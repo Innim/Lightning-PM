@@ -2227,6 +2227,7 @@ class upload {
                     $this->log .= '- Checking MIME type with Fileinfo PECL extension<br />';
                     if (function_exists('finfo_open')) {
                         if ($this->mime_fileinfo !== '') {
+                            /*
                             if ($this->mime_fileinfo === true) {
                                 if (getenv('MAGIC') === FALSE) {
                                     if (substr(PHP_OS, 0, 3) == 'WIN') {
@@ -2244,6 +2245,17 @@ class upload {
                                 $this->log .= '&nbsp;&nbsp;&nbsp;&nbsp;MAGIC path is set to ' . $path . '<br />';
                             }
                             $f = @finfo_open(FILEINFO_MIME, $path);
+                            */
+                            // greymag edit
+                            // php.net: Начиная с PHP >= 5.3.11 и >= 5.4.1 
+                            // формат магической базы данных изменен. Вследствие этого 
+                            // внутренняя база данных mime была также обновлена. 
+                            // Особенно это влияет на код, где читается внешняя база magic.
+                            // Чтение magic-файлов старых форматов работать не будет. 
+                            // Также изменены некоторые текстовые представления mime-типов, 
+                            // например, для PHP будет возвражено "PHP script, ASCII text" 
+                            // вместо "PHP script text".
+                            $f = @finfo_open(FILEINFO_MIME);
                         } else {
                             $this->log .= '&nbsp;&nbsp;&nbsp;&nbsp;MAGIC path will not be used<br />';
                             $f = @finfo_open(FILEINFO_MIME);

@@ -33,7 +33,7 @@ class Project extends MembersInstance
 	}
 
 	public static function updateIssuesCount( $projectId ) {
-		$db = Globals::getDBConnect();
+		$db = LPMGlobals::getInstance()->getDBConnect();
 		$sql = "UPDATE `%1\$s` ".
 				  "SET `issuesCount` = (SELECT COUNT(*) FROM `%2\$s` ".
 				  						"WHERE `%1\$s`.`id` = `%2\$s`.`projectId` ".

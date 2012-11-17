@@ -70,7 +70,8 @@ class Issue extends MembersInstance
 							"(SELECT COUNT(*) FROM `%2\$s` " .
 							  "WHERE `%2\$s`.`instanceType` = '" . Issue::ITYPE_ISSUE . "' " .
 								"AND `%2\$s`.`instanceId` = '" . $issueId . "')";
-		Globals::getDBConnect()->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS );
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS );
 	} 
 	
 	const ITYPE_ISSUE      = 1;

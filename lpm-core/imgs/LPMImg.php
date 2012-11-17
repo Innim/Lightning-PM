@@ -93,7 +93,7 @@ class LPMImg {
             $this->_upload->file_new_name_body = $cacheImgNameBody;
             
             $this->_upload->process( self::getImgPath() . $this->_imgDir );
-        
+            
             // успешность операции никого не волнует
             if (!$this->_upload->processed)
                 $this->_errors[] = $this->_upload->error;

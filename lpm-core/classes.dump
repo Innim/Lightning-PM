@@ -29,4 +29,7 @@
   'Comment' => 'comments/Comment.php',
   'Worker' => 'workStudy/Worker.php',
   'WSDay' => 'workStudy/WSDay.php',
+  'EmailNotifier' => 'notify/EmailNotifier.php',
+  'LPMImgUpload' => 'imgs/LPMImgUpload.php',
+  'LPMImg' => 'imgs/LPMImg.php',
 ); ?>

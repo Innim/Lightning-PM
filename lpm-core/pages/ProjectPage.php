@@ -258,7 +258,7 @@ class ProjectPage extends BasePage
 
 	private function saveImages4Issue( $issueId ) 
 	{
-		$uploader = new BOImgUpload( 
+		$uploader = new LPMImgUpload( 
 			1, true,
             array( LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT ), 
             'issues', 
@@ -269,7 +269,7 @@ class ProjectPage extends BasePage
 
         if ($uploader->isErrorsExist()) {
             $errors = $uploader->getErrors();
-            $engine->addError( $errors[0] );
+            $this->_engine->addError( $errors[0] );
             return false;
         }
             

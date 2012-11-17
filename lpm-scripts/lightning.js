@@ -74,7 +74,7 @@ function BaseService( service )
 };
 
 var srv = {
-    f2p   : new ru.vbinc.net.F2PInvoker( 'lpm-flash2php/gateway.php' ),   
+    f2p   : new ru.vbinc.net.F2PInvoker( 'lpm-libs/flash2php/gateway.php' ),   
     issue : {
         s        : new BaseService( 'IssueService' ),
         complete : function ( issueId, onResult ) {

@@ -94,7 +94,7 @@ class EmailNotifier extends LPMBaseObject {
 			$toName
 		);
 		
-		if (Globals::isDebugMode()) {
+		if (LPMGlobals::isDebugMode()) {
 			GMLog::getInstance()->logIt(
 				GMLog::getInstance()->logsPath . '/emails/' .
 				DateTimeUtils::mysqlDate( null, false ) . '-' .

@@ -222,6 +222,7 @@ class LPMImgUpload {
         // и пытаемся создать, если не существует
         if ($dir != '') {
         	$dirPath = LPMImg::getSrcImgPath( $dir );
+        	
         	if (!is_dir( $dirPath ) && !mkdir( $dirPath )) 
                 return $this->error( 'Ошибка при создании директории' );
                 
@@ -260,7 +261,8 @@ class LPMImgUpload {
 	 * @return float идентификатор сохранённого изображения
 	 */
 	private function saveInDB( LPMImg $img, mysqli_stmt $prepare ) {
-		$prepare->bind_param( 'ss', $img->getSrcImgName(), $img->origName );
+		$srcImgName = $img->getSrcImgName();
+		$prepare->bind_param( 'ss', $srcImgName, $img->origName );
 		$prepare->execute();
 		$img->imgId = $this->_db->insert_id;
 	} 

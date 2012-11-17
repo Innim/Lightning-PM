@@ -91,7 +91,7 @@ class LPMAuth {
 		} else if(!empty( $_COOKIE[self::COOKIE_USER_ID] ) 
 					&& !empty( $_COOKIE[self::COOKIE_HASH] )) {
 			// пытаемся авторизоваться по кукам
-			$db = Globals::getDBConnect();
+			$db = LPMGlobals::getInstance()->getDBConnect();
 			$hash = $db->escape_string( $_COOKIE[self::COOKIE_HASH] );
 			$sql = "select `userId`, `email` from `%s` " .
 			          "where `cookieHash` = '" . $hash . "' " .
