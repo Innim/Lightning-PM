@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link rel="shortcut icon" href="<?=lpm_get_site_url();?>favicon.ico">
+		<title><? lpm_print_title(); ?></title>
+		<? lpm_print_css_links(); ?>
+		<? lpm_print_scripts(); ?>		
+	</head>
+	<body>
+	    <?if (lpm_is_auth()) {?>
+	    <input id="curUserId" value="<?=lpm_get_user()->getID();?>" type="hidden"/>
+		<div id="userMenuLine">
+		  <p>Добро пожаловать, <span class="user-name"><?=lpm_get_user()->getName();?></span>!</p>
+		  <div id="userMenu">
+		      <? foreach (lpm_get_user_menu() as $link) {?>
+              <a href="<?=$link->href;?>"><?=$link->label;?></a>
+              <? }?>
+		  </div>
+		</div>
+		<?}?>
+		<header>
+			<div id="siteLogo">
+			 <a href="<?=lpm_get_site_url();?>">
+                <? lpm_print_logo_img(); ?>
+             </a>
+            </div>			
+			<div id="siteTitle">
+				<h1><? lpm_print_site_title(); ?></h1>
+				<h2><? lpm_print_site_subtitle(); ?></h2>
+			</div>
+		</header>
+		<nav id="mainMenu">
+			<? foreach (lpm_get_main_menu() as $link) {?>
+			<a href="<?=$link->href;?>"><?=$link->label;?></a>
+			<? }?>
+		</nav>
+		<nav id="subMenu">
+            <? foreach (lpm_get_sub_menu() as $link) {?>
+            <a href="<?=$link->href;?>"><?=$link->label;?></a>
+            <? }?>
+        </nav>
+		<div id="content">
+			<? lpm_print_page_content(); ?>
+		</div>
+        <article id="noway">
+            <div class="qtcontent">
+                <h2>ВНИМАНИЕ! Вы используете устаревший браузер или Internet Explorer</h2>
+                <p>Для работы с приложением Вам необходимо выбрать и установить любой из современных браузеров. Это бесплатно и займет всего несколько минут.</p>
+                <p>
+                  <a href="http://www.google.com/chrome" onclick="return !window.open(this.href)" class="browser chrome">Google Chrome</a>
+                  <a href="http://www.mozilla.com/firefox/" onclick="return !window.open(this.href)" class="browser firefox">Mozilla Firefox</a>
+                  <a href="http://www.apple.com/safari/download/" onclick="return !window.open(this.href)" class="browser safari">Apple Safari</a>
+                  <a href="http://www.opera.com/download/" onclick="return !window.open(this.href)" class="browser opera">Opera Browser</a>
+                </p>       
+            </div>  
+        </article>
+		<footer>
+			<span class="copyright"><? lpm_print_copyrights(); ?></span><br/>
+			<span class="version"><? lpm_print_product_name(); ?> v.<? lpm_print_version(); ?></span>
+		</footer>
+		<div id="preloader"></div>
+	</body>
+</html>

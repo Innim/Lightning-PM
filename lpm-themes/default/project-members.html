@@ -1,0 +1,17 @@
+<article id="projectMembers">
+    <h1><?lpm_print_header();?></h1>
+    <h3>Участники проекта</h3>
+    <input type="hidden" name="projectId" value="<?=lpm_get_project()->getID();?>"/>
+    <ul class="users-list">
+        <?foreach (lpm_get_project_members() as $member) {?>
+        <li>
+            <span class="user-name"><?=$member->getLinkedName();?></span>
+            <input type="hidden" name="userId" value="<?=$member->getID();?>">
+        </li>
+        <?}?>
+    </ul>
+    <p class="buttons-bar">
+        <button onclick="openMembersChooser();">Добавить</button>
+    </p> 
+    <?lpm_print_users_chooser();?>
+</article>

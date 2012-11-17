@@ -1,0 +1,24 @@
+<article>
+    <h1><?lpm_print_header();?></h1>
+	<article id="projectView">
+		<h3>Список задач</h3>
+		<p class="project-stat">
+		   <span class="label">Открыто:</span> 
+		   <span class="issues-opened value"></span> из <span class="issues-total value"></span>
+		</p>
+        <!-- <p class="filters-line">
+            <a href="#" onclick="issuePage.showIssues4Me(event); return false;">Показать только мои задачи</a>
+        </p> -->
+		<p class="operations-line">
+		    <a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
+			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
+		</p>
+		<? lpm_print_issues(); ?>
+		<p class="operations-line">
+			<a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
+			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
+		</p>
+	</article>
+	<? lpm_print_issue_form(); ?>
+	<? /*lpm_print_issue_view();*/ ?>
+</article>

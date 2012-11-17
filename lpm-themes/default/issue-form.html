@@ -1,0 +1,66 @@
+<article id="issueForm" class="container">
+    <h3>Добавить задачу</h3>
+    <div class="validateError"><? lpm_print_errors(); ?></div>
+    <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data"> 
+      <ol>
+        <li>      
+            <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>"/>
+        </li>
+        <li>
+	        <fieldset class="radio-group">
+	            <!-- <legend>Тип</legend> -->
+	            <ol>
+	                <li>
+	                    <input id="develop" name="type" type="radio" value="<?=Issue::TYPE_DEVELOP;?>" <?=!isset($_POST['type'])||$_POST['type']==Issue::TYPE_DEVELOP?'checked':'';?>>
+	                    <label for="develop">Разработка</label>
+	                </li>
+	                <li>
+	                    <input id="bug" name="type" type="radio" value="<?=Issue::TYPE_BUG;?>" <?=isset($_POST['type'])&&$_POST['type']==Issue::TYPE_BUG?'checked':'';?>>
+	                    <label for="bug">Ошибка</label>
+	                </li>
+	                <li>
+	                    <input id="support" name="type" type="radio" value="<?=Issue::TYPE_SUPPORT;?>" <?=isset($_POST['type'])&&$_POST['type']==Issue::TYPE_SUPPORT?'checked':'';?> >
+	                    <label for="support">Поддержка</label>
+	                </li>
+	            </ol>
+	        </fieldset>
+        </li>
+        <li>
+	        <label for="priopiry">Приоритет задачи</label>
+	        <input type="range" id="priority" name="priority" min="0" max="99" value="49" step="1" onchange="issuePage.setPriorityVal( this.value );"/>
+	        <span id="priorityVal" class="priority-val"></span>
+        </li>
+        <li>
+            <input placeholder="Дата окончания*" type="text" class="date" name="completeDate" required="required" maxlength="255" value="<?=isset($_POST['completeDate'])?$_POST['completeDate']:lpm_get_default_date();?>"/>
+        </li>
+        <li>
+	        <fieldset>
+	            <legend>Исполнители*</legend>
+	            <ol id="issueMembers" class="members-list"></ol>
+	            <select id="addIssueMembers" onchange="issuePage.addIssueMember();">
+	                <option>Добавить</option>
+	                <?foreach( lpm_get_project_members() as $member) {?>
+	                <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
+	                <?}?>
+	            </select>
+        	</fieldset>
+        </li>
+        <li>
+            <textarea placeholder="Описание" name="desc" maxlength="65535"><?lpm_print_post_var('desc');?></textarea>
+        </li>
+        <li>
+            <label>Изображения</label>
+	        <input type="file" name="images[]"/>
+        </li>
+        <li>
+	        <input type="hidden" name="parentId"/>
+	        <input type="hidden" name="issueId" value="0"/>
+	        <input type="hidden" name="actionType" value="addIssue"/>
+	        <p class="save-line">
+                <button type="submit">Добавить</button>
+                <button type="reset" onclick="showMain();">Отмена</button>
+            </p>   
+        </li>
+      </ol>     
+    </form>
+</article>

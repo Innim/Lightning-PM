@@ -1,0 +1,20 @@
+<table class="users-list">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Пользователь</th>
+            <th>Email</th>
+            <th>Последний вход</th>
+        </tr>
+    </thead>
+    <tbody>
+        <? foreach (lpm_get_users_list() as $user) {?>
+        <tr>
+            <td><img class="user-avatar middle" src="<?=$user->getAvatarUrl();?>"/></td>
+            <td><?=$user->getName();?></td>
+            <td><?=$user->getEmail();?></td>
+            <td><?=$user->getLastVisit();?></td>
+        </tr>           
+        <? }?>
+    </tbody>
+</table>

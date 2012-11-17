@@ -1,0 +1,53 @@
+<article id="projectsList">
+	<h1><?lpm_print_header();?></h1>
+	<?if (lpm_can_create_project()) {?>
+	<p class="operations-line">
+		<a href="#" onclick="showAddProjectForm(); return false;">Добавить проект</a>
+	</p>
+	<?}?>
+	<table class="projects-list">
+		<thead>
+			<tr>
+				<th>Название</th>
+				<th>Описание</th>
+			</tr>
+		</thead>
+		<tbody>
+			<? foreach (lpm_get_projects_list() as $project) {?>
+			<tr>
+				<td>
+					<a href="<?=$project->getUrl();?>"><?=$project->name;?></a>
+				</td>
+				<td>
+					<?=$project->desc;?>
+				</td>
+			</tr>			
+			<? }?>
+		</tbody>
+	</table>
+	<?if (lpm_can_create_project()) {?>
+	<p class="operations-line">
+		<a href="#" onclick="showAddProjectForm(); return false;">Добавить проект</a>
+	</p>
+	<?}?>
+</article>
+<?if (lpm_can_create_project()) {?>
+<article id="addProjectForm" class="container">
+	<h3>Добавить проект</h3>
+	<div class="validateError"><? lpm_print_errors(); ?></div>
+	<form onsubmit="return validateAddProj();" method="post">		
+		<input placeholder="Название проекта*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('email');?>"/>
+		<input placeholder="Уникальный идентификатор*" title="Допустимы строчные буквы (a-z), цифры и дефис" type="text" name="uid" required="required" maxlength="255" value="<?lpm_print_post_var('uid');?>"/>
+		<textarea placeholder="Описание" name="desc" maxlength="65535"><?lpm_print_post_var('desc');?></textarea>
+		<div>
+			<p class="save-line">
+				<button type="submit">Добавить</button>
+				<button type="reset" onclick="showProjectsList();">Отмена</button>
+			</p>
+			<p class="links-line">
+				<a href="#" onclick="showProjectsList(); return false;">К списку</a>
+			</p>			
+		</div>		
+	</form>
+</article>
+<?}?>

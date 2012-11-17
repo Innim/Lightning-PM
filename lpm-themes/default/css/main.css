@@ -1,0 +1,679 @@
+@CHARSET "UTF-8";
+body {
+	font-family: Arial;
+	font-size  : 11pt;
+	padding    : 0px;  
+	margin     : 0px;
+	min-height : 100%; 
+	color      : #666666; 
+	background-color: #f9f9f9;
+}
+a {
+	color      : #000000;
+}
+h3 {
+	margin: 0px;
+}
+input, textarea, select { 
+	border-radius: 5px;	
+	border       : solid 1px #cccccc;
+	padding      : 5px;
+	margin       : 0px; 
+    font-size    : 12pt;
+    font-family  : inherit; 
+	/*box-shadow         : inset 0 2px 4px rgba(0,0,0,0.7);
+    -webkit-box-shadow : inset 0 2px 4px rgba(0,0,0,0.7);*/
+}
+input {
+	height       : 20px;
+}
+input[type="search"] {
+	box-sizing   : content-box;
+}
+select {
+	height       : 30px;
+}
+input[type="radio"],
+input[type="range"] {
+	width        : auto;
+	height       : auto; 
+}
+input[type="range"] {
+	vertical-align: middle;
+}
+fieldset {
+    border       : none;
+    margin-bottom: 10px;
+}
+fieldset :last-of-type {
+	margin-bottom: 0px;
+}
+fieldset legend {
+	margin-left  : 20px;
+}
+article { 
+	margin: 20px auto;
+}
+button, a.button, input[type=submit] {
+    padding        : 5px 10px;
+    border-radius  : 2px 2px;
+    border         : solid 1px rgb(153, 153, 153);
+    background     : -moz-linear-gradient(top,#ffffff,#ddddd);
+    background     : -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(255, 255, 255)), to(rgb(221, 221, 221)));
+    color          : #333333;
+    text-decoration: none;
+    cursor         : pointer;
+    display        : inline-block;
+    text-align     : center;
+    text-shadow    : 0px 1px 1px rgba(255,255,255,1);
+    line-height    : 1;
+    min-width      : 150px;
+    min-height     : 30px;
+    font-size      : 12pt; 
+}
+table {
+	width: 100%;
+	border: 1px solid #cccccc;
+	border-spacing: 0px;	
+	border-collapse: collapse;
+}
+table thead th {
+    background-color: #666666;
+    color           : #ffffff; 
+}
+table tr {
+    background-color: #ffffff;
+}
+table tr:nth-of-type(2n) {
+    background-color: #eeeeee;
+}
+table th,
+table td {
+	padding: 5px;
+	border: 1px solid #cccccc;
+}
+nav {
+	width           : 100%;
+	margin-bottom   : 5px;	
+}
+nav a {
+	color: inherit;
+	margin: 5px 10px;
+	font-size: inherit;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+nav#mainMenu {	
+    background-color: #666666; 
+    color           : #ffffff;
+    font-size       : 10pt; 
+}
+nav#subMenu {  
+    color           : #333333;
+    background-color: #cccccc;
+    margin-top      : -5px; 
+    font-size       : 8pt; 
+    padding-top     : 3px; 
+}
+nav#subMenu:empty {
+	display: none;
+}
+header {
+	height        : 100px;
+	background    : -moz-linear-gradient(top,#ffffff,#eeeeee);
+    background    : -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#eeeeee));    
+	border-bottom : solid 1px #666666;
+}
+header #siteLogo {
+	display: inline-block;
+}
+header #siteLogo img { 
+	max-width  : 160px;
+	max-height : 80px;
+	margin     : 10px;	  
+}
+header #siteTitle {
+	display       : inline-block;
+	vertical-align: top; 
+}
+header #siteTitle h1,
+header #siteTitle h2 {
+	margin     : 0px;
+	padding    : 0px  
+}
+header #siteTitle h1 {
+	margin-top    : 20px;
+	letter-spacing: 3px;
+	color         : #666666;
+}
+header #siteTitle h2 {
+	font-size  : 16pt; 
+}
+footer {
+	text-align : right;
+	line-height: 60%;
+	border-top : solid 1px #666666; 
+	color      : #cccccc;  
+}
+footer a {
+	color : inherit;
+}
+footer:HOVER {
+	color      : #666666; 
+}
+.copyright {
+	font-size: 7pt;
+}
+.version {
+	font-size: 7pt;
+}
+a.back-link {
+	margin    : 0px;
+	text-align: left;
+	font-size : 10px;
+}
+/* p.header-back-link {
+	margin: -1.3em 0px 0.83em;
+}
+p.header-back-link a.back-link {
+    font-size : 11px;
+} */
+.buttons-bar {
+	text-align: center;
+}
+#userMenuLine {
+	font-size: 10px;
+	background-color: rgba(0,0,0,0.1);
+}
+#userMenuLine .user-name {
+	font-weight: bold;
+}
+#userMenuLine > p {
+	display    : inline-block;
+	margin     : 0px;
+	padding    : 0px;
+	margin-left: 10px;
+}
+#userMenuLine #userMenu {
+	float       : right;
+	margin-right: 10px;
+}
+#content {
+	width : 90%;
+	margin: 0px auto;
+}
+#preloader {
+	position        : absolute;
+	left            : 0px;
+	top             : 0px;
+	right           : 0px;
+	bottom          : 0px;
+	display         : none;
+	background-color: rgba( 255, 255, 255, 0.1);  
+}
+#noway {
+	display: none;
+	text-align: center;	
+}
+#noway a.browser {
+	display    : inline-block;
+	width      : 64px;
+	min-height : 84px;
+	padding-top: 64px;
+	background-position: top center;
+	background-repeat  : no-repeat;
+	background-size    : 100%; 
+}
+#noway a.browser.chrome {
+	background-image: url("../imgs/gc.jpg");
+}
+#noway a.browser.firefox {
+    background-image: url("../imgs/mf.jpg");
+}
+#noway a.browser.safari {
+    background-image: url("../imgs/as.jpg");
+}
+#noway a.browser.opera {
+    background-image: url("../imgs/op.jpg");
+}
+article.container,
+div.container {	
+	width    : 90%;
+	max-width: 900px;
+	padding  : 10px;
+	border   : solid 1px #cccccc;
+	background-color: #ffffff;
+	margin   : 20px auto;
+}
+article.container h3,
+div.container h3 { 
+	background-color: #ffffff;
+	width           : 100%;
+	padding         : 0px 15px;
+	margin          : 5px -15px 20px;
+	border          : 1px solid #cccccc;
+	font-size       : 13pt;
+	text-transform  : uppercase; 
+}
+.container input,
+.container textarea, 
+.container select,
+.container fieldset {
+	width   : 90%;
+	display : block;	
+	margin  : 0px auto;  
+}
+.container form > input {
+    margin: 10px auto;
+}
+.container fieldset {
+    padding: 0px;
+}
+.container fieldset legend {
+	font-weight: bold;
+}
+.container fieldset select {
+	width: 100%;
+}
+.container textarea {
+	min-height: 100px;
+}
+.container input[type="radio"],
+.container input[type="range"]  {
+    width    : auto;
+    height   : auto; 
+    display  : inline-block;
+}
+.container input[type="checkbox"] {
+    width: auto;
+    display: inline-block;
+    margin: 0px;
+    vertical-align: top;
+}
+.container .save-line {
+	text-align: center;
+}
+.validateError {
+	width           : 90%;
+	margin          : 10px auto 10px;
+	padding         : 5px;
+	background-color: #f6cdcd;
+	border          : 1px solid #c45151;
+	color           : #ff0000;
+	border-radius   : 5px;
+	display         : none;
+}
+.info-message {
+    width           : 90%;
+    margin          : 10px auto 10px;
+    padding         : 5px;
+    background-color: #9ee081;
+    border: 1px solid #6fa955;
+    color: #386724;
+    border-radius   : 5px; 
+    display         : none; 
+}
+.operations-line {
+	font-size : smaller;
+	text-align: right;
+}
+fieldset.radio-group legend {
+	float  : left;
+	display: inline-block;
+}
+fieldset.radio-group ol {
+	padding: 0px;
+}
+fieldset.radio-group ol li {
+    background : none;
+    border     : none;
+    float      : left;
+    margin-left: 10px;    
+    list-style : none;    
+}
+fieldset.radio-group ol li label {
+	margin: 0px;
+}
+ol.members-list {
+	margin-bottom: 10px;
+}
+fieldset > ol.members-list {
+    margin-bottom: 10px;
+    padding-top: 5px;
+}
+form > ol {
+	padding: 0px;
+}
+form > ol > li {   
+    list-style   : none;	
+    /*margin-bottom: 5px;
+    margin-right : 10px;*/
+    margin: 10px 0px;
+}
+form > ol > li label {
+	margin-left  : 5%;
+	margin-bottom: 5px;
+}
+form > ol > li p {
+    text-align: center;
+}
+.priority-val {
+	padding: 3px;
+	color: #000000;
+	border-radius: 5px;	
+}
+.priority-val.circle {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	vertical-align: middle;
+	margin-right: 5px;
+}
+button.remove-btn,
+a.remove-btn {
+	width              : 16px;
+	height             : 16px; 
+	background-image   : url("../imgs/remove-btn.png");
+	background-repeat  : no-repeat;
+	background-position: center;  
+	background-size    : 100% 100%;	
+	border             : none;
+	min-height         : 16px;
+	min-width          : 16px;  
+	margin-left        : 10px; 
+    cursor             : pointer;
+    display            : inline-block;
+}
+div.list-box {
+	overflow: scroll;
+}
+img.user-avatar {
+	
+}
+img.user-avatar.small {
+    width : 32px;
+    height: 32px;
+}
+img.user-avatar.middle {
+    width : 64px;
+    height: 64px;
+}
+
+/* комментарии */
+article.comments {
+	width    : 90%;
+    max-width: 900px;
+    padding  : 10px;
+    margin   : 20px auto;
+}
+article.comments .links-bar {
+	text-align: right;
+	margin    : 0px; 
+}
+article.comments .links-bar a {
+	font-size: smaller;
+}
+article.comments form.add-comment {
+	text-align: center;
+}
+article.comments form.add-comment textarea {
+	width     : 100%;
+	height    : 100px;
+	box-sizing: border-box;
+}
+article.comments form.add-comment .buttons-bar {
+	text-align: right;
+}
+article.comments ol.comments-list {
+	list-style: none;
+}
+article.comments ol.comments-list li {
+	border-top: solid 1px #cccccc;	
+}
+article.comments ol.comments-list li img.user-avatar {
+    float : left;
+    margin: 5px;
+    margin-top: 10px;
+}
+article.comments ol.comments-list li .author {
+	margin-bottom: 0px;
+	font-size    : smaller;
+}
+article.comments ol.comments-list li .date {
+    margin-top   : 0px;
+    font-size    : x-small;
+}
+article.comments ol.comments-list li .text {
+    background-color: #eeeeee;
+    padding         : 10px;
+    clear           : both;
+}
+.hidden-state {
+	display: none;
+}
+
+/* статистика проекта*/
+.project-stat {
+	margin: 0px;
+}
+.project-stat .label {
+	font-size: smaller;
+}
+.project-stat .value {
+    font-weight: bold;
+}
+
+/* подменюшка панели */
+.container ul.panel-submenu {
+	list-style: none;
+    padding: 0px;
+    margin: -15px 0px 10px;
+    font-size: smaller;
+}
+ul.panel-submenu li {
+    min-width: 100px;
+    display: inline-block;
+    text-align: center;
+}
+
+/* панелька с информацией */
+ol.info-list {
+    list-style: none;
+}
+ol.info-list li {
+	margin: 10px 0px;
+}
+ol.info-list li span.label {
+    width      : 150px;
+    display    : inline-block;
+    font-weight: bold;
+    font-size: smaller;
+}
+ol.info-list li span.label:after {
+    content: ":";
+}
+ol.info-list li span.value {
+}
+
+/* список пользователей */
+table.users-list thead th:first-child,
+table.users-list tbody td:first-child {
+	width     : 64px;
+	text-align: center;
+}
+table.users-list.no-avatar thead th:first-child,
+table.users-list.no-avatar tbody td:first-child {
+	width: auto;
+}
+
+/* форма авторизации и регистрации */
+#authForm,
+#registrationForm {
+	width  : 400px;
+	margin : 40px auto;
+}
+#authForm p.enter-line,
+#authForm p.links-line {
+	width         : 90%;  
+	margin        : 0px auto;	
+}
+#authForm p.enter-line {
+	vertical-align: bottom;
+	text-align    : right; 
+}
+#authForm p.enter-line span {
+	font-size: 10pt;
+}
+#authForm .enter-line button {
+	display    : inline-block;
+	margin-left: 40px;
+}
+#authForm p.links-line,
+#registrationForm p.links-line {
+	text-align: center;
+	font-size : 10pt; 	
+	margin-top: 10px;
+}
+#registrationForm p.links-line {
+	text-align    : left;
+	margin-bottom : 0px;
+	padding-bottom: 0px 
+}
+
+
+/* список проектов и добавление проекта*/
+#projectsList table {
+
+}
+#projectsList table thead th {
+
+}
+#projectsList table th,
+#projectsList table td {
+
+}
+table tr.completed-issue {
+	background-color: #cccccc;
+	color           : #999999;
+}
+table tr.completed-issue .priority-val {
+    opacity: 0.2;
+}
+table tr.completed-issue:hover {   
+    color           : #666666;
+}
+table tr.completed-issue:hover .priority-val {
+    opacity: 0.6;
+}
+table tr.completed-issue a {
+	color: inherit;
+}
+
+table.projects-list td:first-child {
+	min-width: 200px;
+	width    : 30%;
+}
+
+/* просмотр проекта */
+#projectView .filters-line {
+	float: left;
+	width: 70%;
+	font-size : smaller;
+}
+#projectView .operations-line {
+	
+}
+
+/* список задач и добавление/редактироание задачи */
+table.issues-list {
+	
+}
+table.issues-list tr.completed-issue td button.complete-btn {
+	display: none;
+}
+table.issues-list tr.active-issue td button.restore-btn {
+    display: none;
+}
+table.issues-list tr td span.comments-count {
+	font-size    : 8.5pt;
+	font-weight  : bold;
+    padding      : 0px 5px 1px;
+    border-radius: 4px;
+}
+table.issues-list tr.active-issue td span.comments-count {
+    background: #9a9a9a;
+    color     : #ffffff;
+}
+table.issues-list tr.completed-issue td span.comments-count {
+    background: #d6d6d6;
+    color     : #bbbbbb;
+}
+table tr.completed-issue:hover td span.comments-count {   
+    background: #dddddd;
+    color     : #999999;
+}
+
+/* просмотр задачи */
+#issueView .buttons-bar.completed-issue button.complete-btn {
+	display: none;
+}
+#issueView .buttons-bar.active-issue button.restore-btn {
+    display: none;
+}
+
+/* выбор пользователей */
+#usersChooser {
+	text-align: center;
+}
+#usersChooser input[type="search"] {
+	width: 90%;
+	margin-bottom: 10px;
+}
+#usersChooser div.list-box {
+	max-height: 500px;
+}
+#usersChooser .list-box table td:first-child {
+	text-align: left;
+}
+#usersChooser button {  
+    margin-top: 10px;
+}
+
+/* рабочее время */
+.dates-line {
+	margin     : 5px 0px;
+	/*font-weight: bold;*/
+}
+.dates-line a {
+    font-size  : smaller; 
+    font-weight: normal;
+}
+#workersStat table thead th span.day-name {
+	display: block;
+}
+#workersStat table thead th span.day-date {
+    font-size: smaller;
+}
+#workersStat table tbody > tr > td {
+	text-align: center;
+}
+#workersStat table tbody > tr > td:first-child {
+	font-weight: bold;
+	text-align : left;
+}
+#workersStat table tbody > tr td .no-info {
+    font-size: smaller;
+}
+#workersStat table tbody > tr .bad {
+	background-color: #FF2746;
+	color           : #ffffff; 
+}
+#workersStat table tbody > tr .good {
+    background-color: #6BFF7C;
+}
+#workersList table tr td:nth-child(2) div {
+	margin: 5px 0px;
+}
+#workersList table tr td:nth-child(2) input[type=radio] {
+	margin-right: 5px;
+}

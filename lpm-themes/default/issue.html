@@ -1,0 +1,84 @@
+<article id="issueView">  
+  <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
+  <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
+  <article id="issueInfo" class="container">
+    <?$issue = lpm_get_issue();?>    
+    <h3><?=$issue->getName();?></h3>     
+    <ol class="info-list">
+        <li>
+            <span class="label">Статус</span>
+            <span class="value"><?=$issue->getStatus();?></span>
+        </li>
+        <li>
+            <span class="label">Тип</span>
+            <span class="value"><?=$issue->getType();?></span>
+            <input type="hidden" name="type" value="<?=$issue->type;?>"/>
+        </li>
+        <li>
+            <span class="label">Приоритет</span>
+            <span class="value">
+                <span class="priority-val circle"><?=$issue->priority;?></span>
+                <?=$issue->getPriorityStr();?> (<?=($issue->priority+1);?>%)
+            </span>
+            <input type="hidden" name="priority" value="<?=$issue->priority;?>"/>
+        </li>
+	    <li>
+	        <span class="label">Дата создания</span>
+	        <span class="value"><?=$issue->getCreateDate();?></span>
+	    </li>
+	    <li>
+	        <span class="label">Дата завершения</span>
+	        <span class="value"><?=$issue->getCompleteDate();?></span>
+	        <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>"/>
+	    </li>
+	    <li>
+	        <span class="label">Создал</span>
+	        <span class="value"><?=$issue->getAuthorLinkedName();?></span>
+	    </li>
+	    <li>
+	        <span class="label">Исполнители</span>
+	        <span class="value">
+	           <? foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?><?=$member->getLinkedName();?><?}?>
+	        </span>
+	        <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
+	    </li>    
+	    <li class="desc">        
+	        <p class="value"><?=$issue->getDesc();?></p>
+	    </li>
+    </ol>
+    <p class="buttons-bar <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
+        <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
+        <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>        
+        <button class="restore-btn" onclick="restoreIssue( event );">Открыть</button>
+        <button class="complete-btn" onclick="completeIssue( event );">Завершить</button>
+        <button onclick="issuePage.showEditForm();">Редактировать</button> 
+        <button onclick="issuePage.removeIssue( event );">Удалить</button>
+    </p>
+    <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
+  </article>
+  <article class="comments">
+    <p class="links-bar">
+        <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть комментарии</a>
+        <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
+    </p>
+    <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
+     <textarea name="commentText"></textarea>
+     <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>
+     <p class="buttons-bar">
+        <button type="submit">Отправить</button>
+        <button type="reset" onclick="issuePage.hideCommentForm();">Отмена</button>
+     </p>
+    </form>
+    <ol class="comments-list">
+        <?foreach (lpm_get_comments() as $comment) {?>
+        <li>
+            <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
+            <p class="author"><?=$comment->getAuthorLinkedName();?></p>
+            <p class="date"><?=$comment->getDate();?></p>
+            <p class="text"><?=$comment->text;?></p>            
+        </li>
+        <?}?>
+    </ol>
+  </article>
+</article>
+<? lpm_print_issue_form(); ?>
