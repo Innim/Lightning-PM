@@ -50,7 +50,9 @@
         </li>
         <li>
             <label>Изображения</label>
-	        <input type="file" name="images[]"/>
+            <ul class="images-list">
+	        	<li><input type="file" name="images[]" onchange="imgUpload.onSelect(event,window.lpmOptions.issueImgsCount);"/></li>
+	        </ul>
         </li>
         <li>
 	        <input type="hidden" name="parentId"/>

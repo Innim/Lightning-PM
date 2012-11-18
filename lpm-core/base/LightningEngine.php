@@ -69,6 +69,9 @@ class LightningEngine
 		$this->_pagesManager = new PagesManager( $this );		
 		$this->_contructor   = new PageConstructor( $this->_pagesManager );
 		
+	}
+
+	public function createPage() {
 		$this->_curPage = $this->initCurrentPage();
 		
 		$this->_contructor->createPage();

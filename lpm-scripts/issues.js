@@ -334,14 +334,27 @@ issuePage.setEditInfo = function () {
     );
     // исполнители
     var memberIds = $( "#issueInfo li input[name=members]" ).val() .split( ',' );
-    
-    for (var i = 0; i < memberIds.length; i++) {
-        $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'sxelected' );
+    var i,l = 0;
+    l = memberIds.length;
+    for (i = 0; i < l; i++) {
+        $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'selected' );
         issuePage.addIssueMember();
     }
     //$( "#issueForm form" ).value( $( "" ) );
     // описание
     $( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).text() );
+    // изображения
+    var imgs = $("#issueInfo li > .images-line > li");
+    l = imgs.length;
+    var imgInput = $('#issueForm form .images-list')[0];
+    var imgLI = null;
+    for (i = l - 1; i >= 0; i--) {
+        //$('input[name=imgId]',imgs[i]).val() 
+        imgLI = imgs[i].cloneNode( true );
+        imgInput.insertBefore(imgLI, imgInput.children[0]);
+    };
+    if (l >= window.lpmOptions.issueImgsCount)
+        $("#issueForm form .images-list > li input[type=file]").hide();
     // родитель
     $( "#issueForm form input[name=parentId]" ).val( $( "#issueInfo input[name=parentId]" ).val() );
     // идентификатор задачи

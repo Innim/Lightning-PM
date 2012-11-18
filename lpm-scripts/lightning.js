@@ -189,6 +189,21 @@ var preloader = {
   }
 };
 
+var imgUpload = {
+  onSelect : function (event, maxPhotos) {
+    var input = event.currentTarget;
+    var parent = input.parentNode.parentNode;
+    if (typeof maxPhotos !== 'undefined' && maxPhotos <= parent.children.length) return;
+    
+    var inputs = parent.getElementsByTagName('input');
+    for (var i = inputs.length - 1; i >= 0; i--) {
+      if (input.type === 'file' && !inputs[i].value) return;
+    }
+
+    parent.appendChild( input.parentNode.cloneNode(true) );
+  }
+};
+
 var lpInfo = {
         userId : 0
 };
@@ -226,6 +241,10 @@ window.onload = function () {
         $( 'body > nav' ).hide();
         $( '#noway' ).show();
     }
+
+    // galery
+    L.path = window.lpmOptions.themeUrl + 'imgs/'; 
+    L.create();
 };
 
 $(document).ready(

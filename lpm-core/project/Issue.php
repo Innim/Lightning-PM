@@ -74,15 +74,17 @@ class Issue extends MembersInstance
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS );
 	} 
 	
-	const ITYPE_ISSUE      = 1;
+	const ITYPE_ISSUE      	= 1;
 	
-	const TYPE_DEVELOP     = 0;
-	const TYPE_BUG         = 1;
-	const TYPE_SUPPORT     = 2;
+	const TYPE_DEVELOP     	= 0;
+	const TYPE_BUG         	= 1;
+	const TYPE_SUPPORT     	= 2;
 	
-	const STATUS_IN_WORK   = 0;
-	const STATUS_WAIT      = 1;
-	const STATUS_COMPLETED = 2;
+	const STATUS_IN_WORK   	= 0;
+	const STATUS_WAIT      	= 1;
+	const STATUS_COMPLETED 	= 2;
+
+	const MAX_IMAGES_COUNT	= 10;
 	
 	public $id            =  0;
 	public $parentId      =  0;
@@ -99,6 +101,8 @@ class Issue extends MembersInstance
 	public $priority      = 49;
 	public $status        = -1;
 	public $commentsCount = 0;
+
+	private $_images = null;
 	
 	/**
 	 * 
@@ -132,6 +136,22 @@ class Issue extends MembersInstance
 	
 	public function getID() {
 		return $this->id;
+	}
+
+	public function getMaxImagesCount() {
+		return self::MAX_IMAGES_COUNT;
+	}
+
+	/**
+	 * Возвращает массив изображений, прикрепленных к записи
+	 * @var array <code>Array of LPMImg</code>
+	 */
+	public function getImages() {
+		if ($this->_images === null) {
+			$this->_images = LPMImg::loadListByIssue( $this->id );
+		}
+
+		return $this->_images;
 	}
 	
 	/**

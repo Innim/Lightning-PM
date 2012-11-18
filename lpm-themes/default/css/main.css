@@ -399,6 +399,32 @@ img.user-avatar.middle {
     height: 64px;
 }
 
+/* линия изображения */
+ul.images-line {
+	list-style: none;
+	padding: 0;
+	margin: 10px auto;
+	text-align: center;
+}
+ul.images-line > li {
+	display: inline-block;
+	padding: 0;
+	margin: 0;
+}
+/* список изображений */
+ul.images-list {
+	list-style: none;
+	padding: 0;
+	margin: 10px auto;
+}
+ul.images-list > li {
+	margin: 10px auto;
+	padding: 0;
+}
+ul.images-list > li > a {
+	display: inline-block;
+	margin: 0 5%;
+}
 /* комментарии */
 article.comments {
 	width    : 90%;

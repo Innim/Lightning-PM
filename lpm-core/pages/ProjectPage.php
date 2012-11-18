@@ -259,7 +259,8 @@ class ProjectPage extends BasePage
 	private function saveImages4Issue( $issueId ) 
 	{
 		$uploader = new LPMImgUpload( 
-			1, true,
+			Issue::MAX_IMAGES_COUNT, 
+			true,
             array( LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT ), 
             'issues', 
             'scr_',

@@ -3,7 +3,27 @@
  * Загруженное изображение
  * @author greymag
  */
-class LPMImg {
+class LPMImg extends LPMBaseObject {
+
+    public static function loadListByInstance( $instanceType, $instanceId ) {
+        return StreamObject::loadListDefault( 
+                    self::getDB(),
+                    '`itemType` = ' . $instanceType . 
+                    ' AND `itemId` = ' . $instanceId, 
+                    LPMTables::IMAGES,
+                    __CLASS__ 
+        );
+    }
+    
+    public static function loadListByProject( $projectId ) {
+        return self::loadListByInstance( Project::ITYPE_PROJECT, $projectId );
+    }
+    
+    public static function loadListByIssue( $issueId ) {
+        return self::loadListByInstance( Issue::ITYPE_ISSUE, $issueId );
+    }
+
+
     public static function getImgPath( $imgName = '' ) {
         return ROOT . UPLOAD_IMGS_DIR . $imgName;
     }
@@ -27,6 +47,13 @@ class LPMImg {
     public $imgId = 0;
     public $name = '';
     public $origName = '';
+    public $desc = '';
+
+    /**
+     * Сохраненный адрес
+     * @var string
+     */
+    //private $_url;
     
     private $_srcImgName;
     /**
@@ -44,16 +71,10 @@ class LPMImg {
     private $_upload;
     private $_errors = array();
     
-    function __construct( $srcImg ) {
-    	$this->_srcImgName = $srcImg;
-        $this->_srcImg = self::getSrcImgPath( $srcImg );
-        $nameParts = explode( '.', $srcImg );
-        $this->_imgExt  = array_pop( $nameParts );
-        
-        $dirParts  = explode( '/', implode( '.', $nameParts ) );
-        $this->_imgName = array_pop( $dirParts );
-        $this->_imgDir  = implode( '/', $dirParts );
-        if ($this->_imgDir != '') $this->_imgDir .= '/';
+    function __construct( $srcImg = null ) {
+        parent::__construct();
+
+        if ($srcImg !== null) $this->setSrcImg( $srcImg );
     }
     
     /**
@@ -101,6 +122,23 @@ class LPMImg {
         
         return self::getImgURL( $cacheImgName );
     }
+
+    /**
+     * Возвращает url превью изображения 
+     * (при необходимости создавая его)
+     * @return string
+     */
+    public function getPreview() {
+        return $this->getCacheImg( self::PREVIEW_WIDTH, self::PREVIEW_HEIGHT ); 
+    }
+
+    /**
+     * Возвращает url исходного изображения
+     * @return string
+     */
+    public function getSource() {
+        return self::getImgURL( self::SRC_DIR . $this->_srcImgName );
+    }
     
     public function getSrcImgName() {
     	return $this->_srcImgName;
@@ -138,6 +176,32 @@ class LPMImg {
     public function removeAll() {
     	$this->removeCache();
         FileSystemUtils::remove( $this->_srcImg );
+    }
+
+    /*protected function onLoadStream( $hash ) 
+    {
+        if (isset( $hash['url'] )) $this->setSrcImg( $hash['url'] );
+        parent::onLoadStream( $hash );
+    }*/
+
+    protected function setVar( $var, $value ) {
+        if ($var === 'url') {
+            $this->setSrcImg( $value );
+        } else return parent::setVar( $var, $value );
+    }
+
+    private function setSrcImg( $value ) {
+        //$this->_url = $value;
+        // TODO обработку передаваемого полного url
+        $this->_srcImgName = $value;
+        $this->_srcImg = self::getSrcImgPath( $value );
+        $nameParts = explode( '.', $value );
+        $this->_imgExt  = array_pop( $nameParts );
+        
+        $dirParts  = explode( '/', implode( '.', $nameParts ) );
+        $this->_imgName = array_pop( $dirParts );
+        $this->_imgDir  = implode( '/', $dirParts );
+        if ($this->_imgDir != '') $this->_imgDir .= '/';
     }
 }
 ?>

@@ -126,9 +126,10 @@ class PageConstructor
 		'libs/jquery.form',
 		'libs/jquery.validate.min',
 		'libs/F2PInvoker', 
-		'lightning' 
+		'libs/iLoad',
+		'lightning',
+		'js-options.php$' 
 	);
-	
 	
 	public  $_title    = '';
 	public  $_header   = '';
@@ -166,7 +167,11 @@ class PageConstructor
 	}
 	
 	public function getJSLink( $file ) {
-		return SITE_URL . SCRIPTS_DIR . $file . '.js';
+		if ($file !== '' && $file{mb_strlen($file)-1} === '$') 
+			$file = mb_substr($file, 0, -1);
+		else
+			$file = $file . '.js';
+		return SITE_URL . SCRIPTS_DIR . $file;
 	}
 	
 	public function getThemePath()

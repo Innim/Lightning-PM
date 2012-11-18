@@ -45,6 +45,16 @@
 	    <li class="desc">        
 	        <p class="value"><?=$issue->getDesc();?></p>
 	    </li>
+        <li>
+            <ul class="images-line">
+                <?foreach($issue->getImages() as $img):?>
+                <li>
+                    <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
+                    <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
+                </li>
+                <?endforeach;?>
+            </ul>
+        </li>
     </ol>
     <p class="buttons-bar <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
