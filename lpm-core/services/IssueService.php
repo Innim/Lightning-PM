@@ -180,10 +180,10 @@ class IssueService extends LPMBaseService
 	protected function getIssue4Client( Issue $issue, $loadMembers = true ) {
 		$obj = $issue->getClientObject();
 		$members = $issue->getMembers();
-		$obj['members'] = array();
+		$obj->members = array();
 		
 		foreach ($members as $member) {
-			array_push( $obj['members'], $member->getClientObject() );
+			array_push( $obj->members, $member->getClientObject() );
 		}
 		
 		return $obj;

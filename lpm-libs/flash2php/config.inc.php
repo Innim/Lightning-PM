@@ -10,7 +10,7 @@
  * Файл сервиса должен носить имя ИМЯ_КЛАССА.php<br/>
  * Путь до этой директории указывается от корня F2P 
  */
-define( 'F2P_SERVICES_PATH', '../lpm-core/services/');
+define( 'F2P_SERVICES_PATH', '../../lpm-core/services/');
 
 /**
  * Режим отладки. 

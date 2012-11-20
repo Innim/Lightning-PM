@@ -124,6 +124,11 @@ class Issue extends MembersInstance
 		$this->_typeConverter->addIntVars( 'priority' );
 		$this->addDateTimeFields( 'createDate', 'startDate', 'completeDate', 'completedDate' );
 		
+		$this->addClientFields( 
+			'id', 'parentId', 'name', 'desc', 'type', 'authorId', 'createDate', 
+			'completeDate', 'startDate', 'priority', 'status' ,'commentsCount'
+		);
+
 		$this->author = new User();
 	}
 	

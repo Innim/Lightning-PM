@@ -127,7 +127,7 @@ class User extends LPMBaseObject
 	protected function clientObjectCreated( $obj ) {
 		$obj = parent::clientObjectCreated( $obj );
 		
-		$obj['linkedName'] = $this->getLinkedName();
+		$obj->linkedName = $this->getLinkedName();
 		return $obj;
 	} 
 	
