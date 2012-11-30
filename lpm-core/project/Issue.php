@@ -249,9 +249,8 @@ class Issue extends MembersInstance
 		}
 	}
 	
-	public function parseData( $hash ) {
-		if (!parent::parseData( $hash ) || !$this->author->parseData( $hash )) return false;
-		else return true;		
+	public function loadStream( $hash ) {
+		return parent::loadStream( $hash ) && $this->author->loadStream( $hash );		
 	}
 	
 	protected function loadMembers() {

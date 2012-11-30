@@ -61,5 +61,10 @@ class LPMBaseObject extends StreamObject
 		$text = str_replace( "\n", '<br/>', $text );
 		return $text;
 	}
+
+	public function parseData( $hash )
+	{
+		return $this->loadStream( $hash );
+	}
 }
 ?>

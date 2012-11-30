@@ -113,15 +113,13 @@ class User extends LPMBaseObject
 		return self::checkCurRole( $this->role, $reqRole );
 	}
 	
-	public function parseData( $hash )
+	protected function onLoadStream( $hash )
 	{
-		if (!parent::parseData( $hash )) return false;
-		
-		$this->pref->parseData( $hash );
+		$this->pref->onLoadStream( $hash );
 		
 		if ($this->avatarUrl == '') $this->avatarUrl = $this->getMyGravatar();
 		
-		return true;
+		parent::onLoadStream( $hash );
 	}
 	
 	protected function clientObjectCreated( $obj ) {

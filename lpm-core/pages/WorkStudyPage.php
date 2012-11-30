@@ -159,7 +159,7 @@ class WorkStudyPage extends BasePage
 				if ($rows = $this->_db->fetchAssocPrepare( $prepare )) {
 					for ($i = 0; $i < count( $rows ); $i++) {
 						$record = new WSRecord();
-						$record->parseData( $rows[$i] );						
+						$record->loadStream( $rows[$i] );						
 						
 						$worker->addRecord( $record );
 					}
@@ -200,7 +200,7 @@ class WorkStudyPage extends BasePage
 				if ($rows = $this->_db->fetchAssocPrepare( $prepare )) {
 					for ($i = 0; $i < count( $rows ); $i++) {
 						$record = new WSRecord();
-						$record->parseData( $rows[$i] );
+						$record->loadStream( $rows[$i] );
 			
 						$worker->addRecord( $record );
 					}
