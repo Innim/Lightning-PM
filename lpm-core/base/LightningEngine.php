@@ -2,7 +2,7 @@
 /**
  * Движок Lightning Project Manager
  * @author GreyMag
- * @version 0.2.1a 
+ * @version 0.2.2a 
  *
  */
 class LightningEngine

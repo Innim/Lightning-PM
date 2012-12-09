@@ -478,7 +478,7 @@ issuePage.showIssues4Me = function (e) {
 };
 
 issuePage.filterByMemberId = function (userId) {
-    $( '#issuesList > tbody > tr' ).each(
+    /*$( '#issuesList > tbody > tr' ).each(
         function (index) {
             var fields = $( "td > input[name=memberId][type=hidden]", this ); 
             for (var i = 0; i < fields.size(); i++) {
@@ -489,11 +489,32 @@ issuePage.filterByMemberId = function (userId) {
             }
             $(this).hide();
         }
-    );
+    );*/
+    var list = document.getElementById('issuesList'); 
+    var rows = list.tBodies[0].children;
+    var row,fields = null;
+    var hide = true;
+    for (var i =0; i < rows.length; i++) {
+        row = rows[i];
+        hide = true;
+        fields = row.getElementsByTagName('input');
+        for (var j = 0; j < fields.length; j++) {
+           if (fields[j].name === 'memberId' && fields[j].value == userId) {
+                hide = false;
+                break;
+           }
+        }
+        if (hide) row.hide();
+        else row.show();
+    }
 };
 
 issuePage.resetFilter = function (e) {
-    $( '#issuesList > tbody > tr' ).show();
+    //$( '#issuesList > tbody > tr' ).show();
+    var rows = document.getElementById('issuesList').tBodies[0].children;
+    for (var i =0; i < rows.length; i++) {
+        rows[i].show();
+    }
     e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
     e.currentTarget.innerText = 'Показать только мои задачи';
     return false;

@@ -32,4 +32,5 @@
   'EmailNotifier' => 'notify/EmailNotifier.php',
   'LPMImgUpload' => 'imgs/LPMImgUpload.php',
   'LPMImg' => 'imgs/LPMImg.php',
+  'LPMBaseService' => 'base/LPMBaseService.php',
 ); ?>

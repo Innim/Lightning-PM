@@ -568,7 +568,7 @@ table.users-list.no-avatar tbody td:first-child {
 
 
 /* список проектов и добавление проекта*/
-#projectsList table {
+/*#projectsList table {
 
 }
 #projectsList table thead th {
@@ -577,6 +577,24 @@ table.users-list.no-avatar tbody td:first-child {
 #projectsList table th,
 #projectsList table td {
 
+}*/
+.projects-list {
+
+}
+ul.projects-list {
+	list-style: circle;
+}
+ul.projects-list > li {
+	margin: 2em 2em 2em 0;
+}
+.projects-list ,project-name {
+	font-size: 1.1em;
+}
+.projects-list .project-desc {
+	font-size: 0.9em;
+	border: 1px dotted #666666;
+	background-color: #f0f0f0;
+	padding: 5px;
 }
 table tr.completed-issue {
 	background-color: #cccccc;
@@ -595,10 +613,10 @@ table tr.completed-issue a {
 	color: inherit;
 }
 
-table.projects-list td:first-child {
+/*table.projects-list td:first-child {
 	min-width: 200px;
 	width    : 30%;
-}
+}*/
 
 /* просмотр проекта */
 #projectView .filters-line {

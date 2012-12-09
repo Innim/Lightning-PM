@@ -18,12 +18,12 @@ class LPMTag extends LPMBaseObject
 	 * Тип объекта, для которого предназначен тег
 	 * @var int
 	 */
-	public $instanceType;
+	public $itemType;
 
 	function __construct() {
 		parent:__construct();
 
-		$this->_typeConverter->addIntVars( 'tagId', 'instanceType' );
+		$this->_typeConverter->addIntVars( 'tagId', 'itemType' );
 	}
 }
 ?>

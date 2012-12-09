@@ -5,26 +5,30 @@
 		<a href="#" onclick="showAddProjectForm(); return false;">Добавить проект</a>
 	</p>
 	<?}?>
-	<table class="projects-list">
+	<!--<table class="projects-list">
 		<thead>
 			<tr>
 				<th>Название</th>
 				<th>Описание</th>
 			</tr>
 		</thead>
-		<tbody>
+		<tbody>-->
+		<ul class="projects-list">
 			<? foreach (lpm_get_projects_list() as $project) {?>
-			<tr>
-				<td>
-					<a href="<?=$project->getUrl();?>"><?=$project->name;?></a>
-				</td>
-				<td>
-					<?=$project->desc;?>
-				</td>
-			</tr>			
+			<!--<tr>
+				<td>-->
+				<li>
+					<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
+				<!--</td>
+				<td>-->
+					<p class="project-desc"><?=$project->desc;?></p>
+				</li>
+				<!--</td>
+			</tr>-->			
 			<? }?>
-		</tbody>
-	</table>
+		</ul>
+	<!--	</tbody>
+	</table>-->
 	<?if (lpm_can_create_project()) {?>
 	<p class="operations-line">
 		<a href="#" onclick="showAddProjectForm(); return false;">Добавить проект</a>

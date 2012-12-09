@@ -216,7 +216,11 @@ class ProjectPage extends BasePage
 					$prepare->close();
 
 					// загружаем изображения
-					$this->saveImages4Issue( $issueId );
+					$uploader = $this->saveImages4Issue( $issueId );
+
+					// обновляем счетчики
+					if ($uploader->getLoadedCount() > 0 || $editMode) 
+						Issue::updateIssuesCount( $issueId, $updloader->getLoadedCount() );
 					
 					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $issueId );
 					

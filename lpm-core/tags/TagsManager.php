@@ -10,15 +10,15 @@ class TagsManager extends BaseManager
 
 	/**
 	 * Получает теги для указанного типа объектов
-	 * @param int $instanceType 
+	 * @param int $itemType 
 	 * @param string $startWith = '' Тег должен начинаться с указанной подстроки
 	 * @return array <code>Array of LPMTag</code> 
 	 * @throws Exception В случае ошибки формирования или выполнения запроса
 	 */
-	public function getTagsByType( $instanceType, $startWith = '' )
+	public function getTagsByType( $itemType, $startWith = '' )
 	{
 		$where = array(
-			'`instanceType` = ' . $instanceType
+			'`itemType` = ' . $itemType
 		);
 
 		if ($startWith !== '') {
@@ -27,9 +27,35 @@ class TagsManager extends BaseManager
 		}
 
 		return $this->loadObjectsList( 
-			LFMTables::TAGS,
+			LFMTables::TAGS_LIST,
 			$where
 		);
+	}
+
+	/**
+	 * Сохраняет теги
+	 */
+	public function saveTage( $tags, $itemType ) {
+		$values = array();
+
+		foreach ($tags as $tag) {
+			$values[] = array($itemType, $this->_db->escape_string( $tag ));
+		}
+
+		return $this->_db->queryb(
+			'INSERT' 	=> array('itemType', 'name');,
+			'IGNORE'    => '',
+			'INTO' 		=> LFMTables::TAGS_LIST,
+			'VALUES'	=> $values
+		);
+	}
+
+	/**
+	 * Сохраняет набор тегов для конктерной инстанции
+	 */
+	public function updateTags4Instance( $tags, $instanceType, $instanceId )
+	{
+
 	}
 }
 ?>

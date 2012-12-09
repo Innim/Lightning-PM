@@ -74,6 +74,17 @@ class Issue extends MembersInstance
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS );
 	} 
 	
+	public function updateImgsCounter( $issueId, $count ) {
+		$sql = "INSERT INTO `%1\$s` (`issueId`, `imgsCount`) " .
+									"VALUES ('" . $issueId . "', '" . $count . "') " .
+					   "ON DUPLICATE KEY UPDATE `imgsCount` = " . 
+							"(SELECT COUNT(*) FROM `%2\$s` " .
+							  "WHERE `%2\$s`.`itemType` = '" . Issue::ITYPE_ISSUE . "' " .
+								"AND `%2\$s`.`itemId` = '" . $issueId . "')";
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES );
+	} 
+	
 	const ITYPE_ISSUE      	= 1;
 	
 	const TYPE_DEVELOP     	= 0;

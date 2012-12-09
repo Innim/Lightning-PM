@@ -16,11 +16,6 @@ class LPMTables {
 	 */
 	const IMAGES = 'images';
 	/**
-	 * Теги для объектов
-	 * @var string
-	 */
-	const INSTANCE_TAGS = 'instance_tags';
-	/**
 	 * Задачи
 	 * @var string
 	 */
@@ -36,10 +31,15 @@ class LPMTables {
 	 */
 	const MEMBERS = 'members';	
 	/**
-	 * Теги 
+	 * Теги для объектов
 	 * @var string
 	 */
 	const TAGS = 'tags';
+	/**
+	 * Список существующих тегов
+	 * @var string
+	 */
+	const TAGS_LIST = 'tags_list';
 	/**
 	 * Список работников для учёта времени
 	 * @var string

@@ -30,6 +30,18 @@ if ('undefined' == typeof RegExp.createFromStr) {
         return new RegExp( RegExp.escapeStr( str ), keys );
     };
 };
+if ('undefined' == typeof Element.prototype.show) {
+   Element.prototype.show = function() {
+       this.style.display = '';
+   };
+};
+
+if ('undefined' == typeof Element.prototype.hide) {
+    Element.prototype.hide = function() {
+       this.style.display = 'none';
+       return this;
+    };
+}; 
 
 /**
  * Сервис для запросов на сервер
