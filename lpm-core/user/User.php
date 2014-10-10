@@ -35,12 +35,14 @@ class User extends LPMBaseObject
 
 	public static function passwordHash($value)
 	{
-		return password_hash($value);
+		//return password_hash($value);
+        return crypt($value);
 	}
 
 	public static function passwordVerify($value, $hash)
 	{
-		return password_verify($value, $hash);
+		//return password_verify($value, $hash);
+        return crypt($value, $hash) == $hash;
 	}
 	
 	const ROLE_USER      = 0;
