@@ -32,6 +32,16 @@ class User extends LPMBaseObject
 		
 		return $curRole <= $reqRole;
 	}
+
+	public static function passwordHash($value)
+	{
+		return password_hash($value);
+	}
+
+	public static function passwordVerify($value, $hash)
+	{
+		return password_verify($value, $hash);
+	}
 	
 	const ROLE_USER      = 0;
 	const ROLE_ADMIN     = 1;
