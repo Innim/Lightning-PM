@@ -79,6 +79,15 @@ CREATE TABLE `lpm_options` (
   PRIMARY KEY (`option`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='таблица настроек';
 
+INSERT INTO `lpm_options` (`option`, `value`) VALUES
+('cookieExpire',	'30'),
+('currentTheme',	'default'),
+('title',	'FlaPS Group'),
+('subtitle',	'Менеджер проектов'),
+('logo',	'imgs/lightning-logo.png'),
+('fromEmail',	'donotreply@flaps.ru'),
+('fromName',	'FlaPS LLC PM'),
+('emailSubscript',	'Это письмо отправлено автоматически, не отвечайте на него. \r\nВы можете отключить отправку уведомлений в настройках профиля');
 
 DROP TABLE IF EXISTS `lpm_projects`;
 CREATE TABLE `lpm_projects` (
@@ -129,6 +138,8 @@ CREATE TABLE `lpm_users` (
   UNIQUE KEY `email` (`email`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+INSERT INTO `lpm_users` (`userId`, `email`, `pass`, `cookieHash`, `firstName`, `lastName`, `nick`, `lastVisit`, `regDate`, `role`, `secret`) VALUES
+(14,	'test@test.com',	'$1$V7A9iC1B$3JkJzDQLyGIAdSWCjGwm8/',	'937f8fc04ad180df25d9feabbc741b05',	'Test',	'Test',	'test',	'2014-10-10 11:35:10',	'2014-10-10 11:35:00',	0,	0);
 
 DROP TABLE IF EXISTS `lpm_users_pref`;
 CREATE TABLE `lpm_users_pref` (
@@ -140,6 +151,8 @@ CREATE TABLE `lpm_users_pref` (
   PRIMARY KEY (`userId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='настройки пользователя';
 
+INSERT INTO `lpm_users_pref` (`userId`, `seAddIssue`, `seEditIssue`, `seIssueState`, `seIssueComment`) VALUES
+(14,	1,	0,	1,	1);
 
 DROP TABLE IF EXISTS `lpm_workers`;
 CREATE TABLE `lpm_workers` (
@@ -171,4 +184,4 @@ CREATE TABLE `lpm_work_study` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
--- 2014-10-10 07:42:48
+-- 2014-10-13 07:07:37
