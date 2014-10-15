@@ -53,6 +53,7 @@ fieldset legend {
 }
 article { 
 	margin: 20px auto;
+    /*padding-left: 20px;*/
 }
 button, a.button, input[type=submit] {
     padding        : 5px 10px;
@@ -264,8 +265,9 @@ div.container h3 {
 	margin  : 0px auto;  
 }
 .container form > input {
-    margin: 10px auto;
+    margin: 20px auto;
 }
+
 .container fieldset {
     padding: 0px;
 }
@@ -284,15 +286,22 @@ div.container h3 {
     height   : auto; 
     display  : inline-block;
 }
-.container input[type="checkbox"] {
+.container input[type="checkbox"],
+.container input[type="password"] {
     width: auto;
-    display: inline-block;
-    margin: 0px;
+    display: inline-block;    
     vertical-align: top;
 }
+
 .container .save-line {
 	text-align: center;
 }
+
+#profileView form{
+    width           : 90%;
+	margin          : 10px auto 10px;
+}
+
 .validateError {
 	width           : 90%;
 	margin          : 10px auto 10px;
@@ -348,7 +357,7 @@ form > ol > li {
     list-style   : none;	
     /*margin-bottom: 5px;
     margin-right : 10px;*/
-    margin: 10px 0px;
+    margin: 10px auto;
 }
 form > ol > li label {
 	margin-left  : 5%;
@@ -477,6 +486,8 @@ article.comments ol.comments-list li .text {
 .hidden-state {
 	display: none;
 }
+
+
 
 /* статистика проекта*/
 .project-stat {
