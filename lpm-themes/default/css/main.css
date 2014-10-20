@@ -286,8 +286,7 @@ div.container h3 {
     height   : auto; 
     display  : inline-block;
 }
-.container input[type="checkbox"],
-.container input[type="password"] {
+.container input[type="checkbox"] {
     width: auto;
     display: inline-block;    
     vertical-align: top;
@@ -295,6 +294,17 @@ div.container h3 {
 
 .container .save-line {
 	text-align: center;
+}
+
+#profileView input[type="password"]
+{
+    width: auto;
+    display: inline-block;    
+    vertical-align: top;
+}
+
+#changePass label{
+    line-height: 30px;
 }
 
 #profileView form{

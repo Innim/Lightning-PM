@@ -29,9 +29,10 @@ class ProfileService extends LPMBaseService
             if (!User::passwordVerify($curentPass, $userInfo['pass'])){
                 return $this->error( 'Неверный пароль' );
                 //$engine->addError( 'Неверный пароль' );
-            } else {
+            } else {                
+                $salt = User::blowfishSalt();
                 $sql = "UPDATE `%s` SET ".
-                       "`pass` = '" . User::passwordHash($newPass) . "' " .
+                       "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
                        "WHERE `userId` = '" . $this->_auth->getUserId() . "'";
                 if (!$this->_db->queryt( $sql, LPMTables::USERS )) 
 			        return $this->error( 'Ошибка записи в БД' );
