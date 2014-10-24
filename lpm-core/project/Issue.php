@@ -59,8 +59,8 @@ class Issue extends MembersInstance
 	 * @param float $issueId
 	 * @return Issue
 	 */
-	public static function load( $issueId ) {
-		return StreamObject::singleLoad( $issueId, __CLASS__, '', "%1\$s`.`id" );
+	public static function load( $idInProject, $projectId ) {
+		return StreamObject::singleLoad( $idInProject, __CLASS__, "`%1\$s`.`projectId` = '" . $projectId . "'", "%1\$s`.`idInProject" );
 	}
 	
 	public function updateCommentsCounter( $issueId ) {
@@ -100,6 +100,7 @@ class Issue extends MembersInstance
 	public $id            =  0;
 	public $parentId      =  0;
 	public $projectId     =  0;
+    public $idInProject   =  0;
 	public $projectUID    =  '';
 	public $name          = '';
 	public $desc          = '';
@@ -136,7 +137,7 @@ class Issue extends MembersInstance
 		$this->addDateTimeFields( 'createDate', 'startDate', 'completeDate', 'completedDate' );
 		
 		$this->addClientFields( 
-			'id', 'parentId', 'name', 'desc', 'type', 'authorId', 'createDate', 
+			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
 			'completeDate', 'startDate', 'priority', 'status' ,'commentsCount'
 		);
 
@@ -150,6 +151,10 @@ class Issue extends MembersInstance
 		return true;
 	}
 	
+    public function getIdInProject(){
+        return $this->idInProject;
+    }
+    
 	public function getID() {
 		return $this->id;
 	}
@@ -176,7 +181,7 @@ class Issue extends MembersInstance
 	public function getURL4View() {
 		//return $this->baseURL;
 		$curPage = LightningEngine::getInstance()->getCurrentPage();
-		return $curPage->getBaseUrl( ProjectPage::PUID_ISSUE, $this->id );
+		return $curPage->getBaseUrl( ProjectPage::PUID_ISSUE, $this->idInProject );
 	}
 	
 	public function getPriorityStr() {

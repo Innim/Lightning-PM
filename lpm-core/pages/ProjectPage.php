@@ -61,8 +61,8 @@ class ProjectPage extends BasePage
 		if (!$this->_curSubpage) {
 			if ($this->getPUID() == self::PUID_ISSUE) 
 			{
-				$issueId = (float)$this->getAddParam();
-				if ($issueId <= 0 || !$issue = Issue::load( (float)$issueId )) 
+				$idInProject = (float)$this->getAddParam();
+				if ($idInProject <= 0 || !$issue = Issue::load( (float)$idInProject, $this->_project->id )) 
 						LightningEngine::go2URL( $this->getUrl() );				
 				
 				$issue->getMembers();	
@@ -84,6 +84,22 @@ class ProjectPage extends BasePage
 		return $this;
 	}
 	
+    private function getLastIssueId() 
+    {
+        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
+               "WHERE `projectId` = '" . $this->_project->id . "'";
+        if(!$query = $this->_db->queryt($sql, LPMTables::ISSUES)){
+            return $engine->addError( 'Ошибка доступа к базе' );
+        }
+        
+        if ($query->num_rows == 0) {
+            return 1;
+        }else{
+            $result = $query->fetch_assoc();
+            return $result[maxID] + 1;
+        }    
+    }
+    
 	private function saveIssue( $editMode = false ) {
 		$engine = $this->_engine;
 		// если это ректирование, то проверим идентификатор задача
@@ -135,9 +151,9 @@ class ProjectPage extends BasePage
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
 
 			// сохраняем задачу
-			$sql = "INSERT INTO `%s` ( `id`, `projectId`, `name`, `desc`, `type`, " .
+			$sql = "INSERT INTO `%s` (`projectId`, `idInProject`, `name`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
-			           		 "VALUES ( '" . $issueId . "', '" . $this->_project->id . "', " .
+			           		 "VALUES ( '" . $this->_project->id . "', '" . $this->getLastIssueId() . "', " .
 			           		 		  "'" . $_POST['name'] . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
 			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
