@@ -218,9 +218,15 @@ class ProjectPage extends BasePage
 					// загружаем изображения
 					$uploader = $this->saveImages4Issue( $issueId );
 
+					if ($uploader === false)
+					{
+						$engine->addError( 'Не удалось загрузить изображение' );
+						return;
+					}
+
 					// обновляем счетчики
 					if ($uploader->getLoadedCount() > 0 || $editMode) 
-						Issue::updateIssuesCount( $issueId, $updloader->getLoadedCount() );
+						Issue::updateImgsCounter( $issueId, $uploader->getLoadedCount() );
 					
 					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $issueId );
 					
