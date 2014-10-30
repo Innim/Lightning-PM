@@ -121,6 +121,9 @@ var srv = {
         s          : new BaseService( 'ProfileService' ),
         emailPref : function (addIssue, editIssue, issueState, issueComment, onResult ) {
             this.s._( 'emailPref' );
+        },
+        newPass : function (curentPass, newPass, onResult){
+            this.s._('newPass');
         }
     },
     err : function (res) {
