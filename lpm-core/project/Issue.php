@@ -59,8 +59,8 @@ class Issue extends MembersInstance
 	 * @param float $issueId
 	 * @return Issue
 	 */
-	public static function load( $idInProject, $projectId ) {
-		return StreamObject::singleLoad( $idInProject, __CLASS__, "`%1\$s`.`projectId` = '" . $projectId . "'", "%1\$s`.`idInProject" );
+	public static function load( $issueId ) {
+		return StreamObject::singleLoad( $issueId, __CLASS__, "", "%1\$s`.`id" );
 	}
 	
 	public function updateCommentsCounter( $issueId ) {

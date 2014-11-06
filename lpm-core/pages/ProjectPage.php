@@ -61,8 +61,8 @@ class ProjectPage extends BasePage
 		if (!$this->_curSubpage) {
 			if ($this->getPUID() == self::PUID_ISSUE) 
 			{
-				$idInProject = (float)$this->getAddParam();
-				if ($idInProject <= 0 || !$issue = Issue::load( (float)$idInProject, $this->_project->id )) 
+				$issueId = $this->getCurentIssueId((float)$this->getAddParam());
+				if ($issueId <= 0 || !$issue = Issue::load( (float)$issueId) )
 						LightningEngine::go2URL( $this->getUrl() );				
 				
 				$issue->getMembers();	
@@ -84,6 +84,27 @@ class ProjectPage extends BasePage
 		return $this;
 	}
 	
+    /**
+     * Глобальный номер задания
+     * @param mixed $idInProject 
+     * @return $issueId
+     */
+    private function getCurentIssueId($idInProject)
+    {
+        $sql = "SELECT `id` FROM `%s` WHERE `idInProject` = '" . $idInProject . "' " .
+										   "AND `projectId` = '" . $this->_project->id . "'";
+        if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
+            return $engine->addError( 'Ошибка доступа к базе' );
+        }else{
+            $result = $query->fetch_assoc();
+            return $result['id'];
+        }        
+    }
+    
+    /**
+     * Номер последнего задания в проекте
+     * @return idInProject
+     */
     private function getLastIssueId() 
     {
         $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
