@@ -553,6 +553,18 @@ table.users-list.no-avatar tbody td:first-child {
 	width: auto;
 }
 
+table tr.locked-user {
+	background-color: #cccccc;
+	color           : #999999;
+}
+
+table.users-list tr.locked-user td button#locked-btn {
+	display: none;
+}
+table.users-list tr.active-user td button#unlocked-btn {
+    display: none;
+}
+
 /* форма авторизации и регистрации */
 #authForm,
 #registrationForm {

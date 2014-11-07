@@ -64,7 +64,7 @@ class User extends LPMBaseObject
 	const ROLE_USER      = 0;
 	const ROLE_ADMIN     = 1;
 	const ROLE_MODERATOR = 2;
-	
+	    
 	public $userId;
 	public $email     = '';
 	public $nick      = '';
@@ -75,6 +75,7 @@ class User extends LPMBaseObject
 	public $role      = 0;
 	public $secret    = false;
 	public $avatarUrl = '';
+    public $locked = false;
 	
 	public $pref;
 	
@@ -85,7 +86,7 @@ class User extends LPMBaseObject
 		$this->pref = new UserPref();
 		
 		$this->_typeConverter->addIntVars( 'userId' );
-		$this->_typeConverter->addBoolVars( 'secret' );
+		$this->_typeConverter->addBoolVars( 'secret', 'locked');
 		$this->addDateTimeFields( 'lastVisit', 'regDate' );	
 		
 		$this->addClientFields( 'userId', 'firstName', 'lastName', 'nick', 'avatarUrl' );
@@ -137,6 +138,10 @@ class User extends LPMBaseObject
 		return $this->isAdmin() || $this->role == self::ROLE_MODERATOR;
 	}
 	
+    public function isLocked() {
+        return $this->locked == true;        
+    }
+    
 	public function checkRole( $reqRole ) {
 		return self::checkCurRole( $this->role, $reqRole );
 	}

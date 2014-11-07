@@ -80,7 +80,7 @@ class AuthPage extends BasePage
 					// авторизация
 					$pass  = $_POST['apass'];
 					$email = $this->_db->escape_string( $_POST['aemail'] );
-					$sql = "select `userId`, `pass` from `%s` where `email` = '" . $email . "'";
+					$sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::USERS )) {
 						$engine->addError( 'Ошибка чтения из базы' );
 					} elseif ($userInfo = $query->fetch_assoc()) {
@@ -88,13 +88,14 @@ class AuthPage extends BasePage
 						{
 							$engine->addError( 'Неверный пароль' );
 						}
-						else 
-						{
-							$cookieHash = $this->createCookieHash();
+						elseif ($userInfo['locked']) {
+                            $engine->addError( 'Пользователь заблокирован' );
+                        } else {
+                            $cookieHash = $this->createCookieHash();
 							$sql = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "', `cookieHash` = '" . $cookieHash . "' where `userId` = '" . $userInfo['userId'] . "'";
 							if (!$this->_db->queryt( $sql, LPMTables::USERS )) $engine->addError( 'Ошибка записи в базу' );
-							else $this->auth( $userInfo['userId'], $email, $cookieHash );
-						}
+							else $this->auth( $userInfo['userId'], $email, $cookieHash );                        
+                        }  
 					} else {
 						$engine->addError( 'Пользователь с таким email не зарегистрирован' );
 					}

@@ -126,6 +126,13 @@ var srv = {
             this.s._('newPass');
         }
     },
+    users :{
+        s   : new BaseService ('UsersService'),
+        lockUser : function (userId, isLock){
+            this.s._('lockUser');
+        },
+    },
+
     err : function (res) {
         alert( ( typeof res.error != 'undefined' ) ? res.error : 'Ошибка при запросе к серверу' );
     }
