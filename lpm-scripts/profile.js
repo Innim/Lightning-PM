@@ -53,7 +53,7 @@ profilePage.validatePass = function () {
         errors.push('Пароли не совпадают');
     }
 
-    if ((/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\s).*$/i).test($('input[name=newPass]', "#changePass").val())) {
+    if (!(/^([a-z0-9!"№;%:?*()_\+=\-~\/\\<{}\[\]]){1,24}$/i).test($('input[name=newPass]', "#changePass").val())) {
         errors.push('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
     }
 
@@ -69,7 +69,6 @@ profilePage.validatePass = function () {
 }
 
 profilePage.saveNewPass = function () {
-    console.log('saveNew');
     if (!profilePage.validatePass()) {
         return false;
     }
