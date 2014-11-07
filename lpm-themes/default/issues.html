@@ -13,7 +13,7 @@
 	<tbody>
 		<? foreach (lpm_get_issues_list() as $issue) {?>
 		<tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">
-			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getID();?></a></td>
+			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a></td>
 			<td>
 			 <nobr>
 			     <span class="priority-val circle" title="Приоритет: <?=$issue->getPriorityStr();?>">
