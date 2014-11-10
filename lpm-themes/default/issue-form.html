@@ -28,7 +28,21 @@
         <li>
 	        <label for="priopiry">Приоритет задачи</label>
 	        <input type="range" id="priority" name="priority" min="0" max="99" value="49" step="1" onchange="issuePage.setPriorityVal( this.value );"/>
-	        <span id="priorityVal" class="priority-val"></span>
+            <div id="dropdown">
+                <span id="priorityVal" class="priority-val"></span>
+                <ul id="priority-values">
+                    <li style="background-color: rgba(0, 255, 215, 0.8);">
+                        <a href="#">низкий (30%)</a>
+                    </li>
+                    <li style="background-color: rgba(0, 255, 11, 0.8);">
+                        <a href="#">нормальный (50%)</a>
+                    </li>
+                    <li style="background-color: rgba(255, 215, 0, 0.8);">
+                        <a href="#">высокий (80%)</a>
+                    </li>
+                </ul>
+            </div>
+	        
         </li>
         <li>
             <input placeholder="Дата окончания*" type="text" class="date" name="completeDate" required="required" maxlength="255" value="<?=isset($_POST['completeDate'])?$_POST['completeDate']:lpm_get_default_date();?>"/>

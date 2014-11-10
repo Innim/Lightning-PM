@@ -381,6 +381,59 @@ form > ol > li p {
 	color: #000000;
 	border-radius: 5px;	
 }
+
+#dropdown{
+    display:inline-block;
+    position:relative;
+    cursor:default;
+    width: 140px;
+    padding: 3px;    
+}
+
+#dropdown:hover #priority-values {
+   max-height: 60px;
+  /*display: block;*/
+}
+
+#dropdown:hover #priorityVal{
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+#priority-values li a{
+    cursor:pointer;
+    text-decoration:none;
+}
+
+#priority-values li{
+    line-height: 20px;
+}
+
+#priority-values{  
+    padding: 0;
+    margin-top: -1px;
+    list-style-type: none;
+    text-align:center;
+    width: 100%;
+    position:absolute;
+    overflow: hidden;
+    max-height:0;
+    transition: max-height 0.2s ease-in;  
+    display: block;    
+}
+
+#priority-values li:nth-last-child(1) {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+#priorityVal{
+    text-align: center;
+    display:block;
+    width: 100%;
+    z-index: 1;
+}
+
 .priority-val.circle {
 	display: inline-block;
 	width: 5px;
