@@ -7,3 +7,6 @@ phpmyadmin/
 Lightning-PM.phpproj
 Lightning-PM.sln
 info.php
+/nbproject/private/
+nbproject/project.properties
+nbproject/project.xml

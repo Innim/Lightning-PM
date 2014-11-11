@@ -8,7 +8,7 @@ class UsersService extends LPMBaseService
         
         $locked = $isLock ? 1 : 0;
         $userId = (int)$userId;
-        if (!$this->checkRole( User::ROLE_MODERATOR )) return $this->error( 'Недостаточно прав' );
+        if (!$this->checkRole( User::ROLE_MODERATOR )) return $this->error( 'РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїСЂР°РІ' );
         
         if ($userId > 0) {
             $sql = "UPDATE `%s` SET " .

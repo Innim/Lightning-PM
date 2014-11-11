@@ -42,7 +42,7 @@ class PageConstructor
 	}
 	
 	public static function getUsersChooseList() {
-		return User::loadList( '' );
+		return User::loadList( ' `locked` <> 1 ' );
 	}
 	
 	public static function getDateLinks() {
