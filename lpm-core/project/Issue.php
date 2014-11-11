@@ -74,7 +74,7 @@ class Issue extends MembersInstance
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS );
 	} 
 	
-	public function updateImgsCounter( $issueId, $count ) {
+	public static function updateImgsCounter( $issueId, $count ) {
 		$sql = "INSERT INTO `%1\$s` (`issueId`, `imgsCount`) " .
 									"VALUES ('" . $issueId . "', '" . $count . "') " .
 					   "ON DUPLICATE KEY UPDATE `imgsCount` = " . 

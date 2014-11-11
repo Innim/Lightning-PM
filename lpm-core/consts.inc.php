@@ -94,5 +94,5 @@ define( 'COPY_YEAR', 11 );
  * Версия приложения
  * @var string
  */
-define( 'VERSION', '0.1a.031' );
+define( 'VERSION', '0.3a.001' );
 ?>

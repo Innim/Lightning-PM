@@ -28,9 +28,11 @@ read_loop: LOOP
   END LOOP;
 
   CLOSE cur;
-END
+END//
 
 CALL idInProject();
+
+DROP PROCEDURE IF EXISTS idInProject;
 
 #### Вставка поля блокировки для пользователей
 ALTER TABLE `lpm_users` ADD `locked` TINYINT(1) NOT NULL DEFAULT '0' AFTER `role`;

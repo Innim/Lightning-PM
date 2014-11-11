@@ -61,8 +61,8 @@ class ProjectPage extends BasePage
 		if (!$this->_curSubpage) {
 			if ($this->getPUID() == self::PUID_ISSUE) 
 			{
-				$issueId = (float)$this->getAddParam();
-				if ($issueId <= 0 || !$issue = Issue::load( (float)$issueId )) 
+				$issueId = $this->getCurentIssueId((float)$this->getAddParam());
+				if ($issueId <= 0 || !$issue = Issue::load( (float)$issueId) )
 						LightningEngine::go2URL( $this->getUrl() );				
 				
 				$issue->getMembers();	
@@ -84,6 +84,43 @@ class ProjectPage extends BasePage
 		return $this;
 	}
 	
+    /**
+     * Глобальный номер задания
+     * @param mixed $idInProject 
+     * @return $issueId
+     */
+    private function getCurentIssueId($idInProject)
+    {
+        $sql = "SELECT `id` FROM `%s` WHERE `idInProject` = '" . $idInProject . "' " .
+										   "AND `projectId` = '" . $this->_project->id . "'";
+        if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
+            return $engine->addError( 'Ошибка доступа к базе' );
+        }else{
+            $result = $query->fetch_assoc();
+            return $result['id'];
+        }        
+    }
+    
+    /**
+     * Номер последнего задания в проекте
+     * @return idInProject
+     */
+    private function getLastIssueId() 
+    {
+        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
+               "WHERE `projectId` = '" . $this->_project->id . "'";
+        if(!$query = $this->_db->queryt($sql, LPMTables::ISSUES)){
+            return $engine->addError( 'Ошибка доступа к базе' );
+        }
+        
+        if ($query->num_rows == 0) {
+            return 1;
+        }else{
+            $result = $query->fetch_assoc();
+            return $result['maxID'] + 1;
+        }    
+    }
+    
 	private function saveIssue( $editMode = false ) {
 		$engine = $this->_engine;
 		// если это ректирование, то проверим идентификатор задача
@@ -92,7 +129,7 @@ class ProjectPage extends BasePage
 			$issueId = (float)$_POST['issueId'];
 			
 			// проверяем что такая задача есть и она принадлежит текущему проекту
-			$sql = "SELECT `id` FROM `%s` WHERE `id` = '" . $issueId . "' " .
+			$sql = "SELECT `id`, `idInProject` FROM `%s` WHERE `id` = '" . $issueId . "' " .
 										   "AND `projectId` = '" . $this->_project->id . "'";
 			if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				return $engine->addError( 'Ошибка записи в базу' );
@@ -100,10 +137,14 @@ class ProjectPage extends BasePage
 			
 			if ($query->num_rows == 0) 
 				return $engine->addError( 'Нет такой задачи для текущего проекта' );
-			
+            $result = $query->fetch_assoc(); 
+			$idInProject = $result['idInProject'];
 			// TODO проверка прав
 			
-		} else $issueId = 'NULL';
+		} else {
+            $issueId = 'NULL';
+            $idInProject = (int)$this->getLastIssueId();
+        }
 		
 		if (empty( $_POST['name'] ) || !isset( $_POST['members'] )
 		|| !isset( $_POST['type'] ) || empty( $_POST['completeDate'] )
@@ -133,11 +174,11 @@ class ProjectPage extends BasePage
 							$completeDateArr[1] . ' ' .
 							'00:00:00';
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
-
+            
 			// сохраняем задачу
-			$sql = "INSERT INTO `%s` ( `id`, `projectId`, `name`, `desc`, `type`, " .
+			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
-			           		 "VALUES ( '" . $issueId . "', '" . $this->_project->id . "', " .
+			           		 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
 			           		 		  "'" . $_POST['name'] . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
 			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
@@ -218,9 +259,15 @@ class ProjectPage extends BasePage
 					// загружаем изображения
 					$uploader = $this->saveImages4Issue( $issueId );
 
+					if ($uploader === false)
+					{
+						$engine->addError( 'Не удалось загрузить изображение' );
+						return;
+					}
+
 					// обновляем счетчики
 					if ($uploader->getLoadedCount() > 0 || $editMode) 
-						Issue::updateIssuesCount( $issueId, $updloader->getLoadedCount() );
+						Issue::updateImgsCounter( $issueId, $uploader->getLoadedCount() );
 					
 					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $issueId );
 					
