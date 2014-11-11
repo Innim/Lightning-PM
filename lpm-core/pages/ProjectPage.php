@@ -192,7 +192,7 @@ class ProjectPage extends BasePage
 									"`priority` = VALUES( `priority` )";			
 			$members = array();
 			if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) {
-				$engine->addError( $this->_db->error );
+				$engine->addError( 'Ошибка записи в базу' );
 			} else {
 				if (!$editMode) $issueId = $this->_db->insert_id;
 				else {
