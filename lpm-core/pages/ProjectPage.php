@@ -117,7 +117,7 @@ class ProjectPage extends BasePage
             return 1;
         }else{
             $result = $query->fetch_assoc();
-            return $result[maxID] + 1;
+            return $result['maxID'] + 1;
         }    
     }
     
@@ -129,7 +129,7 @@ class ProjectPage extends BasePage
 			$issueId = (float)$_POST['issueId'];
 			
 			// проверяем что такая задача есть и она принадлежит текущему проекту
-			$sql = "SELECT `id` FROM `%s` WHERE `id` = '" . $issueId . "' " .
+			$sql = "SELECT `id`, `idInProject` FROM `%s` WHERE `id` = '" . $issueId . "' " .
 										   "AND `projectId` = '" . $this->_project->id . "'";
 			if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				return $engine->addError( 'Ошибка записи в базу' );
@@ -137,10 +137,14 @@ class ProjectPage extends BasePage
 			
 			if ($query->num_rows == 0) 
 				return $engine->addError( 'Нет такой задачи для текущего проекта' );
-			
+            $result = $query->fetch_assoc(); 
+			$idInProject = $result['idInProject'];
 			// TODO проверка прав
 			
-		} else $issueId = 'NULL';
+		} else {
+            $issueId = 'NULL';
+            $idInProject = (int)$this->getLastIssueId();
+        }
 		
 		if (empty( $_POST['name'] ) || !isset( $_POST['members'] )
 		|| !isset( $_POST['type'] ) || empty( $_POST['completeDate'] )
@@ -170,11 +174,11 @@ class ProjectPage extends BasePage
 							$completeDateArr[1] . ' ' .
 							'00:00:00';
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
-
+            
 			// сохраняем задачу
-			$sql = "INSERT INTO `%s` (`projectId`, `idInProject`, `name`, `desc`, `type`, " .
+			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
-			           		 "VALUES ( '" . $this->_project->id . "', '" . $this->getLastIssueId() . "', " .
+			           		 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
 			           		 		  "'" . $_POST['name'] . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
 			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
@@ -188,7 +192,7 @@ class ProjectPage extends BasePage
 									"`priority` = VALUES( `priority` )";			
 			$members = array();
 			if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) {
-				$engine->addError( 'Ошибка записи в базу' );
+				$engine->addError( $this->_db->error );
 			} else {
 				if (!$editMode) $issueId = $this->_db->insert_id;
 				else {
