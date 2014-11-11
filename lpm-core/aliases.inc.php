@@ -282,6 +282,12 @@ function lpm_get_user() {
 function lpm_can_create_project() {
 	return PageConstructor::canCreateProject();
 }
+/** 
+ * Определяет, является ли пользователь модератором
+ */
+function lpm_is_moderator() {
+	return PageConstructor::isModerator();
+}
 /**
  * Определяет, авторизован ли в данный момент пользователь
  */

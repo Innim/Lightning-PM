@@ -103,6 +103,11 @@ class PageConstructor
 		if (!$user = LightningEngine::getInstance()->getUser()) return false;
 		return $user->canCreateProject(); 
 	} 
+    
+    public static function isModerator() {
+        if (!$user = LightningEngine::getInstance()->getUser()) return false;
+		return $user->isModerator(); 
+    }
 	
 	public static function isAuth() {
 		return LightningEngine::getInstance()->isAuth();
