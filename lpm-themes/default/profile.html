@@ -6,8 +6,8 @@
     <ul class="panel-submenu">
         <li><a href="#" onclick="return profilePage.showInfo();">Информация</a></li><!-- 
         <li><a href="#" onclick="return false;">Изменить</a></li> -->
-        <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li><!-- 
-        <li><a href="#" onclick="return false;">Сменить пароль</a></li> -->
+        <li><a href="#" onclick="return profilePage.changePass();">Сменить пароль</a></li>
+        <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li>
     </ul>
     <ol id="profileInfo" class="info-list">
         <li>
@@ -27,6 +27,32 @@
             <span class="value"><?=$user->getRegDate();?></span>
         </li>
     </ol>
+    
+    <article id="changePass" class="hidden-state">
+        <div class="validateError"></div>
+        
+        <form method="post" action="" onsubmit="profilePage.saveNewPass(); return false;">  
+            <div class="info-message"></div>          
+            <ol class="form-fields">
+                <li>
+                    <input id="curentPass" placeholder="Текущий пароль" type="password" name="curentPass" maxlength="24" required/>
+                    <label for="curentPass">Текущий пароль</label>
+                </li>
+                <li>
+                    <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24" required/>
+                    <label for="newPass">Новый пароль</label>
+                </li>
+                <li>
+                    <input id="repeatPass" placeholder="Подтвержение пароля" type="password" name="repeatPass" maxlength="24" required/>
+                    <label for="repeatPass">Подтвержение пароля</label>
+                </li>
+            </ol>
+            <p class="save-line">
+                <button type="submit">Сохранить</button>
+            </p>
+        </form>
+    </article>     
+
     <article id="userSettings" class="hidden-state">
         <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
             <h4>Настройки оповещений по email</h4>

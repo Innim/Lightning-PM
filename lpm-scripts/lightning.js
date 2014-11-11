@@ -121,8 +121,18 @@ var srv = {
         s          : new BaseService( 'ProfileService' ),
         emailPref : function (addIssue, editIssue, issueState, issueComment, onResult ) {
             this.s._( 'emailPref' );
+        },
+        newPass : function (curentPass, newPass, onResult){
+            this.s._('newPass');
         }
     },
+    users :{
+        s   : new BaseService ('UsersService'),
+        lockUser : function (userId, isLock){
+            this.s._('lockUser');
+        },
+    },
+
     err : function (res) {
         alert( ( typeof res.error != 'undefined' ) ? res.error : 'Ошибка при запросе к серверу' );
     }

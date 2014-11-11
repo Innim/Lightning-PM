@@ -32,11 +32,39 @@ class User extends LPMBaseObject
 		
 		return $curRole <= $reqRole;
 	}
+
+   public static function blowfishSalt($cost = 13)
+    {
+        if (!is_numeric($cost) || $cost < 4 || $cost > 31) {
+            throw new Exception("cost parameter must be between 4 and 31");
+        }
+        $rand = array();
+        for ($i = 0; $i < 8; $i += 1) {
+            $rand[] = pack('S', mt_rand(0, 0xffff));
+        }
+        $rand[] = substr(microtime(), 2, 6);
+        $rand = sha1(implode('', $rand), true);
+        $salt = '$2a$' . sprintf('%02d', $cost) . '$';
+        $salt .= strtr(substr(base64_encode($rand), 0, 22), array('+' => '.'));
+        return $salt;
+    }
+    
+	public static function passwordHash($value, $salt)
+	{
+		//return password_hash($value); 
+        return crypt($value, $salt);
+	}
+
+	public static function passwordVerify($value, $hash)
+	{
+		//return password_verify($value, $hash);
+        return crypt($value, $hash) == $hash;
+	}
 	
 	const ROLE_USER      = 0;
 	const ROLE_ADMIN     = 1;
 	const ROLE_MODERATOR = 2;
-	
+	    
 	public $userId;
 	public $email     = '';
 	public $nick      = '';
@@ -47,6 +75,7 @@ class User extends LPMBaseObject
 	public $role      = 0;
 	public $secret    = false;
 	public $avatarUrl = '';
+    public $locked = false;
 	
 	public $pref;
 	
@@ -57,7 +86,7 @@ class User extends LPMBaseObject
 		$this->pref = new UserPref();
 		
 		$this->_typeConverter->addIntVars( 'userId' );
-		$this->_typeConverter->addBoolVars( 'secret' );
+		$this->_typeConverter->addBoolVars( 'secret', 'locked');
 		$this->addDateTimeFields( 'lastVisit', 'regDate' );	
 		
 		$this->addClientFields( 'userId', 'firstName', 'lastName', 'nick', 'avatarUrl' );
@@ -109,6 +138,10 @@ class User extends LPMBaseObject
 		return $this->isAdmin() || $this->role == self::ROLE_MODERATOR;
 	}
 	
+    public function isLocked() {
+        return $this->locked == true;        
+    }
+    
 	public function checkRole( $reqRole ) {
 		return self::checkCurRole( $this->role, $reqRole );
 	}

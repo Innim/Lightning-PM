@@ -53,6 +53,7 @@ fieldset legend {
 }
 article { 
 	margin: 20px auto;
+    /*padding-left: 20px;*/
 }
 button, a.button, input[type=submit] {
     padding        : 5px 10px;
@@ -264,8 +265,9 @@ div.container h3 {
 	margin  : 0px auto;  
 }
 .container form > input {
-    margin: 10px auto;
+    margin: 20px auto;
 }
+
 .container fieldset {
     padding: 0px;
 }
@@ -286,13 +288,30 @@ div.container h3 {
 }
 .container input[type="checkbox"] {
     width: auto;
-    display: inline-block;
-    margin: 0px;
+    display: inline-block;    
     vertical-align: top;
 }
+
 .container .save-line {
 	text-align: center;
 }
+
+#profileView input[type="password"]
+{
+    width: auto;
+    display: inline-block;    
+    vertical-align: top;
+}
+
+#changePass label{
+    line-height: 30px;
+}
+
+#profileView form{
+    width           : 90%;
+	margin          : 10px auto 10px;
+}
+
 .validateError {
 	width           : 90%;
 	margin          : 10px auto 10px;
@@ -348,7 +367,7 @@ form > ol > li {
     list-style   : none;	
     /*margin-bottom: 5px;
     margin-right : 10px;*/
-    margin: 10px 0px;
+    margin: 10px auto;
 }
 form > ol > li label {
 	margin-left  : 5%;
@@ -362,6 +381,59 @@ form > ol > li p {
 	color: #000000;
 	border-radius: 5px;	
 }
+
+#dropdown{
+    display:inline-block;
+    position:relative;
+    cursor:default;
+    width: 140px;
+    padding: 3px;    
+}
+
+#dropdown:hover #priority-values {
+   max-height: 60px;
+  /*display: block;*/
+}
+
+#dropdown:hover #priorityVal{
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+#priority-values li a{
+    cursor:pointer;
+    text-decoration:none;
+}
+
+#priority-values li{
+    line-height: 20px;
+}
+
+#priority-values{  
+    padding: 0;
+    margin-top: -1px;
+    list-style-type: none;
+    text-align:center;
+    width: 100%;
+    position:absolute;
+    overflow: hidden;
+    max-height:0;
+    transition: max-height 0.2s ease-in;  
+    display: block;    
+}
+
+#priority-values li:nth-last-child(1) {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+#priorityVal{
+    text-align: center;
+    display:block;
+    width: 100%;
+    z-index: 1;
+}
+
 .priority-val.circle {
 	display: inline-block;
 	width: 5px;
@@ -478,6 +550,8 @@ article.comments ol.comments-list li .text {
 	display: none;
 }
 
+
+
 /* статистика проекта*/
 .project-stat {
 	margin: 0px;
@@ -530,6 +604,18 @@ table.users-list tbody td:first-child {
 table.users-list.no-avatar thead th:first-child,
 table.users-list.no-avatar tbody td:first-child {
 	width: auto;
+}
+
+table tr.locked-user {
+	background-color: #cccccc;
+	color           : #999999;
+}
+
+table.users-list tr.locked-user td button#locked-btn {
+	display: none;
+}
+table.users-list tr.active-user td button#unlocked-btn {
+    display: none;
 }
 
 /* форма авторизации и регистрации */

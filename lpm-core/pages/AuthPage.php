@@ -32,7 +32,7 @@ class AuthPage extends BasePage
 				} elseif (!Validation::checkPass( $_POST['pass'], 24, 1, true )) {
 					$engine->addError( 'Введён недопустимый пароль - используйте латинские буквы, цифры или знаки' );
 				} else {
-					$pass = md5( $_POST['pass'] );
+					$pass = User::passwordHash($_POST['pass']);
 					unset( $_POST['pass'], $_POST['repass'] );
 					
 					$_POST['firstName'] = mb_substr( $_POST['firstName'], 0, 128 );
@@ -78,18 +78,26 @@ class AuthPage extends BasePage
 					$engine->addError( 'Веедите email и пароль для входа' );
 				} else {
 					// авторизация
-					$pass  = md5( $_POST['apass'] );
+					$pass  = $_POST['apass'];
 					$email = $this->_db->escape_string( $_POST['aemail'] );
-					$sql = "select `userId` from `%s` where `email` = '" . $email . "' and `pass` = '" . $pass . "'";
+					$sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::USERS )) {
 						$engine->addError( 'Ошибка чтения из базы' );
 					} elseif ($userInfo = $query->fetch_assoc()) {
-						$cookieHash = $this->createCookieHash();
-						$sql = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "', `cookieHash` = '" . $cookieHash . "' where `userId` = '" . $userInfo['userId'] . "'";
-						if (!$this->_db->queryt( $sql, LPMTables::USERS )) $engine->addError( 'Ошибка записи в базу' );
-						else $this->auth( $userInfo['userId'], $email, $cookieHash );
+						if (!User::passwordVerify($pass, $userInfo['pass']))
+						{
+							$engine->addError( 'Неверный пароль' );
+						}
+						elseif ($userInfo['locked']) {
+                            $engine->addError( 'Пользователь заблокирован' );
+                        } else {
+                            $cookieHash = $this->createCookieHash();
+							$sql = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "', `cookieHash` = '" . $cookieHash . "' where `userId` = '" . $userInfo['userId'] . "'";
+							if (!$this->_db->queryt( $sql, LPMTables::USERS )) $engine->addError( 'Ошибка записи в базу' );
+							else $this->auth( $userInfo['userId'], $email, $cookieHash );                        
+                        }  
 					} else {
-						$engine->addError( 'Неверный email или пароль' );
+						$engine->addError( 'Пользователь с таким email не зарегистрирован' );
 					}
 				}
 			}

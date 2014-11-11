@@ -3,9 +3,28 @@ $(document).ready(
     {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
+        var dd = new DropDown($('#dropdown'));
     }
 );
 
+function DropDown(el) {
+    this.dd = el;
+    //this.placeholder = this.dd.children('span');
+    this.opts = this.dd.find('ul#priority-values > li');
+    this.val = '';
+    this.initEvents();
+}
+DropDown.prototype = {
+    initEvents: function () {
+        var obj = this;
+
+        obj.opts.click(function () {
+            var opt = $(this);
+            obj.val = opt.text();            
+            issuePage.setPriorityVal(obj.val.match(/\d+/) - 1);
+        });
+    }
+}
 
 var issuePage = {};
 issuePage.addIssueMember = function() {
@@ -94,7 +113,7 @@ issuePage.updatePriorityVals = function () {
 
 issuePage.setPriorityVal = function (value) {
     var valStr = Issue.getPriorityStr( value );
-    
+    $('#priority').val(value);
     value++;
     $( '#priorityVal' ).html( valStr + ' (' + value + '%)' );
     $( '#priorityVal' ).css( 'backgroundColor', issuePage.getPriorityColor( value - 1 ) );
