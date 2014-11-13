@@ -64,7 +64,7 @@ function ucDone() {
         for (var i = 0; i < checkboxes.length; i++) {            
             if (checkboxes.eq( i ).attr( 'checked' )) userIds.push( checkboxes.eq( i ).val() );
         }
-        
+        if (userIds.length > 0)
         ucOpen.onComplete( userIds );
     }
     $( "#usersChooser" ).dialog( 'close' );
