@@ -11,7 +11,7 @@ class User extends LPMBaseObject
 		if ($where != '') $where = ' AND (' . $where . ')'; 
 		return StreamObject::loadListDefault( 
 					self::getDB(),
-					'`%1$s`.`userId` = `%2$s`.`userId`' . $where, 
+					'`%1$s`.`userId` = `%2$s`.`userId`' . $where . ' ORDER BY `locked`', 
 					array( LPMTables::USERS, LPMTables::USERS_PREF ),
 					__CLASS__ 
 		);

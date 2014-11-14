@@ -7,3 +7,5 @@ phpmyadmin/
 Lightning-PM.phpproj
 Lightning-PM.sln
 info.php
+nbproject/
+.gitignore.orig

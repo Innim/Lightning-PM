@@ -400,9 +400,10 @@ form > ol > li p {
     border-bottom-right-radius: 0px;
 }
 
-#priority-values li a{
+#priority-values li span{
     cursor:pointer;
-    text-decoration:none;
+    color: #000000;
+    /*text-decoration:none;*/
 }
 
 #priority-values li{
