@@ -132,8 +132,8 @@ class PageConstructor
 		'libs/jquery.validate.min',
 		'libs/F2PInvoker', 
 		'libs/iLoad',
-		'lightning',
-		'js-options.php$' 
+		'js-options.php$' ,
+		'lightning'
 	);
 	
 	public  $_title    = '';

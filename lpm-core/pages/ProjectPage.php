@@ -70,6 +70,7 @@ class ProjectPage extends BasePage
 				
 				Comment::setCurrentInstance( Issue::ITYPE_ISSUE, $issue->id );
 
+				$this->_title  =$issue->name .' - '. $this->_project->name ;
 				$this->_pattern = 'issue';
 				ArrayUtils::remove( $this->_js,	'project' );
 				array_push( $this->_js,	'issue' );
