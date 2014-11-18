@@ -79,6 +79,10 @@ class Comment extends LPMBaseObject
 	
 		$this->author = new User();
 	}
+
+	public function getText() {
+		return $this->text;
+	}
 	
 	public function getAuthorLinkedName() {
 		return $this->author->getLinkedName();
@@ -102,10 +106,14 @@ class Comment extends LPMBaseObject
 				$value = htmlspecialchars( $value );
 				$value = preg_replace( 
 					array( 
+						"/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is",
+						"/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is",
 						"/((?:\n\r)|(?:\r\n)|\n|\r){1}/",
-						"/\[(b|i|u)\](.*?)\[\/\\1\]/" 
+						"/\[(b|i|u)\](.*?)\[\/\\1\]/",
 					), 
-				    array( 
+				    array(  
+				    	"$1$2<a href=\"http://$3\" >$3</a>",
+				    	"$1$2<a href=\"$3\" >$3</a>",
 				    	"<br />",
 				    	"<$1>$2</$1>" 
 				    ),
@@ -122,4 +130,5 @@ class Comment extends LPMBaseObject
 		return parent::setVar( $var, $value );
 	}
 }
+
 ?>
