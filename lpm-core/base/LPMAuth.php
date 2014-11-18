@@ -53,6 +53,13 @@ class LPMAuth {
 		}
 		
 		$this->updateSession();
+
+
+		$sql = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "' where `userId` = '" . $userId . "'";
+		 
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		$db->queryt( $sql, LPMTables::USERS );
+
 	}	
 	
 	public function destroy() {

@@ -209,9 +209,19 @@ class Issue extends MembersInstance
 	}
 	
 	public function getDesc() {
-		return nl2br( $this->desc );
+		$text = nl2br( $this->desc);
+		$text = $this->link_it($text);
+		return $text;
+
+	}
+
+	private function link_it($text){
+    	$text = preg_replace("/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is", "$1$2<a href=\"http://$3\" >$3</a>", $text);
+    	$text = preg_replace("/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is", "$1$2<a href=\"$3\" >$3</a>", $text);
+    	return($text);
 	}
 	
+
 	public function isCompleted() {
 		return $this->status == self::STATUS_COMPLETED;
 	} 
@@ -265,10 +275,12 @@ class Issue extends MembersInstance
 		}
 	}
 	
+
 	public function loadStream( $hash ) {
 		return parent::loadStream( $hash ) && $this->author->loadStream( $hash );		
 	}
-	
+
+		
 	protected function loadMembers() {
 		$this->_members = Member::loadListByIssue( $this->id );
 		if ($this->_members === false) 
