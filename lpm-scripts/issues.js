@@ -38,8 +38,9 @@ issuePage.addIssueMember = function() {
     /**
      * @type HTMLOListElement
      */
+    
     var members = document.getElementById( 'issueMembers' );
-   
+
     /**
      * @type HTMLOListElement
      */
@@ -98,6 +99,7 @@ issuePage.removeIssueMember = function(e) {
     }
     selectElement.appendChild( option, i );
 };
+
 
 issuePage.updatePriorityVals = function () {
     issuePage.setPriorityVal( $('input[type=range]#priority').val() );
@@ -365,13 +367,20 @@ issuePage.setEditInfo = function () {
     // изображения
     var imgs = $("#issueInfo li > .images-line > li");
     l = imgs.length;
-    var imgInput = $('#issueForm form .images-list')[0];
+    var $imgInputField = $('#issueForm form .images-list > li').has('input[name="images[]"]');
+    var $imgInput = $('#issueForm form .images-list').empty();
     var imgLI = null;
     for (i = l - 1; i >= 0; i--) {
         //$('input[name=imgId]',imgs[i]).val() 
         imgLI = imgs[i].cloneNode( true );
-        imgInput.insertBefore(imgLI, imgInput.children[0]);
+
+        $(imgLI).append('<a href="javascript:;" class="remove-btn" onclick="removeImage(' + 
+            $('input[name=imgId]', imgLI).val() + ')"></a>');
+
+        $imgInput.append(imgLI);
+        //imgInput.insertBefore(imgLI, imgInput.children[0]);
     };
+    $imgInput.append($imgInputField);
     if (l >= window.lpmOptions.issueImgsCount)
         $("#issueForm form .images-list > li input[type=file]").hide();
     // родитель
@@ -382,6 +391,19 @@ issuePage.setEditInfo = function () {
     $( "#issueForm form input[name=actionType]" ).val( 'editIssue' );
     // меняем заголовок кнопки сохранения    
     $( "#issueForm form .save-line button[type=submit]" ).text( "Сохранить" );
+    
+};
+
+function removeImage(imageId)
+{
+    if (confirm('Вы действительно хотите удалить это изображение?'))
+    {
+        $('#issueForm form .images-list > li').has('input[name=imgId][value=' + imageId + ']').remove();
+        var val = $('#issueForm form input[name=removedImages]').val();
+        if (val != '') val += ',';
+        val += imageId;
+        $('#issueForm form input[name=removedImages]').val(val);
+    } 
     
 };
 

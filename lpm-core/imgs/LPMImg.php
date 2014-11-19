@@ -8,7 +8,7 @@ class LPMImg extends LPMBaseObject {
     public static function loadListByInstance( $instanceType, $instanceId ) {
         return StreamObject::loadListDefault( 
                     self::getDB(),
-                    '`itemType` = ' . $instanceType . 
+                    '`deleted` = 0 AND `itemType` = ' . $instanceType . 
                     ' AND `itemId` = ' . $instanceId, 
                     LPMTables::IMAGES,
                     __CLASS__ 

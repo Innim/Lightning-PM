@@ -77,6 +77,9 @@ class ProjectPage extends BasePage
 			} 
 		} 
 		
+
+
+		
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {			
 			$issues = Issue::getListByProject( $this->_project->id );		
@@ -256,6 +259,26 @@ class ProjectPage extends BasePage
 						}
 					}
 					$prepare->close();
+
+
+					//удаление старых изображений
+					if (!empty($_POST["removedImages"]))
+					{
+						$delImg = $_POST["removedImages"];
+						$delImg = explode(',', $delImg);
+						$imgIds = array();
+						foreach ($delImg as $imgIt) {
+							$imgIt = (int)$imgIt;
+							if ($imgIt > 0) $imgIds[] = $imgIt;
+
+						}
+						if (!empty($imgIds)){
+
+							$sql ="UPDATE `%s` SET `deleted`='1' WHERE `imgId` IN (".implode(',',$imgIds).")";
+							$this->_db->queryt($sql, LPMTables::IMAGES);
+						}
+					}
+
 
 					// загружаем изображения
 					$uploader = $this->saveImages4Issue( $issueId );
