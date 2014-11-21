@@ -102,10 +102,10 @@ class Issue extends MembersInstance
 	public $parentId      =  0;
 	public $projectId     =  0;
     public $idInProject   =  0;
-	public $projectUID    =  '';
+	public $projectUID    = '';
 	public $name          = '';
 	public $desc          = '';
-	public $hourse		  = '';
+	public $hours		  = '';
 	public $type          = -1;
 	public $authorId      =  0;
 	public $createDate    =  0;
@@ -211,7 +211,7 @@ class Issue extends MembersInstance
 	}
 
 	public function getNormHours() {
-		return $this->hourse;
+		return $this->hours;
 	}
 	
 	public function getDesc() {

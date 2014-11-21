@@ -21,7 +21,10 @@
 			 </nobr>
 			</td>
 			<td>
-			 <a href="<?=$issue->getURL4View();?>"><?=$issue->name;?></a>
+			<a href="<?=$issue->getURL4View();?>">
+			 	<span class="issue-name"><?=$issue->getName();?></span>
+			 	<?php if ($issue->getNormHours() > 0): ?> (<span class="issue-hours"><?=$issue->getNormHours();?></span> часов)<?php endif;?>
+    		</a>
 			 <?if ($issue->commentsCount > 0):?>
                  &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
                  <?endif;?>
