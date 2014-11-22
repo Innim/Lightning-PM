@@ -87,7 +87,6 @@ class EmailNotifier extends LPMBaseObject {
 	}
 	
 	public function send( $toEmail, $toName, $subject, $messText ) {
-		return true;
 		$mess = new MailMessage(
 			$toEmail,
 			$subject,
