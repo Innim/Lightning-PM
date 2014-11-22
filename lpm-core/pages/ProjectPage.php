@@ -77,6 +77,9 @@ class ProjectPage extends BasePage
 			} 
 		} 
 		
+
+
+		
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {			
 			$issues = Issue::getListByProject( $this->_project->id );		
@@ -163,6 +166,7 @@ class ProjectPage extends BasePage
 			$engine->addError( 'Недопустимое значение приоритета' );
 		} else {
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
+			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
 			foreach ($_POST as $key => $value) {
 				if ($key != 'members')
@@ -177,16 +181,17 @@ class ProjectPage extends BasePage
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
             
 			// сохраняем задачу
-			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `desc`, `type`, " .
+			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
 			           		 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
-			           		 		  "'" . $_POST['name'] . "', '" . $_POST['desc'] . "', " .
+			           		 		  "'" . $_POST['name'] . "', '" . $_POST['hours'] . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
 			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
 									  "'" . DateTimeUtils::mysqlDate() . "', " .
 									  "'" . $completeDate . "', " . 
 									  "'" . $priority . "' ) " .
 			"ON DUPLICATE KEY UPDATE `name` = VALUES( `name` ), " .
+									"`hours` = VALUES( `hours` ), " .
 									"`desc` = VALUES( `desc` ), " .
 									"`type` = VALUES( `type` ), " .
 									"`completeDate` = VALUES( `completeDate` ), " .
@@ -256,6 +261,32 @@ class ProjectPage extends BasePage
 						}
 					}
 					$prepare->close();
+
+
+					//удаление старых изображений
+					if (!empty($_POST["removedImages"]))
+					{
+						$delImg = $_POST["removedImages"];
+						$delImg = explode(',', $delImg);
+						$imgIds = array();
+						foreach ($delImg as $imgIt) {
+							$imgIt = (int)$imgIt;
+							if ($imgIt > 0) $imgIds[] = $imgIt;
+
+						}
+						if (!empty($imgIds)){
+
+							$sql = "UPDATE `%s` ". 
+										"SET `deleted`='1' ".
+										"WHERE `imgId` IN (".implode(',',$imgIds).") ".
+										 "AND `deleted` = '0' ".
+										 "AND `itemId`='".$issueId."' ".
+										 "AND `itemType`='".Issue::ITYPE_ISSUE."'";
+							$this->_db->queryt($sql, LPMTables::IMAGES);
+						}
+						
+					}
+
 
 					// загружаем изображения
 					$uploader = $this->saveImages4Issue( $issueId );

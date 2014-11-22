@@ -40,6 +40,7 @@ CREATE TABLE `lpm_issues` (
   `projectId` int(11) NOT NULL,
   `parentId` int(11) NOT NULL DEFAULT '0' COMMENT 'идентификатор родительской задачи',
   `name` varchar(255) NOT NULL,
+  `hours` int(11) NOT NULL,
   `desc` text NOT NULL,
   `type` tinyint(1) NOT NULL DEFAULT '0',
   `authorId` bigint(19) NOT NULL,

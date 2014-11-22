@@ -223,10 +223,10 @@ class LPMImgUpload {
         if ($dir != '') {
         	$dirPath = LPMImg::getSrcImgPath( $dir );
         	
-        	if (!is_dir( $dirPath ) && !mkdir( $dirPath )) 
+        	if (!is_dir( $dirPath ) && !mkdir( $dirPath ))
                 return $this->error( 'Ошибка при создании директории' );
                 
-            if (substr( $dir, -1 ) != '/') $dir .= '/';        
+	            if (substr( $dir, -1 ) != '/') $dir .= '/';      
         }            
         
         // сохраняем исходный файл

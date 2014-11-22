@@ -36,3 +36,9 @@ DROP PROCEDURE IF EXISTS idInProject;
 
 #### Вставка поля блокировки для пользователей
 ALTER TABLE `lpm_users` ADD `locked` TINYINT(1) NOT NULL DEFAULT '0' AFTER `role`;
+
+## 2014.11.19
+ALTER TABLE `lpm_images` ADD `deleted` TINYINT(1) NOT NULL DEFAULT '0' ;
+
+## 2014.11.21
+ALTER TABLE `lpm_issues` ADD `hours` int(11) NOT NULL AFTER `name`;

@@ -80,7 +80,8 @@ class Issue extends MembersInstance
 					   "ON DUPLICATE KEY UPDATE `imgsCount` = " . 
 							"(SELECT COUNT(*) FROM `%2\$s` " .
 							  "WHERE `%2\$s`.`itemType` = '" . Issue::ITYPE_ISSUE . "' " .
-								"AND `%2\$s`.`itemId` = '" . $issueId . "')";
+								"AND `%2\$s`.`itemId` = '" . $issueId . "'".
+								"AND `%2\$s`.`deleted` = 0)";
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES );
 	} 
@@ -101,9 +102,10 @@ class Issue extends MembersInstance
 	public $parentId      =  0;
 	public $projectId     =  0;
     public $idInProject   =  0;
-	public $projectUID    =  '';
+	public $projectUID    = '';
 	public $name          = '';
 	public $desc          = '';
+	public $hours		  = '';
 	public $type          = -1;
 	public $authorId      =  0;
 	public $createDate    =  0;
@@ -206,6 +208,10 @@ class Issue extends MembersInstance
 	
 	public function getName() {
 		return $this->name;
+	}
+
+	public function getNormHours() {
+		return $this->hours;
 	}
 	
 	public function getDesc() {

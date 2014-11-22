@@ -1,7 +1,7 @@
 <article id="issueForm" class="container">
     <h3>Добавить задачу</h3>
     <div class="validateError"><? lpm_print_errors(); ?></div>
-    <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data"> 
+    <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data" onsubmit="return removeImage(imageId);"> 
       <ol>
         <li>      
             <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>"/>
@@ -60,11 +60,15 @@
         	</fieldset>
         </li>
         <li>
+            <input placeholder="Нормочасы" type="text" name="hours"  maxlength="5" value="<?lpm_print_post_var('hours');?>"/>
+        </li>
+        <li>
             <textarea placeholder="Описание" name="desc" maxlength="65535"><?lpm_print_post_var('desc');?></textarea>
         </li>
         <li>
             <label>Изображения</label>
-            <ul class="images-list">
+            <input type="hidden" name="removedImages" value="">
+            <ul class="images-list" >
 	        	<li><input type="file" name="images[]" onchange="imgUpload.onSelect(event,window.lpmOptions.issueImgsCount);"/></li>
 	        </ul>
         </li>
@@ -73,7 +77,7 @@
 	        <input type="hidden" name="issueId" value="0"/>
 	        <input type="hidden" name="actionType" value="addIssue"/>
 	        <p class="save-line">
-                <button type="submit">Добавить</button>
+                <button type="submit" >Сохранить</button>
                 <button type="reset" onclick="showMain();">Отмена</button>
             </p>   
         </li>
