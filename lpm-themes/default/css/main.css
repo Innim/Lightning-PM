@@ -188,6 +188,8 @@ p.header-back-link a.back-link {
 }
 #userMenuLine .user-name {
 	font-weight: bold;
+	position: relative;
+
 }
 #userMenuLine > p {
 	display    : inline-block;
@@ -355,6 +357,8 @@ fieldset.radio-group ol li label {
 }
 ol.members-list {
 	margin-bottom: 10px;
+	position : relative;
+	
 }
 fieldset > ol.members-list {
     margin-bottom: 10px;
@@ -457,6 +461,12 @@ a.remove-btn {
     cursor             : pointer;
     display            : inline-block;
 }
+.images-list a.remove-btn
+{	
+    position           : absolute;
+    left 			   : -10px;
+	top 			   : 0px;
+}
 div.list-box {
 	overflow: scroll;
 }
@@ -493,10 +503,16 @@ ul.images-list {
 ul.images-list > li {
 	margin: 10px auto;
 	padding: 0;
+	position: relative;
+    left 	: 0px;
+	top 	: 0px;
 }
 ul.images-list > li > a {
 	display: inline-block;
 	margin: 0 5%;
+	position: relative;
+    left 	: 10px;
+	top 	: 0px;
 }
 /* комментарии */
 article.comments {

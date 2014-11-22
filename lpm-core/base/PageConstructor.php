@@ -139,6 +139,8 @@ class PageConstructor
 	public  $_title    = '';
 	public  $_header   = '';
 	private $_themeDir = '';
+
+
 	
 	/**
 	 * @var PagesManager
@@ -150,7 +152,8 @@ class PageConstructor
 		
 		$this->_pagesManager = $pagesManager;
 	}
-	
+
+
 	public function createPage() {		
 		$page = LightningEngine::getInstance()->getCurrentPage();
 		$this->_title  = $page->getTitle();
