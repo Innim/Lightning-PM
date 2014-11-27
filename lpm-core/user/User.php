@@ -49,9 +49,10 @@ class User extends LPMBaseObject
         return $salt;
     }
     
-	public static function passwordHash($value, $salt)
+	public static function passwordHash($value, $salt = null)
 	{
 		//return password_hash($value); 
+		if (null === $salt) $salt = self::blowfishSalt();
         return crypt($value, $salt);
 	}
 
