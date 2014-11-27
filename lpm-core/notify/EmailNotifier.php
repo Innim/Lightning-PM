@@ -1,4 +1,3 @@
-
 <?php
 class EmailNotifier extends LPMBaseObject {
 	private static $_instance;
