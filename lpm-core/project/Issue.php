@@ -80,7 +80,7 @@ class Issue extends MembersInstance
 					   "ON DUPLICATE KEY UPDATE `imgsCount` = " . 
 							"(SELECT COUNT(*) FROM `%2\$s` " .
 							  "WHERE `%2\$s`.`itemType` = '" . Issue::ITYPE_ISSUE . "' " .
-								"AND `%2\$s`.`itemId` = '" . $issueId . "'".
+								"AND `%2\$s`.`itemId` = '" . $issueId . "' ".
 								"AND `%2\$s`.`deleted` = 0)";
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES );
