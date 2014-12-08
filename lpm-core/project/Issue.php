@@ -210,9 +210,33 @@ class Issue extends MembersInstance
 		return $this->name;
 	}
 
-	public function getNormHours() {
+	public function getNormHours(){
 		return $this->hours;
 	}
+
+	public function  getNormHoursLabel() {
+
+		if (($this->hours >= 11) && ($this->hours <= 19))
+		{
+          return ' часов';
+		}
+
+		$str_hours =substr($this->hours, -1); // Находим последний символ в hours
+		$str_hours = (int)$str_hours;        // Переводим строку в число
+
+		if (($str_hours == 0) || ($str_hours >= 5))
+		{
+           return ' часов';
+		}
+		if ($str_hours == 1)
+		{
+			return ' час';
+		}
+		if (($str_hours > 1) && ($this->hours < 5) )
+		{
+			return ' часа';
+		}
+		}   
 	
 	public function getDesc() {
 		$text = nl2br( $this->desc);
