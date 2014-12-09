@@ -133,6 +133,13 @@ function lpm_print_users_chooser() {
 }
 
 /**
+*   Возвращает текущую страницу
+*/
+function lpm_get_current_page() {
+	return PageConstructor::getCurrentPage();
+}
+
+/**
  * Возвращает url приложения
  * @return string
  */
@@ -288,6 +295,10 @@ function lpm_can_create_project() {
 function lpm_is_moderator() {
 	return PageConstructor::isModerator();
 }
+function lpm_get_show() {
+    //return 
+}
+
 /**
  * Определяет, авторизован ли в данный момент пользователь
  */

@@ -1,0 +1,55 @@
+<article id="recPassForm" class="container">
+    <h3>Восстановление пароля</h3>
+    <div class="validateError"><? lpm_print_errors(); ?></div>
+    <?php switch(lpm_get_current_page()->getShow()) {    
+        case 'emailForm': ?>
+        <form method="post">
+            <input placeholder="Email" type="email" name="remail" required="required" value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>" />        
+            <div>
+                <p class="enter-line">
+                    <button type="submit">Восстановить</button>
+                </p>
+                <p class="links-line">
+                    <a href="/">Назад</a>
+                </p>	
+            </div>
+         </form>
+        <?php break; case 'successEmail': ?>
+        <div class="info-message" style="display: block;">
+            <p>На ваш email было отправлено письмо с инструкциями.</p>
+        </div>  
+        
+        <p class="links-line">
+            <a href="/">На главную</a>
+        </p>
+        
+        <?php break; case 'recoverySuccess': ?>
+        <div class="info-message" style="display: block;">
+            <p>Пароль успешно изменен.</p>
+        </div> 
+        <p class="links-line">
+            <a href="/">На главную</a>
+        </p>
+        
+        <?php break; case 'changePassForm': ?>
+        <form method="post" action="" >  
+            <div class="info-message"></div>          
+            <ol class="form-fields">
+                <li>
+                    <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24" required/>                   
+                </li>
+                <li>
+                    <input id="repeatPass" placeholder="Подтвержение пароля" type="password" name="rePass" maxlength="24" required/>
+                </li>
+                <li>                    
+                    <input type="hidden" name="userId" value="<?= lpm_get_current_page()->getUserId(); ?>"/>
+                    <input type="hidden" name="key" value="<?= lpm_get_current_page()->getKey(); ?>" />
+                </li>                
+            </ol>
+            <p class="save-line">
+                <button type="submit">Сохранить</button>
+            </p>
+        </form>
+        <?php break; } ?>
+
+</article>

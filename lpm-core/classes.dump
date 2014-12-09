@@ -9,6 +9,7 @@
   'User' => 'user/User.php',
   'AuthPage' => 'pages/AuthPage.php',
   'ProjectPage' => 'pages/ProjectPage.php',
+  'PassRecoveryPage' => 'pages/PassRecoveryPage.php',  
   'Link' => 'htmlEntities/Link.php',
   'SubPage' => 'pages/SubPage.php',
   'UsersPage' => 'pages/UsersPage.php',
@@ -33,4 +34,5 @@
   'LPMImgUpload' => 'imgs/LPMImgUpload.php',
   'LPMImg' => 'imgs/LPMImg.php',
   'LPMBaseService' => 'base/LPMBaseService.php',
+  'PassRecoveryPage' => 'pages/PassRecoveryPage.php',
 ); ?>
