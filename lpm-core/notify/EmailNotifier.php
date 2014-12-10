@@ -44,17 +44,18 @@ class EmailNotifier extends LPMBaseObject {
 		while ($row = $query->fetch_assoc()) {
 			array_push( $list, (float)$row['userId'] );
 		}*/
+		$userIds = array_unique($userIds);
 		
 		$prefField = $this->getPrefField( $pref );
 		
 		if ($exceptMe && LPMAuth::$current) 
 			ArrayUtils::remove( $userIds, LPMAuth::$current->getUserId() );
 		
-		return count( $userIds ) == 0 
+		return empty($userIds)
 				? array() 
 				: User::loadList( 
 					"`%1\$s`.`userId` IN (" . implode( ',', $userIds ) . ") " .
-		  			 ( $prefField != 1 ? "AND `%2\$s`.`" . $prefField . "` = 1" : "" ) 
+		  			 ( $prefField !== 1 ? "AND `%2\$s`.`" . $prefField . "` = 1" : "" ) 
 				  );
 	}
 	
@@ -71,7 +72,7 @@ class EmailNotifier extends LPMBaseObject {
 	}
 	
 	public function sendMail2Users( $subject, $text, $users ) {
-		if (count( $users ) > 0) {
+		if (!empty( $users )) {
 			$text .= "\n\n--\n" . LPMOptions::getInstance()->emailSubscript;
 			
 			foreach ($users as /*@var $user User */ $user) {
@@ -86,6 +87,7 @@ class EmailNotifier extends LPMBaseObject {
 	}
 	
 	public function send( $toEmail, $toName, $subject, $messText ) {
+
 		$mess = new MailMessage(
 			$toEmail,
 			$subject,
@@ -93,7 +95,6 @@ class EmailNotifier extends LPMBaseObject {
 			MailMessage::TYPE_TEXT,
 			$toName
 		);
-		
 		if (LPMGlobals::isDebugMode()) {
 			GMLog::getInstance()->logIt(
 				GMLog::getInstance()->logsPath . '/emails/' .
@@ -105,7 +106,7 @@ class EmailNotifier extends LPMBaseObject {
 			);
 		//	return true;
 		}
-		
+
 		return $this->_mail->send( $mess );
 	} 
 	

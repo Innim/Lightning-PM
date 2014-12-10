@@ -306,14 +306,14 @@ class ProjectPage extends BasePage
 					// отсылаем оповещения
 					if ($issue = Issue::load( $issueId )) {
 						if ($editMode) {
-							array_push( $members, $issue->authorId );
+							array_push( $members, $issue->authorId ); // TODO фильтр, чтобы не добавлялся дважды
 							EmailNotifier::getInstance()->sendMail2Allowed(
 								'Изменена задача "' . $issue->name . '"', 
 								$engine->getUser()->getName() . ' изменил задачу "' .
 								$issue->name .  '", в которой Вы принимаете участие' . "\n" .
 								'Просмотреть задачу можно по ссылке ' .	$issueURL, 
 								$members,
-								EmailNotifier::PREF_ADD_ISSUE
+								EmailNotifier::PREF_EDIT_ISSUE
 							);
 						} else {
 							EmailNotifier::getInstance()->sendMail2Allowed(
