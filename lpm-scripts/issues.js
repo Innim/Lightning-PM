@@ -673,3 +673,49 @@ Issue.getPriorityStr = function (priority) {
     else if (priority < 66) return 'нормальный';
     else return 'высокий';
 };
+
+// Всплывающее окно скопировать commit сообщение
+
+jQuery(function($) {
+
+ $('td:first-of-type a').mouseenter( 
+    function() 
+    {
+        $(this).next('.issue_copy').slideDown(200);
+    }
+ );
+
+$('td:first-of-type').mouseleave( 
+    function() 
+    {
+        $('.issue_copy').slideUp(200);
+    }
+);
+
+ $('.issue_copy').hover(
+    function() 
+    {
+        $(this).show();        
+    },
+    function() 
+    {
+        $(this).slideUp(200);
+    }
+);
+
+$('td:first-of-type a').mouseleave( 
+    function()
+    {
+        $('a.link').zclip(
+        {
+            path : 'http://lightning-pm/lpm-scripts/libs/ZeroClipboard.swf',
+            copy : function()
+                   { 
+                       var a = $(this).parent().prev('a').text();
+                       var b = $(this).parent().parent().next('td').next('td').children('a').children('.issue-name').text();           
+                       return 'Issue # '+a+ ' : '+ b;                
+                   }
+        });
+    }
+);
+});   
