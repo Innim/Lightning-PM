@@ -708,12 +708,12 @@ $('td:first-of-type a').mouseleave(
     {
         $('a.link').zclip(
         {
-            path : 'http://lightning-pm/lpm-scripts/libs/ZeroClipboard.swf',
+            path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
             copy : function()
                    { 
                        var a = $(this).parent().prev('a').text();
                        var b = $(this).parent().parent().next('td').next('td').children('a').children('.issue-name').text();           
-                       return 'Issue # '+a+ ' : '+ b;                
+                       return 'Issue # '+a+ ':'+ b;                
                    }
         });
     }

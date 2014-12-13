@@ -29,12 +29,12 @@ $(document).ready(
     {
         $('a.link').zclip(
         {
-            path : 'http://lightning-pm/lpm-scripts/libs/ZeroClipboard.swf',
+            path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
             copy : function()
                    { 
                         var a = $('.issue-id').text();
                         var b = $('.issue-name').text();
-                        return 'Issue # '+a+ ' : '+ b;                
+                        return 'Issue # '+a+ ':'+ b;                
                    }
         });
     }

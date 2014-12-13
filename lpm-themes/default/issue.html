@@ -4,7 +4,7 @@
   <article id="issueInfo" class="container">
     <?$issue = lpm_get_issue();?>    
     <h3>
-        <span class="issue-id"><?=$issue->getIdInProject();?></span><span>.</span>
+        <span class="issue-id"><?=$issue->getIdInProject();?></span>.
         <span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?> (<span class="issue-hours"><?=$issue->getNormHours();?></span> <?=$issue->getNormHoursLabel();?>)<?php endif;?>
     </h3>     
     <div class="issues_copy">
