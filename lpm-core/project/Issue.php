@@ -232,7 +232,7 @@ class Issue extends MembersInstance
 		{
 			return ' час';
 		}
-		if (($str_hours > 1) && ($this->hours < 5) )
+		if (($str_hours > 1) && ($this->hours < 5))
 		{
 			return ' часа';
 		}
