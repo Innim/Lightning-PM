@@ -227,7 +227,7 @@ class Issue extends MembersInstance
 
 		if (($this->hours >= 11) && ($this->hours <= 19))
 		{
-          return ' часов';
+          return 'часов';
 		}
 
 		$str_hours =substr((string)$this->hours, -1); // Находим последний символ в hours
@@ -235,15 +235,15 @@ class Issue extends MembersInstance
 
 		if (($str_hours == 0) || ($str_hours >= 5))
 		{
-           return ' часов';
+           return 'часов';
 		}
 		if ($str_hours == 1)
 		{
-			return ' час';
+			return 'час';
 		}
 		if (($str_hours > 1) && ($this->hours < 5) )
 		{
-			return ' часа';
+			return 'часа';
 		}
 
 		return 'часов';
