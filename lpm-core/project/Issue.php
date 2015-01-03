@@ -105,7 +105,7 @@ class Issue extends MembersInstance
 	public $projectUID    = '';
 	public $name          = '';
 	public $desc          = '';
-	public $hours		  = '';
+	public $hours		  = 0;
 	public $type          = -1;
 	public $authorId      =  0;
 	public $createDate    =  0;
@@ -140,10 +140,19 @@ class Issue extends MembersInstance
 		
 		$this->addClientFields( 
 			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
-			'completeDate', 'startDate', 'priority', 'status' ,'commentsCount'
+			'completeDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
 		);
 
 		$this->author = new User();
+	}
+
+	public function getClientObject()
+	{
+	    $obj = parent::getClientObject();
+
+		if ($this->author) $obj->author = $this->author->getClientObject();
+
+	    return $obj;
 	}
 	
 	public function checkEditPermit( $userId ) {

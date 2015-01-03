@@ -65,7 +65,11 @@ function BaseService( service )
                                              if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED) {
                                                  window.location.reload();
                                              } else {                                                                                                  
+                                                try {
                                                  onResult( obj ); 
+                                                } catch (e) {
+                                                  srv.err({error:'Ошибка при обработке ответа'});
+                                                }
                                              }
                                            } ); 
          srv.f2p.request.apply( null, params );         
