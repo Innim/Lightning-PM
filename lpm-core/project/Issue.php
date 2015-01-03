@@ -221,7 +221,7 @@ class Issue extends MembersInstance
           return ' часов';
 		}
 
-		$str_hours =substr($this->hours, -1); // Находим последний символ в hours
+		$str_hours =substr((string)$this->hours, -1); // Находим последний символ в hours
 		$str_hours = (int)$str_hours;        // Переводим строку в число
 
 		if (($str_hours == 0) || ($str_hours >= 5))
@@ -236,7 +236,9 @@ class Issue extends MembersInstance
 		{
 			return ' часа';
 		}
-		}   
+
+		return 'часов';
+	}   
 	
 	public function getDesc() {
 		$text = nl2br( $this->desc);
