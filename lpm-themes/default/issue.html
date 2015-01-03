@@ -3,7 +3,7 @@
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
   <article id="issueInfo" class="container">
     <?$issue = lpm_get_issue();?>    
-    <h3><span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?> (<span class="issue-hours"><?=$issue->getNormHours();?></span>&nbsp;<?=$issue->getNormHoursLabel();?>)<?php endif;?>
+    <h3><span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getNormHours();?></span>&nbsp;<?=$issue->getNormHoursLabel();?>)</span><?php endif;?>
     </h3>     
     <ol class="info-list">
         <li>

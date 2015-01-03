@@ -826,3 +826,9 @@ table tr.completed-issue:hover td span.comments-count {
 #workersList table tr td:nth-child(2) input[type=radio] {
 	margin-right: 5px;
 }
+#issueInfo h3 .issues-hours-box
+{
+	display: inline-block;
+	margin-left: 5px;
+	font-size: .7em;
+}

@@ -342,7 +342,7 @@ issuePage.setEditInfo = function () {
     // имя
     $( "#issueForm form input[name=name]" ).val( $( "#issueInfo > h3 > .issue-name" ).text() );
     // часы
-    $( "#issueForm form input[name=hours]" ).val( $( "#issueInfo > h3 > .issue-hours" ).text() );
+    $( "#issueForm form input[name=hours]" ).val( $( "#issueInfo > h3 .issue-hours" ).text() );
 
     // тип
     $('form input:radio[name=type]:checked', "#issueForm").removeAttr( 'checked' );
