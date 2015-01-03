@@ -415,7 +415,7 @@ function removeImage(imageId)
  * @param {Issue} issue
  */
 function setIssueInfo( issue ) {        
-    $("#issueInfo > h3").text( issue.name );
+    $("#issueInfo > h3 .issue-name").text( issue.name );
     var fields = $("#issueInfo > ol > li > .value");
     
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
@@ -577,6 +577,7 @@ function Issue( obj ) {
     this.type         = obj.type;
     this.members      = obj.members;
     this.priority     = obj.priority;
+    this.hours        = obj.hours;
     
     this.getCompleteDate = function () {
         return this.getDate( this.completeDate );
@@ -587,7 +588,7 @@ function Issue( obj ) {
     };
     
     this.getAuthor = function () {
-        return this.author.linkedName;
+        return this.author ? this.author.linkedName : '';
     };
     
     this.getPriority = function () {
