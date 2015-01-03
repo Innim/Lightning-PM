@@ -674,6 +674,10 @@ Issue.getPriorityStr = function (priority) {
     else return 'высокий';
 };
 
+Issue.getCommitMessage = function (num, title) {
+    return 'Issue #' + num + ': ' + title;
+}
+
 // Всплывающее окно скопировать commit сообщение
 
 jQuery(function($) {
@@ -706,15 +710,15 @@ $('td:first-of-type').mouseleave(
 $('td:first-of-type a').mouseleave( 
     function()
     {
-        $('a.link').zclip(
+        $('a.issue-commit-copy-link').zclip(
         {
             path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
             copy : function()
-                   { 
-                       var a = $(this).parent().prev('a').text();
-                       var b = $(this).parent().parent().next('td').next('td').children('a').children('.issue-name').text();           
-                       return 'Issue # '+a+ ':'+ b;                
-                   }
+            { 
+                var a = $(this).parent().prev('a').text();
+                var b = $(this).parent().parent().next('td').next('td').children('a').children('.issue-name').text();
+                return Issue.getCommitMessage(a, b);
+            }
         });
     }
 );

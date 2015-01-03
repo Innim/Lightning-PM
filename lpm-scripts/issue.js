@@ -27,14 +27,14 @@ function showMain() {
 $(document).ready(
     function ()
     {
-        $('a.link').zclip(
+        $('a.issue-commit-copy-link').zclip(
         {
             path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
             copy : function()
                    { 
                         var a = $('.issue-id').text();
                         var b = $('.issue-name').text();
-                        return 'Issue # '+a+ ':'+ b;                
+                        return Issue.getCommitMessage(a, b);             
                    }
         });
     }

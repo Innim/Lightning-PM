@@ -15,7 +15,7 @@
 		<tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">			
 			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
              <div class="issue_copy">
-             	   	<a href="javascript:;" class="link">скопировать commit сообщение</a>
+             	   	<a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
              </div>
 			</td>
 			<td>
