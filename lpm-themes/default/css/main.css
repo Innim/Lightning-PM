@@ -255,8 +255,10 @@ div.container h3 {
 	padding         : 0px 15px;
 	margin          : 5px -15px 20px;
 	border          : 1px solid #cccccc;
-	font-size       : 13pt;
-	text-transform  : uppercase; 
+	/*font-size       : 13pt;
+	text-transform  : uppercase; */
+	font-size: 1.5em;
+	font-weight: normal;
 }
 .container input,
 .container textarea, 

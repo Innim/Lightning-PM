@@ -149,7 +149,7 @@ class User extends LPMBaseObject
 	
 	protected function onLoadStream( $hash )
 	{
-		$this->pref->onLoadStream( $hash );
+		$this->pref->loadStream( $hash );
 		
 		if ($this->avatarUrl == '') $this->avatarUrl = $this->getMyGravatar();
 		
