@@ -279,6 +279,10 @@ class Issue extends MembersInstance
 		return self::getDateStr( $this->completeDate );
 	}
 	
+	public function getCompletedDate() {
+		return self::getDateStr( $this->completedDate );
+	}
+	
 	
 	public function getCompleteDate4Input() {
 		return self::getDate4Input( $this->completeDate );
