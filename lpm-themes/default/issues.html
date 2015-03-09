@@ -38,7 +38,7 @@
                <?endforeach;?>
 			</td>
 			<td><?=$issue->getShortDesc();?></td>
-			<td><?=$issue->getCompleteDate();?></td>
+			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
 			<td> 	
 			 <input type="hidden" name="issueId" value="<?=$issue->id;?>"/>
 			 <button onclick="completeIssue( event );" class="complete-btn">Завершить</button>
