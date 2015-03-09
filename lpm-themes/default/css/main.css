@@ -324,8 +324,13 @@ div.container h3 {
 	border          : 1px solid #c45151;
 	color           : #ff0000;
 	border-radius   : 5px;
-	display         : none;
+	//display         : none;
 }
+
+.validateError:empty{
+    display: none;
+}
+
 .info-message {
     width           : 90%;
     margin          : 10px auto 10px;
@@ -336,6 +341,10 @@ div.container h3 {
     border-radius   : 5px; 
     display         : none; 
 }
+.info-message p {
+    text-align      :center; 
+}
+
 .operations-line {
 	font-size : smaller;
 	text-align: right;
@@ -639,33 +648,41 @@ table.users-list tr.active-user td button#unlocked-btn {
 
 /* форма авторизации и регистрации */
 #authForm,
-#registrationForm {
+#registrationForm,
+#recPassForm {
 	width  : 400px;
 	margin : 40px auto;
 }
 #authForm p.enter-line,
-#authForm p.links-line {
+#authForm p.links-line,
+#recPassForm p.enter-line,
+#recPassForm p.links-line {
 	width         : 90%;  
 	margin        : 0px auto;	
 }
-#authForm p.enter-line {
+#authForm p.enter-line,
+#recPassForm p.enter-line {
 	vertical-align: bottom;
 	text-align    : right; 
 }
-#authForm p.enter-line span {
+#authForm p.enter-line span,
+#recPassForm p.enter-line span {
 	font-size: 10pt;
 }
-#authForm .enter-line button {
+#authForm .enter-line button
+#recPassForm p.enter-line button {
 	display    : inline-block;
 	margin-left: 40px;
 }
 #authForm p.links-line,
-#registrationForm p.links-line {
+#registrationForm p.links-line,
+#recPassForm p.links-line{
 	text-align: center;
 	font-size : 10pt; 	
 	margin-top: 10px;
 }
-#registrationForm p.links-line {
+#registrationForm p.links-line,
+#recPassForm p.links-line {
 	text-align    : left;
 	margin-bottom : 0px;
 	padding-bottom: 0px 
@@ -763,6 +780,12 @@ table tr.completed-issue:hover td span.comments-count {
 }
 
 /* просмотр задачи */
+#issueView .info-list.completed-issue .issue-completed-date-row {
+	display: block;
+}
+#issueView .info-list .issue-completed-date-row {
+	display: none;
+}
 #issueView .buttons-bar.completed-issue button.complete-btn {
 	display: none;
 }
