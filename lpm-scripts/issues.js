@@ -421,6 +421,10 @@ function setIssueInfo( issue ) {
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
     
+    $( "#issueInfo .info-list"   ).
+    removeClass( 'active-issue'    ).
+    removeClass( 'completed-issue' );
+
     $( "#issueInfo .buttons-bar"   ).
     removeClass( 'active-issue'    ).
     removeClass( 'completed-issue' );
@@ -428,10 +432,12 @@ function setIssueInfo( issue ) {
     if (issue.isCompleted()) {
         //$( "#issueInfo .buttons-bar > button.restore-btn" ).show();
         $( "#issueInfo .buttons-bar" ).addClass( 'completed-issue' );
+        $( "#issueInfo .info-list" ).addClass( 'completed-issue' );
     }
     else if (issue.isOpened()) {
         //$( "#issueInfo .buttons-bar > button.complete-btn" ).show();
         $( "#issueInfo .buttons-bar" ).addClass( 'active-issue' );
+        $( "#issueInfo .info-list" ).addClass( 'active-issue' );
     } 
     
     var values = [
@@ -440,6 +446,7 @@ function setIssueInfo( issue ) {
         issue.getPriority(),
         issue.getCreateDate(),
         issue.getCompleteDate(),
+        '',//issue.getCompletedDate(), // TODO выставлять настоящее значение
         issue.getAuthor(),
         issue.getMembers(),
         issue.getDesc()
