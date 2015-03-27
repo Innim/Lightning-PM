@@ -101,5 +101,14 @@ class Project extends MembersInstance
 		if (!$this->_members = Member::loadListByProject( $this->id )) return false;
 		return true;
 	}
+	public function getDesc() {
+		$text = nl2br( $this->desc);
+		$text = $this->link_it($text);
+		return $text;
+	}
+	private function link_it($text){
+		$text = preg_replace ( "/(https?:\/\/[^<\s]+[[:alnum:]])([^[:alnum:]]*(?:<br ?\/?>)*[^a-zа-я0-9]|\s|$)/iu", '<a href="$1">$1</a>$2', $text );
+    	return($text);
+	}
 }
 ?>
