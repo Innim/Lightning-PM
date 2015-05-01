@@ -547,6 +547,13 @@ article.comments form.add-comment textarea {
 	height    : 100px;
 	box-sizing: border-box;
 }
+article.comments form.add-comment .comment-note
+{
+	margin: 5px 0;
+	font-size: .8em;
+	color: #999999;
+	text-align: left;
+}
 article.comments form.add-comment .buttons-bar {
 	text-align: right;
 }
