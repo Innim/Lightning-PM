@@ -170,7 +170,7 @@ class ProjectPage extends BasePage
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
 			foreach ($_POST as $key => $value) {
 				if ($key != 'members')
-				$_POST[$key] = $this->_db->escape_string( $value );
+				$_POST[$key] = $this->_db->real_escape_string( $value );
 			}
 			$_POST['type'] = (int)$_POST['type'];
 			
