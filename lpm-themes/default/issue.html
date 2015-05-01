@@ -78,6 +78,7 @@
     </p>
     <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
      <textarea name="commentText"></textarea>
+     <p class="comment-note">Можете использовать [b], [i], [u] для разметки текста</p>
      <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>
      <p class="buttons-bar">
         <button type="submit">Отправить</button>
