@@ -521,10 +521,16 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.showIssues4Me = function (e) {
+issuePage.showIssues4Me = function ()//e) 
+{
+    window.location.hash = 'only-my';
     issuePage.filterByMemberId( lpInfo.userId );
-    e.currentTarget.innerText = 'Показать все';
-    e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
+
+    $('#showIssues4MeLink').hide();
+    $('#showIssues4AllLink').show();
+    //$('#showIssues4MeLink').text('Показать все').click(issuePage.resetFilter);
+    //e.currentTarget.innerText = 'Показать все';
+    //e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
     return false;
 };
 
@@ -560,14 +566,21 @@ issuePage.filterByMemberId = function (userId) {
     }
 };
 
-issuePage.resetFilter = function (e) {
+issuePage.resetFilter = function ()//e) 
+{
     //$( '#issuesList > tbody > tr' ).show();
+    window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
     for (var i =0; i < rows.length; i++) {
         rows[i].show();
     }
-    e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
-    e.currentTarget.innerText = 'Показать только мои задачи';
+
+    $('#showIssues4AllLink').hide();
+    $('#showIssues4MeLink').show();
+    //$('#showIssues4MeLink').text('Показать только мои задачи').
+    //    click(issuePage.showIssues4Me);
+    //e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
+    //e.currentTarget.innerText = 'Показать только мои задачи';
     return false;
 };
 

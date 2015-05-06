@@ -7,6 +7,7 @@ $(document).ready(
   function ()
   {
       states.addState( $("#projectView") );
+      states.addState( $("#projectView"), 'only-my', issuePage.showIssues4Me);
       states.addState( $("#issueForm"  ), 'add-issue' );
       //states.addState( $("#issueView"  ), 'issue-view' );
       
