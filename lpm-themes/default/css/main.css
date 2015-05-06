@@ -324,7 +324,7 @@ div.container h3 {
 	border          : 1px solid #c45151;
 	color           : #ff0000;
 	border-radius   : 5px;
-	//display         : none;
+	/*display         : none;*/
 }
 
 .validateError:empty{
