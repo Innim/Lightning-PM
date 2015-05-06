@@ -97,6 +97,12 @@ class Project extends MembersInstance
 		//return self::getURLByProjectUID( $this->uid );
 	}
 	
+	public function getDesc() {
+		$text = nl2br( $this->desc);
+		$text = HTMLHelper::linkIt($text);
+		return $text;
+	}
+	
 	protected function loadMembers() {
 		if (!$this->_members = Member::loadListByProject( $this->id )) return false;
 		return true;

@@ -251,17 +251,9 @@ class Issue extends MembersInstance
 	
 	public function getDesc() {
 		$text = nl2br( $this->desc);
-		$text = $this->link_it($text);
+		$text = HTMLHelper::linkIt($text);
 		return $text;
-
 	}
-
-	private function link_it($text){
-    	$text = preg_replace("/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is", "$1$2<a href=\"http://$3\" >$3</a>", $text);
-    	$text = preg_replace("/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is", "$1$2<a href=\"$3\" >$3</a>", $text);
-    	return($text);
-	}
-	
 
 	public function isCompleted() {
 		return $this->status == self::STATUS_COMPLETED;
