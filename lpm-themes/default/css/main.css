@@ -761,6 +761,42 @@ table tr.completed-issue a {
 table.issues-list {
 	
 }
+/* num */
+table.issues-list td:nth-child(1)
+{
+	width: 50px;
+}
+/* type */
+table.issues-list td:nth-child(2)
+{
+	width: 110px;
+}
+/* title */
+table.issues-list td:nth-child(3)
+{
+	min-width: 300px;
+}
+/* members */
+table.issues-list td:nth-child(4)
+{
+	min-width: 200px;
+}
+/* desc */
+table.issues-list td:nth-child(5)
+{
+	max-width: 400px;
+	overflow: hidden;
+}
+/* date */
+table.issues-list td:nth-child(6)
+{
+	max-width: 150px;
+}
+/* buttons */
+table.issues-list td:last-child
+{
+	width: 175px;
+}
 table.issues-list tr.completed-issue td button.complete-btn {
 	display: none;
 }
