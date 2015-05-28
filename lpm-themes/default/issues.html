@@ -23,7 +23,7 @@
 			<td>
 			<a href="<?=$issue->getURL4View();?>">
 			 	<span class="issue-name"><?=$issue->getName();?></span>
-			 	<?php if ($issue->getNormHours() > 0): ?> (<span class="issue-hours"><?=$issue->getNormHours();?></span> <?=$issue->getNormHoursLabel();?>)<?php endif;?>
+			 	<?php if ($issue->getNormHours() > 0): ?> (<span class="issue-hours"><?=$hours=$issue->getNormHours();?></span> <?=Issue::getNormHoursLabel($hours);?>)<?php endif;?>
     		</a>
 			 <?if ($issue->commentsCount > 0):?>
                  &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>

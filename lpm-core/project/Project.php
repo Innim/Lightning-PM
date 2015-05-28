@@ -101,5 +101,16 @@ class Project extends MembersInstance
 		if (!$this->_members = Member::loadListByProject( $this->id )) return false;
 		return true;
 	}
+	public static function sumHoursActiveIssues()
+	{
+		$projectId = lpm_get_project()->id;
+		$db = LPMGlobals::getInstance()->getDBConnect();
+        $sql ="SELECT SUM(`hours`) AS `sum` FROM `%s` WHERE `projectId` = ".$projectId." ".
+               "AND `deleted` = 0 ".
+               "AND NOT `status` = ".Issue::STATUS_COMPLETED." "; 
+        $query = $db->queryt( $sql, LPMTables::ISSUES );
+        if (!$query || !($row = $query->fetch_assoc())) return false;
+       	return (int)$row['sum'];
+	}
 }
 ?>

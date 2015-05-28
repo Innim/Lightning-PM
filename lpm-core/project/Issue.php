@@ -85,6 +85,31 @@ class Issue extends MembersInstance
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES );
 	} 
+	public static function  getNormHoursLabel($hours) {
+
+		if (($hours >= 11) && ($hours <= 19))
+		{
+          return 'часов';
+		}
+
+		$str_hours =substr((string)$hours, -1); // Находим последний символ в hours
+		$str_hours = (int)$str_hours;        // Переводим строку в число
+
+		if (($str_hours == 0) || ($str_hours >= 5))
+		{
+           return 'часов';
+		}
+		if ($str_hours == 1)
+		{
+			return 'час';
+		}
+		if (($str_hours > 1) && ($str_hours < 5))
+		{
+			return 'часа';
+		}
+
+		return 'часов';
+	}
 	
 	const ITYPE_ISSUE      	= 1;
 	
@@ -223,33 +248,6 @@ class Issue extends MembersInstance
 		return $this->hours;
 	}
 	
-
-	public function  getNormHoursLabel() {
-
-		if (($this->hours >= 11) && ($this->hours <= 19))
-		{
-          return 'часов';
-		}
-
-		$str_hours =substr((string)$this->hours, -1); // Находим последний символ в hours
-		$str_hours = (int)$str_hours;        // Переводим строку в число
-
-		if (($str_hours == 0) || ($str_hours >= 5))
-		{
-           return 'часов';
-		}
-		if ($str_hours == 1)
-		{
-			return 'час';
-		}
-		if (($str_hours > 1) && ($str_hours < 5) )
-		{
-			return 'часа';
-		}
-
-		return 'часов';
-	}   
-	
 	public function getDesc() {
 		$text = nl2br( $this->desc);
 		$text = $this->link_it($text);
@@ -262,49 +260,7 @@ class Issue extends MembersInstance
     	$text = preg_replace("/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is", "$1$2<a href=\"$3\" >$3</a>", $text);
     	return($text);
 	}
-	public function sumHoursActiveIssues()
-	{
-		$activeList = array();
-		  	foreach (lpm_get_issues_list() as $issue) 
-		  	{
-		  		if (!$issue->isCompleted())
-		  		$activeList[] = $issue;
-		  		$activeHours = array();
-		  		foreach ($activeList as $value) 
-		  		{
-		  			if ($value->getNormHours() > 0) 
-		  			$activeHours[]=$value->getNormHours();
-		  		}
-		  	}
-		  	if($activeHours !== null)
-		  	{
-		  		$sumHours = array_sum($activeHours);
-		  		return $sumHours;
-		  	}
-		  	else
-			{
-				return $sumHours=0;
-			}
-	}
-	public function sumHoursAllIssues()
-	{
-		$hours = array(); 
-		  	foreach (lpm_get_issues_list() as $issue)
-		  	{ 
-		  	if ($issue->getNormHours() > 0) 
-		  		$hours[]=$issue->getNormHours();
-		  	}
-		if($hours !== null)
-		{
-			$sumHours = array_sum($hours);
-			return $sumHours;
-		}
-		else
-		{
-			return $sumHours=0;
-		}
-	}
-
+	
 	public function isCompleted() {
 		return $this->status == self::STATUS_COMPLETED;
 	} 
@@ -373,6 +329,6 @@ class Issue extends MembersInstance
 		if ($this->_members === false) 
 			throw new Exception( 'Ошибка при загрузке списка исполнителей задачи' );
 		return true;
-	}		
+	}
 }
 ?>
