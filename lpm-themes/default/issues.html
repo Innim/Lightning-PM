@@ -37,7 +37,7 @@
                <input name="memberId" type="hidden" value="<?=$member->getID();?>"/>
                <?endforeach;?>
 			</td>
-			<td><?=$issue->getShortDesc();?></td>
+			<td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
 			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
 			<td> 	
 			 <input type="hidden" name="issueId" value="<?=$issue->id;?>"/>
