@@ -1,4 +1,4 @@
-﻿ALTER TABLE  `lpm_issue_counters` ADD  `imgsCount` INT( 11 ) NOT NULL DEFAULT  '0' COMMENT  'количество картинок, прикрепленных к задаче' AFTER `commentsCount`;
+ALTER TABLE  `lpm_issue_counters` ADD  `imgsCount` INT( 11 ) NOT NULL DEFAULT  '0' COMMENT  'количество картинок, прикрепленных к задаче' AFTER `commentsCount`;
 INSERT INTO `lpm_issue_counters` (issueId,imgsCount) SELECT `is`.`id`, (select count(*) from `lpm_images` as `i` where i.itemId = is.id) as `count` FROM `lpm_issues` as `is` WHERE `deleted` = 0 on duplicate key update `imgsCount` = VALUES(`imgsCount`);
 
 # 2014.10.10
@@ -42,3 +42,14 @@ ALTER TABLE `lpm_images` ADD `deleted` TINYINT(1) NOT NULL DEFAULT '0' ;
 
 ## 2014.11.21
 ALTER TABLE `lpm_issues` ADD `hours` int(11) NOT NULL AFTER `name`;
+
+#### Таблица для воостановления пароля
+CREATE TABLE IF NOT EXISTS `lpm_recovery_emails` (
+  `id` bigint(19) unsigned zerofill NOT NULL auto_increment,
+  `userId` bigint(19) NOT NULL,
+  `recoveryKey` varchar(255) NOT NULL,
+  `expDate` datetime NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY (`userId`)
+
+)

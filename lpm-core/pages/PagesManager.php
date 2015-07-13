@@ -24,11 +24,12 @@ class PagesManager
 		} else {
 			$this->_defaultPage = new AuthPage();
 			array_push( $this->_pages, new ProjectsPage() );
+                        array_push( $this->_pages, new PassRecoveryPage() );
 		}
 		
 		array_push(
 			$this->_pages,
-			$this->_defaultPage,
+			$this->_defaultPage,                        
 			new ProjectPage(),
 			new UsersPage(),
 			new WorkStudyPage(),
