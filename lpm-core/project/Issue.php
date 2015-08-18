@@ -323,6 +323,22 @@ class Issue extends MembersInstance
 		if ($this->_members === false) 
 			throw new Exception( 'Ошибка при загрузке списка исполнителей задачи' );
 		return true;
-	}		
+	}
+
+	public function getVideoLinks()
+	{
+		preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"/", $this->getDesc() , $videoTubeAll);
+        preg_match_all("/(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $videoDprlAll);
+		$videoTube = array();
+        $videoDprl = array();
+        foreach ($videoTubeAll[1] as $value) {
+        	$videoTube[] = "http://www.youtube.com/embed/".$value;
+        }
+        foreach ($videoDprlAll[1] as $value) {
+        	$videoDprl[] = "http://d.pr/v/".$value."+";
+        }
+        return compact( 'videoTube', 'videoDprl' );
+	}
+
 }
 ?>

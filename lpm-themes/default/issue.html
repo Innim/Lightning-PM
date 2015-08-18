@@ -51,6 +51,24 @@
             <p class="value"><?=$issue->getDesc();?></p>
         </li>
         <li>
+            <ul class="video-line">
+                <?foreach ($issue->getVideoLinks()['videoTube'] as $video):?>
+                    <li>
+                    <object  width="480" height="320" class="video ytb"
+                        data="<?=$video?>">
+                    </object >
+                    </li>
+                <?endforeach;?>
+                <?foreach ($issue->getVideoLinks()['videoDprl'] as $video):?>
+                    <li>
+                    <video width="480" height="320" controls preload class="video dplr">
+                        <source src="<?=$video?>">
+                    </video>
+                    </li>
+                <?endforeach;?>                       
+            </ul>
+        </li>
+        <li>
             <ul class="images-line">
                 <?foreach($issue->getImages() as $img):?>
                 <li>

@@ -492,6 +492,18 @@ img.user-avatar.middle {
     width : 64px;
     height: 64px;
 }
+/* линия видео */
+ul.video-line {
+	list-style: none;
+	padding: 0;
+	margin: 10px auto;
+	text-align: center;
+}
+
+ul.video-line > li > *{
+background: black;
+border: black solid 10px;
+}
 
 /* линия изображения */
 ul.images-line {
