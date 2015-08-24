@@ -47,8 +47,9 @@ class PassRecoveryPage extends BasePage{
             $key = $this->getAddParam(0);
             $userId = $this->getAddParam(1);            
             
-            if (!empty($key)&& !empty($userId)) {               
-               if($this->checkUrlKey($key,urldecode(base64_decode($userId)))){                   
+            if (!empty($key)&& !empty($userId)) {
+                $userId = base64_decode(urldecode($userId));               
+               if($this->checkUrlKey($key,$userId)){                   
                 $this->_userId = $userId;
                 $this->_recoveryKey = $key;                
                 $this->_show = 'changePassForm';
@@ -105,7 +106,7 @@ class PassRecoveryPage extends BasePage{
     }
     
     private function updatePass($newPass, $userId, $key){
-        if($this->checkUrlKey($key, urldecode(base64_decode($userId)))){
+        if($this->checkUrlKey($key, $userId)){
             $salt = User::blowfishSalt();
             $sql = "UPDATE `%s` SET ".
                    "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
