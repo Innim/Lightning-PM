@@ -15,6 +15,9 @@
 			<p class="links-line">
 				<!-- <a href="#">Восстановление пароля</a> -->
 				<a href="javascript:showRegistration();">Регистрация</a>
+                                &nbsp&nbsp&nbsp
+                                <a href="pass-recovery">Забыли пароль?</a>
+                                <!--<a href="javascript:showRecPass();">Забыли пароль?</a>-->
 			</p>			
 		</div>		
 	</form>
@@ -43,3 +46,19 @@
 		</div>		
 	</form>
 </article>
+
+<!--<article id="recPassForm" class="container">
+    <h3>Восстановление пароля</h3>
+    <div class="validateError"><? lpm_print_errors(); ?></div>
+    <form method="post">
+        <input placeholder="Email" type="email" name="remail" required="required" value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>" />        
+        <div>
+            <p class="enter-line">
+                <button type="submit">Восстановить</button>
+            </p>
+            <p class="links-line">
+                <a href="javascript:showAuth();">Назад</a>
+            </p>	
+        </div>
+    </form>
+</article>-->
