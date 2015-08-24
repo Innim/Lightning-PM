@@ -50,34 +50,37 @@
         <li class="desc">        
             <p class="value"><?=$issue->getDesc();?></p>
         </li>
-        <li>
-            <ul class="video-line">
-                <?foreach ($issue->getVideoLinks()['videoTube'] as $video):?>
-                    <li>
-                    <object  width="480" height="320" class="video ytb"
-                        data="<?=$video?>">
-                    </object >
-                    </li>
-                <?endforeach;?>
-                <?foreach ($issue->getVideoLinks()['videoDprl'] as $video):?>
-                    <li>
-                    <video width="480" height="320" controls preload class="video dplr">
-                        <source src="<?=$video?>">
-                    </video>
-                    </li>
-                <?endforeach;?>                       
-            </ul>
-        </li>
-        <li>
-            <ul class="images-line">
-                <?foreach($issue->getImages() as $img):?>
-                <li>
-                    <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
-                    <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
-                </li>
-                <?endforeach;?>
-            </ul>
-        </li>
+        <?php if ( ($video = $issue->getVideoLinks()) && !empty( $video[0][0] ) ): ?>
+            <li>
+                <ul class="video-line">
+                    <?php foreach ( $video[0] as $key => $value ): ?>
+                        <li>
+                            <?php if ( empty($video[1][$key]) ): ?>
+                                <video width="480" height="320" controls preload class="video dplr">
+                                    <source src="<?php echo $value ?>">
+                                </video>
+                            <?php else: ?>
+                                <object  width="480" height="320" class="video ytb"
+                                    data="<?php echo $value ?>">
+                                </object >
+                            <?php endif ?>
+                        </li>
+                    <?php endforeach ?>
+                </ul>
+            </li>            
+        <?php endif ?>
+        <?php if ( $picture = $issue->getImages() ): ?>
+            <li>
+                <ul class="images-line">
+                    <?php foreach($picture as $img): ?>
+                        <li>
+                            <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
+                            <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
+                        </li>
+                    <?endforeach;?>
+                </ul>
+            </li>
+        <?php endif ?>
     </ol>
     <p class="buttons-bar <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>

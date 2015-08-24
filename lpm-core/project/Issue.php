@@ -327,18 +327,12 @@ class Issue extends MembersInstance
 
 	public function getVideoLinks()
 	{
-		preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"/", $this->getDesc() , $videoTubeAll);
-        preg_match_all("/(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $videoDprlAll);
-		$videoTube = array();
-        $videoDprl = array();
-        foreach ($videoTubeAll[1] as $value) {
-        	$videoTube[] = "http://www.youtube.com/embed/".$value;
-        }
-        foreach ($videoDprlAll[1] as $value) {
-        	$videoDprl[] = "http://d.pr/v/".$value."+";
-        }
-        return compact( 'videoTube', 'videoDprl' );
+		preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
+		foreach ($video[0] as $key => &$value)
+		{
+			$value = ( empty($video[2][$key]) ) ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+";
+		}
+		return $video;
 	}
-
 }
 ?>
