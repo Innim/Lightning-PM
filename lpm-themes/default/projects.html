@@ -14,14 +14,18 @@
 		</thead>
 		<tbody>-->
 		<ul class="projects-list">
-			<? foreach (lpm_get_projects_list() as $project) {?>
+			<? foreach (lpm_get_projects_list( false ) as $project) {?>
 			<!--<tr>
 				<td>-->
 				<li>
-					<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
+					<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>						
 				<!--</td>
 				<td>-->
 					<p class="project-desc"><?=$project->getDesc();?></p>
+						<? if (lpm_is_moderator()): ?>
+							<input type="hidden" name="projectId" value="<?=$project->id;?>" />
+					    	<a href="#" class="archive btn" onclick="setIsArchive(event);">В архив</a>
+      					<? endif; ?>					
 				</li>
 				<!--</td>
 			</tr>-->			

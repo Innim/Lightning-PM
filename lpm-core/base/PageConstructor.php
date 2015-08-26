@@ -25,10 +25,14 @@ class PageConstructor
 		return LightningEngine::getInstance()->getCurrentPage()->getBaseUrl();
 	}
 	
-	public static function getProjectsList() {
-		return Project::getAvailList();
+	public static function getProjectsList( $bool ) {
+		return Project::getAvailList( $bool );
 	}
-	
+
+	public static function switchIsArchive() {
+		return Project::switchIsArchive();
+	}
+
 	public static function getIssuesList() {
 		return Issue::getCurrentList();
 	}

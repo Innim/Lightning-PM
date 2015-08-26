@@ -714,7 +714,13 @@ ul.projects-list {
 	list-style: circle;
 }
 ul.projects-list > li {
+	position: relative;
 	margin: 2em 2em 2em 0;
+}
+ul.projects-list .btn{
+	position: absolute;
+	right: 0px;
+	font-size: smaller;
 }
 .projects-list ,project-name {
 	font-size: 1.1em;
@@ -724,6 +730,7 @@ ul.projects-list > li {
 	border: 1px dotted #666666;
 	background-color: #f0f0f0;
 	padding: 5px;
+	margin-bottom: 0px;
 }
 table tr.completed-issue {
 	background-color: #cccccc;

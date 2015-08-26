@@ -1,0 +1,15 @@
+<article id="projectsList">
+	<h1><?lpm_print_header();?></h1>
+		<ul class="projects-list">
+			<? foreach (lpm_get_projects_list( true ) as $project) :?>
+				<li>
+					<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
+					<p class="project-desc"><?=$project->getDesc();?></p>
+					<? if (lpm_is_moderator()): ?>
+						<input type="hidden" name="projectId" value="<?=$project->id;?>" />
+						<a href="#" class="develop btn" onclick="setIsArchive(event);">В разработку</a>
+					<? endif; ?>					
+				</li>
+			<?endforeach?>
+		</ul>
+</article>

@@ -8,29 +8,44 @@ class Project extends MembersInstance
 	public static $currentProject;
 	
 	private static $_availList = null;
+
+	private static $_isArchive = false;
 	
 	public static function loadList( $where ) {
 		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
 	}
 		
-	public static function getAvailList() {
+	public static function getAvailList( $isArchive ) {
 		if (self::$_availList == null ) {
 			if (LightningEngine::getInstance()->isAuth()) {				
 				$user = LightningEngine::getInstance()->getUser();
 				if (!$user->isModerator()) {
-					$sql = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
-					 					   "where `%2\$s`.`userId`       = '" . $user->userId   . "' " .
+					$sqlDevelop = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
+					 					   "where `%1\$s`.`isArchive` = 'false' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
+											 "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
+											 "and `%2\$s`.`instanceType` = '" . Project::ITYPE_PROJECT   . "' " .
+					"ORDER BY `%1\$s`.`lastUpdate` DESC";
+
+					$sqlArchive = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
+					 					   "where `%1\$s`.`isArchive` = 'true' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
 											 "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
 											 "and `%2\$s`.`instanceType` = '" . Project::ITYPE_PROJECT   . "' " .
 					"ORDER BY `%1\$s`.`lastUpdate` DESC";
 					
-					self::$_availList = StreamObject::loadObjList( self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS ), __CLASS__ );
-				} else self::$_availList = self::loadList( "1 ORDER BY `lastUpdate` DESC" );
+					self::$_availList['develop'] = StreamObject::loadObjList( self::getDB(), array( $sqlDevelop, LPMTables::PROJECTS, LPMTables::MEMBERS ), __CLASS__ );
+					self::$_availList['archive'] = StreamObject::loadObjList( self::getDB(), array( $sqlArchive, LPMTables::PROJECTS, LPMTables::MEMBERS ), __CLASS__ );
+				}
+				else
+				{
+					self::$_availList['develop'] = self::loadList( "`isArchive`='" . false . "' ORDER BY `%1\$s`.`lastUpdate` DESC" );
+					self::$_availList['archive'] = self::loadList( "`isArchive`='" . true . "' ORDER BY `%1\$s`.`lastUpdate` DESC" );
+				}
 			} else self::$_availList = array();
 		}
 		
-		return self::$_availList;
+		return ( $isArchive ) ? self::$_availList['archive'] : self::$_availList['develop'];
 	}
+
 
 	public static function updateIssuesCount( $projectId ) {
 		$db = LPMGlobals::getInstance()->getDBConnect();
@@ -107,5 +122,13 @@ class Project extends MembersInstance
 		if (!$this->_members = Member::loadListByProject( $this->id )) return false;
 		return true;
 	}
+
+	// public function setIsArchive( $projectId , $value ){
+	// 	$db = LPMGlobals::getInstance()->getDBConnect();
+	// 	$sql = "UPDATE `%1\$s`".
+	// 			"SET `isArchive` = '" . $value . "'" .
+	// 			"WHERE `id` = '" . $projectId . "'";
+	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
+	// }
 }
 ?>

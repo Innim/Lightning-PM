@@ -1,12 +1,21 @@
 <?php
 class ProjectsPage extends BasePage
 {
+	const UID = 'projects';
+	const PUID_DEVL = 'develop';
+	const PUID_ARCH = 'projects-archive';
+
 	function  __construct()
 	{
-		parent::__construct( 'projects', 'Проекты', true );
+		parent::__construct( self::UID, 'Проекты', true , false, 'projects', 'Проекты' );
 		$this->_pattern = 'projects';
 		
 		array_push( $this->_js, 'projects' );
+
+		$this->_defaultPUID = self::PUID_DEVL;
+
+		$this->addSubPage( self::PUID_DEVL , 'В разработке' );
+		$this->addSubPage( self::PUID_ARCH , 'Архив' , 'projects-archive');
 	}
 	
 	public function init() {
