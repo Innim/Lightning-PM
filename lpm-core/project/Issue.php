@@ -325,14 +325,27 @@ class Issue extends MembersInstance
 		return true;
 	}
 
+	/**
+	 * 
+	 * @return array<{
+	 *  type:string = youtube|video,
+	 *  url:string
+	 * ]>
+	 */
 	public function getVideoLinks()
 	{
 		preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
-		foreach ($video[0] as $key => &$value)
+		$list = array();
+		foreach ($video[0] as $key => $value)
 		{
-			$value = ( empty($video[2][$key]) ) ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+";
+			//$value = ( empty($video[2][$key]) ) ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+";
+			$yt = empty($video[2][$key]);
+			$list[] = (object)array(
+				'type' => $yt ? 'youtube' : 'video',
+				'url'  => $yt ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+"
+			);
 		}
-		return $video;
+		return $list;
 	}
 }
 ?>

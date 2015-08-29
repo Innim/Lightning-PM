@@ -50,19 +50,19 @@
         <li class="desc">        
             <p class="value"><?=$issue->getDesc();?></p>
         </li>
-        <?php if ( ($video = $issue->getVideoLinks()) && !empty( $video[0][0] ) ): ?>
+        <?php if ($videoLinks = $issue->getVideoLinks()): ?>
             <li>
                 <ul class="video-line">
-                    <?php foreach ( $video[0] as $key => $value ): ?>
+                    <?php foreach ($videoLinks as $item): ?>
                         <li>
-                            <?php if ( empty($video[1][$key]) ): ?>
-                                <video width="480" height="320" controls preload class="video dplr">
-                                    <source src="<?php echo $value ?>">
-                                </video>
-                            <?php else: ?>
+                            <?php if ($item->type == 'youtube'): ?>
                                 <object  width="480" height="320" class="video ytb"
-                                    data="<?php echo $value ?>">
-                                </object >
+                                    data="<?php echo $item->url; ?>">
+                                </object>
+                            <?php else: ?>
+                                <video width="480" height="320" controls preload class="video dplr">
+                                    <source src="<?php echo $item->url; ?>">
+                                </video>
                             <?php endif ?>
                         </li>
                     <?php endforeach ?>
