@@ -50,16 +50,37 @@
         <li class="desc">        
             <p class="value"><?=$issue->getDesc();?></p>
         </li>
-        <li>
-            <ul class="images-line">
-                <?foreach($issue->getImages() as $img):?>
-                <li>
-                    <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
-                    <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
-                </li>
-                <?endforeach;?>
-            </ul>
-        </li>
+        <?php if ($videoLinks = $issue->getVideoLinks()): ?>
+            <li>
+                <ul class="video-line">
+                    <?php foreach ($videoLinks as $item): ?>
+                        <li>
+                            <?php if ($item->type == 'youtube'): ?>
+                                <object  width="480" height="320" class="video ytb"
+                                    data="<?php echo $item->url; ?>">
+                                </object>
+                            <?php else: ?>
+                                <video width="480" height="320" controls preload class="video dplr">
+                                    <source src="<?php echo $item->url; ?>">
+                                </video>
+                            <?php endif ?>
+                        </li>
+                    <?php endforeach ?>
+                </ul>
+            </li>            
+        <?php endif ?>
+        <?php if ( $picture = $issue->getImages() ): ?>
+            <li>
+                <ul class="images-line">
+                    <?php foreach($picture as $img): ?>
+                        <li>
+                            <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
+                            <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
+                        </li>
+                    <?endforeach;?>
+                </ul>
+            </li>
+        <?php endif ?>
     </ol>
     <p class="buttons-bar <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
