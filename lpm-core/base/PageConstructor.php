@@ -113,7 +113,11 @@ class PageConstructor
 		return $user->isModerator(); 
     }
 	
-	public static function isAuth() {
+        public static function getCurrentPage() {
+            return LightningEngine::getInstance()->getCurrentPage();
+        }
+
+        public static function isAuth() {
 		return LightningEngine::getInstance()->isAuth();
 	}
 		

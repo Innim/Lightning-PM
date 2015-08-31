@@ -1,4 +1,4 @@
-<?
+<?php
 class WorkStudyPage extends BasePage
 {
 	const UID             = 'timetable';
