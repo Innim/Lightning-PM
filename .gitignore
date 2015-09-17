@@ -10,3 +10,4 @@ info.php
 nbproject/
 .gitignore.orig
 classes.dump
+lpm-libs/test/
