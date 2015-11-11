@@ -14,11 +14,15 @@
 		</thead>
 		<tbody>-->
 		<ul class="projects-list">
+			<?php $userId = lpm_get_user()->getID();?>
 			<? foreach (lpm_get_projects_list( false ) as $project) {?>
 			<!--<tr>
 				<td>-->
 				<li>
-					<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>						
+					<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
+					<?php if (($countImportaint=lpm_get_count_importaint_for_project($userId, $project->id))>0): ?>
+						<div class="count-importaint"><?=$countImportaint;?></div>
+					<?php endif ?>								
 				<!--</td>
 				<td>-->
 					<p class="project-desc"><?=$project->getDesc();?></p>

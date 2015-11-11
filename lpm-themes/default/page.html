@@ -32,7 +32,7 @@
 		</header>
 		<nav id="mainMenu">
 			<? foreach (lpm_get_main_menu() as $link) {?>
-			<a href="<?=$link->href;?>"><?=$link->label;?></a>
+			<a href="<?=$link->href;?>"><?=$link->label.(($link->label==="Проекты" && lpm_is_auth()) ? " (".lpm_get_count_importaint_for_user(lpm_get_user()->getId()).")" : '');?></a>
 			<? }?>
 		</nav>
 		<nav id="subMenu">

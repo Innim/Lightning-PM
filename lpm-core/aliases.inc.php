@@ -305,4 +305,14 @@ function lpm_get_show() {
 function lpm_is_auth() {
 	return PageConstructor::isAuth();
 }
+
+function lpm_get_count_importaint_for_user($userId)
+{
+	return PageConstructor::getCountImportantIssues($userId);
+}
+
+function lpm_get_count_importaint_for_project( $userId , $projectId )
+{
+	return PageConstructor::getCountImportantIssues( $userId , $projectId );
+}
 ?>

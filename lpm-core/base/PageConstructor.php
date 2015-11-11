@@ -131,8 +131,13 @@ class PageConstructor
 	
 	public static function includePattern( $name ) {
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
+	}	
+
+	public function getCountImportantIssues($userId, $projectId = null)
+	{
+		return Issue::getCountImportantIssues($userId, $projectId);
 	}
-	
+
 	private static $_usingScripts = array( 
 		'libs/jquery-1.6.4.min',
 		'libs/jquery-ui-1.8.16.min',
