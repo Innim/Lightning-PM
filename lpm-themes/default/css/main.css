@@ -1051,8 +1051,6 @@ div.ftp
 	margin-left: 5px;
 	font-size: 0.8em;
 }
-
-}
 /*Меню скопировать в issue*/
 .popup-menu 
 {
@@ -1077,32 +1075,12 @@ div.ftp
 		inset 0px 0px 1px rgba(255,255,255,1);
 }
 .issue_copy{
-	/*background:#666666;
-	color:#fff;
-	border:solid #ccc 1px;
-	position: absolute;
-	margin-top:5px;
-	margin-left: -5px;
-	padding: 10px 5px 10px 5px;
-	display: none;*/
-	
-}
-/*.issues_copy{
-	background:#666666;
-	color:#fff;
-	border:solid #ccc 1px;
-	position: absolute;
-	margin-top:-20px;	
-	margin-left: 645px;	
-	padding: 10px 5px 10px 5px;
 
-}*/
-.issue_copy a/*,.issues_copy*/ a{	
-	margin: 15px;
-	color:#fff;
-	text-decoration: none;
 }
-.issue_copy a:hover, .issue_copy a.hover/*,  .issues_copy a:hover, .issues_copy a.hover*/{
+
+.issue_copy a{	
+}
+.issue_copy a:hover, .issue_copy a.hover{
     color: #999;
    
 }
