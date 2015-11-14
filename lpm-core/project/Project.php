@@ -92,6 +92,8 @@ class Project extends MembersInstance
 	public $uid;
 	public $name;
 	public $desc;
+
+	private $_importantIssuesCount = -1;
 	
 	function __construct() 
 	{
@@ -116,6 +118,22 @@ class Project extends MembersInstance
 		$text = nl2br( $this->desc);
 		$text = HTMLHelper::linkIt($text);
 		return $text;
+	}
+
+	/**
+	 * Возвращает количество важных задач, открытых для текугео пользователя по этому проекту
+	 * @return [type] [description]
+	 */
+	public function getImportantIssuesCount()
+	{
+	    if ($this->_importantIssuesCount === -1)
+	    {
+	    	$userId = LightningEngine::getInstance()->getUserId();
+	    	$this->_importantIssuesCount = empty($userId) ? 0 : 
+	    		Issue::getCountImportantIssues($userId, $this->id);
+	    }
+
+	    return $this->_importantIssuesCount;
 	}
 	
 	protected function loadMembers() {
