@@ -86,6 +86,32 @@ class Issue extends MembersInstance
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES );
 	} 
 	
+
+	public static function getCountImportantIssues($userId, $projectId = null)
+	{
+		$projectId = (int)$projectId;
+		// $sql = "SELECT COUNT(*) AS count FROM `%1\$s` WHERE `%1\$s`.`priority` >= 79
+		// 		AND `%1\$s`.`deleted` = 0 AND `%1\$s`.`status` = '". self::STATUS_IN_WORK."'";
+		$sql = "SELECT COUNT(*) as count FROM `%1\$s` INNER JOIN `%2\$s` ON `%1\$s`.`instanceId` = `%2\$s`.`id`";
+		if ($projectId === 0)
+			$sql .= 'INNER JOIN `%3$s` ON `%2$s`.`projectId` = `%3$s`.`id`';
+		$sql .=	"WHERE `%1\$s`.`userId`= '" . $userId . "' AND `%1\$s`.`instanceType`= 1 AND `%2\$s`.`priority` >= 79 
+				AND `%2\$s`.`deleted` = 0 AND `%2\$s`.`status` = '".
+				self::STATUS_IN_WORK."'";
+		if ( 0 !== $projectId )
+		{
+			$sql .= " AND `%2\$s`.`projectId` = '".$projectId."'";
+		}
+		else 
+		{
+			// Игнорируем архивные проекты
+			$sql .= " AND `%3\$s`.`isArchive` = 0";	
+		}
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		$res = $db->queryt( $sql, LPMTables::MEMBERS, LPMTables::ISSUES, LPMTables::PROJECTS );
+		return $res ? (int)$res->fetch_assoc()['count'] : 0;
+	}
+
 	const ITYPE_ISSUE      	= 1;
 	
 	const TYPE_DEVELOP     	= 0;

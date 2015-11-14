@@ -121,6 +121,12 @@ var srv = {
             this.s._( 'addMembers' );
         }
     },
+    projects : {
+        s          : new BaseService( 'ProjectsService' ),
+        setIsArchive : function ( $projectId , $value , onResult) {
+            this.s._( 'setIsArchive' );
+        }
+    },
     profile : {
         s          : new BaseService( 'ProfileService' ),
         emailPref : function (addIssue, editIssue, issueState, issueComment, onResult ) {

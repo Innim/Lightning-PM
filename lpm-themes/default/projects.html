@@ -14,14 +14,22 @@
 		</thead>
 		<tbody>-->
 		<ul class="projects-list">
-			<? foreach (lpm_get_projects_list() as $project) {?>
+			<?php $userId = lpm_get_user()->getID();?>
+			<? foreach (lpm_get_projects_list( false ) as $project) {?>
 			<!--<tr>
 				<td>-->
 				<li>
 					<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
+					<?php if (($countImportaint=$project->getImportantIssuesCount())>0): ?>
+						<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportaint;?></div>
+					<?php endif ?>								
 				<!--</td>
 				<td>-->
 					<p class="project-desc"><?=$project->getDesc();?></p>
+						<? if (lpm_is_moderator()): ?>
+							<input type="hidden" name="projectId" value="<?=$project->id;?>" />
+					    	<a href="javascript:;" class="archive btn" onclick="setIsArchive(event);">В архив</a>
+      					<? endif; ?>					
 				</li>
 				<!--</td>
 			</tr>-->			

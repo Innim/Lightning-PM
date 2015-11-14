@@ -694,3 +694,53 @@ Issue.getPriorityStr = function (priority) {
     else if (priority < 66) return 'нормальный';
     else return 'высокий';
 };
+
+Issue.getCommitMessage = function (num, title) {
+    return 'Issue #' + num + ': ' + title;
+}
+
+// Всплывающее окно скопировать commit сообщение
+
+jQuery(function($) {
+
+ $('.issues-list > tbody > tr > td:first-of-type a').mouseenter( 
+    function() 
+    {
+        $(this).next('.issue_copy.popup-menu').slideDown(180);
+    }
+ );
+
+$('.issues-list > tbody > tr > td:first-of-type').mouseleave( 
+    function() 
+    {
+        $('.issue_copy.popup-menu').slideUp(180);
+    }
+);
+
+ $('.issue_copy.popup-menu').hover(
+    function() 
+    {
+        $(this).show();        
+    },
+    function() 
+    {
+        $(this).slideUp(180);
+    }
+);
+
+$('.issues-list > tbody > tr > td:first-of-type a').mouseleave( 
+    function()
+    {
+        $('a.issue-commit-copy-link').zclip(
+        {
+            path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
+            copy : function()
+            { 
+                var a = $(this).parent().prev('a').text();
+                var b = $(this).parent().parent().next('td').next('td').children('a').children('.issue-name').text();
+                return Issue.getCommitMessage(a, b);
+            }
+        });
+    }
+);
+});   

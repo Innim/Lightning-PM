@@ -182,8 +182,8 @@ function lpm_get_user_menu() {
 /**
  * Возвращает список проектов
  */
-function lpm_get_projects_list() {
-	return PageConstructor::getProjectsList();
+function lpm_get_projects_list($achive=false) {
+	return PageConstructor::getProjectsList( $achive );
 }
 
 /**

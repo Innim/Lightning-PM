@@ -20,4 +20,10 @@
   'LPMTables' => 'const/LPMTables.php',
   'PagePrinter' => 'base/PagePrinter.php',
   'LPMBase' => 'const/LPMBase.php',
+  'LPMGlobals' => 'base/LPMGlobals.php',
+  'UserPref' => 'user/UserPref.php',
+  'Issue' => 'project/Issue.php',
+  'MembersInstance' => 'project/MembersInstance.php',
+  'Project' => 'project/Project.php',
+  'HTMLHelper' => 'helper/HTMLHelper.php',
 ); ?>

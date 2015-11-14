@@ -12,6 +12,7 @@ ALTER TABLE `lpm_issues` ADD `idInProject` INT(11) NOT NULL AFTER `projectId`;
 #### Заполнение поля idInProject
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS idInProject;
 CREATE PROCEDURE `idInProject`()
 BEGIN
 DECLARE id INT(11);
@@ -53,3 +54,8 @@ CREATE TABLE IF NOT EXISTS `lpm_recovery_emails` (
   UNIQUE KEY (`userId`)
 
 )
+
+-- 2014-10-13 07:07:37
+
+ALTER TABLE `lpm_projects` ADD `isArchive` BOOLEAN NOT NULL DEFAULT FALSE AFTER `issuesCount`;
+-- 2015-08-24 14:38:00

@@ -1,3 +1,4 @@
+
 /**
  * Список проектов и добавление нового
  */
@@ -49,4 +50,13 @@ function validateAddProj() {
 		$('#addIssueForm > div.validateError' ).show();
 		return false;
 	}
+};
+
+function setIsArchive( e ){
+	var parent = e.currentTarget.parentElement;
+	var projectId = $('input[name=projectId]', parent).attr('value');
+	var value = ($("a", parent).hasClass('archive btn')) ? true : false;
+	srv.projects.setIsArchive( projectId , value, reload = function(){
+		location.reload();
+	});
 };
