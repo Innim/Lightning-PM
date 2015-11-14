@@ -3,8 +3,14 @@
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
   <article id="issueInfo" class="container">
     <?$issue = lpm_get_issue();?>    
-    <h3><span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getNormHours();?></span>&nbsp;<?=$issue->getNormHoursLabel();?>)</span><?php endif;?>
-    </h3>  
+    <h3>
+        <span class="issue-id"><?=$issue->getIdInProject();?></span>.
+		<span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getNormHours();?></span>&nbsp;<?=$issue->getNormHoursLabel();?>)</span><?php endif;?>
+    </h3>     
+    <div class="issue_copy">
+
+        <a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
+    </div>
     <ol class="info-list <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
         <li>
             <span class="label">Статус</span>

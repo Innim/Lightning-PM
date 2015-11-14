@@ -12,6 +12,7 @@ ALTER TABLE `lpm_issues` ADD `idInProject` INT(11) NOT NULL AFTER `projectId`;
 #### Заполнение поля idInProject
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS idInProject;
 CREATE PROCEDURE `idInProject`()
 BEGIN
 DECLARE id INT(11);
