@@ -729,10 +729,16 @@ ul.projects-list > li {
 	position: relative;
 	margin: 2em 2em 2em 0;
 }
-ul.projects-list .btn{
+.btn{
 	position: absolute;
 	right: 0px;
 	font-size: smaller;
+}
+ul.projects-list .btn.archive,
+ul.projects-list .btn.develop
+{
+	margin-top: 5px;
+	font-size: 0.6em;
 }
 .projects-list ,project-name {
 	font-size: 1.1em;
@@ -916,4 +922,8 @@ table tr.completed-issue:hover td span.comments-count {
 	display: inline-block;
 	margin-left: 5px;
 	font-size: .7em;
+}
+p.no-items
+{
+	
 }
