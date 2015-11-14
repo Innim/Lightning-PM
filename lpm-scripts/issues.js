@@ -682,32 +682,32 @@ Issue.getCommitMessage = function (num, title) {
 
 jQuery(function($) {
 
- $('td:first-of-type a').mouseenter( 
+ $('.issues-list > tbody > tr > td:first-of-type a').mouseenter( 
     function() 
     {
-        $(this).next('.issue_copy').slideDown(200);
+        $(this).next('.issue_copy.popup-menu').slideDown(180);
     }
  );
 
-$('td:first-of-type').mouseleave( 
+$('.issues-list > tbody > tr > td:first-of-type').mouseleave( 
     function() 
     {
-        $('.issue_copy').slideUp(200);
+        $('.issue_copy.popup-menu').slideUp(180);
     }
 );
 
- $('.issue_copy').hover(
+ $('.issue_copy.popup-menu').hover(
     function() 
     {
         $(this).show();        
     },
     function() 
     {
-        $(this).slideUp(200);
+        $(this).slideUp(180);
     }
 );
 
-$('td:first-of-type a').mouseleave( 
+$('.issues-list > tbody > tr > td:first-of-type a').mouseleave( 
     function()
     {
         $('a.issue-commit-copy-link').zclip(

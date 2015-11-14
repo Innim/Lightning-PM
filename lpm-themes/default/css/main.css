@@ -767,6 +767,17 @@ table tr.completed-issue:hover td span.comments-count {
 #issueView .buttons-bar.active-issue button.restore-btn {
     display: none;
 }
+#issueView .container
+{
+	position: relative;
+}
+#issueView .issue_copy
+{
+	position: absolute;
+	right: 10px;
+	margin-top: -15px;
+	font-size: 0.6em
+}
 
 /* выбор пользователей */
 #usersChooser {
@@ -825,18 +836,40 @@ table tr.completed-issue:hover td span.comments-count {
 	margin-right: 5px;
 }
 /*Меню скопировать в issue*/
+.popup-menu 
+{
+	background:#ffffff;
+	color:#000;
+	font-size: 0.8em;
+	border:solid #ccc 1px;
+	border-radius: 5px;
+	position: absolute;
+	margin-top:5px;
+	margin-left: -5px;
+	padding: 5px 10px;
+	display: none;
+	-moz-box-shadow:
+		0px 1px 3px rgba(000,000,000,0.5),
+		inset 0px 0px 1px rgba(255,255,255,1);
+	-webkit-box-shadow:
+		0px 1px 3px rgba(000,000,000,0.5),
+		inset 0px 0px 1px rgba(255,255,255,1);
+	box-shadow:
+		0px 1px 3px rgba(000,000,000,0.5),
+		inset 0px 0px 1px rgba(255,255,255,1);
+}
 .issue_copy{
-	background:#666666;
+	/*background:#666666;
 	color:#fff;
 	border:solid #ccc 1px;
 	position: absolute;
 	margin-top:5px;
 	margin-left: -5px;
 	padding: 10px 5px 10px 5px;
-	display: none;
+	display: none;*/
 	
 }
-.issues_copy{
+/*.issues_copy{
 	background:#666666;
 	color:#fff;
 	border:solid #ccc 1px;
@@ -845,14 +878,14 @@ table tr.completed-issue:hover td span.comments-count {
 	margin-left: 645px;	
 	padding: 10px 5px 10px 5px;
 
-}
-.issue_copy a,.issues_copy a{	
+}*/
+.issue_copy a/*,.issues_copy*/ a{	
 	margin: 15px;
 	color:#fff;
 	text-decoration: none;
 }
-.issue_copy a:hover, .issue_copy a.hover,  .issues_copy a:hover, .issues_copy a.hover{
-    color: #ccc;
+.issue_copy a:hover, .issue_copy a.hover/*,  .issues_copy a:hover, .issues_copy a.hover*/{
+    color: #999;
    
 }
 .hidden{

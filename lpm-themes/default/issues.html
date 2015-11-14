@@ -14,7 +14,7 @@
 		<? foreach (lpm_get_issues_list() as $issue) {?>		
 		<tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">			
 			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
-             <div class="issue_copy">
+             <div class="issue_copy popup-menu">
              	   	<a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
              </div>
 			</td>
