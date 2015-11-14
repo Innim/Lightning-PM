@@ -87,7 +87,7 @@ class Issue extends MembersInstance
 	} 
 	
 
-	public static function getCountImportantIssues($userId , $projectId = null)
+	public static function getCountImportantIssues($userId, $projectId = null)
 	{
 		$projectId = (int)$projectId;
 		// $sql = "SELECT COUNT(*) AS count FROM `%1\$s` WHERE `%1\$s`.`priority` >= 79
@@ -102,7 +102,7 @@ class Issue extends MembersInstance
 		}
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$res = $db->queryt( $sql, LPMTables::MEMBERS, LPMTables::ISSUES );
-		return $res ? $res->fetch_assoc()['count'] : 0;
+		return $res ? (int)$res->fetch_assoc()['count'] : 0;
 	}
 
 	const ITYPE_ISSUE      	= 1;

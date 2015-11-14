@@ -5,6 +5,9 @@ class ProjectsPage extends BasePage
 	const PUID_DEVL = 'develop';
 	const PUID_ARCH = 'projects-archive';
 
+	// Количество важных задач, открытых для меня по всем проектам
+	private $_myIssuesCount = -1;
+
 	function  __construct()
 	{
 		parent::__construct( self::UID, 'Проекты', true , false, 'projects', 'Проекты' );
@@ -57,5 +60,20 @@ class ProjectsPage extends BasePage
 			}
 		}
 		return $this;
+	}
+
+	public function getLabel()
+	{
+	    $label = parent::getLabel();
+
+	    if ($this->_myIssuesCount === -1)
+	    {
+	    	$userId = LightningEngine::getInstance()->getUserId();
+	    	$this->_myIssuesCount = Issue::getCountImportantIssues($userId);
+	    }
+
+	    if ($this->_myIssuesCount > 0) $label .= ' (' . $this->_myIssuesCount . ')';
+
+	    return $label;
 	}
 }
