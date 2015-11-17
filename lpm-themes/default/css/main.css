@@ -831,7 +831,7 @@ table.issues-list tr.active-issue td button.restore-btn {
 table.issues-list tr td span.comments-count {
 	font-size    : 8.5pt;
 	font-weight  : bold;
-    padding      : 0px 5px 1px;
+    padding      : 2px 5px;
     border-radius: 4px;
 }
 table.issues-list tr.active-issue td span.comments-count {
