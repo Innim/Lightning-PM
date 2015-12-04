@@ -121,6 +121,24 @@ issuePage.setPriorityVal = function (value) {
     $( '#priorityVal' ).css( 'backgroundColor', issuePage.getPriorityColor( value - 1 ) );
 };
 
+issuePage.upPriorityVal = function() {
+    var value = $('#priority').val();
+    if (value<99)
+    {
+        value++;
+        issuePage.setPriorityVal(value);
+    };
+}
+
+issuePage.downPriorityVal = function() {
+    var value = $('#priority').val();
+    if (value>0)
+    {
+        value--;
+        issuePage.setPriorityVal(value);
+    };
+}
+
 issuePage.getPriorityColor = function (val) {
     var v = Math.floor( val % 25 / 25 * 255 );
     var r = 0;

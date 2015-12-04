@@ -11,7 +11,7 @@ class ProjectPage extends BasePage
 	 * @var Project
 	 */
 	private $_project;
-	
+
 	function __construct()
 	{
 		parent::__construct( self::UID, '', true, true );
@@ -21,10 +21,6 @@ class ProjectPage extends BasePage
 		
 		$this->_baseParamsCount = 2;
 		$this->_defaultPUID     = self::PUID_ISSUES;
-		
-		$this->addSubPage( self::PUID_ISSUES , 'Список задач' );
-		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
-						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
 	}
 	
 	public function init() {
@@ -45,6 +41,11 @@ class ProjectPage extends BasePage
 			if ($query->num_rows == 0) return false;
 		}
 		
+		$iCount = (int)$this->_project->getImportantIssuesCount();
+		$this->addSubPage( self::PUID_ISSUES , 'Список задач'.($iCount > 0 ? " (".$iCount.")" : ""));
+		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
+						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
+
 		Project::$currentProject = $this->_project;
 		
 		$this->_header = 'Проект &quot;' . $this->_project->name . '&quot;';// . $this->_title;
