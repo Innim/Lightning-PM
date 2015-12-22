@@ -21,6 +21,10 @@ class ProjectPage extends BasePage
 		
 		$this->_baseParamsCount = 2;
 		$this->_defaultPUID     = self::PUID_ISSUES;
+
+		$this->addSubPage( self::PUID_ISSUES , 'Список задач');
+		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
+						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
 	}
 	
 	public function init() {
@@ -42,10 +46,11 @@ class ProjectPage extends BasePage
 		}
 		
 		$iCount = (int)$this->_project->getImportantIssuesCount();
-		$this->addSubPage( self::PUID_ISSUES , 'Список задач'.($iCount > 0 ? " (".$iCount.")" : ""));
-		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
-						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
-		$this->initSubPage();
+		if ($iCount > 0)
+		{
+			$issuesSubPage = $this->getSubPage(self::PUID_ISSUES);
+			$issuesSubPage->link->label .= " (" . $iCount . ")";
+		}
 
 		Project::$currentProject = $this->_project;
 		
