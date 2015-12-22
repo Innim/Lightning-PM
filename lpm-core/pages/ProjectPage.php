@@ -45,6 +45,7 @@ class ProjectPage extends BasePage
 		$this->addSubPage( self::PUID_ISSUES , 'Список задач'.($iCount > 0 ? " (".$iCount.")" : ""));
 		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
 						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
+		$this->initSubPage();
 
 		Project::$currentProject = $this->_project;
 		
