@@ -228,12 +228,25 @@ class BasePage extends LPMBaseObject
 				);
 		
 		if ($title == '') $title = $label; 
+
+		$subpage = new SubPage( $uid, $link, $title, $pattern, $js );
 		
 		array_push( 
 			$this->_subPages,
-			new SubPage( $uid, $link, $title, $pattern, $js )
+			$subpage
 		);
-	}		
+
+		return $subpage;
+	}	
+
+	protected function getSubPage($uid)
+	{
+		foreach ($this->_subPages as $subpage) 
+		{
+			if ($subpage->uid == $uid) return $subpage;
+		}
+		return null;
+	}
 	
 	protected function addJS( $_ ) {
 		$arr = func_get_args();
