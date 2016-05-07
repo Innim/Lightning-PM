@@ -910,6 +910,24 @@ table tr.completed-issue:hover td span.comments-count {
 	font-size: 0.6em
 }
 
+/* Редактирование задачи */
+#issueForm .note
+{
+	width: 90%;
+	margin: 0 auto;
+	padding: 0 5px;
+	font-size: .6em;
+	color: #cccccc;
+}
+#issueForm .note:hover 
+{
+	color: #999999;
+}
+#issueForm .note pre 
+{
+	display: inline-block;
+}
+
 
 /* выбор пользователей */
 #usersChooser {

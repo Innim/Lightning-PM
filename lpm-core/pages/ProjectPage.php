@@ -172,6 +172,7 @@ class ProjectPage extends BasePage
 		} elseif ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
 			$engine->addError( 'Недопустимое значение приоритета' );
 		} else {
+			// TODO наверное нужен "белый список" тегов
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
 			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
