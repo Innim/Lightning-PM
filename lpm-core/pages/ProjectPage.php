@@ -308,7 +308,7 @@ class ProjectPage extends BasePage
 					if ($uploader->getLoadedCount() > 0 || $editMode) 
 						Issue::updateImgsCounter( $issueId, $uploader->getLoadedCount() );
 					
-					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $issueId );
+					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $idInProject );
 					
 					// отсылаем оповещения
 					if ($issue = Issue::load( $issueId )) {

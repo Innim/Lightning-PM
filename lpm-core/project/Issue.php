@@ -237,7 +237,7 @@ class Issue extends MembersInstance
 						ProjectPage::UID, 
 						$this->projectUID,
 						ProjectPage::PUID_ISSUE, 
-						$this->id
+						$this->idInProject//$this->id
 					);
 	}
 	
