@@ -107,7 +107,56 @@ class LPMImgUpload {
 			}
 			if (count( $this->_sizes ) == 0) $this->_sizes = null;
 		}
-		
+
+		// для вставленных через паст
+		if ( isset( $_POST['clipboardImg'] ) )
+		{
+			if ($saveInDB && !$prepare = $this->_db->preparet( 
+			     			'INSERT INTO `%s` (`url`, `userId`, `name`, `itemType`, `itemId`) ' .
+			              	"VALUES ( ?, '" . $userId . "', ?, " ."'" . $this->_itemType . "', '" . $this->_itemId . "')", 
+			     LPMTables::IMAGES)) 
+			{
+			    $this->error( 'Ошибка при записи в БД' );
+			}
+			else
+			{
+				$dirTempPath = LPMImg::getSrcImgPath('temp');
+				if (!is_dir( $dirTempPath ) && !mkdir( $dirTempPath ))
+				     return $this->error( 'Ошибка при создании директории' );
+
+				    foreach ($_POST['clipboardImg'] as $imgCode) {
+				    	$imgCode = str_replace('data:image/png;base64,', '', $imgCode);
+				    	$imgCode = str_replace(' ', '+', $imgCode);
+				    	$srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr( 10 ) . '.jpeg';
+				    	$result = file_put_contents($srcFileName, base64_decode($imgCode));
+				    }
+
+				    $tempFiles = scandir($dirTempPath);
+				    foreach ($tempFiles as $value) {
+				    	if ($value!=="." and $value!=="..") {
+				    		$fileSrc = $dirTempPath . DIRECTORY_SEPARATOR . $value;
+				    		if ( $img = $this->loadImageFromTemp($fileSrc) )
+				    		{
+				    			if ($saveInDB) $this->saveInDB( $img, $prepare );
+				    		} 
+				    		else
+				    		{
+				    			// была ошибка - прерываем все
+				    			break;
+				    		}
+				    	}
+				    }
+
+				    $tempFiles = scandir($dirTempPath);
+				    foreach ($tempFiles as $value) {
+				    	if ($value!=="." and $value!=="..") {
+				    		$fileSrc = $dirTempPath . DIRECTORY_SEPARATOR . $value;
+				    		unlink ($fileSrc);
+				    	}
+				    }
+			}
+		}
+
 	    if (isset( $_FILES[self::IMG_INPUT_NAME] )) {	
 	    	if ($saveInDB && 
 	    	   !$prepare = $this->_db->preparet( 
@@ -254,7 +303,58 @@ class LPMImgUpload {
         $this->_imgs[] = $img;
         return $img;
 	}
-	
+
+	private function loadImageFromTemp( $tempFileSrc )
+	{
+		$dir=$this->_dir;
+        $maxSize = LPMImgUpload::MAX_SIZE * 1024 * 1024;
+        $allowedTypes = array( 'jpg', 'jpeg', 'png' );
+
+        if (stat($tempFileSrc)['size']>$maxSize) {
+        	unlink ($tempFileSrc);
+        	return $this->error(
+        		sprintf("File's size don't be more then %d Mb", LPMImg::MAX_SIZE)
+        		);
+        }
+
+        $extension = pathinfo($tempFileSrc, PATHINFO_EXTENSION);
+        if (!in_array($extension, $allowedTypes)) {
+        	unlink ($tempFileSrc);
+        	return $this->error( 'Вы можете загружать только файлы типов ' . implode( ', ', $allowedTypes ) );
+        }
+
+        // проверяем, существует ли директория и пытаемся создать, если не существует
+        if ($dir != '') {
+        	$dirPath = LPMImg::getSrcImgPath( $dir );
+         	
+        	if (!is_dir( $dirPath ) && !mkdir( $dirPath ))
+                return $this->error( 'Ошибка при создании директории' );
+                
+	        if (substr( $dir, -1 ) != '/') $dir .= '/'; 
+        }
+
+        $ext = $allowedTypes[1];
+        do {
+            $srcFileName = $dir . $this->_prefix . BaseString::randomStr( 10 ) . '.' . $ext;
+            $srcFile = LPMImg::getSrcImgPath( $srcFileName );
+        } while (file_exists( $srcFile ));
+        rename(	$tempFileSrc , $srcFile );
+
+        $img = new LPMImg( $srcFileName );
+        $img->origName = "clb_paste_" . BaseString::randomStr( 10 ) . '.' . $ext;
+        
+        if ($this->_sizes != null) {
+        	foreach ($this->_sizes as $size) {
+        		$img->getCacheImg( $size[0], $size[1] );
+        	}
+        } else {
+        	$img->getCacheImg();
+        }
+        
+        $this->_imgs[] = $img;
+        return $img;
+	}
+
 	/**
 	 * Сохраняет информацию об изображении в базе данных
 	 * @param string $imgName
