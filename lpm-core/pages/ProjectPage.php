@@ -11,18 +11,18 @@ class ProjectPage extends BasePage
 	 * @var Project
 	 */
 	private $_project;
-	
+
 	function __construct()
 	{
 		parent::__construct( self::UID, '', true, true );
 		
-		array_push( $this->_js, 'project', 'issues' );
+		array_push( $this->_js,'libs/jquery.zclip', 'project', 'issues');
 		$this->_pattern = 'project';
 		
 		$this->_baseParamsCount = 2;
 		$this->_defaultPUID     = self::PUID_ISSUES;
-		
-		$this->addSubPage( self::PUID_ISSUES , 'Список задач' );
+
+		$this->addSubPage( self::PUID_ISSUES , 'Список задач');
 		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
 						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
 	}
@@ -45,6 +45,13 @@ class ProjectPage extends BasePage
 			if ($query->num_rows == 0) return false;
 		}
 		
+		$iCount = (int)$this->_project->getImportantIssuesCount();
+		if ($iCount > 0)
+		{
+			$issuesSubPage = $this->getSubPage(self::PUID_ISSUES);
+			$issuesSubPage->link->label .= " (" . $iCount . ")";
+		}
+
 		Project::$currentProject = $this->_project;
 		
 		$this->_header = 'Проект &quot;' . $this->_project->name . '&quot;';// . $this->_title;
@@ -301,7 +308,7 @@ class ProjectPage extends BasePage
 					if ($uploader->getLoadedCount() > 0 || $editMode) 
 						Issue::updateImgsCounter( $issueId, $uploader->getLoadedCount() );
 					
-					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $issueId );
+					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $idInProject );
 					
 					// отсылаем оповещения
 					if ($issue = Issue::load( $issueId )) {

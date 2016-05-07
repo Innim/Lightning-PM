@@ -109,6 +109,11 @@ class LightningEngine
 		}
 		return $this->_user;
 	}
+
+	public function getUserId()
+	{
+	    return $this->isAuth() ? $this->_auth->getUserId() : null;
+	}
 	
 	/**
 	 * @var LPMAuth

@@ -42,7 +42,10 @@
                     </li>
                 </ul>
             </div>
-	        
+	        <div id="priority-button-block">
+                <button id="upPriority" class="priorityButton" type="button" onclick="issuePage.upPriorityVal();">&#9650;</button>
+                <button id="downPriority" class="priorityButton" type="button" onclick="issuePage.downPriorityVal();">&#9660;</button>
+            </div>
         </li>
         <li>
             <input placeholder="Дата окончания*" type="text" class="date" name="completeDate" required="required" maxlength="255" value="<?=isset($_POST['completeDate'])?$_POST['completeDate']:lpm_get_default_date();?>"/>

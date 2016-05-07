@@ -400,6 +400,7 @@ form > ol > li p {
 #dropdown{
     display:inline-block;
     position:relative;
+    vertical-align: middle;
     cursor:default;
     width: 140px;
     padding: 3px;    
@@ -449,6 +450,31 @@ form > ol > li p {
     width: 100%;
     z-index: 1;
 }
+
+
+/*Кнопки повысить/понизить рейтинг задачи*/
+#priority-button-block
+{
+	position: relative;
+	left: 3px;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.priorityButton
+{
+	display: block;
+	padding: 0;
+	margin: 0;
+	min-height: 0;
+	min-width: 0;
+	font-size: 8pt;
+	color: #666;
+	background: none;
+	border: none;
+	outline-style: none;
+}
+/*========================*/
 
 .priority-val.circle {
 	display: inline-block;
@@ -729,10 +755,16 @@ ul.projects-list > li {
 	position: relative;
 	margin: 2em 2em 2em 0;
 }
-ul.projects-list .btn{
+.btn{
 	position: absolute;
 	right: 0px;
 	font-size: smaller;
+}
+ul.projects-list .btn.archive,
+ul.projects-list .btn.develop
+{
+	margin-top: 5px;
+	font-size: 0.6em;
 }
 .projects-list ,project-name {
 	font-size: 1.1em;
@@ -825,7 +857,7 @@ table.issues-list tr.active-issue td button.restore-btn {
 table.issues-list tr td span.comments-count {
 	font-size    : 8.5pt;
 	font-weight  : bold;
-    padding      : 0px 5px 1px;
+    padding      : 2px 5px;
     border-radius: 4px;
 }
 table.issues-list tr.active-issue td span.comments-count {
@@ -853,6 +885,17 @@ table tr.completed-issue:hover td span.comments-count {
 }
 #issueView .buttons-bar.active-issue button.restore-btn {
     display: none;
+}
+#issueView .container
+{
+	position: relative;
+}
+#issueView .issue_copy
+{
+	position: absolute;
+	right: 10px;
+	margin-top: -15px;
+	font-size: 0.6em
 }
 
 /* выбор пользователей */
@@ -916,4 +959,157 @@ table tr.completed-issue:hover td span.comments-count {
 	display: inline-block;
 	margin-left: 5px;
 	font-size: .7em;
+}
+p.no-items
+{
+	
+}}
+
+/* доступы */
+.access-list
+{
+	float: left;
+}
+
+.access-record
+{
+	float: left;
+	margin: 0 15px 15px 0;
+}
+
+.access-list li
+{
+	position: relative;
+	width: 300px;
+	border: 1px solid;
+	list-style: none;
+	display: inline-block;
+	padding: 10px 10px 20px;
+}
+
+.access-list li.base{
+	border-color: rgba(255, 0, 0, 0.3);
+	background: #FFECEC;
+}
+
+.access-list li.git{
+	border-color: rgba(0, 255, 0, 0.3);
+	background: #D6FFD6;
+}
+
+.access-list li.sql{
+	border-color: rgba(0, 0, 255, 0.3);
+	background: #E1E1FF;
+}
+
+.access-list li.ftp{
+	border-color: rgba(255, 137, 0, 0.3);
+	background: #FFF1E1;
+}
+
+.access-list .access-type
+{
+	position: relative;
+	display: table;
+	padding: 3px;
+	color: black;
+}
+
+div.base
+{
+	background: rgba(255, 0, 0, 0.3);
+}
+
+div.git
+{
+	background: rgba(0, 255, 0, 0.3);
+}
+
+div.sql
+{
+	background: rgba(0, 0, 255, 0.3);
+}
+
+div.ftp
+{
+	background: rgba(255, 137, 0, 0.3);
+}
+
+.access-item>*
+{
+	display: block;
+	margin-bottom: 5px;
+	overflow-x: hidden;
+}
+
+.access-item>*:hover
+{
+    overflow: visible;
+    overflow-wrap: break-word;
+}
+
+.access-item .description
+{
+	overflow-wrap: break-word;
+    overflow-y: auto;
+    max-height: 95px;
+    padding: 5px;
+}
+
+.access-controll
+{
+	position: absolute;
+    bottom: 0px;
+    right: 5px;
+    font-size: 70%;
+}
+
+/* Счетчик задач */
+.count-importaint
+{
+	background: #CCCCCC;
+	color: black;
+	display: inline-block;
+	-webkit-border-radius:4px;
+	-moz-border-radius:4px;
+	border-radius:4px;
+	padding: 3px 5px;
+	margin-left: 5px;
+	font-size: 0.8em;
+}
+/*Меню скопировать в issue*/
+.popup-menu 
+{
+	background:#ffffff;
+	color:#000;
+	font-size: 0.8em;
+	border:solid #ccc 1px;
+	border-radius: 5px;
+	position: absolute;
+	margin-top:5px;
+	margin-left: -5px;
+	padding: 5px 10px;
+	display: none;
+	-moz-box-shadow:
+		0px 1px 3px rgba(000,000,000,0.5),
+		inset 0px 0px 1px rgba(255,255,255,1);
+	-webkit-box-shadow:
+		0px 1px 3px rgba(000,000,000,0.5),
+		inset 0px 0px 1px rgba(255,255,255,1);
+	box-shadow:
+		0px 1px 3px rgba(000,000,000,0.5),
+		inset 0px 0px 1px rgba(255,255,255,1);
+}
+.issue_copy{
+
+}
+
+.issue_copy a{	
+}
+.issue_copy a:hover, .issue_copy a.hover{
+    color: #999;
+   
+}
+.hidden{
+	display: none;
 }

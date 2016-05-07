@@ -183,9 +183,3 @@ CREATE TABLE `lpm_work_study` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `workerId` (`workerId`,`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-
--- 2014-10-13 07:07:37
-
-ALTER TABLE `lpm_projects` ADD `isArchive` BOOLEAN NOT NULL DEFAULT FALSE AFTER `issuesCount`;
--- 2015-08-24 14:38:00

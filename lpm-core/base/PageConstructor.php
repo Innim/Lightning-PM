@@ -131,8 +131,8 @@ class PageConstructor
 	
 	public static function includePattern( $name ) {
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
-	}
-	
+	}	
+
 	private static $_usingScripts = array( 
 		'libs/jquery-1.6.4.min',
 		'libs/jquery-ui-1.8.16.min',
