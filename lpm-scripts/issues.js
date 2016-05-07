@@ -402,7 +402,9 @@ issuePage.setEditInfo = function () {
     }
     //$( "#issueForm form" ).value( $( "" ) );
     // описание
-    $( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).text() );
+    // пришлось убрать, потому что там уже обработанное описание - с ссылками и тп
+    // вообще видимо надо переделать это все
+    //$( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).html() );
     // изображения
     var imgs = $("#issueInfo li > .images-line > li");
     l = imgs.length;

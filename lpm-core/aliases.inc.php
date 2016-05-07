@@ -121,8 +121,8 @@ function lpm_print_issue_view() {
  * Распечатывает переменную из параметров POST.
  * Если переменной нет - то пустую строку
  */
-function lpm_print_post_var( $var ) {
-	return PagePrinter::postVar( $var );
+function lpm_print_post_var($var, $default = '') {
+	return PagePrinter::postVar($var, $default);
 }
 
 /**
