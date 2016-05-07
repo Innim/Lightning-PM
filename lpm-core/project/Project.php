@@ -59,9 +59,8 @@ class Project extends MembersInstance
 		return $db->queryt( $sql, LPMTables::PROJECTS, LPMTables::ISSUES );
 	}
 
-	public static function sumHoursActiveIssues()
+	public static function sumHoursActiveIssues($projectId)
 	{
-		$projectId = lpm_get_project()->id;
 		$db = LPMGlobals::getInstance()->getDBConnect();
         $sql ="SELECT SUM(`hours`) AS `sum` FROM `%s` WHERE `projectId` = ".$projectId." ".
                "AND `deleted` = 0 ".
@@ -106,6 +105,8 @@ class Project extends MembersInstance
 	public $desc;
 
 	private $_importantIssuesCount = -1;
+
+	private $_sumOpenedIssuesHours = -1;
 	
 	function __construct() 
 	{
@@ -146,6 +147,20 @@ class Project extends MembersInstance
 	    }
 
 	    return $this->_importantIssuesCount;
+	}
+
+	/**
+	 * Возвращает сумму часов открытых задач
+	 * @return int
+	 */
+	public function getSumOpenedIssuesHours()
+	{
+		if ($this->_sumOpenedIssuesHours === -1)
+	    {
+	    	$this->_sumOpenedIssuesHours = self::sumHoursActiveIssues($this->id);
+	    }
+
+	    return $this->_sumOpenedIssuesHours;
 	}
 	
 	protected function loadMembers() {
