@@ -85,7 +85,6 @@ class Issue extends MembersInstance
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES );
 	} 
-	
 
 	public static function getCountImportantIssues($userId, $projectId = null)
 	{
@@ -131,7 +130,7 @@ class Issue extends MembersInstance
 	public $projectUID    = '';
 	public $name          = '';
 	public $desc          = '';
-	public $hours		  = 0;
+	public $hours		  =  0;
 	public $type          = -1;
 	public $authorId      =  0;
 	public $createDate    =  0;
@@ -143,7 +142,7 @@ class Issue extends MembersInstance
 	public $commentsCount = 0;
 
 	private $_images = null;
-	
+
 	/**
 	 * 
 	 * @var User
@@ -248,32 +247,6 @@ class Issue extends MembersInstance
 	public function getNormHours(){
 		return $this->hours;
 	}
-
-	public function  getNormHoursLabel() {
-
-		if (($this->hours >= 11) && ($this->hours <= 19))
-		{
-          return 'часов';
-		}
-
-		$str_hours =substr((string)$this->hours, -1); // Находим последний символ в hours
-		$str_hours = (int)$str_hours;        // Переводим строку в число
-
-		if (($str_hours == 0) || ($str_hours >= 5))
-		{
-           return 'часов';
-		}
-		if ($str_hours == 1)
-		{
-			return 'час';
-		}
-		if (($str_hours > 1) && ($this->hours < 5))
-		{
-			return 'часа';
-		}
-
-		return 'часов';
-	}   
 	
 	public function getDesc() {
 		$text = nl2br( $this->desc);

@@ -21,13 +21,13 @@ class Project extends MembersInstance
 				$user = LightningEngine::getInstance()->getUser();
 				if (!$user->isModerator()) {
 					$sqlDevelop = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
-					 					   "where `%1\$s`.`isArchive` = 'false' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
+					 					   "where `%1\$s`.`isArchive` = '0' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
 											 "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
 											 "and `%2\$s`.`instanceType` = '" . Project::ITYPE_PROJECT   . "' " .
 					"ORDER BY `%1\$s`.`lastUpdate` DESC";
 
 					$sqlArchive = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
-					 					   "where `%1\$s`.`isArchive` = 'true' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
+					 					   "where `%1\$s`.`isArchive` = '1' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
 											 "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
 											 "and `%2\$s`.`instanceType` = '" . Project::ITYPE_PROJECT   . "' " .
 					"ORDER BY `%1\$s`.`lastUpdate` DESC";
@@ -37,8 +37,8 @@ class Project extends MembersInstance
 				}
 				else
 				{
-					self::$_availList['develop'] = self::loadList( "`isArchive`='" . false . "' ORDER BY `%1\$s`.`lastUpdate` DESC" );
-					self::$_availList['archive'] = self::loadList( "`isArchive`='" . true . "' ORDER BY `%1\$s`.`lastUpdate` DESC" );
+					self::$_availList['develop'] = self::loadList( "`isArchive`=0 ORDER BY `%1\$s`.`lastUpdate` DESC" );
+					self::$_availList['archive'] = self::loadList( "`isArchive`=1 ORDER BY `%1\$s`.`lastUpdate` DESC" );
 				}
 			} else self::$_availList = array();
 		}
@@ -57,6 +57,17 @@ class Project extends MembersInstance
 				"WHERE  `%1\$s`.`id` = '" . $projectId . "'";
 				
 		return $db->queryt( $sql, LPMTables::PROJECTS, LPMTables::ISSUES );
+	}
+
+	public static function sumHoursActiveIssues($projectId)
+	{
+		$db = LPMGlobals::getInstance()->getDBConnect();
+        $sql ="SELECT SUM(`hours`) AS `sum` FROM `%s` WHERE `projectId` = ".$projectId." ".
+               "AND `deleted` = 0 ".
+               "AND NOT `status` = ".Issue::STATUS_COMPLETED." "; 
+        $query = $db->queryt( $sql, LPMTables::ISSUES );
+        if (!$query || !($row = $query->fetch_assoc())) return false;
+       	return (int)$row['sum'];
 	}
 	
 	/**
@@ -94,6 +105,8 @@ class Project extends MembersInstance
 	public $desc;
 
 	private $_importantIssuesCount = -1;
+
+	private $_sumOpenedIssuesHours = -1;
 	
 	function __construct() 
 	{
@@ -134,6 +147,20 @@ class Project extends MembersInstance
 	    }
 
 	    return $this->_importantIssuesCount;
+	}
+
+	/**
+	 * Возвращает сумму часов открытых задач
+	 * @return int
+	 */
+	public function getSumOpenedIssuesHours()
+	{
+		if ($this->_sumOpenedIssuesHours === -1)
+	    {
+	    	$this->_sumOpenedIssuesHours = self::sumHoursActiveIssues($this->id);
+	    }
+
+	    return $this->_sumOpenedIssuesHours;
 	}
 	
 	protected function loadMembers() {

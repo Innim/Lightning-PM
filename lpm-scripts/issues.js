@@ -164,6 +164,23 @@ issuePage.getPriorityColor = function (val) {
 issuePage.updateStat = function () {    
     $( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() );
+
+    // Перезапрашиваем сумму часов
+    srv.project.getSumOpenedIssuesHours($("#projectView").data('projectId'), function (r) {
+        if (r.success)
+        {
+            if (r.count > 0)
+            {
+                $(".project-stat .project-opened-issue-hours").show();
+                $(".project-stat .issue-hours.value").text(r.count);
+                // TODO склонения лейбла?
+            }
+            else 
+            {
+                $(".project-stat .project-opened-issue-hours").hide();
+            }
+        }
+    });
 };
 
 issuePage.validateIssueForm = function () {

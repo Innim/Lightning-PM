@@ -635,6 +635,10 @@ article.comments ol.comments-list li .text {
 .project-stat .value {
     font-weight: bold;
 }
+.project-stat .project-opened-issue-hours
+{
+	font-size: smaller;
+}
 
 /* подменюшка панели */
 .container ul.panel-submenu {
