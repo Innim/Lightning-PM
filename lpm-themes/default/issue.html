@@ -3,8 +3,14 @@
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
   <article id="issueInfo" class="container">
     <?$issue = lpm_get_issue();?>    
-    <h3><span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours=$issue->getNormHours();?></span>&nbsp;<?=Issue::getNormHoursLabel($hours);?>)</span><?php endif;?>
-    </h3>  
+    <h3>
+        <span class="issue-id"><?=$issue->getIdInProject();?></span>.
+		<span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getNormHours();?></span>&nbsp;<?=$issue->getNormHoursLabel();?>)</span><?php endif;?>
+    </h3>     
+    <div class="issue_copy">
+
+        <a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
+    </div>
     <ol class="info-list <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
         <li>
             <span class="label">Статус</span>
@@ -50,20 +56,41 @@
         <li class="desc">        
             <p class="value"><?=$issue->getDesc();?></p>
         </li>
-        <li>
-            <ul class="images-line">
-                <?foreach($issue->getImages() as $img):?>
-                <li>
-                    <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
-                    <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
-                </li>
-                <?endforeach;?>
-            </ul>
-        </li>
+        <?php if ($videoLinks = $issue->getVideoLinks()): ?>
+            <li>
+                <ul class="video-line">
+                    <?php foreach ($videoLinks as $item): ?>
+                        <li>
+                            <?php if ($item->type == 'youtube'): ?>
+                                <object  width="480" height="320" class="video ytb"
+                                    data="<?php echo $item->url; ?>">
+                                </object>
+                            <?php else: ?>
+                                <video width="480" height="320" controls preload class="video dplr">
+                                    <source src="<?php echo $item->url; ?>">
+                                </video>
+                            <?php endif ?>
+                        </li>
+                    <?php endforeach ?>
+                </ul>
+            </li>            
+        <?php endif ?>
+        <?php if ( $picture = $issue->getImages() ): ?>
+            <li>
+                <ul class="images-line">
+                    <?php foreach($picture as $img): ?>
+                        <li>
+                            <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
+                            <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
+                        </li>
+                    <?endforeach;?>
+                </ul>
+            </li>
+        <?php endif ?>
     </ol>
     <p class="buttons-bar <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
-        <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>        
+        <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>      
         <button class="restore-btn" onclick="restoreIssue( event );">Открыть</button>
         <button class="complete-btn" onclick="completeIssue( event );">Завершить</button>
         <button onclick="issuePage.showEditForm();">Редактировать</button> 
@@ -78,6 +105,7 @@
     </p>
     <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
      <textarea name="commentText"></textarea>
+     <p class="comment-note">Можете использовать [b], [i], [u] для разметки текста</p>
      <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>
      <p class="buttons-bar">
         <button type="submit">Отправить</button>

@@ -4,6 +4,7 @@ $(document).ready(
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
+        document.addEventListener('paste', pasteClipboardImage);
     }
 );
 
@@ -120,6 +121,24 @@ issuePage.setPriorityVal = function (value) {
     $( '#priorityVal' ).html( valStr + ' (' + value + '%)' );
     $( '#priorityVal' ).css( 'backgroundColor', issuePage.getPriorityColor( value - 1 ) );
 };
+
+issuePage.upPriorityVal = function() {
+    var value = $('#priority').val();
+    if (value<99)
+    {
+        value++;
+        issuePage.setPriorityVal(value);
+    };
+}
+
+issuePage.downPriorityVal = function() {
+    var value = $('#priority').val();
+    if (value>0)
+    {
+        value--;
+        issuePage.setPriorityVal(value);
+    };
+}
 
 issuePage.getPriorityColor = function (val) {
     var v = Math.floor( val % 25 / 25 * 255 );
@@ -521,10 +540,16 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.showIssues4Me = function (e) {
+issuePage.showIssues4Me = function ()//e) 
+{
+    window.location.hash = 'only-my';
     issuePage.filterByMemberId( lpInfo.userId );
-    e.currentTarget.innerText = 'Показать все';
-    e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
+
+    $('#showIssues4MeLink').hide();
+    $('#showIssues4AllLink').show();
+    //$('#showIssues4MeLink').text('Показать все').click(issuePage.resetFilter);
+    //e.currentTarget.innerText = 'Показать все';
+    //e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
     return false;
 };
 
@@ -560,14 +585,21 @@ issuePage.filterByMemberId = function (userId) {
     }
 };
 
-issuePage.resetFilter = function (e) {
+issuePage.resetFilter = function ()//e) 
+{
     //$( '#issuesList > tbody > tr' ).show();
+    window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
     for (var i =0; i < rows.length; i++) {
         rows[i].show();
     }
-    e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
-    e.currentTarget.innerText = 'Показать только мои задачи';
+
+    $('#showIssues4AllLink').hide();
+    $('#showIssues4MeLink').show();
+    //$('#showIssues4MeLink').text('Показать только мои задачи').
+    //    click(issuePage.showIssues4Me);
+    //e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
+    //e.currentTarget.innerText = 'Показать только мои задачи';
     return false;
 };
 
@@ -680,4 +712,94 @@ Issue.getPriorityStr = function (priority) {
     if (priority < 33) return 'низкий';
     else if (priority < 66) return 'нормальный';
     else return 'высокий';
+};
+
+Issue.getCommitMessage = function (num, title) {
+    return 'Issue #' + num + ': ' + title;
+}
+
+// Всплывающее окно скопировать commit сообщение
+
+jQuery(function($) {
+
+ $('.issues-list > tbody > tr > td:first-of-type a').mouseenter( 
+    function() 
+    {
+        $(this).next('.issue_copy.popup-menu').slideDown(180);
+    }
+ );
+
+$('.issues-list > tbody > tr > td:first-of-type').mouseleave( 
+    function() 
+    {
+        $('.issue_copy.popup-menu').slideUp(180);
+    }
+);
+
+ $('.issue_copy.popup-menu').hover(
+    function() 
+    {
+        $(this).show();        
+    },
+    function() 
+    {
+        $(this).slideUp(180);
+    }
+);
+
+$('.issues-list > tbody > tr > td:first-of-type a').mouseleave( 
+    function()
+    {
+        $('a.issue-commit-copy-link').zclip(
+        {
+            path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
+            copy : function()
+            { 
+                var a = $(this).parent().prev('a').text();
+                var b = $(this).parent().parent().next('td').next('td').children('a').children('.issue-name').text();
+                return Issue.getCommitMessage(a, b);
+            }
+        });
+    }
+);
+});  
+
+function pasteClipboardImage( event ){
+    var clipboard = event.clipboardData;
+
+    if (clipboard && clipboard.items) {
+        // В буфере обмена может быть только один элемент
+        var item = clipboard.items[0];
+
+        if (item && item.type.indexOf('image/') > -1) {
+            // Получаем картинку в виде блоба
+            var blob = item.getAsFile();
+
+            if (blob) {
+                // Читаем файл и вставляем его в data:uri
+                var reader = new FileReader();
+
+                reader.onload = function(event) {
+                    var img = new Image( 150 , 100 );
+                    img.src = event.target.result;
+                    $('input[type=file]').last().parent().before("<li id='current'><a></a></li>");
+                    $('li#current a').append(img);
+                    $('li#current').append("<a class='remove-btn' onclick='removeClipboardImage()'>");
+                    var input = document.createElement( 'input' );
+                    input.type  = 'hidden';
+                    input.name  = 'clipboardImg[]';
+                    input.value = img.src;
+                    $('li#current').append(input);
+                    $('li#current').removeAttr("id");
+                }
+
+                reader.readAsDataURL(blob);
+            }
+        }
+    }   
+};
+
+function removeClipboardImage(){
+    var elem = event.target.parentNode;
+    elem.parentNode.removeChild(elem);
 };

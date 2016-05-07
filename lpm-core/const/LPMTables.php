@@ -65,5 +65,9 @@ class LPMTables {
 	 * @var string
 	 */
 	const USERS_PREF = 'users_pref';
+        /**
+         *  Записи о отправленных письмах для восстановления пароля
+         */
+        const RECOVERY_EMAILS = 'recovery_emails';
 }
 ?>

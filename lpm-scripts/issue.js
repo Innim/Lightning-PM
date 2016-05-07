@@ -22,3 +22,20 @@ function showMain() {
     window.location.hash = '';
     states.updateView();
 };
+
+// Меню скопировать комит сообщение 
+$(document).ready(
+    function ()
+    {
+        $('a.issue-commit-copy-link').zclip(
+        {
+            path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
+            copy : function()
+                   { 
+                        var a = $('.issue-id').text();
+                        var b = $('.issue-name').text();
+                        return Issue.getCommitMessage(a, b);             
+                   }
+        });
+    }
+);

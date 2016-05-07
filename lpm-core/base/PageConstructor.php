@@ -25,10 +25,14 @@ class PageConstructor
 		return LightningEngine::getInstance()->getCurrentPage()->getBaseUrl();
 	}
 	
-	public static function getProjectsList() {
-		return Project::getAvailList();
+	public static function getProjectsList( $bool ) {
+		return Project::getAvailList( $bool );
 	}
-	
+
+	public static function switchIsArchive() {
+		return Project::switchIsArchive();
+	}
+
 	public static function getIssuesList() {
 		return Issue::getCurrentList();
 	}
@@ -109,7 +113,11 @@ class PageConstructor
 		return $user->isModerator(); 
     }
 	
-	public static function isAuth() {
+        public static function getCurrentPage() {
+            return LightningEngine::getInstance()->getCurrentPage();
+        }
+
+        public static function isAuth() {
 		return LightningEngine::getInstance()->isAuth();
 	}
 		
@@ -123,8 +131,8 @@ class PageConstructor
 	
 	public static function includePattern( $name ) {
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
-	}
-	
+	}	
+
 	private static $_usingScripts = array( 
 		'libs/jquery-1.6.4.min',
 		'libs/jquery-ui-1.8.16.min',

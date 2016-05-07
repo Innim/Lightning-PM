@@ -121,6 +121,12 @@ var srv = {
             this.s._( 'addMembers' );
         }
     },
+    projects : {
+        s          : new BaseService( 'ProjectsService' ),
+        setIsArchive : function ( $projectId , $value , onResult) {
+            this.s._( 'setIsArchive' );
+        }
+    },
     profile : {
         s          : new BaseService( 'ProfileService' ),
         emailPref : function (addIssue, editIssue, issueState, issueComment, onResult ) {
@@ -156,23 +162,43 @@ var states = {
     },
     updateView : function () {
         var item;
+        this.current = null;
         for (var i = 0; i < this._list.length; i++) {
             item = this._list[i];
-            try {
-                if (window.location.hash == item.st) {
-                    if (item.sh) item.sh();
-                    item.el.show();
-                    current = item;
-                }
-                else {
-                    item.el.hide();
-                    $( '.info-message', item.el ).hide();
-                    //$( '.info-message', item.el ).hide();
-                }
-            } catch (e) {
-                // do something
+            if (window.location.hash == item.st)
+            {
+              this.activateState(item);
+              break;
             }
         }
+
+        if (!this.current)
+        {
+          if (this._list.length > 0) this.activateState(this._list[0]);
+          else this.deactivateAll();
+        }
+    },
+    deactivateAll : function ()
+    {
+        for (var i = 0, len = this._list.length; i < len; i++) 
+        {
+            var item = this._list[i];
+            if (item.el) item.el.hide();
+            $('.info-message', item.el).hide();
+            //$( '.info-message', item.el ).hide();
+        }
+    },
+    activateState : function (item)
+    {
+      try {
+        this.deactivateAll();
+
+        if (item.sh) item.sh();
+        if (item.el) item.el.show();
+        this.current = item;
+      } catch (e) {
+          // do something
+      }
     }
 };
 

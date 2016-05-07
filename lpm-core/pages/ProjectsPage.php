@@ -1,12 +1,24 @@
 <?php
 class ProjectsPage extends BasePage
 {
+	const UID = 'projects';
+	const PUID_DEVL = 'develop';
+	const PUID_ARCH = 'projects-archive';
+
+	// Количество важных задач, открытых для меня по всем проектам
+	private $_myIssuesCount = -1;
+
 	function  __construct()
 	{
-		parent::__construct( 'projects', 'Проекты', true );
+		parent::__construct( self::UID, 'Проекты', true , false, 'projects', 'Проекты' );
 		$this->_pattern = 'projects';
 		
 		array_push( $this->_js, 'projects' );
+
+		$this->_defaultPUID = self::PUID_DEVL;
+
+		$this->addSubPage( self::PUID_DEVL , 'В разработке' );
+		$this->addSubPage( self::PUID_ARCH , 'Архив' , 'projects-archive');
 	}
 	
 	public function init() {
@@ -48,5 +60,20 @@ class ProjectsPage extends BasePage
 			}
 		}
 		return $this;
+	}
+
+	public function getLabel()
+	{
+	    $label = parent::getLabel();
+
+	    if ($this->_myIssuesCount === -1)
+	    {
+	    	$userId = LightningEngine::getInstance()->getUserId();
+	    	$this->_myIssuesCount = Issue::getCountImportantIssues($userId);
+	    }
+
+	    if ($this->_myIssuesCount > 0) $label .= ' (' . $this->_myIssuesCount . ')';
+
+	    return $label;
 	}
 }

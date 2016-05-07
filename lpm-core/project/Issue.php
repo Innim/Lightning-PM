@@ -111,6 +111,32 @@ class Issue extends MembersInstance
 		return 'часов';
 	}
 	
+
+	public static function getCountImportantIssues($userId, $projectId = null)
+	{
+		$projectId = (int)$projectId;
+		// $sql = "SELECT COUNT(*) AS count FROM `%1\$s` WHERE `%1\$s`.`priority` >= 79
+		// 		AND `%1\$s`.`deleted` = 0 AND `%1\$s`.`status` = '". self::STATUS_IN_WORK."'";
+		$sql = "SELECT COUNT(*) as count FROM `%1\$s` INNER JOIN `%2\$s` ON `%1\$s`.`instanceId` = `%2\$s`.`id`";
+		if ($projectId === 0)
+			$sql .= 'INNER JOIN `%3$s` ON `%2$s`.`projectId` = `%3$s`.`id`';
+		$sql .=	"WHERE `%1\$s`.`userId`= '" . $userId . "' AND `%1\$s`.`instanceType`= 1 AND `%2\$s`.`priority` >= 79 
+				AND `%2\$s`.`deleted` = 0 AND `%2\$s`.`status` = '".
+				self::STATUS_IN_WORK."'";
+		if ( 0 !== $projectId )
+		{
+			$sql .= " AND `%2\$s`.`projectId` = '".$projectId."'";
+		}
+		else 
+		{
+			// Игнорируем архивные проекты
+			$sql .= " AND `%3\$s`.`isArchive` = 0";	
+		}
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		$res = $db->queryt( $sql, LPMTables::MEMBERS, LPMTables::ISSUES, LPMTables::PROJECTS );
+		return $res ? (int)$res->fetch_assoc()['count'] : 0;
+	}
+
 	const ITYPE_ISSUE      	= 1;
 	
 	const TYPE_DEVELOP     	= 0;
@@ -236,7 +262,7 @@ class Issue extends MembersInstance
 						ProjectPage::UID, 
 						$this->projectUID,
 						ProjectPage::PUID_ISSUE, 
-						$this->id
+						$this->idInProject//$this->id
 					);
 	}
 	
@@ -250,17 +276,10 @@ class Issue extends MembersInstance
 	
 	public function getDesc() {
 		$text = nl2br( $this->desc);
-		$text = $this->link_it($text);
+		$text = HTMLHelper::linkIt($text);
 		return $text;
-
 	}
 
-	private function link_it($text){
-    	$text = preg_replace("/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is", "$1$2<a href=\"http://$3\" >$3</a>", $text);
-    	$text = preg_replace("/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is", "$1$2<a href=\"$3\" >$3</a>", $text);
-    	return($text);
-	}
-	
 	public function isCompleted() {
 		return $this->status == self::STATUS_COMPLETED;
 	} 
@@ -329,6 +348,29 @@ class Issue extends MembersInstance
 		if ($this->_members === false) 
 			throw new Exception( 'Ошибка при загрузке списка исполнителей задачи' );
 		return true;
+	}
+
+	/**
+	 * 
+	 * @return array<{
+	 *  type:string = youtube|video,
+	 *  url:string
+	 * ]>
+	 */
+	public function getVideoLinks()
+	{
+		preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
+		$list = array();
+		foreach ($video[0] as $key => $value)
+		{
+			//$value = ( empty($video[2][$key]) ) ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+";
+			$yt = empty($video[2][$key]);
+			$list[] = (object)array(
+				'type' => $yt ? 'youtube' : 'video',
+				'url'  => $yt ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+"
+			);
+		}
+		return $list;
 	}
 }
 ?>
