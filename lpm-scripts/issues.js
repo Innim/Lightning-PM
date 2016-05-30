@@ -203,6 +203,15 @@ issuePage.validateIssueForm = function () {
     }
 };
 
+issuePage.insertTag = function(_obj_name,tag){//
+    var area = document.getElementsByName(_obj_name).item(0);// получаем текст из описания к задаче
+
+    if (document.getSelection)//текст выделен
+        //преобразовываем текст, и возвращаем уже с тэгом
+        area.value = area.value.substring (0,area.selectionStart) + '<'+tag+'>' + area.value.substring (area.selectionStart,area.selectionEnd) +
+            '</' +tag+ '>' + area.value.substring (area.selectionEnd,area.value.length);
+}
+
 function completeIssue( e ) {    
     var parent   = e.currentTarget.parentElement;
     //var fields   = cell.getElementsByTagName( 'input' );
