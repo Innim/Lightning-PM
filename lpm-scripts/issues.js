@@ -462,15 +462,6 @@ function removeImage(imageId)
     
 };
 
-<<<<<<< Updated upstream
-=======
-function insertTag(_text_,tagname)
-    {
-
-
-    }
-
->>>>>>> Stashed changes
 /**
  * 
  * @param {Issue} issue
