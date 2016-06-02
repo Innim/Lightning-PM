@@ -5,6 +5,11 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
+
+        $('#issueForm .tag a.hreftags').onclick(function (e) {
+            var a = e.currentTarget;
+            issuePage.insertTag(/*desc*/,a.innerText);
+        });
     }
 );
 
@@ -457,6 +462,15 @@ function removeImage(imageId)
     
 };
 
+<<<<<<< Updated upstream
+=======
+function insertTag(_text_,tagname)
+    {
+
+
+    }
+
+>>>>>>> Stashed changes
 /**
  * 
  * @param {Issue} issue
