@@ -6,9 +6,10 @@ $(document).ready(
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
 
-        $('#issueForm .tag a.hreftags').onclick(function (e) {
+        $('#issueForm .note a.Tag').click(function (e) {
             var a = e.currentTarget;
-            issuePage.insertTag(/*desc*/,a.innerText);
+            
+            issuePage.insertTag(a.innerText);
         });
     }
 );
@@ -208,14 +209,25 @@ issuePage.validateIssueForm = function () {
     }
 };
 
-issuePage.insertTag = function(_obj_name,tag){//
-    var area = document.getElementsByName(_obj_name).item(0);// получаем текст из описания к задаче
+issuePage.insertTag = function(tag){
+    var text = document.getElementsByName('desc').item(0);
+    
+        if (!$.isEmptyObject({text})){ 
+            // берем все, что до выделения
+            var desc = text.value.substring(0,text.selectionStart)+
+            // вставляем стартовый тег
+            '<'+tag+'>'+
+            // вставляем выделенный текст
+             text.value.substring(text.selectionStart, text.selectionEnd) +
+            // вставляем закрывающий тег
+            '</' +tag+ '>'+
+             // вставляем все, что после выделения
+            text.value.substring(text.selectionEnd,text.value.length);
 
-    if (document.getSelection)//текст выделен
-        //преобразовываем текст, и возвращаем уже с тэгом
-        area.value = area.value.substring (0,area.selectionStart) + '<'+tag+'>' + area.value.substring (area.selectionStart,area.selectionEnd) +
-            '</' +tag+ '>' + area.value.substring (area.selectionEnd,area.value.length);
-}
+            $('#issueForm textarea.desc').val(desc);
+        }
+};
+
 
 function completeIssue( e ) {    
     var parent   = e.currentTarget.parentElement;
