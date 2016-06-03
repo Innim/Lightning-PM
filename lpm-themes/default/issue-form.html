@@ -67,9 +67,9 @@
             <input placeholder="Нормочасы" type="text" name="hours"  maxlength="5" value="<?lpm_print_post_var('hours');?>"/>
         </li>
         <li>
-            <textarea placeholder="Описание" name="desc" maxlength="65535"><?lpm_print_post_var('desc', $issue->desc);?></textarea>
-            <div class="note">Вы можете использовать HTML теги в описании задачи, например: <a href="javascript:issuePage.insertTag('desc','b')">b</a>, 
-            <a href="javascript:issuePage.insertTag('desc','i')">i</a>, <a href="javascript:issuePage.insertTag('desc','u')">u</a>, <a href="javascript:issuePage.insertTag('desc','ul')">ul</a>, <a href="javascript:issuePage.insertTag('desc','blockqoute')">blockqoute</a>.</div>
+            <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?lpm_print_post_var('desc', $issue->desc);?></textarea>
+            <div class="note">Вы можете использовать HTML теги в описании задачи, например: <pre><a class="Tag" href="javascript:void(0)">b</pre></a>, 
+            <pre><a class="Tag" href="javascript:void(0)">i</a></pre>, <pre><a class="Tag" href="javascript:void(0)">u</a></pre>, <pre><a class="Tag" href="javascript:void(0)">ul</a></pre>, <pre><a class="Tag" href="javascript:void(0)">blockqoute</a></pre>.</div>
         </li>
         <li>
             <label>Изображения</label>
