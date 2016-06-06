@@ -9,7 +9,7 @@ $(document).ready(
         $('#issuesList .member-list a').click(function (e) {
             var a = e.currentTarget;
             
-             issuePage.showIssuesByUser($(a).data('memberid'));
+             issuePage.showIssuesByUser($(a).data('memberId'));
             
         });
 
@@ -607,9 +607,8 @@ issuePage.showIssues4Me = function ()//e)
 
 issuePage.showIssuesByUser = function (memberId)//e) 
 {
-    window.location.hash = 'by-user' + '_' +memberId;
+    window.location.hash = 'by-user' + memberId;
     issuePage.filterByMemberId( memberId );
-
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
     //$('#showIssues4MeLink').text('Показать все').click(issuePage.resetFilter);
@@ -618,31 +617,21 @@ issuePage.showIssuesByUser = function (memberId)//e)
     return false;
 };
 
-issuePage.filterByMemberId = function (userId) {
-    /*$( '#issuesList > tbody > tr' ).each(
-        function (index) {
-            var fields = $( "td > input[name=memberId][type=hidden]", this ); 
-            for (var i = 0; i < fields.size(); i++) {
-                if (fields.get( i ).value == userId) {
-                    $(this).show();
-                    return;
-                }
-            }
-            $(this).hide();
-        }
-    );*/
+issuePage.filterByMemberId = function (userId) 
+{
     var list = document.getElementById('issuesList'); 
     var rows = list.tBodies[0].children;
     var row,fields = null;
     var hide = true;
-    for (var i =0; i < rows.length; i++) {
+    
+    for (var i = 0; i < rows.length; i++) {
         row = rows[i];
         hide = true;
-        fields = row.getElementsByTagName('input');
+        fields = row.children[3].getElementsByTagName('a');        
         for (var j = 0; j < fields.length; j++) {
-           if (fields[j].name === 'memberId' && fields[j].value == userId) {
-                hide = false;
-                break;
+           if (fields[j].hasAttribute('data-member-id') && ($(fields[j]).attr("data-member-id") == userId)) {
+              hide = false;   
+              break;  
            }
         }
         if (hide) row.hide();
@@ -655,7 +644,7 @@ issuePage.resetFilter = function ()//e)
     //$( '#issuesList > tbody > tr' ).show();
     window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
-    for (var i =0; i < rows.length; i++) {
+    for (var i = 0; i < rows.length; i++) {
         rows[i].show();
     }
 
