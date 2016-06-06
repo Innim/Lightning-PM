@@ -6,6 +6,13 @@ $(document).ready(
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
 
+        $('#issuesList .member-list a').click(function (e) {
+            var a = e.currentTarget;
+            
+             issuePage.showIssuesByUser($(a).data('memberid'));
+            
+        });
+
         $('#issueForm .note a.Tag').click(function (e) {
             var a = e.currentTarget;
             
@@ -589,6 +596,19 @@ issuePage.showIssues4Me = function ()//e)
 {
     window.location.hash = 'only-my';
     issuePage.filterByMemberId( lpInfo.userId );
+
+    $('#showIssues4MeLink').hide();
+    $('#showIssues4AllLink').show();
+    //$('#showIssues4MeLink').text('Показать все').click(issuePage.resetFilter);
+    //e.currentTarget.innerText = 'Показать все';
+    //e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
+    return false;
+};
+
+issuePage.showIssuesByUser = function (memberId)//e) 
+{
+    window.location.hash = 'by-user' + '_' +memberId;
+    issuePage.filterByMemberId( memberId );
 
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
