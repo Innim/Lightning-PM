@@ -249,9 +249,12 @@ class Issue extends MembersInstance
 	}
 	
 	public function getDesc() {
-		$text = nl2br( $this->desc);
-		$text = HTMLHelper::linkIt($text);
-		return $text;
+		$desc = $this->desc;
+		$order = array("</li>"."\r\n"."<li>", "</li>"."\n"."<li>","</li>"." \n"."<li>","</li>"." \r\n"."<li>");
+		$desc = str_replace($order, '</li><li>', $desc);
+		$desc = nl2br($desc);
+		$desc = HTMLHelper::linkIt($desc);
+		return $desc;
 	}
 
 	public function isCompleted() {
