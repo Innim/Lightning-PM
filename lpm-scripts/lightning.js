@@ -154,23 +154,36 @@ var srv = {
 var states = {
     _list    : [],
     current  : null,
+    // Будет показывать заданный элемент при включении указанного стейта
+    // стейт может содержать параметры, при регистрации вместо каждого параметра надо указывать #
+    // сами параметры должны быть перечислены через : (двоеточие)
     addState : function (element, state, showHandler) {
+        var params = 0;
         if (typeof state == 'undefined' || state == '') state = '';
-        else state = '#' + state;
+        else
+        {
+          var arr = state.split(':');
+          params = arr.length - 1;
+          state = '#' + arr[0];
+        }
         
         for (var i = 0; i < this._list.length; i++) {
             if (this._list[i].st == state) return;
         }
-        this._list.push( {el : element, st : state, sh : showHandler } );
+        this._list.push( {el : element, st : state, sh : showHandler, p:params } );
     },
     updateView : function () {
         var item;
         this.current = null;
+        var hash = window.location.hash;
+        var hashArr = hash.split(':');
+        var p = hashArr.length - 1;
+        hash = hashArr.shift();
         for (var i = 0; i < this._list.length; i++) {
             item = this._list[i];
-            if (window.location.hash == item.st)
+            if (hash === item.st && item.p === p)
             {
-              this.activateState(item);
+              this.activateState(item, p > 0 ? hashArr : null);
               break;
             }
         }
@@ -191,12 +204,12 @@ var states = {
             //$( '.info-message', item.el ).hide();
         }
     },
-    activateState : function (item)
+    activateState : function (item, params)
     {
       try {
         this.deactivateAll();
 
-        if (item.sh) item.sh();
+        if (item.sh) item.sh.apply(item.sh, params);
         if (item.el) item.el.show();
         this.current = item;
       } catch (e) {

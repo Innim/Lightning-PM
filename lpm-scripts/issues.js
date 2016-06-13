@@ -600,7 +600,7 @@ issuePage.showIssues4Me = function ()
 
 issuePage.showIssuesByUser = function (memberId)
 {
-    window.location.hash = 'by-user' + memberId;
+    window.location.hash = 'by-user:' + memberId;
     issuePage.filterByMemberId( memberId );
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
