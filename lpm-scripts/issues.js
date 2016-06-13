@@ -7,15 +7,11 @@ $(document).ready(
         document.addEventListener('paste', pasteClipboardImage);
 
         $('#issuesList .member-list a').click(function (e) {
-            var a = e.currentTarget;
-            
-             issuePage.showIssuesByUser($(a).data('memberId'));
-            
+            issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
 
-        $('#issueForm .note a.Tag').click(function (e) {
+        $('#issueForm .note.tags-line a.tag').click(function (e) {
             var a = e.currentTarget;
-            
             issuePage.insertTag(a.innerText);
         });
     }
@@ -592,28 +588,22 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.showIssues4Me = function ()//e) 
+issuePage.showIssues4Me = function ()
 {
     window.location.hash = 'only-my';
     issuePage.filterByMemberId( lpInfo.userId );
 
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
-    //$('#showIssues4MeLink').text('Показать все').click(issuePage.resetFilter);
-    //e.currentTarget.innerText = 'Показать все';
-    //e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
     return false;
 };
 
-issuePage.showIssuesByUser = function (memberId)//e) 
+issuePage.showIssuesByUser = function (memberId)
 {
     window.location.hash = 'by-user' + memberId;
     issuePage.filterByMemberId( memberId );
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
-    //$('#showIssues4MeLink').text('Показать все').click(issuePage.resetFilter);
-    //e.currentTarget.innerText = 'Показать все';
-    //e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
     return false;
 };
 

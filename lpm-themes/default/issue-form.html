@@ -68,10 +68,8 @@
         </li>
         <li>
             <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?lpm_print_post_var('desc', $issue->desc);?></textarea>
-            <li>
-            <div class="note">Вы можете использовать HTML теги в описании задачи, например: <pre><a class="Tag" href="javascript:void(0)">b</pre></a>, 
-            <pre><a class="Tag" href="javascript:void(0)">i</a></pre>, <pre><a class="Tag" href="javascript:void(0)">u</a></pre>, <pre><a class="Tag" href="javascript:void(0)">ul</a></pre>, <pre><a class="Tag" href="javascript:void(0)">blockquote</a></pre>.</div>
-            </li>
+            <div class="note tags-line">Вы можете использовать HTML теги в описании задачи, например: <a class="tag" href="javascript:void(0)">b</a>, 
+            <a class="tag" href="javascript:void(0)">i</a>, <a class="tag" href="javascript:void(0)">u</a>, <a class="tag" href="javascript:void(0)">ul</a>&gt;<a class="tag" href="javascript:void(0)">li</a>, <a class="tag" href="javascript:void(0)">blockquote</a>.</div>
         </li>
         <li>
             <label>Изображения</label>
