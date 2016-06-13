@@ -154,8 +154,12 @@ class PageConstructor
 	 * @var PagesManager
 	 */
 	private $_pagesManager;
+
+	// Версионный параметр для сброса кэша 
+	private $_versionParam;
 	
 	function __construct( PagesManager $pagesManager ) {		
+		$this->_versionParam = mb_substr(md5(VERSION), 0, 7);
 		$this->_themeDir = THEMES_DIR . LPMOptions::getInstance()->currentTheme . '/';
 		
 		$this->_pagesManager = $pagesManager;
@@ -179,14 +183,14 @@ class PageConstructor
 	}
 	
 	public function getCSSLink( $file ) {
-		return $this->getThemeUrl() . 'css/' . $file . '.css';
+		return $this->getThemeUrl() . 'css/' . $file . '.css?' . $this->_versionParam;
 	}
 	
 	public function getJSLink( $file ) {
 		if ($file !== '' && $file{mb_strlen($file)-1} === '$') 
 			$file = mb_substr($file, 0, -1);
 		else
-			$file = $file . '.js';
+			$file = $file . '.js?' . $this->_versionParam;
 		return SITE_URL . SCRIPTS_DIR . $file;
 	}
 	

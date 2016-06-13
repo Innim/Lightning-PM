@@ -635,6 +635,10 @@ article.comments ol.comments-list li .text {
 .project-stat .value {
     font-weight: bold;
 }
+.project-stat .project-opened-issue-hours
+{
+	font-size: smaller;
+}
 
 /* подменюшка панели */
 .container ul.panel-submenu {
@@ -890,6 +894,14 @@ table tr.completed-issue:hover td span.comments-count {
 {
 	position: relative;
 }
+#issueView .info-list .desc blockquote
+{
+	background-color: #f9f9f9;
+	font-size: .9em;
+	padding: 10px;
+	border:none;
+	border-left: solid 2px #cdcdcd;
+}
 #issueView .issue_copy
 {
 	position: absolute;
@@ -897,6 +909,25 @@ table tr.completed-issue:hover td span.comments-count {
 	margin-top: -15px;
 	font-size: 0.6em
 }
+
+/* Редактирование задачи */
+#issueForm .note
+{
+	width: 90%;
+	margin: 0 auto;
+	padding: 0 5px;
+	font-size: .6em;
+	color: #cccccc;
+}
+#issueForm .note:hover 
+{
+	color: #999999;
+}
+#issueForm .note pre 
+{
+	display: inline-block;
+}
+
 
 /* выбор пользователей */
 #usersChooser {

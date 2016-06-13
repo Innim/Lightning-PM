@@ -89,10 +89,4 @@ define( 'THEMES_DIR', 'lpm-themes/' );
  * @var int
  */
 define( 'COPY_YEAR', 11 );
-
-/**
- * Версия приложения
- * @var string
- */
-define( 'VERSION', '0.3a.021' );
 ?>

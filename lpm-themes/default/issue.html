@@ -5,7 +5,7 @@
     <?$issue = lpm_get_issue();?>    
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-		<span class="issue-name"><?=$issue->getName();?></span><?php if ($issue->getNormHours() > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getNormHours();?></span>&nbsp;<?=$issue->getNormHoursLabel();?>)</span><?php endif;?>
+		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours;?></span>&nbsp;<?=DeclensionHelper::hours($hours);?>)</span><?php endif;?>
     </h3>     
     <div class="issue_copy">
 
@@ -90,7 +90,7 @@
     </ol>
     <p class="buttons-bar <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
-        <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>        
+        <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>      
         <button class="restore-btn" onclick="restoreIssue( event );">Открыть</button>
         <button class="complete-btn" onclick="completeIssue( event );">Завершить</button>
         <button onclick="issuePage.showEditForm();">Редактировать</button> 

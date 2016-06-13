@@ -119,7 +119,10 @@ var srv = {
         s          : new BaseService( 'ProjectService' ),
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
-        }
+        },
+        getSumOpenedIssuesHours : function ( projectId, onResult ) {
+            this.s._( 'getSumOpenedIssuesHours' );
+        },
     },
     projects : {
         s          : new BaseService( 'ProjectsService' ),

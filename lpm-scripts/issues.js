@@ -4,6 +4,7 @@ $(document).ready(
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
+        document.addEventListener('paste', pasteClipboardImage);
     }
 );
 
@@ -163,6 +164,23 @@ issuePage.getPriorityColor = function (val) {
 issuePage.updateStat = function () {    
     $( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() );
+
+    // Перезапрашиваем сумму часов
+    srv.project.getSumOpenedIssuesHours($("#projectView").data('projectId'), function (r) {
+        if (r.success)
+        {
+            if (r.count > 0)
+            {
+                $(".project-stat .project-opened-issue-hours").show();
+                $(".project-stat .issue-hours.value").text(r.count);
+                // TODO склонения лейбла?
+            }
+            else 
+            {
+                $(".project-stat .project-opened-issue-hours").hide();
+            }
+        }
+    });
 };
 
 issuePage.validateIssueForm = function () {
@@ -384,7 +402,9 @@ issuePage.setEditInfo = function () {
     }
     //$( "#issueForm form" ).value( $( "" ) );
     // описание
-    $( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).text() );
+    // пришлось убрать, потому что там уже обработанное описание - с ссылками и тп
+    // вообще видимо надо переделать это все
+    //$( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).html() );
     // изображения
     var imgs = $("#issueInfo li > .images-line > li");
     l = imgs.length;
@@ -761,4 +781,44 @@ $('.issues-list > tbody > tr > td:first-of-type a').mouseleave(
         });
     }
 );
-});   
+});  
+
+function pasteClipboardImage( event ){
+    var clipboard = event.clipboardData;
+
+    if (clipboard && clipboard.items) {
+        // В буфере обмена может быть только один элемент
+        var item = clipboard.items[0];
+
+        if (item && item.type.indexOf('image/') > -1) {
+            // Получаем картинку в виде блоба
+            var blob = item.getAsFile();
+
+            if (blob) {
+                // Читаем файл и вставляем его в data:uri
+                var reader = new FileReader();
+
+                reader.onload = function(event) {
+                    var img = new Image( 150 , 100 );
+                    img.src = event.target.result;
+                    $('input[type=file]').last().parent().before("<li id='current'><a></a></li>");
+                    $('li#current a').append(img);
+                    $('li#current').append("<a class='remove-btn' onclick='removeClipboardImage()'>");
+                    var input = document.createElement( 'input' );
+                    input.type  = 'hidden';
+                    input.name  = 'clipboardImg[]';
+                    input.value = img.src;
+                    $('li#current').append(input);
+                    $('li#current').removeAttr("id");
+                }
+
+                reader.readAsDataURL(blob);
+            }
+        }
+    }   
+};
+
+function removeClipboardImage(){
+    var elem = event.target.parentNode;
+    elem.parentNode.removeChild(elem);
+};

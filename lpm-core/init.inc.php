@@ -1,5 +1,6 @@
 <?
 require_once( dirname( __FILE__ ) . '/../lpm-config.inc.php' );
+require_once( dirname( __FILE__ ) . '/version.inc.php'        );
 require_once( dirname( __FILE__ ) . '/consts.inc.php'        );
 require_once( dirname( __FILE__ ) . '/aliases.inc.php'       );
 

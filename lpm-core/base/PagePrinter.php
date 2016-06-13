@@ -88,8 +88,8 @@ class PagePrinter {
 		LightningEngine::getInstance()->getCurrentPage()->printContent();
 	}
 	
-	public static function postVar( $var ) {
-		echo isset( $_POST[$var] ) ? $_POST[$var] : '';
+	public static function postVar($var, $default = '') {
+		echo isset( $_POST[$var] ) ? $_POST[$var] : $default;
 	}
 	
 	private static function jsScriptLink( $file ) {

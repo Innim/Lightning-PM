@@ -172,11 +172,12 @@ class ProjectPage extends BasePage
 		} elseif ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
 			$engine->addError( 'Недопустимое значение приоритета' );
 		} else {
+			// TODO наверное нужен "белый список" тегов
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
 			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
 			foreach ($_POST as $key => $value) {
-				if ($key != 'members')
+				if ($key != 'members' && $key != 'clipboardImg')
 				$_POST[$key] = $this->_db->real_escape_string( $value );
 			}
 			$_POST['type'] = (int)$_POST['type'];
@@ -308,7 +309,7 @@ class ProjectPage extends BasePage
 					if ($uploader->getLoadedCount() > 0 || $editMode) 
 						Issue::updateImgsCounter( $issueId, $uploader->getLoadedCount() );
 					
-					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $issueId );
+					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $idInProject );
 					
 					// отсылаем оповещения
 					if ($issue = Issue::load( $issueId )) {
