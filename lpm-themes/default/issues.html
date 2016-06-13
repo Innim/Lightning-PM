@@ -33,13 +33,10 @@
                  &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
                  <?endif;?>
 			</td>
-			<td>
+			<td class="member-list">
 			   <?foreach ($issue->getMembers() as $i => $member):?>
-			   <?=$i>0?', ':''?><?=$member->getLinkedName();?>
+			   <?=$i>0?', ':''?><a href="javascript:;" data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
 			   <?endforeach;?>
-			   <?foreach ($issue->getMembers() as $i => $member):?>
-               <input name="memberId" type="hidden" value="<?=$member->getID();?>"/>
-               <?endforeach;?>
 			</td>
 			<td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
 			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
