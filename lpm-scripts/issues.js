@@ -619,7 +619,7 @@ issuePage.filterByMemberId = function (userId)
         hide = true;
         fields = row.children[3].getElementsByTagName('a');        
         for (var j = 0; j < fields.length; j++) {
-           if (fields[j].hasAttribute('data-member-id') && ($(fields[j]).attr("data-member-id") == userId)) {
+           if (fields[j].getAttribute('data-member-id') == userId) {
               hide = false;   
               break;  
            }
