@@ -563,6 +563,32 @@ ul.images-list > li > a {
     left 	: 10px;
 	top 	: 0px;
 }
+.images-url a.remove-btn
+{	
+    position: absolute;
+    left: 300px;
+	top: 3px;
+}
+ul.images-url{
+	margin-top: 1%;
+}
+ul.images-url > li {
+	display: block;	
+	margin: 10px auto;
+	padding: 0px;
+	position: relative;
+}
+ul.images-url > li > input {
+	max-width: 300px;
+	margin-top: 5px;
+	margin-left: 0;
+	padding: 0;
+	text-align: center;
+}
+ul.images-url > li > a[name="imgUrl[]"] {
+	margin-left: 50px;
+	font-size: small; 
+}
 /* комментарии */
 article.comments {
 	width    : 90%;

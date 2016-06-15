@@ -176,10 +176,13 @@ class ProjectPage extends BasePage
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
 			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
+			//$_POST['urls'] = str_replace( '%', '%%', $_POST['urls'] );
+
 			foreach ($_POST as $key => $value) {
-				if ($key != 'members' && $key != 'clipboardImg')
-				$_POST[$key] = $this->_db->real_escape_string( $value );
+				if ($key != 'members' && $key != 'clipboardImg' && $key != 'urls')
+					$_POST[$key] = $this->_db->real_escape_string( $value );
 			}
+
 			$_POST['type'] = (int)$_POST['type'];
 			
 			$completeDate = $completeDateArr[3] . '-' . 

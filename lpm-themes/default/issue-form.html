@@ -76,6 +76,13 @@
             <ul class="images-list" >
 	        	<li><input type="file" name="images[]" onchange="imgUpload.onSelect(event,window.lpmOptions.issueImgsCount);" multiple/></li>
 	        </ul>
+            <ul class="images-url" >
+                <li class="imgUrlTempl" style="display:none">    
+                    <input name="urls[]" placeholder="Введите URL изображения" type="text" value=""/>
+                    <a class="remove-btn" href="javascript:;"></a>         
+                </li>
+                <a name="imgUrl[]" href="javascript:issues:addImagebyUrl();">Добавить изображение по URL</a>   
+            </ul>
         </li>
         <li>
 	        <input type="hidden" name="parentId"/>

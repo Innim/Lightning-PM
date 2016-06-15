@@ -414,10 +414,8 @@ issuePage.setEditInfo = function () {
     for (i = l - 1; i >= 0; i--) {
         //$('input[name=imgId]',imgs[i]).val() 
         imgLI = imgs[i].cloneNode( true );
-
         $(imgLI).append('<a href="javascript:;" class="remove-btn" onclick="removeImage(' + 
             $('input[name=imgId]', imgLI).val() + ')"></a>');
-
         $imgInput.append(imgLI);
         //imgInput.insertBefore(imgLI, imgInput.children[0]);
     };
@@ -444,8 +442,18 @@ function removeImage(imageId)
         if (val != '') val += ',';
         val += imageId;
         $('#issueForm form input[name=removedImages]').val(val);
-    } 
-    
+    }
+
+function addImagebyUrl() {
+    var img = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
+    var imgInput = $("#issueForm ul.images-url");
+    img.attr('class','imgUrl');  
+    //добавляем в контейнер
+    imgInput.append(img);
+    img.find("a").click(function (event) {
+        if (confirm('Вы действительно хотите удалить это изображение?'))      
+            img.remove();    
+    });
 };
 
 /**
@@ -791,7 +799,7 @@ function pasteClipboardImage( event ){
         var item = clipboard.items[0];
 
         if (item && item.type.indexOf('image/') > -1) {
-            // Получаем картинку в виде блоба
+            // Получаем картинку в виде блога
             var blob = item.getAsFile();
 
             if (blob) {
