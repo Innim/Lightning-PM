@@ -185,7 +185,54 @@ class LPMImgUpload {
 			    if ($this->isErrorsExist()) $this->removeImgs(); 
 	    	}	    
 	    }
-		/*}*/
+
+		//сохранение картинки по ссылке
+		if (isset( $_POST['urls']) && is_array($_POST['urls'])) {
+			if ($saveInDB && !$prepare = $this->_db->preparet( 
+			     			'INSERT INTO `%s` (`url`, `userId`, `name`, `itemType`, `itemId`) ' .
+			              	"VALUES ( ?, '" . $userId . "', ?, " ."'" . $this->_itemType . "', '" . $this->_itemId . "')", 
+			     LPMTables::IMAGES)) 
+			{
+			    $this->error( 'Ошибка при записи в БД' );
+			}
+
+			$dirTempPath = LPMImg::getSrcImgPath('temp');
+			if (!is_dir( $dirTempPath ) && !mkdir( $dirTempPath ))
+				return $this->error( 'Ошибка при создании директории' );
+			$srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr( 10 ) . '.png';
+			//перебираем все ссылки
+			foreach ($_POST['urls'] as $key => $value) {
+				//если ссылка не пустая
+				if (!empty($value)) {
+	  				//получаем из нее картинку и сохраняем ее
+	  				file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX);
+	  			}
+	  		}
+
+	  		$tempFiles = scandir($dirTempPath);
+				    foreach ($tempFiles as $value) {
+				    	if ($value!=="." and $value!=="..") {
+				    		$fileSrc = $dirTempPath . DIRECTORY_SEPARATOR . $value;
+				    		if ( $img = $this->loadImageFromUrl($fileSrc) )
+				    		{
+				    			if ($saveInDB) $this->saveInDB( $img, $prepare );
+				    		} 
+				    		else
+				    		{
+				    			// была ошибка - прерываем все
+				    			break;
+				    		}
+				    	}
+				    }
+
+				    $tempFiles = scandir($dirTempPath);
+				    foreach ($tempFiles as $value) {
+				    	if ($value!=="." and $value!=="..") {
+				    		$fileSrc = $dirTempPath . DIRECTORY_SEPARATOR . $value;
+				    		unlink ($fileSrc);
+				    	}
+				    }
+		}
 	}
 	
 	/**
@@ -202,7 +249,7 @@ class LPMImgUpload {
 	 * Удаляет загруженные фотографии и их кэши
 	 */
 	public function removeImgs() {
-		// удаляем файли и 
+		// удаляем файлы и 
 		// не забываем удалять из базы
 		$ids = array();
 		while ($img = array_shift( $this->_imgs )) {		
@@ -276,8 +323,7 @@ class LPMImgUpload {
                 return $this->error( 'Ошибка при создании директории' );
                 
 	            if (substr( $dir, -1 ) != '/') $dir .= '/';      
-        }            
-        
+        }                  
         // сохраняем исходный файл
         $ext = $fileType[1];
         do {
@@ -287,7 +333,6 @@ class LPMImgUpload {
         
         if (!move_uploaded_file($files['tmp_name'][$i], $srcFile))
             return $this->error( 'Ошибка при сохранении файла' );
-        
         // делаем необходимые изображения
         $img = new LPMImg( $srcFileName );
         $img->origName = $files['name'][$i];
@@ -300,6 +345,55 @@ class LPMImgUpload {
         	$img->getCacheImg();
         }
         
+        $this->_imgs[] = $img;
+        return $img;
+	}
+
+	private function loadImageFromUrl( $tempFileSrc ) {
+		//копируем текущую директорию
+		$dir = $this->_dir;
+		//устанавливаем макс.размеры для картинки
+		$maxSize = LPMImgUpload::MAX_SIZE * 1024 * 1024;
+		//устанавливаем допустимые расширения для картинки
+		$allowedTypes = array( 'jpg', 'jpeg', 'png' );
+		/*проверяем.соответсвует ли файл макс.размеру*/
+		if (stat($tempFileSrc)['size'] > $maxSize) {
+        	unlink ($tempFileSrc);
+        	return $this->error(
+        		sprintf("File's size don't be more then %d Mb", LPMImg::MAX_SIZE)
+        		);
+        }
+        /*проверяем,соответствуют ли картинки допустимым расширениям*/
+        $extension = pathinfo($tempFileSrc, PATHINFO_EXTENSION);
+        if (!in_array($extension, $allowedTypes)) {
+        	unlink ($tempFileSrc);
+        	return $this->error( 'Вы можете загружать только файлы типов ' . implode( ', ', $allowedTypes ) );
+        }
+        // проверяем, существует ли директория и пытаемся создать, если не существует
+        if ($dir != '') {
+        	$dirPath = LPMImg::getSrcImgPath( $dir );	
+        	if (!is_dir( $dirPath ) && !mkdir( $dirPath ))
+                return $this->error( 'Ошибка при создании директории' );
+	        if (substr( $dir, -1 ) != '/') $dir .= '/'; 
+        }
+        //сохраняем файл в новой директории
+        $ext = $allowedTypes[1];
+        do {
+            $srcFileName = $dir . $this->_prefix . BaseString::randomStr( 10 ) . '.' . $ext;
+            $srcFile = LPMImg::getSrcImgPath( $srcFileName );
+        } while (file_exists( $srcFile ));
+        rename(	$tempFileSrc , $srcFile );
+        //получаем изображение из директории и задаем ей префикс имени
+        $img = new LPMImg( $srcFileName );
+        $img->origName = "url_" . BaseString::randomStr( 10 ) . '.' . $ext;
+        //кэшируем изображение
+        if ($this->_sizes != null) {
+        	foreach ($this->_sizes as $size) {
+        		$img->getCacheImg( $size[0], $size[1] );
+        	}
+        } 
+        else $img->getCacheImg();
+   		//возвращаем картинку
         $this->_imgs[] = $img;
         return $img;
 	}
