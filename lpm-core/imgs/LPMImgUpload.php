@@ -199,12 +199,13 @@ class LPMImgUpload {
 			$dirTempPath = LPMImg::getSrcImgPath('temp');
 			if (!is_dir( $dirTempPath ) && !mkdir( $dirTempPath ))
 				return $this->error( 'Ошибка при создании директории' );
-			$srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr( 10 ) . '.png';
+			$srcFileName = $dirTempPath . DIRECTORY_SEPARATOR;
 			//перебираем все ссылки
 			foreach ($_POST['urls'] as $key => $value) {
 				//если ссылка не пустая
 				if (!empty($value)) {
 	  				//получаем из нее картинку и сохраняем ее
+	  				$srcFileName.= BaseString::randomStr( 10 ) . '.png';
 	  				file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX);
 	  			}
 	  		}

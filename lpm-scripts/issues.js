@@ -443,6 +443,7 @@ function removeImage(imageId)
         val += imageId;
         $('#issueForm form input[name=removedImages]').val(val);
     }
+}
 
 function addImagebyUrl() {
     var img = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
