@@ -250,8 +250,15 @@ class Issue extends MembersInstance
 	
 	public function getDesc() {
 		$desc = $this->desc;
-		$order = array("</li>"."\r\n"."<li>", "</li>"."\n"."<li>","</li>"." \n"."<li>","</li>"." \r\n"."<li>");
-		$desc = str_replace($order, '</li><li>', $desc);
+
+		if (strpos($desc, '<ul>') !== false)
+		{
+			// Предварительно порежем переносы в списках
+			$desc = str_replace("\r\n", "\n", $desc);
+			$desc = str_replace(array("</li>\n<li>","</li> \n<li>"), '</li><li>', $desc);
+			$desc = str_replace(array("<ul>\n<li>", "</li>\n</ul>"), array('<ul><li>', '</li></ul>'), $desc);
+		}
+
 		$desc = nl2br($desc);
 		$desc = HTMLHelper::linkIt($desc);
 		return $desc;

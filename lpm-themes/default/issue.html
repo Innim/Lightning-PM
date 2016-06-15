@@ -54,7 +54,7 @@
             <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
         </li>    
         <li class="desc">        
-            <p class="value"><?=$issue->getDesc();?></p>
+            <div class="value"><?=$issue->getDesc();?></div>
         </li>
         <?php if ($videoLinks = $issue->getVideoLinks()): ?>
             <li>
