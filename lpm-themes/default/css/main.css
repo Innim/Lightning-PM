@@ -916,7 +916,7 @@ table tr.completed-issue:hover td span.comments-count {
 #issueForm .note
 {
 	width: 90%;
-	margin: 0 auto;
+	margin: 5px auto 0;
 	padding: 0 5px;
 	font-size: .9em;
 	color: #cccccc;
@@ -925,9 +925,13 @@ table tr.completed-issue:hover td span.comments-count {
 {
 	color: #999999;
 }
-#issueForm .note pre 
+#issueForm .note a.tag
 {
 	display: inline-block;
+	font-family: monospace;
+	white-space: pre;
+	margin: 0 .2em;
+	font-size: 1.1em;
 }
 
 
