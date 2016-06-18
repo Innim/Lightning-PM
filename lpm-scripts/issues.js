@@ -5,6 +5,15 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
+
+        $('#issuesList .member-list a').click(function (e) {
+            issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
+        });
+
+        $('#issueForm .note.tags-line a.tag').click(function (e) {
+            var a = e.currentTarget;
+            issuePage.insertTag(a.innerText);
+        });
     }
 );
 
@@ -202,6 +211,26 @@ issuePage.validateIssueForm = function () {
         return false;
     }
 };
+
+issuePage.insertTag = function(tag){
+    var text = document.getElementsByName('desc').item(0);
+    
+        if (!$.isEmptyObject({text})){ 
+            // берем все, что до выделения
+            var desc = text.value.substring(0,text.selectionStart)+
+            // вставляем стартовый тег
+            '<'+tag+'>'+
+            // вставляем выделенный текст
+             text.value.substring(text.selectionStart, text.selectionEnd) +
+            // вставляем закрывающий тег
+            '</' +tag+ '>'+
+             // вставляем все, что после выделения
+            text.value.substring(text.selectionEnd,text.value.length);
+
+            $('#issueForm textarea.desc').val(desc);
+        }
+};
+
 
 function completeIssue( e ) {    
     var parent   = e.currentTarget.parentElement;
@@ -568,44 +597,40 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.showIssues4Me = function ()//e) 
+issuePage.showIssues4Me = function ()
 {
     window.location.hash = 'only-my';
     issuePage.filterByMemberId( lpInfo.userId );
 
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
-    //$('#showIssues4MeLink').text('Показать все').click(issuePage.resetFilter);
-    //e.currentTarget.innerText = 'Показать все';
-    //e.currentTarget.onclick=issuePage.resetFilter;//"issuePage.resetFilter(event); return false;";
     return false;
 };
 
-issuePage.filterByMemberId = function (userId) {
-    /*$( '#issuesList > tbody > tr' ).each(
-        function (index) {
-            var fields = $( "td > input[name=memberId][type=hidden]", this ); 
-            for (var i = 0; i < fields.size(); i++) {
-                if (fields.get( i ).value == userId) {
-                    $(this).show();
-                    return;
-                }
-            }
-            $(this).hide();
-        }
-    );*/
+issuePage.showIssuesByUser = function (memberId)
+{
+    window.location.hash = 'by-user:' + memberId;
+    issuePage.filterByMemberId( memberId );
+    $('#showIssues4MeLink').hide();
+    $('#showIssues4AllLink').show();
+    return false;
+};
+
+issuePage.filterByMemberId = function (userId) 
+{
     var list = document.getElementById('issuesList'); 
     var rows = list.tBodies[0].children;
     var row,fields = null;
     var hide = true;
-    for (var i =0; i < rows.length; i++) {
+    
+    for (var i = 0; i < rows.length; i++) {
         row = rows[i];
         hide = true;
-        fields = row.getElementsByTagName('input');
+        fields = row.children[3].getElementsByTagName('a');        
         for (var j = 0; j < fields.length; j++) {
-           if (fields[j].name === 'memberId' && fields[j].value == userId) {
-                hide = false;
-                break;
+           if (fields[j].getAttribute('data-member-id') == userId) {
+              hide = false;   
+              break;  
            }
         }
         if (hide) row.hide();
@@ -618,7 +643,7 @@ issuePage.resetFilter = function ()//e)
     //$( '#issuesList > tbody > tr' ).show();
     window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
-    for (var i =0; i < rows.length; i++) {
+    for (var i = 0; i < rows.length; i++) {
         rows[i].show();
     }
 
