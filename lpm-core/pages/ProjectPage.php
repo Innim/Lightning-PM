@@ -359,16 +359,21 @@ class ProjectPage extends BasePage
             'issues', 
             'scr_',
            	Issue::ITYPE_ISSUE, 
-           	$issueId
+           	$issueId,
+           	false
         );  
 
-        if ($uploader->isErrorsExist()) {
-            $errors = $uploader->getErrors();
-            $this->_engine->addError( $errors[0] );
+        // Выполняем загрузку для изображений из поля загрузки
+        // Вставленных из буфера
+        // И добавленных по URL
+        if (!$uploader->uploadViaFiles('images') ||
+        	isset($_POST['clipboardImg']) && !$uploader->uploadFromBase64($_POST['clipboardImg']) ||
+        	isset($_POST['urls']) && !$uploader->uploadFromUrls($_POST['urls']))
+        {
+        	$errors = $uploader->getErrors();
+            $this->_engine->addError($errors[0]);
             return false;
         }
-            
-        //if ($uploader->getLoadedCount() == 0) return $uploader;
             
         return $uploader;    
 	}
