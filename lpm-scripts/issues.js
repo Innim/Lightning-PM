@@ -449,8 +449,13 @@ issuePage.setEditInfo = function () {
         //imgInput.insertBefore(imgLI, imgInput.children[0]);
     };
     $imgInput.append($imgInputField);
-    if (l >= window.lpmOptions.issueImgsCount)
+    if (l >= window.lpmOptions.issueImgsCount) {
+        $('#issueForm form li').has('ul.images-list')
+        .append('<label style="color:red">Вы зазгрузили максимальное кол-во изображений</label>');
         $("#issueForm form .images-list > li input[type=file]").hide();
+        $("#issueForm form li a[name=imgbyUrl]").hide();
+    }
+    else $("#issueForm form li label[class=ImgsMaxCount]").hide();
     // родитель
     $( "#issueForm form input[name=parentId]" ).val( $( "#issueInfo input[name=parentId]" ).val() );
     // идентификатор задачи
@@ -475,14 +480,13 @@ function removeImage(imageId)
 }
 
 function addImagebyUrl() {
-    var img = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
+    var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
     var imgInput = $("#issueForm ul.images-url");
-    img.attr('class','imgUrl');  
+    urlLI.removeAttr('class');
     //добавляем в контейнер
-    imgInput.append(img);
-    img.find("a").click(function (event) {
-        if (confirm('Вы действительно хотите удалить это изображение?'))      
-            img.remove();    
+    imgInput.append(urlLI);
+    urlLI.find("a").click(function (event) {
+        urlLI.remove();    
     });
 };
 

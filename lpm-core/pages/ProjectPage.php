@@ -176,10 +176,9 @@ class ProjectPage extends BasePage
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
 			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
-			//$_POST['urls'] = str_replace( '%', '%%', $_POST['urls'] );
 
 			foreach ($_POST as $key => $value) {
-				if ($key != 'members' && $key != 'clipboardImg' && $key != 'urls')
+				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls')
 					$_POST[$key] = $this->_db->real_escape_string( $value );
 			}
 
@@ -273,7 +272,6 @@ class ProjectPage extends BasePage
 					}
 					$prepare->close();
 
-
 					//удаление старых изображений
 					if (!empty($_POST["removedImages"]))
 					{
@@ -283,10 +281,8 @@ class ProjectPage extends BasePage
 						foreach ($delImg as $imgIt) {
 							$imgIt = (int)$imgIt;
 							if ($imgIt > 0) $imgIds[] = $imgIt;
-
 						}
 						if (!empty($imgIds)){
-
 							$sql = "UPDATE `%s` ". 
 										"SET `deleted`='1' ".
 										"WHERE `imgId` IN (".implode(',',$imgIds).") ".
@@ -295,13 +291,12 @@ class ProjectPage extends BasePage
 										 "AND `itemType`='".Issue::ITYPE_ISSUE."'";
 							$this->_db->queryt($sql, LPMTables::IMAGES);
 						}
-						
 					}
 
-
+					if ($editMode) {
 					// загружаем изображения
-					$uploader = $this->saveImages4Issue( $issueId );
-
+						$uploader = $this->saveImages4Issue( $issueId, $cnt );
+					}
 					if ($uploader === false)
 					{
 						$engine->addError( 'Не удалось загрузить изображение' );
@@ -350,10 +345,11 @@ class ProjectPage extends BasePage
 		}
 	}
 
-	private function saveImages4Issue( $issueId ) 
+	private function saveImages4Issue( $issueId, $hasCnt ) 
 	{
+		print_r($hasCnt);
 		$uploader = new LPMImgUpload( 
-			Issue::MAX_IMAGES_COUNT, 
+			Issue::MAX_IMAGES_COUNT - $hasCnt, 
 			true,
             array( LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT ), 
             'issues', 
@@ -368,13 +364,12 @@ class ProjectPage extends BasePage
         // И добавленных по URL
         if (!$uploader->uploadViaFiles('images') ||
         	isset($_POST['clipboardImg']) && !$uploader->uploadFromBase64($_POST['clipboardImg']) ||
-        	isset($_POST['urls']) && !$uploader->uploadFromUrls($_POST['urls']))
+        	isset($_POST['imgUrls']) && !$uploader->uploadFromUrls($_POST['imgUrls']))
         {
         	$errors = $uploader->getErrors();
             $this->_engine->addError($errors[0]);
             return false;
         }
-            
         return $uploader;    
 	}
 }

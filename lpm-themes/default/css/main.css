@@ -570,6 +570,8 @@ ul.images-list > li > a {
 	top: 3px;
 }
 ul.images-url{
+	list-style: none;
+	margin: 10px auto;
 	margin-top: 1%;
 }
 ul.images-url > li {
@@ -585,7 +587,7 @@ ul.images-url > li > input {
 	padding: 0;
 	text-align: center;
 }
-ul.images-url > li > a[name="imgUrl[]"] {
+#issueForm li > a[name="imgbyUrl"] {
 	margin-left: 50px;
 	font-size: small; 
 }

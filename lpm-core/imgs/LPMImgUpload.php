@@ -115,7 +115,6 @@ class LPMImgUpload {
 			}
 			if (count( $this->_sizes ) == 0) $this->_sizes = null;
 		}
-
 		// Выполняем загрузку по умолчанию
 		if ($defaultLoad) $this->uploadViaFiles(self::IMG_INPUT_NAME);
 	}
@@ -224,13 +223,14 @@ class LPMImgUpload {
 			if (!empty($value)) {
   				//получаем из нее картинку и сохраняем ее
   				$srcFileName = $dirTempPath . BaseString::randomStr( 10 ) . '.png';
+  				if (strstr($value, 'http://d.pr/')) $value.= '+';
+  				if (strstr($value, 'https://cloud')) $value.= '/download';
   				file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX);
-
 	    		$files[] = $srcFileName;
 	    		$names[] = 'url_' . date('YmdHis_u') . '.png'; // тут ды настоящее имя выделить из url
   			}
   		}
-		
+
 		// Если были ошибки - то удаляем все, что сохранили
 		if ($this->isErrorsExist())
 		{
@@ -241,7 +241,7 @@ class LPMImgUpload {
 			return false;
 		}
 		else
-		{
+		{			
 			return $this->addImages($files, false, $names);
 		}
 	}
@@ -265,16 +265,18 @@ class LPMImgUpload {
 			// Перебираем все файлы 
 			foreach ($files as $i => $file) 
 			{
-				// Если загружено уже максимальное количество - прерываем
-			    if ($this->getLoadedCount() >= $this->_maxPhotos) break;
-
+				//print_r(count($this->_imgs));
 				// Загружаем файл, если была ошибка - прерываем все
 				$originalName = null !== $originalNames && isset($originalNames[$i]) 
 					? $originalNames[$i] : null;
 				if (!($img = $this->loadImage($file, $uploaded, $originalName))) break;
-
 				// Выполняем запрос записи в БД
 				if ($this->_saveInDB) $this->saveInDB($img, $prepare);
+
+				if ($this->getLoadedCount() >= $this->_maxPhotos) {
+					return $this->error('Достигнут лимит изображений для задачи ( '. $this->_maxPhotos.' )');
+					break;
+				}
 			}
 		}
 
@@ -284,8 +286,7 @@ class LPMImgUpload {
 		// Если были ошибки - то удаляем все, что загружено
 		if ($this->isErrorsExist())
 		{
-			$this->removeImgs(); 
-
+			$this->removeImgs();
 			return false;
 		}
 		else 
@@ -331,7 +332,7 @@ class LPMImgUpload {
 				return $this->error('Ошибка при создании директории');
     		
     		$dls = mb_substr($dir, -1);
-    		if ($dls !== '/' && $dls !== DIRECTORY_SEPARATOR) $dir .= DIRECTORY_SEPARATOR;
+    		if ($dls !== '/') $dir .= '/';
 		}
 
 		// Сохраняем исходный файл
@@ -375,7 +376,7 @@ class LPMImgUpload {
 	 */
 	public function getImgByIndex( $index ) {
 		return $index >= 0 && $index < count( $this->_imgs ) 
-		          ? $this->_imgs[$index] : null; 
+		    ? $this->_imgs[$index] : null; 
 	}
 	
 	/**
