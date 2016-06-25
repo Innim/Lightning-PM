@@ -229,15 +229,16 @@ issuePage.insertTag = function(tag){
         closetag +
         // вставляем все, что после выделения
         text.value.substring(text.selectionEnd,text.value.length);
-        //добавляем итог в описание задачи
-        $('#issueForm textarea.desc').val(desc);
         //определяем позицию курсора(перед закрывающим тэгом)
         //если есть выделенный текст
-        if (subtext != "") 
+        if (subtext == "")
             //определяем фокус перед '/' тэгом
-            caretPos = text.value.indexOf(closetag);
-        else //после тэга
-            caretPos = text.value.indexOf(closetag) + closetag.length;
+            caretPos = text.selectionStart + closetag.length-1;
+            //alert(text.selectionStart);
+        else //после тэга       
+            caretPos = text.selectionStart + subtext.length + closetag.length*2;
+        //добавляем итог в описание задачи
+        $('#issueForm textarea.desc').val(desc);
         //устанавливаем курсор на полученную позицию
         setCaretPosition(text,caretPos);
     }
