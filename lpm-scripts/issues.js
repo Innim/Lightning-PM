@@ -214,23 +214,44 @@ issuePage.validateIssueForm = function () {
 
 issuePage.insertTag = function(tag){
     var text = document.getElementsByName('desc').item(0);
+    var subtext = text.value.substring(text.selectionStart, text.selectionEnd);
+    var caretPos = 0;
+    const closetag = '</' +tag+ '>';
+    //Если в описании задачи есть текст
+    if (!$.isEmptyObject({text})) { 
+        // берем все, что до выделения
+        var desc = text.value.substring(0,text.selectionStart)+
+        // вставляем стартовый тег
+        '<'+tag+'>'+
+        // вставляем выделенный текст
+         subtext +
+        // вставляем закрывающий тег
+        closetag +
+        // вставляем все, что после выделения
+        text.value.substring(text.selectionEnd,text.value.length);
+        //определяем позицию курсора(перед закрывающим тэгом)
+        //если есть выделенный текст
+        if (subtext == "")
+            //определяем фокус перед '/' тэгом
+            caretPos = text.selectionStart + closetag.length-1;
+            //alert(text.selectionStart);
+        else //после тэга       
+            caretPos = text.selectionStart + subtext.length + closetag.length*2;
+        //добавляем итог в описание задачи
+        $('#issueForm textarea.desc').val(desc);
+        //устанавливаем курсор на полученную позицию
+        setCaretPosition(text,caretPos);
+    }
+}
     
-        if (!$.isEmptyObject({text})){ 
-            // берем все, что до выделения
-            var desc = text.value.substring(0,text.selectionStart)+
-            // вставляем стартовый тег
-            '<'+tag+'>'+
-            // вставляем выделенный текст
-             text.value.substring(text.selectionStart, text.selectionEnd) +
-            // вставляем закрывающий тег
-            '</' +tag+ '>'+
-             // вставляем все, что после выделения
-            text.value.substring(text.selectionEnd,text.value.length);
-
-            $('#issueForm textarea.desc').val(desc);
-        }
+function setCaretPosition(elem, pos ) {
+    //если есть выделение
+    if(elem.selectionStart) {
+        //фокусим курсор на нужной позиции   
+        elem.setSelectionRange(pos, pos);
+        elem.focus();
+    }
 };
-
 
 function completeIssue( e ) {    
     var parent   = e.currentTarget.parentElement;
