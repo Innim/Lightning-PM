@@ -12,7 +12,7 @@
 	</thead>
 	<tbody>
 		<? foreach (lpm_get_issues_list() as $issue) {?>		
-		<tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">			
+		<tr class="active-issue" style="display:<?=$issue->isCompleted()?'none':'';?>">			
 			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
              <div class="issue_copy popup-menu">
              	   	<a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
@@ -43,7 +43,6 @@
 			<td> 	
 			 <input type="hidden" name="issueId" value="<?=$issue->id;?>"/>
 			 <button onclick="completeIssue( event );" class="complete-btn">Завершить</button>
- 			 <button onclick="restoreIssue( event );" class="restore-btn">Открыть</button>
 			</td>
 		</tr>			
 		<? }?>

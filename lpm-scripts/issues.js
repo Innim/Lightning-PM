@@ -234,7 +234,6 @@ issuePage.insertTag = function(tag){
         if (subtext == "")
             //определяем фокус перед '/' тэгом
             caretPos = text.selectionStart + closetag.length-1;
-            //alert(text.selectionStart);
         else //после тэга       
             caretPos = text.selectionStart + subtext.length + closetag.length*2;
         //добавляем итог в описание задачи

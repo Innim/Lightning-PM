@@ -4,6 +4,7 @@ class ProjectPage extends BasePage
 	const UID = 'project';
 	const PUID_MEMBERS = 'members';
 	const PUID_ISSUES  = 'issues';
+	const PUID_COMPLETE_ISSUES  = 'complete-issues';
 	const PUID_ISSUE   = 'issue';
 	
 	/**
@@ -23,6 +24,7 @@ class ProjectPage extends BasePage
 		$this->_defaultPUID     = self::PUID_ISSUES;
 
 		$this->addSubPage( self::PUID_ISSUES , 'Список задач');
+		$this->addSubPage( self::PUID_COMPLETE_ISSUES , 'Завершенные','complete-issues');
 		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
 						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
 	}
@@ -83,9 +85,6 @@ class ProjectPage extends BasePage
 				array_push( $this->_js,	'issue' );
 			} 
 		} 
-		
-
-
 		
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {			
