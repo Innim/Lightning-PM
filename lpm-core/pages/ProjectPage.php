@@ -84,9 +84,6 @@ class ProjectPage extends BasePage
 			} 
 		} 
 		
-
-
-		
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {			
 			$issues = Issue::getListByProject( $this->_project->id );		
@@ -292,11 +289,17 @@ class ProjectPage extends BasePage
 							$this->_db->queryt($sql, LPMTables::IMAGES);
 						}
 					}
-
-					if ($editMode) {
 					// загружаем изображения
-						$uploader = $this->saveImages4Issue( $issueId, $cnt );
+					if ($editMode) {
+						$sql = "SELECT `imgsCount` AS wasloaded FROM `%s` " .
+							"WHERE `issueId` = '" . $issueId . "'";
+						if ($query = $this->_db->queryt($sql, LPMTables::ISSUE_COUNTERS)) {
+							$loaded = $query->fetch_assoc();
+							$uploader = $this->saveImages4Issue( $issueId, $loaded['wasloaded'] );
+						}
 					}
+					else $uploader = $this->saveImages4Issue( $issueId );
+
 					if ($uploader === false)
 					{
 						$engine->addError( 'Не удалось загрузить изображение' );
@@ -345,9 +348,9 @@ class ProjectPage extends BasePage
 		}
 	}
 
-	private function saveImages4Issue( $issueId, $hasCnt ) 
+	private function saveImages4Issue( $issueId, $hasCnt = 0 ) 
 	{
-		print_r($hasCnt);
+		
 		$uploader = new LPMImgUpload( 
 			Issue::MAX_IMAGES_COUNT - $hasCnt, 
 			true,

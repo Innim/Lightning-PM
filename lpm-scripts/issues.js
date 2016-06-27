@@ -5,7 +5,6 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
-
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -194,13 +193,13 @@ issuePage.updateStat = function () {
 
 issuePage.validateIssueForm = function () {
     var errors = [];
-    
-    /*if ((/^([a-z0-9\-]){1,255}$/i).test( ('input[name=uid]', "#addProjectForm" ).val() )) {
-        errors.push( 'Введён недопустимый идентификатор - используйте латинские буквы, цифры и тире' );
-    }*/
+    //var inputFile = document.getElementsByName("images").files;
+
     if ($('#issueForm #issueMembers input[type=hidden][name=members\[\]]').size() == 0)
         errors.push( 'Задаче должен быть назначен хотя бы один исполнитель' );
-    
+
+    //if (len.length > window.lpmOptions.issueImgsCount)
+        
     $('#issueForm > div.validateError' ).html( errors.join( '<br/>' ) );
     
     if (errors.length == 0) {
@@ -450,12 +449,10 @@ issuePage.setEditInfo = function () {
     };
     $imgInput.append($imgInputField);
     if (l >= window.lpmOptions.issueImgsCount) {
-        $('#issueForm form li').has('ul.images-list')
-        .append('<label style="color:red">Вы зазгрузили максимальное кол-во изображений</label>');
         $("#issueForm form .images-list > li input[type=file]").hide();
         $("#issueForm form li a[name=imgbyUrl]").hide();
     }
-    else $("#issueForm form li label[class=ImgsMaxCount]").hide();
+    
     // родитель
     $( "#issueForm form input[name=parentId]" ).val( $( "#issueInfo input[name=parentId]" ).val() );
     // идентификатор задачи

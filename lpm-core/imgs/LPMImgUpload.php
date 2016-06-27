@@ -23,11 +23,6 @@ class LPMImgUpload {
 	const IMG_INPUT_NAME = 'images';
 	
 	/**
-	 * Количество загруженных изображений
-	 * @var int
-	 */
-	//private $_loaded = 0;
-	/**
 	 * Ошибки при загрузке и обработке изображений
 	 * @var array
 	 */
@@ -261,22 +256,20 @@ class LPMImgUpload {
 	   		return $this->error('Ошибка при записи в БД');
 		}
 		else 
-		{
+		{	
+			
 			// Перебираем все файлы 
 			foreach ($files as $i => $file) 
 			{
-				//print_r(count($this->_imgs));
+				if ($this->getLoadedCount() + 1 > $this->_maxPhotos) {
+					break;
+				}
 				// Загружаем файл, если была ошибка - прерываем все
 				$originalName = null !== $originalNames && isset($originalNames[$i]) 
 					? $originalNames[$i] : null;
 				if (!($img = $this->loadImage($file, $uploaded, $originalName))) break;
 				// Выполняем запрос записи в БД
-				if ($this->_saveInDB) $this->saveInDB($img, $prepare);
-
-				if ($this->getLoadedCount() >= $this->_maxPhotos) {
-					return $this->error('Достигнут лимит изображений для задачи ( '. $this->_maxPhotos.' )');
-					break;
-				}
+				if ($this->_saveInDB) $this->saveInDB($img, $prepare);	
 			}
 		}
 
@@ -296,7 +289,7 @@ class LPMImgUpload {
 	}
 
 	private function loadImage($filepath, $uploaded = false, $originalName = null)
-	{
+	{			
 		if (!file_exists($filepath)) return $this->error('Не удалось загрузить файл');
 
 		// Директория сохранения
