@@ -3,6 +3,7 @@ class Issue extends MembersInstance
 {
 	public static $currentIssue;
 	private static $_listByProjects = array();
+	private static $_listByUser = array();
 	
 	protected static function loadList( $where ) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
@@ -29,7 +30,7 @@ class Issue extends MembersInstance
 					__CLASS__ 
 			   );
 	}
-	
+
 	public static function getListByProject( $projectId, $type = -1 ) {
 		if (!isset( self::$_listByProjects[$projectId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {
@@ -38,10 +39,24 @@ class Issue extends MembersInstance
 				self::$_listByProjects[$projectId] = self::loadList( $where );
 			} else self::$_listByProjects[$projectId] = array();
 		}
-	
 		return self::$_listByProjects[$projectId];
 	}
-	
+
+	public static function getListbyMember( $memberId ) {	
+       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` as `projectUID` from `%1\$s`, `%2\$s`, `%3\$s`". 
+       	//"left join `%2\$s` on `%1\$s`.``id`` = `%2\$s`.`instanceId`".
+		  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
+		  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
+			 "and `%2\$s`.`userId` = '" . $memberId . "'".
+			 "ORDER BY `%1\$s`.`id` ";
+		
+		return self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array( $sql, 
+			LPMTables::ISSUES, 
+			LPMTables::MEMBERS,
+			LPMTables::PROJECTS ), __CLASS__ );
+
+	}
+
 	public static function getCurrentList() {
 		/*foreach (self::$_listByProjects as $list) {
 			return $list;

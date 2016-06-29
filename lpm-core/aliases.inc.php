@@ -234,7 +234,12 @@ function lpm_get_issue() {
 function lpm_get_users_list() {
 	return PageConstructor::getUsersList();
 }
-
+/**
+ * Возвращает список пользователей
+ */
+function lpm_get_user_issues() {
+	return PageConstructor::getUserIssues();
+}
 /**
  * Возвращает список пользователей для выбора
  */

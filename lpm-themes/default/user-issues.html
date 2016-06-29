@@ -1,0 +1,24 @@
+<table class="users-list">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Тип</th>
+            <th>Название</th>
+			<th>Описание</th>
+			<th>Проект</th>
+			<th>Дата окончания</th>
+        </tr>
+    </thead>
+    <tbody>
+        <? foreach (lpm_get_user_issues() as $issue) {?>
+        <tr >
+            <td><?=$issue->getID();?></td>
+            <td><?=$issue->getType();?></td>
+            <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a></td>
+            <td><?=$issue->getDesc();?>
+            <td><?=$issue->projectUID;?></td>  
+            <td><?=$issue->getCompleteDate();?></td>
+        </tr>           
+        <? }?>
+    </tbody>
+</table>

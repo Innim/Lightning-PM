@@ -4,6 +4,7 @@ class ProjectsPage extends BasePage
 	const UID = 'projects';
 	const PUID_DEVL = 'develop';
 	const PUID_ARCH = 'projects-archive';
+	const PUID_USER_ISSUES = 'user-issues';
 
 	// Количество важных задач, открытых для меня по всем проектам
 	private $_myIssuesCount = -1;
@@ -19,6 +20,7 @@ class ProjectsPage extends BasePage
 
 		$this->addSubPage( self::PUID_DEVL , 'В разработке' );
 		$this->addSubPage( self::PUID_ARCH , 'Архив' , 'projects-archive');
+		$this->addSubPage( self::PUID_USER_ISSUES , 'Мои задачи' , 'user-issues');
 	}
 	
 	public function init() {

@@ -48,6 +48,10 @@ class PageConstructor
 	public static function getUsersChooseList() {
 		return User::loadList( ' `locked` <> 1 ' );
 	}
+
+	public static function getUserIssues() {
+		return Issue::getListbyMember(LightningEngine::getInstance()->getUserId());
+	}
 	
 	public static function getDateLinks() {
 		// TODO сделать что-нибудь с этим!!
