@@ -4,6 +4,7 @@
     <thead>
         <tr>
             <th>#</th>
+            <th>Приоритет</th>
             <th>Тип</th>
             <th>Название</th>
 			<th>Описание</th>
@@ -16,10 +17,14 @@
         <tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">
             <td><a href="<?=$issue->getConstURL();?>"><?=$issue->getIdInProject();?></a></td>
             <td>
-             <nobr>
-                 <span class="priority-val " title="Приоритет: <?=$issue->getPriorityStr();?>">
-                 <?=$issue->priority;?></span><?=$issue->getType();?>
-             </nobr>             
+            <li>
+            <span class="value">
+                <?=$issue->getPriorityStr();?> (<?=($issue->priority+1);?>%)
+            </span>
+            <input type="hidden" name="priority" value="<?=$issue->priority;?>"/>
+            </li>
+             </td>
+            <td><?=$issue->getType();?></td>             
             </td>
             <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a></td>
             <td><?=$issue->getDesc();?>
