@@ -116,7 +116,7 @@ class Project extends MembersInstance
 	
 	public function getID() {
 		return $this->id;
-	} 
+	}
 	
 	public function getShortDesc() {
 		parent::getShort( $this->desc, 200 );

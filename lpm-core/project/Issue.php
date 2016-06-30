@@ -42,19 +42,23 @@ class Issue extends MembersInstance
 		return self::$_listByProjects[$projectId];
 	}
 
-	public static function getListbyMember( $memberId ) {	
-       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` as `projectUID` from `%1\$s`, `%2\$s`, `%3\$s`". 
-       	//"left join `%2\$s` on `%1\$s`.``id`` = `%2\$s`.`instanceId`".
-		  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
-		  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
-			 "and `%2\$s`.`userId` = '" . $memberId . "'".
-			 "ORDER BY `%1\$s`.`id` ";
-		
-		return self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array( $sql, 
-			LPMTables::ISSUES, 
-			LPMTables::MEMBERS,
-			LPMTables::PROJECTS ), __CLASS__ );
-
+	public static function getListbyMember( $memberId ) {
+		if (!isset( self::$_listByUser[$memberId] )) {
+			if (LightningEngine::getInstance()->isAuth()) {	
+		       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID` FROM `%1\$s`, `%2\$s`, `%3\$s`". 
+				  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
+				  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
+					 "AND `%2\$s`.`userId` = '" . $memberId . "'".
+					 "AND `%1\$s`.`status` = '0'".
+					 "ORDER BY `%1\$s`.`idInProject` ";
+				self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array( $sql, 
+					LPMTables::ISSUES, 
+					LPMTables::MEMBERS,
+					LPMTables::PROJECTS ), __CLASS__ );
+				if (!self::$_listByUser[$memberId]) return false;
+					else return self::$_listByUser[$memberId];
+			}
+		}
 	}
 
 	public static function getCurrentList() {
@@ -201,11 +205,19 @@ class Issue extends MembersInstance
 		// TODO проверку прав
 		return true;
 	}
-	
+
     public function getIdInProject(){
         return $this->idInProject;
     }
     
+    public function getProjName($projID) {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $sql ="SELECT `name` AS `name` FROM `%s` WHERE `id` = ".$projID." "; 
+        $query = $db->queryt( $sql, LPMTables::PROJECTS );
+        if (!$query || !($row = $query->fetch_assoc())) return false;
+       	return (string)$row['name'];
+    }
+
 	public function getID() {
 		return $this->id;
 	}

@@ -5,7 +5,6 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
-
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -109,7 +108,6 @@ issuePage.removeIssueMember = function(e) {
     }
     selectElement.appendChild( option, i );
 };
-
 
 issuePage.updatePriorityVals = function () {
     issuePage.setPriorityVal( $('input[type=range]#priority').val() );
@@ -708,7 +706,6 @@ function Issue( obj ) {
             if (i > 0) str += ', ';
             str += this.members[i].linkedName;
         }
-        
         return str;
     };
     

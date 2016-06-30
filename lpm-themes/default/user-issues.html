@@ -1,4 +1,6 @@
-<table class="users-list">
+<article id="UserIssues">
+<table id="UserIssuesList" class="issues-list">
+    <h1><?lpm_print_header();?></h1>
     <thead>
         <tr>
             <th>#</th>
@@ -11,14 +13,20 @@
     </thead>
     <tbody>
         <? foreach (lpm_get_user_issues() as $issue) {?>
-        <tr >
-            <td><?=$issue->getID();?></td>
-            <td><?=$issue->getType();?></td>
+        <tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">
+            <td><a href="<?=$issue->getConstURL();?>"><?=$issue->getIdInProject();?></a></td>
+            <td>
+             <nobr>
+                 <span class="priority-val " title="Приоритет: <?=$issue->getPriorityStr();?>">
+                 <?=$issue->priority;?></span><?=$issue->getType();?>
+             </nobr>             
+            </td>
             <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a></td>
             <td><?=$issue->getDesc();?>
-            <td><?=$issue->projectUID;?></td>  
+            <td><?=$issue->getProjName($issue->projectId);?></td>  
             <td><?=$issue->getCompleteDate();?></td>
         </tr>           
         <? }?>
     </tbody>
 </table>
+</article>
