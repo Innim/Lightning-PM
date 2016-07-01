@@ -4,7 +4,7 @@ $(document).ready(
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
-        document.addEventListener('paste', pasteClipboardImage);
+       
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -193,20 +193,27 @@ issuePage.updateStat = function () {
 
 issuePage.validateIssueForm = function () {
     var errors = [];
-    //var inputFile = document.getElementsByName("images").files;
+    var inputs =  $( "#issueForm input:file" );
+    var len = 0;
+    
+    if (!$.isEmptyObject({inputs})){
+        inputs.each(function( i ) {
+            len += inputs[i].files.length;
+        });
+    }
+
+    if (len > window.lpmOptions.issueImgsCount)
+        errors.push('Превышен лимит изображений.Лимит - ' + window.lpmOptions.issueImgsCount);
 
     if ($('#issueForm #issueMembers input[type=hidden][name=members\[\]]').size() == 0)
         errors.push( 'Задаче должен быть назначен хотя бы один исполнитель' );
-
-    //if (len.length > window.lpmOptions.issueImgsCount)
-        
-    $('#issueForm > div.validateError' ).html( errors.join( '<br/>' ) );
     
-    if (errors.length == 0) {
+      if (errors.length == 0 ) {
         $('#issueForm > div.validateError' ).hide();
+        $("#issueForm p.save-line button[type=submit]").show();
         return true;
     } else {
-        $('#issueForm > div.validateError' ).show();
+        $('#issueForm > div.validateError' ).html( errors.join( '<br/>' ) ).show();
         return false;
     }
 };
