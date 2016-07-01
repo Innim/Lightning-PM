@@ -852,6 +852,12 @@ table.issues-list td:last-child
 {
 	/*width: 175px;*/
 }
+table.issues-list tr.completed-issue td button.complete-btn {
+    display: none;
+}
+table.issues-list tr.active-issue td button.restore-btn {
+	display: none;
+ }
 
 table.issues-list tr td span.comments-count {
 	font-size    : 8.5pt;
