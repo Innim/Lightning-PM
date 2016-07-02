@@ -47,6 +47,8 @@ class BasePage extends LPMBaseObject
 	protected $_engine;
 	
 	private $_isCurrent = false; 
+
+	private $_tmplVars;
 	
 
 	function __construct( $uid, $title, $needAuth = true, $notInMenu = false, $pattern ='', $label = '', $reqRole = -1 ) 
@@ -91,7 +93,7 @@ class BasePage extends LPMBaseObject
 	}
 	
 	public function printContent() {
-		if ($this->_pattern != '') PageConstructor::includePattern( $this->_pattern );
+		if ($this->_pattern != '') PageConstructor::includePattern( $this->_pattern, $this->_tmplVars );
 	}
 	
 	public function isCurrentPage() {
@@ -246,6 +248,17 @@ class BasePage extends LPMBaseObject
 			if ($subpage->uid == $uid) return $subpage;
 		}
 		return null;
+	}
+
+	/**
+	 * Добавляет переменную, которая будет доступна в шаблоне
+	 * @param string $name   
+	 * @param mixed  $value [description]
+	 */
+	protected function addTmplVar($name, $value)
+	{
+		if (null === $this->_tmplVars) $this->_tmplVars = array();
+		$this->_tmplVars[$name] = $value;
 	}
 	
 	protected function addJS( $_ ) {

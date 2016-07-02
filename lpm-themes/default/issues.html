@@ -1,4 +1,9 @@
-<table id="issuesList" class="issues-list">
+<?php
+/* 
+Требуются: 
+	$list - список задач
+*/
+?><table id="issuesList" class="issues-list">
 	<thead>
 		<tr>
 			<th>#</th>
@@ -11,7 +16,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		<? foreach (lpm_get_issues_list() as $issue) {?>		
+		<? foreach ($list as $issue) {?>
 		<tr class="active-issue" style="display:<?=$issue->isCompleted()?'none':'';?>">			
 			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
              <div class="issue_copy popup-menu">

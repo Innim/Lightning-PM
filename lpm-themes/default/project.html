@@ -1,4 +1,9 @@
-<article>
+<?php
+/* 
+Требуются: 
+	$issues - список задач для отображения
+*/
+?><article>
     <h1><?lpm_print_header();?></h1>
     <?php $project = lpm_get_project();?>
 	<article id="projectView" data-project-id="<?=$project->getID();?>">
@@ -18,7 +23,7 @@
 		    <a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
 			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
 		</p>
-		<? lpm_print_issues(); ?>
+		<? lpm_print_issues($issues); ?>
 		<p class="operations-line">
 			<a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
 			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>

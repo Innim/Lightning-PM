@@ -53,8 +53,8 @@ class PagePrinter {
 		echo implode( ',', LightningEngine::getInstance()->getErrors() );
 	}
 	
-	public static function issues() {
-		PageConstructor::includePattern( 'issues' );
+	public static function issues($list) {
+		PageConstructor::includePattern( 'issues', compact('list'));
 	}
 	
 	public static function issueForm() {

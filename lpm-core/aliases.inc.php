@@ -97,10 +97,10 @@ function lpm_print_page_content() {
 }
 
 /**
-* Распечатывает задачи для текущего проекта
+* Распечатывает задачи
 */
-function lpm_print_issues() {
-	return PagePrinter::issues();
+function lpm_print_issues($list) {
+	return PagePrinter::issues($list);
 }
 
 /**
