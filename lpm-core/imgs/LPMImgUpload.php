@@ -135,7 +135,7 @@ class LPMImgUpload {
 	    		}
 	    	}
 
-	    	return $this->addImages($files, true, $names);
+	    	return $this->addImages($files, true, $names, false);
 	    }
 	    else 
 	    {
@@ -183,10 +183,7 @@ class LPMImgUpload {
 		// Если были ошибки - то удаляем все, что сохранили
 		if ($this->isErrorsExist())
 		{
-			foreach ($files as $filename)
-			{
-				@unlink($filename);
-			}
+			$this->clearTmpImages($files);
 			return false;
 		}
 		else
@@ -215,9 +212,10 @@ class LPMImgUpload {
 		foreach ($urls as $value) 
 		{
 			//если ссылка не пустая
+			$value = trim($value);
 			if (!empty($value)) {
   				//получаем из нее картинку и сохраняем ее
-  				$srcFileName = $dirTempPath . BaseString::randomStr( 10 ) . '.png';
+  				$srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr( 10 ) . '.png';
   				if (strstr($value, 'http://d.pr/')) $value.= '+';
   				if (strstr($value, 'https://cloud')) $value.= '/download';
   				file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX);
@@ -229,25 +227,31 @@ class LPMImgUpload {
 		// Если были ошибки - то удаляем все, что сохранили
 		if ($this->isErrorsExist())
 		{
-			foreach ($files as $filename)
-			{
-				@unlink($filename);
-			}
+			$this->clearTmpImages($files);
 			return false;
 		}
 		else
-		{			
+		{
 			return $this->addImages($files, false, $names);
 		}
 	}
 
+	private function clearTmpImages($files)
+	{
+	    foreach ($files as $filename)
+		{
+			if (file_exists($filename)) @unlink($filename);
+		}
+	}
+
 	/**
-	 * Добавляет изображения
-	 * @param array   $files         Массив путей до изображений, которы едолжны быть добавлены
+	 * Добавляет изображения (с переносом)
+	 * @param array   $files         Массив путей до изображений, которые должны быть добавлены
 	 * @param boolean $uploaded      Определяет, были ли файлы загружены из формы через POST
 	 * @param array   $originalNames Массив оригинальных имен файлов (индексы должны совпадать с $files)
+	 * @param boolean $clearTmp      Удалит все файлы из $files вне зависимости от результата
 	 */
-	private function addImages($files, $uploaded = false, $originalNames = null)
+	private function addImages($files, $uploaded = false, $originalNames = null, $clearTmp = true)
 	{
 		// Готовим запрос записи в БД
 		if ($this->_saveInDB && 
@@ -257,13 +261,15 @@ class LPMImgUpload {
 		}
 		else 
 		{	
-			
 			// Перебираем все файлы 
 			foreach ($files as $i => $file) 
 			{
-				if ($this->getLoadedCount() + 1 > $this->_maxPhotos) {
+				if ($this->getLoadedCount() + 1 > $this->_maxPhotos) 
+				{
+					if ($clearTmp) $this->clearTmpImages($files);
 					break;
 				}
+
 				// Загружаем файл, если была ошибка - прерываем все
 				$originalName = null !== $originalNames && isset($originalNames[$i]) 
 					? $originalNames[$i] : null;
@@ -280,6 +286,7 @@ class LPMImgUpload {
 		if ($this->isErrorsExist())
 		{
 			$this->removeImgs();
+			if ($clearTmp) $this->clearTmpImages($files);
 			return false;
 		}
 		else 
