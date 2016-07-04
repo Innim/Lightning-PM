@@ -216,9 +216,21 @@ class LPMImgUpload {
 			if (!empty($value)) {
   				//получаем из нее картинку и сохраняем ее
   				$srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr( 10 ) . '.png';
-  				if (strstr($value, 'http://d.pr/')) $value.= '+';
-  				if (strstr($value, 'https://cloud')) $value.= '/download';
-  				file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX);
+  				
+  				//проверка, если картинка из сервиса droplr (http://droplr.com/) 
+  				if (preg_match("/^https?:\/\/d.pr\/[a-z0-9\/]+$/i", $value))
+  					$value.= '+';
+  				//проверка, если картинка из сервиса ownCloud (http://cloud.innim.ru/) 
+  				if (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value))
+  					$value.= '/download';
+ 					
+  				//если картинку скачать не удалось - прерываем запись файла
+  				if (!file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX)) 
+		    	{
+		    		$this->error('Ошибка при записи в файл');
+		    		break;
+		    	}
+
 	    		$files[] = $srcFileName;
 	    		$names[] = 'url_' . date('YmdHis_u') . '.png'; // тут ды настоящее имя выделить из url
   			}

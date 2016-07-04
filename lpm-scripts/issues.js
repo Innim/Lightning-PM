@@ -203,14 +203,13 @@ issuePage.validateIssueForm = function () {
     }
 
     if (len > window.lpmOptions.issueImgsCount)
-        errors.push('Превышен лимит изображений.Лимит - ' + window.lpmOptions.issueImgsCount);
+        errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений' );
 
     if ($('#issueForm #issueMembers input[type=hidden][name=members\[\]]').size() == 0)
         errors.push( 'Задаче должен быть назначен хотя бы один исполнитель' );
     
       if (errors.length == 0 ) {
         $('#issueForm > div.validateError' ).hide();
-        $("#issueForm p.save-line button[type=submit]").show();
         return true;
     } else {
         $('#issueForm > div.validateError' ).html( errors.join( '<br/>' ) ).show();

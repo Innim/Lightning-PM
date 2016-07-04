@@ -290,15 +290,19 @@ class ProjectPage extends BasePage
 						}
 					}
 					// загружаем изображения
+					//если задача редактируется
 					if ($editMode) {
-						$sql = "SELECT `imgsCount` AS wasloaded FROM `%s` " .
-							"WHERE `issueId` = '" . $issueId . "'";
-						if ($query = $this->_db->queryt($sql, LPMTables::ISSUE_COUNTERS)) {
-							$loaded = $query->fetch_assoc();
-							$uploader = $this->saveImages4Issue( $issueId, $loaded['wasloaded'] );
+						$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
+							"WHERE `itemId` = '" . $issueId. "'".
+							"AND `deleted` = '0'";
+						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) {
+							$row =  $query->fetch_assoc();
+							$loadedImgs = (int)$row['cnt'];
+							$uploader = $this->saveImages4Issue( $issueId, $loadedImgs );
 						}
 					}
-					else $uploader = $this->saveImages4Issue( $issueId );
+					//если добавляется
+					else $uploader = $this->saveImages4Issue( $issueId, $loadedImgs = 0);
 
 					if ($uploader === false)
 					{
