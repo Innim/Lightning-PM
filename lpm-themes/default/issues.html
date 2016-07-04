@@ -17,7 +17,7 @@
 	</thead>
 	<tbody>
 		<? foreach ($list as $issue) {?>
-		<tr class="active-issue" style="display:<?=$issue->isCompleted()?'none':'';?>">			
+		<tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">			
 			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
              <div class="issue_copy popup-menu">
              	   	<a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
@@ -46,8 +46,9 @@
 			<td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
 			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
 			<td> 	
-			 <input type="hidden" name="issueId" value="<?=$issue->id;?>"/>
-			 <button onclick="completeIssue( event );" class="complete-btn">Завершить</button>
+				<input type="hidden" name="issueId" value="<?=$issue->id;?>"/>
+				<button onclick="restoreIssue( event );" class="restore-btn">Открыть</button>
+				<button onclick="completeIssue( event );" class="complete-btn">Завершить</button>
 			</td>
 		</tr>			
 		<? }?>

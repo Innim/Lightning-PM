@@ -12,8 +12,7 @@ class Issue extends MembersInstance
 					  "`%2\$s`.*, `%3\$s`.*, `%4\$s`.`uid` as `projectUID` " .
 		         "FROM `%2\$s`, `%4\$s`, `%1\$s` " .
 		         "LEFT JOIN `%3\$s` ON `%1\$s`.`id` = `%3\$s`.`issueId` " .
-				"WHERE `%1\$s`.`projectId` = `%4\$s`.`id` " .
-				  "AND `%1\$s`.`deleted` = '0'";
+				"WHERE `%1\$s`.`projectId` = `%4\$s`.`id` " ;
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `%1\$s`.`authorId` = `%2\$s`.`userId` ".
 				"ORDER BY `%1\$s`.`status` ASC, `realCompleted` DESC, `%1\$s`.`priority` DESC, `%1\$s`.`completeDate` ASC";
@@ -34,12 +33,20 @@ class Issue extends MembersInstance
 		if (!isset( self::$_listByProjects[$projectId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {
 				$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
+				$where.= " AND `%1\$s`.`status` = '0'";
 				if ($type != -1) $where .= "AND `%1\$s`.`type` = '" . $type . "'";
+					
 				self::$_listByProjects[$projectId] = self::loadList( $where );
 			} else self::$_listByProjects[$projectId] = array();
 		}
 	
 		return self::$_listByProjects[$projectId];
+	}
+
+	public static function loadListByProject($projectId) {
+		$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
+		$where.= " AND `%1\$s`.`status` = '2'";
+		return self::loadList( $where );
 	}
 	
 	public static function getCurrentList() {
