@@ -832,10 +832,10 @@ $('.issues-list > tbody > tr > td:first-of-type a').mouseleave(
 
 //хэширование комментов к задаче
 function onHash() {
+    var hash = window.location.hash;
+    //поддержка браузером
     if ("onhashchange" in window) {
-        var hash = window.location.hash;
-
-        document.title = hash.replace( /^#/, "" ) || "blank" + ".";
+        document.title = hash.replace( /^#/, "" );
      
         $( "#issueView ol.comments-list li" ).each(function() {
             var that = $( this );
