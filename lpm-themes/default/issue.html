@@ -117,7 +117,7 @@
         <li>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
-            <p class="date"><?=$comment->getDate();?></p>
+            <a class="anchor" id="<?=$comment->id;?>" href ="#<?=$comment->id;?>"><p class="date"><?=$comment->getDate();?></p></a>
             <p class="text"><?=$comment->getText();?></p>            
         </li>
         <?}?>
