@@ -33,7 +33,6 @@ class Issue extends MembersInstance
 		if (!isset( self::$_listByProjects[$projectId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {
 				$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
-				$where.= " AND `%1\$s`.`status` = '0'";
 				if ($type != -1) $where .= "AND `%1\$s`.`type` = '" . $type . "'";
 					
 				self::$_listByProjects[$projectId] = self::loadList( $where );

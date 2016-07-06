@@ -173,6 +173,7 @@ issuePage.getPriorityColor = function (val) {
 issuePage.updateStat = function () {    
     $( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() );
+    $( ".project-stat .issues-completed" ).text( $( "#issuesList > tbody > tr.completed-issue" ).size() );
 
     // Перезапрашиваем сумму часов
     srv.project.getSumOpenedIssuesHours($("#projectView").data('projectId'), function (r) {
@@ -335,7 +336,7 @@ function restoreIssue( e ) {
                     addClass   ( 'active-issue'        ).
                     removeClass( 'completed-issue'     ).
                     prependTo  ( '#issuesList > tbody' );
-                    
+                    $( "#completedIssuess #issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).hide();
                     showMain();
                 } else if ($( '#issueView' ).length > 0) {
                     /*$( "#issueInfo .buttons-bar" ).

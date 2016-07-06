@@ -92,7 +92,7 @@ class ProjectPage extends BasePage
 		}
 		// загружаем задачи
 		else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) {			
-			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id,'',true ));	
+			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id));	
 		}
 		
 		return $this;

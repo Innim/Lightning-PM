@@ -3,31 +3,19 @@
 Требуются: 
 	$issues - список задач для отображения
 */
-?><article>
-    <h1><?lpm_print_header();?></h1>
+?><article id="completedIssuess">
     <?php $project = lpm_get_project();?>
 	<article id="projectView" data-project-id="<?=$project->getID();?>">
-		<h3>Список завершенных задач</h3>
+		<h3>Завершенные задачи</h3>
 		<p class="project-stat">
-		   <span class="label">Открыто:</span> 
-		   <span class="issues-completed value"></span> 
-		   
-		   	<span class="project-opened-issue-hours" <?php if (($hours=$project->getSumOpenedIssuesHours()) == 0):?>style="display:none;"<?php endif;?>>(<span class="issue-hours value"><?=$hours;?></span>&nbsp;<?=DeclensionHelper::hours($hours);?>)</span>
-		 из <span class="issues-total value"></span>
+		   <span class="label">Завершено:</span> 
+		   <span class="issues-completed value"></span> 	 
 		</p>
         <p class="filters-line">
             <a href="javascript:;" id="showIssues4MeLink" onclick="return issuePage.showIssues4Me();">Показать только мои задачи</a>
             <a href="javascript:;" id="showIssues4AllLink" onclick="return issuePage.resetFilter();" style="display:none;">Показать все</a>
         </p>
-		<p class="operations-line">
-		    <a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
-			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
-		</p>
 		<? lpm_print_issues($issues); ?>
-		<p class="operations-line">
-			<a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
-			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
-		</p>
 	</article>
 	<? /*lpm_print_issue_view();*/ ?>
 </article>
