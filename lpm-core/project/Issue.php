@@ -55,10 +55,10 @@ class Issue extends MembersInstance
 					LPMTables::ISSUES, 
 					LPMTables::MEMBERS,
 					LPMTables::PROJECTS ), __CLASS__ );
-				if (!self::$_listByUser[$memberId]) return false;
-					else return self::$_listByUser[$memberId];
 			}
+			else self::$_listByUser[$memberId] = array();
 		}
+		return self::$_listByUser[$memberId];
 	}
 
 	public static function getCurrentList() {
