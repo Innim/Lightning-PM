@@ -5,8 +5,8 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
-        document.addEventListener('hash', onHash());
-
+        onHash();
+        //window.addEventListener('hashchange', onHash);
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -833,22 +833,36 @@ $('.issues-list > tbody > tr > td:first-of-type a').mouseleave(
 //хэширование комментов к задаче
 function onHash() {
     var hash = window.location.hash;
-    //поддержка браузером
-    if ("onhashchange" in window) {
+    
+    window.onhashchange = function () {
+        //имя пейджа - номер коммента
         document.title = hash.replace( /^#/, "" );
-     
-        $( "#issueView ol.comments-list li" ).each(function() {
-            var that = $( this );
-            if (!$.isEmptyObject({that})) { 
-                if (that.find(".anchor").attr("id") == hash.replace( /^#/, "" )){
-                    that.find(".text").css("backgroundColor","#868686");
-                    that.find(".text").animate({ backgroundColor: "#eeeeee" }, 1200);
-                };
-            };
-        });
+               
+        var Li = $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.replace( /^#/, "" )+"]");
+                
+        if ( Li ) {
+            Li.find(".text").css("backgroundColor","#868686");
+            Li.find(".text").animate({ backgroundColor: "#eeeeee" }, 1200);
+        };
+    };
+
+    //поддержка браузером
+    if ("onhashchange" in window)
+        window.onhashchange();
+    
+    //если браузер не поддерживает,выполняем тоже самое
+    else {
+        document.title = hash.replace( /^#/, "" );
+               
+        var Li = $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.replace( /^#/, "" )+"]");
+                
+        if ( Li ) {
+            Li.find(".text").css("backgroundColor","#868686");
+            Li.find(".text").animate({ backgroundColor: "#eeeeee" }, 1200);
+        };
     };
 };
- 
+
 function pasteClipboardImage( event ){
     var clipboard = event.clipboardData;
 
