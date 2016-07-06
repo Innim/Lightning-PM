@@ -292,17 +292,24 @@ class ProjectPage extends BasePage
 					// загружаем изображения
 					//если задача редактируется
 					if ($editMode) {
+						//считаем из базы кол-во картинок, имеющихся для задачи
 						$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
 							"WHERE `itemId` = '" . $issueId. "'".
+							"AND `%s`.`itemType` = '" . Issue::ITYPE_ISSUE . "' " .
 							"AND `deleted` = '0'";
+						
 						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) {
 							$row =  $query->fetch_assoc();
 							$loadedImgs = (int)$row['cnt'];
-							$uploader = $this->saveImages4Issue( $issueId, $loadedImgs );
 						}
+						else 
+							$uploader = false;
 					}
 					//если добавляется
-					else $uploader = $this->saveImages4Issue( $issueId, $loadedImgs = 0);
+					else
+						$loadedImgs = 0;
+
+					$uploader = $this->saveImages4Issue( $issueId, $loadedImgs);
 
 					if ($uploader === false)
 					{

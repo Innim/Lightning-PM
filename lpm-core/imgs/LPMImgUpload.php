@@ -221,7 +221,7 @@ class LPMImgUpload {
   				if (preg_match("/^https?:\/\/d.pr\/[a-z0-9\/]+$/i", $value))
   					$value.= '+';
   				//проверка, если картинка из сервиса ownCloud (http://cloud.innim.ru/) 
-  				if (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value))
+  				else if (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value))
   					$value.= '/download';
  					
   				//если картинку скачать не удалось - прерываем запись файла
