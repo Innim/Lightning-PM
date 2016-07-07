@@ -833,35 +833,26 @@ $('.issues-list > tbody > tr > td:first-of-type a').mouseleave(
 //хэширование комментов к задаче
 function onHash() {
     var hash = window.location.hash;
-    
-    window.onhashchange = function () {
-        //имя пейджа - номер коммента
-        document.title = hash.replace( /^#/, "" );
-               
-        var Li = $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.replace( /^#/, "" )+"]");
-                
-        if ( Li ) {
-            Li.find(".text").css("backgroundColor","#868686");
-            Li.find(".text").animate({ backgroundColor: "#eeeeee" }, 1200);
-        };
-    };
 
     //поддержка браузером
-    if ("onhashchange" in window)
+    if ("onhashchange" in window) {
+        //подсвечиваем коммент
+        window.onhashchange = function showHashComment()
+    {
+        $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.replace( /^#/, "" )+"]")
+            .find(".text").css("backgroundColor","#868686")
+            .animate({ backgroundColor: "#eeeeee" }, 1200);
+    } 
         window.onhashchange();
+    }
     
     //если браузер не поддерживает,выполняем тоже самое
-    else {
-        document.title = hash.replace( /^#/, "" );
-               
-        var Li = $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.replace( /^#/, "" )+"]");
-                
-        if ( Li ) {
-            Li.find(".text").css("backgroundColor","#868686");
-            Li.find(".text").animate({ backgroundColor: "#eeeeee" }, 1200);
-        };
-    };
+    else 
+        showHashComment();
 };
+
+
+
 
 function pasteClipboardImage( event ){
     var clipboard = event.clipboardData;
