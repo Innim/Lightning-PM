@@ -14,7 +14,7 @@ class ProjectsPage extends BasePage
 		parent::__construct( self::UID, 'Проекты', true , false, 'projects', 'Проекты' );
 		$this->_pattern = 'projects';
 		
-		array_push( $this->_js, 'projects' );
+		array_push( $this->_js,'projects','issues' );
 
 		$this->_defaultPUID = self::PUID_DEVL;
 

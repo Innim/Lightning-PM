@@ -2,6 +2,7 @@
 class Issue extends MembersInstance
 {
 	public static $currentIssue;
+	public $projectName  = ''; /*для загрузки задач по неск-им проектам*/
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
 	
@@ -42,16 +43,19 @@ class Issue extends MembersInstance
 		return self::$_listByProjects[$projectId];
 	}
 
-	public static function getListbyMember( $memberId ) {
+	public static function getListByMember( $memberId ) {
 		if (!isset( self::$_listByUser[$memberId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {	
-		       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID` FROM `%1\$s`, `%2\$s`, `%3\$s`". 
+		       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
+		       	`%3\$s`.`name` AS `projectName` FROM `%1\$s`, `%2\$s`, `%3\$s`". 
 				  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
 				  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
-					 "AND `%2\$s`.`userId` = '" . $memberId . "'".
-					 "AND `%1\$s`.`status` = '0'".
-					 "ORDER BY `%1\$s`.`idInProject` ";
-				self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array( $sql, 
+					"AND `%2\$s`.`userId` = '" . $memberId . "'".
+					"AND `%1\$s`.`status` = '0'".
+					"AND `%1\$s`.`deleted` = '0'".
+					"ORDER BY `%1\$s`.`idInProject` ";
+
+				self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array(	$sql, 
 					LPMTables::ISSUES, 
 					LPMTables::MEMBERS,
 					LPMTables::PROJECTS ), __CLASS__ );
@@ -209,14 +213,6 @@ class Issue extends MembersInstance
     public function getIdInProject(){
         return $this->idInProject;
     }
-    
-    public function getProjName($projID) {
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $sql ="SELECT `name` AS `name` FROM `%s` WHERE `id` = ".$projID." "; 
-        $query = $db->queryt( $sql, LPMTables::PROJECTS );
-        if (!$query || !($row = $query->fetch_assoc())) return false;
-       	return (string)$row['name'];
-    }
 
 	public function getID() {
 		return $this->id;
@@ -251,6 +247,11 @@ class Issue extends MembersInstance
 		if ($this->priority < 33) return 'низкий';
 		else if ($this->priority < 66) return 'нормальный';
 		else return 'высокий';
+	}
+
+	/*для загрузки задач по неск-им проектам*/
+	public function getProjectUrl() {
+		return Project::getURLByProjectUID( $this->projectUID );
 	}
 	
 	/**

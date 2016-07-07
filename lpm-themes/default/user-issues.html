@@ -1,4 +1,4 @@
-<article id="UserIssues">
+<article id="UserIssues" >
 <table id="UserIssuesList" class="issues-list">
     <h1><?lpm_print_header();?></h1>
     <thead>
@@ -7,8 +7,8 @@
             <th>Тип</th>
             <th>Название</th>
 			<th>Описание</th>
-			<th>Проект</th>
 			<th>Дата окончания</th>
+            <th>Проект</th>
         </tr>
     </thead>
     <tbody>
@@ -23,9 +23,9 @@
             </td>             
             </td>
             <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a></td>
-            <td><?=$issue->getDesc();?>
-            <td><?=$issue->getProjName($issue->projectId);?></td>  
+            <td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
             <td><?=$issue->getCompleteDate();?></td>
+            <td><a href="<?=$issue->getProjectUrl();?>"><?=$issue->projectName;?></a></td> 
         </tr>           
         <? }?>
     </tbody>
