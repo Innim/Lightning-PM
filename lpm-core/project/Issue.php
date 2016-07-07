@@ -42,9 +42,13 @@ class Issue extends MembersInstance
 		return self::$_listByProjects[$projectId];
 	}
 
-	public static function loadListByProject($projectId) {
+	public static function loadListByProject($projectId,$status = true) {
 		$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
-		$where.= " AND `%1\$s`.`status` = '2'";
+		if ($status)
+			$where.= " AND `%1\$s`.`status` = '0'";
+		else 
+			$where.= " AND `%1\$s`.`status` = '2'";
+		
 		return self::loadList( $where );
 	}
 	
