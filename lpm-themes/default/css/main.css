@@ -614,6 +614,11 @@ article.comments ol.comments-list li .date {
     margin-top   : 0px;
     font-size    : x-small;
 }
+article.comments ol.comments-list li .date a
+{
+	outline: none;
+	color: inherit;
+}
 article.comments ol.comments-list li .text {
     background-color: #eeeeee;
     padding         : 10px;

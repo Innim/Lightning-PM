@@ -5,8 +5,7 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
-        onHash();
-        //window.addEventListener('hashchange', onHash);
+        
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -828,31 +827,7 @@ $('.issues-list > tbody > tr > td:first-of-type a').mouseleave(
         });
     }
 );
-}); 
-
-//хэширование комментов к задаче
-function onHash() {
-    var hash = window.location.hash;
-
-    //поддержка браузером
-    if ("onhashchange" in window) {
-        //подсвечиваем коммент
-        window.onhashchange = function showHashComment()
-    {
-        $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.replace( /^#/, "" )+"]")
-            .find(".text").css("backgroundColor","#868686")
-            .animate({ backgroundColor: "#eeeeee" }, 1200);
-    } 
-        window.onhashchange();
-    }
-    
-    //если браузер не поддерживает,выполняем тоже самое
-    else 
-        showHashComment();
-};
-
-
-
+});  
 
 function pasteClipboardImage( event ){
     var clipboard = event.clipboardData;
