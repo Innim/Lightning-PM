@@ -591,7 +591,8 @@ issuePage.postComment = function () {
                        '<li>' +  
                         '<img src="' + res.comment.author.avatarUrl + '" class="user-avatar small"/>' +
                         '<p class="author">' + res.comment.author.linkedName + '</p> ' +
-                        '<p class="date">' + res.comment.dateLabel + '</p>' +
+                        '<p class="date"><a class="anchor" id="'+res.comment.id+
+                        '"href="#comment-'+res.comment.id+'">'+res.comment.dateLabel+'</a></p>' +
                         '<p class="text">' + res.comment.text + '</p>' +
                        '</li>' 
                 );
