@@ -14,13 +14,13 @@ class ProjectsPage extends BasePage
 		parent::__construct( self::UID, 'Проекты', true , false, 'projects', 'Проекты' );
 		$this->_pattern = 'projects';
 		
-		array_push( $this->_js,'projects','issues' );
+		array_push( $this->_js,'projects' );
 
 		$this->_defaultPUID = self::PUID_DEVL;
 
 		$this->addSubPage( self::PUID_DEVL , 'В разработке' );
 		$this->addSubPage( self::PUID_ARCH , 'Архив' , 'projects-archive');
-		$this->addSubPage( self::PUID_USER_ISSUES , 'Мои задачи' , 'user-issues');
+		$this->addSubPage( self::PUID_USER_ISSUES , 'Мои задачи' , 'user-issues', array( 'issues' ));
 	}
 	
 	public function init() {

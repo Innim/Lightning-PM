@@ -22,7 +22,11 @@
                 </nobr>
             </td>             
             </td>
-            <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a></td>
+            <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a>
+            <?if ($issue->commentsCount > 0):?>
+                 &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
+                 <?endif;?>
+            </td>
             <td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
             <td><?=$issue->getCompleteDate();?></td>
             <td><a href="<?=$issue->getProjectUrl();?>"><?=$issue->projectName;?></a></td> 
@@ -31,3 +35,4 @@
     </tbody>
 </table>
 </article>
+

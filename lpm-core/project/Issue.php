@@ -2,7 +2,6 @@
 class Issue extends MembersInstance
 {
 	public static $currentIssue;
-	public $projectName  = ''; /*для загрузки задач по неск-им проектам*/
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
 	
@@ -47,8 +46,9 @@ class Issue extends MembersInstance
 		if (!isset( self::$_listByUser[$memberId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {	
 		       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
-		       	`%3\$s`.`name` AS `projectName` FROM `%1\$s`, `%2\$s`, `%3\$s`". 
+		       	`%3\$s`.`name` AS `projectName`,`%4\$s`.* FROM `%1\$s`, `%2\$s`, `%3\$s`,`%4\$s`". 
 				  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
+				  "AND `%4\$s`.`issueId` = `%1\$s`.`id` ".
 				  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
 					"AND `%2\$s`.`userId` = '" . $memberId . "'".
 					"AND `%1\$s`.`status` = '0'".
@@ -58,7 +58,8 @@ class Issue extends MembersInstance
 				self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array(	$sql, 
 					LPMTables::ISSUES, 
 					LPMTables::MEMBERS,
-					LPMTables::PROJECTS ), __CLASS__ );
+					LPMTables::PROJECTS,
+					LPMTables::ISSUE_COUNTERS ), __CLASS__ );
 			}
 			else self::$_listByUser[$memberId] = array();
 		}
@@ -149,6 +150,7 @@ class Issue extends MembersInstance
 	public $id            =  0;
 	public $parentId      =  0;
 	public $projectId     =  0;
+	public $projectName  = ''; /*для загрузки задач по неск-им проектам*/
     public $idInProject   =  0;
 	public $projectUID    = '';
 	public $name          = '';
@@ -249,7 +251,6 @@ class Issue extends MembersInstance
 		else return 'высокий';
 	}
 
-	/*для загрузки задач по неск-им проектам*/
 	public function getProjectUrl() {
 		return Project::getURLByProjectUID( $this->projectUID );
 	}
