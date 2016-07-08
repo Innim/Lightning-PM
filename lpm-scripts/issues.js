@@ -282,11 +282,7 @@ function completeIssue( e ) {
                     // находим в таблице строку с этой задачей и переставляем
                     //var row =                     
                     if ($( '#issuesList' ).length > 0) {
-                        $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).
-                        addClass   ( 'completed-issue'     ).
-                        removeClass( 'active-issue'        ).
-                        appendTo   ( '#issuesList > tbody' );
-                                            
+                        $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();                   
                         showMain();
                     } else if ($( '#issueView' ).length > 0) {
                         /*$( "#issueInfo .buttons-bar" ).
@@ -332,11 +328,11 @@ function restoreIssue( e ) {
                 //row.className = 'active-issue';                
                 
                 if ($( '#issuesList' ).length > 0) {
-                    $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).
-                    addClass   ( 'active-issue'        ).
-                    removeClass( 'completed-issue'     ).
-                    prependTo  ( '#issuesList > tbody' );
-                    $( "#completedIssuess #issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).hide();
+                    $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();
+                    //addClass   ( 'active-issue'        ).
+                    //removeClass( 'completed-issue'     ).
+                    //prependTo  ( '#issuesList > tbody' );
+                    //$( "#completedIssuess #issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).hide();
                     showMain();
                 } else if ($( '#issueView' ).length > 0) {
                     /*$( "#issueInfo .buttons-bar" ).
@@ -655,6 +651,7 @@ issuePage.resetFilter = function ()//e)
     //$( '#issuesList > tbody > tr' ).show();
     window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
+    
     for (var i = 0; i < rows.length; i++) {
         rows[i].show();
     }

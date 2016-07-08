@@ -10,9 +10,11 @@ class Issue extends MembersInstance
 					  //"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
 					  "IF(`%1\$s`.`status` = 2, `%1\$s`.`completedDate`, NULL) AS `realCompleted`, " .
 					  "`%2\$s`.*, `%3\$s`.*, `%4\$s`.`uid` as `projectUID` " .
-		         "FROM `%2\$s`, `%4\$s`, `%1\$s` " .
-		         "LEFT JOIN `%3\$s` ON `%1\$s`.`id` = `%3\$s`.`issueId` " .
-				"WHERE `%1\$s`.`projectId` = `%4\$s`.`id` " ;
+		        "FROM `%2\$s`, `%4\$s`, `%1\$s` " .
+		        "LEFT JOIN `%3\$s` ON `%1\$s`.`id` = `%3\$s`.`issueId` " .
+				"WHERE `%1\$s`.`projectId` = `%4\$s`.`id` " .
+				"AND `%1\$s`.`deleted` = '0'";
+
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `%1\$s`.`authorId` = `%2\$s`.`userId` ".
 				"ORDER BY `%1\$s`.`status` ASC, `realCompleted` DESC, `%1\$s`.`priority` DESC, `%1\$s`.`completeDate` ASC";
@@ -42,12 +44,9 @@ class Issue extends MembersInstance
 		return self::$_listByProjects[$projectId];
 	}
 
-	public static function loadListByProject($projectId,$status = true) {
+	public static function loadListByProject($projectId,$issueStatus = 0) {
 		$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
-		if ($status)
-			$where.= " AND `%1\$s`.`status` = '0'";
-		else 
-			$where.= " AND `%1\$s`.`status` = '2'";
+		$where.= " AND `%1\$s`.`status` = '" . $issueStatus . "'";
 		
 		return self::loadList( $where );
 	}
