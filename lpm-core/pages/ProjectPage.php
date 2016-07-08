@@ -295,15 +295,17 @@ class ProjectPage extends BasePage
 						//считаем из базы кол-во картинок, имеющихся для задачи
 						$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
 							"WHERE `itemId` = '" . $issueId. "'".
-							"AND `%s`.`itemType` = '" . Issue::ITYPE_ISSUE . "' " .
+							"AND `itemType` = '" . Issue::ITYPE_ISSUE . "' " .
 							"AND `deleted` = '0'";
 						
 						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) {
 							$row =  $query->fetch_assoc();
 							$loadedImgs = (int)$row['cnt'];
 						}
-						else 
-							$uploader = false;
+						else {
+							$engine->addError( 'Ошибка доступа к БД.Не удалось загрузить изображение' );
+							return;
+						}
 					}
 					//если добавляется
 					else
