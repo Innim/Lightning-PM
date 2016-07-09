@@ -87,12 +87,15 @@ class ProjectPage extends BasePage
 		} 
 		
 		// загружаем задачи
-		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {			
+		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) 
+		{			
 			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id ));	
 		}
 		// загружаем  завершенные задачи
-		else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) {			
-			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id, 2));	
+		else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) 
+		{			
+			$this->addTmplVar('issues', Issue::loadListByProject(
+				$this->_project->id, Issue::STATUS_COMPLETED));	
 		}
 		
 		return $this;
