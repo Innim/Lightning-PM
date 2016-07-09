@@ -5,38 +5,62 @@ class Issue extends MembersInstance
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
 	
-	protected static function loadList( $where ) {
+	/**
+	 * Выборка происходит из таблиц:
+	 * - задач - i
+	 * - пользователей - u
+	 * - проектое - p
+	 * - счетчиков задачи - cnt	 
+	 * @param  string $where       
+	 * @param  string $extraSelect 
+	 * @param  array  $extraTables ассоциативный массив [алиас => таблица]
+	 * @return array<Issue>
+	 */
+	protected static function loadList( $where, $extraSelect = '', $extraTables = null ) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
-		$sql = "SELECT `%1\$s`.*, " .
+		$sql = "SELECT `i`.*, " .
 					  //"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
-					  "IF(`%1\$s`.`status` = 2, `%1\$s`.`completedDate`, NULL) AS `realCompleted`, " .
-					  "`%2\$s`.*, `%3\$s`.*, `%4\$s`.`uid` as `projectUID` " .
-		        "FROM `%2\$s`, `%4\$s`, `%1\$s` " .
-		        "LEFT JOIN `%3\$s` ON `%1\$s`.`id` = `%3\$s`.`issueId` " .
-				"WHERE `%1\$s`.`projectId` = `%4\$s`.`id` " .
-				"AND `%1\$s`.`deleted` = '0'";
+					  "IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, " .
+					  "`u`.*, `cnt`.*, `p`.`uid` as `projectUID`";
+		if (!empty($extraSelect)) $sql .= ', ' . $extraSelect;
+
+		$sql .= ' FROM `%2$s` AS `u`, `%4$s` AS `p`';
+		$args = array( 
+			LPMTables::ISSUES, 
+			LPMTables::USERS,
+			LPMTables::ISSUE_COUNTERS,
+			LPMTables::PROJECTS
+		);
+
+		if (!empty($extraTables))
+		{
+			$i = count($args);
+			foreach ($extraTables as $alias => $table) 
+			{
+				$sql .= ', `%' . (++$i) . '$s` AS `' . $alias . '`';
+				$args[] = $table;
+			}
+		}
+		$sql .= ", `%1\$s` AS `i` LEFT JOIN `%3\$s` AS `cnt` ON `i`.`id` = `cnt`.`issueId` " .
+				"WHERE `i`.`projectId` = `p`.`id` " .
+				"AND `i`.`deleted` = '0'";
 
 		if ($where != '') $sql  .= " AND " . $where;
-		$sql .= " AND `%1\$s`.`authorId` = `%2\$s`.`userId` ".
-				"ORDER BY `%1\$s`.`status` ASC, `realCompleted` DESC, `%1\$s`.`priority` DESC, `%1\$s`.`completeDate` ASC";
-		return StreamObject::loadObjList(
-					self::getDB(),  
-					array( 
-						$sql, 
-						LPMTables::ISSUES, 
-						LPMTables::USERS,
-						LPMTables::ISSUE_COUNTERS,
-						LPMTables::PROJECTS
-					), 
-					__CLASS__ 
-			   );
+		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
+				"ORDER BY `i`.`status` ASC, `realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+
+		array_unshift($args, $sql);
+
+	try{
+		return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
+	}catch (Exception $e){exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);}
 	}
 
 	public static function getListByProject( $projectId, $type = -1 ) {
 		if (!isset( self::$_listByProjects[$projectId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {
-				$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
-				if ($type != -1) $where .= "AND `%1\$s`.`type` = '" . $type . "'";
+				$where = "`i`.`projectId` = '" . $projectId . "'";
+				if ($type != -1) $where .= "AND `i`.`type` = '" . $type . "'";
 					
 				self::$_listByProjects[$projectId] = self::loadList( $where );
 			} else self::$_listByProjects[$projectId] = array();
@@ -44,9 +68,10 @@ class Issue extends MembersInstance
 		return self::$_listByProjects[$projectId];
 	}
 
-	public static function loadListByProject($projectId,$issueStatus = 0) {
-		$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
-		$where.= " AND `%1\$s`.`status` = '" . $issueStatus . "'";
+	public static function loadListByProject($projectId, $issueStatus = null) {
+		if (null === $issueStatus) $issueStatus = Issue::STATUS_IN_WORK;
+		$where = "`i`.`projectId` = '" . $projectId . "'";
+		$where.= " AND `i`.`status` = '" . $issueStatus . "'";
 		
 		return self::loadList( $where );
 	}
@@ -54,8 +79,9 @@ class Issue extends MembersInstance
 
 	public static function getListByMember( $memberId ) {
 		if (!isset( self::$_listByUser[$memberId] )) {
-			if (LightningEngine::getInstance()->isAuth()) {	
-		       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
+			if (LightningEngine::getInstance()->isAuth()) {
+
+		       	/*$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
 		       	`%3\$s`.`name` AS `projectName`,`%4\$s`.* FROM `%1\$s`, `%2\$s`, `%3\$s`,`%4\$s`". 
 				  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
 				  "AND `%4\$s`.`issueId` = `%1\$s`.`id` ".
@@ -63,13 +89,19 @@ class Issue extends MembersInstance
 					"AND `%2\$s`.`userId` = '" . $memberId . "'".
 					"AND `%1\$s`.`status` = '0'".
 					"AND `%1\$s`.`deleted` = '0'".
-					"ORDER BY `%1\$s`.`idInProject` ";
+					"ORDER BY `%1\$s`.`idInProject` ";*/
 
-				self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array(	$sql, 
-					LPMTables::ISSUES, 
-					LPMTables::MEMBERS,
-					LPMTables::PROJECTS,
-					LPMTables::ISSUE_COUNTERS ), __CLASS__ );
+				self::$_listByUser[$memberId] = self::loadList(
+					// только задачи, в которых я участник
+					'`i`.`id` = `m`.`instanceId` AND `m`.`instanceType` = ' . Issue::ITYPE_ISSUE . 
+					' AND `m`.`userId` = ' . $memberId . 
+					// открытые
+					' AND `i`.`status` = ' . Issue::STATUS_IN_WORK .
+					// и проект не в архиве
+					' AND `p`.`isArchive` = 0',
+					'`p`.`name` AS `projectName`',
+					array('m' => LPMTables::MEMBERS)
+				);
 			}
 			else self::$_listByUser[$memberId] = array();
 		}
@@ -94,7 +126,7 @@ class Issue extends MembersInstance
 	 * @return Issue
 	 */
 	public static function load( $issueId ) {
-		return StreamObject::singleLoad( $issueId, __CLASS__, "", "%1\$s`.`id" );
+		return StreamObject::singleLoad( $issueId, __CLASS__, "", "i`.`id" );
 	}
 	
 	public function updateCommentsCounter( $issueId ) {
