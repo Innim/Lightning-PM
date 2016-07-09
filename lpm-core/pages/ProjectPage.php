@@ -179,10 +179,12 @@ class ProjectPage extends BasePage
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
 			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
+
 			foreach ($_POST as $key => $value) {
-				if ($key != 'members' && $key != 'clipboardImg')
-				$_POST[$key] = $this->_db->real_escape_string( $value );
+				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls')
+					$_POST[$key] = $this->_db->real_escape_string( $value );
 			}
+
 			$_POST['type'] = (int)$_POST['type'];
 			
 			$completeDate = $completeDateArr[3] . '-' . 
@@ -273,7 +275,6 @@ class ProjectPage extends BasePage
 					}
 					$prepare->close();
 
-
 					//удаление старых изображений
 					if (!empty($_POST["removedImages"]))
 					{
@@ -283,10 +284,8 @@ class ProjectPage extends BasePage
 						foreach ($delImg as $imgIt) {
 							$imgIt = (int)$imgIt;
 							if ($imgIt > 0) $imgIds[] = $imgIt;
-
 						}
 						if (!empty($imgIds)){
-
 							$sql = "UPDATE `%s` ". 
 										"SET `deleted`='1' ".
 										"WHERE `imgId` IN (".implode(',',$imgIds).") ".
@@ -295,12 +294,32 @@ class ProjectPage extends BasePage
 										 "AND `itemType`='".Issue::ITYPE_ISSUE."'";
 							$this->_db->queryt($sql, LPMTables::IMAGES);
 						}
-						
 					}
-
-
 					// загружаем изображения
-					$uploader = $this->saveImages4Issue( $issueId );
+					//если задача редактируется
+					if ($editMode) {
+						//считаем из базы кол-во картинок, имеющихся для задачи
+						$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
+							"WHERE `itemId` = '" . $issueId. "'".
+							"AND `itemType` = '" . Issue::ITYPE_ISSUE . "' " .
+							"AND `deleted` = '0'";
+						
+						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) 
+						{
+							$row =  $query->fetch_assoc();
+							$loadedImgs = (int)$row['cnt'];
+						}
+						else 
+						{
+							$engine->addError('Ошибка доступа к БД. Не удалось загрузить количество изображений');
+							return;
+						}
+					}
+					//если добавляется
+					else
+						$loadedImgs = 0;
+
+					$uploader = $this->saveImages4Issue( $issueId, $loadedImgs);
 
 					if ($uploader === false)
 					{
@@ -350,26 +369,31 @@ class ProjectPage extends BasePage
 		}
 	}
 
-	private function saveImages4Issue( $issueId ) 
+	private function saveImages4Issue( $issueId, $hasCnt = 0 ) 
 	{
+		
 		$uploader = new LPMImgUpload( 
-			Issue::MAX_IMAGES_COUNT, 
+			Issue::MAX_IMAGES_COUNT - $hasCnt, 
 			true,
             array( LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT ), 
             'issues', 
             'scr_',
            	Issue::ITYPE_ISSUE, 
-           	$issueId
+           	$issueId,
+           	false
         );  
 
-        if ($uploader->isErrorsExist()) {
-            $errors = $uploader->getErrors();
-            $this->_engine->addError( $errors[0] );
+        // Выполняем загрузку для изображений из поля загрузки
+        // Вставленных из буфера
+        // И добавленных по URL
+        if (!$uploader->uploadViaFiles('images') ||
+        	isset($_POST['clipboardImg']) && !$uploader->uploadFromBase64($_POST['clipboardImg']) ||
+        	isset($_POST['imgUrls']) && !$uploader->uploadFromUrls($_POST['imgUrls']))
+        {
+        	$errors = $uploader->getErrors();
+            $this->_engine->addError($errors[0]);
             return false;
         }
-            
-        //if ($uploader->getLoadedCount() == 0) return $uploader;
-            
         return $uploader;    
 	}
 }
