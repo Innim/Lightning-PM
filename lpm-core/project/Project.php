@@ -107,6 +107,7 @@ class Project extends MembersInstance
 	private $_importantIssuesCount = -1;
 
 	private $_sumOpenedIssuesHours = -1;
+	private $_totalIssuesCount = -1;
 	
 	function __construct() 
 	{
@@ -147,6 +148,20 @@ class Project extends MembersInstance
 	    }
 
 	    return $this->_importantIssuesCount;
+	}
+
+	/**
+	 * Возвращает количество всех задач текущего проекта
+	 * @return int
+	 */
+	public function getTotalIssuesCount()
+	{
+	    if ($this->_totalIssuesCount === -1)
+	    {
+	    	$this->_totalIssuesCount = Issue::loadTotalCountIssuesByProject($this->id);
+	    }
+
+	    return $this->_totalIssuesCount;
 	}
 
 	/**

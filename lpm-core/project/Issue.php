@@ -119,6 +119,22 @@ class Issue extends MembersInstance
 		$res = $db->queryt( $sql, LPMTables::MEMBERS, LPMTables::ISSUES, LPMTables::PROJECTS );
 		return $res ? (int)$res->fetch_assoc()['count'] : 0;
 	}
+	
+	public static function loadTotalCountIssuesByProject($projectId) 
+	{
+		$sql = "SELECT COUNT(*) AS `count` FROM `%1\$s` WHERE `projectId` = " . $projectId . 
+					" AND `deleted` = 0 ";
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		if ($q = $db->queryt($sql, LPMTables::ISSUES))
+		{
+			$row = $q->fetch_assoc();
+			return $row ? $row['count'] : 0;
+		}
+		else 
+		{
+			return null;
+		}
+	}
 
 	const ITYPE_ISSUE      	= 1;
 	
