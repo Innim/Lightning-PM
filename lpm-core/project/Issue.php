@@ -11,10 +11,11 @@ class Issue extends MembersInstance
 					  //"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
 					  "IF(`%1\$s`.`status` = 2, `%1\$s`.`completedDate`, NULL) AS `realCompleted`, " .
 					  "`%2\$s`.*, `%3\$s`.*, `%4\$s`.`uid` as `projectUID` " .
-		         "FROM `%2\$s`, `%4\$s`, `%1\$s` " .
-		         "LEFT JOIN `%3\$s` ON `%1\$s`.`id` = `%3\$s`.`issueId` " .
+		        "FROM `%2\$s`, `%4\$s`, `%1\$s` " .
+		        "LEFT JOIN `%3\$s` ON `%1\$s`.`id` = `%3\$s`.`issueId` " .
 				"WHERE `%1\$s`.`projectId` = `%4\$s`.`id` " .
-				  "AND `%1\$s`.`deleted` = '0'";
+				"AND `%1\$s`.`deleted` = '0'";
+
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `%1\$s`.`authorId` = `%2\$s`.`userId` ".
 				"ORDER BY `%1\$s`.`status` ASC, `realCompleted` DESC, `%1\$s`.`priority` DESC, `%1\$s`.`completeDate` ASC";
@@ -36,11 +37,20 @@ class Issue extends MembersInstance
 			if (LightningEngine::getInstance()->isAuth()) {
 				$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
 				if ($type != -1) $where .= "AND `%1\$s`.`type` = '" . $type . "'";
+					
 				self::$_listByProjects[$projectId] = self::loadList( $where );
 			} else self::$_listByProjects[$projectId] = array();
 		}
 		return self::$_listByProjects[$projectId];
 	}
+
+	public static function loadListByProject($projectId,$issueStatus = 0) {
+		$where = "`%1\$s`.`projectId` = '" . $projectId . "'";
+		$where.= " AND `%1\$s`.`status` = '" . $issueStatus . "'";
+		
+		return self::loadList( $where );
+	}
+	
 
 	public static function getListByMember( $memberId ) {
 		if (!isset( self::$_listByUser[$memberId] )) {
@@ -133,6 +143,22 @@ class Issue extends MembersInstance
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$res = $db->queryt( $sql, LPMTables::MEMBERS, LPMTables::ISSUES, LPMTables::PROJECTS );
 		return $res ? (int)$res->fetch_assoc()['count'] : 0;
+	}
+	
+	public static function loadTotalCountIssuesByProject($projectId) 
+	{
+		$sql = "SELECT COUNT(*) AS `count` FROM `%1\$s` WHERE `projectId` = " . $projectId . 
+					" AND `deleted` = 0 ";
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		if ($q = $db->queryt($sql, LPMTables::ISSUES))
+		{
+			$row = $q->fetch_assoc();
+			return $row ? $row['count'] : 0;
+		}
+		else 
+		{
+			return null;
+		}
 	}
 
 	const ITYPE_ISSUE      	= 1;

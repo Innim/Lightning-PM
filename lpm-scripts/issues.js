@@ -169,8 +169,9 @@ issuePage.getPriorityColor = function (val) {
 };
 
 issuePage.updateStat = function () {    
-    $( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
+    //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() );
+    $( ".project-stat .issues-completed" ).text( $( "#issuesList > tbody > tr.completed-issue" ).size() );
 
     // Перезапрашиваем сумму часов
     srv.project.getSumOpenedIssuesHours($("#projectView").data('projectId'), function (r) {
@@ -232,7 +233,6 @@ issuePage.insertTag = function(tag){
         if (subtext == "")
             //определяем фокус перед '/' тэгом
             caretPos = text.selectionStart + closetag.length-1;
-            //alert(text.selectionStart);
         else //после тэга       
             caretPos = text.selectionStart + subtext.length + closetag.length*2;
         //добавляем итог в описание задачи
@@ -280,11 +280,7 @@ function completeIssue( e ) {
                     // находим в таблице строку с этой задачей и переставляем
                     //var row =                     
                     if ($( '#issuesList' ).length > 0) {
-                        $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).
-                        addClass   ( 'completed-issue'     ).
-                        removeClass( 'active-issue'        ).
-                        appendTo   ( '#issuesList > tbody' );
-                                            
+                        $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();                   
                         showMain();
                     } else if ($( '#issueView' ).length > 0) {
                         /*$( "#issueInfo .buttons-bar" ).
@@ -330,11 +326,11 @@ function restoreIssue( e ) {
                 //row.className = 'active-issue';                
                 
                 if ($( '#issuesList' ).length > 0) {
-                    $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).
-                    addClass   ( 'active-issue'        ).
-                    removeClass( 'completed-issue'     ).
-                    prependTo  ( '#issuesList > tbody' );
-                    
+                    $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();
+                    //addClass   ( 'active-issue'        ).
+                    //removeClass( 'completed-issue'     ).
+                    //prependTo  ( '#issuesList > tbody' );
+                    //$( "#completedIssuess #issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).hide();
                     showMain();
                 } else if ($( '#issueView' ).length > 0) {
                     /*$( "#issueInfo .buttons-bar" ).
@@ -653,6 +649,7 @@ issuePage.resetFilter = function ()//e)
     //$( '#issuesList > tbody > tr' ).show();
     window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
+    
     for (var i = 0; i < rows.length; i++) {
         rows[i].show();
     }

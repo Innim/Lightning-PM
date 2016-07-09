@@ -133,7 +133,8 @@ class PageConstructor
 		include self::$_instance->getThemeDir() . 'css/' . $name . '.css';
 	}*/
 	
-	public static function includePattern( $name ) {
+	public static function includePattern( $name, $args = null) {
+		if (null !== $args) extract($args);
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
 	}	
 
