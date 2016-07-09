@@ -1,0 +1,38 @@
+<article id="UserIssues" >
+<table id="UserIssuesList" class="issues-list">
+    <h1><?lpm_print_header();?></h1>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Тип</th>
+            <th>Название</th>
+			<th>Описание</th>
+			<th>Дата окончания</th>
+            <th>Проект</th>
+        </tr>
+    </thead>
+    <tbody>
+        <? foreach (lpm_get_user_issues() as $issue) {?>
+        <tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">
+            <td><a href="<?=$issue->getConstURL();?>"><?=$issue->getIdInProject();?></a></td>
+            <td>
+                <nobr>
+                     <span class="priority-val circle" title="Приоритет: <?=$issue->getPriorityStr();?>">
+                     <?=$issue->priority;?></span><?=$issue->getType();?>
+                </nobr>
+            </td>             
+            </td>
+            <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a>
+            <?if ($issue->commentsCount > 0):?>
+                 &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
+                 <?endif;?>
+            </td>
+            <td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
+            <td><?=$issue->getCompleteDate();?></td>
+            <td><a href="<?=$issue->getProjectUrl();?>"><?=$issue->projectName;?></a></td> 
+        </tr>           
+        <? }?>
+    </tbody>
+</table>
+</article>
+

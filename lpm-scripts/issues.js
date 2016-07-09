@@ -5,7 +5,7 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
-
+        
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -110,7 +110,6 @@ issuePage.removeIssueMember = function(e) {
     selectElement.appendChild( option, i );
 };
 
-
 issuePage.updatePriorityVals = function () {
     issuePage.setPriorityVal( $('input[type=range]#priority').val() );
     //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
@@ -171,8 +170,9 @@ issuePage.getPriorityColor = function (val) {
 };
 
 issuePage.updateStat = function () {    
-    $( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
+    //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() );
+    $( ".project-stat .issues-completed" ).text( $( "#issuesList > tbody > tr.completed-issue" ).size() );
 
     // Перезапрашиваем сумму часов
     srv.project.getSumOpenedIssuesHours($("#projectView").data('projectId'), function (r) {
@@ -194,43 +194,69 @@ issuePage.updateStat = function () {
 
 issuePage.validateIssueForm = function () {
     var errors = [];
+    var inputs =  $( "#issueForm input:file" );
+    var len = 0;
     
-    /*if ((/^([a-z0-9\-]){1,255}$/i).test( ('input[name=uid]', "#addProjectForm" ).val() )) {
-        errors.push( 'Введён недопустимый идентификатор - используйте латинские буквы, цифры и тире' );
-    }*/
+    if (!$.isEmptyObject({inputs})){
+        inputs.each(function( i ) {
+            len += inputs[i].files.length;
+        });
+    }
+
+    if (len > window.lpmOptions.issueImgsCount)
+        errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений' );
+
     if ($('#issueForm #issueMembers input[type=hidden][name=members\[\]]').size() == 0)
         errors.push( 'Задаче должен быть назначен хотя бы один исполнитель' );
     
-    $('#issueForm > div.validateError' ).html( errors.join( '<br/>' ) );
-    
-    if (errors.length == 0) {
+      if (errors.length == 0 ) {
         $('#issueForm > div.validateError' ).hide();
         return true;
     } else {
-        $('#issueForm > div.validateError' ).show();
+        $('#issueForm > div.validateError' ).html( errors.join( '<br/>' ) ).show();
         return false;
     }
 };
 
 issuePage.insertTag = function(tag){
     var text = document.getElementsByName('desc').item(0);
+    var subtext = text.value.substring(text.selectionStart, text.selectionEnd);
+    var caretPos = 0;
+    const closetag = '</' +tag+ '>';
+    //Если в описании задачи есть текст
+    if (!$.isEmptyObject({text})) { 
+        // берем все, что до выделения
+        var desc = text.value.substring(0,text.selectionStart)+
+        // вставляем стартовый тег
+        '<'+tag+'>'+
+        // вставляем выделенный текст
+        subtext +
+        // вставляем закрывающий тег
+        closetag +
+        // вставляем все, что после выделения
+        text.value.substring(text.selectionEnd,text.value.length);
+        //определяем позицию курсора(перед закрывающим тэгом)
+        //если есть выделенный текст
+        if (subtext == "")
+            //определяем фокус перед '/' тэгом
+            caretPos = text.selectionStart + closetag.length-1;
+        else //после тэга       
+            caretPos = text.selectionStart + subtext.length + closetag.length*2;
+        //добавляем итог в описание задачи
+        $('#issueForm textarea.desc').val(desc);
+        //устанавливаем курсор на полученную позицию
+        setCaretPosition(text,caretPos);
+    }
+}
     
-        if (!$.isEmptyObject({text})){ 
-            // берем все, что до выделения
-            var desc = text.value.substring(0,text.selectionStart)+
-            // вставляем стартовый тег
-            '<'+tag+'>'+
-            // вставляем выделенный текст
-             text.value.substring(text.selectionStart, text.selectionEnd) +
-            // вставляем закрывающий тег
-            '</' +tag+ '>'+
-             // вставляем все, что после выделения
-            text.value.substring(text.selectionEnd,text.value.length);
-
-            $('#issueForm textarea.desc').val(desc);
-        }
+function setCaretPosition(elem, pos ) {
+    //если есть выделение
+    if(elem.selectionStart) {
+        //фокусим курсор на нужной позиции   
+        elem.setSelectionRange(pos, pos);
+        elem.focus();
+    }
 };
-
 
 function completeIssue( e ) {    
     var parent   = e.currentTarget.parentElement;
@@ -261,11 +287,7 @@ function completeIssue( e ) {
                     // находим в таблице строку с этой задачей и переставляем
                     //var row =                     
                     if ($( '#issuesList' ).length > 0) {
-                        $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).
-                        addClass   ( 'completed-issue'     ).
-                        removeClass( 'active-issue'        ).
-                        appendTo   ( '#issuesList > tbody' );
-                                            
+                        $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();                   
                         showMain();
                     } else if ($( '#issueView' ).length > 0) {
                         /*$( "#issueInfo .buttons-bar" ).
@@ -311,11 +333,11 @@ function restoreIssue( e ) {
                 //row.className = 'active-issue';                
                 
                 if ($( '#issuesList' ).length > 0) {
-                    $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).
-                    addClass   ( 'active-issue'        ).
-                    removeClass( 'completed-issue'     ).
-                    prependTo  ( '#issuesList > tbody' );
-                    
+                    $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();
+                    //addClass   ( 'active-issue'        ).
+                    //removeClass( 'completed-issue'     ).
+                    //prependTo  ( '#issuesList > tbody' );
+                    //$( "#completedIssuess #issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).hide();
                     showMain();
                 } else if ($( '#issueView' ).length > 0) {
                     /*$( "#issueInfo .buttons-bar" ).
@@ -443,16 +465,17 @@ issuePage.setEditInfo = function () {
     for (i = l - 1; i >= 0; i--) {
         //$('input[name=imgId]',imgs[i]).val() 
         imgLI = imgs[i].cloneNode( true );
-
         $(imgLI).append('<a href="javascript:;" class="remove-btn" onclick="removeImage(' + 
             $('input[name=imgId]', imgLI).val() + ')"></a>');
-
         $imgInput.append(imgLI);
         //imgInput.insertBefore(imgLI, imgInput.children[0]);
     };
     $imgInput.append($imgInputField);
-    if (l >= window.lpmOptions.issueImgsCount)
+    if (l >= window.lpmOptions.issueImgsCount) {
         $("#issueForm form .images-list > li input[type=file]").hide();
+        $("#issueForm form li a[name=imgbyUrl]").hide();
+    }
+    
     // родитель
     $( "#issueForm form input[name=parentId]" ).val( $( "#issueInfo input[name=parentId]" ).val() );
     // идентификатор задачи
@@ -473,8 +496,18 @@ function removeImage(imageId)
         if (val != '') val += ',';
         val += imageId;
         $('#issueForm form input[name=removedImages]').val(val);
-    } 
-    
+    }
+}
+
+function addImagebyUrl() {
+    var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
+    var imgInput = $("#issueForm ul.images-url");
+    urlLI.removeAttr('class');
+    //добавляем в контейнер
+    imgInput.append(urlLI);
+    urlLI.find("a").click(function (event) {
+        urlLI.remove();    
+    });
 };
 
 /**
@@ -570,7 +603,8 @@ issuePage.postComment = function () {
                        '<li>' +  
                         '<img src="' + res.comment.author.avatarUrl + '" class="user-avatar small"/>' +
                         '<p class="author">' + res.comment.author.linkedName + '</p> ' +
-                        '<p class="date">' + res.comment.dateLabel + '</p>' +
+                        '<p class="date"><a class="anchor" id="'+res.comment.id+
+                        '"href="#comment-'+res.comment.id+'">'+res.comment.dateLabel+'</a></p>' +
                         '<p class="text">' + res.comment.text + '</p>' +
                        '</li>' 
                 );
@@ -634,6 +668,7 @@ issuePage.resetFilter = function ()//e)
     //$( '#issuesList > tbody > tr' ).show();
     window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
+    
     for (var i = 0; i < rows.length; i++) {
         rows[i].show();
     }
@@ -687,7 +722,6 @@ function Issue( obj ) {
             if (i > 0) str += ', ';
             str += this.members[i].linkedName;
         }
-        
         return str;
     };
     
@@ -816,7 +850,7 @@ function pasteClipboardImage( event ){
         var item = clipboard.items[0];
 
         if (item && item.type.indexOf('image/') > -1) {
-            // Получаем картинку в виде блоба
+            // Получаем картинку в виде блога
             var blob = item.getAsFile();
 
             if (blob) {

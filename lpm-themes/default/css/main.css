@@ -563,6 +563,34 @@ ul.images-list > li > a {
     left 	: 10px;
 	top 	: 0px;
 }
+.images-url a.remove-btn
+{	
+    position: absolute;
+    left: 300px;
+	top: 3px;
+}
+ul.images-url{
+	list-style: none;
+	margin: 10px auto;
+	margin-top: 1%;
+}
+ul.images-url > li {
+	display: block;	
+	margin: 10px auto;
+	padding: 0px;
+	position: relative;
+}
+ul.images-url > li > input {
+	max-width: 300px;
+	margin-top: 5px;
+	margin-left: 0;
+	padding: 0;
+	text-align: center;
+}
+#issueForm li > a[name="imgbyUrl"] {
+	margin-left: 50px;
+	font-size: small; 
+}
 /* комментарии */
 article.comments {
 	width    : 90%;
@@ -613,6 +641,11 @@ article.comments ol.comments-list li .author {
 article.comments ol.comments-list li .date {
     margin-top   : 0px;
     font-size    : x-small;
+}
+article.comments ol.comments-list li .date a
+{
+	outline: none;
+	color: inherit;
 }
 article.comments ol.comments-list li .text {
     background-color: #eeeeee;
@@ -853,11 +886,12 @@ table.issues-list td:last-child
 	/*width: 175px;*/
 }
 table.issues-list tr.completed-issue td button.complete-btn {
-	display: none;
-}
-table.issues-list tr.active-issue td button.restore-btn {
     display: none;
 }
+table.issues-list tr.active-issue td button.restore-btn {
+	display: none;
+ }
+
 table.issues-list tr td span.comments-count {
 	font-size    : 8.5pt;
 	font-weight  : bold;

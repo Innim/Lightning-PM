@@ -88,9 +88,9 @@ class Project extends MembersInstance
 		return StreamObject::singleLoad( $projectId, __CLASS__, '' );
 	}
 	
-	/*public static function getURLByProjectUID( $projectUID ) {
+	public static function getURLByProjectUID( $projectUID ) {
 		return Link::getUrlByUid( ProjectPage::UID, $projectUID );
-	} */
+	} 
 	
 	
 	const ITYPE_PROJECT = 2;
@@ -107,6 +107,7 @@ class Project extends MembersInstance
 	private $_importantIssuesCount = -1;
 
 	private $_sumOpenedIssuesHours = -1;
+	private $_totalIssuesCount = -1;
 	
 	function __construct() 
 	{
@@ -116,15 +117,15 @@ class Project extends MembersInstance
 	
 	public function getID() {
 		return $this->id;
-	} 
+	}
 	
 	public function getShortDesc() {
 		parent::getShort( $this->desc, 200 );
 	}
 	
 	public function getUrl() {
-		return Link::getUrlByUid( ProjectPage::UID, $this->uid );
-		//return self::getURLByProjectUID( $this->uid );
+		//return Link::getUrlByUid( ProjectPage::UID, $this->uid );
+		return self::getURLByProjectUID( $this->uid );
 	}
 	
 	public function getDesc() {
@@ -147,6 +148,20 @@ class Project extends MembersInstance
 	    }
 
 	    return $this->_importantIssuesCount;
+	}
+
+	/**
+	 * Возвращает количество всех задач текущего проекта
+	 * @return int
+	 */
+	public function getTotalIssuesCount()
+	{
+	    if ($this->_totalIssuesCount === -1)
+	    {
+	    	$this->_totalIssuesCount = Issue::loadTotalCountIssuesByProject($this->id);
+	    }
+
+	    return $this->_totalIssuesCount;
 	}
 
 	/**

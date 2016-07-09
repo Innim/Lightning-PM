@@ -48,6 +48,10 @@ class PageConstructor
 	public static function getUsersChooseList() {
 		return User::loadList( ' `locked` <> 1 ' );
 	}
+
+	public static function getUserIssues() {
+		return Issue::getListbyMember(LightningEngine::getInstance()->getUserId());
+	}
 	
 	public static function getDateLinks() {
 		// TODO сделать что-нибудь с этим!!
@@ -129,7 +133,8 @@ class PageConstructor
 		include self::$_instance->getThemeDir() . 'css/' . $name . '.css';
 	}*/
 	
-	public static function includePattern( $name ) {
+	public static function includePattern( $name, $args = null) {
+		if (null !== $args) extract($args);
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
 	}	
 
