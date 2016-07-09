@@ -5,6 +5,7 @@ $(document).ready(
         issuePage.updatePriorityVals();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
+        
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -229,7 +230,7 @@ issuePage.insertTag = function(tag){
         // вставляем стартовый тег
         '<'+tag+'>'+
         // вставляем выделенный текст
-         subtext +
+        subtext +
         // вставляем закрывающий тег
         closetag +
         // вставляем все, что после выделения
@@ -602,7 +603,8 @@ issuePage.postComment = function () {
                        '<li>' +  
                         '<img src="' + res.comment.author.avatarUrl + '" class="user-avatar small"/>' +
                         '<p class="author">' + res.comment.author.linkedName + '</p> ' +
-                        '<p class="date">' + res.comment.dateLabel + '</p>' +
+                        '<p class="date"><a class="anchor" id="'+res.comment.id+
+                        '"href="#comment-'+res.comment.id+'">'+res.comment.dateLabel+'</a></p>' +
                         '<p class="text">' + res.comment.text + '</p>' +
                        '</li>' 
                 );

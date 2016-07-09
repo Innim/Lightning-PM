@@ -15,6 +15,20 @@ $(document).ready(
         
         if ($( '#issueView .comments .comments-list > li' ).size() == 0) 
             $( '#issueView .comments .links-bar a.toggle-comments' ).hide();
+
+        function highlightComment() 
+        {
+            var hash = window.location.hash;
+            if (hash.substr(0, 9) === '#comment-')
+            {
+                 $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.substr(1)+"]")
+                    .find(".text").css("backgroundColor","#868686")
+                    .animate({ backgroundColor: "#eeeeee" }, 1200);
+            }
+        }
+
+        if ("onhashchange" in window) window.onhashchange = highlightComment;
+        highlightComment();
     }
 );
 
@@ -39,3 +53,4 @@ $(document).ready(
         });
     }
 );
+
