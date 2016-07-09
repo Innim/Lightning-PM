@@ -88,9 +88,9 @@ class Project extends MembersInstance
 		return StreamObject::singleLoad( $projectId, __CLASS__, '' );
 	}
 	
-	/*public static function getURLByProjectUID( $projectUID ) {
+	public static function getURLByProjectUID( $projectUID ) {
 		return Link::getUrlByUid( ProjectPage::UID, $projectUID );
-	} */
+	} 
 	
 	
 	const ITYPE_PROJECT = 2;
@@ -116,15 +116,15 @@ class Project extends MembersInstance
 	
 	public function getID() {
 		return $this->id;
-	} 
+	}
 	
 	public function getShortDesc() {
 		parent::getShort( $this->desc, 200 );
 	}
 	
 	public function getUrl() {
-		return Link::getUrlByUid( ProjectPage::UID, $this->uid );
-		//return self::getURLByProjectUID( $this->uid );
+		//return Link::getUrlByUid( ProjectPage::UID, $this->uid );
+		return self::getURLByProjectUID( $this->uid );
 	}
 	
 	public function getDesc() {

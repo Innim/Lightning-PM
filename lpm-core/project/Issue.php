@@ -3,6 +3,7 @@ class Issue extends MembersInstance
 {
 	public static $currentIssue;
 	private static $_listByProjects = array();
+	private static $_listByUser = array();
 	
 	protected static function loadList( $where ) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
@@ -29,7 +30,7 @@ class Issue extends MembersInstance
 					__CLASS__ 
 			   );
 	}
-	
+
 	public static function getListByProject( $projectId, $type = -1 ) {
 		if (!isset( self::$_listByProjects[$projectId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {
@@ -38,10 +39,33 @@ class Issue extends MembersInstance
 				self::$_listByProjects[$projectId] = self::loadList( $where );
 			} else self::$_listByProjects[$projectId] = array();
 		}
-	
 		return self::$_listByProjects[$projectId];
 	}
-	
+
+	public static function getListByMember( $memberId ) {
+		if (!isset( self::$_listByUser[$memberId] )) {
+			if (LightningEngine::getInstance()->isAuth()) {	
+		       	$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
+		       	`%3\$s`.`name` AS `projectName`,`%4\$s`.* FROM `%1\$s`, `%2\$s`, `%3\$s`,`%4\$s`". 
+				  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
+				  "AND `%4\$s`.`issueId` = `%1\$s`.`id` ".
+				  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
+					"AND `%2\$s`.`userId` = '" . $memberId . "'".
+					"AND `%1\$s`.`status` = '0'".
+					"AND `%1\$s`.`deleted` = '0'".
+					"ORDER BY `%1\$s`.`idInProject` ";
+
+				self::$_listByUser[$memberId] = StreamObject::loadObjList(self::getDB(), array(	$sql, 
+					LPMTables::ISSUES, 
+					LPMTables::MEMBERS,
+					LPMTables::PROJECTS,
+					LPMTables::ISSUE_COUNTERS ), __CLASS__ );
+			}
+			else self::$_listByUser[$memberId] = array();
+		}
+		return self::$_listByUser[$memberId];
+	}
+
 	public static function getCurrentList() {
 		/*foreach (self::$_listByProjects as $list) {
 			return $list;
@@ -126,6 +150,7 @@ class Issue extends MembersInstance
 	public $id            =  0;
 	public $parentId      =  0;
 	public $projectId     =  0;
+	public $projectName  = ''; /*для загрузки задач по неск-им проектам*/
     public $idInProject   =  0;
 	public $projectUID    = '';
 	public $name          = '';
@@ -186,11 +211,11 @@ class Issue extends MembersInstance
 		// TODO проверку прав
 		return true;
 	}
-	
+
     public function getIdInProject(){
         return $this->idInProject;
     }
-    
+
 	public function getID() {
 		return $this->id;
 	}
@@ -224,6 +249,10 @@ class Issue extends MembersInstance
 		if ($this->priority < 33) return 'низкий';
 		else if ($this->priority < 66) return 'нормальный';
 		else return 'высокий';
+	}
+
+	public function getProjectUrl() {
+		return Project::getURLByProjectUID( $this->projectUID );
 	}
 	
 	/**
