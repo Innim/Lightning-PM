@@ -298,12 +298,14 @@ class ProjectPage extends BasePage
 							"AND `itemType` = '" . Issue::ITYPE_ISSUE . "' " .
 							"AND `deleted` = '0'";
 						
-						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) {
+						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) 
+						{
 							$row =  $query->fetch_assoc();
 							$loadedImgs = (int)$row['cnt'];
 						}
-						else {
-							$engine->addError( 'Ошибка доступа к БД.Не удалось загрузить изображение' );
+						else 
+						{
+							$engine->addError('Ошибка доступа к БД. Не удалось загрузить количество изображений');
 							return;
 						}
 					}
