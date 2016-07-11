@@ -357,6 +357,28 @@ function restoreIssue( e ) {
     );
 };
 
+function verifyIssue( e ) {
+    var parent   = e.currentTarget.parentElement;
+    
+    var issueId  = $( 'input[name=issueId]', parent ).attr( 'value' );
+    preloader.show();
+    
+    srv.issue.verify( 
+        issueId, 
+        function (res) {
+            preloader.hide();
+            if (res.success) {        
+                    if ($( '#issueView' ).length > 0) {
+                    setIssueInfo( new Issue( res.issue ) );
+                }
+                issuePage.updateStat();
+            } else {
+                srv.err( res );
+            }
+        }
+    );
+};
+
 issuePage.removeIssue = function( e ) {
     
     if (confirm( 'Вы действительно хотите удалить эту задачу?' )) {    
@@ -523,10 +545,13 @@ function setIssueInfo( issue ) {
     
     $( "#issueInfo .info-list"   ).
     removeClass( 'active-issue'    ).
+    removeClass( 'verify-issue'    ).
     removeClass( 'completed-issue' );
+
 
     $( "#issueInfo .buttons-bar"   ).
     removeClass( 'active-issue'    ).
+    removeClass( 'verify-issue'    ).
     removeClass( 'completed-issue' );
     
     if (issue.isCompleted()) {
@@ -537,8 +562,14 @@ function setIssueInfo( issue ) {
     else if (issue.isOpened()) {
         //$( "#issueInfo .buttons-bar > button.complete-btn" ).show();
         $( "#issueInfo .buttons-bar" ).addClass( 'active-issue' );
+        //$( "#issueInfo .buttons-bar" ).addClass( 'verify-issue' );
         $( "#issueInfo .info-list" ).addClass( 'active-issue' );
     } 
+
+    else if (issue.isVerify()) {
+        $( "#issueInfo .buttons-bar" ).addClass( 'verify-issue' );
+        $( "#issueInfo .info-list" ).addClass( 'verify-issue' );
+    }
     
     var values = [
         issue.getStatus(),
@@ -651,9 +682,13 @@ issuePage.filterByMemberId = function (userId)
     for (var i = 0; i < rows.length; i++) {
         row = rows[i];
         hide = true;
-        fields = row.children[3].getElementsByTagName('a');        
-        for (var j = 0; j < fields.length; j++) {
-           if (fields[j].getAttribute('data-member-id') == userId) {
+        if (row.className == 'verify-issue') {
+            row.hide();
+            continue;
+        }
+        fields_members = row.children[3].getElementsByTagName('a');        
+        for (var j = 0; j < fields_members.length; j++) {
+           if (fields_members[j].getAttribute('data-member-id') == userId) {
               hide = false;   
               break;  
            }
@@ -751,6 +786,10 @@ function Issue( obj ) {
     
     this.isOpened = function () {
         return this.status == 0;
+    };
+
+    this.isVerify = function () {
+        return this.status == 1;
     };
     
     this.getDate = function (value) {

@@ -830,6 +830,11 @@ table tr.completed-issue a {
 	color: inherit;
 }
 
+table tr.verify-issue {
+	background-color: rgba(0, 255, 0, 0.3);
+	color           : #999999;
+}
+
 /*table.projects-list td:first-child {
 	min-width: 200px;
 	width    : 30%;
@@ -892,6 +897,10 @@ table.issues-list tr.active-issue td button.restore-btn {
 	display: none;
  }
 
+table.issues-list tr.verify-issue td button.restore-btn {
+	display: none;
+ }
+
 table.issues-list tr td span.comments-count {
 	font-size    : 8.5pt;
 	font-weight  : bold;
@@ -921,7 +930,16 @@ table tr.completed-issue:hover td span.comments-count {
 #issueView .buttons-bar.completed-issue button.complete-btn {
 	display: none;
 }
+#issueView .buttons-bar.completed-issue button.verify-btn {
+	display: none;
+}
 #issueView .buttons-bar.active-issue button.restore-btn {
+    display: none;
+}
+#issueView .buttons-bar.verify-issue button.restore-btn {
+    display: none;
+}
+#issueView .buttons-bar.verify-issue button.verify-btn {
     display: none;
 }
 #issueView .container

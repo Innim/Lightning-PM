@@ -47,7 +47,7 @@ class Issue extends MembersInstance
 
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
-				"ORDER BY `i`.`status` ASC, `realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+				"ORDER BY `i`.`status` DESC, `realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
 
 		array_unshift($args, $sql);
 
@@ -71,7 +71,8 @@ class Issue extends MembersInstance
 	public static function loadListByProject($projectId, $issueStatus = null) {
 		if (null === $issueStatus) $issueStatus = Issue::STATUS_IN_WORK;
 		$where = "`i`.`projectId` = '" . $projectId . "'";
-		$where.= " AND `i`.`status` = '" . $issueStatus . "'";
+
+		$where.= " AND `i`.`status` IN( '" . $issueStatus . "','" . Issue::STATUS_WAIT . "')";
 		
 		return self::loadList( $where );
 	}
