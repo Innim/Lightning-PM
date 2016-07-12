@@ -47,8 +47,7 @@ class Issue extends MembersInstance
 
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
-				"ORDER BY IF(`i`.`status` , '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "') ASC,
-				 `realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+				"ORDER BY FIELD(`i`.`status`, 1,0,2) ,`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
 
 		array_unshift($args, $sql);
 
@@ -74,17 +73,18 @@ class Issue extends MembersInstance
 		$where = "`i`.`projectId` = '" . $projectId . "'";
 		
 		if (null === $issueStatus) 
-			$args[] = "AND `i`.`status` IN( '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "')";
+			$args = "AND `i`.`status` IN( '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "')";
 		else {
-			foreach ($issueStatus as $value) 
-			{
-				$args[] = " AND `i`.`status` ='" . $value . "'";
+			$args = " AND `i`.`status` IN( ";
+			foreach ($issueStatus as $i => $value) 
+			{	
+				$args.= $value ;
+				if ($i<count($issueStatus)-1) $args.= ",";
+				else $args .= ")";
 			}
 		}
 
-		foreach ($args as $value) {
-			$where.= $value;
-		}
+		$where .= $args;
 
 		return self::loadList( $where );
 	}
