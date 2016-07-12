@@ -47,7 +47,8 @@ class Issue extends MembersInstance
 
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
-				"ORDER BY `i`.`status` DESC, `realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+				"ORDER BY IF(`i`.`status` , '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "') ASC,
+				 `realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
 
 		array_unshift($args, $sql);
 
@@ -69,11 +70,22 @@ class Issue extends MembersInstance
 	}
 
 	public static function loadListByProject($projectId, $issueStatus = null) {
-		if (null === $issueStatus) $issueStatus = Issue::STATUS_IN_WORK;
+		//if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
 		$where = "`i`.`projectId` = '" . $projectId . "'";
-
-		$where.= " AND `i`.`status` IN( '" . $issueStatus . "','" . Issue::STATUS_WAIT . "')";
 		
+		if (null === $issueStatus) 
+			$args[] = "AND `i`.`status` IN( '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "')";
+		else {
+			foreach ($issueStatus as $value) 
+			{
+				$args[] = " AND `i`.`status` ='" . $value . "'";
+			}
+		}
+
+		foreach ($args as $value) {
+			$where.= $value;
+		}
+
 		return self::loadList( $where );
 	}
 	
@@ -403,7 +415,7 @@ class Issue extends MembersInstance
 	public function getStatus() {
 		switch ($this->status) {
 			case self::STATUS_IN_WORK   : return 'В работе';
-			case self::STATUS_WAIT      : return 'Ожидает';
+			case self::STATUS_WAIT      : return 'Ожидает проверки';
 			case self::STATUS_COMPLETED : return 'Завершена';
 			default 			        : return '';
 		}

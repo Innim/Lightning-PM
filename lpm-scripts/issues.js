@@ -171,7 +171,8 @@ issuePage.getPriorityColor = function (val) {
 
 issuePage.updateStat = function () {    
     //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
-    $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() );
+    $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() + 
+        $( "#issuesList > tbody > tr.verify-issue" ).size());
     $( ".project-stat .issues-completed" ).text( $( "#issuesList > tbody > tr.completed-issue" ).size() );
 
     // Перезапрашиваем сумму часов
@@ -766,7 +767,7 @@ function Issue( obj ) {
     
     this.getStatus = function () {
         switch (this.status) {
-            case 1  : return 'Ожидает';
+            case 1  : return 'Ожидает проверки';
             case 2  : return 'Завершена';
             default : return 'В работе';
         }

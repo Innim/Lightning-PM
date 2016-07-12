@@ -831,7 +831,7 @@ table tr.completed-issue a {
 }
 
 table tr.verify-issue {
-	background-color: rgba(0, 255, 0, 0.3);
+	background-color: #f8f3b5;
 	color           : #999999;
 }
 
@@ -895,11 +895,10 @@ table.issues-list tr.completed-issue td button.complete-btn {
 }
 table.issues-list tr.active-issue td button.restore-btn {
 	display: none;
- }
-
+}
 table.issues-list tr.verify-issue td button.restore-btn {
 	display: none;
- }
+}
 
 table.issues-list tr td span.comments-count {
 	font-size    : 8.5pt;
@@ -914,6 +913,10 @@ table.issues-list tr.active-issue td span.comments-count {
 table.issues-list tr.completed-issue td span.comments-count {
     background: #d6d6d6;
     color     : #bbbbbb;
+}
+table.issues-list tr.verify-issue td span.comments-count {
+   	background: #808080;
+    color: #ffffff;
 }
 table tr.completed-issue:hover td span.comments-count {   
     background: #dddddd;
@@ -934,9 +937,6 @@ table tr.completed-issue:hover td span.comments-count {
 	display: none;
 }
 #issueView .buttons-bar.active-issue button.restore-btn {
-    display: none;
-}
-#issueView .buttons-bar.verify-issue button.restore-btn {
     display: none;
 }
 #issueView .buttons-bar.verify-issue button.verify-btn {

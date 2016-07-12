@@ -95,7 +95,7 @@ class ProjectPage extends BasePage
 		else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) 
 		{			
 			$this->addTmplVar('issues', Issue::loadListByProject(
-				$this->_project->id, Issue::STATUS_COMPLETED));	
+				$this->_project->id, array( Issue::STATUS_COMPLETED )));	
 		}
 		
 		return $this;
