@@ -73,11 +73,13 @@ class Issue extends MembersInstance
 		//if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
 		$where = "`i`.`projectId` = '" . $projectId . "'";
 		
-		if (null === $issueStatus) 
-			$args = "AND `i`.`status` IN( '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "')";
-		else {
-			$args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';;
+		if (!empty($issueStatus)){
+			if (null === $issueStatus) 
+				$args = "AND `i`.`status` IN( '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "')";
+			else
+				$args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';;
 		}
+		
 		if (!empty($args)) $where .= $args;
 
 		return self::loadList( $where );

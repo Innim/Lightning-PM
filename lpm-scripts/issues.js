@@ -681,7 +681,6 @@ issuePage.filterByMemberId = function (userId)
     
     for (var i = 0; i < rows.length; i++) {
         row = rows[i];
-        hide = true;
         
         if (row.classList.contains('verify-issue')) hide = true;
         
