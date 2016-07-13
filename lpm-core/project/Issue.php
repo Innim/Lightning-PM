@@ -47,7 +47,8 @@ class Issue extends MembersInstance
 
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
-				"ORDER BY FIELD(`i`.`status`, 1,0,2) ,`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+				"ORDER BY FIELD(`i`.`status`, ".Issue::STATUS_WAIT.",".Issue::STATUS_IN_WORK.",".Issue::STATUS_COMPLETED.") ,
+				`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
 
 		array_unshift($args, $sql);
 
@@ -75,16 +76,9 @@ class Issue extends MembersInstance
 		if (null === $issueStatus) 
 			$args = "AND `i`.`status` IN( '" . Issue::STATUS_IN_WORK . "','" . Issue::STATUS_WAIT . "')";
 		else {
-			$args = " AND `i`.`status` IN( ";
-			foreach ($issueStatus as $i => $value) 
-			{	
-				$args.= $value ;
-				if ($i<count($issueStatus)-1) $args.= ",";
-				else $args .= ")";
-			}
+			$args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';;
 		}
-
-		$where .= $args;
+		if (!empty($args)) $where .= $args;
 
 		return self::loadList( $where );
 	}
@@ -366,6 +360,17 @@ class Issue extends MembersInstance
 
 	public function isCompleted() {
 		return $this->status == self::STATUS_COMPLETED;
+	} 
+
+	public function isMember($userId) {
+		$finded = false;;
+		foreach ($this->_members as $member) {
+			if ($userId === $member->userId ){	
+				$finded = true;
+				break;
+			}
+		}
+		return $finded;
 	} 
 	
 	public function getShortDesc() {

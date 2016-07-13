@@ -171,8 +171,7 @@ issuePage.getPriorityColor = function (val) {
 
 issuePage.updateStat = function () {    
     //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
-    $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() + 
-        $( "#issuesList > tbody > tr.verify-issue" ).size());
+    $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue,tr.verify-issue" ).size());
     $( ".project-stat .issues-completed" ).text( $( "#issuesList > tbody > tr.completed-issue" ).size() );
 
     // Перезапрашиваем сумму часов
@@ -683,17 +682,19 @@ issuePage.filterByMemberId = function (userId)
     for (var i = 0; i < rows.length; i++) {
         row = rows[i];
         hide = true;
-        if (row.className == 'verify-issue') {
-            row.hide();
-            continue;
+        
+        if (row.classList.contains('verify-issue')) hide = true;
+        
+        else {
+            fields_members = row.children[3].getElementsByTagName('a');        
+            for (var j = 0; j < fields_members.length; j++) {
+               if (fields_members[j].getAttribute('data-member-id') == userId) {
+                  hide = false;   
+                  break;  
+               }
+            }
         }
-        fields_members = row.children[3].getElementsByTagName('a');        
-        for (var j = 0; j < fields_members.length; j++) {
-           if (fields_members[j].getAttribute('data-member-id') == userId) {
-              hide = false;   
-              break;  
-           }
-        }
+
         if (hide) row.hide();
         else row.show();
     }

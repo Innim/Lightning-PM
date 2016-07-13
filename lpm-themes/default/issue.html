@@ -100,9 +100,9 @@
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
         <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>      
         <button class="restore-btn" onclick="restoreIssue( event );">Открыть</button>
-        <? foreach ($issue->getMembers() as $i => $member){?> <!--{?><?=$i>0?', ':''?><?=$member->getLinkedName();?><?}?>-->
-        <?=lpm_get_user()->getID()==$member->getID()?'
-        <button class="verify-btn" onclick="verifyIssue( event )">Отправить на проверку</button>': ''?>
+        <?php if ( $issue->isMember(lpm_get_user()->getID()) ): ?>
+        <button class="verify-btn" onclick="verifyIssue( event )">Отправить на проверку</button>
+        <?php endif ?>
         <button class="complete-btn" onclick="completeIssue( event );">Завершить</button>
         <button onclick="issuePage.showEditForm();">Редактировать</button> 
         <button onclick="issuePage.removeIssue( event );">Удалить</button>
