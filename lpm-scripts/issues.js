@@ -681,10 +681,9 @@ issuePage.filterByMemberId = function (userId)
     
     for (var i = 0; i < rows.length; i++) {
         row = rows[i];
+        hide = true;
         
-        if (row.classList.contains('verify-issue')) hide = true;
-        
-        else {
+        if (!row.classList.contains('verify-issue')) {
             fields_members = row.children[3].getElementsByTagName('a');        
             for (var j = 0; j < fields_members.length; j++) {
                if (fields_members[j].getAttribute('data-member-id') == userId) {
