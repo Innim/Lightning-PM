@@ -69,13 +69,11 @@ class Issue extends MembersInstance
 		return self::$_listByProjects[$projectId];
 	}
 
-	public static function loadListByProject($projectId, $issueStatus = null) {
+	public static function loadListByProject($projectId, $issueStatus) {
 		//if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
 		$where = "`i`.`projectId` = '" . $projectId . "'";
 			
-		if (empty($issueStatus)) 
-			$args = "AND `i`.`status` = '" . Issue::STATUS_IN_WORK . "'";
-		else
+		if (!empty($issueStatus)) 
 			$args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';
 
 		if (!empty($args)) $where .= $args;
