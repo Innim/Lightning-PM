@@ -11,7 +11,11 @@
 
         <a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
     </div>
-    <ol class="info-list <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
+    <ol class="info-list <?switch($issue->status): 
+    case 0: ?>active-issue <?break;?> 
+    <? case 1: ?>verify-issue <?break;?> 
+    <?case 2: ?>completed-issue<?break;?>
+    <?endswitch;?>">
         <li>
             <span class="label">Статус</span>
             <span class="value"><?=$issue->getStatus();?></span>
@@ -88,10 +92,17 @@
             </li>
         <?php endif ?>
     </ol>
-    <p class="buttons-bar <?=($issue->isCompleted()?'completed-issue':'active-issue')?>">
+    <p class="buttons-bar <? switch($issue->status): 
+    case 0: ?>active-issue<?break;?> 
+    <?case 1: ?>verify-issue<?break;?> 
+    <?case 2: ?>completed-issue<?break;?>
+    <?endswitch;?>">
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
         <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>      
         <button class="restore-btn" onclick="restoreIssue( event );">Открыть</button>
+        <?php if ( $issue->isMember(lpm_get_user()->getID()) ): ?>
+        <button class="verify-btn" onclick="verifyIssue( event )">Отправить на проверку</button>
+        <?php endif ?>
         <button class="complete-btn" onclick="completeIssue( event );">Завершить</button>
         <button onclick="issuePage.showEditForm();">Редактировать</button> 
         <button onclick="issuePage.removeIssue( event );">Удалить</button>
