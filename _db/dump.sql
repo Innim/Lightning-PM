@@ -189,3 +189,5 @@ CREATE TABLE `lpm_cookie`  (
   `userAgent` varchar(64) NOT NULL COMMENT 'информация о браузере юзера',
   `userId` bigint(18) NOT NULL 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Данные авторизации по куки';
+
+ALTER TABLE `lpm_users` DROP COLUMN `cookieHash`;
