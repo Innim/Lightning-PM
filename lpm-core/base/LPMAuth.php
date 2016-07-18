@@ -20,8 +20,8 @@ class LPMAuth {
 	 */
 	private $_userId = 0;
 	private $_email = '';
-	
 	private $_cookiePath = '//';
+
 	
 	function __construct()
 	{
@@ -33,7 +33,7 @@ class LPMAuth {
 		if ($siteURL !== false && !empty( $siteURL['path'] )) {
 			$this->_cookiePath = $siteURL['path'];
 		}
-		
+
 		self::$current = $this;
 	}
 	
@@ -45,7 +45,7 @@ class LPMAuth {
 		$this->_userId  = $userId;
 		$this->_email   = $email;
 		$this->_isLogin = true;
-		
+
 		if ($cookieHash != '') {
 			$expire = DateTimeUtils::$currentDate + 2592000; // на месяцок
 			$this->setCookie( self::COOKIE_USER_ID, $userId    , $expire );
@@ -91,21 +91,40 @@ class LPMAuth {
 	} 
 	
 	private function parseSession() {
+		$db = LPMGlobals::getInstance()->getDBConnect();
+		//берем время последнего визита юзера
+		$sql = "select `lastVisit` as `visit` from `%s` where `userId` = '" . (float)$_COOKIE[self::COOKIE_USER_ID] . "' limit 0,1";
+		
+		if ($query = $db->queryt( $sql, LPMTables::USERS  )) {
+			if ( $lastVisit = $query->fetch_assoc()['visit'] ) {
+				$lastVisit = DateTimeUtils::convertMysqlDate($lastVisit);
+				//прибавляем к нему время жизни хэша из опций
+				$lastVisit += LPMOptions::getInstance()->cookieExpire;
+				//если время жизни хэша истекло
+				if (DateTimeUtils::$currentDate > $lastVisit) {
+					//удаляем хэш(не даем авторизоваться по кукам,если сессия умерла)
+					$sql = "delete from `%s` where `userId`='". (float)$_COOKIE[self::COOKIE_USER_ID] ."' and `cookieHash`='".$_COOKIE[self::COOKIE_HASH]."'";
+					$db->queryt( $sql, LPMTables::COOKIE  );
+				}
+			}
+		}
+
 		if ($data = unserialize( Session::getInstance()->get( self::SESSION_NAME ) )) {
 			$this->_userId  = (float)$data['uid'];
 			$this->_email   = $data['email'];
 			$this->_isLogin = true;
 		} else if(!empty( $_COOKIE[self::COOKIE_USER_ID] ) 
-					&& !empty( $_COOKIE[self::COOKIE_HASH] )) {
+			&& !empty( $_COOKIE[self::COOKIE_HASH] )) {
 			// пытаемся авторизоваться по кукам
 			$db = LPMGlobals::getInstance()->getDBConnect();
 			$hash = $db->escape_string( $_COOKIE[self::COOKIE_HASH] );
-			$sql = "select `userId`, `email` from `%s` " .
-			          "where `cookieHash` = '" . $hash . "' " .
-						"and `userId` = '" . (float)$_COOKIE[self::COOKIE_USER_ID] . "' limit 0,1";
-			if ($query = $db->queryt( $sql, LPMTables::USERS )) {
-				if ($data = $query->fetch_assoc()) 				
-					$this->init( $data['userId'], $data['email'] );
+			$sql = "select `%1\$s`.`userId`, `%1\$s`.`email` from `%1\$s` INNER JOIN `%2\$s` ON `%1\$s`.`userId` = `%2\$s`.`userId` " .
+				    "where `%2\$s`.`cookieHash` = '" . $hash . "' " .
+						"and `%1\$s`.`userId` = '" . (float)$_COOKIE[self::COOKIE_USER_ID] . "' limit 0,1";
+			if ($query = $db->queryt( $sql, LPMTables::USERS, LPMTables::COOKIE  )) {
+
+				if ($data = $query->fetch_assoc()) 	{		
+					$this->init( $data['userId'], $data['email'] );}
 				else $this->destroy();
 			}
 		}

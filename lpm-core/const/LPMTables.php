@@ -56,6 +56,11 @@ class LPMTables {
 	 */
 	const COMMENTS = 'comments';
 	/**
+	 * Куки для авторизации
+	 * @var string
+	 */
+	const COOKIE = 'cookie';
+	/**
 	 * Таблица пользователей
 	 * @var string
 	 */

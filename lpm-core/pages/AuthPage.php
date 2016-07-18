@@ -80,6 +80,7 @@ class AuthPage extends BasePage
 					// авторизация
 					$pass  = $_POST['apass'];
 					$email = $this->_db->escape_string( $_POST['aemail'] );
+					$userAgent = $_SERVER['HTTP_USER_AGENT'];
 					$sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::USERS )) {
 						$engine->addError( 'Ошибка чтения из базы' );
@@ -92,8 +93,11 @@ class AuthPage extends BasePage
                             $engine->addError( 'Пользователь заблокирован' );
                         } else {
                             $cookieHash = $this->createCookieHash();
-							$sql = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "', `cookieHash` = '" . $cookieHash . "' where `userId` = '" . $userInfo['userId'] . "'";
-							if (!$this->_db->queryt( $sql, LPMTables::USERS )) $engine->addError( 'Ошибка записи в базу' );
+							$sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "' where `userId` = '" . $userInfo['userId'] . "'";
+							$sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`) values ('".$cookieHash."','".$userInfo['userId']."','".$userAgent."')";
+
+							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS )||!$this->_db->queryt( $sqlCookie, LPMTables::COOKIE )) 
+								$engine->addError( 'Ошибка записи в базу' );
 							else $this->auth( $userInfo['userId'], $email, $cookieHash );                        
                         }  
 					} else {

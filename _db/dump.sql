@@ -183,3 +183,9 @@ CREATE TABLE `lpm_work_study` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `workerId` (`workerId`,`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE `lpm_cookie`  (
+  `cookieHash` varchar(32) NOT NULL ,
+  `userAgent` varchar(64) NOT NULL COMMENT 'информация о браузере юзера',
+  `userId` bigint(18) NOT NULL 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Данные авторизации по куки';
