@@ -16,7 +16,7 @@ class LightningEngine
 	
 	public static function go2URL( $url = '' ) {
 		if ($url == '') $url = SITE_URL;
-		header( 'Location: '. $url  . '#' );
+		header( 'Location: '. $url  );
 		exit;
 	}
 	
@@ -63,12 +63,11 @@ class LightningEngine
 	{
 		if (self::$_instance != '') throw new Exception( __CLASS__ . ' are singleton' );
 		self::$_instance = $this;
-		
 		$this->_auth         = new LPMAuth();	
 		$this->_params       = new LPMParams();	
 		$this->_pagesManager = new PagesManager( $this );		
 		$this->_contructor   = new PageConstructor( $this->_pagesManager );
-		
+
 	}
 
 	public function createPage() {
@@ -128,7 +127,13 @@ class LightningEngine
 	public function getParams() {
 		return $this->_params;
 	}
-	
+
+	public function getRedirectUrl() {
+		$args = $this->_params->getArgs();
+		if(!$_SESSION["redirect"])
+			return $_SESSION["redirect"] = implode("/",array_diff($args,array("")));
+	}
+
 	/**
 	 * @return BasePage
 	 */

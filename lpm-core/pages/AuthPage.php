@@ -8,6 +8,7 @@ class AuthPage extends BasePage
 		$this->_pattern = 'auth';
 		
 		array_push( $this->_js, 'auth' );
+
 	}
 	
 	public function init() {
@@ -116,9 +117,9 @@ class AuthPage extends BasePage
 	}
 	
 	private function auth( $userId, $email, $cookieHash ) {
-		LightningEngine::getInstance()->getAuth()->init( $userId, $email, $cookieHash );		
+		LightningEngine::getInstance()->getAuth()->init( $userId, $email, $cookieHash );
 		
-		LightningEngine::go2URL();
+		LightningEngine::go2URL($_SESSION["redirect"]);
 		//header( 'Location: ' . SITE_URL );
 	}
 }
