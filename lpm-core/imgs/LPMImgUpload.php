@@ -223,9 +223,24 @@ class LPMImgUpload {
   				//проверка, если картинка из сервиса ownCloud (http://cloud.innim.ru/) 
   				else if (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value))
   					$value.= '/download';
- 					
+
+  				//определяем размер скачиваемой картинки
+  				//берем ее параметры из url
+  				$fp = fopen($value,"r");
+				$inf = stream_get_meta_data($fp);
+				fclose($fp);
+				//извлекаем из них размер
+				foreach($inf["wrapper_data"] as $param) {
+					if (stristr($param,"content-length"))
+					{
+						$param = explode(":",$param);
+						$size = trim($param[1]);
+					}
+				}
+
   				//если картинку скачать не удалось - прерываем запись файла
-  				if (!file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX)) 
+  				if (!file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX)||
+  					$size > LPMImgUpload::MAX_SIZE * 1024 * 1024) 
 		    	{
 		    		$this->error('Ошибка при записи в файл');
 		    		break;
