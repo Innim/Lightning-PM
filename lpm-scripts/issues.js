@@ -171,7 +171,7 @@ issuePage.getPriorityColor = function (val) {
 
 issuePage.updateStat = function () {    
     //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
-    $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue" ).size() );
+    $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue,tr.verify-issue" ).size());
     $( ".project-stat .issues-completed" ).text( $( "#issuesList > tbody > tr.completed-issue" ).size() );
 
     // Перезапрашиваем сумму часов
@@ -357,6 +357,28 @@ function restoreIssue( e ) {
     );
 };
 
+function verifyIssue( e ) {
+    var parent   = e.currentTarget.parentElement;
+    
+    var issueId  = $( 'input[name=issueId]', parent ).attr( 'value' );
+    preloader.show();
+    
+    srv.issue.verify( 
+        issueId, 
+        function (res) {
+            preloader.hide();
+            if (res.success) {        
+                    if ($( '#issueView' ).length > 0) {
+                    setIssueInfo( new Issue( res.issue ) );
+                }
+                issuePage.updateStat();
+            } else {
+                srv.err( res );
+            }
+        }
+    );
+};
+
 issuePage.removeIssue = function( e ) {
     
     if (confirm( 'Вы действительно хотите удалить эту задачу?' )) {    
@@ -523,10 +545,13 @@ function setIssueInfo( issue ) {
     
     $( "#issueInfo .info-list"   ).
     removeClass( 'active-issue'    ).
+    removeClass( 'verify-issue'    ).
     removeClass( 'completed-issue' );
+
 
     $( "#issueInfo .buttons-bar"   ).
     removeClass( 'active-issue'    ).
+    removeClass( 'verify-issue'    ).
     removeClass( 'completed-issue' );
     
     if (issue.isCompleted()) {
@@ -537,8 +562,14 @@ function setIssueInfo( issue ) {
     else if (issue.isOpened()) {
         //$( "#issueInfo .buttons-bar > button.complete-btn" ).show();
         $( "#issueInfo .buttons-bar" ).addClass( 'active-issue' );
+        //$( "#issueInfo .buttons-bar" ).addClass( 'verify-issue' );
         $( "#issueInfo .info-list" ).addClass( 'active-issue' );
     } 
+
+    else if (issue.isVerify()) {
+        $( "#issueInfo .buttons-bar" ).addClass( 'verify-issue' );
+        $( "#issueInfo .info-list" ).addClass( 'verify-issue' );
+    }
     
     var values = [
         issue.getStatus(),
@@ -651,13 +682,17 @@ issuePage.filterByMemberId = function (userId)
     for (var i = 0; i < rows.length; i++) {
         row = rows[i];
         hide = true;
-        fields = row.children[3].getElementsByTagName('a');        
-        for (var j = 0; j < fields.length; j++) {
-           if (fields[j].getAttribute('data-member-id') == userId) {
-              hide = false;   
-              break;  
-           }
+        
+        if (!row.classList.contains('verify-issue')) {
+            fields_members = row.children[3].getElementsByTagName('a');        
+            for (var j = 0; j < fields_members.length; j++) {
+               if (fields_members[j].getAttribute('data-member-id') == userId) {
+                  hide = false;   
+                  break;  
+               }
+            }
         }
+
         if (hide) row.hide();
         else row.show();
     }
@@ -731,7 +766,7 @@ function Issue( obj ) {
     
     this.getStatus = function () {
         switch (this.status) {
-            case 1  : return 'Ожидает';
+            case 1  : return 'Ожидает проверки';
             case 2  : return 'Завершена';
             default : return 'В работе';
         }
@@ -751,6 +786,10 @@ function Issue( obj ) {
     
     this.isOpened = function () {
         return this.status == 0;
+    };
+
+    this.isVerify = function () {
+        return this.status == 1;
     };
     
     this.getDate = function (value) {

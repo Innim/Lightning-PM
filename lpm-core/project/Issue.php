@@ -47,7 +47,8 @@ class Issue extends MembersInstance
 
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
-				"ORDER BY `i`.`status` ASC, `realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+				"ORDER BY FIELD(`i`.`status`, ".Issue::STATUS_WAIT.",".Issue::STATUS_IN_WORK.",".Issue::STATUS_COMPLETED.") ,
+				`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
 
 		array_unshift($args, $sql);
 
@@ -68,11 +69,15 @@ class Issue extends MembersInstance
 		return self::$_listByProjects[$projectId];
 	}
 
-	public static function loadListByProject($projectId, $issueStatus = null) {
-		if (null === $issueStatus) $issueStatus = Issue::STATUS_IN_WORK;
+	public static function loadListByProject($projectId, $issueStatus) {
+		//if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
 		$where = "`i`.`projectId` = '" . $projectId . "'";
-		$where.= " AND `i`.`status` = '" . $issueStatus . "'";
-		
+			
+		if (!empty($issueStatus)) 
+			$args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';
+
+		if (!empty($args)) $where .= $args;
+
 		return self::loadList( $where );
 	}
 	
@@ -354,6 +359,17 @@ class Issue extends MembersInstance
 	public function isCompleted() {
 		return $this->status == self::STATUS_COMPLETED;
 	} 
+
+	public function isMember($userId) {
+		$finded = false;;
+		foreach ($this->_members as $member) {
+			if ($userId === $member->userId ){	
+				$finded = true;
+				break;
+			}
+		}
+		return $finded;
+	} 
 	
 	public function getShortDesc() {
 		return parent::getRich( parent::getShort( $this->desc ) );
@@ -402,7 +418,7 @@ class Issue extends MembersInstance
 	public function getStatus() {
 		switch ($this->status) {
 			case self::STATUS_IN_WORK   : return 'В работе';
-			case self::STATUS_WAIT      : return 'Ожидает';
+			case self::STATUS_WAIT      : return 'Ожидает проверки';
 			case self::STATUS_COMPLETED : return 'Завершена';
 			default 			        : return '';
 		}

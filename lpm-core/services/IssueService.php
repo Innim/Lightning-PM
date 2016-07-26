@@ -79,6 +79,45 @@ class IssueService extends LPMBaseService
 	
 		return $this->answer();
 	}
+
+	/**
+	 * Ставим задачу на проверку
+	 * @param float $issueId
+	 */
+	public function verify( $issueId ) {
+		// ставить задачу на проверку может исполнитель задачи
+		if (!$issue = Issue::load( (float)$issueId )) return $this->error( 'Нет такой задачи' );
+	
+		if (!$issue->checkEditPermit( $this->_auth->getUserId() ))
+			return $this->error( 'У Вас нет прав на редактирование этой задачи' );
+	
+		$issue->status = Issue::STATUS_WAIT;
+		// выставляем статус - завершена
+		$sql = "update `%s` set `status` = '" . $issue->status . "' " .
+						   "where `id` = '" . $issue->id . "'";
+	
+		if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) return $this->errorDBSave();
+
+		Project::updateIssuesCount(  $issue->projectId );
+		
+		// отправка оповещений
+		$members = $issue->getMemberIds();
+		array_push( $members, $issue->authorId );
+		
+		EmailNotifier::getInstance()->sendMail2Allowed(
+			'Задача "' . $issue->name . '"ожидает проверки',
+			$this->getUser()->getName() . ' поставил задачу"' .
+			$issue->name .  '"на проверку' . "\n" .
+			'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL(), 
+			$members,
+			EmailNotifier::PREF_ISSUE_STATE
+		);
+		
+		//$this->add2Answer( 'issue', $issue->getClientObject() );
+		$this->add2Answer( 'issue', $this->getIssue4Client( $issue ) );
+	
+		return $this->answer();
+	}
 	
 	/**
 	 * Загружает информацию о задаче
