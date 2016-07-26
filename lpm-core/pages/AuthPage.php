@@ -94,9 +94,9 @@ class AuthPage extends BasePage
                         } else {
                             $cookieHash = $this->createCookieHash();
 							$sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "' where `userId` = '" . $userInfo['userId'] . "'";
-							$sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`) values ('".$cookieHash."','".$userInfo['userId']."','".$userAgent."')";
-
-							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS )||!$this->_db->queryt( $sqlCookie, LPMTables::COOKIE )) 
+							$sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`,`hasCreated`) 
+								values ('".$cookieHash."','".$userInfo['userId']."','".$userAgent."','".DateTimeUtils::mysqlDate()."')";
+							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS )||!$this->_db->queryt( $sqlCookie, LPMTables::USER_AUTH )) 
 								$engine->addError( 'Ошибка записи в базу' );
 							else $this->auth( $userInfo['userId'], $email, $cookieHash );                        
                         }  

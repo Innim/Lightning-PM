@@ -184,10 +184,13 @@ CREATE TABLE `lpm_work_study` (
   UNIQUE KEY `workerId` (`workerId`,`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-CREATE TABLE `lpm_cookie`  (
+CREATE TABLE `lpm_user_auth`  (
+  `id` bigint(18) AUTO_INCREMENT,
   `cookieHash` varchar(32) NOT NULL ,
   `userAgent` varchar(64) NOT NULL COMMENT 'информация о браузере юзера',
-  `userId` bigint(18) NOT NULL 
+  `userId` bigint(18) NOT NULL COMMENT 'индентификатор пользователя',
+  `hasCreated` datetime NOT NULL COMMENT 'дата создания записи',
+   PRIMARY KEY (`id`,`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Данные авторизации по куки';
 
 ALTER TABLE `lpm_users` DROP COLUMN `cookieHash`;
