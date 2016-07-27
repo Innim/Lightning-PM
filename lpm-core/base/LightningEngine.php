@@ -130,8 +130,10 @@ class LightningEngine
 
 	public function getRedirectUrl() {
 		$args = $this->_params->getArgs();
-		if(!$_SESSION["redirect"])
-			return $_SESSION["redirect"] = implode("/",array_diff($args,array("")));
+		$url = implode("/",array_diff($args,array("")));
+		
+		if(!$this->isAuth() && $_SESSION["redirect"] != $url && $url != '')
+			return $_SESSION["redirect"] = $url;
 	}
 
 	/**
