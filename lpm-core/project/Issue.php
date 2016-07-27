@@ -253,7 +253,7 @@ class Issue extends MembersInstance
 		
 		$this->addClientFields( 
 			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
-			'completeDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
+			'completeDate','completedDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
 		);
 
 		$this->author = new User();

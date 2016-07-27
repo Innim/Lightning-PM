@@ -577,7 +577,8 @@ function setIssueInfo( issue ) {
         issue.getPriority(),
         issue.getCreateDate(),
         issue.getCompleteDate(),
-        '',//issue.getCompletedDate(), // TODO выставлять настоящее значение
+        //issue.getCompletedDate(), // TODO выставлять настоящее значение
+        issue.getCompletedDate(),
         issue.getAuthor(),
         issue.getMembers(),
         issue.getDesc()
@@ -723,6 +724,7 @@ function Issue( obj ) {
     this.id           = obj.id;
     this.author       = obj.author;
     this.completeDate = obj.completeDate;
+    this.completedDate = obj.completedDate;
     this.createDate   = obj.createDate;
     this.desc         = obj.desc;
     this.name         = obj.name;
@@ -734,7 +736,11 @@ function Issue( obj ) {
     
     this.getCompleteDate = function () {
         return this.getDate( this.completeDate );
-    };   
+    };
+
+    this.getCompletedDate = function () {
+        return this.getDate( this.completedDate );
+    };     
 
     this.getCreateDate = function () {
         return this.getDate( this.createDate );
