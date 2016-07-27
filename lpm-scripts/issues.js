@@ -256,6 +256,8 @@ function setCaretPosition(elem, pos ) {
         elem.setSelectionRange(pos, pos);
         elem.focus();
     }
+    //иначе фокусим сам элемент
+    else elem.focus();
 };
 
 function completeIssue( e ) {    
@@ -522,11 +524,14 @@ function removeImage(imageId)
 }
 
 function addImagebyUrl() {
+    // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
     var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
     var imgInput = $("#issueForm ul.images-url");
     urlLI.removeAttr('class');
+    //urlLI.("input").attr('autofocus','true');
     //добавляем в контейнер
     imgInput.append(urlLI);
+    setCaretPosition(urlLI.find("input"));
     urlLI.find("a").click(function (event) {
         urlLI.remove();    
     });
