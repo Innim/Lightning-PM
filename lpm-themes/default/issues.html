@@ -17,7 +17,11 @@
 	</thead>
 	<tbody>
 		<? foreach ($list as $issue) {?>
-		<tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">			
+		<tr class="<?switch($issue->status): 
+    	case 0: ?>active-issue<?break;?> 
+    	<?case 1: ?>verify-issue<?break;?> 
+    	<?case 2: ?>completed-issue<?break;?>
+    	<?endswitch;?>">			
 			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
              <div class="issue_copy popup-menu">
              	   	<a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
