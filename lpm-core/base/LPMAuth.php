@@ -21,13 +21,17 @@ class LPMAuth {
 	private $_userId = 0;
 	private $_email = '';
 	private $_cookiePath = '//';
-	private $_expire = 0;
 
 	
 	function __construct()
 	{
 		Session::getInstance()->startSession();
 		
+		$siteURL = parse_url( SITE_URL );
+		//соответствует ли куки-путь пути сайта
+		if ($siteURL !== false && !empty( $siteURL['path'] ))
+			$this->_cookiePath = $siteURL['path'];
+
 		$this->parseSession();
 		
 		self::$current = $this;
@@ -41,9 +45,10 @@ class LPMAuth {
 		$this->_userId  = $userId;
 		$this->_email   = $email;
 		$this->_isLogin = true;
-		$this->_expire = DateTimeUtils::$currentDate + 2592000; // на месяцок
+		$expire = LPMOptions::getInstance()->cookieExpire; // на месяцок
+
 		if ($cookieHash != '') {
-			$this->setCookie( self::COOKIE_USER_ID, $userId    , $this->_expire );
+			$this->setCookie( self::COOKIE_USER_ID, $userId    , $expire );
 			$this->setCookie( self::COOKIE_HASH   , $cookieHash, $this->_expire );
 		}
 		$this->removeExpiredHash();
@@ -82,11 +87,6 @@ class LPMAuth {
 	}
 	
 	private function setCookie( $name, $value, $expire = 0 ) {
-		$siteURL = parse_url( SITE_URL );
-		//соответствует ли куки-путь пути сайта
-		if ($siteURL !== false && !empty( $siteURL['path'] ))
-			$this->_cookiePath = $siteURL['path'];
-
 		setcookie( $name, $value, $expire, $this->_cookiePath );
 	} 
 
@@ -94,11 +94,10 @@ class LPMAuth {
 	private function removeExpiredHash() {
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		//проверяем, есть ли просроченный хэш по дате его создания
-		$expire = time() - LPMOptions::getInstance()->cookieExpire*2;
+		$expire = DateTimeUtils::$currentDate - LPMOptions::getInstance()->cookieExpire*2;
 		$sql = "delete from `%s` where unix_timestamp(`hasCreated`)<'". $expire ."' and `userId` = '" . $this->_userId . "'";
 		//если так, то удаляем
-		if ($prepare = $db->preparet( $sql, LPMTables::USER_AUTH ))
-			$prepare->execute();	
+		$db->queryt( $sql, LPMTables::USER_AUTH  );	
 	}
 
 	private function parseSession() {
@@ -109,7 +108,6 @@ class LPMAuth {
 			$this->_isLogin = true;
 		} else if(!empty( $_COOKIE[self::COOKIE_USER_ID] ) 
 			&& !empty( $_COOKIE[self::COOKIE_HASH] )) {
-			$this->removeExpiredHash();
 			// пытаемся авторизоваться по кукам
 			$db = LPMGlobals::getInstance()->getDBConnect();
 			//берем время создания хэша
@@ -144,8 +142,7 @@ class LPMAuth {
 			//и запись в базе
 			$sqlUserData = "update `%s` set `cookieHash`='".$hash."',`userAgent`='".$_SERVER['HTTP_USER_AGENT']."',`hasCreated`='".DateTimeUtils::mysqlDate()."' 
 				where `userId`='".(float)$_COOKIE[self::COOKIE_USER_ID]."' order by `id` desc limit 1";
-			if ($prepare = $db->preparet( $sqlUserData, LPMTables::USER_AUTH ))
-				$prepare->execute(); 
+			$db->queryt( $sql, LPMTables::USER_AUTH  );
 			}
 		}
 	}
