@@ -67,10 +67,11 @@ class LightningEngine
 		$this->_params       = new LPMParams();	
 		$this->_pagesManager = new PagesManager( $this );		
 		$this->_contructor   = new PageConstructor( $this->_pagesManager );
-
 	}
 
 	public function createPage() {
+		$this->setRedirectUrl();
+
 		$this->_curPage = $this->initCurrentPage();
 		
 		$this->_contructor->createPage();
@@ -128,12 +129,18 @@ class LightningEngine
 		return $this->_params;
 	}
 
-	public function getRedirectUrl() {
+	public function getCurrentUrl() {
 		$args = $this->_params->getArgs();
-		$url = implode("/",array_diff($args,array("")));
-		
-		if(!$this->isAuth() && $_SESSION["redirect"] != $url && $url != '')
-			return $_SESSION["redirect"] = $url;
+		$currentUrl = implode("/",array_filter($args));
+	
+		return $currentUrl;
+	}
+
+	public function setRedirectUrl() {
+		$redirectUrl = $this->getCurrentUrl();
+
+		if(!$this->isAuth() && $_SESSION["redirect"] != $redirectUrl && $redirectUrl != '')
+			$_SESSION["redirect"] = $redirectUrl;
 	}
 
 	/**
