@@ -577,7 +577,6 @@ function setIssueInfo( issue ) {
         issue.getPriority(),
         issue.getCreateDate(),
         issue.getCompleteDate(),
-        //issue.getCompletedDate(), // TODO выставлять настоящее значение
         issue.getCompletedDate(),
         issue.getAuthor(),
         issue.getMembers(),

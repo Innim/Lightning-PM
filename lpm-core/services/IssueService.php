@@ -12,11 +12,11 @@ class IssueService extends LPMBaseService
 			return $this->error( 'У Вас нет прав на редактирование этой задачи' );
 		
 		$issue->status = Issue::STATUS_COMPLETED;
+		$issue->completedDate = mktime();
 		// выставляем статус - завершена
-		$sql = "update `%s` set `status` = '" . $issue->status . "', " .
-							   "`completedDate` = '" . DateTimeUtils::mysqlDate() . "'" .
-						   "where `id` = '" . $issue->id . "'";
-		
+		$sql = "update `%s` set `status` = '" . $issue->status . "', completedDate='". DateTimeUtils::mysqlDate() ."' 
+				where `id` = '" . $issue->id . "'";
+	
 		if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) return $this->errorDBSave();
 
 		Project::updateIssuesCount(  $issue->projectId );
@@ -54,7 +54,7 @@ class IssueService extends LPMBaseService
 	
 		$issue->status = Issue::STATUS_IN_WORK;
 		// выставляем статус - завершена
-		$sql = "update `%s` set `status` = '" . $issue->status . "' " .
+		$sql = "update `%s` set `status` = '" . $issue->status . "',`completedDate` = '" . null . "' " .
 						   "where `id` = '" . $issue->id . "'";
 	
 		if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) return $this->errorDBSave();
