@@ -225,29 +225,45 @@ class LPMImgUpload {
   					$value.= '/download';
 
   				//определяем размер скачиваемой картинки
+  				$stream = fopen($value,"r");
   				//берем ее параметры из url
-  				$fp = fopen($value,"r");
-				$inf = stream_get_meta_data($fp);
-				fclose($fp);
-				//извлекаем из них размер
-				foreach($inf["wrapper_data"] as $param) {
-					if (stristr($param,"content-length"))
-					{
-						$param = explode(":",$param);
-						$size = trim($param[1]);
-					}
-				}
-
-  				//если картинку скачать не удалось - прерываем запись файла
-  				if (!file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX)||
-  					$size > LPMImgUpload::MAX_SIZE * 1024 * 1024) 
-		    	{
-		    		$this->error('Ошибка при записи в файл');
-		    		break;
-		    	}
-
-	    		$files[] = $srcFileName;
-	    		$names[] = 'url_' . date('YmdHis_u') . '.png'; // тут ды настоящее имя выделить из url
+				if ( $imageData = stream_get_meta_data($stream) ) {
+					//закрытие потока
+					fclose($stream);
+					//если данные есть и имеют определенный тип
+					if ( $imageData["wrapper_data"] && is_array($imageData["wrapper_data"])) {
+						$paramsLength = count($imageData["wrapper_data"]);
+						//извлекаем из них размер
+						foreach($imageData["wrapper_data"] as $i => $param) {
+							if (stristr($param,"content-length") )
+							{
+								//получаем параметр
+								$param = explode(":",$param);
+								$size = trim($param[1]);
+								//если размер файла валиден и он не превышает лимит - пишем файл на диск
+								if ( ((int)$size > 0) && ((int)$size <= LPMImgUpload::MAX_SIZE * 1024 * 1024) ) {
+									//если картинку скачать не удалось - прерываем запись
+						  			if (!file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX))
+								    {
+								    	$this->error('Ошибка чтения файла');
+								    	break;
+								    }
+								    //устанавливаем параметры для записи файла в базу
+							    	$files[] = $srcFileName;
+							    	$names[] = 'url_' . date('YmdHis_u') . '.png'; // тут ды настоящее имя выделить из url
+									break;
+								}
+								else {
+									return $this->error(sprintf('Размер файла не должен превышать %d Мб',
+										LPMImgUpload::MAX_SIZE)); 
+									break;
+								}
+							}
+							else if ($i >= $paramsLength) 
+								$this->error('Неудалось получить размер файла');
+						}
+					} else $this->error('Неверный формат данных файла');
+	    		} else $this->error('Ошибка чтения данных потока');	
   			}
   		}
 
@@ -366,7 +382,7 @@ class LPMImgUpload {
 		// Ищем уникальное имя 
 		do 
 		{
-            $srcFilename = $dir . $this->_prefix . BaseString::randomStr( 10 ) . '.' . $ext;
+        	$srcFilename = $dir . $this->_prefix . BaseString::randomStr( 10 ) . '.' . $ext;
             $srcFilepath = LPMImg::getSrcImgPath($srcFilename);
         } while (file_exists($srcFilepath));
 
