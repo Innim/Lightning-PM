@@ -80,7 +80,7 @@ class LPMOptions extends Options
 	{
 		parent::initOptions();
 		
-		$this->cookieExpire *= 86400; 
+		$this->cookieExpire = 180; 
  
 		if ($this->fromName == '') $this->fromName = $this->title;
 		

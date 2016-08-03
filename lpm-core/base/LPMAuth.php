@@ -1,6 +1,13 @@
 <?php
 class LPMAuth {
 	/**
+	 * @return cookieHash
+	 */
+	public function createCookieHash() {
+		return md5( BaseString::randomStr() );
+	}
+
+	/**
 	 * 
 	 * 
 	 * @var LPMAuth
@@ -41,24 +48,27 @@ class LPMAuth {
 	 * Инициализация авторизации
 	 * @param float $userId
 	 */
-	public function init( $userId, $email, $cookieHash = '' ) {
+	public function init( $userId, $email, $cookieHash = '', $hashId = null  ) {
 		$this->_userId  = $userId;
 		$this->_email   = $email;
 		$this->_isLogin = true;
-		$expire = LPMOptions::getInstance()->cookieExpire; // на месяцок
-
+		$expire = DateTimeUtils::$currentDate + LPMOptions::getInstance()->cookieExpire; // на месяцок
 		if ($cookieHash != '') {
 			$this->setCookie( self::COOKIE_USER_ID, $userId    , $expire );
-			$this->setCookie( self::COOKIE_HASH   , $cookieHash, $this->_expire );
+			$this->setCookie( self::COOKIE_HASH   , $cookieHash, $expire );
 		}
+		
 		$this->removeExpiredHash();
 		$this->updateSession();
-
-		$sql = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "' where `userId` = '" . $userId . "'";
-		 
-		$db = LPMGlobals::getInstance()->getDBConnect();
-		$db->queryt( $sql, LPMTables::USERS );
-
+		
+		if ($hashId != null) {
+			
+			$db = LPMGlobals::getInstance()->getDBConnect();
+			$userAgent = $db->real_escape_string($_SERVER['HTTP_USER_AGENT']);
+			$sqlUserData = "update `%s` set `cookieHash`='". $cookieHash ."',`userAgent`='". $userAgent ."',
+				`hasCreated`='". DateTimeUtils::mysqlDate() ."' where `userId` = '". $userId ."' and `id` = '". $hashId ."'";
+			$db->queryt( $sqlUserData, LPMTables::USER_AUTH );
+		}
 	}	
 	
 	public function destroy() {
@@ -95,54 +105,42 @@ class LPMAuth {
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		//проверяем, есть ли просроченный хэш по дате его создания
 		$expire = DateTimeUtils::$currentDate - LPMOptions::getInstance()->cookieExpire*2;
-		$sql = "delete from `%s` where unix_timestamp(`hasCreated`)<'". $expire ."' and `userId` = '" . $this->_userId . "'";
-		//если так, то удаляем
+		$sql = "delete from `%s` where `hasCreated`<'". DateTimeUtils::date( DateTimeFormat::DAY_OF_MONTH_2 . '.' .
+			DateTimeFormat::MONTH_NUMBER_2_DIGITS . '.' .
+			DateTimeFormat::YEAR_NUMBER_4_DIGITS . ' ' .	
+			DateTimeFormat::HOUR_24_NUMBER_2_DIGITS . ':' .
+			DateTimeFormat::MINUTES_OF_HOUR_2_DIGITS. ':' . 
+			DateTimeFormat::SECONDS_OF_MINUTE_2_DIGITS,
+			$expire )  ."' and `userId` = '" . $this->_userId . "'";
+		//print_r($sql);
 		$db->queryt( $sql, LPMTables::USER_AUTH  );	
 	}
 
 	private function parseSession() {
-		//удаляем старый хэш
+		//если сессия живет
 		if ($data = unserialize( Session::getInstance()->get( self::SESSION_NAME ) )) {
 			$this->_userId  = (float)$data['uid'];
 			$this->_email   = $data['email'];
 			$this->_isLogin = true;
 		} else if(!empty( $_COOKIE[self::COOKIE_USER_ID] ) 
 			&& !empty( $_COOKIE[self::COOKIE_HASH] )) {
-			// пытаемся авторизоваться по кукам
+			//иначе пытаемся авторизоваться по кукам
 			$db = LPMGlobals::getInstance()->getDBConnect();
-			//берем время создания хэша
-			$sql = "select `hasCreated` as `date` from `%s` where `userId` = '" . (float)$_COOKIE[self::COOKIE_USER_ID] . "' limit 0,1";
-			if ($query = $db->queryt( $sql, LPMTables::USER_AUTH  )) {
-				if ( $created = $query->fetch_assoc() ) {
-					$created = DateTimeUtils::convertMysqlDate($created['date']);
-					//прибавляем к нему время жизни хэша из опций
-					$created += LPMOptions::getInstance()->cookieExpire;
-					//если время жизни хэша истекло
-					if (DateTimeUtils::$currentDate > $created) {
-						//удаляем его(не даем авторизоваться по кукам,если сессия умерла)
-						$sql = "delete from `%s` where `userId`='". (float)$_COOKIE[self::COOKIE_USER_ID] ."' and `cookieHash`='".$_COOKIE[self::COOKIE_HASH]."'";
-						$db->queryt( $sql, LPMTables::USER_AUTH  );
-					}
-				}
-			}
-			$hash = $db->escape_string( $_COOKIE[self::COOKIE_HASH] );
-			$sql = "select `%1\$s`.`userId`, `%1\$s`.`email` from `%1\$s` INNER JOIN `%2\$s` ON `%1\$s`.`userId` = `%2\$s`.`userId` " .
-				    "where `%2\$s`.`cookieHash` = '" . $hash . "' " .
-					"and `%1\$s`.`userId` = '" . (float)$_COOKIE[self::COOKIE_USER_ID] . "' limit 0,1";
+			$hash = $db->real_escape_string( $_COOKIE[self::COOKIE_HASH] );
+			$sql = "select `%1\$s`.`userId`,`%1\$s`.`email`,`%2\$s`.`id` from `%1\$s`". " 
+						left join `%2\$s` on `%1\$s`.`userId` = `%2\$s`.`userId` " .
+						   	"where `%2\$s`.`cookieHash` = '". $hash ."' ". 
+						   		"and `%1\$s`.`userId` = '". (float)$_COOKIE[self::COOKIE_USER_ID] ."' limit 0,1";
 			if ($query = $db->queryt( $sql, LPMTables::USERS, LPMTables::USER_AUTH  )) {
-				if ($data = $query->fetch_assoc())		
-					$this->init( $data['userId'], $data['email'] );
-				else $this->destroy();
-
-			//обновление данных юзера
-			//создаем новый хэш
-			$hash = md5( BaseString::randomStr());
-			//перезаписываем старые куки
-			$this->setCookie( self::COOKIE_HASH, $hash, $this->_expire);
-			//и запись в базе
-			$sqlUserData = "update `%s` set `cookieHash`='".$hash."',`userAgent`='".$_SERVER['HTTP_USER_AGENT']."',`hasCreated`='".DateTimeUtils::mysqlDate()."' 
-				where `userId`='".(float)$_COOKIE[self::COOKIE_USER_ID]."' order by `id` desc limit 1";
-			$db->queryt( $sql, LPMTables::USER_AUTH  );
+				if ($data = $query->fetch_assoc()) {
+					//создаем новый хэш
+					$hash = self::createCookieHash();
+					//авторизация с новым хэшем
+					$this->init( $data['userId'], $data['email'], $hash, $data['id']  );
+				} 
+				else { 
+						$this->destroy();
+					}
 			}
 		}
 	}

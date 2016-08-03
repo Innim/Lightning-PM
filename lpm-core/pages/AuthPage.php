@@ -79,8 +79,9 @@ class AuthPage extends BasePage
 				} else {
 					// авторизация
 					$pass  = $_POST['apass'];
-					$email = $this->_db->escape_string( $_POST['aemail'] );
-					$userAgent = $_SERVER['HTTP_USER_AGENT'];
+					$email = $this->_db->escape_string( $_POST['aemail'] );	
+					$userAgent = $this->_db->real_escape_string($_SERVER['HTTP_USER_AGENT']);
+    				
 					$sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::USERS )) {
 						$engine->addError( 'Ошибка чтения из базы' );
@@ -92,10 +93,10 @@ class AuthPage extends BasePage
 						elseif ($userInfo['locked']) {
                             $engine->addError( 'Пользователь заблокирован' );
                         } else {
-                            $cookieHash = $this->createCookieHash();
+                            $cookieHash = LPMAuth::createCookieHash();
 							$sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "' where `userId` = '" . $userInfo['userId'] . "'";
 							$sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`,`hasCreated`) 
-								values ('".$cookieHash."','".$userInfo['userId']."','".$userAgent."','".DateTimeUtils::mysqlDate()."')";
+								values ('". $cookieHash ."','". $userInfo['userId']. "','". $userAgent ."','". DateTimeUtils::mysqlDate() ."')";
 							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS )||!$this->_db->queryt( $sqlCookie, LPMTables::USER_AUTH )) 
 								$engine->addError( 'Ошибка записи в базу' );
 							else $this->auth( $userInfo['userId'], $email, $cookieHash );                        
@@ -113,10 +114,6 @@ class AuthPage extends BasePage
 	public function printContent() 
 	{
 		parent::printContent();		
-	}
-	
-	private function createCookieHash() {
-		return md5( BaseString::randomStr() );
 	}
 	
 	private function auth( $userId, $email, $cookieHash ) {
