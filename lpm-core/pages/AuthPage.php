@@ -97,9 +97,12 @@ class AuthPage extends BasePage
 							$sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "' where `userId` = '" . $userInfo['userId'] . "'";
 							$sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`,`hasCreated`) 
 								values ('". $cookieHash ."','". $userInfo['userId']. "','". $userAgent ."','". DateTimeUtils::mysqlDate() ."')";
-							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS )||!$this->_db->queryt( $sqlCookie, LPMTables::USER_AUTH )) 
+							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS ))
 								$engine->addError( 'Ошибка записи в базу' );
-							else $this->auth( $userInfo['userId'], $email, $cookieHash );                        
+							else {
+								$this->auth( $userInfo['userId'], $email, $cookieHash );
+								$this->_db->queryt( $sqlCookie, LPMTables::USER_AUTH );
+							}                        
                         }  
 					} else {
 						$engine->addError( 'Пользователь с таким email не зарегистрирован' );

@@ -62,7 +62,6 @@ class LPMAuth {
 		$this->updateSession();
 		
 		if ($hashId != null) {
-			
 			$db = LPMGlobals::getInstance()->getDBConnect();
 			$userAgent = $db->real_escape_string($_SERVER['HTTP_USER_AGENT']);
 			$sqlUserData = "update `%s` set `cookieHash`='". $cookieHash ."',`userAgent`='". $userAgent ."',
@@ -105,14 +104,7 @@ class LPMAuth {
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		//проверяем, есть ли просроченный хэш по дате его создания
 		$expire = DateTimeUtils::$currentDate - LPMOptions::getInstance()->cookieExpire*2;
-		$sql = "delete from `%s` where `hasCreated`<'". DateTimeUtils::date( DateTimeFormat::DAY_OF_MONTH_2 . '.' .
-			DateTimeFormat::MONTH_NUMBER_2_DIGITS . '.' .
-			DateTimeFormat::YEAR_NUMBER_4_DIGITS . ' ' .	
-			DateTimeFormat::HOUR_24_NUMBER_2_DIGITS . ':' .
-			DateTimeFormat::MINUTES_OF_HOUR_2_DIGITS. ':' . 
-			DateTimeFormat::SECONDS_OF_MINUTE_2_DIGITS,
-			$expire )  ."' and `userId` = '" . $this->_userId . "'";
-		//print_r($sql);
+		$sql = "delete from `%s` where `hasCreated`<'". DateTimeUtils::mysqlDate($expire)  ."' and `userId` = '" . $this->_userId . "'";
 		$db->queryt( $sql, LPMTables::USER_AUTH  );	
 	}
 
@@ -138,9 +130,7 @@ class LPMAuth {
 					//авторизация с новым хэшем
 					$this->init( $data['userId'], $data['email'], $hash, $data['id']  );
 				} 
-				else { 
-						$this->destroy();
-					}
+				else $this->destroy();
 			}
 		}
 	}
