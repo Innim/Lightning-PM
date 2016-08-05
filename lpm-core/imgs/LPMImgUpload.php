@@ -254,7 +254,7 @@ class LPMImgUpload {
 									break;
 								}
 								else {
-									return $this->error(sprintf('Размер файла не должен превышать %d Мб',
+									return $this->error(sprintf('Размер файла не должен превышать %d Мб , или файл не существует',
 										LPMImgUpload::MAX_SIZE)); 
 									break;
 								}
