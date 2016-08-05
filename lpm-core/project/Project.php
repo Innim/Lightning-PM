@@ -52,7 +52,7 @@ class Project extends MembersInstance
 		$sql = "UPDATE `%1\$s` ".
 				  "SET `issuesCount` = (SELECT COUNT(*) FROM `%2\$s` ".
 				  						"WHERE `%1\$s`.`id` = `%2\$s`.`projectId` ".
-				  						  "AND  `%2\$s`.`status` = 0 ".
+				  						  "AND  `%2\$s`.`status` IN (0,1) ".
 				  						  "AND  `%2\$s`.`deleted` = 0) ".
 				"WHERE  `%1\$s`.`id` = '" . $projectId . "'";
 				

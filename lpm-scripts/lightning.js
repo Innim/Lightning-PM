@@ -99,6 +99,9 @@ var srv = {
         restore  : function ( issueId, onResult ) {
             this.s._( 'restore' );
         },
+        verify  : function ( issueId, onResult ) {
+            this.s._( 'verify' );
+        },
         load     : function ( issueId, onResult ) {
             this.s._( 'load' );
         },
