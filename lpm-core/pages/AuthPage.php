@@ -119,10 +119,14 @@ class AuthPage extends BasePage
 	private function auth( $userId, $email, $cookieHash ) {
 		LightningEngine::getInstance()->getAuth()->init( $userId, $email, $cookieHash );
 
-		if ($_SESSION["redirect"]!='')
+		if ($_SESSION["redirect"] != '')
 			$redirect = $_SESSION["redirect"];
 
 		LightningEngine::go2URL($redirect);
+
+		if (isset($_SESSION["redirect"])) {
+			unset($_SESSION["redirect"]);
+		}
 		//header( 'Location: ' . SITE_URL );
 	}
 }
