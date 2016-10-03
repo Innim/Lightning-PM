@@ -755,6 +755,7 @@ function Issue( obj ) {
         if (this.members)
         for (var i = 0; i < this.members.length; i++) {
             if (i > 0) str += ', ';
+            if (i == 4) str += '<p>';
             str += this.members[i].linkedName;
         }
         return str;
