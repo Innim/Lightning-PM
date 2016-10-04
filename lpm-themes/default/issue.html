@@ -50,10 +50,10 @@
             <span class="label">Создал</span>
             <span class="value"><?=$issue->getAuthorLinkedName();?></span>
         </li>
-        <li id="members">
+        <li>
             <span class="label">Исполнители</span>
             <span class="value" >
-               <? foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?><?=$i==4?'<p>':''?> <?=$member->getLinkedName();?><?}?>
+                <p><? foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?> <?=$member->getLinkedName();?><?}?></p>
             </span>
             <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
         </li>    

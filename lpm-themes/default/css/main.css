@@ -695,7 +695,7 @@ ol.info-list li {
 }
 ol.info-list span.value p {
 	margin-left: 18%;
-    margin-top: auto;
+    margin-top: -15px;
 } 
 ol.info-list li span.label {
     width      : 150px;
