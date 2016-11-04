@@ -16,7 +16,7 @@ class LightningEngine
 	
 	public static function go2URL( $url = '' ) {
 		if ($url == '') $url = SITE_URL;
-		header( 'Location: '. $url  . '#' );
+		header( 'Location: '. $url . '#' );
 		exit;
 	}
 	
@@ -63,17 +63,15 @@ class LightningEngine
 	{
 		if (self::$_instance != '') throw new Exception( __CLASS__ . ' are singleton' );
 		self::$_instance = $this;
-		
 		$this->_auth         = new LPMAuth();	
 		$this->_params       = new LPMParams();	
 		$this->_pagesManager = new PagesManager( $this );		
 		$this->_contructor   = new PageConstructor( $this->_pagesManager );
-		
 	}
 
-	public function createPage() {
+	public function createPage() 
+	{
 		$this->_curPage = $this->initCurrentPage();
-		
 		$this->_contructor->createPage();
 	}
 	
@@ -128,7 +126,18 @@ class LightningEngine
 	public function getParams() {
 		return $this->_params;
 	}
+
+	/**
+	 * Возвращает URL путь для текущей страницы
+	 * @return string
+	 */
+	public function getCurrentUrlPath() {
+		$args = $this->_params->getArgs();
+		$currentUrl = implode("/",array_filter($args));
 	
+		return $currentUrl;
+	}
+
 	/**
 	 * @return BasePage
 	 */
@@ -148,8 +157,21 @@ class LightningEngine
 			|| !$page = $this->_pagesManager->getPageByUid( $this->_params->uid )) 
 				$page = $this->_pagesManager->getDefaultPage();	
 		
-		if (!$page = $page->init()) self::go2URL();
-		return $page;
+		// Если не удалось инициализировать, то перебрасываем на главную
+		if (!$res = $page->init())
+		{
+			// Если мы сейчас не авторизованы, а страница требует авторизации - 
+			// запомним URL для пересылки после авторизации
+			if (!$this->isAuth() && $page->needAuth)
+			{
+				$redirectPath = $this->getCurrentUrlPath();
+				if (!empty($redirectPath)) 
+					Session::getInstance()->set(AuthPage::SESSION_REDIRECT, $redirectPath);
+			}
+			// пересылка на главную 
+			self::go2URL();	
+		} 
+		return $res;
 	}
 }
 ?>
