@@ -50,7 +50,7 @@ class PagePrinter {
 	}
 	
 	public static function errors() {
-		echo implode( ',', LightningEngine::getInstance()->getErrors() );
+		echo implode( ', ', LightningEngine::getInstance()->getErrors() );
 	}
 	
 	public static function issues($list) {
