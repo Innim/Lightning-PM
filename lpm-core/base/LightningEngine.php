@@ -69,11 +69,9 @@ class LightningEngine
 		$this->_contructor   = new PageConstructor( $this->_pagesManager );
 	}
 
-	public function createPage() {
-		$this->setRedirectUrl();
-
+	public function createPage() 
+	{
 		$this->_curPage = $this->initCurrentPage();
-		
 		$this->_contructor->createPage();
 	}
 	
@@ -129,18 +127,15 @@ class LightningEngine
 		return $this->_params;
 	}
 
-	public function getCurrentUrl() {
+	/**
+	 * Возвращает URL путь для текущей страницы
+	 * @return string
+	 */
+	public function getCurrentUrlPath() {
 		$args = $this->_params->getArgs();
 		$currentUrl = implode("/",array_filter($args));
 	
 		return $currentUrl;
-	}
-
-	public function setRedirectUrl() {
-		$redirectUrl = $this->getCurrentUrl();
-
-		if(!$this->isAuth() && $_SESSION["redirect"] != $redirectUrl && $redirectUrl != '')
-			$_SESSION["redirect"] = $redirectUrl;
 	}
 
 	/**
@@ -162,8 +157,21 @@ class LightningEngine
 			|| !$page = $this->_pagesManager->getPageByUid( $this->_params->uid )) 
 				$page = $this->_pagesManager->getDefaultPage();	
 		
-		if (!$page = $page->init()) self::go2URL();
-		return $page;
+		// Если не удалось инициализировать, то перебрасываем на главную
+		if (!$res = $page->init())
+		{
+			// Если мы сейчас не авторизованы, а страница требует авторизации - 
+			// запомним URL для пересылки после авторизации
+			if (!$this->isAuth() && $page->needAuth)
+			{
+				$redirectPath = $this->getCurrentUrlPath();
+				if (!empty($redirectPath)) 
+					Session::getInstance()->set(AuthPage::SESSION_REDIRECT, $redirectPath);
+			}
+			// пересылка на главную 
+			self::go2URL();	
+		} 
+		return $res;
 	}
 }
 ?>

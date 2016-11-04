@@ -1,6 +1,8 @@
 <?php
 class AuthPage extends BasePage
 {
+	const SESSION_REDIRECT = 'lightning_redirect';
+
 	function __construct()
 	{
 		parent::__construct( 'auth', 'Авторизация', false, true );
@@ -116,17 +118,22 @@ class AuthPage extends BasePage
 		return md5( BaseString::randomStr() );
 	}
 	
-	private function auth( $userId, $email, $cookieHash ) {
-		LightningEngine::getInstance()->getAuth()->init( $userId, $email, $cookieHash );
+	private function auth( $userId, $email, $cookieHash ) 
+	{
+		LightningEngine::getInstance()->getAuth()->init(
+			$userId, $email, $cookieHash);
 
-		if ($_SESSION["redirect"] != '')
-			$redirect = $_SESSION["redirect"];
+		$redirect = Session::getInstance()->get(self::SESSION_REDIRECT);
+		if (empty($redirect))
+		{
+			$redirect = '';
+		}
+		else 
+		{
+			Session::getInstance()->unsetVar(self::SESSION_REDIRECT);
+		}
 
 		LightningEngine::go2URL($redirect);
-
-		if (isset($_SESSION["redirect"])) {
-			unset($_SESSION["redirect"]);
-		}
 		//header( 'Location: ' . SITE_URL );
 	}
 }
