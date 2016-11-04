@@ -4,6 +4,8 @@ require_once( dirname( __FILE__ ) . '/version.inc.php'        );
 require_once( dirname( __FILE__ ) . '/consts.inc.php'        );
 require_once( dirname( __FILE__ ) . '/aliases.inc.php'       );
 
+date_default_timezone_set('Etc/GMT-3'); 
+
 // подключаем фреймворк
 //require_once( ROOT . FRAMEWORK_DIR . 'GMFramework.class.php' );
 require_once( ROOT . LIBS_DIR . 'gm-framework-v1.1.1.phar' );
