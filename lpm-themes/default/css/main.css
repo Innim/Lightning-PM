@@ -693,13 +693,11 @@ ol.info-list {
 ol.info-list li {
 	margin: 10px 0px;
 }
-ol.info-list span.value p {
-	margin-left: 18%;
-    margin-top: -15px;
-} 
 ol.info-list li span.label {
     width      : 150px;
-    display    : inline-block;
+    /*display    : inline-block;*/
+    display: block;
+    float: left;
     font-weight: bold;
     font-size: smaller;
 }
@@ -707,6 +705,12 @@ ol.info-list li span.label:after {
     content: ":";
 }
 ol.info-list li span.value {
+	display: block;
+	margin-left: 155px;
+}
+ol.info-list li
+{
+	clear: both;
 }
 
 /* список пользователей */

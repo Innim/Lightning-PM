@@ -52,8 +52,8 @@
         </li>
         <li>
             <span class="label">Исполнители</span>
-            <span class="value" >
-                <p><? foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?> <?=$member->getLinkedName();?><?}?></p>
+            <span class="value">
+                <?php foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?> <?=$member->getLinkedName();?><?php }?>
             </span>
             <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
         </li>    
