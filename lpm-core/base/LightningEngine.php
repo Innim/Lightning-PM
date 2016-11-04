@@ -16,7 +16,7 @@ class LightningEngine
 	
 	public static function go2URL( $url = '' ) {
 		if ($url == '') $url = SITE_URL;
-		header( 'Location: '. $url  );
+		header( 'Location: '. $url . '#' );
 		exit;
 	}
 	
