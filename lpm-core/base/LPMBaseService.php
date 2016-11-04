@@ -61,8 +61,10 @@ class LPMBaseService extends SecureService
 			$this->error( 'Недопустимый текст' );
 			return false;
 		}
-		
-		$text = $this->_db->escape_string_t( $text );
+
+		$text = $this->_db->real_escape_string($text);
+		$text = str_replace( '%', '%%', $text );
+		//$text = $this->_db->escape_string_t( $text ); // там баг
 		
 		$sql = "insert into `%s` (`instanceId`, `instanceType`, `authorId`, `date`, `text` ) " .
 		         "values ( '" . $instanceId . "', '" . $instanceType . "', " . 
