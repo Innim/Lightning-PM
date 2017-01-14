@@ -122,6 +122,8 @@ class Comment extends LPMBaseObject
 				    ),
 					$value 
 				);
+
+				$value = HTMLHelper::codeIt($value);
 			} break;
 			case 'date' : {
 				if (!parent::setVar( $var, $value )) return false;

@@ -47,6 +47,8 @@ class PagePrinter {
 		return $str;*/
 		self::cssLink( 'main' );
 		self::cssLink( 'jquery-ui-1.8.16' );
+		self::cssLink( 'jquery-ui-1.8.16' );
+		self::cssLink( 'highlightjs-styles/default' );
 	}
 	
 	public static function errors() {

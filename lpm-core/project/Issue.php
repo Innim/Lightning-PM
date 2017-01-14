@@ -231,6 +231,8 @@ class Issue extends MembersInstance
 
 	private $_images = null;
 
+	private $_htmlDesc = null;
+
 	/**
 	 * 
 	 * @var User
@@ -341,19 +343,27 @@ class Issue extends MembersInstance
 	}
 	
 	public function getDesc() {
-		$desc = $this->desc;
 
-		if (strpos($desc, '<ul>') !== false)
+		if (empty($this->_htmlDesc))
 		{
-			// Предварительно порежем переносы в списках
-			$desc = str_replace("\r\n", "\n", $desc);
-			$desc = str_replace(array("</li>\n<li>","</li> \n<li>"), '</li><li>', $desc);
-			$desc = str_replace(array("<ul>\n<li>", "</li>\n</ul>"), array('<ul><li>', '</li></ul>'), $desc);
-		}
+			$desc = $this->desc;
 
-		$desc = nl2br($desc);
-		$desc = HTMLHelper::linkIt($desc);
-		return $desc;
+			if (strpos($desc, '<ul>') !== false)
+			{
+				// Предварительно порежем переносы в списках
+				$desc = str_replace("\r\n", "\n", $desc);
+				$desc = str_replace(array("</li>\n<li>","</li> \n<li>"), '</li><li>', $desc);
+				$desc = str_replace(array("<ul>\n<li>", "</li>\n</ul>"), array('<ul><li>', '</li></ul>'), $desc);
+			}
+
+			$desc = HTMLHelper::codeIt($desc);
+			$desc = nl2br($desc);
+			$desc = HTMLHelper::linkIt($desc);
+
+			$this->_htmlDesc = $desc;
+		}
+		
+		return $this->_htmlDesc;
 	}
 
 	public function isCompleted() {
