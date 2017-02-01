@@ -169,6 +169,30 @@ code {
 	border-radius: 2px;
 	padding: 1px 4px;
 }
+code.nohighlight {
+	display: block;
+
+	color: rgb(44, 45, 48);
+	margin: .5rem 0 .2rem;
+	font-size: .75rem;
+	line-height: 0.75rem;
+	overflow-x: auto;
+	background: #fbfaf8;
+	padding: .5rem;
+	word-break: normal;
+	white-space: pre;
+	white-space: pre-wrap;
+
+	font-family: Consolas, monaco, "Ubuntu Mono", courier, monospace !important;
+	border: 1px solid #E8E8E8;
+	border-radius: .2rem;
+	-webkit-font-variant-ligatures: none;
+	font-variant-ligatures: none;
+	tab-size: 4;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	-webkit-tab-size: 4
+}
 .copyright {
 	font-size: 7pt;
 }
