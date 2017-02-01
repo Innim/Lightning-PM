@@ -129,7 +129,7 @@
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
-            <p class="text"><?=$comment->getText();?></p>            
+            <article class="text"><?=$comment->getText();?></article>
         </li>
         <?}?>
     </ol>
