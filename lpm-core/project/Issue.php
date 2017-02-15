@@ -218,6 +218,10 @@ class Issue extends MembersInstance
 	public $projectUID    = '';
 	public $name          = '';
 	public $desc          = '';
+	/**
+	 * Теперь это не часы, а story points
+	 * @var integer
+	 */
 	public $hours		  =  0;
 	public $type          = -1;
 	public $authorId      =  0;
@@ -250,7 +254,7 @@ class Issue extends MembersInstance
 		$this->_typeConverter->addFloatVars( 
 			'id', 'parentId', 'authorId', 'type', 'status', 'commentsCount' 
 		);
-		$this->_typeConverter->addIntVars( 'priority' );
+		$this->_typeConverter->addIntVars( 'priority', 'hours' );
 		$this->addDateTimeFields( 'createDate', 'startDate', 'completeDate', 'completedDate' );
 		
 		$this->addClientFields( 
