@@ -59,3 +59,7 @@ CREATE TABLE IF NOT EXISTS `lpm_recovery_emails` (
 
 ALTER TABLE `lpm_projects` ADD `isArchive` BOOLEAN NOT NULL DEFAULT FALSE AFTER `issuesCount`;
 -- 2015-08-24 14:38:00
+
+
+ALTER TABLE `lpm_projects`
+ADD `scrum` tinyint NOT NULL DEFAULT '0' COMMENT 'Проект использует Scrum' AFTER `issuesCount`;

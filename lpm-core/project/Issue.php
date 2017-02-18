@@ -219,7 +219,7 @@ class Issue extends MembersInstance
 	public $name          = '';
 	public $desc          = '';
 	/**
-	 * Теперь это не часы, а story points
+	 * Нормачасы. Для проектов, использующих Scrum - здесь story points
 	 * @var integer
 	 */
 	public $hours		  =  0;
@@ -242,6 +242,11 @@ class Issue extends MembersInstance
 	 * @var User
 	 */
 	public $author;
+	/**
+	 * Проект, к которому относится задача
+	 * @var Project
+	 */
+	private $_project;
 	
 	//public $baseURL = '';
 	
@@ -291,6 +296,23 @@ class Issue extends MembersInstance
 
 	public function getMaxImagesCount() {
 		return self::MAX_IMAGES_COUNT;
+	}
+
+	/**
+	 * Загружает и возвращает объект проекта.
+	 * Этот метод достаточно тяжелый, он будет грузить данные из БД
+	 * Для получения имени проекта в общем списке - 
+	 * лучше воспользоваться projectName.
+	 * @return Project
+	 * @see projectName
+	 * @see projectId
+	 */
+	public function getProject()
+	{
+	    if ($this->_project === null)
+	    	$this->_project = Project::loadById($this->projectId);
+
+	    return $this->_project;
 	}
 
 	/**
@@ -344,6 +366,20 @@ class Issue extends MembersInstance
 
 	public function getNormHours(){
 		return $this->hours;
+	}
+
+	
+	/**
+	 * Возвращает лейбл для параметра hours
+	 * @param  boolean $short Использовать сокращение 
+	 * @return Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+	 */
+	public function getNormHoursLabel($short = false)
+	{
+		if ($this->getProject()->scrum)
+			return DeclensionHelper::storyPoints($this->hours, $short);
+		else 
+			return $short ? 'ч' : DeclensionHelper::hours($this->hours);
 	}
 	
 	public function getDesc() {

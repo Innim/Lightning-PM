@@ -5,7 +5,7 @@
     <?$issue = lpm_get_issue();?>    
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours;?></span>&nbsp;<?=DeclensionHelper::storyPoints($hours, false);?>)</span><?php endif;?>
+		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours;?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
     </h3>     
     <div class="issue_copy">
 
