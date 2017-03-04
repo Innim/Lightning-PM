@@ -26,6 +26,11 @@ class LPMTables {
 	 */
 	const ISSUE_COUNTERS = 'issue_counters';	
 	/**
+	 * Стикеры для Scrum доски
+	 * @var string
+	 */
+	const SCRUM_STICKER = 'scrum_sticker';
+	/**
 	 * Участия пользователей
 	 * @var string
 	 */
@@ -65,9 +70,9 @@ class LPMTables {
 	 * @var string
 	 */
 	const USERS_PREF = 'users_pref';
-        /**
-         *  Записи о отправленных письмах для восстановления пароля
-         */
-        const RECOVERY_EMAILS = 'recovery_emails';
+    /**
+     *  Записи о отправленных письмах для восстановления пароля
+     */
+    const RECOVERY_EMAILS = 'recovery_emails';
 }
 ?>

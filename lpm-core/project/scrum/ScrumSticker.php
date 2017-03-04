@@ -1,0 +1,89 @@
+<?php
+/**
+ * Стикер на Scrum доске.
+ * Связан с задачей, каждому стикеру соответствует 1 задача
+ */
+class ScrumSticker extends LPMBaseObject
+{
+	public static function loadList($projectId)
+	{
+		$db = self::getDB();
+
+		$states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS, 
+			ScrumStickerState::TESTING, ScrumStickerState::DONE]);
+
+		$sql = <<<SQL
+		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 'with_issue', `i`.*
+		  FROM `%1\$s` `s` 
+    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
+     	 WHERE `i`.`projectId` = ${projectId} AND `i`.`deleted` = 0 
+     	   AND `s`.`state` IN (${states})
+SQL;
+
+		return StreamObject::loadObjList($db, 
+			[$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES], __CLASS__);
+	}
+
+	/**
+	 * Идентифкиатор задачи
+	 * @var int
+	 */
+	public $issueId;
+	/**
+	 * Текущее состояние - в какой колонке доски находится стикер
+	 * @var int
+	 * @see ScrumStickerState
+	 */
+	public $state;
+
+	// Issue
+	private $_issue;
+
+	function __construct( $id = 0 )
+	{
+		parent::__construct();
+
+		$this->_typeConverter->addFloatVars('issueId');
+		$this->_typeConverter->addIntVars('state');
+	}
+
+	/**
+	 * Возвщает отображаемое имя стикера
+	 * @return String
+	 */
+	public function getName()
+	{
+	    return $this->_issue === null ? 
+	    	'Задача #' . $this->issueId : $this->_issue->getName();
+	}
+
+	/**
+	 * Возвращает объект задачи. Если не выставлен - будет загружен
+	 * @return Issue
+	 */
+	public function getIssue()
+	{
+	    if ($this->_issue === null)
+	    	$this->_issue = Issue::load($this->issueId);
+	    return $this->_issue;
+	}
+
+	public function loadStream($raw)
+	{
+	    $data = [];
+	    foreach ($raw as $key => $value) 
+	    {
+	    	if (strpos($key, 's_') === 0)
+	    		$data[mb_substr($key, 2)] = $value;
+	    }
+
+	    parent::loadStream($data);
+
+	    if (isset($raw['with_issue']))
+	    {
+	    	if ($this->_issue === null)
+	    		$this->_issue = new Issue($this->issueId);
+	    	$this->_issue->loadStream($raw);
+	    }
+	}
+}

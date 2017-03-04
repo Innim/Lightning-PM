@@ -338,6 +338,8 @@ $(document).ready(
            firstDay       : 1,
            closeText      : 'Готово'
        });
+
+       if (hljs) hljs.initHighlightingOnLoad();
        
        
        window.lpInfo.userId = $( '#curUserId' ).val();

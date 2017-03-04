@@ -145,6 +145,7 @@ class PageConstructor
 		'libs/jquery.validate.min',
 		'libs/F2PInvoker', 
 		'libs/iLoad',
+		'libs/highlight.pack',
 		'js-options.php$' ,
 		'lightning'
 	);

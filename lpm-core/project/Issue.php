@@ -218,6 +218,10 @@ class Issue extends MembersInstance
 	public $projectUID    = '';
 	public $name          = '';
 	public $desc          = '';
+	/**
+	 * Нормачасы. Для проектов, использующих Scrum - здесь story points
+	 * @var integer
+	 */
 	public $hours		  =  0;
 	public $type          = -1;
 	public $authorId      =  0;
@@ -231,11 +235,18 @@ class Issue extends MembersInstance
 
 	private $_images = null;
 
+	private $_htmlDesc = null;
+
 	/**
 	 * 
 	 * @var User
 	 */
 	public $author;
+	/**
+	 * Проект, к которому относится задача
+	 * @var Project
+	 */
+	private $_project;
 	
 	//public $baseURL = '';
 	
@@ -248,7 +259,7 @@ class Issue extends MembersInstance
 		$this->_typeConverter->addFloatVars( 
 			'id', 'parentId', 'authorId', 'type', 'status', 'commentsCount' 
 		);
-		$this->_typeConverter->addIntVars( 'priority' );
+		$this->_typeConverter->addIntVars( 'priority', 'hours' );
 		$this->addDateTimeFields( 'createDate', 'startDate', 'completeDate', 'completedDate' );
 		
 		$this->addClientFields( 
@@ -285,6 +296,23 @@ class Issue extends MembersInstance
 
 	public function getMaxImagesCount() {
 		return self::MAX_IMAGES_COUNT;
+	}
+
+	/**
+	 * Загружает и возвращает объект проекта.
+	 * Этот метод достаточно тяжелый, он будет грузить данные из БД
+	 * Для получения имени проекта в общем списке - 
+	 * лучше воспользоваться projectName.
+	 * @return Project
+	 * @see projectName
+	 * @see projectId
+	 */
+	public function getProject()
+	{
+	    if ($this->_project === null)
+	    	$this->_project = Project::loadById($this->projectId);
+
+	    return $this->_project;
 	}
 
 	/**
@@ -339,21 +367,43 @@ class Issue extends MembersInstance
 	public function getNormHours(){
 		return $this->hours;
 	}
+
+	
+	/**
+	 * Возвращает лейбл для параметра hours
+	 * @param  boolean $short Использовать сокращение 
+	 * @return Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+	 */
+	public function getNormHoursLabel($short = false)
+	{
+		if ($this->getProject()->scrum)
+			return DeclensionHelper::storyPoints($this->hours, $short);
+		else 
+			return $short ? 'ч' : DeclensionHelper::hours($this->hours);
+	}
 	
 	public function getDesc() {
-		$desc = $this->desc;
 
-		if (strpos($desc, '<ul>') !== false)
+		if (empty($this->_htmlDesc))
 		{
-			// Предварительно порежем переносы в списках
-			$desc = str_replace("\r\n", "\n", $desc);
-			$desc = str_replace(array("</li>\n<li>","</li> \n<li>"), '</li><li>', $desc);
-			$desc = str_replace(array("<ul>\n<li>", "</li>\n</ul>"), array('<ul><li>', '</li></ul>'), $desc);
-		}
+			$desc = $this->desc;
 
-		$desc = nl2br($desc);
-		$desc = HTMLHelper::linkIt($desc);
-		return $desc;
+			if (strpos($desc, '<ul>') !== false)
+			{
+				// Предварительно порежем переносы в списках
+				$desc = str_replace("\r\n", "\n", $desc);
+				$desc = str_replace(array("</li>\n<li>","</li> \n<li>"), '</li><li>', $desc);
+				$desc = str_replace(array("<ul>\n<li>", "</li>\n</ul>"), array('<ul><li>', '</li></ul>'), $desc);
+			}
+
+			$desc = HTMLHelper::codeIt($desc);
+			$desc = nl2br($desc);
+			$desc = HTMLHelper::linkIt($desc);
+
+			$this->_htmlDesc = $desc;
+		}
+		
+		return $this->_htmlDesc;
 	}
 
 	public function isCompleted() {

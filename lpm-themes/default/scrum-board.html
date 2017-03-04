@@ -1,0 +1,48 @@
+<article id="projectMembers">
+    <h1><?lpm_print_header();?></h1>
+    <h3>SCRUM доска</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>TO DO</th>
+                <th>В работе</th>
+                <th>Тестируется</th>
+                <th>Готово</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php 
+        // Просто сначала распределим по столбцам
+        $stickersByState = [];
+        $count = 0;
+        foreach ($stickers as $sticker)
+        {
+            if (!isset($stickersByState[$sticker->state]))
+                $stickersByState[$sticker->state] = [];
+            $stickersByState[$sticker->state][] = $sticker;
+            $count = max(count($stickersByState[$sticker->state]), $count);
+        }
+        $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS, 
+            ScrumStickerState::TESTING, ScrumStickerState::DONE];
+        $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+
+        for ($i = 0; $i < $count; ++$i):
+        ?>
+        <tr>
+            <?php foreach ($columns as $i => $state):?>
+            <td class="scrum-board-col <?=$colStyles[$i];?>">
+                <?php 
+                $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
+                    $stickersByState[$state][$i] : null;
+                if ($sticker):
+                ?>
+                <div class="scrum-board-sticker"><a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a></div>
+                <?php endif;?>
+            </td>
+        <?php endforeach;?>
+        </tr>
+        <?php endfor;?>
+        </tbody>
+    </table>
+</article>

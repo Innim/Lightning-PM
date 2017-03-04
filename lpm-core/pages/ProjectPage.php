@@ -6,6 +6,7 @@ class ProjectPage extends BasePage
 	const PUID_ISSUES  = 'issues';
 	const PUID_COMPLETED_ISSUES  = 'completed';
 	const PUID_ISSUE   = 'issue';
+	const PUID_SCRUM_BOARD = 'scrum_board';
 	
 	/**
 	 * 
@@ -24,18 +25,25 @@ class ProjectPage extends BasePage
 		$this->_defaultPUID     = self::PUID_ISSUES;
 
 		$this->addSubPage( self::PUID_ISSUES , 'Список задач');
-		$this->addSubPage( self::PUID_COMPLETED_ISSUES , 'Завершенные','completed-issues');
+		$this->addSubPage( self::PUID_COMPLETED_ISSUES , 'Завершенные');
 		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
 						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
 	}
 	
 	public function init() {
-		if (!parent::init()) return false;
-		
 		$engine = LightningEngine::getInstance();
+
 		// загружаем проект, на странице которого находимся
 		if ($engine->getParams()->suid == '' 
-			|| !$this->_project = Project::load( $engine->getParams()->suid )) return false;
+			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
+
+		// Если это scrum проект - добавляем новый подразде
+		// XXX временно отключаем недоделанный раздел
+		//if ($this->_project->scrum)
+		//	$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
+
+		if (!parent::init()) return false;
+		
 		// проверим, можно ли текущему пользователю смотреть этот проект
 		if (!$user = LightningEngine::getInstance()->getUser()) return false;
 		if (!$user->isModerator()) {
@@ -96,6 +104,10 @@ class ProjectPage extends BasePage
 		{			
 			$this->addTmplVar('issues', Issue::loadListByProject(
 				$this->_project->id, array( Issue::STATUS_COMPLETED )));	
+		}
+		else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) 
+		{
+			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
 		}
 		
 		return $this;

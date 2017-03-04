@@ -111,7 +111,7 @@ class Comment extends LPMBaseObject
 						//"/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is",
 						"/(https?:\/\/[^<\s]+[[:alnum:]])([^[:alnum:]]*(?:<br ?\/?>)*[^a-zа-я0-9]|\s|$)/iu",
 						"/((?:\n\r)|(?:\r\n)|\n|\r){1}/",
-						"/\[(b|i|u)\](.*?)\[\/\\1\]/",
+						"/\[(b|i|u|code)\](.*?)\[\/\\1\]/",
 					), 
 				    array(  
 				    	//"$1$2<a href=\"http://$3\" >$3</a>",
@@ -122,6 +122,8 @@ class Comment extends LPMBaseObject
 				    ),
 					$value 
 				);
+
+				$value = HTMLHelper::codeIt($value);
 			} break;
 			case 'date' : {
 				if (!parent::setVar( $var, $value )) return false;
