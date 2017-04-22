@@ -111,6 +111,9 @@ var srv = {
         comment  : function ( issueId, text, onResult ) {
             this.s._( 'comment' );
         },
+        changeScrumState : function (issueId, state, onResult) {
+            this.s._('changeScrumState');
+        },
     },
     workStudy : {
         s         : new BaseService( 'WorkStudyService' ),

@@ -2,7 +2,7 @@
     <h1><?lpm_print_header();?></h1>
     <h3>SCRUM доска</h3>
     
-    <table>
+    <table class="scrub-board-table">
         <thead>
             <tr>
                 <th>TO DO</th>
@@ -27,22 +27,31 @@
             ScrumStickerState::TESTING, ScrumStickerState::DONE];
         $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
 
-        for ($i = 0; $i < $count; ++$i):
+        //for ($i = 0; $i < $count; ++$i):
         ?>
         <tr>
-            <?php foreach ($columns as $i => $state):?>
-            <td class="scrum-board-col <?=$colStyles[$i];?>">
+            <?php foreach ($columns as $j => $state):?>
+            <td class="scrum-board-col <?=$colStyles[$j];?>">
+                <?php for ($i = 0; $i < $count; ++$i):?>
                 <?php 
                 $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
                     $stickersByState[$state][$i] : null;
                 if ($sticker):
                 ?>
-                <div class="scrum-board-sticker"><a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a></div>
+                <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>">
+                    <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a>
+                    <div class="control-line">
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-done"><i class="fa fa-check" aria-hidden="true"></i></a>
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-prev">&lt;</a>
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-next">&gt;</a>
+                    </div>
+                </div>
                 <?php endif;?>
+                <?php endfor;?>
             </td>
         <?php endforeach;?>
         </tr>
-        <?php endfor;?>
+        <?php //endfor;?>
         </tbody>
     </table>
 </article>

@@ -381,8 +381,7 @@ function verifyIssue( e ) {
     );
 };
 
-issuePage.removeIssue = function( e ) {
-    
+issuePage.removeIssue = function( e ) {    
     if (confirm( 'Вы действительно хотите удалить эту задачу?' )) {    
         var btn     = e.currentTarget;
         var issueId = $( 'input[type=hidden][name=issueId]', btn.parentElement ).attr( 'value' );
@@ -403,6 +402,45 @@ issuePage.removeIssue = function( e ) {
             }
         );
     }
+};
+
+issuePage.changeScrumState = function (e) {
+    var $control = $(e.currentTarget);
+    var $sticker = $control.parents('.scrum-board-sticker');
+    var issueId = $sticker.data('issueId');
+    var curState = $sticker.data('stickerState');
+
+    // Определяем следующий стейт
+    var state;
+    if ($control.hasClass('sticker-control-done'))
+        state = 4;
+    else if ($control.hasClass('sticker-control-prev'))
+        state = curState - 1;
+    else if ($control.hasClass('sticker-control-next'))
+        state = curState + 1;
+    else 
+        return;
+
+    preloader.show();
+    srv.issue.changeScrumState(issueId, state, function (res) {
+        preloader.hide();
+        if (res.success) {
+            $sticker.attr('data-sticker-state', state);
+            // Перевешиваем стикер
+            $sticker.remove();
+            var colName;
+            switch (state) {
+                case 1 : colName = 'todo'; break;
+                case 2 : colName = 'in_progress'; break;
+                case 3 : colName = 'testing'; break;
+                case 4 : colName = 'done'; break;
+            }
+
+            if (colName) {
+                $('.scrum-board-col.col-' + colName).append($sticker);
+            }
+        }
+    });
 };
 
 function showIssue (issueId) {
@@ -511,10 +549,8 @@ issuePage.setEditInfo = function () {
     
 };
 
-function removeImage(imageId)
-{
-    if (confirm('Вы действительно хотите удалить это изображение?'))
-    {
+function removeImage(imageId) {
+    if (confirm('Вы действительно хотите удалить это изображение?')) {
         $('#issueForm form .images-list > li').has('input[name=imgId][value=' + imageId + ']').remove();
         var val = $('#issueForm form input[name=removedImages]').val();
         if (val != '') val += ',';
@@ -658,8 +694,7 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.showIssues4Me = function ()
-{
+issuePage.showIssues4Me = function () {
     window.location.hash = 'only-my';
     issuePage.filterByMemberId( lpInfo.userId );
 
@@ -668,8 +703,7 @@ issuePage.showIssues4Me = function ()
     return false;
 };
 
-issuePage.showIssuesByUser = function (memberId)
-{
+issuePage.showIssuesByUser = function (memberId) {
     window.location.hash = 'by-user:' + memberId;
     issuePage.filterByMemberId( memberId );
     $('#showIssues4MeLink').hide();
@@ -677,8 +711,7 @@ issuePage.showIssuesByUser = function (memberId)
     return false;
 };
 
-issuePage.filterByMemberId = function (userId) 
-{
+issuePage.filterByMemberId = function (userId) {
     var list = document.getElementById('issuesList'); 
     var rows = list.tBodies[0].children;
     var row,fields = null;

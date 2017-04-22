@@ -1251,3 +1251,44 @@ div.ftp
 .hidden{
 	display: none;
 }
+.scrub-board-table td {
+	width: 25%;
+}
+.scrum-board-sticker {
+	position: relative;
+	width: 100px;
+	min-height: 70px;
+	padding: 5px;
+	padding-bottom: 10px;
+	float: left;
+	font-size: 10pt;
+	background-color: #FE3678;
+}
+.scrum-board-sticker.orange {
+	background-color: #FEB93C;
+}
+.scrum-board-sticker.green {
+	background-color: #7BDB23;
+}
+.scrum-board-sticker.yellow {
+	background-color: #FEF80F;
+}
+.scrum-board-sticker .control-line {
+	position: absolute;
+	right: 5px;
+	bottom: 3px;
+}
+.scrum-board-sticker .control-line a {
+	font-size: 8px;
+	margin-left: 3px; 
+}
+.col-todo .scrum-board-sticker .control-line a.sticker-control-done,
+.col-done .scrum-board-sticker .control-line a.sticker-control-done {
+	display: none;
+}
+.col-todo .scrum-board-sticker .control-line a.sticker-control-prev {
+	display: none;
+}
+.col-done .scrum-board-sticker .control-line a.sticker-control-next {
+	display: none;
+}

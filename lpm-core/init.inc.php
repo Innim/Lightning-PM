@@ -9,6 +9,7 @@ date_default_timezone_set('Etc/GMT-3');
 // подключаем фреймворк
 //require_once( ROOT . FRAMEWORK_DIR . 'GMFramework.class.php' );
 require_once( ROOT . LIBS_DIR . 'gm-framework-v1.1.1.phar' );
+// require_once(ROOT . LIBS_DIR . 'gm-framework-v1.1.1/GMFramework.class.php');
 
 // Подключаем фреймворк
 // if (!class_exists( 'GMFramework', false ))

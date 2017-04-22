@@ -204,6 +204,40 @@ class IssueService extends LPMBaseService
 		$this->add2Answer( 'comment', $comment->getClientObject() );
 		return $this->answer();
 	}
+
+	/**
+	 * Изменяет состояние стикера
+	 * @param  int $issueId Идентификатор задачи
+	 * @param  int $state   Новое состояние стикера
+	 * @return 
+	 */
+	public function changeScrumState($issueId, $state) {
+		$issueId = (int)$issueId;
+		$state   = (int)$state;
+
+	    try {
+	    	// Проверяем состояние 
+	    	if (!ScrumStickerState::validateValue($state))
+	    		throw new Exception('Неизвестный стейт');
+	    	 
+	        $sticker = ScrumSticker::load($issueId);
+	        if ($sticker === null)
+	        	throw new Exception('Нет стикера для этой задачи');
+
+			// Менять состояние стикера может любой пользователь
+	        $sql = <<<SQL
+	        UPDATE `%s` SET `state` = ${state} 
+	         WHERE `issueId` = ${issueId}
+SQL;
+
+	        if (!$this->_db->queryt($sql, LPMTables::SCRUM_STICKER))
+	        	return $this->errorDBSave();
+	    } catch (\Exception $e) { 
+	        return $this->exception($e); 
+	    } 
+	
+	    return $this->answer();
+	}
 	
 	/**
 	 * Загружает html информации о задаче
