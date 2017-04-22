@@ -1291,6 +1291,10 @@ div.ftp
 .scrum-board-sticker.yellow {
 	background-color: #FEF80F;
 }
+.scrum-board-sticker.white {
+	background-color: #FEFEFE;
+	border: solid 1px #cccccc;
+}
 .scrum-board-sticker .control-line {
 	position: absolute;
 	right: 5px;
