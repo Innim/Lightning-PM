@@ -45,10 +45,11 @@ class PagePrinter {
 			$str .= elf::cssLink( $file ) . "\n";
 		}
 		return $str;*/
-		self::cssLink( 'main' );
-		self::cssLink( 'jquery-ui-1.8.16' );
-		self::cssLink( 'jquery-ui-1.8.16' );
-		self::cssLink( 'highlightjs-styles/default' );
+		self::cssLink('main');
+		self::cssLink('jquery-ui-1.8.16');
+		self::cssLink('jquery-ui-1.8.16');
+		self::cssLink('highlightjs-styles/default');
+		self::cssLink('font-awesome/css/font-awesome.min');
 	}
 	
 	public static function errors() {
