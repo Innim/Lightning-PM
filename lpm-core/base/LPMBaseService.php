@@ -31,7 +31,7 @@ class LPMBaseService extends SecureService
 		return $this->error('Error DB load');
 	}
 
-	protected function error($message, $code) {
+	protected function error($message, $code = 0) {
 		if (DEBUG) {
 			if ($this->_db && $this->_db->error) {
 				if (empty($message)) 

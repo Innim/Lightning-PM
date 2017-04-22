@@ -418,6 +418,10 @@ issuePage.changeScrumState = function (e) {
         state = curState - 1;
     else if ($control.hasClass('sticker-control-next'))
         state = curState + 1;
+    else if ($control.hasClass('sticker-control-archive'))
+        state = 5;
+    else if ($control.hasClass('sticker-control-remove'))
+        state = 0;
     else 
         return;
 
@@ -442,6 +446,16 @@ issuePage.changeScrumState = function (e) {
         }
     });
 };
+
+issuePage.putStickerOnBoard = function (issueId) {
+    preloader.show();
+    srv.issue.putStickerOnBoard(issueId, function (res) {
+        preloader.hide();
+        if (res.success) {
+            $('#issueInfo h3 .scrum-put-sticker').remove();
+        }
+    });
+}
 
 function showIssue (issueId) {
     srv.issue.load( 

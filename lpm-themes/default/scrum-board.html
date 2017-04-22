@@ -40,8 +40,10 @@
                 ?>
                 <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>">
                     <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a>
+                    <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
                     <div class="control-line">
-                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-done"><i class="fa fa-check" aria-hidden="true"></i></a>
+                        <!-- <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-archive" title="Архивировать"><i class="fa fa-archive" aria-hidden="true"></i></a> -->
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-done" title="Завершить"><i class="fa fa-check" aria-hidden="true"></i></a>
                         <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-prev">&lt;</a>
                         <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-next">&gt;</a>
                     </div>

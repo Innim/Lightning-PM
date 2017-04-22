@@ -44,6 +44,32 @@ SQL;
 		return empty($list) ? null : $list[0];
 	}
 
+	public static function putStickerOnBoard(Issue $issue) {
+		switch ($issue->status) {
+			case Issue::STATUS_IN_WORK : $state = ScrumStickerState::TODO; break;
+			case Issue::STATUS_WAIT : $state = ScrumStickerState::TESTING; break;
+			case Issue::STATUS_COMPLETED : $state = ScrumStickerState::DONE; break;
+			default : $state = ScrumStickerState::BACKLOG;
+		}
+		$issueId = $issue->id;
+
+		$db = self::getDB();
+		$sql = <<<SQL
+        REPLACE `%s` SET `issueId` = ${issueId}, `state` = ${state} 
+SQL;
+		return $db->queryt($sql, LPMTables::SCRUM_STICKER);
+	}
+
+	public static function updateStickerState($issueId, $state) {
+        $sql = <<<SQL
+	        UPDATE `%s` SET `state` = ${state} 
+	         WHERE `issueId` = ${issueId}
+SQL;
+		
+		$db = self::getDB();
+		return $db->queryt($sql, LPMTables::SCRUM_STICKER);
+	}
+
 	/**
 	 * Идентифкиатор задачи
 	 * @var int
@@ -83,6 +109,10 @@ SQL;
 	    if ($this->_issue === null)
 	    	$this->_issue = Issue::load($this->issueId);
 	    return $this->_issue;
+	}
+
+	public function isOnBoard() {
+	    return $this->state !== ScrumStickerState::BACKLOG;
 	}
 
 	/**

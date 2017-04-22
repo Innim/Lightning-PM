@@ -225,12 +225,37 @@ class IssueService extends LPMBaseService
 	        	throw new Exception('Нет стикера для этой задачи');
 
 			// Менять состояние стикера может любой пользователь
-	        $sql = <<<SQL
-	        UPDATE `%s` SET `state` = ${state} 
-	         WHERE `issueId` = ${issueId}
-SQL;
+	        if (!ScrumSticker::updateStickerState($issueId, $state))
+	        	return $this->errorDBSave();
 
-	        if (!$this->_db->queryt($sql, LPMTables::SCRUM_STICKER))
+	        if ($state === ScrumStickerState::TESTING) {
+	        	// Если состояние "Тестируется" - ставим задачу на проверку
+	        	$this->verify($issueId);
+	        } else if ($state === ScrumStickerState::DONE) {
+	        	// Если "Готово" - закрываем задачу
+	        	$this->complete($issueId);
+	        }
+	    } catch (\Exception $e) { 
+	        return $this->exception($e); 
+	    } 
+	
+	    return $this->answer();
+	}
+
+	/**
+	 * Помещает стикер задачи на скрам доску
+	 * @param  int $issueId Идентификатор задачи
+	 * @return 
+	 */
+	public function putStickerOnBoard($issueId) {
+		$issueId = (int)$issueId;
+
+	    try {
+	    	$issue = Issue::load($issueId);
+			if ($issue === null) 
+				return $this->error('Нет такой задачи');
+
+	        if (!ScrumSticker::putStickerOnBoard($issue))
 	        	return $this->errorDBSave();
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 

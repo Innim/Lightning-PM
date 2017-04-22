@@ -57,11 +57,11 @@ class PagePrinter {
 	}
 	
 	public static function issues($list) {
-		PageConstructor::includePattern( 'issues', compact('list'));
+		PageConstructor::includePattern('issues', compact('list'));
 	}
 	
-	public static function issueForm() {
-		PageConstructor::includePattern( 'issue-form' );
+	public static function issueForm($project) {
+		PageConstructor::includePattern('issue-form', compact('project'));
 	}
 	
 	public static function issueView() {
