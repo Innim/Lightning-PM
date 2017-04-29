@@ -214,6 +214,20 @@ class Project extends MembersInstance
 	    return $this->_sumOpenedIssuesHours;
 	}
 	
+	/**
+	 * Возвращает лейбл для параметра hours в задаче из проекта (без значения)
+	 * @param  int $value
+	 * @param  boolean $short Использовать сокращение 
+	 * @return Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+	 */
+	public function getNormHoursLabel($value, $short = false)
+	{
+		if ($this->scrum)
+			return DeclensionHelper::storyPoints($value, $short);
+		else 
+			return $short ? 'ч' : DeclensionHelper::hours($value);
+	}
+	
 	protected function loadMembers() {
 		if (!$this->_members = Member::loadListByProject( $this->id )) return false;
 		return true;

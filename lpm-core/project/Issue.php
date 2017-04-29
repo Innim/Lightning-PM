@@ -449,7 +449,6 @@ SQL;
 		return $this->hours;
 	}
 
-	
 	/**
 	 * Возвращает лейбл для параметра hours
 	 * @param  boolean $short Использовать сокращение 
@@ -457,10 +456,7 @@ SQL;
 	 */
 	public function getNormHoursLabel($short = false)
 	{
-		if ($this->getProject()->scrum)
-			return DeclensionHelper::storyPoints($this->hours, $short);
-		else 
-			return $short ? 'ч' : DeclensionHelper::hours($this->hours);
+		return $this->getProject()->getNormHoursLabel($this->hours, $short);
 	}
 	
 	public function getDesc() {
