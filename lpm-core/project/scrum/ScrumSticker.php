@@ -55,7 +55,13 @@ SQL;
     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id` 
      	 WHERE `s`.`issueId` = ${issueId} AND `i`.`deleted` = 0 AND `s`.`state` IN (${states})
 SQL;
-		return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
+		$res = $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
+
+		if (!$res) 
+	    	throw new Exception('Load has sticker on board', \GMFramework\ErrorCode::LOAD_DATA);
+
+        $row = $res->fetch_row();
+		return !empty($row) && (int)$row[0] == 1;
 	}*/
 
 	public static function putStickerOnBoard(Issue $issue) {

@@ -460,6 +460,20 @@ issuePage.putStickerOnBoard = function (issueId) {
     });
 }
 
+issuePage.takeIssue = function (e) {
+    var $control = $(e.currentTarget);
+    var $sticker = $control.parents('.scrum-board-sticker');
+    var issueId = $sticker.data('issueId');
+    preloader.show();
+    srv.issue.takeIssue(issueId, function (res) {
+        preloader.hide();
+        if (res.success) {
+            $sticker.addClass('mine');
+            issuePage.scumColUpdateSP();
+        }
+    });
+}
+
 function showIssue (issueId) {
     srv.issue.load( 
         issueId, 

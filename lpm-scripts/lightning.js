@@ -117,6 +117,9 @@ var srv = {
         putStickerOnBoard : function (issueId, onResult) {
             this.s._('putStickerOnBoard');
         },
+        takeIssue : function (issueId, onResult) {
+            this.s._('takeIssue');
+        },
     },
     workStudy : {
         s         : new BaseService( 'WorkStudyService' ),

@@ -13,6 +13,8 @@
         </thead>
         <tbody>
         <?php 
+        $user = lpm_get_user();
+
         // Просто сначала распределим по столбцам
         $stickersByState = [];
         $count = 0;
@@ -37,22 +39,24 @@
                 $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
                     $stickersByState[$state][$i] : null;
                 if ($sticker):
-                $color = 'green';
                 $sp = $sticker->getIssue()->hours;
                 if ($sp == 0)
                     $color = 'white';
-                else if ($sp >= 3)
+                else if ($sp <= 3)
+                    $color = 'green';
+                else if ($sp <= 5)
                     $color = 'yellow';
-                else if ($sp >= 5)
+                else if ($sp <= 8)
                     $color = 'orange';
-                else if ($sp >= 8)
+                else
                     $color = 'red';
                 ?>
-                <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
+                <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                     <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a>
                     <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
                     <div class="control-line">
                         <!-- <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-archive" title="Архивировать"><i class="fa fa-archive" aria-hidden="true"></i></a> -->
+                        <a href="#" onclick="return issuePage.takeIssue(event);" class="sticker-control-take" title="Взять задачу себе"><i class="fa fa-hand-paper-o" aria-hidden="true"></i></a>
                         <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-done" title="Завершить"><i class="fa fa-check" aria-hidden="true"></i></a>
                         <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-prev">&lt;</a>
                         <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-next">&gt;</a>

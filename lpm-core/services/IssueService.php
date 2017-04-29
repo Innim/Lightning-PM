@@ -3,6 +3,10 @@ require_once( dirname( __FILE__ ) . '/../init.inc.php' );
 
 class IssueService extends LPMBaseService
 {
+	/**
+	 * Завершаем задачу
+	 * @param  int $issueId 
+	 */
 	public function complete($issueId) {
 		// завершать задачу может создатель задачи,
 		// исполнитель задачи или модератор
@@ -233,6 +237,31 @@ class IssueService extends LPMBaseService
 
 	        if (!ScrumSticker::putStickerOnBoard($issue))
 	        	return $this->errorDBSave();
+	    } catch (\Exception $e) { 
+	        return $this->exception($e); 
+	    } 
+	
+	    return $this->answer();
+	}
+
+	/**
+	 * Забрать задачу себе. Удаляет других исполнителей, 
+	 * оставляя только текущего 
+	 * @param  int $issueId 
+	 */
+	public function takeIssue($issueId) {
+	    $issueId = (int)$issueId;
+
+	    try {
+	        $issue = Issue::load($issueId);
+			if ($issue === null) 
+				return $this->error('Нет такой задачи');
+
+			if (!Member::deleteIssueMembers($issueId))
+				return $this->errorDBSave();
+
+			if (!Member::saveIssueMembers($issueId, [$this->getUser()->userId]))
+				return $this->errorDBSave();
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    } 

@@ -1302,6 +1302,9 @@ div.ftp
 	background-color: #FEFEFE;
 	border: solid 1px #cccccc;
 }
+.scrum-board-sticker.mine {
+	border: solid 2px #1E90FF;
+}
 .scrum-board-sticker .control-line {
 	position: absolute;
 	right: 5px;
@@ -1331,5 +1334,10 @@ div.ftp
 	display: none;
 }
 .col-done .scrum-board-sticker a.sticker-control-next {
+	display: none;
+}
+.col-testing .scrum-board-sticker a.sticker-control-take,
+.col-done .scrum-board-sticker a.sticker-control-take,
+.scrum-board-sticker.mine a.sticker-control-take {
 	display: none;
 }
