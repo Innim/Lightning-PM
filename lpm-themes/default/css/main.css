@@ -1273,11 +1273,13 @@ div.ftp
 }
 .scrum-board-sticker {
 	position: relative;
-	width: 100px;
-	min-height: 70px;
+	width: 120px;
+	min-height: 85px;
 	padding: 5px;
+	padding-right: 10px;
 	padding-bottom: 10px;
 	margin: 5px;
+    box-sizing: border-box;
 	float: left;
 	font-size: 10pt;
 	background-color: #FE3678;
