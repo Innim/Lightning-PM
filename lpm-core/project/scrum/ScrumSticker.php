@@ -44,6 +44,20 @@ SQL;
 		return empty($list) ? null : $list[0];
 	}
 
+	/*public static function hasStickerOnBoard($issueId) {
+	    $db = self::getDB();
+
+	    $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS, 
+	    	ScrumStickerState::TESTING, ScrumStickerState::DONE]);
+		$sql = <<<SQL
+		SELECT 1
+		  FROM `%1\$s` `s` 
+    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id` 
+     	 WHERE `s`.`issueId` = ${issueId} AND `i`.`deleted` = 0 AND `s`.`state` IN (${states})
+SQL;
+		return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
+	}*/
+
 	public static function putStickerOnBoard(Issue $issue) {
 		switch ($issue->status) {
 			case Issue::STATUS_IN_WORK : $state = ScrumStickerState::TODO; break;
