@@ -1,18 +1,20 @@
-<article id="projectMembers">
+<article id="scrumBoard">
     <h1><?lpm_print_header();?></h1>
     <h3>SCRUM доска</h3>
     
-    <table>
+    <table class="scrub-board-table">
         <thead>
             <tr>
-                <th>TO DO</th>
-                <th>В работе</th>
-                <th>Тестируется</th>
-                <th>Готово</th>
+                <th>TO DO<span class="scrub-col-sp col-todo">(<span class="value"></span> SP)</span></th>
+                <th>В работе<span class="scrub-col-sp col-in_progress">(<span class="value"></span> SP)</span></th>
+                <th>Тестируется<span class="scrub-col-sp col-testing">(<span class="value"></span> SP)</span></th>
+                <th>Готово<span class="scrub-col-sp col-done">(<span class="value"></span> SP)</span></th>
             </tr>
         </thead>
         <tbody>
         <?php 
+        $user = lpm_get_user();
+
         // Просто сначала распределим по столбцам
         $stickersByState = [];
         $count = 0;
@@ -27,22 +29,45 @@
             ScrumStickerState::TESTING, ScrumStickerState::DONE];
         $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
 
-        for ($i = 0; $i < $count; ++$i):
+        //for ($i = 0; $i < $count; ++$i):
         ?>
         <tr>
-            <?php foreach ($columns as $i => $state):?>
-            <td class="scrum-board-col <?=$colStyles[$i];?>">
+            <?php foreach ($columns as $j => $state):?>
+            <td class="scrum-board-col <?=$colStyles[$j];?>">
+                <?php for ($i = 0; $i < $count; ++$i):?>
                 <?php 
                 $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
                     $stickersByState[$state][$i] : null;
                 if ($sticker):
+                $sp = $sticker->getIssue()->hours;
+                if ($sp == 0)
+                    $color = 'white';
+                else if ($sp <= 3)
+                    $color = 'green';
+                else if ($sp <= 5)
+                    $color = 'yellow';
+                else if ($sp <= 8)
+                    $color = 'orange';
+                else
+                    $color = 'red';
                 ?>
-                <div class="scrum-board-sticker"><a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a></div>
+                <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
+                    <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a>
+                    <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
+                    <div class="control-line">
+                        <!-- <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-archive" title="Архивировать"><i class="fa fa-archive" aria-hidden="true"></i></a> -->
+                        <a href="#" onclick="return issuePage.takeIssue(event);" class="sticker-control-take" title="Взять задачу себе"><i class="fa fa-hand-paper-o" aria-hidden="true"></i></a>
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-done" title="Завершить"><i class="fa fa-check" aria-hidden="true"></i></a>
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-prev">&lt;</a>
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-next">&gt;</a>
+                    </div>
+                </div>
                 <?php endif;?>
+                <?php endfor;?>
             </td>
         <?php endforeach;?>
         </tr>
-        <?php endfor;?>
+        <?php //endfor;?>
         </tbody>
     </table>
 </article>

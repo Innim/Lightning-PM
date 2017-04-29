@@ -18,7 +18,7 @@ class Issue extends MembersInstance
 	 */
 	protected static function loadList( $where, $extraSelect = '', $extraTables = null ) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
-		$sql = "SELECT `i`.*, " .
+		$sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
 					  //"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
 					  "IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, " .
 					  "`u`.*, `cnt`.*, `p`.`uid` as `projectUID`";
@@ -29,7 +29,8 @@ class Issue extends MembersInstance
 			LPMTables::ISSUES, 
 			LPMTables::USERS,
 			LPMTables::ISSUE_COUNTERS,
-			LPMTables::PROJECTS
+			LPMTables::PROJECTS,
+			LPMTables::SCRUM_STICKER
 		);
 
 		if (!empty($extraTables))
@@ -41,9 +42,13 @@ class Issue extends MembersInstance
 				$args[] = $table;
 			}
 		}
-		$sql .= ", `%1\$s` AS `i` LEFT JOIN `%3\$s` AS `cnt` ON `i`.`id` = `cnt`.`issueId` " .
-				"WHERE `i`.`projectId` = `p`.`id` " .
-				"AND `i`.`deleted` = '0'";
+		$sql .= <<<SQL
+		, `%1\$s` AS `i` 
+		LEFT JOIN `%3\$s` AS `cnt` ON `i`.`id` = `cnt`.`issueId` 
+		LEFT JOIN `%5\$s` AS `st` ON `i`.`id` = `st`.`issueId` 
+			WHERE `i`.`projectId` = `p`.`id` 
+			  AND `i`.`deleted` = '0'
+SQL;
 
 		if ($where != '') $sql  .= " AND " . $where;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
@@ -54,7 +59,7 @@ class Issue extends MembersInstance
 
 	try{
 		return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
-	}catch (Exception $e){exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);}
+	} catch (Exception $e){exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);}
 	}
 
 	public static function getListByProject( $projectId, $type = -1 ) {
@@ -198,6 +203,62 @@ class Issue extends MembersInstance
 		}
 	}
 
+	public static function updateStatus(User $user, Issue $issue, $status, $sendEmail = true) {
+		$issue->status = $status;
+	    $hash = [
+	    	'UPDATE' => LPMTables::ISSUES,
+	    	'SET' => [
+	    		'status' => $issue->status 
+	    	],
+	    	'WHERE' => [
+	    		'id' => $issue->id
+	    	]
+	    ];
+
+	    if ($issue->status === Issue::STATUS_COMPLETED)
+	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate();
+
+	    $db = self::getDB();
+	    if (!$db->queryb($hash))
+	    	throw new Exception('Status save failed', \GMFramework\ErrorCode::SAVE_DATA);
+
+	    Project::updateIssuesCount($issue->projectId);
+
+	    if ($sendEmail) {
+	    	// Отправка оповещений
+			$subject = '';
+			$text = '';
+			switch ($issue->status) {
+				case Issue::STATUS_COMPLETED : 
+					$subject = 'Завершена задача "' . $issue->name . '"';
+					$text = $user->getName() . ' отметил задачу "' .
+						$issue->name . '" как завершённую';
+					break;
+				case Issue::STATUS_IN_WORK : 
+					$subject = 'Открыта задача "' . $issue->name . '"';
+					$text = $user->getName() . ' заново открыл задачу "' .
+						$issue->name . '"';
+					break;
+				case Issue::STATUS_WAIT : 
+					$subject = 'Задача "' . $issue->name . '"ожидает проверки';
+					$text = $user->getName() . ' поставил задачу "' .
+						$issue->name . '"'.  '" на проверку';
+					break;
+			}
+
+			if (!empty($subject) && !empty($text)) {
+				$members = $issue->getMemberIds();
+				$members[] = $issue->authorId;
+
+				$text .= "\n" . 'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL();
+
+				EmailNotifier::getInstance()->sendMail2Allowed(
+					$subject, $text, $members, EmailNotifier::PREF_ISSUE_STATE);
+			}
+					
+	    }
+	}
+
 	const ITYPE_ISSUE      	= 1;
 	
 	const TYPE_DEVELOP     	= 0;
@@ -247,6 +308,11 @@ class Issue extends MembersInstance
 	 * @var Project
 	 */
 	private $_project;
+	/**
+	 * Стикер
+	 * @var ScrumSticker
+	 */
+	private $_sticker = false;
 	
 	//public $baseURL = '';
 	
@@ -307,8 +373,7 @@ class Issue extends MembersInstance
 	 * @see projectName
 	 * @see projectId
 	 */
-	public function getProject()
-	{
+	public function getProject() {
 	    if ($this->_project === null)
 	    	$this->_project = Project::loadById($this->projectId);
 
@@ -325,6 +390,22 @@ class Issue extends MembersInstance
 		}
 
 		return $this->_images;
+	}
+
+	/**
+	 * Стикер, прикрепленный к доске
+	 * @return ScrumSticker|null
+	 */
+	public function getSticker() {
+	    if ($this->_sticker === false)
+	    	$this->_sticker = ScrumSticker::load($this->id);
+
+	    return $this->_sticker;
+	}
+
+	public function isOnBoard() {
+	    $sticker = $this->getSticker();
+	    return $sticker !== null && $sticker->isOnBoard();
 	}
 	
 	/**
@@ -368,7 +449,6 @@ class Issue extends MembersInstance
 		return $this->hours;
 	}
 
-	
 	/**
 	 * Возвращает лейбл для параметра hours
 	 * @param  boolean $short Использовать сокращение 
@@ -376,10 +456,7 @@ class Issue extends MembersInstance
 	 */
 	public function getNormHoursLabel($short = false)
 	{
-		if ($this->getProject()->scrum)
-			return DeclensionHelper::storyPoints($this->hours, $short);
-		else 
-			return $short ? 'ч' : DeclensionHelper::hours($this->hours);
+		return $this->getProject()->getNormHoursLabel($this->hours, $short);
 	}
 	
 	public function getDesc() {
@@ -411,14 +488,18 @@ class Issue extends MembersInstance
 	} 
 
 	public function isMember($userId) {
-		$finded = false;;
-		foreach ($this->_members as $member) {
-			if ($userId === $member->userId ){	
-				$finded = true;
-				break;
+		if ($this->_members === null) {
+			return Member::hasIssueMember($this->id, $userId);
+		} else {
+			$finded = false;
+			foreach ($this->_members as $member) {
+				if ($userId === $member->userId ){	
+					$finded = true;
+					break;
+				}
 			}
+			return $finded;
 		}
-		return $finded;
 	} 
 	
 	public function getShortDesc() {
@@ -473,13 +554,29 @@ class Issue extends MembersInstance
 			default 			        : return '';
 		}
 	}
-	
 
-	public function loadStream( $hash ) {
-		return parent::loadStream( $hash ) && $this->author->loadStream( $hash );		
+	public function loadStream($hash) {
+		$res = parent::loadStream($hash) && $this->author->loadStream($hash);
+		if (isset($hash['with_sticker'])) {
+			$sData = [];
+		    foreach ($hash as $key => $value) {
+		    	if (strpos($key, 's_') === 0 && $value !== null)
+		    		$sData[$key] = $value;
+		    }
+
+		    if (empty($sData)) {
+		    	$this->_sticker = null;
+		    } else {
+				if (!$this->_sticker) 
+					$this->_sticker = new ScrumSticker();
+	    		$this->_sticker->loadStream($sData);
+	    		$this->_sticker->issueId = $this->issueId;
+	    	}
+
+	    }
+		return $res;
 	}
 
-		
 	protected function loadMembers() {
 		$this->_members = Member::loadListByIssue( $this->id );
 		if ($this->_members === false) 

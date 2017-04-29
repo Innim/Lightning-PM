@@ -68,3 +68,5 @@ CREATE TABLE `lpm_scrum_sticker` (
   `state` tinyint(2) NOT NULL COMMENT 'состояние стикера',
   PRIMARY KEY (`issueId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='стикер на scrum доске';
+
+-- 2017-03-04 17:24:00

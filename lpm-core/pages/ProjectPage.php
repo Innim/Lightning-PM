@@ -38,9 +38,8 @@ class ProjectPage extends BasePage
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
 		// Если это scrum проект - добавляем новый подразде
-		// XXX временно отключаем недоделанный раздел
-		//if ($this->_project->scrum)
-		//	$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
+		if ($this->_project->scrum)
+			$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
 
 		if (!parent::init()) return false;
 		
@@ -254,18 +253,9 @@ class ProjectPage extends BasePage
 						if (!$memberInArr) array_push( $users4Delete, $tmpId );
 					}
 					
-					if (count( $users4Delete ) > 0 && 
-							!$this->_db->queryt( 
-								"DELETE FROM `%s` " .
-								 "WHERE `instanceType` = '" . Issue::ITYPE_ISSUE . "' " .
-						      	   "AND `instanceId` = '" . $issueId . "' " .
-						      	   "AND `userId` IN (" . implode( ',', $users4Delete ) . ")", 
-								LPMTables::MEMBERS 
-							)
-					   ) 
-					{
-						return $engine->addError( 'Ошибка при сохранении участников' );
-					}
+					if (count($users4Delete) > 0 && 
+							!Member::deleteIssueMembers($issueId, $users4Delete)) 
+						return $engine->addError('Ошибка при сохранении участников');
 				}
 				
 				// сохраняем исполнителей задачи
@@ -337,9 +327,27 @@ class ProjectPage extends BasePage
 					$uploader = $this->saveImages4Issue( $issueId, $loadedImgs);
 
 					if ($uploader === false)
-					{
-						$engine->addError( 'Не удалось загрузить изображение' );
+						return $engine->addError( 'Не удалось загрузить изображение' );
+
+					$issue = Issue::load($issueId);
+					if (!$issue) {
+						$engine->addError('Не удалось загрузить данные задачи');
 						return;
+					}
+
+					// Если это SCRUM проект
+					if ($this->_project->scrum) {
+						$putOnBoard = !empty($_POST['putToBoard']);
+						if ($issue->isOnBoard() != $putOnBoard) {
+							if ($putOnBoard) {
+								if (!ScrumSticker::putStickerOnBoard($issue))
+									return $engine->addError('Не удалось поместить стикер на доску');
+							} else {
+								if (!ScrumSticker::updateStickerState($issue->id, 
+										ScrumStickerState::BACKLOG))
+									return $engine->addError('Не удалось снять стикер с доски');
+							}
+						}
 					}
 
 					// обновляем счетчики
@@ -349,31 +357,29 @@ class ProjectPage extends BasePage
 					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $idInProject );
 					
 					// отсылаем оповещения
-					if ($issue = Issue::load( $issueId )) {
-						if ($editMode) {
-							array_push( $members, $issue->authorId ); // TODO фильтр, чтобы не добавлялся дважды
-							EmailNotifier::getInstance()->sendMail2Allowed(
-								'Изменена задача "' . $issue->name . '"', 
-								$engine->getUser()->getName() . ' изменил задачу "' .
-								$issue->name .  '", в которой Вы принимаете участие' . "\n" .
-								'Просмотреть задачу можно по ссылке ' .	$issueURL, 
-								$members,
-								EmailNotifier::PREF_EDIT_ISSUE
-							);
-						} else {
-							EmailNotifier::getInstance()->sendMail2Allowed(
-								'Добавлена задача "' . $issue->name . '"', 
-								$engine->getUser()->getName() . ' добавил задачу "' . 
-								$issue->name .  '", в которой Вы назначены исполнителем' . "\n" . 
-								'Просмотреть задачу можно по ссылке ' .	$issueURL, 
-								$members, 
-								EmailNotifier::PREF_ADD_ISSUE
-							);
-						}	
+					if ($editMode) {
+						array_push( $members, $issue->authorId ); // TODO фильтр, чтобы не добавлялся дважды
+						EmailNotifier::getInstance()->sendMail2Allowed(
+							'Изменена задача "' . $issue->name . '"', 
+							$engine->getUser()->getName() . ' изменил задачу "' .
+							$issue->name .  '", в которой Вы принимаете участие' . "\n" .
+							'Просмотреть задачу можно по ссылке ' .	$issueURL, 
+							$members,
+							EmailNotifier::PREF_EDIT_ISSUE
+						);
+					} else {
+						EmailNotifier::getInstance()->sendMail2Allowed(
+							'Добавлена задача "' . $issue->name . '"', 
+							$engine->getUser()->getName() . ' добавил задачу "' . 
+							$issue->name .  '", в которой Вы назначены исполнителем' . "\n" . 
+							'Просмотреть задачу можно по ссылке ' .	$issueURL, 
+							$members, 
+							EmailNotifier::PREF_ADD_ISSUE
+						);
+					}	
 
-						Project::updateIssuesCount(  $issue->projectId );				
-					}
-					
+					Project::updateIssuesCount(  $issue->projectId );				
+				
 					LightningEngine::go2URL( 
 						$editMode 
 							? $issueURL

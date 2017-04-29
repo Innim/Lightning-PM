@@ -111,6 +111,15 @@ var srv = {
         comment  : function ( issueId, text, onResult ) {
             this.s._( 'comment' );
         },
+        changeScrumState : function (issueId, state, onResult) {
+            this.s._('changeScrumState');
+        },
+        putStickerOnBoard : function (issueId, onResult) {
+            this.s._('putStickerOnBoard');
+        },
+        takeIssue : function (issueId, onResult) {
+            this.s._('takeIssue');
+        },
     },
     workStudy : {
         s         : new BaseService( 'WorkStudyService' ),

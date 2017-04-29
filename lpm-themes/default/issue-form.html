@@ -1,4 +1,9 @@
-<article id="issueForm" class="container">
+<?php
+/* 
+Требуются: 
+    $project - текущий проект
+*/
+?><article id="issueForm" class="container">
     <h3>Добавить задачу</h3>
     <?php $issue = lpm_get_issue();?>
     <div class="validateError"><? lpm_print_errors(); ?></div>
@@ -67,7 +72,7 @@
             <input placeholder="Story Points" type="text" name="hours"  maxlength="5" value="<?lpm_print_post_var('hours');?>"/>
         </li>
         <li>
-            <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?lpm_print_post_var('desc', $issue->desc);?></textarea>
+            <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?$issue && lpm_print_post_var('desc', $issue->desc);?></textarea>
             <div class="note tags-line">Вы можете использовать HTML теги в описании задачи, например: <a class="tag" href="javascript:void(0)">b</a>, 
             <a class="tag" href="javascript:void(0)">i</a>, <a class="tag" href="javascript:void(0)">u</a>, <a class="tag" href="javascript:void(0)">s</a>, <a class="tag" href="javascript:void(0)">ul</a>&gt;<a class="tag" href="javascript:void(0)">li</a>, <a class="tag" href="javascript:void(0)">blockquote</a>. </div>
             <div class="note tags-line">Также используйте <code>`</code> для строчного кода и <code>```</code> для многострочного (можно указать язык: as, js, php и тд, добавляется сразу после открывающих кавычек, требуется перенос строки)</div>
@@ -90,6 +95,19 @@
             <input type="hidden" name="parentId"/>
             <input type="hidden" name="issueId" value="0"/>
             <input type="hidden" name="actionType" value="addIssue"/>
+            <?php 
+            if ($project->scrum): 
+                if (isset($_POST['putToBoard'])) {
+                    $checked = empty($_POST['putToBoard']);
+                } else {
+                    $checked = $issue && $issue->isOnBoard();
+                }
+            ?>
+            <div class="put-to-board-line">
+                <input id="putToBoardField" name="putToBoard" type="checkbox" <?=$checked?'checked':'';?>>
+                <label for="putToBoardField">Поместить на SCRUM доску</label>
+            </div>
+            <?php endif;?>
             <p class="save-line">
                 <button type="submit" >Сохранить</button>
                 <button type="reset" onclick="showMain();">Отмена</button>

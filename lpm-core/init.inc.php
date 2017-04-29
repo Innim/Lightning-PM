@@ -9,6 +9,11 @@ date_default_timezone_set('Etc/GMT-3');
 // подключаем фреймворк
 //require_once( ROOT . FRAMEWORK_DIR . 'GMFramework.class.php' );
 require_once( ROOT . LIBS_DIR . 'gm-framework-v1.1.1.phar' );
+// require_once(ROOT . LIBS_DIR . 'gm-framework-v1.1.1/GMFramework.class.php');
+
+// Подключаем фреймворк
+// if (!class_exists( 'GMFramework', false ))
+require_once(ROOT . LIBS_DIR . 'framework/GMFramework.class.php');
 
 
 /**
@@ -22,9 +27,18 @@ function init()
 	if (Globals::isDebugMode()) GMLog::getInstance()->init( LOGS_PATH );
 	// инициализация времени
 	DateTimeUtils::setTimeAdjust( TIMEADJUST * 3600 );
+
+    // Будем потихоньку выпиливать старый фреймворк, 
+    // так что подключаем новую версию вместе со старой
+    GMFramework\GMFramework::useFramework();
+    // инициализируем логи
+    //GMFramework\Log::getInstance()->init(LOGS_PATH);
+    // инициализация времени
+    GMFramework\DateTimeUtils::setTimeAdjust(TIMEADJUST * 3600);
 	
 	// автозагрузка
-	$importer = ImportClasses::createInstance( ROOT . CORE_DIR, false );
+    $importer = GMFramework\ImportClasses::createInstance(ROOT . CORE_DIR, '', false);
+	// $importer = ImportClasses::createInstance( ROOT . CORE_DIR, false );
     $importer->enableUseAutoSearch( ROOT . CORE_DIR . 'classes.dump' );
 	
 	// здесь импортируются только общие классы
