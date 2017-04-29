@@ -33,6 +33,26 @@ class ScrumStickerState extends \GMFramework\Enum {
 	 */
 	const DELETED = 6;
 
+	/**
+	 * Возвращает список активных состояний 
+	 * (если стикер в таком состоянии - он на доске)
+	 * @return array<int>
+	 */
+	public static function getActiveStates() {
+	    return [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS, 
+	    	ScrumStickerState::TESTING, ScrumStickerState::DONE];
+	}
+
+	/**
+	 * Определяет, активное ли состояние 
+	 * (т.е. стикер находится на доске)
+	 * @param  int  $state 
+	 * @return boolean   
+	 */
+	public static function isActiveState($state) {
+	    return in_array($state, self::getActiveStates());
+	}
+
 	/*private static $_statesOrder = [self::TODO, self::IN_PROGRESS, self::TESTING, self::DONE];
 
 	public static function getNextState($state) {

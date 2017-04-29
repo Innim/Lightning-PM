@@ -245,6 +245,35 @@ class IssueService extends LPMBaseService
 	}
 
 	/**
+	 * Убирает в архив стикеры с доски
+	 * @param  int $projectId Идентификатор проекта
+	 * @return 
+	 */
+	public function removeStickersFromBoard($projectId) {
+		$projectId = (int)$projectId;
+
+	    try {
+	    	$state = ScrumStickerState::ARCHIVED;
+	    	$activeStates = implode(',', ScrumStickerState::getActiveStates());
+
+	    	$db = $this->_db;
+	    	$sql = <<<SQL
+	    	UPDATE `%1\$s` `s`
+    	INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
+	    	   SET `s`.`state` = ${state}
+	    	 WHERE `s`.`state` IN (${activeStates}) 
+	    	   AND `i`.`projectId` = ${projectId}
+SQL;
+			if (!$db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES))
+				return $this->errorDBSave();
+	    } catch (\Exception $e) { 
+	        return $this->exception($e); 
+	    } 
+	
+	    return $this->answer();
+	}
+
+	/**
 	 * Забрать задачу себе. Удаляет других исполнителей, 
 	 * оставляя только текущего 
 	 * @param  int $issueId 

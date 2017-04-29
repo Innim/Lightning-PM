@@ -1264,29 +1264,47 @@ div.ftp
     color: #999;
    
 }
-.hidden{
+.hidden {
 	display: none;
 }
-.scrub-board-table td {
+#scrumBoard h3 {
+	float: left;
+}
+#scrumBoard h3 .scrum-board-sp {
+	font-weight: normal;
+	font-size: 0.8em;
+} 
+#scrumBoard .scrum-board-actions {
+	float: right;
+	padding-right: 5px;
+}
+.scrum-board-table {
+	clear: both;
+}
+.scrum-board-table td {
 	width: 25%;
     vertical-align: top;
+    text-align: left;
 }
-.scrub-board-table th .scrub-col-sp {
+.scrum-board-table th .scrum-col-sp {
 	margin-left: 5px;
 	font-weight: normal;
     font-size: 0.9em;
 }
 .scrum-board-sticker {
 	position: relative;
-	width: 120px;
-	min-height: 85px;
+    display: inline-block;
+    vertical-align: top;
+	width: 140px;
+	min-height: 100px;
 	padding: 5px;
 	padding-right: 10px;
-	padding-bottom: 10px;
+	padding-bottom: 15px;
 	margin: 5px;
     box-sizing: border-box;
-	float: left;
+	/*float: left;*/
 	font-size: 10pt;
+    word-wrap: break-word;
 	background-color: #FE3678;
 }
 .scrum-board-sticker.orange {
@@ -1305,6 +1323,20 @@ div.ftp
 .scrum-board-sticker.mine {
 	border: solid 2px #1E90FF;
 }
+.scrum-board-sticker a {
+	text-decoration: none;
+}
+.scrum-board-sticker .sticker-issue-id {
+	position: absolute;
+	left: 3px;
+	bottom: 2px;
+	font-size: 8px;
+}
+.scrum-board-sticker .sticker-issue-members {
+	display: block;
+	margin-top: 3px;
+	font-size: 9px;
+}
 .scrum-board-sticker .control-line {
 	position: absolute;
 	right: 5px;
@@ -1313,13 +1345,15 @@ div.ftp
 	text-align: right;
 }
 .scrum-board-sticker .control-line a {
-	font-size: 8px;
+	font-size: 9px;
 	margin-left: 3px; 
 }
 .scrum-board-sticker a.sticker-control-remove {
 	position: absolute;
 	right: 3px;
-	top: 3px;
+	top: 1px;
+    font-size: 10px;
+    color: #333333;
 }
 .scrum-board-sticker a.sticker-control-archive {
 	position: absolute;

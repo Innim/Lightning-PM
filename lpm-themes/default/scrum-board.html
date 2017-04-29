@@ -1,14 +1,24 @@
-<article id="scrumBoard">
+<?php
+/* 
+Требуются: 
+    $project - проект
+    $stickers - список стикеров
+*/
+?>
+<article id="scrumBoard" data-project-id="<?=$project->id;?>">
     <h1><?lpm_print_header();?></h1>
-    <h3>SCRUM доска</h3>
+    <h3>SCRUM доска <span class="scrum-board-sp" style="display:none;">(<span class="value"></span> SP)</span></h3>
+    <div class="scrum-board-actions">
+        <a href="#" onclick="return issuePage.clearBoard(event);" title="Убрать все стикеры с доски"><i class="fa fa-archive" aria-hidden="true"></i></a>
+    </div>
     
-    <table class="scrub-board-table">
+    <table class="scrum-board-table">
         <thead>
             <tr>
-                <th>TO DO<span class="scrub-col-sp col-todo">(<span class="value"></span> SP)</span></th>
-                <th>В работе<span class="scrub-col-sp col-in_progress">(<span class="value"></span> SP)</span></th>
-                <th>Тестируется<span class="scrub-col-sp col-testing">(<span class="value"></span> SP)</span></th>
-                <th>Готово<span class="scrub-col-sp col-done">(<span class="value"></span> SP)</span></th>
+                <th>TO DO<span class="scrum-col-sp col-todo" style="display:none;">(<span class="value"></span> SP)</span></th>
+                <th>В работе<span class="scrum-col-sp col-in_progress" style="display:none;">(<span class="value"></span> SP)</span></th>
+                <th>Тестируется<span class="scrum-col-sp col-testing" style="display:none;">(<span class="value"></span> SP)</span></th>
+                <th>Готово<span class="scrum-col-sp col-done" style="display:none;">(<span class="value"></span> SP)</span></th>
             </tr>
         </thead>
         <tbody>
@@ -52,14 +62,17 @@
                     $color = 'red';
                 ?>
                 <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
+                    <span class="sticker-issue-id">#<?=$sticker->issueId;?></span>
                     <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a>
+                    <span class="sticker-issue-members"><?php 
+                    foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
                     <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
                     <div class="control-line">
                         <!-- <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-archive" title="Архивировать"><i class="fa fa-archive" aria-hidden="true"></i></a> -->
                         <a href="#" onclick="return issuePage.takeIssue(event);" class="sticker-control-take" title="Взять задачу себе"><i class="fa fa-hand-paper-o" aria-hidden="true"></i></a>
                         <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-done" title="Завершить"><i class="fa fa-check" aria-hidden="true"></i></a>
-                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-prev">&lt;</a>
-                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-next">&gt;</a>
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-prev"><i class="fa fa-caret-left" aria-hidden="true"></i></a>
+                        <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-next"><i class="fa fa-caret-right" aria-hidden="true"></i></a>
                     </div>
                 </div>
                 <?php endif;?>

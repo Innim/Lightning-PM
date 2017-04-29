@@ -117,6 +117,9 @@ var srv = {
         putStickerOnBoard : function (issueId, onResult) {
             this.s._('putStickerOnBoard');
         },
+        removeStickersFromBoard : function (projectId, onResult) {
+            this.s._('removeStickersFromBoard');
+        },
         takeIssue : function (issueId, onResult) {
             this.s._('takeIssue');
         },
