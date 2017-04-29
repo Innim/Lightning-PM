@@ -106,6 +106,7 @@ class ProjectPage extends BasePage
 		}
 		else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) 
 		{
+			$this->addTmplVar('project', $this->_project);
 			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
 		}
 		

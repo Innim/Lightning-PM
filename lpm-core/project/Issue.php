@@ -86,7 +86,6 @@ SQL;
 		return self::loadList( $where );
 	}
 	
-
 	public static function getListByMember( $memberId ) {
 		if (!isset( self::$_listByUser[$memberId] )) {
 			if (LightningEngine::getInstance()->isAuth()) {
