@@ -253,18 +253,9 @@ class ProjectPage extends BasePage
 						if (!$memberInArr) array_push( $users4Delete, $tmpId );
 					}
 					
-					if (count( $users4Delete ) > 0 && 
-							!$this->_db->queryt( 
-								"DELETE FROM `%s` " .
-								 "WHERE `instanceType` = '" . Issue::ITYPE_ISSUE . "' " .
-						      	   "AND `instanceId` = '" . $issueId . "' " .
-						      	   "AND `userId` IN (" . implode( ',', $users4Delete ) . ")", 
-								LPMTables::MEMBERS 
-							)
-					   ) 
-					{
-						return $engine->addError( 'Ошибка при сохранении участников' );
-					}
+					if (count($users4Delete) > 0 && 
+							!Member::deleteIssueMembers($issueId, $users4Delete)) 
+						return $engine->addError('Ошибка при сохранении участников');
 				}
 				
 				// сохраняем исполнителей задачи

@@ -492,14 +492,18 @@ SQL;
 	} 
 
 	public function isMember($userId) {
-		$finded = false;;
-		foreach ($this->_members as $member) {
-			if ($userId === $member->userId ){	
-				$finded = true;
-				break;
+		if ($this->_members === null) {
+			return Member::hasIssueMember($this->id, $userId);
+		} else {
+			$finded = false;
+			foreach ($this->_members as $member) {
+				if ($userId === $member->userId ){	
+					$finded = true;
+					break;
+				}
 			}
+			return $finded;
 		}
-		return $finded;
 	} 
 	
 	public function getShortDesc() {
