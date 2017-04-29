@@ -38,9 +38,8 @@ class ProjectPage extends BasePage
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
 		// Если это scrum проект - добавляем новый подразде
-		// XXX временно отключаем недоделанный раздел
-		//if ($this->_project->scrum)
-		//	$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
+		if ($this->_project->scrum)
+			$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
 
 		if (!parent::init()) return false;
 		
