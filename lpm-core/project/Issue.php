@@ -203,6 +203,62 @@ SQL;
 		}
 	}
 
+	public static function updateStatus(User $user, Issue $issue, $status, $sendEmail = true) {
+		$issue->status = $status;
+	    $hash = [
+	    	'UPDATE' => LPMTables::ISSUES,
+	    	'SET' => [
+	    		'status' => $issue->status 
+	    	],
+	    	'WHERE' => [
+	    		'id' => $issue->id
+	    	]
+	    ];
+
+	    if ($issue->status === Issue::STATUS_COMPLETED)
+	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate();
+
+	    $db = self::getDB();
+	    if (!$db->queryb($hash))
+	    	throw new Exception('Status save failed', \GMFramework\ErrorCode::SAVE_DATA);
+
+	    Project::updateIssuesCount($issue->projectId);
+
+	    if ($sendEmail) {
+	    	// Отправка оповещений
+			$subject = '';
+			$text = '';
+			switch ($issue->status) {
+				case Issue::STATUS_COMPLETED : 
+					$subject = 'Завершена задача "' . $issue->name . '"';
+					$text = $user->getName() . ' отметил задачу "' .
+						$issue->name . '" как завершённую';
+					break;
+				case Issue::STATUS_IN_WORK : 
+					$subject = 'Открыта задача "' . $issue->name . '"';
+					$text = $user->getName() . ' заново открыл задачу "' .
+						$issue->name . '"';
+					break;
+				case Issue::STATUS_WAIT : 
+					$subject = 'Задача "' . $issue->name . '"ожидает проверки';
+					$text = $user->getName() . ' поставил задачу "' .
+						$issue->name . '"'.  '" на проверку';
+					break;
+			}
+
+			if (!empty($subject) && !empty($text)) {
+				$members = $issue->getMemberIds();
+				$members[] = $issue->authorId;
+
+				$text .= "\n" . 'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL();
+
+				EmailNotifier::getInstance()->sendMail2Allowed(
+					$subject, $text, $members, EmailNotifier::PREF_ISSUE_STATE);
+			}
+					
+	    }
+	}
+
 	const ITYPE_ISSUE      	= 1;
 	
 	const TYPE_DEVELOP     	= 0;
