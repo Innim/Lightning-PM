@@ -77,6 +77,7 @@ class LightningEngine
 	
 	public function addError( $errString ) {
 		array_push( $this->_errors, $errString );
+		return false;
 	}
 	
 	public function isAuth() {

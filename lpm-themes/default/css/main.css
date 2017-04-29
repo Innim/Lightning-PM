@@ -419,6 +419,12 @@ form > ol > li label {
 	margin-left  : 5%;
 	margin-bottom: 5px;
 }
+form > ol > li .put-to-board-line {
+	text-align: center;
+}
+form > ol > li .put-to-board-line label {
+	margin: 0 5px;
+}
 form > ol > li p {
     text-align: center;
 }
@@ -1092,11 +1098,21 @@ table tr.completed-issue:hover td span.comments-count {
 #workersList table tr td:nth-child(2) input[type=radio] {
 	margin-right: 5px;
 }
+#issueInfo h3 {
+	position: relative;
+}
 #issueInfo h3 .issues-hours-box
 {
 	display: inline-block;
 	margin-left: 5px;
 	font-size: .7em;
+}
+#issueInfo h3 .scrum-put-sticker {
+	position: absolute;
+	top: 50%;
+	right: 10px;
+	margin-top: -7px;
+	font-size: 16px;
 }
 p.no-items
 {
@@ -1249,5 +1265,79 @@ div.ftp
    
 }
 .hidden{
+	display: none;
+}
+.scrub-board-table td {
+	width: 25%;
+    vertical-align: top;
+}
+.scrub-board-table th .scrub-col-sp {
+	margin-left: 5px;
+	font-weight: normal;
+    font-size: 0.9em;
+}
+.scrum-board-sticker {
+	position: relative;
+	width: 120px;
+	min-height: 85px;
+	padding: 5px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	margin: 5px;
+    box-sizing: border-box;
+	float: left;
+	font-size: 10pt;
+	background-color: #FE3678;
+}
+.scrum-board-sticker.orange {
+	background-color: #FEB93C;
+}
+.scrum-board-sticker.green {
+	background-color: #7BDB23;
+}
+.scrum-board-sticker.yellow {
+	background-color: #FEF80F;
+}
+.scrum-board-sticker.white {
+	background-color: #FEFEFE;
+	border: solid 1px #cccccc;
+}
+.scrum-board-sticker.mine {
+	border: solid 2px #1E90FF;
+}
+.scrum-board-sticker .control-line {
+	position: absolute;
+	right: 5px;
+	left: 5px;
+	bottom: 3px;
+	text-align: right;
+}
+.scrum-board-sticker .control-line a {
+	font-size: 8px;
+	margin-left: 3px; 
+}
+.scrum-board-sticker a.sticker-control-remove {
+	position: absolute;
+	right: 3px;
+	top: 3px;
+}
+.scrum-board-sticker a.sticker-control-archive {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+}
+.col-todo .scrum-board-sticker a.sticker-control-done,
+.col-done .scrum-board-sticker a.sticker-control-done {
+	display: none;
+}
+.col-todo .scrum-board-sticker a.sticker-control-prev {
+	display: none;
+}
+.col-done .scrum-board-sticker a.sticker-control-next {
+	display: none;
+}
+.col-testing .scrum-board-sticker a.sticker-control-take,
+.col-done .scrum-board-sticker a.sticker-control-take,
+.scrum-board-sticker.mine a.sticker-control-take {
 	display: none;
 }

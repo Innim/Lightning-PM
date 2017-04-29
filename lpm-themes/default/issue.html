@@ -1,14 +1,16 @@
 <article id="issueView">  
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
+  <?$issue = lpm_get_issue();?>
   <article id="issueInfo" class="container">
-    <?$issue = lpm_get_issue();?>    
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
 		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours;?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
+        <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
+        <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumb-tack" aria-hidden="true"></i></a>
+        <?php endif;?>
     </h3>     
     <div class="issue_copy">
-
         <a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
     </div>
     <ol class="info-list <?switch($issue->status): 
@@ -135,4 +137,4 @@
     </ol>
   </article>
 </article>
-<? lpm_print_issue_form(); ?>
+<? lpm_print_issue_form($issue->getProject()); ?>

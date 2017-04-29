@@ -45,10 +45,11 @@ class PagePrinter {
 			$str .= elf::cssLink( $file ) . "\n";
 		}
 		return $str;*/
-		self::cssLink( 'main' );
-		self::cssLink( 'jquery-ui-1.8.16' );
-		self::cssLink( 'jquery-ui-1.8.16' );
-		self::cssLink( 'highlightjs-styles/default' );
+		self::cssLink('main');
+		self::cssLink('jquery-ui-1.8.16');
+		self::cssLink('jquery-ui-1.8.16');
+		self::cssLink('highlightjs-styles/default');
+		self::cssLink('font-awesome/css/font-awesome.min');
 	}
 	
 	public static function errors() {
@@ -56,11 +57,11 @@ class PagePrinter {
 	}
 	
 	public static function issues($list) {
-		PageConstructor::includePattern( 'issues', compact('list'));
+		PageConstructor::includePattern('issues', compact('list'));
 	}
 	
-	public static function issueForm() {
-		PageConstructor::includePattern( 'issue-form' );
+	public static function issueForm($project) {
+		PageConstructor::includePattern('issue-form', compact('project'));
 	}
 	
 	public static function issueView() {
