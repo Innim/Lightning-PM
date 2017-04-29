@@ -3,6 +3,7 @@ $(document).ready(
     {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
+        issuePage.scumColUpdateSP();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
         
@@ -443,6 +444,7 @@ issuePage.changeScrumState = function (e) {
             if (colName) {
                 $('.scrum-board-col.col-' + colName).append($sticker);
             }
+            issuePage.scumColUpdateSP();
         }
     });
 };
@@ -453,6 +455,7 @@ issuePage.putStickerOnBoard = function (issueId) {
         preloader.hide();
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
+            issuePage.scumColUpdateSP();
         }
     });
 }
@@ -768,6 +771,27 @@ issuePage.resetFilter = function ()//e)
     //e.currentTarget.innerText = 'Показать только мои задачи';
     return false;
 };
+
+issuePage.scumColUpdateSP = function () {
+    var cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+    for (var i = 0; i < cols.length; ++i) {
+        var col = cols[i];
+
+        var sp = 0;
+        $('#scrumBoard .scrub-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').
+            each(function (i, el) {
+                sp += parseInt($(el).data('stickerSp'));
+        });
+
+        var selector = '#scrumBoard .scrub-board-table .scrub-col-sp.' + col;
+        if (sp > 0)
+            $(selector).show();
+        else 
+            $(selector).hide();
+        $(selector + ' .value').html(sp);
+    }
+    
+}
 
 function Issue( obj ) {
     this._obj = obj;

@@ -1271,6 +1271,11 @@ div.ftp
 	width: 25%;
     vertical-align: top;
 }
+.scrub-board-table th .scrub-col-sp {
+	margin-left: 5px;
+	font-weight: normal;
+    font-size: 0.9em;
+}
 .scrum-board-sticker {
 	position: relative;
 	width: 120px;
