@@ -3,7 +3,7 @@ $(document).ready(
     {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
-        issuePage.scumColUpdateSP();
+        issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
         
@@ -444,7 +444,7 @@ issuePage.changeScrumState = function (e) {
             if (colName) {
                 $('.scrum-board-col.col-' + colName).append($sticker);
             }
-            issuePage.scumColUpdateSP();
+            issuePage.scumColUpdateInfo();
         }
     });
 };
@@ -455,7 +455,7 @@ issuePage.putStickerOnBoard = function (issueId) {
         preloader.hide();
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
-            issuePage.scumColUpdateSP();
+            issuePage.scumColUpdateInfo();
         }
     });
 }
@@ -469,7 +469,7 @@ issuePage.takeIssue = function (e) {
         preloader.hide();
         if (res.success) {
             $sticker.addClass('mine');
-            issuePage.scumColUpdateSP();
+            issuePage.scumColUpdateInfo();
         }
     });
 }
@@ -786,9 +786,10 @@ issuePage.resetFilter = function ()//e)
     return false;
 };
 
-issuePage.scumColUpdateSP = function () {
+issuePage.scumColUpdateInfo = function () {
     var cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     var totalSP = 0;
+    var totalNum = 0;
     for (var i = 0; i < cols.length; ++i) {
         var col = cols[i];
 
@@ -797,19 +798,39 @@ issuePage.scumColUpdateSP = function () {
             each(function (i, el) {
                 sp += parseInt($(el).data('stickerSp'));
         });
+        var num = $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').size();
 
-        var selector = '#scrumBoard .scrum-board-table .scrum-col-sp.' + col;
-        if (sp > 0)
+        var selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
+
+        if (num > 0) {
+            $(selector + ' .scrum-col-count .value').html(num);
+
+            var spSelector = selector + ' .scrum-col-sp';
+            if (sp > 0)
+                $(spSelector).show();
+            else 
+                $(spSelector).hide();
+            $(spSelector + ' .value').html(sp);
+
+            totalSP += sp;
+            totalNum += num;
+
             $(selector).show();
-        else 
+        } else {
             $(selector).hide();
-        $(selector + ' .value').html(sp);
-        totalSP += sp;
+        }
     }
-    if (totalSP > 0) 
-        $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSP);
-    else 
-        $('#scrumBoard .scrum-board-sp').hide();   
+
+    if (totalNum) {
+        $('#scrumBoard .scrum-board-info').show();
+        $('#scrumBoard .scrum-board-info .scrum-board-count .value').html(totalNum);
+        if (totalSP > 0) 
+            $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSP);
+        else 
+            $('#scrumBoard .scrum-board-sp').hide();
+    } else {
+        $('#scrumBoard .scrum-board-info').hide();
+    }
 }
 
 issuePage.clearBoard = function () {
@@ -820,7 +841,7 @@ issuePage.clearBoard = function () {
             preloader.hide();
             if (res.success) {
                 $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
-                issuePage.scumColUpdateSP();
+                issuePage.scumColUpdateInfo();
             } else {
                 srv.err(res);
             }

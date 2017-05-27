@@ -17,6 +17,7 @@ class ScrumSticker extends LPMBaseObject
     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
      	 WHERE `i`.`projectId` = ${projectId} AND `i`.`deleted` = 0 
      	   AND `s`.`state` IN (${states})
+ 	  ORDER BY `i`.`priority` DESC
 SQL;
 
 		return StreamObject::loadObjList($db, 
