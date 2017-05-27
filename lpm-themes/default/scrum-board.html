@@ -62,7 +62,7 @@
                     $color = 'red';
                 ?>
                 <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
-                    <span class="sticker-issue-id">#<?=$sticker->issueId;?></span>
+                    <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                     <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a>
                     <span class="sticker-issue-members"><?php 
                     foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
