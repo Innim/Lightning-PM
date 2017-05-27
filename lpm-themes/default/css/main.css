@@ -1270,7 +1270,7 @@ div.ftp
 #scrumBoard h3 {
 	float: left;
 }
-#scrumBoard h3 .scrum-board-sp {
+#scrumBoard h3 .scrum-board-info {
 	font-weight: normal;
 	font-size: 0.8em;
 } 
@@ -1286,7 +1286,7 @@ div.ftp
     vertical-align: top;
     text-align: left;
 }
-.scrum-board-table th .scrum-col-sp {
+.scrum-board-table th .scrum-col-info {
 	margin-left: 5px;
 	font-weight: normal;
     font-size: 0.9em;

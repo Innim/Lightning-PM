@@ -7,7 +7,7 @@
 ?>
 <article id="scrumBoard" data-project-id="<?=$project->id;?>">
     <h1><?lpm_print_header();?></h1>
-    <h3>SCRUM доска <span class="scrum-board-sp" style="display:none;">(<span class="value"></span> SP)</span></h3>
+    <h3>SCRUM доска <span class="scrum-board-info">(<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></h3>
     <div class="scrum-board-actions">
         <a href="#" onclick="return issuePage.clearBoard(event);" title="Убрать все стикеры с доски"><i class="fa fa-archive" aria-hidden="true"></i></a>
     </div>
@@ -15,10 +15,10 @@
     <table class="scrum-board-table">
         <thead>
             <tr>
-                <th>TO DO<span class="scrum-col-sp col-todo" style="display:none;">(<span class="value"></span> SP)</span></th>
-                <th>В работе<span class="scrum-col-sp col-in_progress" style="display:none;">(<span class="value"></span> SP)</span></th>
-                <th>Тестируется<span class="scrum-col-sp col-testing" style="display:none;">(<span class="value"></span> SP)</span></th>
-                <th>Готово<span class="scrum-col-sp col-done" style="display:none;">(<span class="value"></span> SP)</span></th>
+                <th class="col-todo">TO DO<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+                <th class="col-in_progress">В работе<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+                <th class="col-testing">Тестируется<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+                <th class="col-done">Готово<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
             </tr>
         </thead>
         <tbody>
