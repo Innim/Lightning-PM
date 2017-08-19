@@ -30,9 +30,9 @@ class Comment extends LPMBaseObject
 		$sql = <<<SQL
 			SELECT `c`.*, `u`.* 
 			  FROM `%1\$s` `c`, `%2\$s` `u`, `%3\$s` `p`, `%4\$s` `i`
-			 WHERE `c`.`deleted` = 0 AND `c`.`instanceType` = {$instanceType}
+			 WHERE `c`.`deleted` = 0 AND `c`.`instanceType` = {$instanceType} 
 			   AND `c`.`authorId` = `u`.`userId` AND `i`.`id` = `c`.`instanceId`
-			   AND `i`.`projectId` = `p`.`id`
+			   AND `i`.`projectId` = `p`.`id` AND `p`.`id` = {$projectId}
 		  ORDER BY `c`.`date` DESC
 			{$limitStr}
 SQL;
