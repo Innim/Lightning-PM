@@ -22,21 +22,49 @@ class Comment extends LPMBaseObject
 		self::$_curIType = $curIType;
 		self::$_curIId   = $curIId;
 	}
+
+	public static function getIssuesListByProject($projectId, $from = 0, $limit = 0) {
+		$instanceType = Issue::ITYPE_ISSUE;
+		$limitStr = $limit > 0 ? 'LIMIT ' . $from . ',' . $limit : '';
+
+		$sql = <<<SQL
+			SELECT `c`.*, `u`.* 
+			  FROM `%1\$s` `c`, `%2\$s` `u`, `%3\$s` `p`, `%4\$s` `i`
+			 WHERE `c`.`deleted` = 0 AND `c`.`instanceType` = {$instanceType}
+			   AND `c`.`authorId` = `u`.`userId` AND `i`.`id` = `c`.`instanceId`
+			   AND `i`.`projectId` = `p`.`id`
+		  ORDER BY `c`.`date` DESC
+			{$limitStr}
+SQL;
+		return StreamObject::loadObjList(self::getDB(), array($sql, LPMTables::COMMENTS, 
+				LPMTables::USERS, LPMTables::PROJECTS, LPMTables::ISSUES), __CLASS__);
+	}
 	
-	public static function getListByInstance( $instanceType, $instanceId ) {
-		if (!isset( self::$_listByInstance[$instanceType], 
-					self::$_listByInstance[$instanceType][$instanceId] )) {
-			if (!isset( self::$_listByInstance[$instanceType] )) 
-				self::$_listByInstance[$instanceType] = array();
+	public static function getListByInstance($instanceType, $instanceId = null) {
+		$list = null;
+
+		if (isset(self::$_listByInstance[$instanceType]) && $instanceId !== null && 
+				isset(self::$_listByInstance[$instanceType][$instanceId]))
+			$list = self::$_listByInstance[$instanceType][$instanceId];
+
+		if ($list === null) {
 			if (LightningEngine::getInstance()->isAuth()) {
-				self::$_listByInstance[$instanceType][$instanceId] = self::loadList( 
-					"`%1\$s`.`instanceId` = '" . $instanceId . "' and " .
-					"`%1\$s`.`instanceType` = '" . $instanceType . "'" 
-				);
-			} else self::$_listByInstance[$instanceType][$instanceId] = array();
+				$where = '`%1$s`.`instanceType` = ' . $instanceType;
+				if ($instanceId !== null)
+					$where .= ' AND `%1$s`.`instanceId` = ' . $instanceId;
+				$list = self::loadList($where);
+
+				if ($instanceId !== null) {				
+					if (!isset(self::$_listByInstance[$instanceType])) 
+						self::$_listByInstance[$instanceType] = array();
+					self::$_listByInstance[$instanceType][$instanceId] = $list;
+				}
+			} else {
+				$list = [];
+			}
 		}
-	
-		return self::$_listByInstance[$instanceType][$instanceId];
+
+		return $list;
 	}
 	
 	/**
@@ -67,6 +95,12 @@ class Comment extends LPMBaseObject
 	 * @var User
 	 */
 	public $author;
+	/**
+	 * Задача, если комментарий оставлен к ней 
+	 * (не озябательно может быть загружен)
+	 * @var Issue
+	 */
+	public $issue;
 	
 	function __construct()
 	{

@@ -1,0 +1,38 @@
+<?php
+/* 
+Требуются: 
+    $project - проект
+    $comments - список комментариев
+    [$prevPageUrl] - URL предыдущей страницы
+    [$nextPageUrl] - URL следующей страницы
+*/
+?>
+<article id="projectComments" data-project-id="<?=$project->id;?>" class="comments">
+	<h1><?lpm_print_header();?></h1>
+	<h3>Последние комментарии</h3>
+
+    <?php if (!empty($prevPageUrl)):?>
+    	<div class="pages-nav-bar"><a href="<?=$prevPageUrl;?>">Позже</a></div>
+    <?php endif;?>
+
+    <ul class="projects-comments-list comments-list">
+    	<?php foreach ($comments as $comment): ?>
+    	<li id="comment-<?=$comment->id;?>" class="projects-comments-list-item">
+			<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
+            <p class="author"><?=$comment->getAuthorLinkedName();?></p>
+            <p class="date"><a class="anchor" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
+            <article class="text"><?=$comment->getText();?></article>
+            <?php if ($comment->issue):?>
+    		<div class="comment-issue-line">
+    			<span>Задача </span>
+    			<a href="<?=$comment->issue->getConstURL();?>" class="comment-issue-link"><?=$comment->issue->getName();?></a>
+    		</div>
+    		<?php endif;?>
+    	</li>
+    	<?php endforeach; ?>
+    </ul>
+
+    <?php if (!empty($nextPageUrl)):?>
+    	<div class="pages-nav-bar"><a href="<?=$nextPageUrl;?>">Раньше</a></div>
+    <?php endif;?>
+</article>

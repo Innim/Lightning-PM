@@ -5,10 +5,12 @@
     $stickers - список стикеров
 */
 ?>
-<article id="scrumBoard" data-project-id="<?=$project->id;?>">
+<article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
     <h1><?lpm_print_header();?></h1>
     <h3>SCRUM доска <span class="scrum-board-info">(<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></h3>
     <div class="scrum-board-actions">
+        <a href="#" onclick="return issuePage.changeSPVisibility(true);" title="Показать SP по стикерам" class="scrum-board-actions-show-sp"><i class="fa fa-eye" aria-hidden="true"></i></a>
+        <a href="#" onclick="return issuePage.changeSPVisibility(false);" title="Скрыть SP по стикерам" class="scrum-board-actions-hide-sp"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
         <a href="#" onclick="return issuePage.clearBoard(event);" title="Убрать все стикеры с доски"><i class="fa fa-archive" aria-hidden="true"></i></a>
     </div>
     
@@ -63,7 +65,7 @@
                 ?>
                 <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                     <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
-                    <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?></a>
+                    <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span class="sticker-issue-sp">(<?=$sp;?> SP)</span></a>
                     <span class="sticker-issue-members"><?php 
                     foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
                     <a href="#" onclick="issuePage.changeScrumState(event); return false;" class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>

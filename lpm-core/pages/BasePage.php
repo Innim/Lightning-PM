@@ -177,8 +177,22 @@ class BasePage extends LPMBaseObject
 		return $this->getParam( $this->_baseParamsCount );
 	}
 	
+	protected function getPageArg() {
+		$index = $this->getParamIndex('page');
+		if ($index === -1) {
+			return 1;
+		} else {
+			$page = $this->getParam($index + 1);
+			return empty($page) ? 1 : (int)$page;
+		}
+	}
+	
 	protected function getParam( $num ) {
 		return $this->_engine->getParams()->getArg( $num );
+	}
+	
+	protected function getParamIndex($val) {
+		return $this->_engine->getParams()->getArgIndex($val);
 	}
 	
 	/**

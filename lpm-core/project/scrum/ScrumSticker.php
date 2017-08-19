@@ -12,16 +12,18 @@ class ScrumSticker extends LPMBaseObject
 			ScrumStickerState::TESTING, ScrumStickerState::DONE]);
 
 		$sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 'with_issue', `i`.*
+		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
+			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
 		  FROM `%1\$s` `s` 
     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
+    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
      	 WHERE `i`.`projectId` = ${projectId} AND `i`.`deleted` = 0 
      	   AND `s`.`state` IN (${states})
  	  ORDER BY `i`.`priority` DESC
 SQL;
 
 		return StreamObject::loadObjList($db, 
-			[$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES], __CLASS__);
+			[$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS], __CLASS__);
 	}
 
 	/**
@@ -33,14 +35,16 @@ SQL;
 		$db = self::getDB();
 
 		$sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 'with_issue', `i`.*
+		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
+			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
 		  FROM `%1\$s` `s` 
     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id` 
+    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
      	 WHERE `s`.`issueId` = ${issueId} AND `i`.`deleted` = 0 
 SQL;
 
 		$list = StreamObject::loadObjList($db, 
-			[$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES], __CLASS__);
+			[$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS], __CLASS__);
 
 		return empty($list) ? null : $list[0];
 	}

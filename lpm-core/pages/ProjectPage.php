@@ -5,6 +5,7 @@ class ProjectPage extends BasePage
 	const PUID_MEMBERS = 'members';
 	const PUID_ISSUES  = 'issues';
 	const PUID_COMPLETED_ISSUES  = 'completed';
+	const PUID_COMMENTS  = 'comments';
 	const PUID_ISSUE   = 'issue';
 	const PUID_SCRUM_BOARD = 'scrum_board';
 	
@@ -13,6 +14,7 @@ class ProjectPage extends BasePage
 	 * @var Project
 	 */
 	private $_project;
+	private $_currentPage;
 
 	function __construct()
 	{
@@ -24,10 +26,11 @@ class ProjectPage extends BasePage
 		$this->_baseParamsCount = 2;
 		$this->_defaultPUID     = self::PUID_ISSUES;
 
-		$this->addSubPage( self::PUID_ISSUES , 'Список задач');
-		$this->addSubPage( self::PUID_COMPLETED_ISSUES , 'Завершенные');
-		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
-						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
+		$this->addSubPage(self::PUID_ISSUES , 'Список задач');
+		$this->addSubPage(self::PUID_COMPLETED_ISSUES , 'Завершенные');
+		$this->addSubPage(self::PUID_COMMENTS , 'Комментарии', 'project-comments');
+		$this->addSubPage(self::PUID_MEMBERS, 'Участники', 'project-members', 
+				array('users-chooser'), '', User::ROLE_MODERATOR);
 	}
 	
 	public function init() {
@@ -103,6 +106,43 @@ class ProjectPage extends BasePage
 		{			
 			$this->addTmplVar('issues', Issue::loadListByProject(
 				$this->_project->id, array( Issue::STATUS_COMPLETED )));	
+		}
+		else if ($this->_curSubpage->uid == self::PUID_COMMENTS) 
+		{
+			$page = $this->getProjectedCommentsPage();
+			$commentsPerPage = 100;
+
+			$this->_currentPage = $page;
+
+			$comments = Comment::getIssuesListByProject($this->_project->id, 
+					($page - 1) * $commentsPerPage, $commentsPerPage);
+			$issueIds = [];
+			$commentsByIssueId = [];
+			foreach ($comments as $comment) {
+				if (!isset($commentsByIssueId[$comment->instanceId])) {
+					$commentsByIssueId[$comment->instanceId] = [];
+					$issueIds[] = $comment->instanceId;
+				} 
+				$commentsByIssueId[$comment->instanceId][] = $comment;
+			}
+
+			$issues = Issue::loadListByIds($issueIds);
+			foreach ($issues as $issue) {
+				if (isset($commentsByIssueId[$issue->id])) {
+					foreach ($commentsByIssueId[$issue->id] as $comment) {
+						$comment->issue = $issue;
+					}
+				}
+			}
+
+			$this->addTmplVar('project', $this->_project);
+			$this->addTmplVar('comments', $comments);
+			$this->addTmplVar('page', $page);
+			if ($page > 1)
+				$this->addTmplVar('prevPageUrl', $this->getUrl('page', $page - 1));
+			// Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело 
+			if (count($comments) === $commentsPerPage)
+				$this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
 		}
 		else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) 
 		{
@@ -389,6 +429,12 @@ class ProjectPage extends BasePage
 				}
 			}
 		}
+	}
+
+	private function getProjectedCommentsPage() {
+		// $page = $this->getParam($this->_baseParamsCount + 1);
+		// return empty($page) ? 1 : (int)$page;
+		return $this->getPageArg();
 	}
 
 	private function saveImages4Issue( $issueId, $hasCnt = 0 ) 

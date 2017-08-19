@@ -11,7 +11,7 @@
 			<th>Название</th>
 			<th>Исполнители</th>
 			<th>Описание</th>
-			<th>Дата окончания</th>
+			<th>Дата завершения</th>
 			<th>Управление</th>
 		</tr>
 	</thead>
@@ -29,7 +29,7 @@
 			</td>
 			<td>
 			 <nobr>
-			     <span class="priority-val circle" title="Приоритет: <?=$issue->getPriorityStr();?>">
+			     <span class="priority-val circle" title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->priority;?>)">
 			     <?=$issue->priority;?></span><?=$issue->getType();?>
 			 </nobr>			 
 			</td>

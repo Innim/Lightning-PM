@@ -57,9 +57,11 @@ SQL;
 
 		array_unshift($args, $sql);
 
-	try{
-		return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
-	} catch (Exception $e){exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);}
+		try {
+			return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
+		} catch (Exception $e) { 
+			exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);
+		}
 	}
 
 	public static function getListByProject( $projectId, $type = -1 ) {
@@ -84,6 +86,20 @@ SQL;
 		if (!empty($args)) $where .= $args;
 
 		return self::loadList( $where );
+	}
+
+	/**
+	 * Загружает список задач по идентификаторам
+	 * @param  array<int> $issueIds Идентификаторы задач
+	 * @return array<Issue>
+	 */
+	public static function loadListByIds($issueIds) {
+		if (empty($issueIds)) {
+			return array();
+		} else {
+			$where = "`i`.`id` IN (" . implode(',', $issueIds) . ")";
+			return self::loadList($where);
+		}
 	}
 	
 	public static function getListByMember( $memberId ) {
@@ -134,8 +150,8 @@ SQL;
 	 * @param float $issueId
 	 * @return Issue
 	 */
-	public static function load( $issueId ) {
-		return StreamObject::singleLoad( $issueId, __CLASS__, "", "i`.`id" );
+	public static function load($issueId) {
+		return StreamObject::singleLoad($issueId, __CLASS__, "", "i`.`id");
 	}
 	
 	public function updateCommentsCounter( $issueId ) {
@@ -214,8 +230,15 @@ SQL;
 	    	]
 	    ];
 
-	    if ($issue->status === Issue::STATUS_COMPLETED)
-	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate();
+	    if ($issue->status === Issue::STATUS_COMPLETED) {
+			$issue->completedDate = (float)DateTimeUtils::date();
+	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
+	    } else if ($issue->status === Issue::STATUS_IN_WORK) {
+	    	// Сбрасываем дату завершения	    	
+			$issue->completedDate = null;
+	    	$hash['SET']['completedDate'] = '0000-00-00 00:00:00';
+	    }
+
 
 	    $db = self::getDB();
 	    if (!$db->queryb($hash))
@@ -329,7 +352,7 @@ SQL;
 		
 		$this->addClientFields( 
 			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
-			'completeDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
+			'completeDate','completedDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
 		);
 
 		$this->author = new User();
