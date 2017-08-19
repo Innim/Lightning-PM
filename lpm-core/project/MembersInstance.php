@@ -5,8 +5,9 @@ class MembersInstance extends LPMBaseObject
 	protected $_members = null;
 	
 	public function getMembers() {
-		if ($this->_members == null && !$this->loadMembers()) return array();
-		else return $this->_members;
+		if ($this->_members == null && !$this->loadMembers()) 
+			return array();
+		return $this->_members;
 	}
 	
 	public function getMemberIds() {

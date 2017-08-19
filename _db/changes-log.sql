@@ -59,3 +59,14 @@ CREATE TABLE IF NOT EXISTS `lpm_recovery_emails` (
 
 ALTER TABLE `lpm_projects` ADD `isArchive` BOOLEAN NOT NULL DEFAULT FALSE AFTER `issuesCount`;
 -- 2015-08-24 14:38:00
+
+
+ALTER TABLE `lpm_projects`
+ADD `scrum` tinyint NOT NULL DEFAULT '0' COMMENT 'Проект использует Scrum' AFTER `issuesCount`;
+CREATE TABLE `lpm_scrum_sticker` (
+  `issueId` bigint(18) NOT NULL COMMENT 'идентификатор задачи',
+  `state` tinyint(2) NOT NULL COMMENT 'состояние стикера',
+  PRIMARY KEY (`issueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='стикер на scrum доске';
+
+-- 2017-03-04 17:24:00

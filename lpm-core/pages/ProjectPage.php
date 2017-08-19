@@ -6,6 +6,7 @@ class ProjectPage extends BasePage
 	const PUID_ISSUES  = 'issues';
 	const PUID_COMPLETED_ISSUES  = 'completed';
 	const PUID_ISSUE   = 'issue';
+	const PUID_SCRUM_BOARD = 'scrum_board';
 	
 	/**
 	 * 
@@ -24,18 +25,24 @@ class ProjectPage extends BasePage
 		$this->_defaultPUID     = self::PUID_ISSUES;
 
 		$this->addSubPage( self::PUID_ISSUES , 'Список задач');
-		$this->addSubPage( self::PUID_COMPLETED_ISSUES , 'Завершенные','completed-issues');
+		$this->addSubPage( self::PUID_COMPLETED_ISSUES , 'Завершенные');
 		$this->addSubPage( self::PUID_MEMBERS, 'Участники', 'project-members', 
 						   array( 'users-chooser' ), '', User::ROLE_MODERATOR );
 	}
 	
 	public function init() {
-		if (!parent::init()) return false;
-		
 		$engine = LightningEngine::getInstance();
+
 		// загружаем проект, на странице которого находимся
 		if ($engine->getParams()->suid == '' 
-			|| !$this->_project = Project::load( $engine->getParams()->suid )) return false;
+			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
+
+		// Если это scrum проект - добавляем новый подразде
+		if ($this->_project->scrum)
+			$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
+
+		if (!parent::init()) return false;
+		
 		// проверим, можно ли текущему пользователю смотреть этот проект
 		if (!$user = LightningEngine::getInstance()->getUser()) return false;
 		if (!$user->isModerator()) {
@@ -96,6 +103,11 @@ class ProjectPage extends BasePage
 		{			
 			$this->addTmplVar('issues', Issue::loadListByProject(
 				$this->_project->id, array( Issue::STATUS_COMPLETED )));	
+		}
+		else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) 
+		{
+			$this->addTmplVar('project', $this->_project);
+			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
 		}
 		
 		return $this;
@@ -242,18 +254,9 @@ class ProjectPage extends BasePage
 						if (!$memberInArr) array_push( $users4Delete, $tmpId );
 					}
 					
-					if (count( $users4Delete ) > 0 && 
-							!$this->_db->queryt( 
-								"DELETE FROM `%s` " .
-								 "WHERE `instanceType` = '" . Issue::ITYPE_ISSUE . "' " .
-						      	   "AND `instanceId` = '" . $issueId . "' " .
-						      	   "AND `userId` IN (" . implode( ',', $users4Delete ) . ")", 
-								LPMTables::MEMBERS 
-							)
-					   ) 
-					{
-						return $engine->addError( 'Ошибка при сохранении участников' );
-					}
+					if (count($users4Delete) > 0 && 
+							!Member::deleteIssueMembers($issueId, $users4Delete)) 
+						return $engine->addError('Ошибка при сохранении участников');
 				}
 				
 				// сохраняем исполнителей задачи
@@ -325,9 +328,27 @@ class ProjectPage extends BasePage
 					$uploader = $this->saveImages4Issue( $issueId, $loadedImgs);
 
 					if ($uploader === false)
-					{
-						$engine->addError( 'Не удалось загрузить изображение' );
+						return $engine->addError( 'Не удалось загрузить изображение' );
+
+					$issue = Issue::load($issueId);
+					if (!$issue) {
+						$engine->addError('Не удалось загрузить данные задачи');
 						return;
+					}
+
+					// Если это SCRUM проект
+					if ($this->_project->scrum) {
+						$putOnBoard = !empty($_POST['putToBoard']);
+						if ($issue->isOnBoard() != $putOnBoard) {
+							if ($putOnBoard) {
+								if (!ScrumSticker::putStickerOnBoard($issue))
+									return $engine->addError('Не удалось поместить стикер на доску');
+							} else {
+								if (!ScrumSticker::updateStickerState($issue->id, 
+										ScrumStickerState::BACKLOG))
+									return $engine->addError('Не удалось снять стикер с доски');
+							}
+						}
 					}
 
 					// обновляем счетчики
@@ -337,31 +358,29 @@ class ProjectPage extends BasePage
 					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $idInProject );
 					
 					// отсылаем оповещения
-					if ($issue = Issue::load( $issueId )) {
-						if ($editMode) {
-							array_push( $members, $issue->authorId ); // TODO фильтр, чтобы не добавлялся дважды
-							EmailNotifier::getInstance()->sendMail2Allowed(
-								'Изменена задача "' . $issue->name . '"', 
-								$engine->getUser()->getName() . ' изменил задачу "' .
-								$issue->name .  '", в которой Вы принимаете участие' . "\n" .
-								'Просмотреть задачу можно по ссылке ' .	$issueURL, 
-								$members,
-								EmailNotifier::PREF_EDIT_ISSUE
-							);
-						} else {
-							EmailNotifier::getInstance()->sendMail2Allowed(
-								'Добавлена задача "' . $issue->name . '"', 
-								$engine->getUser()->getName() . ' добавил задачу "' . 
-								$issue->name .  '", в которой Вы назначены исполнителем' . "\n" . 
-								'Просмотреть задачу можно по ссылке ' .	$issueURL, 
-								$members, 
-								EmailNotifier::PREF_ADD_ISSUE
-							);
-						}	
+					if ($editMode) {
+						array_push( $members, $issue->authorId ); // TODO фильтр, чтобы не добавлялся дважды
+						EmailNotifier::getInstance()->sendMail2Allowed(
+							'Изменена задача "' . $issue->name . '"', 
+							$engine->getUser()->getName() . ' изменил задачу "' .
+							$issue->name .  '", в которой Вы принимаете участие' . "\n" .
+							'Просмотреть задачу можно по ссылке ' .	$issueURL, 
+							$members,
+							EmailNotifier::PREF_EDIT_ISSUE
+						);
+					} else {
+						EmailNotifier::getInstance()->sendMail2Allowed(
+							'Добавлена задача "' . $issue->name . '"', 
+							$engine->getUser()->getName() . ' добавил задачу "' . 
+							$issue->name .  '", в которой Вы назначены исполнителем' . "\n" . 
+							'Просмотреть задачу можно по ссылке ' .	$issueURL, 
+							$members, 
+							EmailNotifier::PREF_ADD_ISSUE
+						);
+					}	
 
-						Project::updateIssuesCount(  $issue->projectId );				
-					}
-					
+					Project::updateIssuesCount(  $issue->projectId );				
+				
 					LightningEngine::go2URL( 
 						$editMode 
 							? $issueURL

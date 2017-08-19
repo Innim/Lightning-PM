@@ -12,7 +12,7 @@
 		   <span class="label">Открыто:</span> 
 		   <span class="issues-opened value"></span> 
 		   
-		   	<span class="project-opened-issue-hours" <?php if (($hours=$project->getSumOpenedIssuesHours()) == 0):?>style="display:none;"<?php endif;?>>(<span class="issue-hours value"><?=$hours;?></span>&nbsp;<?=DeclensionHelper::hours($hours);?>)</span>
+		   	<span class="project-opened-issue-hours" <?php if (($hours=$project->getSumOpenedIssuesHours()) == 0):?>style="display:none;"<?php endif;?>>(<span class="issue-hours value"><?=$hours;?></span>&nbsp;<?=$project->getNormHoursLabel($hours);?>)</span>
 		 из <span class="issues-total value"><?=$project->getTotalIssuesCount()?></span>
 		</p>
         <p class="filters-line">
@@ -29,6 +29,6 @@
 			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
 		</p>
 	</article>
-	<? lpm_print_issue_form(); ?>
+	<? lpm_print_issue_form($project); ?>
 	<? /*lpm_print_issue_view();*/ ?>
 </article>

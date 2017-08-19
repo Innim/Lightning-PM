@@ -10,6 +10,12 @@ class Project extends MembersInstance
 	private static $_availList = null;
 
 	private static $_isArchive = false;
+
+	/**
+	 * Загруженные проекты по идентификаторам
+	 * @var array<int, Project>
+	 */
+	private static $_projectsByIds = [];
 	
 	public static function loadList( $where ) {
 		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
@@ -80,17 +86,40 @@ class Project extends MembersInstance
 	}		
 	
 	/**
-	*
-	* @param string $projectIв
-	* @return Project
-	*/
-	public static function loadById( $projectId ) {
-		return StreamObject::singleLoad( $projectId, __CLASS__, '' );
+	 * Загружает данные проекта.
+	 * Если проект уже был загружен - вернется сохраненный объект
+	 * @param  int     $projectId   Идентификатор проекта
+	 * @param  boolean $forceReload Принудительно выполняет загрузку из БД, 
+	 * даже если есть уже загруженные данные
+	 * @return Project
+	 */
+	public static function loadById($projectId, $forceReload = false) 
+	{
+		if ($forceReload || !isset(self::$_projectsByIds[$projectId]))
+		{
+			$project = StreamObject::singleLoad($projectId, __CLASS__, '');;
+			self::$_projectsByIds[$projectId] = $project;
+		}
+		else 
+		{
+			$project = self::$_projectsByIds[$projectId];
+		}
+
+		return $project;
 	}
 	
 	public static function getURLByProjectUID( $projectUID ) {
 		return Link::getUrlByUid( ProjectPage::UID, $projectUID );
 	} 
+
+	/**
+	 * Сбрасывает загруженные 
+	 * @return [type] [description]
+	 */
+	public static function resetLoaded()
+	{
+	    
+	}
 	
 	
 	const ITYPE_PROJECT = 2;
@@ -104,6 +133,12 @@ class Project extends MembersInstance
 	public $name;
 	public $desc;
 
+	/**
+	 * Проект ведется с помощью методологии Scrum
+	 * @var Boolean
+	 */
+	public $scrum = false;
+
 	private $_importantIssuesCount = -1;
 
 	private $_sumOpenedIssuesHours = -1;
@@ -112,7 +147,8 @@ class Project extends MembersInstance
 	function __construct() 
 	{
 		parent::__construct();
-		$this->_typeConverter->addIntVars( 'id' );
+		$this->_typeConverter->addIntVars('id');
+		$this->_typeConverter->addBoolVars('scrum');
 	}
 	
 	public function getID() {
@@ -176,6 +212,20 @@ class Project extends MembersInstance
 	    }
 
 	    return $this->_sumOpenedIssuesHours;
+	}
+	
+	/**
+	 * Возвращает лейбл для параметра hours в задаче из проекта (без значения)
+	 * @param  int $value
+	 * @param  boolean $short Использовать сокращение 
+	 * @return Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+	 */
+	public function getNormHoursLabel($value, $short = false)
+	{
+		if ($this->scrum)
+			return DeclensionHelper::storyPoints($value, $short);
+		else 
+			return $short ? 'ч' : DeclensionHelper::hours($value);
 	}
 	
 	protected function loadMembers() {

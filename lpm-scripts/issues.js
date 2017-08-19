@@ -3,6 +3,7 @@ $(document).ready(
     {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
+        issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
         
@@ -381,8 +382,7 @@ function verifyIssue( e ) {
     );
 };
 
-issuePage.removeIssue = function( e ) {
-    
+issuePage.removeIssue = function( e ) {    
     if (confirm( 'Вы действительно хотите удалить эту задачу?' )) {    
         var btn     = e.currentTarget;
         var issueId = $( 'input[type=hidden][name=issueId]', btn.parentElement ).attr( 'value' );
@@ -404,6 +404,75 @@ issuePage.removeIssue = function( e ) {
         );
     }
 };
+
+issuePage.changeScrumState = function (e) {
+    var $control = $(e.currentTarget);
+    var $sticker = $control.parents('.scrum-board-sticker');
+    var issueId = $sticker.data('issueId');
+    var curState = $sticker.data('stickerState');
+
+    // Определяем следующий стейт
+    var state;
+    if ($control.hasClass('sticker-control-done'))
+        state = 4;
+    else if ($control.hasClass('sticker-control-prev'))
+        state = curState - 1;
+    else if ($control.hasClass('sticker-control-next'))
+        state = curState + 1;
+    else if ($control.hasClass('sticker-control-archive'))
+        state = 5;
+    else if ($control.hasClass('sticker-control-remove'))
+        state = 0;
+    else 
+        return;
+
+    preloader.show();
+    srv.issue.changeScrumState(issueId, state, function (res) {
+        preloader.hide();
+        if (res.success) {
+            $sticker.attr('data-sticker-state', state);
+            // Перевешиваем стикер
+            $sticker.remove();
+            var colName;
+            switch (state) {
+                case 1 : colName = 'todo'; break;
+                case 2 : colName = 'in_progress'; break;
+                case 3 : colName = 'testing'; break;
+                case 4 : colName = 'done'; break;
+            }
+
+            if (colName) {
+                $('.scrum-board-col.col-' + colName).append($sticker);
+            }
+            issuePage.scumColUpdateInfo();
+        }
+    });
+};
+
+issuePage.putStickerOnBoard = function (issueId) {
+    preloader.show();
+    srv.issue.putStickerOnBoard(issueId, function (res) {
+        preloader.hide();
+        if (res.success) {
+            $('#issueInfo h3 .scrum-put-sticker').remove();
+            issuePage.scumColUpdateInfo();
+        }
+    });
+}
+
+issuePage.takeIssue = function (e) {
+    var $control = $(e.currentTarget);
+    var $sticker = $control.parents('.scrum-board-sticker');
+    var issueId = $sticker.data('issueId');
+    preloader.show();
+    srv.issue.takeIssue(issueId, function (res) {
+        preloader.hide();
+        if (res.success) {
+            $sticker.addClass('mine');
+            issuePage.scumColUpdateInfo();
+        }
+    });
+}
 
 function showIssue (issueId) {
     srv.issue.load( 
@@ -511,10 +580,8 @@ issuePage.setEditInfo = function () {
     
 };
 
-function removeImage(imageId)
-{
-    if (confirm('Вы действительно хотите удалить это изображение?'))
-    {
+function removeImage(imageId) {
+    if (confirm('Вы действительно хотите удалить это изображение?')) {
         $('#issueForm form .images-list > li').has('input[name=imgId][value=' + imageId + ']').remove();
         var val = $('#issueForm form input[name=removedImages]').val();
         if (val != '') val += ',';
@@ -650,7 +717,7 @@ issuePage.postComment = function () {
                 if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
                     issuePage.toogleCommentForm();
             } else {
-                srv.err( res );
+                srv.err(res);
             }
         } 
      );
@@ -658,8 +725,7 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.showIssues4Me = function ()
-{
+issuePage.showIssues4Me = function () {
     window.location.hash = 'only-my';
     issuePage.filterByMemberId( lpInfo.userId );
 
@@ -668,8 +734,7 @@ issuePage.showIssues4Me = function ()
     return false;
 };
 
-issuePage.showIssuesByUser = function (memberId)
-{
+issuePage.showIssuesByUser = function (memberId) {
     window.location.hash = 'by-user:' + memberId;
     issuePage.filterByMemberId( memberId );
     $('#showIssues4MeLink').hide();
@@ -677,8 +742,7 @@ issuePage.showIssuesByUser = function (memberId)
     return false;
 };
 
-issuePage.filterByMemberId = function (userId) 
-{
+issuePage.filterByMemberId = function (userId) {
     var list = document.getElementById('issuesList'); 
     var rows = list.tBodies[0].children;
     var row,fields = null;
@@ -721,6 +785,69 @@ issuePage.resetFilter = function ()//e)
     //e.currentTarget.innerText = 'Показать только мои задачи';
     return false;
 };
+
+issuePage.scumColUpdateInfo = function () {
+    var cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+    var totalSP = 0;
+    var totalNum = 0;
+    for (var i = 0; i < cols.length; ++i) {
+        var col = cols[i];
+
+        var sp = 0;
+        $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').
+            each(function (i, el) {
+                sp += parseInt($(el).data('stickerSp'));
+        });
+        var num = $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').size();
+
+        var selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
+
+        if (num > 0) {
+            $(selector + ' .scrum-col-count .value').html(num);
+
+            var spSelector = selector + ' .scrum-col-sp';
+            if (sp > 0)
+                $(spSelector).show();
+            else 
+                $(spSelector).hide();
+            $(spSelector + ' .value').html(sp);
+
+            totalSP += sp;
+            totalNum += num;
+
+            $(selector).show();
+        } else {
+            $(selector).hide();
+        }
+    }
+
+    if (totalNum) {
+        $('#scrumBoard .scrum-board-info').show();
+        $('#scrumBoard .scrum-board-info .scrum-board-count .value').html(totalNum);
+        if (totalSP > 0) 
+            $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSP);
+        else 
+            $('#scrumBoard .scrum-board-sp').hide();
+    } else {
+        $('#scrumBoard .scrum-board-info').hide();
+    }
+}
+
+issuePage.clearBoard = function () {
+    if (confirm('Убрать все стикеры с доски?')) {
+        var projectId = $('#scrumBoard').data('projectId');
+        preloader.show();
+        srv.issue.removeStickersFromBoard(projectId, function (res) {
+            preloader.hide();
+            if (res.success) {
+                $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
+                issuePage.scumColUpdateInfo();
+            } else {
+                srv.err(res);
+            }
+        });
+    }
+}
 
 function Issue( obj ) {
     this._obj = obj;

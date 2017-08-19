@@ -39,6 +39,10 @@ class LPMParams extends LPMBaseObject
 		if (!isset( $this->_args[$num] )) return '';
 		else return $this->_args[$num];
 	}
+
+	public function getArgs() {
+		return $this->_args;
+	}
 	
 	/*public function setVar( $var, $value ) {
 		$value = $this->_db->escape_string( $value );
