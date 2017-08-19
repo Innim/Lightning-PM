@@ -57,9 +57,11 @@ SQL;
 
 		array_unshift($args, $sql);
 
-	try{
-		return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
-	} catch (Exception $e){exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);}
+		try {
+			return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
+		} catch (Exception $e) { 
+			exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);
+		}
 	}
 
 	public static function getListByProject( $projectId, $type = -1 ) {
@@ -134,8 +136,8 @@ SQL;
 	 * @param float $issueId
 	 * @return Issue
 	 */
-	public static function load( $issueId ) {
-		return StreamObject::singleLoad( $issueId, __CLASS__, "", "i`.`id" );
+	public static function load($issueId) {
+		return StreamObject::singleLoad($issueId, __CLASS__, "", "i`.`id");
 	}
 	
 	public function updateCommentsCounter( $issueId ) {
