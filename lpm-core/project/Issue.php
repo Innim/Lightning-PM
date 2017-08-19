@@ -214,8 +214,15 @@ SQL;
 	    	]
 	    ];
 
-	    if ($issue->status === Issue::STATUS_COMPLETED)
-	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate();
+	    if ($issue->status === Issue::STATUS_COMPLETED) {
+			$issue->completedDate = (float)DateTimeUtils::date();
+	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
+	    } else if ($issue->status === Issue::STATUS_IN_WORK) {
+	    	// Сбрасываем дату завершения	    	
+			$issue->completedDate = null;
+	    	$hash['SET']['completedDate'] = '0000-00-00 00:00:00';
+	    }
+
 
 	    $db = self::getDB();
 	    if (!$db->queryb($hash))
@@ -329,7 +336,7 @@ SQL;
 		
 		$this->addClientFields( 
 			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
-			'completeDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
+			'completeDate','completedDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
 		);
 
 		$this->author = new User();
