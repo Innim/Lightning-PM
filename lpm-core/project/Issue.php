@@ -87,6 +87,20 @@ SQL;
 
 		return self::loadList( $where );
 	}
+
+	/**
+	 * Загружает список задач по идентификаторам
+	 * @param  array<int> $issueIds Идентификаторы задач
+	 * @return array<Issue>
+	 */
+	public static function loadListByIds($issueIds) {
+		if (empty($issueIds)) {
+			return array();
+		} else {
+			$where = "`i`.`id` IN (" . implode(',', $issueIds) . ")";
+			return self::loadList($where);
+		}
+	}
 	
 	public static function getListByMember( $memberId ) {
 		if (!isset( self::$_listByUser[$memberId] )) {
