@@ -849,6 +849,13 @@ issuePage.clearBoard = function () {
     }
 }
 
+issuePage.changeSPVisibility = function (value) {
+    if (value)
+        $('#scrumBoard').removeClass('hide-sp');
+    else 
+        $('#scrumBoard').addClass('hide-sp');
+}
+
 function Issue( obj ) {
     this._obj = obj;
     

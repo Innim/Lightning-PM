@@ -1278,6 +1278,18 @@ div.ftp
 	float: right;
 	padding-right: 5px;
 }
+#scrumBoard .scrum-board-actions > a {
+	margin-left: 5px;
+}
+#scrumBoard .scrum-board-actions-show-sp {
+	display: none;
+}
+#scrumBoard.hide-sp .scrum-board-actions-show-sp {
+	display: inline-block;
+}
+#scrumBoard.hide-sp .scrum-board-actions-hide-sp {
+	display: none;
+}
 .scrum-board-table {
 	clear: both;
 }
@@ -1336,6 +1348,17 @@ div.ftp
 	display: block;
 	margin-top: 3px;
 	font-size: 9px;
+}
+.scrum-board-sticker .sticker-issue-sp {
+	display: inline-block;
+	font-size: 10px;
+	margin-left: 2px;
+    margin-top: -2px;
+    vertical-align: middle;
+}
+#scrumBoard.hide-sp .scrum-board-sticker .sticker-issue-sp {
+	display: none;	
+	margin: 0;
 }
 .scrum-board-sticker .control-line {
 	position: absolute;
