@@ -112,10 +112,18 @@
     <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
   </article>
   <article class="comments">
-    <p class="links-bar">
-        <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть комментарии</a>
-        <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
-    </p>
+    <div class="links-bar">
+        <?php if ($issue->getProject()->scrum):?>
+            <div class="scrum-comments-shortcut">
+                <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i class="fa fa-check-square-o" aria-hidden="true"></i></a>
+                <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i class="fa fa-code-fork" aria-hidden="true"></i></a>
+            </div>
+        <?php endif;?>
+        <div class="comments-controls">
+            <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть комментарии</a>
+            <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
+        </div>
+    </div>
     <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
      <textarea name="commentText"></textarea>
      <p class="comment-note">Можете использовать [b], [i], [u], [code] для разметки текста</p>

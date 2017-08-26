@@ -688,8 +688,23 @@ issuePage.toogleCommentForm = function () {
     comments.slideToggle( 'normal' );
 };
 
+issuePage.commentPassTesting = function () { 
+    issuePage.postCommentForCurrentIssue('Прошла тестирование');
+};
+
+issuePage.commentMergeInDevelop = function () { 
+    issuePage.postCommentForCurrentIssue('`-> develop`');
+};
+
 issuePage.postComment = function () {
     var text    = $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val();
+    
+    issuePage.postCommentForCurrentIssue(text);
+    
+    return false;
+};
+
+issuePage.postCommentForCurrentIssue = function (text) {
     var issueId = $( '#issueView .comments form.add-comment input[name=issueId]'        ).val();
     
     // TODO проверку на пустоту
@@ -722,8 +737,7 @@ issuePage.postComment = function () {
         } 
      );
     }
-    return false;
-};
+}
 
 issuePage.showIssues4Me = function () {
     window.location.hash = 'only-my';
