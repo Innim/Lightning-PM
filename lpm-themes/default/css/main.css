@@ -640,11 +640,22 @@ ul.images-url > li > input {
 	max-width: none;
 }
 .comments .links-bar {
-	text-align: right;
-	margin    : 0px; 
+	/*text-align: right;*/
+	height: 20px;
+	margin: 0;
 }
 .comments .links-bar a {
 	font-size: smaller;
+}
+.comments .links-bar .scrum-comments-shortcut {
+	float: left;
+}
+.comments .links-bar .comments-controls {
+	float: right;
+}
+.comments .links-bar .scrum-comments-shortcut a {
+	display: inline-block;
+	margin-right: 5px;
 }
 .comments form.add-comment {
 	text-align: center;
@@ -666,10 +677,11 @@ ul.images-url > li > input {
 }
 .comments .comments-list {
 	list-style: none;
-}
-#projectComments.comments .comments-list {
 	padding: 0;
 }
+/*#projectComments.comments .comments-list {
+	padding: 0;
+}*/
 .comments .comments-list li {
 	border-top: solid 1px #cccccc;	
 }
