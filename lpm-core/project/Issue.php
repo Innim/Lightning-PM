@@ -382,8 +382,28 @@ SQL;
 		return $this->id;
 	}
 
+	/**
+	 * Возвращает моксимальное количество изображений.
+	 * @return int Максимальное количество изображений.
+	 */
 	public function getMaxImagesCount() {
 		return self::MAX_IMAGES_COUNT;
+	}
+	
+	/**
+	 * Устанавливает название задачи.
+	 * @param string $value Название задачи.
+	 */
+	public function setTitle($value) {
+		$this->title = $value;
+	}
+
+	/**
+	 * Возвращает название задачи.
+	 * @return string Название задачи.
+	 */
+	public function getTitle() {
+		return $this->title;
 	}
 
 	/**
@@ -391,9 +411,7 @@ SQL;
 	 * Этот метод достаточно тяжелый, он будет грузить данные из БД
 	 * Для получения имени проекта в общем списке - 
 	 * лучше воспользоваться projectName.
-	 * @return Project
-	 * @see projectName
-	 * @see projectId
+	 * @return Project Модель проекта.
 	 */
 	public function getProject() {
 	    if ($this->_project === null)
