@@ -111,6 +111,13 @@ class User extends LPMBaseObject
 			   $this->lastName;
 	}
 	
+	public function getShortName() {
+		if (empty($this->nick))
+			return $this->lastName . ' ' . mb_substr($this->firstName, 0, 1);
+		else 
+			return $this->nick;
+	}
+	
 	public function getAvatarUrl() {
 		return $this->avatarUrl;
 	}

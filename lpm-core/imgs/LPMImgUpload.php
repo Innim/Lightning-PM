@@ -209,10 +209,10 @@ class LPMImgUpload {
     	$names = array();
 
 	    //перебираем все ссылки
-		foreach ($urls as $value) 
+		foreach ($urls as $url) 
 		{
 			//если ссылка не пустая
-			$value = trim($value);
+			$value = trim($url);
 			if (!empty($value)) {
   				//получаем из нее картинку и сохраняем ее
   				$srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr( 10 ) . '.png';
@@ -223,16 +223,82 @@ class LPMImgUpload {
   				//проверка, если картинка из сервиса ownCloud (http://cloud.innim.ru/) 
   				else if (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value))
   					$value.= '/download';
- 					
-  				//если картинку скачать не удалось - прерываем запись файла
-  				if (!file_put_contents($srcFileName, fopen($value, 'r'), FILE_APPEND | LOCK_EX)) 
-		    	{
-		    		$this->error('Ошибка при записи в файл');
-		    		break;
-		    	}
 
-	    		$files[] = $srcFileName;
-	    		$names[] = 'url_' . date('YmdHis_u') . '.png'; // тут ды настоящее имя выделить из url
+  				//определяем размер скачиваемой картинки
+  				$context = stream_context_create(array(
+					// XXX здесь дыра безопасности по сути - отключена проверка ssl
+					// на с включенной нифига не работает droplr, хотя сертификат у них правильный
+			    	'ssl' => array(
+			        	'verify_peer' => false,
+			        	'verify_peer_name' => false
+			    	)));
+  				$stream = fopen($value, "r", false, $context);
+  				if (!$stream) 
+  				{
+	    			$this->error('Не удалось загрузить файл ' . $url .  ' getFilesizeByURL: ' . $this->getFilesizeByURL($value));
+  				}
+  				//берем ее параметры из url
+				else if ($imageData = stream_get_meta_data($stream)) 
+				{
+					//echo '<pre>';
+					//var_dump($imageData);
+					//закрытие потока
+					//fclose($stream);
+					//если данные есть и имеют определенный тип
+					if (isset($imageData["wrapper_data"]) && is_array($imageData["wrapper_data"])) 
+					{
+						$size = -1;
+						//извлекаем из них размер
+						foreach ($imageData["wrapper_data"] as $param) 
+						{
+							// Там может быть несколько content-length, если делаются пересылки
+							// так что перебираем до последнего - все wrapper_data
+							if (stristr($param, "content-length"))
+							{
+								//получаем параметр
+								$param = explode(":",$param);
+								$size  = (int)(trim($param[1]));
+								//break;
+							}
+						}
+
+						if ($size === -1)
+						{
+							$this->error('Не удалось получить размер файла');
+						}
+						//если размер файла валиден и он не превышает лимит - пишем файл на диск
+						else if ($size > 0 && ($size <= LPMImgUpload::MAX_SIZE * 1024 * 1024))
+						{
+				  			if (file_put_contents($srcFileName, $stream, FILE_APPEND | LOCK_EX))
+				  			{
+				  				//устанавливаем параметры для записи файла в базу
+						    	$files[] = $srcFileName;
+						    	$names[] = 'url_' . date('YmdHis_u') . '.png'; // тут бы настоящее имя выделить из url
+				  			}
+				  			else 
+				  			{
+								//если картинку скачать не удалось - прерываем запись
+								$this->error('Ошибка чтения файла');
+				  			}
+						}
+						else 
+						{
+							$this->error(sprintf('Размер файла не должен превышать %d Мб',
+										LPMImgUpload::MAX_SIZE));
+						}
+
+					} 
+					else 
+					{
+						$this->error('Неверный формат данных файла');
+					}
+	    		} 
+	    		else 
+	    		{
+	    			$this->error('Ошибка чтения данных потока');	
+	    		}
+
+				fclose($stream);
   			}
   		}
 
@@ -351,7 +417,7 @@ class LPMImgUpload {
 		// Ищем уникальное имя 
 		do 
 		{
-            $srcFilename = $dir . $this->_prefix . BaseString::randomStr( 10 ) . '.' . $ext;
+        	$srcFilename = $dir . $this->_prefix . BaseString::randomStr( 10 ) . '.' . $ext;
             $srcFilepath = LPMImg::getSrcImgPath($srcFilename);
         } while (file_exists($srcFilepath));
 

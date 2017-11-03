@@ -111,6 +111,18 @@ var srv = {
         comment  : function ( issueId, text, onResult ) {
             this.s._( 'comment' );
         },
+        changeScrumState : function (issueId, state, onResult) {
+            this.s._('changeScrumState');
+        },
+        putStickerOnBoard : function (issueId, onResult) {
+            this.s._('putStickerOnBoard');
+        },
+        removeStickersFromBoard : function (projectId, onResult) {
+            this.s._('removeStickersFromBoard');
+        },
+        takeIssue : function (issueId, onResult) {
+            this.s._('takeIssue');
+        },
     },
     workStudy : {
         s         : new BaseService( 'WorkStudyService' ),
@@ -338,6 +350,8 @@ $(document).ready(
            firstDay       : 1,
            closeText      : 'Готово'
        });
+
+       if (hljs) hljs.initHighlightingOnLoad();
        
        
        window.lpInfo.userId = $( '#curUserId' ).val();

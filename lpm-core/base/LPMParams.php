@@ -39,6 +39,24 @@ class LPMParams extends LPMBaseObject
 		if (!isset( $this->_args[$num] )) return '';
 		else return $this->_args[$num];
 	}
+
+	/**
+	 * Возвращает индекс аргумента по значению
+	 * @param  mixed $arg Значение
+	 * @return int Индекс (-1 - если не найдено)
+	 */
+	public function getArgIndex($arg) {
+		$argVal = (string)$arg;
+		foreach ($this->_args as $key => $value) {
+			if ($value === $argVal) 
+				return $key;
+		}
+		return -1;	    
+	}
+
+	public function getArgs() {
+		return $this->_args;
+	}
 	
 	/*public function setVar( $var, $value ) {
 		$value = $this->_db->escape_string( $value );

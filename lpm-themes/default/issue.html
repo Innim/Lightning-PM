@@ -1,14 +1,16 @@
 <article id="issueView">  
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
+  <?$issue = lpm_get_issue();?>
   <article id="issueInfo" class="container">
-    <?$issue = lpm_get_issue();?>    
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours;?></span>&nbsp;<?=DeclensionHelper::hours($hours);?>)</span><?php endif;?>
+		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours;?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
+        <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
+        <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumb-tack" aria-hidden="true"></i></a>
+        <?php endif;?>
     </h3>     
     <div class="issue_copy">
-
         <a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
     </div>
     <ol class="info-list <?switch($issue->status): 
@@ -53,7 +55,7 @@
         <li>
             <span class="label">Исполнители</span>
             <span class="value">
-               <? foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?><?=$member->getLinkedName();?><?}?>
+                <?php foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?> <?=$member->getLinkedName();?><?php }?>
             </span>
             <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
         </li>    
@@ -110,13 +112,21 @@
     <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
   </article>
   <article class="comments">
-    <p class="links-bar">
-        <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть комментарии</a>
-        <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
-    </p>
+    <div class="links-bar">
+        <?php if ($issue->getProject()->scrum):?>
+            <div class="scrum-comments-shortcut">
+                <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i class="fa fa-check-square-o" aria-hidden="true"></i></a>
+                <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i class="fa fa-code-fork" aria-hidden="true"></i></a>
+            </div>
+        <?php endif;?>
+        <div class="comments-controls">
+            <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть комментарии</a>
+            <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
+        </div>
+    </div>
     <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
      <textarea name="commentText"></textarea>
-     <p class="comment-note">Можете использовать [b], [i], [u] для разметки текста</p>
+     <p class="comment-note">Можете использовать [b], [i], [u], [code] для разметки текста</p>
      <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>
      <p class="buttons-bar">
         <button type="submit">Отправить</button>
@@ -129,10 +139,10 @@
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
-            <p class="text"><?=$comment->getText();?></p>            
+            <article class="text"><?=$comment->getText();?></article>
         </li>
         <?}?>
     </ol>
   </article>
 </article>
-<? lpm_print_issue_form(); ?>
+<? lpm_print_issue_form($issue->getProject()); ?>

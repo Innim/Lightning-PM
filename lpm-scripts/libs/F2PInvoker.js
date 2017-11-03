@@ -88,6 +88,14 @@ var F2PInvoker = ru.vbinc.net.F2PInvoker = function( gateway, defaultPackage, us
      * @type String
      */
     var host = '';    
+    
+    /**
+     * Идентификатор сессии
+     * @private
+     * @type String
+     */
+    var sid = null;    
+
     /**
      * Package сервисов
      * @private
@@ -203,6 +211,14 @@ var F2PInvoker = ru.vbinc.net.F2PInvoker = function( gateway, defaultPackage, us
     this.setTimeout = function( value ) {
         timeout = value;
     };
+
+    /**
+     * Устанавливает идентификатор сессии, который должен быть отправлен на сервер
+     * @param string value идентификатор сессии
+     */
+    this.setSid = function (value) {
+        sid = value;
+    };
     
     var sendRequest = function() {
         // если в очереди есть элементы 
@@ -224,8 +240,12 @@ var F2PInvoker = ru.vbinc.net.F2PInvoker = function( gateway, defaultPackage, us
                     ( params != '' ? '&' + _paramsParam + '=[' + encodeURIComponent( params ) + ']' : '' );
                                     
             timeoutId = setTimeout( onTimeout, timeout * 1000 );
+
+            var url = host;
+            if (sid)
+                url += '?sid=' + sid;
             
-            xhr.open( 'POST', host, true );
+            xhr.open( 'POST', url, true );
             xhr.setRequestHeader( 'Content-Type', /*'text/plain' );//*/'application/x-www-form-urlencoded' );
             xhr.send( params );                        
         }

@@ -6,6 +6,11 @@ class DeclensionHelper
 		return self::getDeclension(['час', 'часа', 'часов'], $count);
 	}
 
+	public static function storyPoints($count, $short = false)
+	{
+		return ($short ? 'SP' : ($count > 1 ? 'story points' : 'story point'));
+	}
+
 	public static function getDeclension($variants, $count)
 	{
 		if ($count < 0) $count = -$count;

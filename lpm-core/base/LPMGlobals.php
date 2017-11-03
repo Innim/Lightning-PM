@@ -55,6 +55,8 @@ class LPMGlobals extends Globals
         else return $fileName;
     }*/
 
+    private $_db;
+
     function __construct() {
         parent::__construct();
     }
@@ -62,5 +64,13 @@ class LPMGlobals extends Globals
     protected function createOptions() {
         return new LPMOptions();
     }
+
+    // public function getDBConnect() {
+    //     if ($this->_db == null) {
+    //         $this->_db = new \GMFramework\DBConnect(
+    //             MYSQL_SERVER, MYSQL_USER, MYSQL_PASS, DB_NAME, PREFIX);
+    //     }
+    //     return $this->_db;
+    // }
 }
 ?>

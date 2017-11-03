@@ -6,6 +6,8 @@ class LPMBaseService extends SecureService
 	 */
 	protected $_auth;
 	protected $_user;
+
+	private $_dbError;
 	
 	function __construct()
 	{
@@ -22,11 +24,35 @@ class LPMBaseService extends SecureService
 	}
 	
 	protected function errorDBSave() {
-		return $this->error();
+		return $this->error('Error DB save');
 	}
 	
 	protected function errorDBLoad() {
-		return $this->error();
+		return $this->error('Error DB load');
+	}
+
+	protected function error($message, $code = 0) {
+		if (DEBUG) {
+			if ($this->_db && $this->_db->error) {
+				if (empty($message)) 
+					$message = 'DB error';
+				$message .= ' (#' . $this->_db->errno . ': ' . $this->_db->error . ')';
+			} else if ($this->_dbError) {
+				if (empty($message)) 
+					$message = 'DB error';
+				$message .= ' (' . $this->_dbError . ')';
+			}
+		}
+		return parent::error($message, $code);
+	}
+
+	protected function exception($e) {
+		if (DEBUG && $e instanceof DBException) {
+			$db = $e->getDB();
+			if ($db && $db->error)
+				$this->_dbError = '#' . $db->errno . ': ' . $db->error;
+		}
+		return parent::exception($e);
 	}
 	
 	protected function floatArr( $arr, $justPositive = true ) {
@@ -61,8 +87,10 @@ class LPMBaseService extends SecureService
 			$this->error( 'Недопустимый текст' );
 			return false;
 		}
-		
-		$text = $this->_db->escape_string_t( $text );
+
+		$text = $this->_db->real_escape_string($text);
+		$text = str_replace( '%', '%%', $text );
+		//$text = $this->_db->escape_string_t( $text ); // там баг
 		
 		$sql = "insert into `%s` (`instanceId`, `instanceType`, `authorId`, `date`, `text` ) " .
 		         "values ( '" . $instanceId . "', '" . $instanceType . "', " . 
