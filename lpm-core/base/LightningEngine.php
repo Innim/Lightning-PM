@@ -76,6 +76,14 @@ class LightningEngine
 	}
 	
 	public function addError( $errString ) {
+		if (LPMGlobals::isDebugMode()) {
+			// В дебаге добавляем ошибку БД в текст, чтобы проще отлаживать	
+			$db = LPMGlobals::getInstance()->getDBConnect();		
+			if ($db->errno > 0)
+        	{
+        		$errString .= ' (DB error #' . $db->errno . ': ' . $db->error . ')';
+        	}
+		}
 		array_push( $this->_errors, $errString );
 		return false;
 	}
