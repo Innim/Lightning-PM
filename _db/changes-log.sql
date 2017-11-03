@@ -70,3 +70,25 @@ CREATE TABLE `lpm_scrum_sticker` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='стикер на scrum доске';
 
 -- 2017-03-04 17:24:00
+
+CREATE TABLE `lpm_scrum_snapshot_list`
+( `id` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор snapshot-а' ,
+  `pid` INT(11) NOT NULL COMMENT 'Идентификатор проекта' ,
+  `creatorId` BIGINT(19) NOT NULL COMMENT 'Идентификатор создателя snapshot-а' ,
+  `created` DATETIME NOT NULL COMMENT 'Время создания snapshot-а' ,
+  PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+-- 2017-11-03 16:49:00
+
+CREATE TABLE `lpm_scrum_snapshot` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи' ,
+  `sid` INT(11) NOT NULL COMMENT 'Идентификатор snapshot-а' ,
+  `issue_uid` INT(11) NOT NULL COMMENT 'Глобавльный идентификатор задачи' ,
+  `issue_pid` INT(11) NOT NULL COMMENT 'Идентификатор задачи в проекте' ,
+  `issue_name` VARCHAR(255) NOT NULL COMMENT 'Название задачи' ,
+  `issue_state` TINYINT(2) NOT NULL COMMENT 'Состояние задачи' ,
+  `issue_sp` VARCHAR(255) NOT NULL COMMENT 'Количество SP' ,
+  `issue_priority` TINYINT(2) NOT NULL COMMENT 'Приоритет задачи' ,
+  PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+-- 2017-11-03 17:03:00

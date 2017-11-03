@@ -8,7 +8,8 @@ class ProjectPage extends BasePage
 	const PUID_COMMENTS  = 'comments';
 	const PUID_ISSUE   = 'issue';
 	const PUID_SCRUM_BOARD = 'scrum_board';
-	
+	const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
+
 	/**
 	 * 
 	 * @var Project
@@ -40,21 +41,31 @@ class ProjectPage extends BasePage
 		if ($engine->getParams()->suid == '' 
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
-		// Если это scrum проект - добавляем новый подразде
+		// Если это scrum проект - добавляем новый подраздел
 		if ($this->_project->scrum)
+		{
 			$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
+            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
+		}
 
-		if (!parent::init()) return false;
+		if (!parent::init())
+            return false;
 		
 		// проверим, можно ли текущему пользователю смотреть этот проект
-		if (!$user = LightningEngine::getInstance()->getUser()) return false;
+		if (!$user = LightningEngine::getInstance()->getUser())
+            return false;
+
 		if (!$user->isModerator()) {
 			$sql = "SELECT `instanceId` FROM `%s` " .
 			                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
 							   "AND `instanceType` = '" . Project::ITYPE_PROJECT . "' " .
-							   "AND `userId`       = '" . $user->userId . "'";		
-			if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) return false;
-			if ($query->num_rows == 0) return false;
+							   "AND `userId`       = '" . $user->userId . "'";
+
+			if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS ))
+                return false;
+
+			if ($query->num_rows == 0)
+                return false;
 		}
 		
 		$iCount = (int)$this->_project->getImportantIssuesCount();
@@ -148,7 +159,10 @@ class ProjectPage extends BasePage
 		{
 			$this->addTmplVar('project', $this->_project);
 			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
-		}
+		} else if ($this->_currentPage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
+            $this->addTmplVar('project', $this->_project);
+            $this->addTmplVar('stickers', ScrumStickerSnapshot::loadList($this->_project->id));
+        }
 		
 		return $this;
 	}

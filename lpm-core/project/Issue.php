@@ -9,7 +9,7 @@ class Issue extends MembersInstance
 	 * Выборка происходит из таблиц:
 	 * - задач - i
 	 * - пользователей - u
-	 * - проектое - p
+	 * - проектов - p
 	 * - счетчиков задачи - cnt	 
 	 * @param  string $where       
 	 * @param  string $extraSelect 

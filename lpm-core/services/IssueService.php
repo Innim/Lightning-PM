@@ -253,7 +253,13 @@ class IssueService extends LPMBaseService
 		$projectId = (int)$projectId;
 
 	    try {
-	    	$state = ScrumStickerState::ARCHIVED;
+			// прежде чем отправлять все задачи в архив, делаем snapshot доски
+			ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
+
+			// TODO: пока так
+			return $this->answer();
+
+			$state = ScrumStickerState::ARCHIVED;
 	    	$activeStates = implode(',', ScrumStickerState::getActiveStates());
 
 	    	$db = $this->_db;
