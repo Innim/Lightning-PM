@@ -49,10 +49,10 @@ class AuthPage extends BasePage
 					$cookieHash = $this->createCookieHash();
 					
 					// пытаемся записать в базу
-					$sql = "insert into `%s` ( `email`, `pass`, `firstName`, `lastName`, `nick`, `lastVisit`, `regDate`, `cookieHash` ) " .
+					$sql = "insert into `%s` ( `email`, `pass`, `firstName`, `lastName`, `nick`, `lastVisit`, `regDate` ) " .
 									 "values ( '" . $_POST['email'] . "', '" . $pass . "', '" . $_POST['firstName'] . "', " .
 									 		  "'" . $_POST['lastName'] . "', '" . $_POST['nick'] . "', '" . DateTimeUtils::mysqlDate() . "', " . 
-									 		  "'" . DateTimeUtils::mysqlDate() . "', '" . $cookieHash . "' )";
+									 		  "'" . DateTimeUtils::mysqlDate() . "' )";
 					if (!$this->_db->queryt( $sql, LPMTables::USERS )) {
 						if ($this->_db->errno == 1062) {
 							$engine->addError( 'Пользователь с таким email уже зарегистрирован' );
