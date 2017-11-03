@@ -70,3 +70,17 @@ CREATE TABLE `lpm_scrum_sticker` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='стикер на scrum доске';
 
 -- 2017-03-04 17:24:00
+
+-- 2016-08-01 14:55:00
+CREATE TABLE `lpm_user_auth`  (
+  `id` bigint(18) AUTO_INCREMENT,
+  `cookieHash` varchar(32) NOT NULL ,
+  `userAgent` varchar(255) NOT NULL COMMENT 'информация о браузере юзера',
+  `userId` bigint(18) NOT NULL COMMENT 'индентификатор пользователя',
+  `hasCreated` datetime NOT NULL COMMENT 'дата создания записи',
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Данные авторизации по куки';
+
+ALTER TABLE `lpm_user_auth` ADD INDEX(`userId`);
+
+ALTER TABLE `lpm_users` DROP COLUMN `cookieHash`;

@@ -61,6 +61,11 @@ class LPMTables {
 	 */
 	const COMMENTS = 'comments';
 	/**
+	 * Данные авторизации
+	 * @var string
+	 */
+	const USER_AUTH = 'user_auth';
+	/**
 	 * Таблица пользователей
 	 * @var string
 	 */

@@ -3,26 +3,26 @@ class AuthPage extends BasePage
 {
 	const SESSION_REDIRECT = 'lightning_redirect';
 
-	function __construct()
-	{
-		parent::__construct( 'auth', 'Авторизация', false, true );
+	function __construct() {
+		parent::__construct('auth', 'Авторизация', false, true);
 		
 		$this->_pattern = 'auth';
 		
 		array_push( $this->_js, 'auth' );
-
 	}
 	
 	public function init() {
-		if (!parent::init()) return false;
-		
+		if (!parent::init())
+			return false;
+
 		$engine = LightningEngine::getInstance();
+
 		// проверяем, не пришли ли данные формы
 		if (count( $_POST ) > 0) {
 			foreach ($_POST as $key => $value) {
 				$_POST[$key] = trim( $value );
 			}
-			
+
 			if (isset( $_POST['email'] )) {
 				// регистрация 				
 				if (empty( $_POST['email'] ) || empty( $_POST['pass'] ) || empty( $_POST['repass'] )
@@ -49,10 +49,10 @@ class AuthPage extends BasePage
 					$cookieHash = $this->createCookieHash();
 					
 					// пытаемся записать в базу
-					$sql = "insert into `%s` ( `email`, `pass`, `firstName`, `lastName`, `nick`, `lastVisit`, `regDate`, `cookieHash` ) " .
+					$sql = "insert into `%s` ( `email`, `pass`, `firstName`, `lastName`, `nick`, `lastVisit`, `regDate` ) " .
 									 "values ( '" . $_POST['email'] . "', '" . $pass . "', '" . $_POST['firstName'] . "', " .
 									 		  "'" . $_POST['lastName'] . "', '" . $_POST['nick'] . "', '" . DateTimeUtils::mysqlDate() . "', " . 
-									 		  "'" . DateTimeUtils::mysqlDate() . "', '" . $cookieHash . "' )";
+									 		  "'" . DateTimeUtils::mysqlDate() . "' )";
 					if (!$this->_db->queryt( $sql, LPMTables::USERS )) {
 						if ($this->_db->errno == 1062) {
 							$engine->addError( 'Пользователь с таким email уже зарегистрирован' );
@@ -78,11 +78,12 @@ class AuthPage extends BasePage
 				}
 			} else {
 				if (empty( $_POST['aemail'] ) || empty( $_POST['apass'] ))  {
-					$engine->addError( 'Веедите email и пароль для входа' );
+					$engine->addError( 'Введите email и пароль для входа' );
 				} else {
 					// авторизация
 					$pass  = $_POST['apass'];
-					$email = $this->_db->escape_string( $_POST['aemail'] );
+					$email = $this->_db->escape_string( $_POST['aemail'] );	
+
 					$sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::USERS )) {
 						$engine->addError( 'Ошибка чтения из базы' );
@@ -94,10 +95,15 @@ class AuthPage extends BasePage
 						elseif ($userInfo['locked']) {
                             $engine->addError( 'Пользователь заблокирован' );
                         } else {
-                            $cookieHash = $this->createCookieHash();
-							$sql = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "', `cookieHash` = '" . $cookieHash . "' where `userId` = '" . $userInfo['userId'] . "'";
-							if (!$this->_db->queryt( $sql, LPMTables::USERS )) $engine->addError( 'Ошибка записи в базу' );
-							else $this->auth( $userInfo['userId'], $email, $cookieHash );                        
+                            $cookieHash = LPMAuth::createCookieHash();
+							$sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() .
+                                "' where `userId` = '" . $userInfo['userId'] . "'";
+
+							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS ))
+								$engine->addError( 'Ошибка записи в базу' );
+							else {
+								$this->auth( $userInfo['userId'], $email, $cookieHash );
+							}
                         }  
 					} else {
 						$engine->addError( 'Пользователь с таким email не зарегистрирован' );
@@ -108,7 +114,7 @@ class AuthPage extends BasePage
 		
 		return $this;
 	}
-	
+
 	public function printContent() 
 	{
 		parent::printContent();		
