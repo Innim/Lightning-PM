@@ -2,7 +2,6 @@
 /**
 * Настройки
 * @author GreyMag
-*
 */
 class LPMOptions extends Options
 {	
@@ -12,7 +11,9 @@ class LPMOptions extends Options
 	 */
 	public static function getInstance()
 	{
-        if (self::$_instance == null) new LPMOptions();
+        if (self::$_instance == null)
+            new LPMOptions();
+
         return self::$_instance;
 		//return Options::getInstance( __CLASS__ );
 	}
@@ -80,9 +81,10 @@ class LPMOptions extends Options
 	{
 		parent::initOptions();
 		
-		$this->cookieExpire = 180; 
- 
-		if ($this->fromName == '') $this->fromName = $this->title;
+		$this->cookieExpire *= 86400;
+
+        if ($this->fromName == '')
+            $this->fromName = $this->title;
 		
 		if ($this->logo != '' && substr( $this->logo, 0, 7 ) != 'http://') 
 			$this->logo = SITE_URL . FILES_DIR . $this->logo;

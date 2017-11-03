@@ -3,26 +3,26 @@ class AuthPage extends BasePage
 {
 	const SESSION_REDIRECT = 'lightning_redirect';
 
-	function __construct()
-	{
-		parent::__construct( 'auth', 'Авторизация', false, true );
+	function __construct() {
+		parent::__construct('auth', 'Авторизация', false, true);
 		
 		$this->_pattern = 'auth';
 		
 		array_push( $this->_js, 'auth' );
-
 	}
 	
 	public function init() {
-		if (!parent::init()) return false;
-		
+		if (!parent::init())
+			return false;
+
 		$engine = LightningEngine::getInstance();
+
 		// проверяем, не пришли ли данные формы
 		if (count( $_POST ) > 0) {
 			foreach ($_POST as $key => $value) {
 				$_POST[$key] = trim( $value );
 			}
-			
+
 			if (isset( $_POST['email'] )) {
 				// регистрация 				
 				if (empty( $_POST['email'] ) || empty( $_POST['pass'] ) || empty( $_POST['repass'] )
@@ -78,13 +78,12 @@ class AuthPage extends BasePage
 				}
 			} else {
 				if (empty( $_POST['aemail'] ) || empty( $_POST['apass'] ))  {
-					$engine->addError( 'Веедите email и пароль для входа' );
+					$engine->addError( 'Введите email и пароль для входа' );
 				} else {
 					// авторизация
 					$pass  = $_POST['apass'];
 					$email = $this->_db->escape_string( $_POST['aemail'] );	
-					$userAgent = $this->_db->real_escape_string($_SERVER['HTTP_USER_AGENT']);
-    				
+
 					$sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::USERS )) {
 						$engine->addError( 'Ошибка чтения из базы' );
@@ -97,15 +96,14 @@ class AuthPage extends BasePage
                             $engine->addError( 'Пользователь заблокирован' );
                         } else {
                             $cookieHash = LPMAuth::createCookieHash();
-							$sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() . "' where `userId` = '" . $userInfo['userId'] . "'";
-							$sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`,`hasCreated`) 
-								values ('". $cookieHash ."','". $userInfo['userId']. "','". $userAgent ."','". DateTimeUtils::mysqlDate() ."')";
+							$sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() .
+                                "' where `userId` = '" . $userInfo['userId'] . "'";
+
 							if (!$this->_db->queryt( $sqlVisit, LPMTables::USERS ))
 								$engine->addError( 'Ошибка записи в базу' );
 							else {
 								$this->auth( $userInfo['userId'], $email, $cookieHash );
-								$this->_db->queryt( $sqlCookie, LPMTables::USER_AUTH );
-							}                        
+							}
                         }  
 					} else {
 						$engine->addError( 'Пользователь с таким email не зарегистрирован' );
@@ -116,7 +114,7 @@ class AuthPage extends BasePage
 		
 		return $this;
 	}
-	
+
 	public function printContent() 
 	{
 		parent::printContent();		
