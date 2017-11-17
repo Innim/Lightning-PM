@@ -47,7 +47,7 @@ class LPMImgUpload {
 	 * Идентификатор пользователя, который загружает изображения
 	 * @var int
 	 */
-	//private $_userId;
+	private $_userId;
 	/**
 	 * Массив загруженных изображений
 	 * @var array
@@ -88,6 +88,7 @@ class LPMImgUpload {
 		$userId = $engine->isAuth()
 		           ? $engine->getAuth()->getUserId()
 		           : 0;
+		$this->_userId = $userId;
 		$this->_db = LPMGlobals::getInstance()->getDBConnect();
 		
 		$this->_dir = $dir;
@@ -332,6 +333,7 @@ class LPMImgUpload {
 	private function addImages($files, $uploaded = false, $originalNames = null, $clearTmp = true)
 	{
 		// Готовим запрос записи в БД
+		$userId = $this->_userId;
 		if ($this->_saveInDB && 
 			!($prepare = $this->_db->preparet("INSERT INTO `%s` (`url`, `userId`, `name`, `itemType`, `itemId`) VALUES (?, '{$userId}', ?, '{$this->_itemType}', '{$this->_itemId}')", LPMTables::IMAGES)))
 		{

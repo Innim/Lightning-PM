@@ -71,6 +71,20 @@ CREATE TABLE `lpm_scrum_sticker` (
 
 -- 2017-03-04 17:24:00
 
+-- 2016-08-01 14:55:00
+CREATE TABLE `lpm_user_auth`  (
+  `id` bigint(18) AUTO_INCREMENT,
+  `cookieHash` varchar(32) NOT NULL ,
+  `userAgent` varchar(255) NOT NULL COMMENT 'информация о браузере юзера',
+  `userId` bigint(18) NOT NULL COMMENT 'индентификатор пользователя',
+  `hasCreated` datetime NOT NULL COMMENT 'дата создания записи',
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Данные авторизации по куки';
+
+ALTER TABLE `lpm_user_auth` ADD INDEX(`userId`);
+
+ALTER TABLE `lpm_users` DROP COLUMN `cookieHash`;
+
 CREATE TABLE `lpm_scrum_snapshot_list`
 ( `id` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор snapshot-а' ,
   `pid` INT(11) NOT NULL COMMENT 'Идентификатор проекта' ,
