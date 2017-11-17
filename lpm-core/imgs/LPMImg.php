@@ -16,11 +16,11 @@ class LPMImg extends LPMBaseObject {
     }
     
     public static function loadListByProject( $projectId ) {
-        return self::loadListByInstance( Project::ITYPE_PROJECT, $projectId );
+        return self::loadListByInstance( LPMInstanceTypes::PROJECT, $projectId );
     }
     
     public static function loadListByIssue( $issueId ) {
-        return self::loadListByInstance( Issue::ITYPE_ISSUE, $issueId );
+        return self::loadListByInstance( LPMInstanceTypes::ISSUE, $issueId );
     }
 
 
