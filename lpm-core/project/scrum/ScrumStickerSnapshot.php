@@ -55,41 +55,81 @@ SQL;
 
 	/**
 	 * Создает snapshot по текущему состоянию доски для переданного проекта.
-	 * @param int $projectId
-	 * @param float $userId
-	 */
+     * @param int $projectId
+     * @param $userId
+     * @throws Exception
+     */
 	public static function createSnapshot($projectId, $userId){
 		// получаем список всех стикеров на текущей доске
 		$stickers = ScrumSticker::loadList($projectId);
 
-		$names = "\n";
-
-		$sid = 0;
 		$pid = $projectId;
 		$created = DateTimeUtils::mysqlDate();
 		$creatorId = $userId;
 
-		foreach ($stickers as $sticker) {
-			/* @var $sticker ScrumSticker */
+        $db = self::getDB();
 
-			$issue = $sticker->getIssue();
+        try {
+            // начинаем транзакцию
+            $db->begin_transaction();
 
-			$issueUid = $sticker->issueId;
-			$issuePid = $issue->idInProject;
-			$issueName = $sticker->getName();
-			$issueState = $sticker->state;
-			$issueSP = $issue->hours;
-			$issuePriority = $issue->priority;
-			$members = $issue->getMemberIdsStr();
+            // запись о новом снепшоте
+            $sql = <<<SQL
+                INSERT INTO `%s` (`pid`, `creatorId`, `created`)
+                VALUES ('${pid}', '${creatorId}', '${created}')
+SQL;
 
-			$names .= "$issueUid, $issuePid, $issueName, $issueState, $issueSP, $issuePriority, ($members)" . "\n";
+            // если что-то пошло не так
+            if (!$db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST))
+                throw new Exception("Ошибка при сохранении нового снепшота");
 
+            $sid = $db->insert_id;
 
+            // добавляем всю необходимую информацию по снепшоте
+            $sql = <<<SQL
+                INSERT INTO `%s` (`sid`, `issue_uid`, `issue_pid`, `issue_name`, `issue_state`, `issue_sp`, `issue_priority`)
+                VALUES ('${sid}', ?, ?, ?, ?, ?, ?)
+SQL;
 
-//			$sticker->getIssue()
-		}
+            // подготавливаем запрос для вставки данных о стикерах снепшота
+            if (!$prepare = $db->preparet($sql, LPMTables::SCRUM_SNAPSHOT))
+                throw new Exception("Ошибка при подготовке запроса.");
 
-		ScrumStickerSnapshot::__log("names: $names");
+            foreach ($stickers as $sticker) {
+                /* @var $sticker ScrumSticker */
+
+                $issue = $sticker->getIssue();
+
+                $issueUid = $sticker->issueId;
+                $issuePid = $issue->idInProject;
+                $issueName = $sticker->getName();
+                $issueState = $sticker->state;
+                $issueSP = $issue->hours;
+                $issuePriority = $issue->priority;
+
+                $prepare->bind_param('ddsisi', $issueUid, $issuePid, $issueName, $issueState, $issueSP, $issuePriority);
+
+                if (!$prepare->execute())
+                    throw new Exception("Ошибка при вставке данных стикера.");
+
+                // TODO: нужно ли проверить, возможно нет участников?? или такого не может быть?
+                // так же сохраняем пользователей
+                if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $issueUid, $issue->getMemberIds()))
+                    throw new Exception("Ошибка при сохранении участников.");
+            }
+
+            // запрос больше не нужен
+            $prepare->close();
+
+            // вроде бы все ок -> завершае транзакцию
+            $db->commit();
+        }
+        catch (Exception $ex) {
+            // что-то пошло не так -> отменяем все изменения
+            $db->rollback();
+
+            throw $ex;
+        }
 	}
 
 	/**

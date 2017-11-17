@@ -19,5 +19,11 @@ class LPMInstanceTypes {
      * @var int
      */
     const PROJECT = 2;
+
+    /**
+     * Instance тип для пользователя задачи в снепшоте.
+     * @var int
+     */
+    const SNAPSHOT_ISSUE_MEMBERS = 3;
 }
 ?>
