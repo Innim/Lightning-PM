@@ -89,8 +89,8 @@ SQL;
                 $members = $issue->getMemberIds();
 
                 if (count($members) > 0) {
-                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $sid, $issue->getMemberIds()))
-                        throw new Exception("Ошибка при сохранении участников." . $db->error);
+                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $prepare->insert_id, $issue->getMemberIds()))
+                        throw new Exception("Ошибка при сохранении участников.");
                 }
 
                 $added = true;

@@ -122,6 +122,6 @@ SQL;
      */
     public function getURL4View() {
         $curPage = LightningEngine::getInstance()->getCurrentPage();
-        return $curPage->getBaseUrl(ProjectPage::PUID_ISSUE, $this->issue_pid);
+        return $curPage->getBaseUrl(ProjectPage::PUID_ISSUE, $this->id);
     }
 }
