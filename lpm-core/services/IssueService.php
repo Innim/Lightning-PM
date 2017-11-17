@@ -156,7 +156,7 @@ class IssueService extends LPMBaseService
 		//if (!$issue->check???Permit( $this->_auth->getUserId() ))
 		//return $this->error( 'У Вас нет прав на комментировние задачи' );
 		
-		if (!$comment = $this->addComment( Issue::ITYPE_ISSUE, $issueId, $text )) 
+		if (!$comment = $this->addComment( LPMInstanceTypes::ISSUE, $issueId, $text )) 
 			return $this->error();				
 		
 		// отправка оповещений

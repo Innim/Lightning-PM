@@ -29,13 +29,13 @@ class Project extends MembersInstance
 					$sqlDevelop = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
 					 					   "where `%1\$s`.`isArchive` = '0' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
 											 "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
-											 "and `%2\$s`.`instanceType` = '" . Project::ITYPE_PROJECT   . "' " .
+											 "and `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT   . "' " .
 					"ORDER BY `%1\$s`.`lastUpdate` DESC";
 
 					$sqlArchive = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
 					 					   "where `%1\$s`.`isArchive` = '1' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
 											 "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
-											 "and `%2\$s`.`instanceType` = '" . Project::ITYPE_PROJECT   . "' " .
+											 "and `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT   . "' " .
 					"ORDER BY `%1\$s`.`lastUpdate` DESC";
 					
 					self::$_availList['develop'] = StreamObject::loadObjList( self::getDB(), array( $sqlDevelop, LPMTables::PROJECTS, LPMTables::MEMBERS ), __CLASS__ );
@@ -120,9 +120,6 @@ class Project extends MembersInstance
 	{
 	    
 	}
-	
-	
-	const ITYPE_PROJECT = 2;
 	
 	/**
 	 * 

@@ -10,15 +10,15 @@ class Member extends User
 	}
 	
 	public static function loadListByProject( $projectId ) {
-		return self::loadListByInstance( Project::ITYPE_PROJECT, $projectId );
+		return self::loadListByInstance( LPMInstanceTypes::PROJECT, $projectId );
 	}
 	
 	public static function loadListByIssue($issueId) {
-		return self::loadListByInstance(Issue::ITYPE_ISSUE, $issueId);
+		return self::loadListByInstance(LPMInstanceTypes::ISSUE, $issueId);
 	}
 
 	public static function hasIssueMember($issueId, $userId) {
-		return self::hasMember(Issue::ITYPE_ISSUE, $issueId, $userId);
+		return self::hasMember(LPMInstanceTypes::ISSUE, $issueId, $userId);
 	}
 
 	public static function hasMember($instanceType, $instanceId, $userId) {
@@ -42,7 +42,7 @@ class Member extends User
 	}
 
 	public static function deleteIssueMembers($issueId, $userIds = null) {
-		return self::deleteMembers(Issue::ITYPE_ISSUE, $issueId, $userIds);
+		return self::deleteMembers(LPMInstanceTypes::ISSUE, $issueId, $userIds);
 	}
 
 	public static function deleteMembers($instanceType, $instanceId, $userIds = null) {
@@ -64,7 +64,7 @@ class Member extends User
 	}
 
 	public static function saveIssueMembers($issueId, $userIds) {
-		return self::saveMembers(Issue::ITYPE_ISSUE, $issueId, $userIds);
+		return self::saveMembers(LPMInstanceTypes::ISSUE, $issueId, $userIds);
 	}
 
 	public static function saveMembers($instanceType, $instanceId, $userIds) {
@@ -80,8 +80,5 @@ class Member extends User
 		];
 		return self::getDB()->queryb($hash);
 	}
-	
-	/*const ITYPE_ISSUE   = 1;
-	const ITYPE_PROJECT = 2;*/
 }
 ?>

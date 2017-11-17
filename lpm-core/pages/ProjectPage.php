@@ -51,7 +51,7 @@ class ProjectPage extends BasePage
 		if (!$user->isModerator()) {
 			$sql = "SELECT `instanceId` FROM `%s` " .
 			                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
-							   "AND `instanceType` = '" . Project::ITYPE_PROJECT . "' " .
+							   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
 							   "AND `userId`       = '" . $user->userId . "'";		
 			if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) return false;
 			if ($query->num_rows == 0) return false;
@@ -87,7 +87,7 @@ class ProjectPage extends BasePage
 				$issue->getMembers();	
 				Issue::$currentIssue = $issue;
 				
-				Comment::setCurrentInstance( Issue::ITYPE_ISSUE, $issue->id );
+				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
 
 				$this->_title  =$issue->name .' - '. $this->_project->name ;
 				$this->_pattern = 'issue';
@@ -272,7 +272,7 @@ class ProjectPage extends BasePage
 				else {
 					// выберем из базы текущих участников задачи
 					$sql = "SELECT `userId` FROM `%s` " .
-							"WHERE `instanceType` = '" . Issue::ITYPE_ISSUE . "' " .
+							"WHERE `instanceType` = '" . LPMInstanceTypes::ISSUE . "' " .
 						      "AND `instanceId` = '" . $issueId . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) {
 						return $engine->addError( 'Ошибка загрузки участников' );
@@ -301,7 +301,7 @@ class ProjectPage extends BasePage
 				
 				// сохраняем исполнителей задачи
 				$sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
-							     "VALUES ( ?, '" . Issue::ITYPE_ISSUE . "', '" . $issueId . "' )";
+							     "VALUES ( ?, '" . LPMInstanceTypes::ISSUE . "', '" . $issueId . "' )";
 					
 				if (!$prepare = $this->_db->preparet( $sql, LPMTables::MEMBERS )) {
 					if (!$editMode)
@@ -337,7 +337,7 @@ class ProjectPage extends BasePage
 										"WHERE `imgId` IN (".implode(',',$imgIds).") ".
 										 "AND `deleted` = '0' ".
 										 "AND `itemId`='".$issueId."' ".
-										 "AND `itemType`='".Issue::ITYPE_ISSUE."'";
+										 "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
 							$this->_db->queryt($sql, LPMTables::IMAGES);
 						}
 					}
@@ -347,7 +347,7 @@ class ProjectPage extends BasePage
 						//считаем из базы кол-во картинок, имеющихся для задачи
 						$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
 							"WHERE `itemId` = '" . $issueId. "'".
-							"AND `itemType` = '" . Issue::ITYPE_ISSUE . "' " .
+							"AND `itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
 							"AND `deleted` = '0'";
 						
 						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) 
@@ -446,7 +446,7 @@ class ProjectPage extends BasePage
             array( LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT ), 
             'issues', 
             'scr_',
-           	Issue::ITYPE_ISSUE, 
+			LPMInstanceTypes::ISSUE, 
            	$issueId,
            	false
         );  
