@@ -5,84 +5,91 @@
     $stickers - список стикеров
 */
 ?>
-<article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
+<article id="<?=isset($snapshot) ? 'scrumBoard' : 'scrumSnapshot'?>" data-project-id="<?=$project->id;?>" class="hide-sp">
     <h1><?lpm_print_header();?></h1>
-    <h3>SCRUM доска <span class="scrum-board-info">(<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></h3>
-    <div class="scrum-board-actions">
-        <a href="#" onclick="return issuePage.changeSPVisibility(true);" title="Показать SP по стикерам" class="scrum-board-actions-show-sp"><i class="fa fa-eye" aria-hidden="true"></i></a>
-        <a href="#" onclick="return issuePage.changeSPVisibility(false);" title="Скрыть SP по стикерам" class="scrum-board-actions-hide-sp"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
-        <a href="#" onclick="return issuePage.clearBoard(event);" title="Убрать все стикеры с доски"><i class="fa fa-archive" aria-hidden="true"></i></a>
-    </div>
-    
-    <table class="scrum-board-table">
-        <thead>
+    <?php if (!isset($snapshot)): ?>
+    <h3>SCRUM архив:</h3>
+        <div class="scrum-snapshot-list">
+            <ul>
+                <?php foreach ($snapshots as $snapshot): ?>
+                <li>
+                    <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot #<?=$snapshot->id?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php else: ?>
+        <a href="<?=$snapshot->getUrl()?>"><h3><u>SCRUM архив:</u></h3></a>
+        <div class="scrum-snapshot-stat">
+            <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->id?></i> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+            <span class="num-issues">Всего: <?=$snapshot->getNumStickers()?> шт, <?=$snapshot->getNumSP()?> SP</span>
+        </div>
+
+        <table class="scrum-board-table">
+            <thead>
             <tr>
                 <th class="col-todo">TO DO<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
                 <th class="col-in_progress">В работе<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
                 <th class="col-testing">Тестируется<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
                 <th class="col-done">Готово<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
             </tr>
-        </thead>
-        <tbody>
-        <?php 
-        $user = lpm_get_user();
+            </thead>
+            <tbody>
+            <?php
+            $user = lpm_get_user();
 
-        // Просто сначала распределим по столбцам
-        $stickersByState = [];
-        $count = 0;
-        foreach ($stickers as $sticker)
-        {
-            if (!isset($stickersByState[$sticker->state]))
-                $stickersByState[$sticker->state] = [];
-            $stickersByState[$sticker->state][] = $sticker;
-            $count = max(count($stickersByState[$sticker->state]), $count);
-        }
-        $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS, 
-            ScrumStickerState::TESTING, ScrumStickerState::DONE];
-        $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+            // Просто сначала распределим по столбцам
+            $stickersByState = [];
+            $count = 0;
 
-        //for ($i = 0; $i < $count; ++$i):
-        ?>
-        <tr>
-            <?php foreach ($columns as $j => $state):?>
-            <td class="scrum-board-col <?=$colStyles[$j];?>">
-                <?php for ($i = 0; $i < $count; ++$i):?>
-                <?php 
-                $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
-                    $stickersByState[$state][$i] : null;
-                if ($sticker):
-                $sp = $sticker->getIssue()->hours;
-                if ($sp == 0)
+            $stickers = $snapshot->getStickers();
+            foreach ($stickers as $sticker)
+            {
+                if (!isset($stickersByState[$sticker->issue_state]))
+                    $stickersByState[$sticker->issue_state] = [];
+
+                $stickersByState[$sticker->issue_state][] = $sticker;
+                $count = max(count($stickersByState[$sticker->issue_state]), $count);
+            }
+
+            $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
+                ScrumStickerState::TESTING, ScrumStickerState::DONE];
+            $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+
+            ?>
+            <tr>
+                <?php foreach ($columns as $j => $state):?>
+                <td class="scrum-board-col <?=$colStyles[$j];?>">
+                    <?php for ($i = 0; $i < $count; ++$i):?>
+                    <?php
+                    $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
+                        $stickersByState[$state][$i] : null;
+                    if ($sticker):
+                    $sp = (int) $sticker->issue_sp;
+                    if ($sp == 0)
                     $color = 'white';
-                else if ($sp <= 3)
+                    else if ($sp <= 3)
                     $color = 'green';
-                else if ($sp <= 5)
+                    else if ($sp <= 5)
                     $color = 'yellow';
-                else if ($sp <= 8)
+                    else if ($sp <= 8)
                     $color = 'orange';
-                else
+                    else
                     $color = 'red';
-                ?>
-                <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
-                    <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
-                    <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span class="sticker-issue-sp">(<?=$sp;?> SP)</span></a>
-                    <span class="sticker-issue-members"><?php 
-                    foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
-                    <a href="#" onclick="issuePage.changeScrumState(event); return false;" class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
-                    <div class="control-line">
-                        <!-- <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-archive" title="Архивировать"><i class="fa fa-archive" aria-hidden="true"></i></a> -->
-                        <a href="#" onclick="issuePage.takeIssue(event); return false;" class="sticker-control-take" title="Взять задачу себе"><i class="fa fa-hand-paper-o" aria-hidden="true"></i></a>
-                        <a href="#" onclick="issuePage.changeScrumState(event); return false;" class="sticker-control-done" title="Завершить"><i class="fa fa-check" aria-hidden="true"></i></a>
-                        <a href="#" onclick="issuePage.changeScrumState(event); return false;" class="sticker-control-prev"><i class="fa fa-caret-left" aria-hidden="true"></i></a>
-                        <a href="#" onclick="issuePage.changeScrumState(event); return false;" class="sticker-control-next"><i class="fa fa-caret-right" aria-hidden="true"></i></a>
+                    ?>
+                    <div id="scrum-sticker-<?=$sticker->issue_uid;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issue_uid;?>" data-sticker-state="<?=$sticker->issue_state;?>" data-sticker-sp="<?=$sp;?>">
+                        <span class="sticker-issue-id">#<?=$sticker->issue_pid;?></span>
+                        <a href="<?=$sticker->getURL4View();?>"><?=$sticker->issue_name;?><span class="snapshot-sticker-issue-sp">(<?=$sp;?> SP)</span></a>
+                        <span class="sticker-issue-members"><?php
+                        foreach ($sticker->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
                     </div>
-                </div>
-                <?php endif;?>
-                <?php endfor;?>
-            </td>
-        <?php endforeach;?>
-        </tr>
-        <?php //endfor;?>
-        </tbody>
-    </table>
+                    <?php endif;?>
+                    <?php endfor;?>
+                </td>
+                <?php endforeach;?>
+            </tr>
+            <?php //endfor;?>
+            </tbody>
+        </table>
+    <?php endif; ?>
 </article>

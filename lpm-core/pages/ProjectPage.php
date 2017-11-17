@@ -105,8 +105,8 @@ class ProjectPage extends BasePage
 				ArrayUtils::remove( $this->_js,	'project' );
 				array_push( $this->_js,	'issue' );
 			} 
-		} 
-		
+		}
+
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) 
 		{			
@@ -159,9 +159,22 @@ class ProjectPage extends BasePage
 		{
 			$this->addTmplVar('project', $this->_project);
 			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
-		} else if ($this->_currentPage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
+		} else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
             $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('stickers', ScrumStickerSnapshot::loadList($this->_project->id));
+            $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
+            $this->addTmplVar('snapshots', $snapshots);
+
+            $sid = (int) $this->getParam(3);
+
+            if ($sid > 0)
+            {
+                foreach ($snapshots as $snapshot) {
+                    if ($snapshot->id == $sid) {
+                        $this->addTmplVar('snapshot', $snapshot);
+                        break;
+                    }
+                }
+            }
         }
 		
 		return $this;

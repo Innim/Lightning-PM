@@ -1379,6 +1379,13 @@ div.ftp
 	margin-top: 3px;
 	font-size: 9px;
 }
+.scrum-board-sticker .snapshot-sticker-issue-sp {
+	display: inline-block;
+	font-size: 10px;
+	margin-left: 2px;
+	margin-top: -2px;
+	vertical-align: middle;
+}
 .scrum-board-sticker .sticker-issue-sp {
 	display: inline-block;
 	font-size: 10px;
@@ -1427,4 +1434,25 @@ div.ftp
 .col-done .scrum-board-sticker a.sticker-control-take,
 .scrum-board-sticker.mine a.sticker-control-take {
 	display: none;
+}
+
+#scrumBoard .scrum-snapshot-stat {
+	clear: both;
+	margin-top: 50px;
+	margin-left: 5px;
+	margin-bottom: 10px;
+}
+
+#scrumBoard .scrum-snapshot-stat .num-issues {
+	float: right;
+	margin-right: 5px;
+ }
+
+#scrumSnapshot .scrum-snapshot-list {
+	clear: both;
+}
+
+#scrumSnapshot .scrum-snapshot-list li {
+	margin-top: 10px;
+	margin-bottom: 10px;
 }

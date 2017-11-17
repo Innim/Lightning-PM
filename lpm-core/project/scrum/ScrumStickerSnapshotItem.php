@@ -89,72 +89,8 @@ SQL;
         $this->getMemberIdsStr() . ")" . "\n";
     }
 
-	/**
-	 * Возвщает отображаемое имя стикера
-	 * @return String
-	 */
-//	public function getName() {
-//	    return $this->_issue === null ?
-//	    	'Задача #' . $this->issueId : $this->_issue->getName();
-//	}
-
-	/**
-	 * Возвращает объект задачи. Если не выставлен - будет загружен
-	 * @return Issue
-	 */
-//	public function getIssue() {
-//	    if ($this->_issue === null)
-//	    	$this->_issue = Issue::load($this->issueId);
-//	    return $this->_issue;
-//	}
-
-//	public function isOnBoard() {
-//	    // return $this->state !== ScrumStickerState::BACKLOG;
-//	    return ScrumStickerState::isActiveState($this->state);
-//	}
-
-	/**
-	 * Стикер находится в колонке TO DO
-	 * @return boolean 
-	 */
-//	public function isTodo() {
-//	    return $this->state === ScrumStickerState::TODO;
-//	}
-
-	/**
-	 * Стикер находится в колонке В работе
-	 * @return boolean 
-	 */
-//	public function isInProgress() {
-//	    return $this->state === ScrumStickerState::IN_PROGRESS;
-//	}
-
-	/**
-	 * Стикер находится в колонке Тестируется
-	 * @return boolean 
-	 */
-//	public function isTesting() {
-//	    return $this->state === ScrumStickerState::TESTING;
-//	}
-
-	/**
-	 * Стикер находится в колонке Выполнено
-	 * @return boolean 
-	 */
-//	public function isDone() {
-//	    return $this->state === ScrumStickerState::DONE;
-//	}
-
-	/*public function nextState() {
-	    return ScrumStickerState::getNextState($this->state);
-	}
-
-	public function prevState() {
-	    return ScrumStickerState::getPrevState($this->state);
-	}*/
-
     protected function loadMembers() {
-        $this->_members = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->issue_uid);
+        $this->_members = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->sid);
 
         if ($this->_members === false)
             throw new Exception( 'Ошибка при загрузке снепшота списка исполнителей задачи' );
@@ -165,4 +101,27 @@ SQL;
 	public function loadStream($raw) {
 	    parent::loadStream($raw);
 	}
+
+    public function isMember($userId) {
+        if ($this->_members === null) {
+            return Member::hasMember(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->issue_uid, $userId);
+        } else {
+            $found = false;
+            foreach ($this->_members as $member) {
+                if ($userId === $member->userId) {
+                    $found = true;
+                    break;
+                }
+            }
+            return $found;
+        }
+    }
+
+    /**
+     * Путь до оригинальной задачи.
+     */
+    public function getURL4View() {
+        $curPage = LightningEngine::getInstance()->getCurrentPage();
+        return $curPage->getBaseUrl(ProjectPage::PUID_ISSUE, $this->issue_pid);
+    }
 }

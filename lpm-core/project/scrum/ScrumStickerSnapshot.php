@@ -25,42 +25,6 @@ SQL;
 		return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
 	}
 
-    /**
-     * Загружает данные снепшота по идентификатору
-     * @param $snapshotId
-     * @return ScrumStickerSnapshot|null
-     * @throws DBException
-     * @throws Exception
-     */
-//	public static function load($snapshotId)
-//    {
-//        $snapshotId = (int) $snapshotId;
-//
-//        $db = self::getDB();
-//
-//        /*$sql = <<<SQL
-//		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
-//			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
-//		  FROM `%1\$s` `s` 
-//    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id` 
-//    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
-//     	 WHERE `s`.`issueId` = ${issueId} AND `i`.`deleted` = 0 
-//SQL;*/
-//        $sql = <<<SQL
-//        SELECT * FROM `%1\$s` WHERE `%1\$s`.`sid` = '${$snapshotId}'
-//SQL;
-//
-//        $list = StreamObject::loadObjList($db,
-//            [$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS], __CLASS__);
-//
-//        return empty($list) ? null : $list[0];
-//    }
-
-	public static function __log($value){
-		GMLog::getInstance()->logIt(
-			GMLog::getInstance()->logsPath . 'cmx_log', $value);
-	}
-
 	/**
 	 * Создает snapshot по текущему состоянию доски для переданного проекта.
      * @param int $projectId
@@ -103,6 +67,8 @@ SQL;
             if (!$prepare = $db->preparet($sql, LPMTables::SCRUM_SNAPSHOT))
                 throw new Exception("Ошибка при подготовке запроса.");
 
+            $added = false;
+
             foreach ($stickers as $sticker) {
                 /* @var $sticker ScrumSticker */
 
@@ -120,17 +86,26 @@ SQL;
                 if (!$prepare->execute())
                     throw new Exception("Ошибка при вставке данных стикера.");
 
-                // TODO: нужно ли проверить, возможно нет участников?? или такого не может быть?
-                // так же сохраняем пользователей
-                if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $issueUid, $issue->getMemberIds()))
-                    throw new Exception("Ошибка при сохранении участников.");
+                $members = $issue->getMemberIds();
+
+                if (count($members) > 0) {
+                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $sid, $issue->getMemberIds()))
+                        throw new Exception("Ошибка при сохранении участников." . $db->error);
+                }
+
+                $added = true;
             }
 
             // запрос больше не нужен
             $prepare->close();
 
             // вроде бы все ок -> завершае транзакцию
-            $db->commit();
+            if ($added) {
+                $db->commit();
+            } else {
+                // отменяем, т.к. на доске нет стикеров
+                $db->rollback();
+            }
         }
         catch (Exception $ex) {
             // что-то пошло не так -> отменяем все изменения
@@ -161,6 +136,9 @@ SQL;
 	 */
 	public $creatorId;
 
+	private $_creator;
+	private $_stickers;
+
 	function __construct($id = 0) {
 		parent::__construct();
 
@@ -168,91 +146,53 @@ SQL;
 
 		$this->_typeConverter->addFloatVars('id', 'pid', 'creatorId');
 		$this->addDateTimeFields('created');
-
-		// TODO:
-//		$this->addClientFields(
-//			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate',
-//			'completeDate','completedDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
-//		);
 	}
 
-	/**
-	 * Возвщает отображаемое имя стикера
-	 * @return String
-	 */
-//	public function getName() {
-//	    return $this->_issue === null ?
-//	    	'Задача #' . $this->issueId : $this->_issue->getName();
-//	}
+    /**
+     * Путь до просмотра снепшота
+     * @return string
+     */
+	public function getSnapshotUrl() {
+        $curPage = LightningEngine::getInstance()->getCurrentPage();
+        return $curPage->getBaseUrl(ProjectPage::PUID_SCRUM_BOARD_SNAPSHOT, $this->id);
+    }
 
-	/**
-	 * Возвращает объект задачи. Если не выставлен - будет загружен
-	 * @return Issue
-	 */
-//	public function getIssue() {
-//	    if ($this->_issue === null)
-//	    	$this->_issue = Issue::load($this->issueId);
-//	    return $this->_issue;
-//	}
+    /**
+     * Путь до списка снепшотов
+     */
+    public function getUrl() {
+        $curPage = LightningEngine::getInstance()->getCurrentPage();
+        return $curPage->getBaseUrl(ProjectPage::PUID_SCRUM_BOARD_SNAPSHOT);
+    }
 
-//	public function isOnBoard() {
-//	    // return $this->state !== ScrumStickerState::BACKLOG;
-//	    return ScrumStickerState::isActiveState($this->state);
-//	}
+    public function getCreateDate() {
+        return self::getDateStr($this->created);
+    }
 
-	/**
-	 * Стикер находится в колонке TO DO
-	 * @return boolean 
-	 */
-//	public function isTodo() {
-//	    return $this->state === ScrumStickerState::TODO;
-//	}
+    public function getCreatorShortName() {
+        if (!isset($this->_creator))
+            $this->_creator = User::load($this->creatorId);
 
-	/**
-	 * Стикер находится в колонке В работе
-	 * @return boolean 
-	 */
-//	public function isInProgress() {
-//	    return $this->state === ScrumStickerState::IN_PROGRESS;
-//	}
+        return $this->_creator->getShortName();
+    }
 
-	/**
-	 * Стикер находится в колонке Тестируется
-	 * @return boolean 
-	 */
-//	public function isTesting() {
-//	    return $this->state === ScrumStickerState::TESTING;
-//	}
+    public function getStickers() {
+        if (!isset($this->_stickers))
+            $this->_stickers = ScrumStickerSnapshotItem::loadList($this->id);
+        return $this->_stickers;
+    }
 
-	/**
-	 * Стикер находится в колонке Выполнено
-	 * @return boolean 
-	 */
-//	public function isDone() {
-//	    return $this->state === ScrumStickerState::DONE;
-//	}
+    public function getNumStickers() {
+        return count($this->getStickers());
+    }
 
-	/*public function nextState() {
-	    return ScrumStickerState::getNextState($this->state);
-	}
+    public function getNumSp() {
+        $count = 0;
+        $stickers = $this->getStickers();
+        foreach ($stickers as $sticker) {
+            $count += (int) $sticker->issue_sp;
+        }
 
-	public function prevState() {
-	    return ScrumStickerState::getPrevState($this->state);
-	}*/
-
-	public function loadStream($raw) {
-//	    $data = [];
-//	    foreach ($raw as $key => $value) {
-//	    	if (strpos($key, 's_') === 0)
-//	    		$data[mb_substr($key, 2)] = $value;
-//	    }
-
-	    parent::loadStream($raw);
-
-//	    if (isset($raw['with_issue'])) {
-//	    	if ($this->_issue === null)
-//	    		$this->_issue = new Issue($this->issueId);
-//	    	$this->_issue->loadStream($raw);
-//	    }
-	}
+        return $count;
+    }
 }
