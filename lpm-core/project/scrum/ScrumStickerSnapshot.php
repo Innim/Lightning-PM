@@ -3,52 +3,60 @@
  * Архив scrum досок.
  */
 class ScrumStickerSnapshot extends LPMBaseObject
-{/*
+{
+    /**
+     * Загружает список снепшотов по идентификатору проекта (вначале новые).
+     * @param int $projectId
+     * @return ScrumStickerSnapshot[]
+     * @throws DBException
+     * @throws Exception
+     */
 	public static function loadList($projectId) {
 		$db = self::getDB();
+        $projectId = (int) $projectId;
 
-		$states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS, 
-			ScrumStickerState::TESTING, ScrumStickerState::DONE]);
-
-		$sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
-			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
-		  FROM `%1\$s` `s` 
-    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
-    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
-     	 WHERE `i`.`projectId` = ${projectId} AND `i`.`deleted` = 0 
-     	   AND `s`.`state` IN (${states})
- 	  ORDER BY `i`.`priority` DESC
+        // TODO: нужно ли ограничить как-то?
+        // Выбираем (пока все) записи по переданному проекту
+        $sql = <<<SQL
+        SELECT * FROM `%1\$s` WHERE `%1\$s`.`pid` = '${projectId}'
+        ORDER BY `%1\$s`.`created` DESC
 SQL;
 
-		return StreamObject::loadObjList($db, 
-			[$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS], __CLASS__);
+		return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
 	}
 
-	/**
-	 * Загружает стикер по идентификатору задачи
-	 * @param  int $issueId 
-	 * @return ScrumSticker
-	 *//*
-	public static function load($issueId) {
-		$db = self::getDB();
+    /**
+     * Загружает данные снепшота по идентификатору
+     * @param $snapshotId
+     * @return ScrumStickerSnapshot|null
+     * @throws DBException
+     * @throws Exception
+     */
+//	public static function load($snapshotId)
+//    {
+//        $snapshotId = (int) $snapshotId;
+//
+//        $db = self::getDB();
+//
+//        /*$sql = <<<SQL
+//		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
+//			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
+//		  FROM `%1\$s` `s` 
+//    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id` 
+//    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
+//     	 WHERE `s`.`issueId` = ${issueId} AND `i`.`deleted` = 0 
+//SQL;*/
+//        $sql = <<<SQL
+//        SELECT * FROM `%1\$s` WHERE `%1\$s`.`sid` = '${$snapshotId}'
+//SQL;
+//
+//        $list = StreamObject::loadObjList($db,
+//            [$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS], __CLASS__);
+//
+//        return empty($list) ? null : $list[0];
+//    }
 
-		$sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
-			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
-		  FROM `%1\$s` `s` 
-    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id` 
-    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
-     	 WHERE `s`.`issueId` = ${issueId} AND `i`.`deleted` = 0 
-SQL;
-
-		$list = StreamObject::loadObjList($db, 
-			[$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS], __CLASS__);
-
-		return empty($list) ? null : $list[0];
-	*/
-
-	private static function __log($value){
+	public static function __log($value){
 		GMLog::getInstance()->logIt(
 			GMLog::getInstance()->logsPath . 'cmx_log', $value);
 	}
@@ -59,7 +67,7 @@ SQL;
      * @param $userId
      * @throws Exception
      */
-	public static function createSnapshot($projectId, $userId){
+	public static function createSnapshot($projectId, $userId) {
 		// получаем список всех стикеров на текущей доске
 		$stickers = ScrumSticker::loadList($projectId);
 
@@ -233,13 +241,13 @@ SQL;
 	}*/
 
 	public function loadStream($raw) {
-	    $data = [];
-	    foreach ($raw as $key => $value) {
-	    	if (strpos($key, 's_') === 0)
-	    		$data[mb_substr($key, 2)] = $value;
-	    }
+//	    $data = [];
+//	    foreach ($raw as $key => $value) {
+//	    	if (strpos($key, 's_') === 0)
+//	    		$data[mb_substr($key, 2)] = $value;
+//	    }
 
-	    parent::loadStream($data);
+	    parent::loadStream($raw);
 
 //	    if (isset($raw['with_issue'])) {
 //	    	if ($this->_issue === null)

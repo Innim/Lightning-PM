@@ -246,7 +246,7 @@ class IssueService extends LPMBaseService
 
 	/**
 	 * Убирает в архив стикеры с доски
-	 * @param  int $projectId Идентификатор проекта
+	 * @param int $projectId Идентификатор проекта
 	 * @return 
 	 */
 	public function removeStickersFromBoard($projectId) {
@@ -254,7 +254,29 @@ class IssueService extends LPMBaseService
 
 	    try {
 			// прежде чем отправлять все задачи в архив, делаем snapshot доски
-			ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
+			// ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
+			$list = ScrumStickerSnapshot::loadList($projectId);
+
+            $values = "";
+
+            foreach ($list as $item) {
+                $values .= $item->id . " " . $item->pid . " " . $item->created . " " . $item->creatorId . "\n";
+            }
+
+            ScrumStickerSnapshot::__log("values: \n" . $values);
+            
+            if (!empty($list)) {
+                $items = ScrumStickerSnapshotItem::loadList($list[0]->id);
+                $values = "";
+                foreach ($items as $element) {
+                    $values .= $element->toString();
+                }
+
+                ScrumStickerSnapshot::__log("elements count: " . count($items));
+                ScrumStickerSnapshot::__log("elements: \n" . $values);
+            } else {
+                
+            }
 
 			// TODO: пока так
 			return $this->answer();
