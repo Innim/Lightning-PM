@@ -1,0 +1,101 @@
+<?php
+/* 
+Требуются: 
+    $project - проект
+    $snapshots - список снимков доски (обязателен, если не задан $snapshot)
+Опционально:
+    $snapshot - данные конкретного снимка, если задано - будет показан он, если нет - список
+*/
+?>
+<article id="<?=isset($snapshot) ? 'scrumBoard' : 'scrumSnapshot'?>" data-project-id="<?=$project->id;?>" class="hide-sp">
+    <h1><?lpm_print_header();?></h1>
+    <?php if (!isset($snapshot)): ?>
+    <h3>SCRUM архив:</h3>
+        <div class="scrum-snapshot-list">
+            <?php if (empty($snapshots)): ?>
+            <p class="no-items">Нет записей</p>
+            <?php else:?>
+            <ul>
+                <?php foreach ($snapshots as $snapshot): ?>
+                <li>
+                    <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot #<?=$snapshot->id?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+            <?php endif;?>
+        </div>
+    <?php else: ?>
+        <a href="<?=$snapshot->getUrl()?>"><h3><u>SCRUM архив:</u></h3></a>
+        <div class="scrum-snapshot-stat">
+            <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->id?></i> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+            <span class="num-issues">Всего: <?=$snapshot->getNumStickers()?> шт, <?=$snapshot->getNumSP()?> SP</span>
+        </div>
+
+        <table class="scrum-board-table">
+            <thead>
+            <tr>
+                <th class="col-todo">TO DO<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+                <th class="col-in_progress">В работе<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+                <th class="col-testing">Тестируется<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+                <th class="col-done">Готово<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php
+            $user = lpm_get_user();
+
+            // Просто сначала распределим по столбцам
+            $stickersByState = [];
+            $count = 0;
+
+            $stickers = $snapshot->getStickers();
+            foreach ($stickers as $sticker)
+            {
+                if (!isset($stickersByState[$sticker->issue_state]))
+                    $stickersByState[$sticker->issue_state] = [];
+
+                $stickersByState[$sticker->issue_state][] = $sticker;
+                $count = max(count($stickersByState[$sticker->issue_state]), $count);
+            }
+
+            $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
+                ScrumStickerState::TESTING, ScrumStickerState::DONE];
+            $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+
+            ?>
+            <tr>
+                <?php foreach ($columns as $j => $state):?>
+                <td class="scrum-board-col <?=$colStyles[$j];?>">
+                    <?php for ($i = 0; $i < $count; ++$i):?>
+                    <?php
+                    $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
+                        $stickersByState[$state][$i] : null;
+                    if ($sticker):
+                    $sp = (int) $sticker->issue_sp;
+                    if ($sp == 0)
+                    $color = 'white';
+                    else if ($sp <= 3)
+                    $color = 'green';
+                    else if ($sp <= 5)
+                    $color = 'yellow';
+                    else if ($sp <= 8)
+                    $color = 'orange';
+                    else
+                    $color = 'red';
+                    ?>
+                    <div id="scrum-sticker-<?=$sticker->issue_uid;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issue_uid;?>" data-sticker-state="<?=$sticker->issue_state;?>" data-sticker-sp="<?=$sp;?>">
+                        <span class="sticker-issue-id">#<?=$sticker->issue_pid;?></span>
+                        <a href="<?=$sticker->getURL4View();?>"><?=$sticker->issue_name;?><span class="snapshot-sticker-issue-sp">(<?=$sp;?> SP)</span></a>
+                        <span class="sticker-issue-members"><?php
+                        foreach ($sticker->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
+                    </div>
+                    <?php endif;?>
+                    <?php endfor;?>
+                </td>
+                <?php endforeach;?>
+            </tr>
+            <?php //endfor;?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</article>

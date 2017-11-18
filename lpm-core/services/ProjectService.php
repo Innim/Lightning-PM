@@ -20,7 +20,7 @@ class ProjectService extends LPMBaseService
 		
 		foreach ($userIds as $i => $userId) {
 			if ($i > 0) $sql .= ', ';
-			$sql .= "( '" . $userId . "', '" . Project::ITYPE_PROJECT . "', '" . $projectId . "' )";
+			$sql .= "( '" . $userId . "', '" . LPMInstanceTypes::PROJECT . "', '" . $projectId . "' )";
 		}
 		
 		if (!$this->_db->queryt( $sql, LPMTables::MEMBERS )) {

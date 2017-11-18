@@ -24,7 +24,7 @@ class Comment extends LPMBaseObject
 	}
 
 	public static function getIssuesListByProject($projectId, $from = 0, $limit = 0) {
-		$instanceType = Issue::ITYPE_ISSUE;
+		$instanceType = LPMInstanceTypes::ISSUE;
 		$limitStr = $limit > 0 ? 'LIMIT ' . $from . ',' . $limit : '';
 
 		$sql = <<<SQL

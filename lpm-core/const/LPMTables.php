@@ -79,5 +79,13 @@ class LPMTables {
      *  Записи о отправленных письмах для восстановления пароля
      */
     const RECOVERY_EMAILS = 'recovery_emails';
+    /**
+     * Список scrum снепшотов по проектам
+     */
+	const SCRUM_SNAPSHOT_LIST = 'scrum_snapshot_list';
+    /**
+     * Данные scrum снепшотов
+     */
+    const SCRUM_SNAPSHOT = 'scrum_snapshot';
 }
 ?>

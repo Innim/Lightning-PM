@@ -9,7 +9,7 @@ class Issue extends MembersInstance
 	 * Выборка происходит из таблиц:
 	 * - задач - i
 	 * - пользователей - u
-	 * - проектое - p
+	 * - проектов - p
 	 * - счетчиков задачи - cnt	 
 	 * @param  string $where       
 	 * @param  string $extraSelect 
@@ -118,7 +118,7 @@ SQL;
 
 				self::$_listByUser[$memberId] = self::loadList(
 					// только задачи, в которых я участник
-					'`i`.`id` = `m`.`instanceId` AND `m`.`instanceType` = ' . Issue::ITYPE_ISSUE . 
+					'`i`.`id` = `m`.`instanceId` AND `m`.`instanceType` = ' . LPMInstanceTypes::ISSUE . 
 					' AND `m`.`userId` = ' . $memberId . 
 					// открытые
 					' AND `i`.`status` = ' . Issue::STATUS_IN_WORK .
@@ -159,7 +159,7 @@ SQL;
 									"VALUES ('" . $issueId . "', '1') " .
 					   "ON DUPLICATE KEY UPDATE `commentsCount` = " . 
 							"(SELECT COUNT(*) FROM `%2\$s` " .
-							  "WHERE `%2\$s`.`instanceType` = '" . Issue::ITYPE_ISSUE . "' " .
+							  "WHERE `%2\$s`.`instanceType` = '" . LPMInstanceTypes::ISSUE . "' " .
 								"AND `%2\$s`.`instanceId` = '" . $issueId . "')";
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS );
@@ -170,7 +170,7 @@ SQL;
 									"VALUES ('" . $issueId . "', '" . $count . "') " .
 					   "ON DUPLICATE KEY UPDATE `imgsCount` = " . 
 							"(SELECT COUNT(*) FROM `%2\$s` " .
-							  "WHERE `%2\$s`.`itemType` = '" . Issue::ITYPE_ISSUE . "' " .
+							  "WHERE `%2\$s`.`itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
 								"AND `%2\$s`.`itemId` = '" . $issueId . "' ".
 								"AND `%2\$s`.`deleted` = 0)";
 		$db = LPMGlobals::getInstance()->getDBConnect();
@@ -281,8 +281,6 @@ SQL;
 	    }
 	}
 
-	const ITYPE_ISSUE      	= 1;
-	
 	const TYPE_DEVELOP     	= 0;
 	const TYPE_BUG         	= 1;
 	const TYPE_SUPPORT     	= 2;

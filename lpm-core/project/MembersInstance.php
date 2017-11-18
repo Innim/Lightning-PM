@@ -1,7 +1,6 @@
 <?php
 class MembersInstance extends LPMBaseObject
 {
-	
 	protected $_members = null;
 	
 	public function getMembers() {

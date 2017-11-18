@@ -8,7 +8,8 @@ class ProjectPage extends BasePage
 	const PUID_COMMENTS  = 'comments';
 	const PUID_ISSUE   = 'issue';
 	const PUID_SCRUM_BOARD = 'scrum_board';
-	
+	const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
+
 	/**
 	 * 
 	 * @var Project
@@ -40,21 +41,31 @@ class ProjectPage extends BasePage
 		if ($engine->getParams()->suid == '' 
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
-		// Если это scrum проект - добавляем новый подразде
+		// Если это scrum проект - добавляем новый подраздел
 		if ($this->_project->scrum)
+		{
 			$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
+            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
+		}
 
-		if (!parent::init()) return false;
+		if (!parent::init())
+            return false;
 		
 		// проверим, можно ли текущему пользователю смотреть этот проект
-		if (!$user = LightningEngine::getInstance()->getUser()) return false;
+		if (!$user = LightningEngine::getInstance()->getUser())
+            return false;
+
 		if (!$user->isModerator()) {
 			$sql = "SELECT `instanceId` FROM `%s` " .
 			                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
-							   "AND `instanceType` = '" . Project::ITYPE_PROJECT . "' " .
-							   "AND `userId`       = '" . $user->userId . "'";		
-			if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) return false;
-			if ($query->num_rows == 0) return false;
+							   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+							   "AND `userId`       = '" . $user->userId . "'";
+
+			if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS ))
+                return false;
+
+			if ($query->num_rows == 0)
+                return false;
 		}
 		
 		$iCount = (int)$this->_project->getImportantIssuesCount();
@@ -87,15 +98,15 @@ class ProjectPage extends BasePage
 				$issue->getMembers();	
 				Issue::$currentIssue = $issue;
 				
-				Comment::setCurrentInstance( Issue::ITYPE_ISSUE, $issue->id );
+				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
 
 				$this->_title  =$issue->name .' - '. $this->_project->name ;
 				$this->_pattern = 'issue';
 				ArrayUtils::remove( $this->_js,	'project' );
 				array_push( $this->_js,	'issue' );
 			} 
-		} 
-		
+		}
+
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) 
 		{			
@@ -148,7 +159,23 @@ class ProjectPage extends BasePage
 		{
 			$this->addTmplVar('project', $this->_project);
 			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
-		}
+		} else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
+            $this->addTmplVar('project', $this->_project);
+            $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
+            $this->addTmplVar('snapshots', $snapshots);
+
+            $sid = (int) $this->getParam(3);
+
+            if ($sid > 0)
+            {
+                foreach ($snapshots as $snapshot) {
+                    if ($snapshot->id == $sid) {
+                        $this->addTmplVar('snapshot', $snapshot);
+                        break;
+                    }
+                }
+            }
+        }
 		
 		return $this;
 	}
@@ -272,7 +299,7 @@ class ProjectPage extends BasePage
 				else {
 					// выберем из базы текущих участников задачи
 					$sql = "SELECT `userId` FROM `%s` " .
-							"WHERE `instanceType` = '" . Issue::ITYPE_ISSUE . "' " .
+							"WHERE `instanceType` = '" . LPMInstanceTypes::ISSUE . "' " .
 						      "AND `instanceId` = '" . $issueId . "'";
 					if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) {
 						return $engine->addError( 'Ошибка загрузки участников' );
@@ -301,7 +328,7 @@ class ProjectPage extends BasePage
 				
 				// сохраняем исполнителей задачи
 				$sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
-							     "VALUES ( ?, '" . Issue::ITYPE_ISSUE . "', '" . $issueId . "' )";
+							     "VALUES ( ?, '" . LPMInstanceTypes::ISSUE . "', '" . $issueId . "' )";
 					
 				if (!$prepare = $this->_db->preparet( $sql, LPMTables::MEMBERS )) {
 					if (!$editMode)
@@ -337,7 +364,7 @@ class ProjectPage extends BasePage
 										"WHERE `imgId` IN (".implode(',',$imgIds).") ".
 										 "AND `deleted` = '0' ".
 										 "AND `itemId`='".$issueId."' ".
-										 "AND `itemType`='".Issue::ITYPE_ISSUE."'";
+										 "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
 							$this->_db->queryt($sql, LPMTables::IMAGES);
 						}
 					}
@@ -347,7 +374,7 @@ class ProjectPage extends BasePage
 						//считаем из базы кол-во картинок, имеющихся для задачи
 						$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
 							"WHERE `itemId` = '" . $issueId. "'".
-							"AND `itemType` = '" . Issue::ITYPE_ISSUE . "' " .
+							"AND `itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
 							"AND `deleted` = '0'";
 						
 						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) 
@@ -446,7 +473,7 @@ class ProjectPage extends BasePage
             array( LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT ), 
             'issues', 
             'scr_',
-           	Issue::ITYPE_ISSUE, 
+			LPMInstanceTypes::ISSUE, 
            	$issueId,
            	false
         );  
