@@ -2,7 +2,9 @@
 /* 
 Требуются: 
     $project - проект
-    $stickers - список стикеров
+    $snapshots - список снимков доски (обязателен, если не задан $snapshot)
+Опционально:
+    $snapshot - данные конкретного снимка, если задано - будет показан он, если нет - список
 */
 ?>
 <article id="<?=isset($snapshot) ? 'scrumBoard' : 'scrumSnapshot'?>" data-project-id="<?=$project->id;?>" class="hide-sp">
