@@ -12,6 +12,9 @@
     <?php if (!isset($snapshot)): ?>
     <h3>SCRUM архив:</h3>
         <div class="scrum-snapshot-list">
+            <?php if (empty($snapshots)): ?>
+            <p class="no-items">Нет записей</p>
+            <?php else:?>
             <ul>
                 <?php foreach ($snapshots as $snapshot): ?>
                 <li>
@@ -19,6 +22,7 @@
                 </li>
                 <?php endforeach; ?>
             </ul>
+            <?php endif;?>
         </div>
     <?php else: ?>
         <a href="<?=$snapshot->getUrl()?>"><h3><u>SCRUM архив:</u></h3></a>
