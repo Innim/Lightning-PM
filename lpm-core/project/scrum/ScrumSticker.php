@@ -168,7 +168,7 @@ SQL;
 	    		$data[mb_substr($key, 2)] = $value;
 	    }
 
-	    parent::loadStream($data);
+	    parent::loadStream(empty($data) ? $raw : $data);
 
 	    if (isset($raw['with_issue'])) {
 	    	if ($this->_issue === null)

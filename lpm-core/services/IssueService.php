@@ -246,14 +246,17 @@ class IssueService extends LPMBaseService
 
 	/**
 	 * Убирает в архив стикеры с доски
-	 * @param  int $projectId Идентификатор проекта
+	 * @param int $projectId Идентификатор проекта
 	 * @return 
 	 */
 	public function removeStickersFromBoard($projectId) {
 		$projectId = (int)$projectId;
 
 	    try {
-	    	$state = ScrumStickerState::ARCHIVED;
+			// прежде чем отправлять все задачи в архив, делаем snapshot доски
+			ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
+
+			$state = ScrumStickerState::ARCHIVED;
 	    	$activeStates = implode(',', ScrumStickerState::getActiveStates());
 
 	    	$db = $this->_db;
