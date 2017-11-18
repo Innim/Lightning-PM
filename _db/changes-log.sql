@@ -85,14 +85,14 @@ ALTER TABLE `lpm_user_auth` ADD INDEX(`userId`);
 
 ALTER TABLE `lpm_users` DROP COLUMN `cookieHash`;
 
+-- 2017-11-03 18:00:00
+
 CREATE TABLE `lpm_scrum_snapshot_list`
 ( `id` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор snapshot-а' ,
   `pid` INT(11) NOT NULL COMMENT 'Идентификатор проекта' ,
   `creatorId` BIGINT(19) NOT NULL COMMENT 'Идентификатор создателя snapshot-а' ,
   `created` DATETIME NOT NULL COMMENT 'Время создания snapshot-а' ,
   PRIMARY KEY (`id`)) ENGINE = InnoDB;
-
--- 2017-11-03 16:49:00
 
 CREATE TABLE `lpm_scrum_snapshot` (
   `id` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи' ,
@@ -105,4 +105,4 @@ CREATE TABLE `lpm_scrum_snapshot` (
   `issue_priority` TINYINT(2) NOT NULL COMMENT 'Приоритет задачи' ,
   PRIMARY KEY (`id`)) ENGINE = InnoDB;
 
--- 2017-11-03 17:03:00
+-- 2017-11-18 10:03:00
