@@ -399,8 +399,8 @@ class ProjectPage extends BasePage
                                     array_push($saved, $testerId);
                                 }
                             }
+                            $prepare->close();
                         }
-                        $prepare->close();
                     }
 
 					//удаление старых изображений
