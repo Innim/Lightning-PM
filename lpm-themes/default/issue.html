@@ -58,7 +58,17 @@
                 <?php foreach ($issue->getMembers() as $i => $member) {?><?=$i>0?', ':''?> <?=$member->getLinkedName();?><?php }?>
             </span>
             <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
-        </li>    
+        </li>
+        <li>
+            <?php $testers=$issue->getTesters(); ?>
+            <?php if (!empty($testers)): ?>
+            <span class="label">Тестеры</span>
+            <span class="value">
+                <?php foreach ($testers as $i => $tester) {?><?=$i>0?', ':''?> <?=$tester->getLinkedName();?><?php }?>
+            </span>
+            <?php endif; ?>
+            <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>"/>
+        </li>
         <li class="desc">        
             <div class="value"><?=$issue->getDesc();?></div>
         </li>

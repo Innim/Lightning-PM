@@ -111,6 +111,78 @@ issuePage.removeIssueMember = function(e) {
     selectElement.appendChild( option, i );
 };
 
+issuePage.addIssueTester = function() {
+    /**
+     * @type HTMLSelectElement
+     */
+    var selectElement = document.getElementById( 'addIssueTesters' );
+
+    var option = selectElement.options[selectElement.selectedIndex];
+
+    /**
+     * @type HTMLOListElement
+     */
+
+    var testers = document.getElementById( 'issueTesters' );
+
+    /**
+     * @type HTMLOListElement
+     */
+    var li = document.createElement( 'li' );
+
+    /**
+     * @type HTMLSpanElement
+     */
+    var nameLabel = document.createElement( 'span' );
+    nameLabel.innerHTML = option.innerHTML;
+    nameLabel.className = 'user-name';
+
+    /**
+     * @type HTMLLinkElement
+     */
+    var idField = document.createElement( 'input' );
+    idField.type  = 'hidden';
+    idField.name  = 'testers[]';
+    idField.value = option.value;
+
+    /**
+     * @type HTMLButtonElement
+     */
+    var removeBtn = document.createElement( 'a' );
+    //removeBtn.innerHTML = 'Удалить';
+    removeBtn.className = 'remove-btn';
+    removeBtn.onclick   = issuePage.removeIssueTester;
+
+    li.appendChild( nameLabel );
+    li.appendChild( idField   );
+    li.appendChild( removeBtn );
+
+    testers.appendChild( li );
+
+    selectElement.removeChild( option );
+    selectElement.selectedIndex = 0;
+};
+
+issuePage.removeIssueTester = function(e) {
+    var li           = e.currentTarget.parentNode;
+
+    var userId       = $( 'input[type=hidden][type=testers\[\]]', li ).attr( 'value' );
+    var userName     = $( 'span.user-name', li ).html();
+
+    var option       = document.createElement( 'option' );
+    option.value     = userId;
+    option.innerHTML = userName;
+
+    if (li.parentNode)
+        li.parentNode.removeChild( li );
+
+    var selectElement = document.getElementById( 'addIssueTesters' );
+    for (var i = 1; i < selectElement.options.length; i++) {
+        if (userName < selectElement.options[i].innerHTML) break;
+    }
+    selectElement.appendChild( option, i );
+};
+
 issuePage.updatePriorityVals = function () {
     issuePage.setPriorityVal( $('input[type=range]#priority').val() );
     //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
@@ -538,12 +610,24 @@ issuePage.setEditInfo = function () {
     );
     // исполнители
     var memberIds = $( "#issueInfo li input[name=members]" ).val() .split( ',' );
-    var i,l = 0;
+    var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
         $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'selected' );
         issuePage.addIssueMember();
     }
+
+    // Тестеры
+    var testerIds = $( "#issueInfo li input[name=testers]" ).val() .split( ',' );
+    l = testerIds.length;
+    for (i = 0; i < l; i++) {
+        var testerId = testerIds[i];
+        if (testerId.length > 0) {
+            $("#addIssueTesters option[value=" + testerId + "]").attr('selected', 'selected');
+            issuePage.addIssueTester();
+        }
+    }
+
     //$( "#issueForm form" ).value( $( "" ) );
     // описание
     // пришлось убрать, потому что там уже обработанное описание - с ссылками и тп

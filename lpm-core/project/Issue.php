@@ -4,6 +4,7 @@ class Issue extends MembersInstance
 	public static $currentIssue;
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
+    protected $_testers;
 	
 	/**
 	 * Выборка происходит из таблиц:
@@ -615,12 +616,40 @@ SQL;
 		return $res;
 	}
 
+    public function getTesters() {
+        if ($this->_testers == null && !$this->loadTesters())
+            return array();
+        return $this->_testers;
+    }
+
+    public function getTesterIds() {
+        if ($this->_testers == null && !$this->loadTesters())
+            return array();
+
+        $arr = array();
+        foreach ($this->_testers as $tester) {
+            array_push( $arr, $tester->userId );
+        }
+        return $arr;
+    }
+
+    public function getTesterIdsStr() {
+        return implode( ',', $this->getTesterIds() );
+    }
+
 	protected function loadMembers() {
 		$this->_members = Member::loadListByIssue( $this->id );
 		if ($this->_members === false) 
 			throw new Exception( 'Ошибка при загрузке списка исполнителей задачи' );
 		return true;
 	}
+
+	protected function loadTesters() {
+	    $this->_testers = Member::loadListByIssueForTest($this->id);
+	    if ($this->_testers === false)
+	        throw new Exception('Ошибка при загрузке списка тестеров задачи');
+	    return $this->_testers;
+    }
 
 	/**
 	 * 
