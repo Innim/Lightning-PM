@@ -90,7 +90,7 @@ SQL;
     }
 
     protected function loadMembers() {
-        $this->_members = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->sid);
+        $this->_members = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->id);
 
         if ($this->_members === false)
             throw new Exception( 'Ошибка при загрузке снепшота списка исполнителей задачи' );
@@ -122,6 +122,6 @@ SQL;
      */
     public function getURL4View() {
         $curPage = LightningEngine::getInstance()->getCurrentPage();
-        return $curPage->getBaseUrl(ProjectPage::PUID_ISSUE, $this->id);
+        return $curPage->getBaseUrl(ProjectPage::PUID_ISSUE, $this->issue_pid);
     }
 }
