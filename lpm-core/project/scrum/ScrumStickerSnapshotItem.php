@@ -90,7 +90,7 @@ SQL;
     }
 
     protected function loadMembers() {
-        $this->_members = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->sid);
+        $this->_members = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->id);
 
         if ($this->_members === false)
             throw new Exception( 'Ошибка при загрузке снепшота списка исполнителей задачи' );
