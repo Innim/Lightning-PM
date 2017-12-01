@@ -91,6 +91,10 @@ class PageConstructor
 	public static function getIssue() {
 		return Issue::$currentIssue ? Issue::$currentIssue : new Issue();
 	}
+
+	public static function getIssueLabels() {
+        return Issue::getLabels();
+    }
 	
 	public static function getWorkersList() {
 		//if (!WorkStudyPage::isCurrent()) return array();		

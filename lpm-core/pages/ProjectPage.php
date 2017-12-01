@@ -85,6 +85,12 @@ class ProjectPage extends BasePage
 			 if ($_POST['actionType'] == 'addIssue') $this->saveIssue();
 			 elseif ($_POST['actionType'] == 'editIssue' && isset( $_POST['issueId'] )) 
 			 	$this->saveIssue( true );
+			 elseif ($_POST['actionType'] == 'editIssueLabel') {
+			     $this->saveLabel();
+             }
+             elseif ($_POST['actionType'] == 'removeIssueLabel') {
+                 $this->removeLabel();
+             }
 		}
 		
 		// может быть это страница просмотра задачи?
@@ -275,6 +281,14 @@ class ProjectPage extends BasePage
 							$completeDateArr[1] . ' ' .
 							'00:00:00';
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
+
+			$labelId = (int) $_POST['issueLabel'];
+			$label = null;
+			if ($labelId > 0)
+			    $label = Issue::getLabel($labelId);
+
+			if ($label != null)
+			    $_POST['name'] = "[" . $label["label"] . "] " . $_POST['name'];
 
 			// из дробных разрешаем только 1/2
             $hours = $_POST['hours'];

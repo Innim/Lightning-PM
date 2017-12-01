@@ -1456,3 +1456,38 @@ div.ftp
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
+
+.container select.issue-labels {
+	width: 20%;
+	display: inline-block;
+	float: left;
+}
+
+.container input.edit-issue-name {
+	width: 78%;
+	display: inline-block;
+	float: right;
+}
+
+.container span.edit-issue-name-container {
+	width: 91%;
+	display: block;
+	margin: auto;
+}
+
+#addIssueLabelFormContainer #issueLabelText {
+	width: 300px;
+}
+
+#addIssueLabelFormContainer div {
+	padding: 5px 0;
+}
+
+#addIssueLabelFormContainer div.align-right {
+	text-align: right;
+}
+
+#isAllProjectsCheckbox {
+	vertical-align: middle;
+}
+

@@ -7,10 +7,19 @@
     <h3>Добавить задачу</h3>
     <?php $issue = lpm_get_issue();?>
     <div class="validateError"><? lpm_print_errors(); ?></div>
-    <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data" onsubmit="return removeImage(imageId);"> 
+    <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data" onsubmit="return removeImage(imageId);">
       <ol>
-        <li>      
-            <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>"/>
+        <li>
+            <span class="edit-issue-name-container">
+                <select class="issue-labels" onchange="issuePage.addIssueLabel();" id="editIssueLabel" name="issueLabel">
+                    <option>Без метки</option>
+                    <?php foreach( lpm_get_issue_labels() as $label): ?>
+                    <option value="<?=$label['id'];?>"><?=$label['label'];?></option>
+                    <? endforeach; ?>
+                    <option>Добавить новую метку</option>
+                </select>
+                <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>" class="edit-issue-name"/>
+            </span>
         </li>
         <li>
             <fieldset class="radio-group">
@@ -125,6 +134,19 @@
                 <button type="reset" onclick="showMain();">Отмена</button>
             </p>   
         </li>
-      </ol>     
+      </ol>
+        <input type="hidden" value="<?=$project->getID();?>" id="issueProjectID">
     </form>
+    <div id="addIssueLabelFormContainer" style="display: none;">
+        <form id="addIssueLabelForm">
+            <div>
+                <label for="issueLabelText">Метка: </label>
+                <input name="labelText" id="issueLabelText"/>
+            </div>
+            <div class="align-right">
+                <input type="checkbox" name="isAllProjects" id="isAllProjectsCheckbox"/>
+                <label for="isAllProjectsCheckbox">для всех проектов</label>
+            </div>
+        </form>
+    </div>
 </article>

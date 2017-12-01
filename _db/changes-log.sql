@@ -114,3 +114,12 @@ CHANGE `issue_sp` `issue_sp` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COM
 -- 2017-12-01 13:01:00
 
 ALTER TABLE `lpm_issues` CHANGE `hours` `hours` FLOAT NOT NULL;
+
+-- 2017-12-01 14:12:00
+
+CREATE TABLE `task`.`lpm_issue_labels` (
+  `id` INT NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор' ,
+  `projectId` INT NOT NULL DEFAULT '0' COMMENT 'Проект (0 если метка общая)' ,
+  `label` VARCHAR(255) NOT NULL COMMENT 'Текст метки' ,
+  PRIMARY KEY (`id`), INDEX `projectId` (`projectId`)
+) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci COMMENT = 'Метки для задач';

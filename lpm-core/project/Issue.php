@@ -202,8 +202,76 @@ SQL;
 		$res = $db->queryt( $sql, LPMTables::MEMBERS, LPMTables::ISSUES, LPMTables::PROJECTS );
 		return $res ? (int)$res->fetch_assoc()['count'] : 0;
 	}
-	
-	public static function loadTotalCountIssuesByProject($projectId) 
+
+    /**
+     * Возвращает список стандартных меток для задачи.
+     * @return array[{id, label}...n] Список меток для задачи.
+     */
+	public static function getLabels() {
+	    $labels = array();
+        $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
+	    $sql = "SELECT `id`, `label` FROM `%s` WHERE `projectId` = " . (int) $projectId . " OR `projectId` = 0";
+
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
+
+        while ($array = $res->fetch_assoc()) {
+            $labels[] = $array;
+        }
+
+        return $labels;
+    }
+
+    /**
+     * Возвращает данные метки по идентификатору.
+     * @param $id Идентификатор метки.
+     * @return array{id, label} | null Данные метки или null, если метка не найдена.
+     */
+    public static function getLabel($id) {
+        $sql = "SELECT `id`, `label` FROM `%s` WHERE `id` = " . (int) $id;
+
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
+        return $res ? $res->fetch_assoc() : null;
+    }
+
+    /**
+     * Сохраняет метку.
+     * @param $label string Текст метки.
+     * @param $projectId int Идентификатор проекта для которого создается метка (если не передан, то метка будет общей).
+     * @param $id int Идентификатор метки (если не передан, то будет создана новая метка).
+     * @return int|null Идентификатор вставленной/обновленной записи или null в случае ошибки.
+     */
+    public static function saveLabel($label, $projectId = 0, $id = 0) {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $id = ((int)$id > 0) ? (int)$id : "NULL";
+        $projectId = (int) $projectId;
+        $label = $db->escape_string($label);
+
+        $sql = "INSERT INTO `%s` (`id`, `projectId`, `label`) VALUES ('" . $id . "', '" . $projectId . "', '" . $label .
+            "') ON DUPLICATE KEY UPDATE `projectId` = VALUES(`projectId`), `label` = VALUES(`label`), id=LAST_INSERT_ID(id)";
+
+        if ($db->queryt($sql, LPMTables::ISSUE_LABELS))
+            return $db->insert_id;
+        return null;
+    }
+
+    /**
+     * Удаляет метку.
+     * @param $id int Идентификатор метки.
+     * @return bool true в случае успешной операции, иначе false.
+     */
+    public static function removeLabel($id) {
+        $id = (int)$id;
+        if ($id > 0) {
+            $sql = "DELETE FROM `%s` WHERE `id` = " . $id;
+
+            $db = LPMGlobals::getInstance()->getDBConnect();
+            return ($db->queryt( $sql, LPMTables::ISSUE_LABELS )) ? true : false;
+        }
+    }
+
+	public static function loadTotalCountIssuesByProject($projectId)
 	{
 		$sql = "SELECT COUNT(*) AS `count` FROM `%1\$s` WHERE `projectId` = " . $projectId . 
 					" AND `deleted` = 0 ";

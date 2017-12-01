@@ -229,6 +229,13 @@ function lpm_get_issue() {
 }
 
 /**
+ * Возвращает список меток для задачи.
+ */
+function lpm_get_issue_labels() {
+    return PageConstructor::getIssueLabels();
+}
+
+/**
  * Возвращает список пользователей
  */
 function lpm_get_users_list() {

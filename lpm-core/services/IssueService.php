@@ -300,6 +300,24 @@ SQL;
 	
 	    return $this->answer();
 	}
+
+    /**
+     * Добавляет новую метку.
+     * @param $label Текст метки.
+     * @param $isForAllProjects Для всех ли проектов.
+     * @param $projectId Идентификатор проекта (используется в случае, если не для всех проектов).
+     * @return mixed
+     */
+	public function addLabel($label, $isForAllProjects, $projectId) {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+	    $id = Issue::saveLabel($label, ($isForAllProjects ? 0 : $projectId));
+	    if ($id == null) {
+            return $this->error($db->error);
+        } else {
+            $this->add2Answer('id', $id);
+            return $this->answer();
+        }
+    }
 	
 	/**
 	 * Загружает html информации о задаче
