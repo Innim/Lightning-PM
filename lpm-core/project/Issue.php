@@ -344,9 +344,9 @@ SQL;
 		$this->id = $id;
 		
 		$this->_typeConverter->addFloatVars( 
-			'id', 'parentId', 'authorId', 'type', 'status', 'commentsCount' 
+			'id', 'parentId', 'authorId', 'type', 'status', 'commentsCount', 'hours'
 		);
-		$this->_typeConverter->addIntVars( 'priority', 'hours' );
+		$this->_typeConverter->addIntVars( 'priority' );
 		$this->addDateTimeFields( 'createDate', 'startDate', 'completeDate', 'completedDate' );
 		
 		$this->addClientFields( 
@@ -487,6 +487,10 @@ SQL;
 	public function getNormHours(){
 		return $this->hours;
 	}
+
+	public function getStrHours() {
+	    return ($this->hours == .5) ? "1/2" : (string) $this->hours;
+    }
 
 	/**
 	 * Возвращает лейбл для параметра hours

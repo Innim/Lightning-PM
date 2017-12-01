@@ -275,12 +275,16 @@ class ProjectPage extends BasePage
 							$completeDateArr[1] . ' ' .
 							'00:00:00';
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
-            
+
+			// из дробных разрешаем только 1/2
+            $hours = $_POST['hours'];
+            $hours = ($hours == "0.5" || $hours == "0,5" || $hours == "1/2") ? 0.5 : (int)$hours;
+
 			// сохраняем задачу
 			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
 			           		 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
-			           		 		  "'" . $_POST['name'] . "', '" . $_POST['hours'] . "', '" . $_POST['desc'] . "', " .
+			           		 		  "'" . $_POST['name'] . "', '" . $hours . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
 			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
 									  "'" . DateTimeUtils::mysqlDate() . "', " .

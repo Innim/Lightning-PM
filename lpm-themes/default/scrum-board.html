@@ -52,7 +52,7 @@
                     $stickersByState[$state][$i] : null;
                 if ($sticker):
                 $sp = $sticker->getIssue()->hours;
-                if ($sp == 0)
+                if ($sp < 1)
                     $color = 'white';
                 else if ($sp <= 3)
                     $color = 'green';
@@ -62,10 +62,11 @@
                     $color = 'orange';
                 else
                     $color = 'red';
+                $spStr = $sp == .5 ? "1/2" : $sp;
                 ?>
                 <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                     <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
-                    <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span class="sticker-issue-sp">(<?=$sp;?> SP)</span></a>
+                    <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span></a>
                     <span class="sticker-issue-members"><?php 
                     foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
                     <a href="#" onclick="issuePage.changeScrumState(event); return false;" class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
