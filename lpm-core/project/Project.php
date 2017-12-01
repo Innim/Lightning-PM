@@ -70,10 +70,10 @@ class Project extends MembersInstance
 		$db = LPMGlobals::getInstance()->getDBConnect();
         $sql ="SELECT SUM(`hours`) AS `sum` FROM `%s` WHERE `projectId` = ".$projectId." ".
                "AND `deleted` = 0 ".
-               "AND NOT `status` = ".Issue::STATUS_COMPLETED." "; 
+               "AND NOT `status` = ".Issue::STATUS_COMPLETED." ";
         $query = $db->queryt( $sql, LPMTables::ISSUES );
         if (!$query || !($row = $query->fetch_assoc())) return false;
-       	return (int)$row['sum'];
+       	return $row['sum'];
 	}
 	
 	/**

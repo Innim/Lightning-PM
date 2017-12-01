@@ -5,7 +5,7 @@
   <article id="issueInfo" class="container">
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$hours;?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
+		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
         <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
         <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumb-tack" aria-hidden="true"></i></a>
         <?php endif;?>

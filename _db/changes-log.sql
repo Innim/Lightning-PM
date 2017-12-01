@@ -110,3 +110,7 @@ CHANGE `issue_name` `issue_name` varchar(255) COLLATE 'utf8_general_ci' NOT NULL
 CHANGE `issue_sp` `issue_sp` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Количество SP' AFTER `issue_state`;
 
 -- 2017-11-18 10:03:00
+
+-- 2017-12-01 13:01:00
+
+ALTER TABLE `lpm_issues` CHANGE `hours` `hours` FLOAT NOT NULL;
