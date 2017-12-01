@@ -105,4 +105,8 @@ CREATE TABLE `lpm_scrum_snapshot` (
   `issue_priority` TINYINT(2) NOT NULL COMMENT 'Приоритет задачи' ,
   PRIMARY KEY (`id`)) ENGINE = InnoDB;
 
+ALTER TABLE `lpm_scrum_snapshot`
+CHANGE `issue_name` `issue_name` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Название задачи' AFTER `issue_pid`,
+CHANGE `issue_sp` `issue_sp` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Количество SP' AFTER `issue_state`;
+
 -- 2017-11-18 10:03:00
