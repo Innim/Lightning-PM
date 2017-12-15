@@ -73,7 +73,7 @@ class Project extends MembersInstance
                "AND NOT `status` = ".Issue::STATUS_COMPLETED." ";
         $query = $db->queryt( $sql, LPMTables::ISSUES );
         if (!$query || !($row = $query->fetch_assoc())) return false;
-       	return $row['sum'];
+       	return (float)$row['sum'];
 	}
 	
 	/**
