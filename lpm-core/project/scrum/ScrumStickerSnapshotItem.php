@@ -104,7 +104,7 @@ SQL;
 
     public function isMember($userId) {
         if ($this->_members === null) {
-            return Member::hasMember(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->issue_uid, $userId);
+            return Member::hasMember(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->id, $userId);
         } else {
             $found = false;
             foreach ($this->_members as $member) {
@@ -118,7 +118,7 @@ SQL;
     }
 
     public function isTester($userId) {
-        return Member::hasMember(LPMInstanceTypes::ISSUE_FOR_TEST, $this->issue_uid, $userId);
+        return Member::hasMember(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $this->id, $userId);
     }
 
     /**
