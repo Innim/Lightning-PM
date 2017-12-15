@@ -10,7 +10,8 @@ class Issue extends MembersInstance
 	 * - задач - i
 	 * - пользователей - u
 	 * - проектов - p
-	 * - счетчиков задачи - cnt.
+	 * - счетчиков задачи - cnt
+	 * - стикер на доске - st.
 	 * @param  string $where       Условие выборки.
 	 * @param  string $extraSelect Дополнительная строка полей для выборки.
 	 * @param  array  $extraTables Ассоциативный массив дополнительных таблиц для выборки
@@ -125,7 +126,6 @@ SQL;
 	public static function getListByMember($memberId) {
 		if (!isset(self::$_listByUser[$memberId])) {
 			if (LightningEngine::getInstance()->isAuth()) {
-
 		       	/*$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
 		       	`%3\$s`.`name` AS `projectName`,`%4\$s`.* FROM `%1\$s`, `%2\$s`, `%3\$s`,`%4\$s`". 
 				  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
@@ -359,8 +359,7 @@ SQL;
 	
 	//public $baseURL = '';
 	
-	function __construct( $id = 0 )
-	{
+	function __construct($id = 0) {
 		parent::__construct();
 		
 		$this->id = $id;
@@ -368,8 +367,9 @@ SQL;
 		$this->_typeConverter->addFloatVars( 
 			'id', 'parentId', 'authorId', 'type', 'status', 'commentsCount', 'hours'
 		);
-		$this->_typeConverter->addIntVars( 'priority' );
-		$this->addDateTimeFields( 'createDate', 'startDate', 'completeDate', 'completedDate' );
+		$this->_typeConverter->addIntVars('priority');
+		$this->_typeConverter->addBoolVars('isOnBoard');
+		$this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
 		
 		$this->addClientFields( 
 			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
@@ -383,7 +383,8 @@ SQL;
 	{
 	    $obj = parent::getClientObject();
 
-		if ($this->author) $obj->author = $this->author->getClientObject();
+		if ($this->author)
+			$obj->author = $this->author->getClientObject();
 
 	    return $obj;
 	}
