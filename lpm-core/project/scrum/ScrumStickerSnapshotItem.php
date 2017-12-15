@@ -117,6 +117,10 @@ SQL;
         }
     }
 
+    public function isTester($userId) {
+        return Member::hasMember(LPMInstanceTypes::ISSUE_FOR_TEST, $this->issue_uid, $userId);
+    }
+
     /**
      * Путь до оригинальной задачи.
      */
