@@ -57,7 +57,7 @@ SQL;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
 				"ORDER BY FIELD(`i`.`status`, " . Issue::STATUS_WAIT . "," .
 				Issue::STATUS_IN_WORK . "," . Issue::STATUS_COMPLETED . "), " .
-				"`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+				"`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC, `id` ASC";
 
 		array_unshift($args, $sql);
 
@@ -176,7 +176,7 @@ SQL;
 		return StreamObject::singleLoad($issueId, __CLASS__, "", "i`.`id");
 	}
 	
-	public function updateCommentsCounter( $issueId ) {
+	public static function updateCommentsCounter( $issueId ) {
 		$sql = "INSERT INTO `%1\$s` (`issueId`, `commentsCount`) " .
 									"VALUES ('" . $issueId . "', '1') " .
 					   "ON DUPLICATE KEY UPDATE `commentsCount` = " . 
@@ -301,6 +301,28 @@ SQL;
 			}
 					
 	    }
+	}
+
+	/**
+	 * Обновляет значение приоритета задачи.
+	 * @param  Issue  $issue Задача, у которой меняется приоритет.
+	 * @param  int    $delta Изменение приоритета.
+	 */
+	public static function changePriority(Issue $issue, $delta) {
+		$issue->priority = (int)max(0, min($issue->priority + $delta, 100));
+	    $hash = [
+	    	'UPDATE' => LPMTables::ISSUES,
+	    	'SET' => [
+	    		'priority' => $issue->priority 
+	    	],
+	    	'WHERE' => [
+	    		'id' => $issue->id
+	    	]
+	    ];
+
+	    $db = self::getDB();
+	    if (!$db->queryb($hash))
+	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
 	}
 
 	const TYPE_DEVELOP     	= 0;

@@ -184,16 +184,16 @@ issuePage.removeIssueTester = function(e) {
 };
 
 issuePage.updatePriorityVals = function () {
-    issuePage.setPriorityVal( $('input[type=range]#priority').val() );
+    issuePage.setPriorityVal($('input[type=range]#priority').val());
     //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
-    $('.priority-val.circle').each( function (i) {
-        $(this).css( 
-            'backgroundColor', 
-            issuePage.getPriorityColor( parseInt( $(this).text() ) ) 
-        );
-        $(this).text( '' );
+    $('.priority-val.circle').each(function (i) {
+        issuePage.updatePriorityVal($(this), parseInt($(this).text()));
+        $(this).text('');
     });
 };
+issuePage.updatePriorityVal = function ($el, value) {
+    $el.css('backgroundColor', issuePage.getPriorityColor(value));
+}
 
 issuePage.setPriorityVal = function (value) {
     var valStr = Issue.getPriorityStr( value );
@@ -333,23 +333,12 @@ function setCaretPosition(elem, pos ) {
     else elem.focus();
 };
 
-function completeIssue( e ) {    
+function completeIssue(e) {    
     var parent   = e.currentTarget.parentElement;
-    //var fields   = cell.getElementsByTagName( 'input' );
-   // var btn      = cell.getElementsByTagName( 'button' )[0];
-    //btn.disabled = "disabled";
-    
-    var issueId  = $( 'input[name=issueId]', parent ).attr( 'value' );
-    preloader.show();
-    
-    /*for (var i = 0; i < fields.length; i++) {
-        if (fields[i].name == 'issueId') {
-            issueId = fields[i].value;
-            break;
-        }
-    }*/
+    var issueId  = $('input[name=issueId]', parent).attr('value');
     
     if (issueId > 0) {
+        preloader.show();
         srv.issue.complete( 
             issueId, 
             function (res) {
@@ -380,7 +369,89 @@ function completeIssue( e ) {
             }  
         );
     }
-};
+}
+
+issuePage.changePriority = function (e) {
+    var $control = $(e.currentTarget);
+    var $row = $control.parents('tr');
+    var issueId = $('input[name=issueId]', $row).attr('value');
+    var delta = $control.hasClass('priority-up') ? 1 : -1;
+
+    if (issueId > 0) {
+        srv.issue.changePriority(issueId, delta, function (res) {
+            if (res.success) {
+                // alert('ok: ' + res.priority);
+                var priority = res.priority;
+                var priorityStr = Issue.getPriorityStr(priority);
+                $('.priority-val', $row).attr('title', 'Приоритет: ' + priorityStr + 
+                        ' (' + priority + ')').data("value", priority);
+                issuePage.updatePriorityVal($('.priority-val', $row), priority);
+
+                var hintY = e.pageY - 13;
+                $("<span></span>").text(priority).addClass("priority-change-animation").
+                    appendTo($('body')).offset({top:hintY, left:e.pageX - 10}).
+                    animate(
+                        {
+                            opacity: '0',
+                            top: '-=20px'
+                        }, 500, function () {
+                            $(this).remove();
+                        });
+
+                var status = $row.data("status");
+                var date = $row.data("completeDate");
+                var compare = function ($r) {
+                    if ($r.data("status") != status)
+                        return 0;
+                    var p = parseInt($(".priority-val", $r).data("value"));
+                    if (p != priority)
+                        return priority - p;
+                    else if ($r.data("completeDate") != date)
+                        return $r.data("completeDate") - date;
+                    else 
+                        return $r.data("id") - issueId;
+                }
+
+                if (delta < 0) {
+                    var $next = $row;
+                    var $last = null;
+                    while ($next) {
+                        var $next = $next.next();
+
+                        if (compare($next) < 0)
+                        {
+                            $last = $next;
+                        }
+                        else 
+                        {
+                            if ($last)
+                                $last.after($row);
+                            break;
+                        }
+                    }
+                } else {
+                    var $prev = $row;
+                    var $first = null;
+                    while ($prev) {
+                        var $prev = $prev.prev();
+                        if (compare($prev) > 0)
+                        {
+                            $first = $prev;
+                        }
+                        else 
+                        {
+                            if ($first)
+                                $first.before($row);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                srv.err(res);
+            }
+        });
+    }
+}
 
 function restoreIssue( e ) {
     var parent   = e.currentTarget.parentElement;
