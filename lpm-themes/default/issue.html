@@ -5,9 +5,9 @@
   <article id="issueInfo" class="container">
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->getNormHours()) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
+		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
         <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
-        <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumb-tack" aria-hidden="true"></i></a>
+        <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
         <?php endif;?>
     </h3>     
     <div class="issue_copy">
@@ -125,8 +125,8 @@
     <div class="links-bar">
         <?php if ($issue->getProject()->scrum):?>
             <div class="scrum-comments-shortcut">
-                <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i class="fa fa-check-square-o" aria-hidden="true"></i></a>
-                <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i class="fa fa-code-fork" aria-hidden="true"></i></a>
+                <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i class="far fa-check-square" aria-hidden="true"></i></a>
+                <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i class="fas fa-code-branch" aria-hidden="true"></i></a>
             </div>
         <?php endif;?>
         <div class="comments-controls">
