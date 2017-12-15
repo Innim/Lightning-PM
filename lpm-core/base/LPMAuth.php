@@ -126,7 +126,7 @@ class LPMAuth {
 	private function removeExpiredHash($withHashId = 0) {
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		// проверяем, есть ли просроченный хэш по дате его создания
-		$expire = DateTimeUtils::$currentDate - LPMOptions::getInstance()->cookieExpire * 2;
+		$expire = DateTimeUtils::$currentDate - LPMOptions::getInstance()->cookieExpire/* * 2*/; // убрал, не знаю зачем здесь на 2 умножалось
         $currentHashIdCondition = ($withHashId > 0 ? "`id` = '$withHashId' or " : "");
         $sql = "delete from `%s` where (". $currentHashIdCondition. "`hasCreated` < '" . DateTimeUtils::mysqlDate($expire) .
             "') and `userId` = '" . $this->_userId . "'";
@@ -144,9 +144,11 @@ class LPMAuth {
 			// иначе пытаемся авторизоваться по кукам
 			$db = LPMGlobals::getInstance()->getDBConnect();
 			$hash = $db->real_escape_string($_COOKIE[self::COOKIE_HASH]);
+            $expire = DateTimeUtils::$currentDate - LPMOptions::getInstance()->cookieExpire;
 			$sql = "select `%1\$s`.`userId`,`%1\$s`.`email`,`%2\$s`.`id` from `%1\$s`". " 
 						left join `%2\$s` on `%1\$s`.`userId` = `%2\$s`.`userId` " .
 						   	"where `%2\$s`.`cookieHash` = '". $hash ."' ".
+                                "and `%2\$s`.`hasCreated` >= '" . DateTimeUtils::mysqlDate($expire) . "' " .
 						   		"and `%1\$s`.`userId` = '". (float)$_COOKIE[self::COOKIE_USER_ID] ."' limit 0, 1";
 			if ($query = $db->queryt($sql, LPMTables::USERS, LPMTables::USER_AUTH)) {
 				if ($data = $query->fetch_assoc()) {
