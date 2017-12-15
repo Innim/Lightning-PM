@@ -181,6 +181,32 @@ class IssueService extends LPMBaseService
 	}
 
 	/**
+	 * Меняет приоритет задачи.
+	 * @param  int $issueId Идентификатор задачи
+	 * @param  int $delta Изменение приоритета.
+	 * @return {
+	 *     int priority Новое значение приоритета.
+	 * }
+	 */
+	public function changePriority($issueId, $delta) {
+		$issueId = (int)$issueId;
+		$delta   = (int)$delta;
+
+	    try {
+	        $issue = Issue::load($issueId);
+	        if (!$issue)
+	        	return $this->error('Нет такой задачи');
+	        Issue::changePriority($issue, $delta);
+
+	        $this->add2Answer('priority', $issue->priority);
+	    } catch (\Exception $e) { 
+	        return $this->exception($e); 
+	    } 
+	
+	    return $this->answer();
+	}
+
+	/**
 	 * Изменяет состояние стикера
 	 * @param  int $issueId Идентификатор задачи
 	 * @param  int $state   Новое состояние стикера

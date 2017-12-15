@@ -1007,6 +1007,33 @@ table.issues-list td .on-board-state {
 	font-size: 12px;
 	color: #333333;
 }
+table.issues-list td .priority-change-bar {
+	position: absolute;
+	left: 6px;
+	top: 50%;
+	width: 10px;
+	height: 36px;
+	margin-top: -15px;
+	color: #cecece;
+	font-size: 13px;
+}
+table.issues-list td .priority-change-bar:hover {
+	color: #666666;
+}
+table.issues-list td .priority-change-bar .priority-control {
+	position: absolute;
+	cursor: pointer;
+}
+table.issues-list td .priority-change-bar .priority-up {
+	top: 0;
+}
+table.issues-list td .priority-change-bar .priority-down {
+	bottom: 0;
+}
+table.issues-list td .priority-change-animation {
+	position: absolute;
+	user-select: none;
+}
 
 /* просмотр задачи */
 #issueView .info-list.completed-issue .issue-completed-date-row {
