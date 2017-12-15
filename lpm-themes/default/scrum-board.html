@@ -63,8 +63,11 @@
                 else
                     $color = 'red';
                 $spStr = $sp == .5 ? "1/2" : $sp;
+                
+                $issue = $sticker->getIssue();
+                $userRole = $issue->isTester($user->userId) ? 'tester' : ($issue->isMember($user->userId) ? 'mine' : '');
                 ?>
-                <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->getIssue()->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
+                <div id="scrum-sticker-<?=$sticker->issueId;?>" class="scrum-board-sticker <?=$color;?> <?=$userRole;?>" data-issue-id="<?=$sticker->issueId;?>" data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                     <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                     <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span></a>
                     <span class="sticker-issue-members"><?php 

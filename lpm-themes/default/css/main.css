@@ -1365,6 +1365,9 @@ div.ftp
 .scrum-board-sticker.mine {
 	border: solid 2px #1E90FF;
 }
+.scrum-board-sticker.tester {
+	border: solid 2px #EE82EE;
+}
 .scrum-board-sticker a {
 	text-decoration: none;
 }

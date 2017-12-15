@@ -190,7 +190,7 @@ SQL;
         $count = 0;
         $stickers = $this->getStickers();
         foreach ($stickers as $sticker) {
-            $count += (int) $sticker->issue_sp;
+            $count += $sticker->issue_sp;
         }
 
         return $count;
