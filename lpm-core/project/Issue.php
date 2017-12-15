@@ -543,7 +543,20 @@ SQL;
 			}
 			return $finded;
 		}
-	} 
+	}
+
+    public function isTester($userId) {
+        $testers = $this->getTesters();
+        $count = count($testers);
+        if ($count > 0) {
+            foreach ($testers as $tester) {
+                if ($tester->userId == $userId)
+                    return true;
+            }
+        }
+
+        return false;
+    }
 	
 	public function getShortDesc() {
 		return parent::getRich( parent::getShort( $this->desc ) );
