@@ -484,9 +484,9 @@ SQL;
 		return $this->name;
 	}
 
-	public function getNormHours(){
-		return $this->hours;
-	}
+	// public function getNormHours(){
+	// 	return $this->hours;
+	// }
 
 	public function getStrHours() {
 	    return ($this->hours == .5) ? "1/2" : (string) $this->hours;
