@@ -121,6 +121,13 @@ SQL;
         return Member::hasMember(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $this->id, $userId);
     }
 
+    public function getTesters() {
+	    $testers = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $this->id);
+	    if ($testers === false)
+	        $testers = array();
+	    return $testers;
+    }
+
     /**
      * Путь до оригинальной задачи.
      */
