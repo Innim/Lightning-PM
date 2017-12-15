@@ -929,6 +929,9 @@ table tr.verify-issue {
 table.issues-list {
 	
 }
+table.issues-list td {
+	position: relative;
+}
 /* num */
 table.issues-list td:nth-child(1)
 {
@@ -996,6 +999,13 @@ table.issues-list tr.verify-issue td span.comments-count {
 table tr.completed-issue:hover td span.comments-count {   
     background: #dddddd;
     color     : #999999;
+}
+table.issues-list td .on-board-state {
+	position: absolute;
+	left: 1px;
+	top: 0px;
+	font-size: 12px;
+	color: #333333;
 }
 
 /* просмотр задачи */

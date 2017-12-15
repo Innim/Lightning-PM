@@ -16,13 +16,17 @@
 		</tr>
 	</thead>
 	<tbody>
-		<? foreach ($list as $issue) {?>
+		<?php foreach ($list as $issue) {?>
 		<tr class="<?switch($issue->status): 
     	case 0: ?>active-issue<?break;?> 
     	<?case 1: ?>verify-issue<?break;?> 
     	<?case 2: ?>completed-issue<?break;?>
     	<?endswitch;?>">			
-			<td><a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
+			<td>
+    		 <?php if ($issue->isOnBoard()):?>
+    		 <span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
+			 <?php endif; ?>
+			 <a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
              <div class="issue_copy popup-menu">
              	   	<a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
              </div>
@@ -40,12 +44,12 @@
     		</a>
 			 <?if ($issue->commentsCount > 0):?>
                  &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
-                 <?endif;?>
+                 <?php endif; ?>
 			</td>
 			<td class="member-list">
-			   <?foreach ($issue->getMembers() as $i => $member):?>
+			   <?php foreach ($issue->getMembers() as $i => $member): ?>
 			   <?=$i>0?', ':''?><a href="javascript:;" data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
-			   <?endforeach;?>
+			   <?php endforeach; ?>
 			</td>
 			<td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
 			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
