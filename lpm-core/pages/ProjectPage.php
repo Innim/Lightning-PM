@@ -507,11 +507,12 @@ class ProjectPage extends BasePage
 
 					Project::updateIssuesCount(  $issue->projectId );				
 				
-					LightningEngine::go2URL( 
-						$editMode 
-							? $issueURL
-							: $this->_project->getUrl() 
-					);
+					LightningEngine::go2URL($issueURL);
+					// LightningEngine::go2URL( 
+						// $editMode 
+							// ? $issueURL
+							// : $this->_project->getUrl() 
+					// );
 				}
 			}
 		}
