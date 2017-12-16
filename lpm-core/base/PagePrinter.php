@@ -60,8 +60,8 @@ class PagePrinter {
 		PageConstructor::includePattern('issues', compact('list'));
 	}
 	
-	public static function issueForm($project) {
-		PageConstructor::includePattern('issue-form', compact('project'));
+	public static function issueForm($project, $issue) {
+		PageConstructor::includePattern('issue-form', compact('project', 'issue'));
 	}
 	
 	public static function issueView() {

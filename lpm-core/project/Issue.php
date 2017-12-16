@@ -1,7 +1,6 @@
 <?php
 class Issue extends MembersInstance
 {
-	public static $currentIssue;
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
 	

@@ -97,7 +97,6 @@ class ProjectPage extends BasePage
 				
 				$issue->getMembers();
 				$issue->getTesters();
-				Issue::$currentIssue = $issue;
 				
 				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
 
@@ -105,6 +104,8 @@ class ProjectPage extends BasePage
 				$this->_pattern = 'issue';
 				ArrayUtils::remove( $this->_js,	'project' );
 				array_push( $this->_js,	'issue' );
+
+				$this->addTmplVar('issue', $issue);
 			} 
 		}
 

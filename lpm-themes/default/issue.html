@@ -1,7 +1,11 @@
-<article id="issueView">  
+<?php
+/* 
+Требуются: 
+    $issue - текущая задача
+*/
+?><article id="issueView">  
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-  <?$issue = lpm_get_issue();?>
   <article id="issueInfo" class="container">
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
@@ -155,4 +159,4 @@
     </ol>
   </article>
 </article>
-<? lpm_print_issue_form($issue->getProject()); ?>
+<?php lpm_print_issue_form($issue->getProject(), $issue); ?>

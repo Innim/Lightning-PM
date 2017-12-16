@@ -106,8 +106,8 @@ function lpm_print_issues($list) {
 /**
 * Распечатывает форму добавления/редактирования задачи для текущего проекта
 */
-function lpm_print_issue_form($project) {
-	return PagePrinter::issueForm($project);
+function lpm_print_issue_form($project, $issue = null) {
+	return PagePrinter::issueForm($project, $issue);
 }
 
 /**
@@ -219,13 +219,6 @@ function lpm_get_project() {
  */
 function lpm_get_project_members() {
 	return PageConstructor::getProjectMembers();
-}
-
-/**
- * Возвращает текущую задачу
- */
-function lpm_get_issue() {
-	return PageConstructor::getIssue();
 }
 
 /**
