@@ -1,11 +1,23 @@
 <?php
 class Link {
-	public static function getUrlByUid( $uid, $_subuids = '' ) {
-		/*$url = SITE_URL . '?uid=' . $uid;
-		if ($subuid     != '') $url .= '&suid=' . $subuid;
-		if ($subpageuid != '') $url .= '&puid=' . $subpageuid;*/
+	public static function getUrlByUid($uid, $_subuids = '') {
 		$args = func_get_args();
-		$url = SITE_URL . implode( '/', $args );
+		array_shift($args);
+		
+		return self::getUrl($uid, $args);
+	}
+
+	/**
+	 * Строит URL страницы сайта.
+	 * @param  string        $pageUid Строковый идентификатор страницы.
+	 * @param  array<string> $args    Массив дополнительных аргументов.
+	 * @param  string        $hash    Хэш параметр.
+	 * @return string URL страницы.
+	 */
+	public static function getUrl($pageUid, $args, $hash = '') {
+		$url = SITE_URL . $pageUid . '/' . implode('/', $args);
+		if (!empty($hash))
+			$url .= '#' . $hash;
 		
 		return $url;
 	}
@@ -38,4 +50,3 @@ class Link {
 		return $user->checkRole( $this->_reqRole );
 	}
 }
-?>

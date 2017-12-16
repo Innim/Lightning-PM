@@ -11,6 +11,9 @@ body {
 a {
 	color      : #000000;
 }
+h1 {
+	margin: 24px 0;
+}
 h3 {
 	margin: 0px;
 }
@@ -1036,6 +1039,14 @@ table.issues-list td .priority-change-animation {
 }
 
 /* просмотр задачи */
+#issueView h1 {
+	float: left;
+}
+#issueView .header-operations-bar {
+	float: right;
+	margin-top: 35px;
+	font-size: 10px;
+}
 #issueView .info-list.completed-issue .issue-completed-date-row {
 	display: block;
 }
@@ -1056,6 +1067,7 @@ table.issues-list td .priority-change-animation {
 }
 #issueView .container
 {
+	clear: both;
 	position: relative;
 }
 #issueView .info-list .desc blockquote

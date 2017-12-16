@@ -1,7 +1,6 @@
 <?php
 class Issue extends MembersInstance
 {
-	public static $currentIssue;
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
 	
@@ -507,8 +506,13 @@ SQL;
 		else return 'высокий';
 	}
 
-	public function getProjectUrl() {
-		return Project::getURLByProjectUID( $this->projectUID );
+	/**
+	 * Возвращает URL страницы проекта, к которому относится задача,
+	 * @param  string $hash Хэш параметр.
+	 * @return string URL страницы проекта.
+	 */
+	public function getProjectUrl($hash = '') {
+		return Project::getURLByProjectUID($this->projectUID, $hash);
 	}
 	
 	/**
