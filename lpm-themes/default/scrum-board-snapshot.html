@@ -71,8 +71,8 @@
                     $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
                         $stickersByState[$state][$i] : null;
                     if ($sticker):
-                    $sp = (int) $sticker->issue_sp;
-                    if ($sp == 0)
+                    $sp = $sticker->issue_sp;
+                    if ($sp < 1)
                     $color = 'white';
                     else if ($sp <= 3)
                     $color = 'green';
@@ -82,10 +82,22 @@
                     $color = 'orange';
                     else
                     $color = 'red';
+                    $spStr = $sp == .5 ? "1/2" : $sp;
+                    
+                    $userRole = $sticker->isTester($user->userId) ? 'tester' : ($sticker->isMember($user->userId) ? 'mine' : '');
+                    $testers = $sticker->getTesters();
+                    $testersStr = "Нет тестеров";
+                    if (!empty($testers)) {
+                        $testersStr = "Тестеры: ";
+                        foreach ($testers as $tester) {
+                            $testersStr .= $tester->getShortName() . ", ";
+                        }
+                        $testersStr = substr($testersStr, 0, -2);
+                    }
                     ?>
-                    <div id="scrum-sticker-<?=$sticker->issue_uid;?>" class="scrum-board-sticker <?=$color;?><?=($sticker->isMember($user->userId)?' mine':'');?>" data-issue-id="<?=$sticker->issue_uid;?>" data-sticker-state="<?=$sticker->issue_state;?>" data-sticker-sp="<?=$sp;?>">
+                    <div id="scrum-sticker-<?=$sticker->issue_uid;?>" class="scrum-board-sticker <?=$color;?> <?=$userRole;?>" data-issue-id="<?=$sticker->issue_uid;?>" data-sticker-state="<?=$sticker->issue_state;?>" data-sticker-sp="<?=$sp;?>" title="<?=$testersStr;?>">
                         <span class="sticker-issue-id">#<?=$sticker->issue_pid;?></span>
-                        <a href="<?=$sticker->getURL4View();?>"><?=$sticker->issue_name;?><span class="snapshot-sticker-issue-sp">(<?=$sp;?> SP)</span></a>
+                        <a href="<?=$sticker->getURL4View();?>"><?=$sticker->issue_name;?><span class="snapshot-sticker-issue-sp">(<?=$spStr;?> SP)</span></a>
                         <span class="sticker-issue-members"><?php
                         foreach ($sticker->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
                     </div>

@@ -68,6 +68,18 @@
                 </select>
             </fieldset>
         </li>
+          <li>
+              <fieldset>
+                  <legend>Тестеры</legend>
+                  <ol id="issueTesters" class="members-list"></ol>
+                  <select id="addIssueTesters" onchange="issuePage.addIssueTester();">
+                      <option>Добавить</option>
+                      <?foreach( lpm_get_project_members() as $tester) {?>
+                      <option value="<?=$tester->userId;?>"><?=$tester->getName();?></option>
+                      <?}?>
+                  </select>
+              </fieldset>
+          </li>
         <li>
             <input placeholder="Story Points" type="text" name="hours"  maxlength="5" value="<?lpm_print_post_var('hours');?>"/>
         </li>

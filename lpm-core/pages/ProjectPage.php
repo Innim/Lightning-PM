@@ -95,7 +95,8 @@ class ProjectPage extends BasePage
 				if ($issueId <= 0 || !$issue = Issue::load( (float)$issueId) )
 						LightningEngine::go2URL( $this->getUrl() );				
 				
-				$issue->getMembers();	
+				$issue->getMembers();
+				$issue->getTesters();
 				Issue::$currentIssue = $issue;
 				
 				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
@@ -263,7 +264,7 @@ class ProjectPage extends BasePage
 			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
 
 			foreach ($_POST as $key => $value) {
-				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls')
+				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers')
 					$_POST[$key] = $this->_db->real_escape_string( $value );
 			}
 
@@ -274,12 +275,16 @@ class ProjectPage extends BasePage
 							$completeDateArr[1] . ' ' .
 							'00:00:00';
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
-            
+
+			// из дробных разрешаем только 1/2
+            $hours = $_POST['hours'];
+            $hours = ($hours == "0.5" || $hours == "0,5" || $hours == "1/2") ? 0.5 : (int)$hours;
+
 			// сохраняем задачу
 			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
 			           		 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
-			           		 		  "'" . $_POST['name'] . "', '" . $_POST['hours'] . "', '" . $_POST['desc'] . "', " .
+			           		 		  "'" . $_POST['name'] . "', '" . $hours . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
 			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
 									  "'" . DateTimeUtils::mysqlDate() . "', " .
@@ -292,6 +297,8 @@ class ProjectPage extends BasePage
 									"`completeDate` = VALUES( `completeDate` ), " .
 									"`priority` = VALUES( `priority` )";			
 			$members = array();
+			$testers = array();
+
 			if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				$engine->addError( 'Ошибка записи в базу' );
 			} else {
@@ -324,15 +331,45 @@ class ProjectPage extends BasePage
 					if (count($users4Delete) > 0 && 
 							!Member::deleteIssueMembers($issueId, $users4Delete)) 
 						return $engine->addError('Ошибка при сохранении участников');
+
+                    // выборка тестеров задачи
+                    $sql = "SELECT `userId` FROM `%s` " .
+                        "WHERE `instanceType` = '" . LPMInstanceTypes::ISSUE_FOR_TEST . "' " .
+                        "AND `instanceId` = '" . $issueId . "'";
+                    if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) {
+                        return $engine->addError( 'Ошибка загрузки тестеров' );
+                    }
+
+                    $users4Delete = array();
+
+                    while ($row = $query->fetch_assoc()) {
+                        $tmpId = (float)$row['userId'];
+                        $memberInArr = false;
+                        if (!empty($_POST['testers'])) {
+                            foreach ($_POST['testers'] as $i => $testerId) {
+                                if ($testerId == $tmpId) {
+                                    ArrayUtils::removeByIndex($_POST['testers'], $i);
+                                    array_push($members, (float)$testerId);
+                                    $memberInArr = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!$memberInArr)
+                            array_push($users4Delete, $tmpId);
+                    }
+
+                    if (count($users4Delete) > 0 && !Member::deleteIssueTesters($issueId, $users4Delete))
+                        return $engine->addError('Ошибка при удалении старых тестеров');
 				}
-				
+
 				// сохраняем исполнителей задачи
 				$sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
 							     "VALUES ( ?, '" . LPMInstanceTypes::ISSUE . "', '" . $issueId . "' )";
 					
 				if (!$prepare = $this->_db->preparet( $sql, LPMTables::MEMBERS )) {
 					if (!$editMode)
-						$this->_db->queryt( "DELETE FROM `%s` WHERE `id` = '" . $issueId . "'", 
+						$this->_db->queryt( "DELETE FROM `%s` WHERE `id` = '" . $issueId . "'",
 											LPMTables::ISSUES );
 					$engine->addError( 'Ошибка при сохранении участников' );
 				} else {
@@ -347,6 +384,28 @@ class ProjectPage extends BasePage
 						}
 					}
 					$prepare->close();
+
+					if (!empty($_POST['testers'])) {
+                        // Сохранение тестеров задачи
+                        $sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
+                            "VALUES ( ?, '" . LPMInstanceTypes::ISSUE_FOR_TEST . "', '" . $issueId . "' )";
+
+                        if (!$prepare = $this->_db->preparet( $sql, LPMTables::MEMBERS )) {
+                            $engine->addError( 'Ошибка при сохранении тестеров' );
+                        } else {
+                            $saved = array();
+                            foreach ($_POST['testers'] as $testerId) {
+                                $testerId = (float)$testerId;
+                                array_push($testers, $testerId);
+                                if (!in_array($testerId, $saved)) {
+                                    $prepare->bind_param('d', $testerId);
+                                    $prepare->execute();
+                                    array_push($saved, $testerId);
+                                }
+                            }
+                            $prepare->close();
+                        }
+                    }
 
 					//удаление старых изображений
 					if (!empty($_POST["removedImages"]))

@@ -17,6 +17,10 @@ class Member extends User
 		return self::loadListByInstance(LPMInstanceTypes::ISSUE, $issueId);
 	}
 
+	public static function loadListByIssueForTest($issueId) {
+	    return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId);
+    }
+
 	public static function hasIssueMember($issueId, $userId) {
 		return self::hasMember(LPMInstanceTypes::ISSUE, $issueId, $userId);
 	}
@@ -44,6 +48,11 @@ class Member extends User
 	public static function deleteIssueMembers($issueId, $userIds = null) {
 		return self::deleteMembers(LPMInstanceTypes::ISSUE, $issueId, $userIds);
 	}
+
+    public static function deleteIssueTesters($issueId, $userIds = null) {
+        return self::deleteMembers(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId, $userIds);
+    }
+
 
 	public static function deleteMembers($instanceType, $instanceId, $userIds = null) {
 	    $hash = [

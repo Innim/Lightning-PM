@@ -15,14 +15,22 @@ class DeclensionHelper
 	{
 		if ($count < 0) $count = -$count;
 
-		if ($count > 10 && $count < 15) return $variants[2];
+		if ($count < 1)
+		    return $variants[1];
+
+		if ($count > 10 && $count < 15)
+		    return $variants[2];
+
 		switch ($count % 10)
 		{
-			case 1 : return $variants[0];
+			case 1 :
+			    return $variants[0];
 			case 2 :
 			case 3 :
-			case 4 : return $variants[1];
-			default : return $variants[2];
+			case 4 :
+			    return $variants[1];
+			default :
+			    return $variants[2];
 		}
 	}
 }

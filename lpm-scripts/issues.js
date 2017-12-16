@@ -111,17 +111,89 @@ issuePage.removeIssueMember = function(e) {
     selectElement.appendChild( option, i );
 };
 
+issuePage.addIssueTester = function() {
+    /**
+     * @type HTMLSelectElement
+     */
+    var selectElement = document.getElementById( 'addIssueTesters' );
+
+    var option = selectElement.options[selectElement.selectedIndex];
+
+    /**
+     * @type HTMLOListElement
+     */
+
+    var testers = document.getElementById( 'issueTesters' );
+
+    /**
+     * @type HTMLOListElement
+     */
+    var li = document.createElement( 'li' );
+
+    /**
+     * @type HTMLSpanElement
+     */
+    var nameLabel = document.createElement( 'span' );
+    nameLabel.innerHTML = option.innerHTML;
+    nameLabel.className = 'user-name';
+
+    /**
+     * @type HTMLLinkElement
+     */
+    var idField = document.createElement( 'input' );
+    idField.type  = 'hidden';
+    idField.name  = 'testers[]';
+    idField.value = option.value;
+
+    /**
+     * @type HTMLButtonElement
+     */
+    var removeBtn = document.createElement( 'a' );
+    //removeBtn.innerHTML = 'Удалить';
+    removeBtn.className = 'remove-btn';
+    removeBtn.onclick   = issuePage.removeIssueTester;
+
+    li.appendChild( nameLabel );
+    li.appendChild( idField   );
+    li.appendChild( removeBtn );
+
+    testers.appendChild( li );
+
+    selectElement.removeChild( option );
+    selectElement.selectedIndex = 0;
+};
+
+issuePage.removeIssueTester = function(e) {
+    var li           = e.currentTarget.parentNode;
+
+    var userId       = $( 'input[type=hidden][type=testers\[\]]', li ).attr( 'value' );
+    var userName     = $( 'span.user-name', li ).html();
+
+    var option       = document.createElement( 'option' );
+    option.value     = userId;
+    option.innerHTML = userName;
+
+    if (li.parentNode)
+        li.parentNode.removeChild( li );
+
+    var selectElement = document.getElementById( 'addIssueTesters' );
+    for (var i = 1; i < selectElement.options.length; i++) {
+        if (userName < selectElement.options[i].innerHTML) break;
+    }
+    selectElement.appendChild( option, i );
+};
+
 issuePage.updatePriorityVals = function () {
-    issuePage.setPriorityVal( $('input[type=range]#priority').val() );
+    issuePage.setPriorityVal($('input[type=range]#priority').val());
     //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
-    $('.priority-val.circle').each( function (i) {
-        $(this).css( 
-            'backgroundColor', 
-            issuePage.getPriorityColor( parseInt( $(this).text() ) ) 
-        );
-        $(this).text( '' );
+    $('.priority-val.circle').each(function (i) {
+        issuePage.updatePriorityVal($(this), parseInt($(this).text()));
+        $(this).text('');
     });
 };
+issuePage.updatePriorityVal = function ($el, value) {
+    $el.css('backgroundColor', issuePage.getPriorityColor(value));
+}
 
 issuePage.setPriorityVal = function (value) {
     var valStr = Issue.getPriorityStr( value );
@@ -261,23 +333,12 @@ function setCaretPosition(elem, pos ) {
     else elem.focus();
 };
 
-function completeIssue( e ) {    
+function completeIssue(e) {    
     var parent   = e.currentTarget.parentElement;
-    //var fields   = cell.getElementsByTagName( 'input' );
-   // var btn      = cell.getElementsByTagName( 'button' )[0];
-    //btn.disabled = "disabled";
-    
-    var issueId  = $( 'input[name=issueId]', parent ).attr( 'value' );
-    preloader.show();
-    
-    /*for (var i = 0; i < fields.length; i++) {
-        if (fields[i].name == 'issueId') {
-            issueId = fields[i].value;
-            break;
-        }
-    }*/
+    var issueId  = $('input[name=issueId]', parent).attr('value');
     
     if (issueId > 0) {
+        preloader.show();
         srv.issue.complete( 
             issueId, 
             function (res) {
@@ -308,7 +369,89 @@ function completeIssue( e ) {
             }  
         );
     }
-};
+}
+
+issuePage.changePriority = function (e) {
+    var $control = $(e.currentTarget);
+    var $row = $control.parents('tr');
+    var issueId = $('input[name=issueId]', $row).attr('value');
+    var delta = $control.hasClass('priority-up') ? 1 : -1;
+
+    if (issueId > 0) {
+        srv.issue.changePriority(issueId, delta, function (res) {
+            if (res.success) {
+                // alert('ok: ' + res.priority);
+                var priority = res.priority;
+                var priorityStr = Issue.getPriorityStr(priority);
+                $('.priority-val', $row).attr('title', 'Приоритет: ' + priorityStr + 
+                        ' (' + priority + ')').data("value", priority);
+                issuePage.updatePriorityVal($('.priority-val', $row), priority);
+
+                var hintY = e.pageY - 13;
+                $("<span></span>").text(priority).addClass("priority-change-animation").
+                    appendTo($('body')).offset({top:hintY, left:e.pageX - 10}).
+                    animate(
+                        {
+                            opacity: '0',
+                            top: '-=20px'
+                        }, 500, function () {
+                            $(this).remove();
+                        });
+
+                var status = $row.data("status");
+                var date = $row.data("completeDate");
+                var compare = function ($r) {
+                    if ($r.data("status") != status)
+                        return 0;
+                    var p = parseInt($(".priority-val", $r).data("value"));
+                    if (p != priority)
+                        return priority - p;
+                    else if ($r.data("completeDate") != date)
+                        return $r.data("completeDate") - date;
+                    else 
+                        return $r.data("id") - issueId;
+                }
+
+                if (delta < 0) {
+                    var $next = $row;
+                    var $last = null;
+                    while ($next) {
+                        var $next = $next.next();
+
+                        if (compare($next) < 0)
+                        {
+                            $last = $next;
+                        }
+                        else 
+                        {
+                            if ($last)
+                                $last.after($row);
+                            break;
+                        }
+                    }
+                } else {
+                    var $prev = $row;
+                    var $first = null;
+                    while ($prev) {
+                        var $prev = $prev.prev();
+                        if (compare($prev) > 0)
+                        {
+                            $first = $prev;
+                        }
+                        else 
+                        {
+                            if ($first)
+                                $first.before($row);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                srv.err(res);
+            }
+        });
+    }
+}
 
 function restoreIssue( e ) {
     var parent   = e.currentTarget.parentElement;
@@ -538,12 +681,24 @@ issuePage.setEditInfo = function () {
     );
     // исполнители
     var memberIds = $( "#issueInfo li input[name=members]" ).val() .split( ',' );
-    var i,l = 0;
+    var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
         $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'selected' );
         issuePage.addIssueMember();
     }
+
+    // Тестеры
+    var testerIds = $( "#issueInfo li input[name=testers]" ).val() .split( ',' );
+    l = testerIds.length;
+    for (i = 0; i < l; i++) {
+        var testerId = testerIds[i];
+        if (testerId.length > 0) {
+            $("#addIssueTesters option[value=" + testerId + "]").attr('selected', 'selected');
+            issuePage.addIssueTester();
+        }
+    }
+
     //$( "#issueForm form" ).value( $( "" ) );
     // описание
     // пришлось убрать, потому что там уже обработанное описание - с ссылками и тп
@@ -810,7 +965,7 @@ issuePage.scumColUpdateInfo = function () {
         var sp = 0;
         $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').
             each(function (i, el) {
-                sp += parseInt($(el).data('stickerSp'));
+                sp += parseFloat($(el).data('stickerSp'));
         });
         var num = $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').size();
 
@@ -824,7 +979,9 @@ issuePage.scumColUpdateInfo = function () {
                 $(spSelector).show();
             else 
                 $(spSelector).hide();
-            $(spSelector + ' .value').html(sp);
+
+            var spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
+            $(spSelector + ' .value').html(spScr);
 
             totalSP += sp;
             totalNum += num;
@@ -838,8 +995,10 @@ issuePage.scumColUpdateInfo = function () {
     if (totalNum) {
         $('#scrumBoard .scrum-board-info').show();
         $('#scrumBoard .scrum-board-info .scrum-board-count .value').html(totalNum);
-        if (totalSP > 0) 
-            $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSP);
+        if (totalSP > 0) {
+            var totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
+            $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSpScr);
+        }
         else 
             $('#scrumBoard .scrum-board-sp').hide();
     } else {
