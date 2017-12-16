@@ -506,7 +506,7 @@ class ProjectPage extends BasePage
 						);
 					}	
 
-					Project::updateIssuesCount(  $issue->projectId );				
+					Project::updateIssuesCount($issue->projectId);
 				
 					LightningEngine::go2URL($issueURL);
 					// LightningEngine::go2URL( 
@@ -527,7 +527,6 @@ class ProjectPage extends BasePage
 
 	private function saveImages4Issue( $issueId, $hasCnt = 0 ) 
 	{
-		
 		$uploader = new LPMImgUpload( 
 			Issue::MAX_IMAGES_COUNT - $hasCnt, 
 			true,

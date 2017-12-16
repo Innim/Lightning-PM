@@ -151,14 +151,14 @@
      </p>
     </form>
     <ol class="comments-list">
-        <?foreach (lpm_get_comments() as $comment) {?>
+        <?php foreach (lpm_get_comments() as $comment): ?>
         <li>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
             <article class="text"><?=$comment->getText();?></article>
         </li>
-        <?}?>
+        <?php endforeach; ?>
     </ol>
   </article>
 </article>
