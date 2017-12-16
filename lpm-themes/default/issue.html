@@ -5,6 +5,9 @@
 */
 ?><article id="issueView">  
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
+  <div class="header-operations-bar">
+    <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
+  </div>
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
   <article id="issueInfo" class="container">
     <h3>
