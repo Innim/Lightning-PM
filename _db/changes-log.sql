@@ -111,6 +111,6 @@ CHANGE `issue_sp` `issue_sp` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COM
 
 -- 2017-11-18 10:03:00
 
--- 2017-12-01 13:01:00
-
 ALTER TABLE `lpm_issues` CHANGE `hours` `hours` DECIMAL(10,1) NOT NULL;
+
+-- 2017-12-16 10:01:00
