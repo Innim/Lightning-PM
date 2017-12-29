@@ -18,7 +18,7 @@
             <ul>
                 <?php foreach ($snapshots as $snapshot): ?>
                 <li>
-                    <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot #<?=$snapshot->id?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+                    <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot #<?=$snapshot->idInProject?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
                 </li>
                 <?php endforeach; ?>
             </ul>

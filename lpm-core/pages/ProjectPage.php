@@ -166,12 +166,12 @@ class ProjectPage extends BasePage
             $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
             $this->addTmplVar('snapshots', $snapshots);
 
-            $sid = (int) $this->getParam(3);
+            $sidInProject = (int) $this->getParam(3);
 
-            if ($sid > 0)
+            if ($sidInProject > 0)
             {
                 foreach ($snapshots as $snapshot) {
-                    if ($snapshot->id == $sid) {
+                    if ($snapshot->idInProject == $sidInProject) {
                         $this->addTmplVar('snapshot', $snapshot);
                         break;
                     }
