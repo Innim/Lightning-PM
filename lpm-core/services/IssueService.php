@@ -310,7 +310,9 @@ SQL;
      */
 	public function addLabel($label, $isForAllProjects, $projectId) {
         $db = LPMGlobals::getInstance()->getDBConnect();
-	    $id = Issue::saveLabel($label, ($isForAllProjects ? 0 : $projectId));
+        $projectId = $isForAllProjects ? 0 : $projectId;
+
+	    $id = Issue::saveLabel($label, $projectId);
 	    if ($id == null) {
             return $this->error($db->error);
         } else {

@@ -11,14 +11,18 @@
       <ol>
         <li>
             <span class="edit-issue-name-container">
-                <select class="issue-labels" onchange="issuePage.addIssueLabel();" id="editIssueLabel" name="issueLabel">
-                    <option>Без метки</option>
-                    <?php foreach( lpm_get_issue_labels() as $label): ?>
-                    <option value="<?=$label['id'];?>"><?=$label['label'];?></option>
-                    <? endforeach; ?>
-                    <option>Добавить новую метку</option>
-                </select>
                 <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>" class="edit-issue-name"/>
+            </span>
+            <span class="issue-labels-container">
+                <?php foreach( lpm_get_issue_labels() as $label): ?>
+                <a href="javascript:void(0)" class="issue-label" onclick="issuePage.addLabelToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
+                <? endforeach; ?>
+                <a href="javascript:void(0)" class="add-issue-label" onclick="issuePage.addIssueLabel()">
+                    <i class="far fa-plus-square" aria-hidden="true"></i>
+                </a>
+                <?php if (lpm_is_moderator()):?>
+                    <!-- Удаление меток -->
+                <?php endif; ?>
             </span>
         </li>
         <li>
@@ -143,10 +147,12 @@
                 <label for="issueLabelText">Метка: </label>
                 <input name="labelText" id="issueLabelText"/>
             </div>
+            <?php if (lpm_is_moderator()):?>
             <div class="align-right">
                 <input type="checkbox" name="isAllProjects" id="isAllProjectsCheckbox"/>
                 <label for="isAllProjectsCheckbox">для всех проектов</label>
             </div>
+            <?php endif;?>
         </form>
     </div>
 </article>

@@ -121,5 +121,6 @@ CREATE TABLE `task`.`lpm_issue_labels` (
   `id` INT NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор' ,
   `projectId` INT NOT NULL DEFAULT '0' COMMENT 'Проект (0 если метка общая)' ,
   `label` VARCHAR(255) NOT NULL COMMENT 'Текст метки' ,
-  PRIMARY KEY (`id`), INDEX `projectId` (`projectId`)
+  `countUses` INT UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Количество использований' ,
+  PRIMARY KEY (`id`), INDEX (`projectId`)
 ) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci COMMENT = 'Метки для задач';

@@ -155,4 +155,7 @@
     </ol>
   </article>
 </article>
+<script type="text/javascript">
+    var issueLabels = <?=json_encode($issue->getLabelNames());?>;
+</script>
 <? lpm_print_issue_form($issue->getProject()); ?>

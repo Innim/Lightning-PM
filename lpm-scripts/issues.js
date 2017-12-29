@@ -40,48 +40,90 @@ DropDown.prototype = {
 var issuePage = {};
 
 issuePage.addIssueLabel = function() {
-    var selectElement = document.getElementById( 'editIssueLabel' );
-    if (selectElement.selectedIndex == selectElement.options.length - 1)
+    $("#addIssueLabelFormContainer").dialog({
+        resizable: false,
+        width: 400,
+        modal: true,
+        draggable: false,
+        title: "Добавление новой метки",
+        buttons: [{
+            text: "Сохранить",
+            click: function (e) {
+                var label = $("#issueLabelText").val();
+                var checked = $("#isAllProjectsCheckbox").is(':checked');
+                var projectId = $("#issueProjectID").val();
+                if (label.length > 0) {
+                    preloader.show();
+                    srv.issue.addLabel(label, checked, projectId, function (res) {
+                        preloader.hide();
+                        if (res.success) {
+                            $(".add-issue-label").before(
+                                "<a href=\"javascript:void(0)\" class=\"issue-label\" onclick=\"issuePage.addLabelToName('"
+                                + label + "');\">" + label + "</a>");
+                            issuePage.addLabelToName(label);
+                        } else {
+                            srv.err( res );
+                        }
+                    });
+                }
+                $("#addIssueLabelForm")[0].reset();
+                $("#addIssueLabelFormContainer").dialog('close');
+            }
+        }, {
+            text: "Отмена",
+            click: function (e) {
+                $("#addIssueLabelForm")[0].reset();
+                $("#addIssueLabelFormContainer").dialog('close');
+            }
+        }]
+    });
+}
+
+issuePage.addLabelToName = function(labelName) {
+    if (typeof issueLabels === 'undefined')
+        issueLabels = [];
+    var index = issueLabels.indexOf(labelName);
+    var isAddingLabel = index == -1;
+    var strPos = 0;
+    var resultLabels = "";
+    for (var i = 0, len = issueLabels.length; i < len; ++i)
     {
-        selectElement.selectedIndex = 0;
-        $("#addIssueLabelFormContainer").dialog({
-            resizable: false,
-            width: 400,
-            modal: true,
-            draggable: false,
-            title: "Добавление новой метки",
-            buttons: [{
-                text: "Сохранить",
-                click: function (e) {
-                    var label = $("#issueLabelText").val();
-                    var checked = $("#isAllProjectsCheckbox").is(':checked');
-                    var projectId = $("#issueProjectID").val();
-                    if (label.length > 0) {
-                        preloader.show();
-                        srv.issue.addLabel(label, checked, projectId, function (res) {
-                            preloader.hide();
-                            if (res.success) {
-                                $(":last-child", $("#editIssueLabel")).before(
-                                    "<option value='" + res.id + "'>" + label + "</option>");
-                                updateIssueName($( "#issueForm form input[name=name]" ).val());
-                            } else {
-                                srv.err( res );
-                            }
-                        });
-                    }
-                    $("#addIssueLabelForm")[0].reset();
-                    $("#addIssueLabelFormContainer").dialog('close');
-                }
-            }, {
-                text: "Отмена",
-                click: function (e) {
-                    $("#addIssueLabelForm")[0].reset();
-                    $("#addIssueLabelFormContainer").dialog('close');
-                }
-            }]
-        });
+        var str = issueLabels[i];
+        strPos += str.length + 2;
+        if (index == i) { // на случай, если несколько одинаковых меток у задачи, ну мало ли кто накосячил.
+            issueLabels.splice(index, 1);
+            len--;
+            i--;
+            index = issueLabels.indexOf(labelName);
+        } else {
+            resultLabels += "[" + str + "]";
+        }
     }
 
+    if (isAddingLabel) {
+        resultLabels += "[" + labelName + "]";
+        issueLabels.push(labelName);
+    }
+
+    var name = $( "#issueForm form input[name=name]" ).val();
+    name = (resultLabels.length > 0 ? resultLabels + " " : "") + $.trim(name.substr(strPos));
+
+    $( "#issueForm form input[name=name]" ).val(name);
+    issuePage.updateLabelsView();
+}
+
+issuePage.updateLabelsView = function () {
+    if (typeof issueLabels !== 'undefined') {
+        var subclass = 'selected';
+        $(".issue-labels-container a.issue-label").each(function () {
+            if ($(this).hasClass(subclass))
+                $(this).removeClass(subclass);
+
+            var item = $(this).text();
+            if (issueLabels.indexOf(item) != -1)
+                $(this).addClass(subclass);
+        });
+    }
 }
 
 issuePage.addIssueMember = function() {
@@ -89,7 +131,7 @@ issuePage.addIssueMember = function() {
      * @type HTMLSelectElement
      */
     var selectElement = document.getElementById( 'addIssueMembers' );
-    
+
     var option = selectElement.options[selectElement.selectedIndex];
     
     /**
@@ -635,12 +677,13 @@ issuePage.showEditForm = function () {
 issuePage.setEditInfo = function () {
     // заполняем всю информацию
     //$( "" ).value( $( "" ) );
-
-
     // меняем заголовок
     $( "#issueForm > h3" ).text( "Редактирование задачи" );
     // имя
-    updateIssueName($( "#issueInfo > h3 > .issue-name" ).text());
+    var issueName = $( "#issueInfo > h3 > .issue-name" ).text();
+    $( "#issueForm form input[name=name]" ).val(issueName);
+    // внешний вид меток
+    issuePage.updateLabelsView();
     // часы
     $( "#issueForm form input[name=hours]" ).val( $( "#issueInfo > h3 .issue-hours" ).text() );
 
@@ -711,26 +754,6 @@ issuePage.setEditInfo = function () {
     $( "#issueForm form .save-line button[type=submit]" ).text( "Сохранить" );
     
 };
-
-function updateIssueName(issueName) {
-    if (issueName.length > 0)
-    {
-        var regex = /^\[(.*?)] (.*?)$/gi;
-        var arr = regex.exec(issueName);
-
-        if (arr != null && arr.length == 3) {
-            $("#editIssueLabel option").each(function () {
-                var item = $(this).text();
-                if (item.toUpperCase() == arr[1].toUpperCase()) {
-                    $(this).attr('selected', 'selected');
-                    issueName = arr[2];
-                }
-            });
-        }
-    }
-
-    $( "#issueForm form input[name=name]" ).val(issueName);
-}
 
 function removeImage(imageId) {
     if (confirm('Вы действительно хотите удалить это изображение?')) {

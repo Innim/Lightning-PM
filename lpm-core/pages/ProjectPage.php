@@ -232,7 +232,7 @@ class ProjectPage extends BasePage
 			$issueId = (float)$_POST['issueId'];
 			
 			// проверяем что такая задача есть и она принадлежит текущему проекту
-			$sql = "SELECT `id`, `idInProject` FROM `%s` WHERE `id` = '" . $issueId . "' " .
+			$sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
 										   "AND `projectId` = '" . $this->_project->id . "'";
 			if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				return $engine->addError( 'Ошибка записи в базу' );
@@ -242,11 +242,13 @@ class ProjectPage extends BasePage
 				return $engine->addError( 'Нет такой задачи для текущего проекта' );
             $result = $query->fetch_assoc(); 
 			$idInProject = $result['idInProject'];
+			$issueName = $result['name'];
 			// TODO проверка прав
 			
 		} else {
             $issueId = 'NULL';
             $idInProject = (int)$this->getLastIssueId();
+            $issueName = null;
         }
 		
 		if (empty( $_POST['name'] ) || !isset( $_POST['members'] )
@@ -282,13 +284,17 @@ class ProjectPage extends BasePage
 							'00:00:00';
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
 
-			$labelId = (int) $_POST['issueLabel'];
-			$label = null;
-			if ($labelId > 0)
-			    $label = Issue::getLabel($labelId);
-
-			if ($label != null)
-			    $_POST['name'] = "[" . $label["label"] . "] " . $_POST['name'];
+			// Обновляем меткам кол-во использований.
+			$labels = Issue::getLabelsByName($_POST['name']);
+			if ($issueName != null) {
+			    $oldLabels = Issue::getLabelsByName($issueName);
+                foreach ($labels as $key => $value) {
+                    if (in_array($value, $oldLabels))
+                        unset($labels[$key]);
+                }
+            }
+            if (!empty($labels))
+                Issue::addLabelsUsing($labels, $this->_project->id);
 
 			// из дробных разрешаем только 1/2
             $hours = $_POST['hours'];

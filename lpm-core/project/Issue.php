@@ -225,13 +225,13 @@ SQL;
 	}
 
     /**
-     * Возвращает список стандартных меток для задачи.
+     * Возвращает список стандартных меток для задачи отсортированных по количеству использований.
      * @return array[{id, label}...n] Список меток для задачи.
      */
 	public static function getLabels() {
 	    $labels = array();
         $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
-	    $sql = "SELECT `id`, `label` FROM `%s` WHERE `projectId` = " . (int) $projectId . " OR `projectId` = 0";
+	    $sql = "SELECT `id`, `label`, `countUses` FROM `%s` WHERE `projectId` = " . (int) $projectId . " OR `projectId` = 0";
 
         $db = LPMGlobals::getInstance()->getDBConnect();
         $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
@@ -239,21 +239,47 @@ SQL;
         while ($array = $res->fetch_assoc()) {
             $labels[] = $array;
         }
-
+        uasort($labels,"Issue::labelsSort");
         return $labels;
     }
 
-    /**
-     * Возвращает данные метки по идентификатору.
-     * @param $id Идентификатор метки.
-     * @return array{id, label} | null Данные метки или null, если метка не найдена.
-     */
-    public static function getLabel($id) {
-        $sql = "SELECT `id`, `label` FROM `%s` WHERE `id` = " . (int) $id;
+    public static function labelsSort($label1, $label2)
+    {
+        return $label2['countUses'] - $label1['countUses'];
+    }
 
+    /**
+     * Добавить метками количество использований.
+     * @param $labelNames Список имен меток, которым нужно добавить использование.
+     * @param $projectId Идентификатор проекта приоритет метки которого нужно изменить, либо 0,
+     * если нужно изменить приоритет только общей для проектов метки.
+     */
+    public static function addLabelsUsing($labelNames, $projectId = 0) {
+        $projectId = (int) $projectId;
         $db = LPMGlobals::getInstance()->getDBConnect();
-        $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
-        return $res ? $res->fetch_assoc() : null;
+        foreach ($labelNames as $key => $value) {
+            $labelNames[$key] = $db->escape_string($value);
+        }
+
+        $sql = "UPDATE `%s` SET `countUses` = `countUses` + 1 WHERE `label` IN('" . implode("','", $labelNames). "')" .
+            " AND (`projectId` = 0 OR `projectId` = " . (int) $projectId . ")";
+        $db->queryt($sql, LPMTables::ISSUE_LABELS);
+    }
+
+    /**
+     * Возвращает список меток по имени.
+     * @param $issueName Имя задачи.
+     * @return array{string} Список меток в указанном имени.
+     */
+    public static function getLabelsByName($issueName) {
+        $labels = array();
+        $matches = array();
+        if (preg_match_all("/(?:\[([a-zA-Z0-9]+)\])+.*/UA", $issueName, $matches))
+        {
+            if (count($matches) > 1)
+                $labels = $matches[1];
+        }
+        return $labels;
     }
 
     /**
@@ -261,16 +287,20 @@ SQL;
      * @param $label string Текст метки.
      * @param $projectId int Идентификатор проекта для которого создается метка (если не передан, то метка будет общей).
      * @param $id int Идентификатор метки (если не передан, то будет создана новая метка).
+     * @param $countUses int Количество использований метки.
      * @return int|null Идентификатор вставленной/обновленной записи или null в случае ошибки.
      */
-    public static function saveLabel($label, $projectId = 0, $id = 0) {
+    public static function saveLabel($label, $projectId = 0, $id = 0, $countUses = 0) {
         $db = LPMGlobals::getInstance()->getDBConnect();
         $id = ((int)$id > 0) ? (int)$id : "NULL";
         $projectId = (int) $projectId;
+        $countUses = (int) $countUses;
         $label = $db->escape_string($label);
 
-        $sql = "INSERT INTO `%s` (`id`, `projectId`, `label`) VALUES ('" . $id . "', '" . $projectId . "', '" . $label .
-            "') ON DUPLICATE KEY UPDATE `projectId` = VALUES(`projectId`), `label` = VALUES(`label`), id=LAST_INSERT_ID(id)";
+        $sql = "INSERT INTO `%s` (`id`, `projectId`, `label`, `countUses`) " .
+            "VALUES ('" . $id . "', '" . $projectId . "', '" . $label . "', '" . $countUses . "') " .
+            "ON DUPLICATE KEY UPDATE ".
+            "`projectId` = VALUES(`projectId`), `label` = VALUES(`label`), `countUses` = VALUES(`countUses`)";
 
         if ($db->queryt($sql, LPMTables::ISSUE_LABELS))
             return $db->insert_id;
@@ -574,6 +604,10 @@ SQL;
 	public function getName() {
 		return $this->name;
 	}
+
+	public function getLabelNames() {
+	    return self::getLabelsByName($this->getName());
+    }
 
 	// public function getNormHours(){
 	// 	return $this->hours;
