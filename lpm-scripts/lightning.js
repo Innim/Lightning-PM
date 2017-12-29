@@ -68,6 +68,7 @@ function BaseService( service )
                                                 try {
                                                  onResult( obj ); 
                                                 } catch (e) {
+                                                  console && console.error(e);
                                                   srv.err({error:'Ошибка при обработке ответа'});
                                                 }
                                              }
@@ -90,40 +91,43 @@ function BaseService( service )
 };
 
 var srv = {
-    f2p   : new ru.vbinc.net.F2PInvoker( window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php' ),   
+    f2p   : new ru.vbinc.net.F2PInvoker(window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php'),
     issue : {
-        s        : new BaseService( 'IssueService' ),
-        complete : function ( issueId, onResult ) {
-            this.s._( 'complete' );
+        s: new BaseService('IssueService'),
+        complete: function (issueId, onResult) {
+            this.s._('complete');
         },
-        restore  : function ( issueId, onResult ) {
-            this.s._( 'restore' );
+        restore: function (issueId, onResult) {
+            this.s._('restore');
         },
-        verify  : function ( issueId, onResult ) {
-            this.s._( 'verify' );
+        verify: function (issueId, onResult) {
+            this.s._('verify');
         },
-        load     : function ( issueId, onResult ) {
-            this.s._( 'load' );
+        load: function (issueId, onResult) {
+            this.s._('load');
         },
-        loadByIdInProject : function ( idInProject, onResult ) {
-            this.s._( 'loadByIdInProject' );
+        loadByIdInProject: function (idInProject, onResult) {
+            this.s._('loadByIdInProject');
         },
-        remove   : function ( issueId, onResult ) {
-            this.s._( 'remove' );
+        remove: function (issueId, onResult) {
+            this.s._('remove');
         },
-        comment  : function ( issueId, text, onResult ) {
-            this.s._( 'comment' );
+        comment: function (issueId, text, onResult) {
+            this.s._('comment');
         },
-        changeScrumState : function (issueId, state, onResult) {
+        changePriority: function (issueId, delta, onResult) {
+            this.s._('changePriority');
+        },
+        changeScrumState: function (issueId, state, onResult) {
             this.s._('changeScrumState');
         },
-        putStickerOnBoard : function (issueId, onResult) {
+        putStickerOnBoard: function (issueId, onResult) {
             this.s._('putStickerOnBoard');
         },
-        removeStickersFromBoard : function (projectId, onResult) {
+        removeStickersFromBoard: function (projectId, onResult) {
             this.s._('removeStickersFromBoard');
         },
-        takeIssue : function (issueId, onResult) {
+        takeIssue: function (issueId, onResult) {
             this.s._('takeIssue');
         },
     },

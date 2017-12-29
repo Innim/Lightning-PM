@@ -2,10 +2,10 @@
 /* 
 Требуются: 
     $project - текущий проект
+    $issue - редактируемая задача (при добавлении задачи - null)
 */
 ?><article id="issueForm" class="container">
     <h3>Добавить задачу</h3>
-    <?php $issue = lpm_get_issue();?>
     <div class="validateError"><? lpm_print_errors(); ?></div>
     <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data" onsubmit="return removeImage(imageId);"> 
       <ol>

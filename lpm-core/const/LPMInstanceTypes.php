@@ -30,5 +30,10 @@ class LPMInstanceTypes {
      * Instance задача для теста.
      */
     const ISSUE_FOR_TEST = 4;
+
+    /**
+     * Instance тестар задачи в снепште.
+     */
+    const SNAPSHOT_ISSUE_FOR_TEST = 5;
 }
 ?>

@@ -1,29 +1,30 @@
 <?php
 class Issue extends MembersInstance
 {
-	public static $currentIssue;
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
-    protected $_testers;
 	
 	/**
 	 * Выборка происходит из таблиц:
 	 * - задач - i
 	 * - пользователей - u
 	 * - проектов - p
-	 * - счетчиков задачи - cnt	 
-	 * @param  string $where       
-	 * @param  string $extraSelect 
-	 * @param  array  $extraTables ассоциативный массив [алиас => таблица]
-	 * @return array<Issue>
+	 * - счетчиков задачи - cnt
+	 * - стикер на доске - st.
+	 * @param  string $where       Условие выборки.
+	 * @param  string $extraSelect Дополнительная строка полей для выборки.
+	 * @param  array  $extraTables Ассоциативный массив дополнительных таблиц для выборки
+	 *                             [алиас => таблица].
+	 * @return array<Issue> Массив загруженных задач.
 	 */
-	protected static function loadList( $where, $extraSelect = '', $extraTables = null ) {
+	protected static function loadList($where, $extraSelect = '', $extraTables = null) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
 		$sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
-					  //"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
-					  "IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, " .
-					  "`u`.*, `cnt`.*, `p`.`uid` as `projectUID`";
-		if (!empty($extraSelect)) $sql .= ', ' . $extraSelect;
+				//"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
+				"IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, " .
+				"`u`.*, `cnt`.*, `p`.`uid` as `projectUID`";
+		if (!empty($extraSelect))
+			$sql .= ', ' . $extraSelect;
 
 		$sql .= ' FROM `%2$s` AS `u`, `%4$s` AS `p`';
 		$args = array( 
@@ -34,15 +35,14 @@ class Issue extends MembersInstance
 			LPMTables::SCRUM_STICKER
 		);
 
-		if (!empty($extraTables))
-		{
+		if (!empty($extraTables)) {
 			$i = count($args);
-			foreach ($extraTables as $alias => $table) 
-			{
+			foreach ($extraTables as $alias => $table) {
 				$sql .= ', `%' . (++$i) . '$s` AS `' . $alias . '`';
 				$args[] = $table;
 			}
 		}
+
 		$sql .= <<<SQL
 		, `%1\$s` AS `i` 
 		LEFT JOIN `%3\$s` AS `cnt` ON `i`.`id` = `cnt`.`issueId` 
@@ -51,32 +51,50 @@ class Issue extends MembersInstance
 			  AND `i`.`deleted` = '0'
 SQL;
 
-		if ($where != '') $sql  .= " AND " . $where;
+		if ($where != '')
+			$sql  .= " AND " . $where;
 		$sql .= " AND `i`.`authorId` = `u`.`userId` ".
-				"ORDER BY FIELD(`i`.`status`, ".Issue::STATUS_WAIT.",".Issue::STATUS_IN_WORK.",".Issue::STATUS_COMPLETED.") ,
-				`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC";
+				"ORDER BY FIELD(`i`.`status`, " . Issue::STATUS_WAIT . "," .
+				Issue::STATUS_IN_WORK . "," . Issue::STATUS_COMPLETED . "), " .
+				"`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC, `id` ASC";
 
 		array_unshift($args, $sql);
 
 		try {
 			return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
 		} catch (Exception $e) { 
-			exit ('Error: '. $e->getMessage().'<br>'.self::getDB()->error);
+			exit ('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
 		}
 	}
 
-	public static function getListByProject( $projectId, $type = -1 ) {
-		if (!isset( self::$_listByProjects[$projectId] )) {
+	/**
+	 * Получает список задач по проекту. Загруженный список кэшируется по проектам,
+	 * если список еще не был получен - он будет загружен из базы.
+	 * @param  integer $projectId Идентификатор проекта,
+	 * @param  integer $type      Тип задач.
+	 * @return array<Issue> Массив задач.
+	 */
+	public static function getListByProject($projectId, $type = -1) {
+		if (!isset(self::$_listByProjects[$projectId])) {
 			if (LightningEngine::getInstance()->isAuth()) {
 				$where = "`i`.`projectId` = '" . $projectId . "'";
-				if ($type != -1) $where .= "AND `i`.`type` = '" . $type . "'";
+				if ($type != -1)
+					$where .= "AND `i`.`type` = '" . $type . "'";
 					
-				self::$_listByProjects[$projectId] = self::loadList( $where );
-			} else self::$_listByProjects[$projectId] = array();
+				self::$_listByProjects[$projectId] = self::loadList($where);
+			} else {
+				self::$_listByProjects[$projectId] = array();
+			}
 		}
 		return self::$_listByProjects[$projectId];
 	}
 
+	/**
+	 * Загружает список задач по проекту.
+	 * @param  integer 		  $projectId   Идентификатор проекта,
+	 * @param  array<integer> $issueStatus Список статусов задач, которые должны быть загружены.
+	 * @return array<Issue> Массив загруженных задач.
+	 */
 	public static function loadListByProject($projectId, $issueStatus) {
 		//if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
 		$where = "`i`.`projectId` = '" . $projectId . "'";
@@ -84,7 +102,8 @@ SQL;
 		if (!empty($issueStatus)) 
 			$args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';
 
-		if (!empty($args)) $where .= $args;
+		if (!empty($args))
+			$where .= $args;
 
 		return self::loadList( $where );
 	}
@@ -103,10 +122,9 @@ SQL;
 		}
 	}
 	
-	public static function getListByMember( $memberId ) {
-		if (!isset( self::$_listByUser[$memberId] )) {
+	public static function getListByMember($memberId) {
+		if (!isset(self::$_listByUser[$memberId])) {
 			if (LightningEngine::getInstance()->isAuth()) {
-
 		       	/*$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
 		       	`%3\$s`.`name` AS `projectName`,`%4\$s`.* FROM `%1\$s`, `%2\$s`, `%3\$s`,`%4\$s`". 
 				  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
@@ -128,9 +146,11 @@ SQL;
 					'`p`.`name` AS `projectName`',
 					array('m' => LPMTables::MEMBERS)
 				);
+			} else {
+				self::$_listByUser[$memberId] = array();
 			}
-			else self::$_listByUser[$memberId] = array();
 		}
+
 		return self::$_listByUser[$memberId];
 	}
 
@@ -141,9 +161,9 @@ SQL;
 		
 		return array();*/
 		//return Project::
-		return Project::$currentProject != null 
-					? self::getListByProject( Project::$currentProject->id )
-					: array();
+		return Project::$currentProject != null ?
+				self::getListByProject(Project::$currentProject->id) : 
+				array();
 	}
 	
 	/**
@@ -164,7 +184,7 @@ SQL;
         return StreamObject::singleLoad($idInProject, __CLASS__, "", "i`.`idInProject");
     }
 	
-	public function updateCommentsCounter( $issueId ) {
+	public static function updateCommentsCounter( $issueId ) {
 		$sql = "INSERT INTO `%1\$s` (`issueId`, `commentsCount`) " .
 									"VALUES ('" . $issueId . "', '1') " .
 					   "ON DUPLICATE KEY UPDATE `commentsCount` = " . 
@@ -291,6 +311,28 @@ SQL;
 	    }
 	}
 
+	/**
+	 * Обновляет значение приоритета задачи.
+	 * @param  Issue  $issue Задача, у которой меняется приоритет.
+	 * @param  int    $delta Изменение приоритета.
+	 */
+	public static function changePriority(Issue $issue, $delta) {
+		$issue->priority = (int)max(0, min($issue->priority + $delta, 100));
+	    $hash = [
+	    	'UPDATE' => LPMTables::ISSUES,
+	    	'SET' => [
+	    		'priority' => $issue->priority 
+	    	],
+	    	'WHERE' => [
+	    		'id' => $issue->id
+	    	]
+	    ];
+
+	    $db = self::getDB();
+	    if (!$db->queryb($hash))
+	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
+	}
+
 	const TYPE_DEVELOP     	= 0;
 	const TYPE_BUG         	= 1;
 	const TYPE_SUPPORT     	= 2;
@@ -325,6 +367,7 @@ SQL;
 	public $commentsCount = 0;
 
 	private $_images = null;
+    private $_testers = null;
 
 	private $_htmlDesc = null;
 
@@ -346,8 +389,7 @@ SQL;
 	
 	//public $baseURL = '';
 	
-	function __construct( $id = 0 )
-	{
+	function __construct($id = 0) {
 		parent::__construct();
 		
 		$this->id = $id;
@@ -355,8 +397,9 @@ SQL;
 		$this->_typeConverter->addFloatVars( 
 			'id', 'parentId', 'authorId', 'type', 'status', 'commentsCount', 'hours'
 		);
-		$this->_typeConverter->addIntVars( 'priority' );
-		$this->addDateTimeFields( 'createDate', 'startDate', 'completeDate', 'completedDate' );
+		$this->_typeConverter->addIntVars('priority');
+		$this->_typeConverter->addBoolVars('isOnBoard');
+		$this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
 		
 		$this->addClientFields( 
 			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
@@ -370,7 +413,8 @@ SQL;
 	{
 	    $obj = parent::getClientObject();
 
-		if ($this->author) $obj->author = $this->author->getClientObject();
+		if ($this->author)
+			$obj->author = $this->author->getClientObject();
 
 	    return $obj;
 	}
@@ -471,8 +515,13 @@ SQL;
 		else return 'высокий';
 	}
 
-	public function getProjectUrl() {
-		return Project::getURLByProjectUID( $this->projectUID );
+	/**
+	 * Возвращает URL страницы проекта, к которому относится задача,
+	 * @param  string $hash Хэш параметр.
+	 * @return string URL страницы проекта.
+	 */
+	public function getProjectUrl($hash = '') {
+		return Project::getURLByProjectUID($this->projectUID, $hash);
 	}
 	
 	/**

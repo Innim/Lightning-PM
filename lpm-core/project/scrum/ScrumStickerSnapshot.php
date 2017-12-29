@@ -88,9 +88,18 @@ SQL;
 
                 $members = $issue->getMemberIds();
 
+                $insertId = $prepare->insert_id;
+
                 if (count($members) > 0) {
-                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $prepare->insert_id, $issue->getMemberIds()))
+                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $insertId, $issue->getMemberIds()))
                         throw new Exception("Ошибка при сохранении участников.");
+                }
+
+                $testers = $issue->getTesterIds();
+
+                if (count($testers) > 0) {
+                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $insertId, $testers))
+                        throw new Exception("Ошибка при сохранении тестеров.");
                 }
 
                 $added = true;
