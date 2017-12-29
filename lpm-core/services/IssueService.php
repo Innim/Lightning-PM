@@ -113,6 +113,21 @@ class IssueService extends LPMBaseService
 		$this->add2Answer('issue', $this->getIssue4Client($issue));
 		return $this->answer();
 	}
+
+    /**
+     * Загружает информацию о задаче
+     * @param float $idInProject
+     * @return array
+     */
+    public function loadByIdInProject($idInProject) {
+        if (!$issue = Issue::loadByIdInProject((float) $idInProject))
+            return $this->error('Нет такой задачи');
+
+        // TODO проверка на возможность просмотра
+
+        $this->add2Answer('issue', $this->getIssue4Client($issue));
+        return $this->answer();
+    }
 	
 	/**
 	 * Удаляет задачу
@@ -315,12 +330,27 @@ SQL;
 	protected function getIssue4Client( Issue $issue, $loadMembers = true ) {
 		$obj = $issue->getClientObject();
 		$members = $issue->getMembers();
+		$testers = $issue->getTesters();
+		$images = $issue->getImages();
 		$obj->members = array();
-		
+		$obj->testers = array();
+		$obj->images = array();
+		$obj->isOnBoard = $issue->isOnBoard();
+
 		foreach ($members as $member) {
 			array_push( $obj->members, $member->getClientObject() );
 		}
-		
+
+		foreach ($testers as $tester) {
+			array_push( $obj->testers, $tester->getClientObject() );
+		}
+
+		foreach ($images as $image) {
+			array_push( $obj->images, array( 'imgId' => $image->imgId,
+                'source' => $image->getSource(),
+                'preview' => $image->getPreview()));
+		}
+
 		return $obj;
 	}
 }
