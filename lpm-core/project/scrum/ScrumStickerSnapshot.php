@@ -42,7 +42,7 @@ SQL;
 
         try {
             // получаем идентификатор снепшота в проекте
-            $idInProject = self::getLastIssueId($projectId);
+            $idInProject = self::getLastSnapshotId($projectId);
 
             // начинаем транзакцию
             $db->begin_transaction();
@@ -117,8 +117,7 @@ SQL;
                 // отменяем, т.к. на доске нет стикеров
                 $db->rollback();
             }
-        }
-        catch (Exception $ex) {
+        } catch (Exception $ex) {
             // что-то пошло не так -> отменяем все изменения
             $db->rollback();
 
@@ -126,13 +125,36 @@ SQL;
         }
 	}
 
+    /**
+     * Возвращает номер последнего снепшота в архиве.
+     * @param int $projectId идентификатор проекта, для которого создается снепшот.
+     * @return int номер последнего снепшота в проекте.
+     * @throws Exception В случае, если произошла ошибка при запросе к БД.
+     */
+    private static function getLastSnapshotId($projectId)
+    {
+        $db = self::getDB();
+        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
+            "WHERE `pid` = '" . $projectId . "'";
+        if (!$query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)){
+            throw new Exception("Ошибка доступа к базе при получении идентификатора снепшота в проекте!");
+        }
+
+        if ($query->num_rows == 0) {
+            return 1;
+        } else {
+            $result = $query->fetch_assoc();
+            return (int) $result['maxID'] + 1;
+        }
+    }
+
 	/**
 	 * Идентификатор snapshot-а.
 	 * @var int
 	 */
 	public $id;
     /**
-     * Порядковый номер снепшота по проект.
+     * Порядковый номер снепшота по проекту.
      * @var int
      */
     public $idInProject = 0;
@@ -218,28 +240,5 @@ SQL;
         }
 
         return $count;
-    }
-
-    /**
-     * Возвращает номер последнего задания в проекте.
-     * @param int $projectId идентификатор проекта, для которого создается снепшот.
-     * @return int номер последнего задания в проекте.
-     * @throws Exception В случае, если произошла ошибка при запросе к БД.
-     */
-    private static function getLastIssueId($projectId)
-    {
-        $db = self::getDB();
-        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
-            "WHERE `pid` = '" . $projectId . "'";
-        if (!$query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)){
-            throw new Exception("Ошибка доступа к базе при получении идентификатора снепшота в проекте!");
-        }
-
-        if ($query->num_rows == 0) {
-            return 1;
-        } else {
-            $result = $query->fetch_assoc();
-            return $result['maxID'] + 1;
-        }
     }
 }
