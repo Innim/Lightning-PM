@@ -157,7 +157,7 @@ SQL;
 					$value 
 				);
 
-				$value = HTMLHelper::codeIt($value);
+				$value = HTMLHelper::codeIt($value, false);
 			} break;
 			case 'date' : {
 				if (!parent::setVar( $var, $value )) return false;
