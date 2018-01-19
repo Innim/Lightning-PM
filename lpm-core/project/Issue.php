@@ -409,9 +409,9 @@ SQL;
 		$this->author = new User();
 	}
 
-	public function getClientObject()
+	public function getClientObject($addfields = null)
 	{
-	    $obj = parent::getClientObject();
+	    $obj = parent::getClientObject($addfields);
 
 		if ($this->author)
 			$obj->author = $this->author->getClientObject();

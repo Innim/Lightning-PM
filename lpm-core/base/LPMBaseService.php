@@ -31,7 +31,7 @@ class LPMBaseService extends SecureService
 		return $this->error('Error DB load');
 	}
 
-	protected function error($message, $code = 0) {
+	protected function error($message = '', $errno = 0, $useLang = true) {
 		if (DEBUG) {
 			if ($this->_db && $this->_db->error) {
 				if (empty($message)) 
@@ -43,10 +43,10 @@ class LPMBaseService extends SecureService
 				$message .= ' (' . $this->_dbError . ')';
 			}
 		}
-		return parent::error($message, $code);
+		return parent::error($message, $code, $useLang);
 	}
 
-	protected function exception($e) {
+	protected function exception(Exception $e) {
 		if (DEBUG && $e instanceof DBException) {
 			$db = $e->getDB();
 			if ($db && $db->error)
@@ -101,4 +101,3 @@ class LPMBaseService extends SecureService
 		return Comment::load( $this->_db->insert_id );
 	}
 }
-?>
