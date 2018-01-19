@@ -112,7 +112,8 @@ class ProjectPage extends BasePage
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) 
 		{			
-			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id,array(Issue::STATUS_IN_WORK,Issue::STATUS_WAIT) ));	
+			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id,
+                array(Issue::STATUS_IN_WORK, Issue::STATUS_WAIT) ));
 		}
 		// загружаем  завершенные задачи
 		else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) 
@@ -221,8 +222,8 @@ class ProjectPage extends BasePage
     
 	private function saveIssue( $editMode = false ) {
 		$engine = $this->_engine;
-		// если это ректирование, то проверим идентификатор задача
-		// соответствие её проекту и права пользователя
+		// если это редактирование, то проверим идентификатор задачи
+		// на соответствие её проекту и права пользователя
 		if ($editMode) {
 			$issueId = (float)$_POST['issueId'];
 			

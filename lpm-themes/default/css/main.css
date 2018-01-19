@@ -207,6 +207,10 @@ a.back-link {
 	text-align: left;
 	font-size : 10px;
 }
+a.copy-issue-link {
+	float: right;
+	font-size: 12px;
+}
 /* p.header-back-link {
 	margin: -1.3em 0px 0.83em;
 }
