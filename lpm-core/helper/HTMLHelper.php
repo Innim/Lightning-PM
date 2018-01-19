@@ -14,24 +14,30 @@ class HTMLHelper
 	}
 
 	/**
-	 * Автоматически заменяет обертку блоков ` и ``` на теги кода 
-	 * @param  string $text 
-	 * @return string
+	 * Автоматически заменяет обертку блоков ` и ``` на теги кода.
+	 * @param  string $text Текст для подсветки кода в нем.
+     * @param  boolean $htmlEncode Определяет, нужно ли заменять html символы на эквиваленты внутри
+     *                             блоков кода.
+	 * @return string Текст, в котром уже подсвечен код.
 	 */
-	public static function codeIt($text) {
+	public static function codeIt($text, $htmlEncode = true) {
         return self::processCode($text,
-    		function ($matches) {
+    		function ($matches) use ($htmlEncode) {
     			if (empty($matches[2]))
     			{
     				$tag = 'pre';
-    				$text = htmlentities(trim($matches[4], "\n\r"));
+                    $text = trim($matches[4], "\n\r");
+                    if ($htmlEncode)
+    				    $text = htmlentities($text);
     				$classname = empty($matches[3]) ? 'nohighlight' : trim($matches[3]); 
     				$text = '<code class="' . $classname . '">' . $text . '</code>';
     			}
     			else 
     			{
     				$tag = 'code';
-    				$text = htmlentities($matches[2]);
+                    $text = $matches[2];
+                    if ($htmlEncode)
+                        $text = htmlentities($text);
     			}
     			return $matches[1] . '<' . $tag . '>' . $text . '</' . $tag . '>';
     		});
