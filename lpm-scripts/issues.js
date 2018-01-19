@@ -134,6 +134,50 @@ issuePage.updateLabelsView = function () {
     }
 }
 
+issuePage.issueNameChanged = function (value) {
+    if (typeof issueLabels === 'undefined')
+        issueLabels = [];
+
+    var labelsStr = $.trim(value).match(/^\[.*]/);
+    // т.к. на js нет нормальной регулярки для такой задачи, то как-то так
+    var labels = labelsStr.toString().split("]");
+    var isUpdate = false;
+    var currentSymbol = 0;
+    for (var i = 0, len = labels.length; i < len; ++i) {
+        var label = $.trim(labels[i]);
+        if (label.substr(0, 1) == '[') {
+            currentSymbol += 2;
+            label = $.trim(label.substr(1));
+            if (label == "") {
+                labels.splice(i--, 1);
+                len--;
+            } else {
+                labels[i] = label;
+                if (issueLabels.indexOf(label) == -1) {
+                    issueLabels.push(label);
+                    isUpdate = true;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+
+    //Удаляем те, которые стерли
+    var len = issueLabels.length;
+    while (len-- > 0)
+    {
+        var label = issueLabels[len];
+        if (labels.indexOf(label) == -1) {
+            issueLabels.splice(len, 1);
+            isUpdate = true;
+        }
+    }
+
+    if (isUpdate)
+        issuePage.updateLabelsView();
+}
+
 issuePage.addIssueMember = function() {
     /**
      * @type HTMLSelectElement

@@ -11,7 +11,7 @@
       <ol>
         <li>
             <span class="edit-issue-name-container">
-                <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>" class="edit-issue-name"/>
+                <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>" class="edit-issue-name" oninput="issuePage.issueNameChanged(this.value)"/>
             </span>
             <span class="issue-labels-container">
                 <?php foreach( lpm_get_issue_labels() as $label): ?>
