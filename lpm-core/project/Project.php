@@ -108,8 +108,14 @@ class Project extends MembersInstance
 		return $project;
 	}
 	
-	public static function getURLByProjectUID( $projectUID ) {
-		return Link::getUrlByUid( ProjectPage::UID, $projectUID );
+	/**
+	 * Возвращает URL страницы проекта.
+	 * @param  string $projectUID Строковый идентификатор проекта.
+	 * @param  string $hash       Хэш параметр.
+	 * @return URL страницы проекта.
+	 */
+	public static function getURLByProjectUID($projectUID, $hash = '') {
+		return Link::getUrl(ProjectPage::UID, [$projectUID], $hash);
 	} 
 
 	/**

@@ -111,13 +111,24 @@ CHANGE `issue_sp` `issue_sp` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COM
 
 -- 2017-11-18 10:03:00
 
--- 2017-12-01 13:01:00
-
 ALTER TABLE `lpm_issues` CHANGE `hours` `hours` DECIMAL(10,1) NOT NULL;
+
+-- 2017-12-16 10:01:00
+
+#### Вставка поля idInProject для scrum snapshot
+ALTER TABLE `lpm_scrum_snapshot_list` ADD `idInProject` INT(11) NOT NULL COMMENT 'Порядковый номер снепшота по проекту' AFTER `id`;
+
+
+#### Заполнение поля idInProject для scrum snapshot
+CREATE TEMPORARY TABLE IF NOT EXISTS `lmp_scrum_snapshot_list_tmp_0_11_38` AS (SELECT `id`, `pid` FROM `lpm_scrum_snapshot_list`);
+UPDATE `lpm_scrum_snapshot_list` SET `idInProject` = (SELECT COUNT(`id`) FROM `lmp_scrum_snapshot_list_tmp_0_11_38` WHERE
+  `lmp_scrum_snapshot_list_tmp_0_11_38`.`pid` = `lpm_scrum_snapshot_list`.`pid` AND
+  `lmp_scrum_snapshot_list_tmp_0_11_38`.`id` < `lpm_scrum_snapshot_list`.`id`) + 1;
+DROP TEMPORARY TABLE `lmp_scrum_snapshot_list_tmp_0_11_38`;ALTER TABLE `lpm_issues` CHANGE `hours` `hours` DECIMAL(10,1) NOT NULL;
 
 -- 2017-12-01 14:12:00
 
-CREATE TABLE `task`.`lpm_issue_labels` (
+CREATE TABLE `lpm_issue_labels` (
   `id` INT NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор' ,
   `projectId` INT NOT NULL DEFAULT '0' COMMENT 'Проект (0 если метка общая)' ,
   `label` VARCHAR(255) NOT NULL COMMENT 'Текст метки' ,

@@ -103,7 +103,6 @@ class ProjectPage extends BasePage
 				
 				$issue->getMembers();
 				$issue->getTesters();
-				Issue::$currentIssue = $issue;
 				
 				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
 
@@ -111,13 +110,16 @@ class ProjectPage extends BasePage
 				$this->_pattern = 'issue';
 				ArrayUtils::remove( $this->_js,	'project' );
 				array_push( $this->_js,	'issue' );
+
+				$this->addTmplVar('issue', $issue);
 			} 
 		}
 
 		// загружаем задачи
 		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) 
 		{			
-			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id,array(Issue::STATUS_IN_WORK,Issue::STATUS_WAIT) ));	
+			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id,
+                array(Issue::STATUS_IN_WORK, Issue::STATUS_WAIT) ));
 		}
 		// загружаем  завершенные задачи
 		else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) 
@@ -171,12 +173,12 @@ class ProjectPage extends BasePage
             $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
             $this->addTmplVar('snapshots', $snapshots);
 
-            $sid = (int) $this->getParam(3);
+            $sidInProject = (int) $this->getParam(3);
 
-            if ($sid > 0)
+            if ($sidInProject > 0)
             {
                 foreach ($snapshots as $snapshot) {
-                    if ($snapshot->id == $sid) {
+                    if ($snapshot->idInProject == $sidInProject) {
                         $this->addTmplVar('snapshot', $snapshot);
                         break;
                     }
@@ -226,8 +228,8 @@ class ProjectPage extends BasePage
     
 	private function saveIssue( $editMode = false ) {
 		$engine = $this->_engine;
-		// если это ректирование, то проверим идентификатор задача
-		// соответствие её проекту и права пользователя
+		// если это редактирование, то проверим идентификатор задачи
+		// на соответствие её проекту и права пользователя
 		if ($editMode) {
 			$issueId = (float)$_POST['issueId'];
 			
@@ -525,13 +527,14 @@ class ProjectPage extends BasePage
 						);
 					}	
 
-					Project::updateIssuesCount(  $issue->projectId );				
+					Project::updateIssuesCount($issue->projectId);
 				
-					LightningEngine::go2URL( 
-						$editMode 
-							? $issueURL
-							: $this->_project->getUrl() 
-					);
+					LightningEngine::go2URL($issueURL);
+					// LightningEngine::go2URL( 
+						// $editMode 
+							// ? $issueURL
+							// : $this->_project->getUrl() 
+					// );
 				}
 			}
 		}
@@ -545,7 +548,6 @@ class ProjectPage extends BasePage
 
 	private function saveImages4Issue( $issueId, $hasCnt = 0 ) 
 	{
-		
 		$uploader = new LPMImgUpload( 
 			Issue::MAX_IMAGES_COUNT - $hasCnt, 
 			true,

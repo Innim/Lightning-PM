@@ -272,16 +272,16 @@ issuePage.removeIssueTester = function(e) {
 };
 
 issuePage.updatePriorityVals = function () {
-    issuePage.setPriorityVal( $('input[type=range]#priority').val() );
+    issuePage.setPriorityVal($('input[type=range]#priority').val());
     //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
-    $('.priority-val.circle').each( function (i) {
-        $(this).css( 
-            'backgroundColor', 
-            issuePage.getPriorityColor( parseInt( $(this).text() ) ) 
-        );
-        $(this).text( '' );
+    $('.priority-val.circle').each(function (i) {
+        issuePage.updatePriorityVal($(this), parseInt($(this).text()));
+        $(this).text('');
     });
 };
+issuePage.updatePriorityVal = function ($el, value) {
+    $el.css('backgroundColor', issuePage.getPriorityColor(value));
+}
 
 issuePage.setPriorityVal = function (value) {
     var valStr = Issue.getPriorityStr( value );
@@ -421,23 +421,12 @@ function setCaretPosition(elem, pos ) {
     else elem.focus();
 };
 
-function completeIssue( e ) {    
+function completeIssue(e) {    
     var parent   = e.currentTarget.parentElement;
-    //var fields   = cell.getElementsByTagName( 'input' );
-   // var btn      = cell.getElementsByTagName( 'button' )[0];
-    //btn.disabled = "disabled";
-    
-    var issueId  = $( 'input[name=issueId]', parent ).attr( 'value' );
-    preloader.show();
-    
-    /*for (var i = 0; i < fields.length; i++) {
-        if (fields[i].name == 'issueId') {
-            issueId = fields[i].value;
-            break;
-        }
-    }*/
+    var issueId  = $('input[name=issueId]', parent).attr('value');
     
     if (issueId > 0) {
+        preloader.show();
         srv.issue.complete( 
             issueId, 
             function (res) {
@@ -468,7 +457,89 @@ function completeIssue( e ) {
             }  
         );
     }
-};
+}
+
+issuePage.changePriority = function (e) {
+    var $control = $(e.currentTarget);
+    var $row = $control.parents('tr');
+    var issueId = $('input[name=issueId]', $row).attr('value');
+    var delta = $control.hasClass('priority-up') ? 1 : -1;
+
+    if (issueId > 0) {
+        srv.issue.changePriority(issueId, delta, function (res) {
+            if (res.success) {
+                // alert('ok: ' + res.priority);
+                var priority = res.priority;
+                var priorityStr = Issue.getPriorityStr(priority);
+                $('.priority-val', $row).attr('title', 'Приоритет: ' + priorityStr + 
+                        ' (' + priority + ')').data("value", priority);
+                issuePage.updatePriorityVal($('.priority-val', $row), priority);
+
+                var hintY = e.pageY - 13;
+                $("<span></span>").text(priority).addClass("priority-change-animation").
+                    appendTo($('body')).offset({top:hintY, left:e.pageX - 10}).
+                    animate(
+                        {
+                            opacity: '0',
+                            top: '-=20px'
+                        }, 500, function () {
+                            $(this).remove();
+                        });
+
+                var status = $row.data("status");
+                var date = $row.data("completeDate");
+                var compare = function ($r) {
+                    if ($r.data("status") != status)
+                        return 0;
+                    var p = parseInt($(".priority-val", $r).data("value"));
+                    if (p != priority)
+                        return priority - p;
+                    else if ($r.data("completeDate") != date)
+                        return $r.data("completeDate") - date;
+                    else 
+                        return $r.data("id") - issueId;
+                }
+
+                if (delta < 0) {
+                    var $next = $row;
+                    var $last = null;
+                    while ($next) {
+                        var $next = $next.next();
+
+                        if (compare($next) < 0)
+                        {
+                            $last = $next;
+                        }
+                        else 
+                        {
+                            if ($last)
+                                $last.after($row);
+                            break;
+                        }
+                    }
+                } else {
+                    var $prev = $row;
+                    var $first = null;
+                    while ($prev) {
+                        var $prev = $prev.prev();
+                        if (compare($prev) > 0)
+                        {
+                            $first = $prev;
+                        }
+                        else 
+                        {
+                            if ($first)
+                                $first.before($row);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                srv.err(res);
+            }
+        });
+    }
+}
 
 function restoreIssue( e ) {
     var parent   = e.currentTarget.parentElement;
@@ -755,6 +826,95 @@ issuePage.setEditInfo = function () {
     
 };
 
+issuePage.setIssueBy = function (value) {
+    // заполняем всю информацию
+    //$( "" ).value( $( "" ) );
+    // меняем заголовок
+    $( "#issueForm > h3" ).text( "Добавить задачу" );
+    // имя
+    $( "#issueForm form input[name=name]" ).val( value.name );
+    // часы
+    $( "#issueForm form input[name=hours]" ).val( value.hours );
+
+    // тип
+    $('form input:radio[name=type]:checked', "#issueForm").removeAttr( 'checked' );
+    $('form input:radio[name=type][value=' + /*$( "#issueInfo li input[name=type]" ).val()*/ value.type + ']',
+        "#issueForm" ).attr( 'checked', 'checked' );
+    // приоритет
+    // var priorityVal = $( "#issueInfo li input[name=priority]" ).val();
+    $( "#issueForm form input[name=priority]" ).val( value.priority );
+    issuePage.setPriorityVal( value.priority );
+    // дата окончания
+    $( "#issueForm form input[name=completeDate]" ).val(
+        //$( "#issueInfo li input[name=completeDate]" ).val()
+        value.completeDate
+    );
+    // исполнители
+    var memberIds = value.members/*$( "#issueInfo li input[name=members]" ).val()*/ .split( ',' );
+    var i, l = 0;
+    l = memberIds.length;
+    for (i = 0; i < l; i++) {
+        $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'selected' );
+        issuePage.addIssueMember();
+    }
+
+    // Тестеры
+    var testerIds = value.testers/*$( "#issueInfo li input[name=testers]" ).val()*/ .split( ',' );
+    l = testerIds.length;
+    for (i = 0; i < l; i++) {
+        var testerId = testerIds[i];
+        if (testerId.length > 0) {
+            $("#addIssueTesters option[value=" + testerId + "]").attr('selected', 'selected');
+            issuePage.addIssueTester();
+        }
+    }
+
+    //$( "#issueForm form" ).value( $( "" ) );
+    // описание
+    // пришлось убрать, потому что там уже обработанное описание - с ссылками и тп
+    // вообще видимо надо переделать это все
+    //$( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).html() );
+    $( "#issueForm form textarea[name=desc]" ).val( value.desc );
+    // изображения
+    var imgs = value.images;
+    var numImages = imgs.length;
+    for (i = 0; i < numImages; ++i){
+        addImagebyUrl(imgs[i].source);
+    }
+    /*var imgs = $("#issueInfo li > .images-line > li");
+    l = imgs.length;
+    var $imgInputField = $('#issueForm form .images-list > li').has('input[name="images[]"]');
+    var $imgInput = $('#issueForm form .images-list').empty();
+    var imgLI = null;
+    for (i = l - 1; i >= 0; i--) {
+        //$('input[name=imgId]',imgs[i]).val()
+        imgLI = imgs[i].cloneNode( true );
+        $(imgLI).append('<a href="javascript:;" class="remove-btn" onclick="removeImage(' +
+            $('input[name=imgId]', imgLI).val() + ')"></a>');
+        $imgInput.append(imgLI);
+        //imgInput.insertBefore(imgLI, imgInput.children[0]);
+    };
+    $imgInput.append($imgInputField);
+    if (l >= window.lpmOptions.issueImgsCount) {
+        $("#issueForm form .images-list > li input[type=file]").hide();
+        $("#issueForm form li a[name=imgbyUrl]").hide();
+    }*/
+
+    // родитель
+    $( "#issueForm form input[name=parentId]" ).val( value.parentId /*$( "#issueInfo input[name=parentId]" ).val()*/ );
+    // идентификатор задачи
+    // $( "#issueForm form input[name=issueId]" ).val( value.issueId/*$( "#issueInfo input[name=issueId]" ).val()*/ );
+    // действие меняем на редактирование
+    $( "#issueForm form input[name=actionType]" ).val( 'addIssue' );
+    // меняем заголовок кнопки сохранения
+    $( "#issueForm form .save-line button[type=submit]" ).text( "Сохранить" );
+
+    // выставляем галочку "Поместить на Scrum доску"
+    var boardField = $("#putToBoardField");
+    if (boardField && boardField[0])
+        boardField[0].checked = value.isOnBoard;
+};
+
 function removeImage(imageId) {
     if (confirm('Вы действительно хотите удалить это изображение?')) {
         $('#issueForm form .images-list > li').has('input[name=imgId][value=' + imageId + ']').remove();
@@ -765,15 +925,17 @@ function removeImage(imageId) {
     }
 }
 
-function addImagebyUrl() {
+function addImagebyUrl(imageUrl) {
     // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
     var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
     var imgInput = $("#issueForm ul.images-url");
     urlLI.removeAttr('class');
+    if (imageUrl)
+        urlLI[0].children[0].value = imageUrl;
     //urlLI.("input").attr('autofocus','true');
     //добавляем в контейнер
     imgInput.append(urlLI);
-    setCaretPosition(urlLI.find("input"));
+    // setCaretPosition(urlLI.find("input"));
     urlLI.find("a").click(function (event) {
         urlLI.remove();    
     });
@@ -1049,6 +1211,48 @@ issuePage.changeSPVisibility = function (value) {
         $('#scrumBoard').addClass('hide-sp');
 }
 
+issuePage.addIssueBy = function (issueIdInProject) {
+    issueIdInProject = parseInt(issueIdInProject);
+
+    if (issueIdInProject <= 0)
+        return;
+
+    // показываем прелоадер
+    preloader.show();
+
+    // Пробуем загрузить данные задачи
+    srv.issue.loadByIdInProject(
+        issueIdInProject,
+        function (res) {
+            // скрываем прелоадер
+            preloader.hide();
+
+            if (res.success) {
+                var issue = new Issue( res.issue );
+                console.log("issue-name: " + issue.name);
+
+                issuePage.setIssueBy({
+                    name: issue.name,
+                    hours: issue.hours,
+                    desc: issue.desc,
+                    priority : issue.priority,
+                    completeDate : issue.getCompleteDateInput(),
+                    type : issue.type,
+                    members : issue.getMemberIds(),
+                    testers : issue.getTesterIds(),
+                    parentId : issue.parentId,
+                    issueId : issue.id,
+                    images : issue.images,
+                    isOnBoard : issue.isOnBoard
+                });
+
+            } else {
+                srv.err( res );
+            }
+        }
+    );
+}
+
 function Issue( obj ) {
     this._obj = obj;
     
@@ -1064,9 +1268,21 @@ function Issue( obj ) {
     this.members      = obj.members;
     this.priority     = obj.priority;
     this.hours        = obj.hours;
+    this.testers      = obj.testers;
+    this.images       = obj.images;
+    this.isOnBoard    = obj.isOnBoard;
     
     this.getCompleteDate = function () {
         return this.getDate( this.completeDate );
+    };
+
+    this.getCompleteDateInput = function () {
+        var d = this.getCompleteDate();
+
+        if (d)
+            d = d.replace(/-/g, '/');
+
+        return d;
     };
 
     this.getCompletedDate = function () {
@@ -1086,7 +1302,7 @@ function Issue( obj ) {
         return '<span class="priority-val circle">' + this.priority + '</span>' +
                Issue.getPriorityStr( val ) + ' (' + val + '%)';
     };
-    
+
     this.getMembers = function () {
         var str = '';
         if (this.members)
@@ -1094,6 +1310,36 @@ function Issue( obj ) {
             if (i > 0) str += ', ';
             str += this.members[i].linkedName;
         }
+        return str;
+    };
+
+    this.getMemberIds = function () {
+        var str = '';
+        if (this.members)
+            for (var i = 0; i < this.members.length; i++) {
+                if (i > 0) str += ', ';
+                str += this.members[i].userId;
+            }
+        return str;
+    };
+
+    this.getTesters = function () {
+        var str = '';
+        if (this.testers)
+            for (var i = 0; i < this.testers.length; i++) {
+                if (i > 0) str += ', ';
+                str += this.testers[i].linkedName;
+            }
+        return str;
+    };
+
+    this.getTesterIds = function () {
+        var str = '';
+        if (this.testers)
+            for (var i = 0; i < this.testers.length; i++) {
+                if (i > 0) str += ', ';
+                str += this.testers[i].userId;
+            }
         return str;
     };
     

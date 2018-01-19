@@ -88,10 +88,6 @@ class PageConstructor
 				? Project::$currentProject->getMembers() : array();
 	}
 	
-	public static function getIssue() {
-		return Issue::$currentIssue ? Issue::$currentIssue : new Issue();
-	}
-
 	public static function getIssueLabels() {
         return Issue::getLabels();
     }

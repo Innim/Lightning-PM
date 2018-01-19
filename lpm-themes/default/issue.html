@@ -1,7 +1,14 @@
-<article id="issueView">  
+<?php
+/* 
+Требуются: 
+    $issue - текущая задача
+*/
+?><article id="issueView">  
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
+  <div class="header-operations-bar">
+    <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
+  </div>
   <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-  <?$issue = lpm_get_issue();?>
   <article id="issueInfo" class="container">
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
@@ -120,6 +127,10 @@
         <button onclick="issuePage.removeIssue( event );">Удалить</button>
     </p>
     <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
+    <a href="<?=$issue->getProjectUrl() . '#copy-issue:' . $issue->idInProject;?>" target="_blank"
+       class="copy-issue-link">
+        <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
+    </a>
   </article>
   <article class="comments">
     <div class="links-bar">
@@ -144,18 +155,18 @@
      </p>
     </form>
     <ol class="comments-list">
-        <?foreach (lpm_get_comments() as $comment) {?>
+        <?php foreach (lpm_get_comments() as $comment): ?>
         <li>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
             <article class="text"><?=$comment->getText();?></article>
         </li>
-        <?}?>
+        <?php endforeach; ?>
     </ol>
   </article>
 </article>
 <script type="text/javascript">
     var issueLabels = <?=json_encode($issue->getLabelNames());?>;
 </script>
-<? lpm_print_issue_form($issue->getProject()); ?>
+<?php lpm_print_issue_form($issue->getProject(), $issue); ?>

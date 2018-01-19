@@ -11,6 +11,9 @@ body {
 a {
 	color      : #000000;
 }
+h1 {
+	margin: 24px 0;
+}
 h3 {
 	margin: 0px;
 }
@@ -203,6 +206,10 @@ a.back-link {
 	margin    : 0px;
 	text-align: left;
 	font-size : 10px;
+}
+a.copy-issue-link {
+	float: right;
+	font-size: 12px;
 }
 /* p.header-back-link {
 	margin: -1.3em 0px 0.83em;
@@ -1007,8 +1014,43 @@ table.issues-list td .on-board-state {
 	font-size: 12px;
 	color: #333333;
 }
+table.issues-list td .priority-change-bar {
+	position: absolute;
+	left: 6px;
+	top: 50%;
+	width: 10px;
+	height: 36px;
+	margin-top: -15px;
+	color: #cecece;
+	font-size: 13px;
+}
+table.issues-list td .priority-change-bar:hover {
+	color: #666666;
+}
+table.issues-list td .priority-change-bar .priority-control {
+	position: absolute;
+	cursor: pointer;
+}
+table.issues-list td .priority-change-bar .priority-up {
+	top: 0;
+}
+table.issues-list td .priority-change-bar .priority-down {
+	bottom: 0;
+}
+table.issues-list td .priority-change-animation {
+	position: absolute;
+	user-select: none;
+}
 
 /* просмотр задачи */
+#issueView h1 {
+	float: left;
+}
+#issueView .header-operations-bar {
+	float: right;
+	margin-top: 35px;
+	font-size: 10px;
+}
 #issueView .info-list.completed-issue .issue-completed-date-row {
 	display: block;
 }
@@ -1029,6 +1071,7 @@ table.issues-list td .on-board-state {
 }
 #issueView .container
 {
+	clear: both;
 	position: relative;
 }
 #issueView .info-list .desc blockquote
