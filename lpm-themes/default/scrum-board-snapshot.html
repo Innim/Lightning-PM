@@ -18,7 +18,7 @@
             <ul>
                 <?php foreach ($snapshots as $snapshot): ?>
                 <li>
-                    <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot #<?=$snapshot->id?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+                    <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot #<?=$snapshot->idInProject?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
                 </li>
                 <?php endforeach; ?>
             </ul>
@@ -27,7 +27,7 @@
     <?php else: ?>
         <a href="<?=$snapshot->getUrl()?>"><h3><u>SCRUM архив:</u></h3></a>
         <div class="scrum-snapshot-stat">
-            <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->id?></i> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+            <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->idInProject?></i> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
             <span class="num-issues">Всего: <?=$snapshot->getNumStickers()?> шт, <?=$snapshot->getNumSP()?> SP</span>
         </div>
 
