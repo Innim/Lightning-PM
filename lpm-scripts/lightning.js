@@ -106,6 +106,9 @@ var srv = {
         load: function (issueId, onResult) {
             this.s._('load');
         },
+        loadByIdInProject: function (idInProject, onResult) {
+            this.s._('loadByIdInProject');
+        },
         remove: function (issueId, onResult) {
             this.s._('remove');
         },

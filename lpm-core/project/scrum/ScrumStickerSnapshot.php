@@ -38,17 +38,19 @@ SQL;
 		$pid = $projectId;
 		$created = DateTimeUtils::mysqlDate();
 		$creatorId = $userId;
-
         $db = self::getDB();
 
         try {
+            // получаем идентификатор снепшота в проекте
+            $idInProject = self::getLastSnapshotId($projectId);
+
             // начинаем транзакцию
             $db->begin_transaction();
 
             // запись о новом снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`pid`, `creatorId`, `created`)
-                VALUES ('${pid}', '${creatorId}', '${created}')
+                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `created`)
+                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${created}')
 SQL;
 
             // если что-то пошло не так
@@ -115,8 +117,7 @@ SQL;
                 // отменяем, т.к. на доске нет стикеров
                 $db->rollback();
             }
-        }
-        catch (Exception $ex) {
+        } catch (Exception $ex) {
             // что-то пошло не так -> отменяем все изменения
             $db->rollback();
 
@@ -124,11 +125,39 @@ SQL;
         }
 	}
 
+    /**
+     * Возвращает номер последнего снепшота в архиве.
+     * @param int $projectId идентификатор проекта, для которого создается снепшот.
+     * @return int номер последнего снепшота в проекте.
+     * @throws Exception В случае, если произошла ошибка при запросе к БД.
+     */
+    private static function getLastSnapshotId($projectId)
+    {
+        $db = self::getDB();
+        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
+            "WHERE `pid` = '" . $projectId . "'";
+        if (!$query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)){
+            throw new Exception("Ошибка доступа к базе при получении идентификатора снепшота в проекте!");
+        }
+
+        if ($query->num_rows == 0) {
+            return 1;
+        } else {
+            $result = $query->fetch_assoc();
+            return (int) $result['maxID'] + 1;
+        }
+    }
+
 	/**
 	 * Идентификатор snapshot-а.
 	 * @var int
 	 */
 	public $id;
+    /**
+     * Порядковый номер снепшота по проекту.
+     * @var int
+     */
+    public $idInProject = 0;
 	/**
 	 * Идентификатор проекта, для которого сделан snapshot.
 	 * @var int
@@ -153,9 +182,17 @@ SQL;
 
 		$this->id = $id;
 
-		$this->_typeConverter->addFloatVars('id', 'pid', 'creatorId');
+		$this->_typeConverter->addFloatVars('id', 'idInProject', 'pid', 'creatorId');
 		$this->addDateTimeFields('created');
 	}
+
+    /**
+     * Возвращает порядковый номер снепшота по проекту.
+     * @return int
+     */
+    public function getIdInProject(){
+        return $this->idInProject;
+    }
 
     /**
      * Путь до просмотра снепшота
@@ -163,7 +200,7 @@ SQL;
      */
 	public function getSnapshotUrl() {
         $curPage = LightningEngine::getInstance()->getCurrentPage();
-        return $curPage->getBaseUrl(ProjectPage::PUID_SCRUM_BOARD_SNAPSHOT, $this->id);
+        return $curPage->getBaseUrl(ProjectPage::PUID_SCRUM_BOARD_SNAPSHOT, $this->idInProject);
     }
 
     /**

@@ -127,6 +127,10 @@
         <button onclick="issuePage.removeIssue( event );">Удалить</button>
     </p>
     <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
+    <a href="<?=$issue->getProjectUrl() . '#copy-issue:' . $issue->idInProject;?>" target="_blank"
+       class="copy-issue-link">
+        <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
+    </a>
   </article>
   <article class="comments">
     <div class="links-bar">
