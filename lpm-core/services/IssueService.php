@@ -353,12 +353,76 @@ SQL;
         $db = LPMGlobals::getInstance()->getDBConnect();
         $projectId = $isForAllProjects ? 0 : $projectId;
 
-	    $id = Issue::saveLabel($label, $projectId);
+        $labels = Issue::getLabelsByLabelText($label);
+        $uses = 0;
+        $id = 0;
+        if (!empty($labels))
+        {
+            $count = count($labels);
+            while ($count-- > 0) {
+                $labelData = $labels[$count];
+                if ($projectId == 0) {
+                    if ($labelData['projectId'] != 0 && $labelData['deleted'] == LabelState::ACTIVE) {
+                        $uses += $labelData['countUses'];
+                        Issue::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
+                    } elseif ($labelData['projectId'] == 0) {
+                        if ($labelData['deleted'] == LabelState::ACTIVE) {
+                            return $this->error("Метка уже существует");
+                        } else {
+                            $uses += $labelData['countUses'];
+                            $id = $labelData['id'];
+                        }
+                    }
+                } elseif ($labelData['projectId'] == 0) {
+                    return $this->error("Метка уже существует");
+                } elseif ($labelData['projectId'] == $projectId) {
+                    if ($labelData['deleted'] == LabelState::ACTIVE)
+                        return $this->error("Метка уже существует");
+                    else
+                        $id = $labelData['id'];
+                }
+            }
+        }
+
+	    $id = Issue::saveLabel($label, $projectId, $id, $uses, LabelState::ACTIVE);
 	    if ($id == null) {
             return $this->error($db->error);
         } else {
             $this->add2Answer('id', $id);
             return $this->answer();
+        }
+    }
+
+    /**
+     * Удаляет метку.
+     * @param $id
+     */
+    public function removeLabel($id) {
+        $label = Issue::getLabel($id);
+        if ($label == null)
+            return $this->error("Метка не найдена.");
+
+        $state = ($label['projectId'] == 0) ? LabelState::DISABLED : LabelState::DELETED;
+        if ($label['projectId'] == 0) {
+            $labels = Issue::getLabelsByLabelText($label['label']);
+            if (!empty($labels)) {
+                $count = count($labels);
+                while ($count-- > 0) {
+                    $labelData = $labels[$count];
+                    if ($labelData['projectId'] == 0 && $labelData['id'] != $label['id']) {
+                        Issue::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
+                    } elseif ($labelData['projectId'] != 0 && $labelData['deleted'] == LabelState::DISABLED) {
+                        Issue::changeLabelDeleted($labelData['id'], LabelState::ACTIVE);
+                    }
+                }
+            }
+        }
+
+        if (Issue::changeLabelDeleted($labelData['id'], $state)) {
+            return $this->answer();
+        } else {
+            $db = LPMGlobals::getInstance()->getDBConnect();
+            return $this->error($db->error);
         }
     }
 	

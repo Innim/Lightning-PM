@@ -234,21 +234,55 @@ SQL;
 
     /**
      * Возвращает список стандартных меток для задачи отсортированных по количеству использований.
-     * @return array[{id, label}...n] Список меток для задачи.
+     * @return array[{id, label, countUses}...n] Список меток для задачи.
      */
 	public static function getLabels() {
 	    $labels = array();
         $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
-	    $sql = "SELECT `id`, `label`, `countUses` FROM `%s` WHERE `projectId` = " . (int) $projectId . " OR `projectId` = 0";
+	    $sql = "SELECT `id`, `label`, `countUses` FROM `%s` WHERE (`deleted` = " . LabelState::ACTIVE . ") AND ".
+            "(`projectId` = " . (int) $projectId . " OR `projectId` = 0)";
 
         $db = LPMGlobals::getInstance()->getDBConnect();
         $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
-
-        while ($array = $res->fetch_assoc()) {
-            $labels[] = $array;
+        if ($res) {
+            while ($array = $res->fetch_assoc()) {
+                $labels[] = $array;
+            }
+            uasort($labels, "Issue::labelsSort");
         }
-        uasort($labels,"Issue::labelsSort");
         return $labels;
+    }
+
+    /**
+     * Возвращает список меток во всех проектах по тексту метки.
+     * @param Имя меток, которые нужно вернуть.
+     * @return array Список меток по имени.
+     */
+    public static function getLabelsByLabelText($label) {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $label = $db->escape_string($label);
+        $labels = array();
+        $sql = "SELECT * FROM `%s` WHERE `label` = '" . $label . "'";
+        $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
+        if ($res) {
+            while ($array = $res->fetch_assoc()) {
+                $labels[] = $array;
+            }
+        }
+        return $labels;
+    }
+
+    /**
+     * Возвращает метку по id.
+     * @param $id
+     * @return array|null
+     */
+    public static function getLabel($id) {
+        $id = (int) $id;
+        $sql = "SELECT * FROM `%s` WHERE `id` = " . $id;
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
+        return ($res) ? $res->fetch_assoc() : null;
     }
 
     public static function labelsSort($label1, $label2)
@@ -296,19 +330,20 @@ SQL;
      * @param $projectId int Идентификатор проекта для которого создается метка (если не передан, то метка будет общей).
      * @param $id int Идентификатор метки (если не передан, то будет создана новая метка).
      * @param $countUses int Количество использований метки.
+     * @param $deleted bool Удалена ли метка.
      * @return int|null Идентификатор вставленной/обновленной записи или null в случае ошибки.
      */
-    public static function saveLabel($label, $projectId = 0, $id = 0, $countUses = 0) {
+    public static function saveLabel($label, $projectId = 0, $id = 0, $countUses = 0, $deleted = 0) {
         $db = LPMGlobals::getInstance()->getDBConnect();
         $id = ((int)$id > 0) ? (int)$id : "NULL";
         $projectId = (int) $projectId;
         $countUses = (int) $countUses;
         $label = $db->escape_string($label);
 
-        $sql = "INSERT INTO `%s` (`id`, `projectId`, `label`, `countUses`) " .
-            "VALUES ('" . $id . "', '" . $projectId . "', '" . $label . "', '" . $countUses . "') " .
+        $sql = "INSERT INTO `%s` (`id`, `projectId`, `label`, `countUses`, `deleted`) " .
+            "VALUES ('" . $id . "', '" . $projectId . "', '" . $label . "', '" . $countUses . "', '" . $deleted . "') " .
             "ON DUPLICATE KEY UPDATE ".
-            "`projectId` = VALUES(`projectId`), `label` = VALUES(`label`), `countUses` = VALUES(`countUses`)";
+            "`projectId` = VALUES(`projectId`), `label` = VALUES(`label`), `countUses` = VALUES(`countUses`), `deleted` = VALUES(`deleted`)";
 
         if ($db->queryt($sql, LPMTables::ISSUE_LABELS))
             return $db->insert_id;
@@ -318,12 +353,13 @@ SQL;
     /**
      * Удаляет метку.
      * @param $id int Идентификатор метки.
+     * @param $deleted bool Состояние удаления метки.
      * @return bool true в случае успешной операции, иначе false.
      */
-    public static function removeLabel($id) {
+    public static function changeLabelDeleted($id, $deleted) {
         $id = (int)$id;
         if ($id > 0) {
-            $sql = "DELETE FROM `%s` WHERE `id` = " . $id;
+            $sql = "UPDATE `%s` SET `deleted` = " . $deleted . " WHERE `id` = " . $id;
 
             $db = LPMGlobals::getInstance()->getDBConnect();
             return ($db->queryt( $sql, LPMTables::ISSUE_LABELS )) ? true : false;

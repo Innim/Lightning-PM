@@ -88,9 +88,6 @@ class ProjectPage extends BasePage
 			 elseif ($_POST['actionType'] == 'editIssueLabel') {
 			     $this->saveLabel();
              }
-             elseif ($_POST['actionType'] == 'removeIssueLabel') {
-                 $this->removeLabel();
-             }
 		}
 		
 		// может быть это страница просмотра задачи?
