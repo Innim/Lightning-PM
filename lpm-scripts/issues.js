@@ -75,7 +75,15 @@ issuePage.addIssueLabel = function() {
                 $("#addIssueLabelForm")[0].reset();
                 $("#addIssueLabelFormContainer").dialog('close');
             }
-        }]
+        }],
+        open: function() {
+            $("#addIssueLabelFormContainer").keypress(function(e) {
+                if (e.keyCode == $.ui.keyCode.ENTER) {
+                    $(this).parent().find("button:eq(0)").trigger("click");
+                    return false;
+                }
+            });
+        }
     });
 }
 
