@@ -18,10 +18,8 @@ class HTMLHelper
 	 * @param  string $text 
 	 * @return string
 	 */
-	public static function codeIt($text)
-	{
-    	return preg_replace_callback(
-    		"/(^|[^`])(?:`( [^\n]{1,} |[^`\n]{1,})`|```(\w{1,}\s*\n)?([^`].*?[^`])```)/ius",
+	public static function codeIt($text) {
+        return self::processCode($text,
     		function ($matches) {
     			if (empty($matches[2]))
     			{
@@ -36,7 +34,34 @@ class HTMLHelper
     				$text = htmlentities($matches[2]);
     			}
     			return $matches[1] . '<' . $tag . '>' . $text . '</' . $tag . '>';
-    		}, $text);
+    		});
 	}
+
+    /**
+     * Удаляет все блоки многострочного кода (```), а для инлайн кода (`) только заменяет теги,
+     * не помечая его при этом как код.
+     * @param  string $text 
+     * @return string
+     */
+    public static function stripCode($text) {
+        return self::processCode($text,
+            function ($matches) {
+                if (empty($matches[2]))
+                {
+                    $text = '';
+                }
+                else 
+                {
+                    $text = htmlentities($matches[2]);
+                }
+                return $matches[1] . $text;
+            });
+    }
+
+    private static function processCode($text, $func)
+    {
+        return preg_replace_callback(
+            "/(^|[^`])(?:`( [^\n]{1,} |[^`\n]{1,})`|```(\w{1,}\s*\n)?([^`].*?[^`])```)/ius",
+            $func, $text);
+    }
 }
-?>

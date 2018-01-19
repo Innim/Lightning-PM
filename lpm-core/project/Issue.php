@@ -174,15 +174,6 @@ SQL;
 	public static function load($issueId) {
 		return StreamObject::singleLoad($issueId, __CLASS__, "", "i`.`id");
 	}
-
-    /**
-     * Загружает issue по идентификатору в проекте
-     * @param $idInProject
-     * @return Issue
-     */
-	public static function loadByIdInProject($idInProject) {
-        return StreamObject::singleLoad($idInProject, __CLASS__, "", "i`.`idInProject");
-    }
 	
 	public static function updateCommentsCounter( $issueId ) {
 		$sql = "INSERT INTO `%1\$s` (`issueId`, `commentsCount`) " .
@@ -616,8 +607,16 @@ SQL;
         return false;
     }
 	
+	/**
+	 * Возвращает краткое описание задачи - для превью.
+	 * @return string Краткое описание.
+	 */
 	public function getShortDesc() {
-		return parent::getRich( parent::getShort( $this->desc ) );
+		$desc = $this->desc;
+		// Для короткого описания вырежем весь код
+		$desc = HTMLHelper::stripCode($desc);
+
+		return parent::getRich(parent::getShort($desc));
 	}
 	
 	public function getCreateDate() {
