@@ -14,14 +14,25 @@
                 <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>" class="edit-issue-name" oninput="issuePage.issueNameChanged(this.value)"/>
             </span>
             <span class="issue-labels-container">
+                <?php $issueLabels = $issue ? $issue->getLabelNames() : array(); ?>
                 <?php foreach( lpm_get_issue_labels() as $label): ?>
+                <?php
+                    $index = array_search($label['label'], $issueLabels);
+                    if ($index !== false)
+                        unset($issueLabels[$index]);
+                ?>
                 <a href="javascript:void(0)" class="issue-label" onclick="issuePage.addLabelToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
+                <? endforeach; ?>
+                <?php foreach( $issueLabels as $label): ?>
+                <a href="javascript:void(0)" class="issue-label" onclick="issuePage.addLabelToName('<?=$label;?>');"><?=$label;?></a>
                 <? endforeach; ?>
                 <a href="javascript:void(0)" class="add-issue-label" onclick="issuePage.addIssueLabel()">
                     <i class="far fa-plus-square" aria-hidden="true"></i>
                 </a>
                 <?php if (lpm_is_moderator()):?>
-                    <!-- Удаление меток -->
+                    <a href="javascript:void(0)" class="remove-issue-labels" onclick="issuePage.removeIssueLabels()">
+                        <i class="far fa-minus-square" aria-hidden="true"></i>
+                    </a>
                 <?php endif; ?>
             </span>
         </li>
@@ -155,4 +166,64 @@
             <?php endif;?>
         </form>
     </div>
+    <?php if (lpm_is_moderator()):?>
+    <div id="removeIssuesLabelContainer" style="display: none;">
+        <div class="table">
+            <div class="table-header">
+                <div class="table-cell">
+                    Метка
+                </div>
+                <div class="table-cell">
+                    Использования
+                </div>
+                <div class="table-cell">
+                    Общая
+                </div>
+                <div class="table-cell">
+                </div>
+            </div>
+            <?php
+                $allLabels = lpm_get_issue_labels();
+                $issueLabels = $issue ? $issue->getLabelNames() : array();
+            ?>
+            <?php foreach( $allLabels as $label): ?>
+                <?php
+                    $index = array_search($label['label'], $issueLabels);
+                    if ($index !== false)
+                        unset($issueLabels[$index]);
+                ?>
+                <div class="table-row">
+                    <div class="table-cell label-name">
+                        <?=$label['label'];?>
+                    </div>
+                    <div class="table-cell">
+                        <?=$label['countUses'];?>
+                    </div>
+                    <div class="table-cell">
+                        <?php if($label['projectId'] == 0): ?>
+                            <i class="far fa-check-square" aria-hidden="true"></i>
+                        <?php endif;?>
+                    </div>
+                    <div class="table-cell">
+                        <a href="javascript:void(0)" onclick="issuePage.removeIssueLabel('<?=$label['label'];?>', <?=$label['id'];?>);">
+                            <i class="far fa-minus-square" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            <?php foreach( $issueLabels as $label): ?>
+                <div class="table-row">
+                    <div class="table-cell label-name"><?=$label?></div>
+                    <div class="table-cell">0</div>
+                    <div class="table-cell"></div>
+                    <div class="table-cell">
+                        <a href="javascript:void(0)" onclick="issuePage.removeIssueLabel('<?=$label;?>');">
+                            <i class="far fa-minus-square" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif;?>
 </article>

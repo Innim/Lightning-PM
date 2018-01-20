@@ -132,6 +132,9 @@ var srv = {
         },
         addLabel : function (label, isForAllProjects, projectId, onResult) {
             this.s._('addLabel');
+        },
+        removeLabel : function (id, projectId, onResult) {
+            this.s._('removeLabel');
         }
     },
     workStudy : {

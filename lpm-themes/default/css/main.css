@@ -1549,3 +1549,35 @@ div.ftp
 	vertical-align: middle;
 }
 
+#removeIssuesLabelContainer .table {
+	border: 1px solid #CCCCCC;
+	padding: 0;
+	margin: 0;
+}
+
+#removeIssuesLabelContainer .table-cell {
+	padding: 5px 10px;
+	text-align: center;
+	border: 1px solid #FFFFFF;
+}
+
+#removeIssuesLabelContainer .table-row:nth-child(even) {
+	background: #FFFFFF;
+}
+
+.table {
+	display: table;
+}
+
+.table-header {
+	display: table-header-group;
+}
+
+.table-row {
+	display: table-row;
+}
+
+.table-cell {
+	display: table-cell;
+}
+

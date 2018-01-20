@@ -57,9 +57,8 @@ issuePage.addIssueLabel = function() {
                     srv.issue.addLabel(label, checked, projectId, function (res) {
                         preloader.hide();
                         if (res.success) {
-                            $(".add-issue-label").before(
-                                "<a href=\"javascript:void(0)\" class=\"issue-label\" onclick=\"issuePage.addLabelToName('"
-                                + label + "');\">" + label + "</a>");
+                            issuePage.clearLabel(label);
+                            issuePage.createLabel(label, (checked ? 0 : projectId), res.id);
                             issuePage.addLabelToName(label);
                         } else {
                             srv.err( res );
@@ -83,6 +82,76 @@ issuePage.addIssueLabel = function() {
                     return false;
                 }
             });
+        }
+    });
+}
+
+issuePage.removeIssueLabels = function() {
+    $("#removeIssuesLabelContainer").dialog({
+        resizable: false,
+        width: 'auto',
+        modal: true,
+        draggable: false,
+        title: "Удаление меток"
+    });
+}
+
+issuePage.removeIssueLabel = function(name, id) {
+    if (typeof issueLabels === 'undefined')
+        issueLabels = [];
+
+    var success = false;
+
+
+    if (id == undefined) {
+        issuePage.clearLabel(name);
+    } else {
+        preloader.show();
+        srv.issue.removeLabel(id, $("#issueProjectID").val(), function (res) {
+            preloader.hide();
+            if (res.success) {
+                issuePage.clearLabel(name);
+            } else {
+                srv.err( res );
+            }
+        });
+    }
+}
+
+issuePage.createLabel = function (label, id, projectId) {
+    $(".add-issue-label").before(
+        "<a href=\"javascript:void(0)\" class=\"issue-label\" onclick=\"issuePage.addLabelToName('"
+        + label + "');\">" + label + "</a>");
+
+    $("#removeIssuesLabelContainer .table").append("<div class=\"table-row\">" +
+        "<div class=\"table-cell label-name\">" + label + "</div>" +
+        "<div class=\"table-cell\">0</div>" +
+        "<div class=\"table-cell\">" + (projectId == 0 ? "<i class=\"far fa-check-square\" aria-hidden=\"true\"></i>" : "") + "</div>" +
+        "<div class=\"table-cell\">" +
+        "<a href=\"javascript:void(0)\" onclick=\"issuePage.removeIssueLabel('" + label + (id != 0 ? "', " + id : "") + ");\">" +
+        "<i class=\"far fa-minus-square\" aria-hidden=\"true\"></i>" +
+        "</a>" +
+        "</div>" +
+        "</div>");
+}
+
+issuePage.clearLabel = function (labelName) {
+
+    if (issueLabels.indexOf(labelName) != -1)
+        issuePage.addLabelToName(labelName);
+
+    $("#removeIssuesLabelContainer .table-row").each(function () {
+        var item = $.trim($(this).find(".label-name").text());
+        id = $(this).find(".label-name").data("labelid");
+        if (item == labelName) {
+            $(this).remove();
+        }
+    });
+
+    $(".issue-labels-container a.issue-label").each(function () {
+        var item = $(this).text();
+        if (item == labelName) {
+            $(this).remove();
         }
     });
 }
@@ -139,43 +208,44 @@ issuePage.issueNameChanged = function (value) {
         issueLabels = [];
 
     var labelsStr = $.trim(value).match(/^\[.*]/);
-    // т.к. на js нет нормальной регулярки для такой задачи, то как-то так
-    var labels = labelsStr.toString().split("]");
-    var isUpdate = false;
-    var currentSymbol = 0;
-    for (var i = 0, len = labels.length; i < len; ++i) {
-        var label = $.trim(labels[i]);
-        if (label.substr(0, 1) == '[') {
-            currentSymbol += 2;
-            label = $.trim(label.substr(1));
-            if (label == "") {
-                labels.splice(i--, 1);
-                len--;
-            } else {
-                labels[i] = label;
-                if (issueLabels.indexOf(label) == -1) {
-                    issueLabels.push(label);
-                    isUpdate = true;
+    if (labelsStr != null) {
+        // т.к. на js нет нормальной регулярки для такой задачи, то как-то так
+        var labels = labelsStr.toString().split("]");
+        var isUpdate = false;
+        var currentSymbol = 0;
+        for (var i = 0, len = labels.length; i < len; ++i) {
+            var label = $.trim(labels[i]);
+            if (label.substr(0, 1) == '[') {
+                currentSymbol += 2;
+                label = $.trim(label.substr(1));
+                if (label == "") {
+                    labels.splice(i--, 1);
+                    len--;
+                } else {
+                    labels[i] = label;
+                    if (issueLabels.indexOf(label) == -1) {
+                        issueLabels.push(label);
+                        isUpdate = true;
+                    }
                 }
+            } else {
+                break;
             }
-        } else {
-            break;
         }
-    }
 
-    //Удаляем те, которые стерли
-    var len = issueLabels.length;
-    while (len-- > 0)
-    {
-        var label = issueLabels[len];
-        if (labels.indexOf(label) == -1) {
-            issueLabels.splice(len, 1);
-            isUpdate = true;
+        //Удаляем те, которые стерли
+        var len = issueLabels.length;
+        while (len-- > 0) {
+            var label = issueLabels[len];
+            if (labels.indexOf(label) == -1) {
+                issueLabels.splice(len, 1);
+                isUpdate = true;
+            }
         }
-    }
 
-    if (isUpdate)
-        issuePage.updateLabelsView();
+        if (isUpdate)
+            issuePage.updateLabelsView();
+    }
 }
 
 issuePage.addIssueMember = function() {

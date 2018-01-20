@@ -268,7 +268,7 @@ class ProjectPage extends BasePage
 			// TODO наверное нужен "белый список" тегов
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
 			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
-			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
+			$_POST['name'] = trim(str_replace( '%', '%%', $_POST['name'] ));
 
 			foreach ($_POST as $key => $value) {
 				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers')
@@ -284,7 +284,9 @@ class ProjectPage extends BasePage
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
 
 			// Обновляем меткам кол-во использований.
-			$labels = Issue::getLabelsByName($_POST['name']);
+            $origLabels = Issue::getLabelsByName($_POST['name']);
+			$labels = array_merge($origLabels);
+
 			if ($issueName != null) {
 			    $oldLabels = Issue::getLabelsByName($issueName);
                 foreach ($labels as $key => $value) {
@@ -292,8 +294,24 @@ class ProjectPage extends BasePage
                         unset($labels[$key]);
                 }
             }
-            if (!empty($labels))
-                Issue::addLabelsUsing($labels, $this->_project->id);
+            if (!empty($labels)) {
+			    $allLabels = Issue::getLabels();
+			    $countedLabels = array();
+			    foreach ($allLabels as $value) {
+			        $index = array_search($value['label'], $labels);
+			        if ($index !== false) {
+                        $countedLabels[] = $labels[$index];
+                        unset($labels[$index]);
+                    }
+                }
+                if (!empty($labels))
+                    Issue::addLabelsUsing($countedLabels, $this->_project->id);
+			    if (!empty($labels)) {
+			        foreach ($labels as $newLabel) {
+                        Issue::saveLabel($newLabel, $this->_project->id, 0, 1);
+                    }
+                }
+            }
 
 			// из дробных разрешаем только 1/2
             $hours = $_POST['hours'];

@@ -234,12 +234,12 @@ SQL;
 
     /**
      * Возвращает список стандартных меток для задачи отсортированных по количеству использований.
-     * @return array[{id, label, countUses}...n] Список меток для задачи.
+     * @return array[{id, label, countUses, projectId}...n] Список меток для задачи.
      */
 	public static function getLabels() {
 	    $labels = array();
         $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
-	    $sql = "SELECT `id`, `label`, `countUses` FROM `%s` WHERE (`deleted` = " . LabelState::ACTIVE . ") AND ".
+	    $sql = "SELECT `id`, `label`, `countUses`, `projectId` FROM `%s` WHERE (`deleted` = " . LabelState::ACTIVE . ") AND ".
             "(`projectId` = " . (int) $projectId . " OR `projectId` = 0)";
 
         $db = LPMGlobals::getInstance()->getDBConnect();
@@ -316,10 +316,10 @@ SQL;
     public static function getLabelsByName($issueName) {
         $labels = array();
         $matches = array();
-        if (preg_match_all("/(?:\[([a-zA-Z0-9]+)\])+.*/UA", $issueName, $matches))
+        if (preg_match_all("/(?:\[([a-zA-Z0-9]+)\])+.*/UA", trim($issueName), $matches))
         {
             if (count($matches) > 1)
-                $labels = $matches[1];
+                $labels = array_unique($matches[1]);
         }
         return $labels;
     }
