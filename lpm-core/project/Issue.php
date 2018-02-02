@@ -93,19 +93,27 @@ SQL;
 	 * Загружает список задач по проекту.
 	 * @param  integer 		  $projectId   Идентификатор проекта,
 	 * @param  array<integer> $issueStatus Список статусов задач, которые должны быть загружены.
+	 * @param  string 		  $fromCompletedDate Минимальная дата завершени задачи
+	 *                                       	 (в фотмате ГГГГ-ММ-ДД ЧЧ:ММ:СС)
+	 * @param  string 		  $toCompletedDate Максимальная дата завершени задачи 
+	 *                                     	   (в фотмате ГГГГ-ММ-ДД ЧЧ:ММ:СС)
 	 * @return array<Issue> Массив загруженных задач.
 	 */
-	public static function loadListByProject($projectId, $issueStatus) {
+	public static function loadListByProject($projectId, $issueStatus, $fromCompletedDate = null,
+			$toCompletedDate = null) {
 		//if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
 		$where = "`i`.`projectId` = '" . $projectId . "'";
 			
+		$args = '';
 		if (!empty($issueStatus)) 
 			$args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';
+		if (!empty($fromCompletedDate))
+			$args .= " AND `i`.`completedDate` >= '" . $fromCompletedDate . "'";
+		if (!empty($toCompletedDate))
+			$args .= " AND `i`.`completedDate` <= '" . $toCompletedDate . "'";
 
-		if (!empty($args))
-			$where .= $args;
-
-		return self::loadList( $where );
+		$where .= $args;
+		return self::loadList($where);
 	}
 
 	/**
@@ -285,8 +293,7 @@ SQL;
         return ($res) ? $res->fetch_assoc() : null;
     }
 
-    public static function labelsSort($label1, $label2)
-    {
+    public static function labelsSort($label1, $label2) {
         return $label2['countUses'] - $label1['countUses'];
     }
 
