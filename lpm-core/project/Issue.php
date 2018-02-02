@@ -316,7 +316,7 @@ SQL;
     public static function getLabelsByName($issueName) {
         $labels = array();
         $matches = array();
-        if (preg_match_all("/(?:\[([a-zA-Z0-9]+)\])+.*/UA", trim($issueName), $matches))
+        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", trim($issueName), $matches))
         {
             if (count($matches) > 1)
                 $labels = array_unique($matches[1]);
