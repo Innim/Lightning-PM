@@ -40,6 +40,7 @@ function init()
     $importer = GMFramework\ImportClasses::createInstance(ROOT . CORE_DIR, '', false);
 	// $importer = ImportClasses::createInstance( ROOT . CORE_DIR, false );
     $importer->enableUseAutoSearch( ROOT . CORE_DIR . 'classes.dump' );
+    $importer->import('PHPExcel', ROOT . LIBS_DIR . 'PHPExcel.php');
 	
 	// здесь импортируются только общие классы
     /*$importer->importPackageClasses( 
