@@ -136,6 +136,6 @@ CREATE TABLE `lpm_issue_labels` (
   PRIMARY KEY (`id`), INDEX (`projectId`)
 ) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci COMMENT = 'Метки для задач';
 
--- 2018-01-19 18:58:00
-
 ALTER TABLE `lpm_issue_labels` ADD `deleted` TINYINT(1) NOT NULL DEFAULT '0' AFTER `countUses`;
+
+-- 2018-02-02 12:16:00
