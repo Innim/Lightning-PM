@@ -1,5 +1,6 @@
 <?php
-require_once( dirname( __FILE__ ) . '/../init.inc.php' );
+require_once(dirname( __FILE__ ) . '/../init.inc.php');
+use \GMFramework\DateTimeUtils as DTU;
 
 class IssueService extends LPMBaseService
 {
@@ -430,6 +431,55 @@ SQL;
             $db = LPMGlobals::getInstance()->getDBConnect();
             return $this->error($db->error);
         }
+    }
+
+    /**
+     * Экспорт завершенных задач в Excel.
+     * @param  int $projectId Идентификатор проекта.
+     * @param  string $fromDate Минимальная дата завершения задачи.
+     * @param  string $toDate Максимальная дата завершения задачи.
+     * @return {
+     *    string fileUrl URL сформированного файла.
+     * }
+     */
+    public function exportCompletedIssuesToExcel($projectId, $fromDate, $toDate) {
+    	$projectId = (int) $projectId;
+
+        try {
+        	$user = $this->getUser();
+        	$project = Project::loadById($projectId);
+
+			if ($project == null)
+				return $this->error("Не найден проект с идентификатором " . $projectId);
+        	if (!$project->hasReadPermission($user))
+				return $this->error("Нет прав на просмотр задач проекта");
+
+			$fromDateU = strtotime($fromDate);
+			$toDateU = strtotime($toDate);
+
+			if ($fromDateU > $toDateU) {
+				$tmpDate = $fromDateU;
+				$fromDateU = $toDateU;
+				$toDateU = $tmpDate;
+			}
+
+        	$fromCompletedDate = DTU::mysqlDate($fromDateU);
+        	$toCompletedDate = DTU::mysqlDate($toDateU);
+            $list = Issue::loadListByProject($projectId, array(Issue::STATUS_COMPLETED),
+        		$fromCompletedDate, $toCompletedDate);
+
+            $filename = $project->uid . '_completed_issues_' . 
+            	DTU::date('ymd', $fromDateU) . '-' . DTU::date('ymd', $toDateU) . '_' . 
+            	DTU::date('YmdHis');
+            $exporter = new IssuesExporterToExcel($list, $filename);
+            $fileUrl = $exporter->export();
+
+            $this->add2Answer('fileUrl', $fileUrl);
+        } catch (\Exception $e) { 
+            return $this->exception($e); 
+        } 
+    
+        return $this->answer();
     }
 	
 	/**

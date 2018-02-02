@@ -4,10 +4,14 @@
 	$issues - список задач для отображения
 */
 ?><article>
-    <h1><?lpm_print_header();?></h1>
+    <h1><?php lpm_print_header();?></h1>
     <?php $project = lpm_get_project();?>
 	<article id="projectView" data-project-id="<?=$project->getID();?>">
-		<h3>Список задач</h3>
+		<h3>Список задач
+			<span class="issues-operations">
+				<a href="#" onclick="return issuePage.showExportXls(event);" title="Экспорт в Excel"><i class="fa fa-file-excel" aria-hidden="true"></i></a>
+			</span>
+		</h3>
 		<p class="project-stat">
 		   <span class="label">Открыто:</span> 
 		   <span class="issues-opened value"></span> 
@@ -23,12 +27,12 @@
 		    <a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
 			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
 		</p>
-		<? lpm_print_issues($issues); ?>
+		<?php lpm_print_issues($issues); ?>
 		<p class="operations-line">
 			<a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
 			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
 		</p>
 	</article>
-	<? lpm_print_issue_form($project); ?>
-	<? /*lpm_print_issue_view();*/ ?>
+	<?php lpm_print_issue_form($project); ?>
+	<?php lpm_print_issues_export_to_excel(); ?>
 </article>

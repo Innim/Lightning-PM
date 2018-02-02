@@ -126,10 +126,17 @@ function lpm_print_post_var($var, $default = '') {
 }
 
 /**
-* Распечатывает форму выбора пользователей
-*/
+ * Распечатывает форму выбора пользователей.
+ */
 function lpm_print_users_chooser() {
 	return PagePrinter::usersChooser();
+}
+
+/**
+ * Распечатывает форму экспорта задач в Excel.
+ */
+function lpm_print_issues_export_to_excel() {
+	return PagePrinter::issuesExportToExcel();
 }
 
 /**
@@ -299,9 +306,6 @@ function lpm_can_create_project() {
  */
 function lpm_is_moderator() {
 	return PageConstructor::isModerator();
-}
-function lpm_get_show() {
-    //return 
 }
 
 /**

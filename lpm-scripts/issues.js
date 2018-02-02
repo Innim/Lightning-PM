@@ -1373,6 +1373,10 @@ issuePage.addIssueBy = function (issueIdInProject) {
     );
 }
 
+issuePage.showExportXls = function () {
+    issuesExport2Excel.openWindow(parseInt($("#projectView").data('projectId')));
+}
+
 function Issue( obj ) {
     this._obj = obj;
     
