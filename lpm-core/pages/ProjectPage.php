@@ -55,18 +55,21 @@ class ProjectPage extends BasePage
 		if (!$user = LightningEngine::getInstance()->getUser())
             return false;
 
-		if (!$user->isModerator()) {
-			$sql = "SELECT `instanceId` FROM `%s` " .
-			                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
-							   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-							   "AND `userId`       = '" . $user->userId . "'";
+        if (!$this->_project->hasReadPermission($user))
+        	return false;
 
-			if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS ))
-                return false;
+		// if (!$user->isModerator()) {
+		// 	$sql = "SELECT `instanceId` FROM `%s` " .
+		// 	                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
+		// 					   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+		// 					   "AND `userId`       = '" . $user->userId . "'";
 
-			if ($query->num_rows == 0)
-                return false;
-		}
+		// 	if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS ))
+  //               return false;
+
+		// 	if ($query->num_rows == 0)
+  //               return false;
+		// }
 		
 		$iCount = (int)$this->_project->getImportantIssuesCount();
 		if ($iCount > 0)
