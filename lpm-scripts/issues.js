@@ -1074,32 +1074,28 @@ function setIssueInfo( issue ) {
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
     
-    $( "#issueInfo .info-list"   ).
-    removeClass( 'active-issue'    ).
-    removeClass( 'verify-issue'    ).
-    removeClass( 'completed-issue' );
+    $("#issueInfo .info-list").
+        removeClass('active-issue').
+        removeClass('verify-issue').
+        removeClass('completed-issue');
 
-
-    $( "#issueInfo .buttons-bar"   ).
-    removeClass( 'active-issue'    ).
-    removeClass( 'verify-issue'    ).
-    removeClass( 'completed-issue' );
+    $("#issueInfo .buttons-bar").
+        removeClass('active-issue').
+        removeClass('verify-issue').
+        removeClass('completed-issue');
     
     if (issue.isCompleted()) {
         //$( "#issueInfo .buttons-bar > button.restore-btn" ).show();
-        $( "#issueInfo .buttons-bar" ).addClass( 'completed-issue' );
-        $( "#issueInfo .info-list" ).addClass( 'completed-issue' );
-    }
-    else if (issue.isOpened()) {
+        $("#issueInfo .buttons-bar").addClass('completed-issue');
+        $("#issueInfo .info-list").addClass('completed-issue');
+    } else if (issue.isOpened()) {
         //$( "#issueInfo .buttons-bar > button.complete-btn" ).show();
-        $( "#issueInfo .buttons-bar" ).addClass( 'active-issue' );
+        $("#issueInfo .buttons-bar").addClass('active-issue');
         //$( "#issueInfo .buttons-bar" ).addClass( 'verify-issue' );
-        $( "#issueInfo .info-list" ).addClass( 'active-issue' );
-    } 
-
-    else if (issue.isVerify()) {
-        $( "#issueInfo .buttons-bar" ).addClass( 'verify-issue' );
-        $( "#issueInfo .info-list" ).addClass( 'verify-issue' );
+        $("#issueInfo .info-list").addClass('active-issue');
+    } else if (issue.isVerify()) {
+        $("#issueInfo .buttons-bar").addClass('verify-issue');
+        $("#issueInfo .info-list").addClass('verify-issue');
     }
     
     var values = [
@@ -1121,31 +1117,32 @@ function setIssueInfo( issue ) {
     
     issuePage.updatePriorityVals();
     
-    $("#issueInfo > p > input[name=issueId]").attr( 'value', issue.id );
+    $("#issueInfo > p > input[name=issueId]").attr('value', issue.id);
 };
 
 issuePage.showCommentForm = function () {
-    $( '#issueView .comments form.add-comment' ).show();
-    $( '#issueView .comments .links-bar a'     ).hide();
-    $( '#issueView .comments form.add-comment textarea[name=commentText]' ).focus();
+    $('#issueView .comments form.add-comment').show();
+    $('#issueView .comments .links-bar a').hide();
+    $('#issueView .comments form.add-comment textarea[name=commentText]' ).focus();
 };
 
 issuePage.hideCommentForm = function () {
-    $( '#issueView .comments form.add-comment' ).hide();
-    $( '#issueView .comments .links-bar a'     ).show();
+    $('#issueView .comments form.add-comment').hide();
+    $('#issueView .comments .links-bar a').show();
 };
 
 issuePage.toogleCommentForm = function () {
-    var link = $( '#issueView .comments .links-bar a.toggle-comments' );
-    var comments = $( '#issueView .comments .comments-list' );
-    if (!comments.is(':visible'))
-        link.html( 'Свернуть комментарии' );
-    else 
-        link.html( 'Показать комментарии (' 
-                +  $( '#issueView .comments .comments-list li' ).size() 
-                + ')' );
+    var link = $('#issueView .comments .links-bar a.toggle-comments');
+    var comments = $('#issueView .comments .comments-list');
+    if (!comments.is(':visible')) {
+        link.html('Свернуть комментарии');
+    } else {
+        link.html('Показать комментарии (' + 
+            $( '#issueView .comments .comments-list li' ).size() + ')');
+    }
+
     link.show();
-    comments.slideToggle( 'normal' );
+    comments.slideToggle('normal');
 };
 
 issuePage.commentPassTesting = function () { 
