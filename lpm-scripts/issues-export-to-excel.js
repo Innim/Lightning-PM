@@ -28,7 +28,7 @@ var issuesExport2Excel = {
 			messages.alert('Необходимо указать период для выгрузки.');
 			return;
 		}
-		//issuesExport2Excel.closeWindow();
+		issuesExport2Excel.closeWindow();
 		preloader.show();
 		srv.issue.exportCompletedIssuesToExcel(
 			projectId,
@@ -37,37 +37,10 @@ var issuesExport2Excel = {
 			function (res) {
 				preloader.hide();
 				if (res.success) {
-					// alert(res.fileUrl);
 					window.open(res.fileUrl, '_blank');
 				} else {
 					srv.err(res);
 				}
 			});
-// srv.issue.comment( 
-// issueId, 
-// text, 
-// function (res) {
-//     preloader.hide();
-//     if (res.success) {
-//         $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
-//         $( '#issueView .comments ol.comments-list' ).prepend( 
-//                '<li>' +  
-//                 '<img src="' + res.comment.author.avatarUrl + '" class="user-avatar small"/>' +
-//                 '<p class="author">' + res.comment.author.linkedName + '</p> ' +
-//                 '<p class="date"><a class="anchor" id="'+res.comment.id+
-//                 '"href="#comment-'+res.comment.id+'">'+res.comment.dateLabel+'</a></p>' +
-//                 '<p class="text">' + res.comment.text + '</p>' +
-//                '</li>' 
-//         );
-//         issuePage.hideCommentForm();
-//         $( '#issueView .comments .links-bar a.toggle-comments' ).show();
-        
-//         if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
-//             issuePage.toogleCommentForm();
-//     } else {
-//         srv.err(res);
-//     }
-// } 
-// );
 	}
 };
