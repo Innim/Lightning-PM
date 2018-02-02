@@ -6,13 +6,6 @@ use \GMFramework\DateTimeUtils as DTU;
  */
 class IssuesExporterToExcel extends IssuesExporter {
 	protected function doExport($list, $filepath) {
-		$data = '';
-		foreach ($list as $issue) {
-			$data .= $issue->name . ';' . $issue->hours . "\n";
-		}
-		if (!file_put_contents($filepath, $data))
-			throw new Exception("Can't save file");
-
 		$doc = new \PHPExcel();
 		$sheet = $doc->getActiveSheet();
 		$sheet->setTitle('Задачи');	
