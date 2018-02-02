@@ -1,36 +1,37 @@
 <?php
+use \GMFramework\DateTimeUtils as DTU;
+
 /**
  * Класс, позволяющий экспортировать задачи в Excel файл.
  */
 class IssuesExporterToExcel extends IssuesExporter {
 	protected function doExport($list, $filepath) {
-		$data = '';
-		foreach ($list as $issue) {
-			$data .= $issue->name . ';' . $issue->hours . "\n";
-		}
-		if (!file_put_contents($filepath, $data))
-			throw new Exception("Can't save file");
-
 		$doc = new \PHPExcel();
 		$sheet = $doc->getActiveSheet();
 		$sheet->setTitle('Задачи');	
 
-		$sheet->setCellValue('A1', 'Задача');
-		$sheet->setCellValue('B1', 'SP'); // TODO: по идее надо проверять на scrum/не scrum
+		$sheet->setCellValue('A1', 'Дата завершения');
+		$sheet->setCellValue('B1', 'Задача');
+		$sheet->setCellValue('C1', 'SP'); // TODO: по идее надо проверять на scrum/не scrum
 
 		$row = 2;
 		foreach ($list as $issue) {
-			$sheet->setCellValue('A' . $row, $issue->name);
-			$sheet->setCellValue('B' . $row, $issue->hours);
+			$sheet->setCellValue('A' . $row, DTU::date('Y-m-d', $issue->completedDate));
+			$sheet->setCellValue('B' . $row, $issue->name);
+			$sheet->setCellValue('C' . $row, $issue->hours);
 			$row++;
 		}
 
 		// Устанавливаем формат, чтобы было красиво
 		$row--;
-		$sheet->getColumnDimension('A')->setWidth(100);
+		$sheet->getColumnDimension('A')->setAutoSize(true);
+		$sheet->getColumnDimension('B')->setAutoSize(true);
+		//$sheet->getColumnDimension('B')->setWidth(100);
 		$sheet->getStyle('A2:A' . $row)->getNumberFormat()->setFormatCode(
-			\PHPExcel_Style_NumberFormat::FORMAT_TEXT);
+			\PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDD2);
 		$sheet->getStyle('B2:B' . $row)->getNumberFormat()->setFormatCode(
+			\PHPExcel_Style_NumberFormat::FORMAT_TEXT);
+		$sheet->getStyle('C2:C' . $row)->getNumberFormat()->setFormatCode(
 			\PHPExcel_Style_NumberFormat::FORMAT_NUMBER_00);
 
 		try {
