@@ -130,11 +130,14 @@ var srv = {
         takeIssue: function (issueId, onResult) {
             this.s._('takeIssue');
         },
-        addLabel : function (label, isForAllProjects, projectId, onResult) {
+        addLabel: function (label, isForAllProjects, projectId, onResult) {
             this.s._('addLabel');
         },
-        removeLabel : function (id, projectId, onResult) {
+        removeLabel: function (id, projectId, onResult) {
             this.s._('removeLabel');
+        },
+        exportCompletedIssuesToExcel: function (projectId, fromDate, toDate, onResult) {
+            this.s._('exportCompletedIssuesToExcel');
         }
     },
     workStudy : {
@@ -265,6 +268,9 @@ var messages = {
               _container.fadeOut( 'slow' );
           }, 3000 );
       }
+  },
+  alert: function (text) {
+    alert(text);
   }
 };
 

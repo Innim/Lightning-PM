@@ -2,7 +2,6 @@
 .DS_Store
 _private
 lpm-config.inc.php
-lpm-files/imgs/
 phpmyadmin/
 Lightning-PM.phpproj
 Lightning-PM.sln

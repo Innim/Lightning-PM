@@ -230,6 +230,35 @@ class Project extends MembersInstance
 		else 
 			return $short ? 'ч' : DeclensionHelper::hours($value);
 	}
+
+	/**
+	 * Определяет, есть ли у пользователя права на чтение проекта.
+	 * @param  User    $user Пользователь.
+	 * @return boolean       true если есть права, в ином случае false.
+	 */
+	public function hasReadPermission(User $user) {
+		if ($user->isModerator())
+			return true;
+
+		if ($this->_members != null) {
+			foreach ($this->_members as $member) {
+				if ($user->userId == $member->userId)
+					return true;
+			}
+			return false;
+		} else {
+			$sql = "SELECT `instanceId` FROM `%s` " .
+			                 "WHERE `instanceId`   = '" . $this->id . "' " .
+							   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+							   "AND `userId`       = '" . $user->userId . "'";
+
+			$db = LPMGlobals::getInstance()->getDBConnect();
+			if (!$query = $db->queryt( $sql, LPMTables::MEMBERS ))
+                return false;
+
+			return $query->num_rows > 0;
+		}
+	}
 	
 	protected function loadMembers() {
 		if (!$this->_members = Member::loadListByProject( $this->id )) return false;

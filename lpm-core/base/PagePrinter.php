@@ -76,6 +76,13 @@ class PagePrinter {
 		PageConstructor::includePattern( 'users-chooser' );
 	}
 	
+	/**
+	 * Распечатывает форму экспорта задач в Excel.
+	 */
+	public static function issuesExportToExcel() {
+		PageConstructor::includePattern('issues-export-to-excel');
+	}
+	
 	/*public static function mainCSSLink() {
 		self::cssLink( 'main' );
 	}*/

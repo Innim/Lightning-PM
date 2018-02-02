@@ -27,8 +27,10 @@ class ProjectPage extends BasePage
 		$this->_baseParamsCount = 2;
 		$this->_defaultPUID     = self::PUID_ISSUES;
 
-		$this->addSubPage(self::PUID_ISSUES , 'Список задач');
-		$this->addSubPage(self::PUID_COMPLETED_ISSUES , 'Завершенные');
+		$this->addSubPage(self::PUID_ISSUES , 'Список задач',
+			'', array('issues-export-to-excel'));
+		$this->addSubPage(self::PUID_COMPLETED_ISSUES , 'Завершенные',
+			'', array('issues-export-to-excel'));
 		$this->addSubPage(self::PUID_COMMENTS , 'Комментарии', 'project-comments');
 		$this->addSubPage(self::PUID_MEMBERS, 'Участники', 'project-members', 
 				array('users-chooser'), '', User::ROLE_MODERATOR);
@@ -55,18 +57,21 @@ class ProjectPage extends BasePage
 		if (!$user = LightningEngine::getInstance()->getUser())
             return false;
 
-		if (!$user->isModerator()) {
-			$sql = "SELECT `instanceId` FROM `%s` " .
-			                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
-							   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-							   "AND `userId`       = '" . $user->userId . "'";
+        if (!$this->_project->hasReadPermission($user))
+        	return false;
 
-			if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS ))
-                return false;
+		// if (!$user->isModerator()) {
+		// 	$sql = "SELECT `instanceId` FROM `%s` " .
+		// 	                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
+		// 					   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+		// 					   "AND `userId`       = '" . $user->userId . "'";
 
-			if ($query->num_rows == 0)
-                return false;
-		}
+		// 	if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS ))
+  //               return false;
+
+		// 	if ($query->num_rows == 0)
+  //               return false;
+		// }
 		
 		$iCount = (int)$this->_project->getImportantIssuesCount();
 		if ($iCount > 0)

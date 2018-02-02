@@ -1124,6 +1124,15 @@ table.issues-list td .priority-change-animation {
 	font-size: 1.1em;
 }
 
+/* экспорт задач в Excel */
+#issuesExportToExcel {
+	text-align: center;
+}
+
+#issuesExportToExcel .buttons-line {
+	text-align: center;
+	margin-top: 20px;
+}
 
 /* выбор пользователей */
 #usersChooser {
