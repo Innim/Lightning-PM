@@ -1111,6 +1111,7 @@ function setIssueInfo( issue ) {
         issue.getCompletedDate(),
         issue.getAuthor(),
         issue.getMembers(),
+        issue.getTesters(),
         issue.getDesc()
     ];
     
