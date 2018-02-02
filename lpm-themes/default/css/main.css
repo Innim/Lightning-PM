@@ -1512,3 +1512,72 @@ div.ftp
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
+
+.issue-labels-container {
+	font-size: 0.9em;
+	display: block;
+	width: 90%;
+	margin: auto;
+	padding-top: 5px;
+}
+
+.issue-labels-container a {
+	display: inline-block;
+	padding: 2px 5px;
+}
+
+.issue-labels-container a.selected {
+	border: 1px solid #cccccc;
+	background: #ffff00;
+	border-radius: 5px;
+	margin: -1px;
+}
+
+#addIssueLabelFormContainer #issueLabelText {
+	width: 300px;
+}
+
+#addIssueLabelFormContainer div {
+	padding: 5px 0;
+}
+
+#addIssueLabelFormContainer div.align-right {
+	text-align: right;
+}
+
+#isAllProjectsCheckbox {
+	vertical-align: middle;
+}
+
+#removeIssuesLabelContainer .table {
+	border: 1px solid #CCCCCC;
+	padding: 0;
+	margin: 0;
+}
+
+#removeIssuesLabelContainer .table-cell {
+	padding: 5px 10px;
+	text-align: center;
+	border: 1px solid #FFFFFF;
+}
+
+#removeIssuesLabelContainer .table-row:nth-child(even) {
+	background: #FFFFFF;
+}
+
+.table {
+	display: table;
+}
+
+.table-header {
+	display: table-header-group;
+}
+
+.table-row {
+	display: table-row;
+}
+
+.table-cell {
+	display: table-cell;
+}
+

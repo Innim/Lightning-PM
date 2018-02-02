@@ -87,5 +87,9 @@ class LPMTables {
      * Данные scrum снепшотов
      */
     const SCRUM_SNAPSHOT = 'scrum_snapshot';
+    /**
+     * Стандартные метки для задач.
+     */
+    const ISSUE_LABELS = 'issue_labels';
 }
 ?>

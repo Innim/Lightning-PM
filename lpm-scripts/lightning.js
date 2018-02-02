@@ -130,6 +130,12 @@ var srv = {
         takeIssue: function (issueId, onResult) {
             this.s._('takeIssue');
         },
+        addLabel : function (label, isForAllProjects, projectId, onResult) {
+            this.s._('addLabel');
+        },
+        removeLabel : function (id, projectId, onResult) {
+            this.s._('removeLabel');
+        }
     },
     workStudy : {
         s         : new BaseService( 'WorkStudyService' ),
