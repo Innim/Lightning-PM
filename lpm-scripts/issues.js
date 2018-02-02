@@ -31,19 +31,229 @@ DropDown.prototype = {
 
         obj.opts.click(function () {
             var opt = $(this);
-            obj.val = opt.text();            
+            obj.val = opt.text();
             issuePage.setPriorityVal(obj.val.match(/\d+/) - 1);
         });
     }
 }
 
 var issuePage = {};
+
+issuePage.addIssueLabel = function() {
+    $("#addIssueLabelFormContainer").dialog({
+        resizable: false,
+        width: 400,
+        modal: true,
+        draggable: false,
+        title: "Добавление новой метки",
+        buttons: [{
+            text: "Сохранить",
+            click: function (e) {
+                var label = $("#issueLabelText").val();
+                var checked = $("#isAllProjectsCheckbox").is(':checked');
+                var projectId = $("#issueProjectID").val();
+                if (label.length > 0) {
+                    preloader.show();
+                    srv.issue.addLabel(label, checked, projectId, function (res) {
+                        preloader.hide();
+                        if (res.success) {
+                            issuePage.clearLabel(label);
+                            issuePage.createLabel(label, (checked ? 0 : projectId), res.id);
+                            issuePage.addLabelToName(label);
+                        } else {
+                            srv.err( res );
+                        }
+                    });
+                }
+                $("#addIssueLabelForm")[0].reset();
+                $("#addIssueLabelFormContainer").dialog('close');
+            }
+        }, {
+            text: "Отмена",
+            click: function (e) {
+                $("#addIssueLabelForm")[0].reset();
+                $("#addIssueLabelFormContainer").dialog('close');
+            }
+        }],
+        open: function() {
+            $("#addIssueLabelFormContainer").keypress(function(e) {
+                if (e.keyCode == $.ui.keyCode.ENTER) {
+                    $(this).parent().find("button:eq(0)").trigger("click");
+                    return false;
+                }
+            });
+        }
+    });
+}
+
+issuePage.removeIssueLabels = function() {
+    $("#removeIssuesLabelContainer").dialog({
+        resizable: false,
+        width: 'auto',
+        modal: true,
+        draggable: false,
+        title: "Удаление меток"
+    });
+}
+
+issuePage.removeIssueLabel = function(name, id) {
+    if (typeof issueLabels === 'undefined')
+        issueLabels = [];
+
+    var success = false;
+
+
+    if (id == undefined) {
+        issuePage.clearLabel(name);
+    } else {
+        preloader.show();
+        srv.issue.removeLabel(id, $("#issueProjectID").val(), function (res) {
+            preloader.hide();
+            if (res.success) {
+                issuePage.clearLabel(name);
+            } else {
+                srv.err( res );
+            }
+        });
+    }
+}
+
+issuePage.createLabel = function (label, id, projectId) {
+    $(".add-issue-label").before(
+        "<a href=\"javascript:void(0)\" class=\"issue-label\" onclick=\"issuePage.addLabelToName('"
+        + label + "');\">" + label + "</a>");
+
+    $("#removeIssuesLabelContainer .table").append("<div class=\"table-row\">" +
+        "<div class=\"table-cell label-name\">" + label + "</div>" +
+        "<div class=\"table-cell\">0</div>" +
+        "<div class=\"table-cell\">" + (projectId == 0 ? "<i class=\"far fa-check-square\" aria-hidden=\"true\"></i>" : "") + "</div>" +
+        "<div class=\"table-cell\">" +
+        "<a href=\"javascript:void(0)\" onclick=\"issuePage.removeIssueLabel('" + label + (id != 0 ? "', " + id : "") + ");\">" +
+        "<i class=\"far fa-minus-square\" aria-hidden=\"true\"></i>" +
+        "</a>" +
+        "</div>" +
+        "</div>");
+}
+
+issuePage.clearLabel = function (labelName) {
+
+    if (issueLabels.indexOf(labelName) != -1)
+        issuePage.addLabelToName(labelName);
+
+    $("#removeIssuesLabelContainer .table-row").each(function () {
+        var item = $.trim($(this).find(".label-name").text());
+        id = $(this).find(".label-name").data("labelid");
+        if (item == labelName) {
+            $(this).remove();
+        }
+    });
+
+    $(".issue-labels-container a.issue-label").each(function () {
+        var item = $(this).text();
+        if (item == labelName) {
+            $(this).remove();
+        }
+    });
+}
+
+issuePage.addLabelToName = function(labelName) {
+    if (typeof issueLabels === 'undefined')
+        issueLabels = [];
+    var index = issueLabels.indexOf(labelName);
+    var isAddingLabel = index == -1;
+    var strPos = 0;
+    var resultLabels = "";
+    for (var i = 0, len = issueLabels.length; i < len; ++i)
+    {
+        var str = issueLabels[i];
+        strPos += str.length + 2;
+        if (index == i) { // на случай, если несколько одинаковых меток у задачи, ну мало ли кто накосячил.
+            issueLabels.splice(index, 1);
+            len--;
+            i--;
+            index = issueLabels.indexOf(labelName);
+        } else {
+            resultLabels += "[" + str + "]";
+        }
+    }
+
+    if (isAddingLabel) {
+        resultLabels += "[" + labelName + "]";
+        issueLabels.push(labelName);
+    }
+
+    var name = $( "#issueForm form input[name=name]" ).val();
+    name = (resultLabels.length > 0 ? resultLabels + " " : "") + $.trim(name.substr(strPos));
+
+    $( "#issueForm form input[name=name]" ).val(name);
+    issuePage.updateLabelsView();
+}
+
+issuePage.updateLabelsView = function () {
+    if (typeof issueLabels !== 'undefined') {
+        var subclass = 'selected';
+        $(".issue-labels-container a.issue-label").each(function () {
+            if ($(this).hasClass(subclass))
+                $(this).removeClass(subclass);
+
+            var item = $(this).text();
+            if (issueLabels.indexOf(item) != -1)
+                $(this).addClass(subclass);
+        });
+    }
+}
+
+issuePage.issueNameChanged = function (value) {
+    if (typeof issueLabels === 'undefined')
+        issueLabels = [];
+
+    var labelsStr = $.trim(value).match(/^\[.*]/);
+    if (labelsStr != null) {
+        // т.к. на js нет нормальной регулярки для такой задачи, то как-то так
+        var labels = labelsStr.toString().split("]");
+        var isUpdate = false;
+        var currentSymbol = 0;
+        for (var i = 0, len = labels.length; i < len; ++i) {
+            var label = $.trim(labels[i]);
+            if (label.substr(0, 1) == '[') {
+                currentSymbol += 2;
+                label = $.trim(label.substr(1));
+                if (label == "") {
+                    labels.splice(i--, 1);
+                    len--;
+                } else {
+                    labels[i] = label;
+                    if (issueLabels.indexOf(label) == -1) {
+                        issueLabels.push(label);
+                        isUpdate = true;
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+
+        //Удаляем те, которые стерли
+        var len = issueLabels.length;
+        while (len-- > 0) {
+            var label = issueLabels[len];
+            if (labels.indexOf(label) == -1) {
+                issueLabels.splice(len, 1);
+                isUpdate = true;
+            }
+        }
+
+        if (isUpdate)
+            issuePage.updateLabelsView();
+    }
+}
+
 issuePage.addIssueMember = function() {
     /**
      * @type HTMLSelectElement
      */
     var selectElement = document.getElementById( 'addIssueMembers' );
-    
+
     var option = selectElement.options[selectElement.selectedIndex];
     
     /**
@@ -663,7 +873,10 @@ issuePage.setEditInfo = function () {
     // меняем заголовок
     $( "#issueForm > h3" ).text( "Редактирование задачи" );
     // имя
-    $( "#issueForm form input[name=name]" ).val( $( "#issueInfo > h3 > .issue-name" ).text() );
+    var issueName = $( "#issueInfo > h3 > .issue-name" ).text();
+    $( "#issueForm form input[name=name]" ).val(issueName);
+    // внешний вид меток
+    issuePage.updateLabelsView();
     // часы
     $( "#issueForm form input[name=hours]" ).val( $( "#issueInfo > h3 .issue-hours" ).text() );
 

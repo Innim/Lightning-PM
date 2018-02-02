@@ -88,6 +88,10 @@ class PageConstructor
 				? Project::$currentProject->getMembers() : array();
 	}
 	
+	public static function getIssueLabels() {
+        return Issue::getLabels();
+    }
+	
 	public static function getWorkersList() {
 		//if (!WorkStudyPage::isCurrent()) return array();		
 		return LightningEngine::getInstance()->getCurrentPage()->getWorkers();

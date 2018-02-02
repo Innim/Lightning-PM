@@ -85,6 +85,9 @@ class ProjectPage extends BasePage
 			 if ($_POST['actionType'] == 'addIssue') $this->saveIssue();
 			 elseif ($_POST['actionType'] == 'editIssue' && isset( $_POST['issueId'] )) 
 			 	$this->saveIssue( true );
+			 elseif ($_POST['actionType'] == 'editIssueLabel') {
+			     $this->saveLabel();
+             }
 		}
 		
 		// может быть это страница просмотра задачи?
@@ -228,7 +231,7 @@ class ProjectPage extends BasePage
 			$issueId = (float)$_POST['issueId'];
 			
 			// проверяем что такая задача есть и она принадлежит текущему проекту
-			$sql = "SELECT `id`, `idInProject` FROM `%s` WHERE `id` = '" . $issueId . "' " .
+			$sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
 										   "AND `projectId` = '" . $this->_project->id . "'";
 			if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				return $engine->addError( 'Ошибка записи в базу' );
@@ -238,11 +241,13 @@ class ProjectPage extends BasePage
 				return $engine->addError( 'Нет такой задачи для текущего проекта' );
             $result = $query->fetch_assoc(); 
 			$idInProject = $result['idInProject'];
+			$issueName = $result['name'];
 			// TODO проверка прав
 			
 		} else {
             $issueId = 'NULL';
             $idInProject = (int)$this->getLastIssueId();
+            $issueName = null;
         }
 		
 		if (empty( $_POST['name'] ) || !isset( $_POST['members'] )
@@ -263,7 +268,7 @@ class ProjectPage extends BasePage
 			// TODO наверное нужен "белый список" тегов
 			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
 			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
-			$_POST['name'] = str_replace( '%', '%%', $_POST['name'] );
+			$_POST['name'] = trim(str_replace( '%', '%%', $_POST['name'] ));
 
 			foreach ($_POST as $key => $value) {
 				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers')
@@ -277,6 +282,36 @@ class ProjectPage extends BasePage
 							$completeDateArr[1] . ' ' .
 							'00:00:00';
 			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
+
+			// Обновляем меткам кол-во использований.
+            $origLabels = Issue::getLabelsByName($_POST['name']);
+			$labels = array_merge($origLabels);
+
+			if ($issueName != null) {
+			    $oldLabels = Issue::getLabelsByName($issueName);
+                foreach ($labels as $key => $value) {
+                    if (in_array($value, $oldLabels))
+                        unset($labels[$key]);
+                }
+            }
+            if (!empty($labels)) {
+			    $allLabels = Issue::getLabels();
+			    $countedLabels = array();
+			    foreach ($allLabels as $value) {
+			        $index = array_search($value['label'], $labels);
+			        if ($index !== false) {
+                        $countedLabels[] = $labels[$index];
+                        unset($labels[$index]);
+                    }
+                }
+                if (!empty($labels))
+                    Issue::addLabelsUsing($countedLabels, $this->_project->id);
+			    if (!empty($labels)) {
+			        foreach ($labels as $newLabel) {
+                        Issue::saveLabel($newLabel, $this->_project->id, 0, 1);
+                    }
+                }
+            }
 
 			// из дробных разрешаем только 1/2
             $hours = $_POST['hours'];

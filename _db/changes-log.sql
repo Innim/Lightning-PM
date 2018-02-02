@@ -115,7 +115,6 @@ ALTER TABLE `lpm_issues` CHANGE `hours` `hours` DECIMAL(10,1) NOT NULL;
 
 -- 2017-12-16 10:01:00
 
-
 #### Вставка поля idInProject для scrum snapshot
 ALTER TABLE `lpm_scrum_snapshot_list` ADD `idInProject` INT(11) NOT NULL COMMENT 'Порядковый номер снепшота по проекту' AFTER `id`;
 
@@ -125,4 +124,18 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `lmp_scrum_snapshot_list_tmp_0_11_38` AS (S
 UPDATE `lpm_scrum_snapshot_list` SET `idInProject` = (SELECT COUNT(`id`) FROM `lmp_scrum_snapshot_list_tmp_0_11_38` WHERE
   `lmp_scrum_snapshot_list_tmp_0_11_38`.`pid` = `lpm_scrum_snapshot_list`.`pid` AND
   `lmp_scrum_snapshot_list_tmp_0_11_38`.`id` < `lpm_scrum_snapshot_list`.`id`) + 1;
-DROP TEMPORARY TABLE `lmp_scrum_snapshot_list_tmp_0_11_38`;
+DROP TEMPORARY TABLE `lmp_scrum_snapshot_list_tmp_0_11_38`;ALTER TABLE `lpm_issues` CHANGE `hours` `hours` DECIMAL(10,1) NOT NULL;
+
+-- 2017-12-01 14:12:00
+
+CREATE TABLE `lpm_issue_labels` (
+  `id` INT NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор' ,
+  `projectId` INT NOT NULL DEFAULT '0' COMMENT 'Проект (0 если метка общая)' ,
+  `label` VARCHAR(255) NOT NULL COMMENT 'Текст метки' ,
+  `countUses` INT UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Количество использований' ,
+  PRIMARY KEY (`id`), INDEX (`projectId`)
+) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci COMMENT = 'Метки для задач';
+
+-- 2018-01-19 18:58:00
+
+ALTER TABLE `lpm_issue_labels` ADD `deleted` TINYINT(1) NOT NULL DEFAULT '0' AFTER `countUses`;
