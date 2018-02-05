@@ -302,7 +302,9 @@ var imgUpload = {
       if (input.type === 'file' && !inputs[i].value) return;
     }
 
-    parent.appendChild( input.parentNode.cloneNode(true) );
+    var field = input.parentNode.cloneNode(true);
+    $("input[type=file]", field).val("");
+    parent.appendChild(field);
   }
 };
 
