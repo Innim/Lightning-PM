@@ -1097,6 +1097,8 @@ function setIssueInfo( issue ) {
         $("#issueInfo .buttons-bar").addClass('verify-issue');
         $("#issueInfo .info-list").addClass('verify-issue');
     }
+
+    var testers = issue.getTesters();
     
     var values = [
         issue.getStatus(),
@@ -1107,13 +1109,18 @@ function setIssueInfo( issue ) {
         issue.getCompletedDate(),
         issue.getAuthor(),
         issue.getMembers(),
-        issue.getTesters(),
+        testers,
         issue.getDesc()
     ];
     
     for (var i = 0; i < values.length; i++) {
         fields[i].innerHTML = values[i];
     }
+
+    if (testers)
+        $('#issueInfo .testers-row').show();
+    else 
+        $('#issueInfo .testers-row').hide();
     
     issuePage.updatePriorityVals();
     
