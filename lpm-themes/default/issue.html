@@ -66,14 +66,12 @@
             </span>
             <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
         </li>
-        <li>
-            <?php $testers=$issue->getTesters(); ?>
-            <?php if (!empty($testers)): ?>
+        <?php $testers = $issue->getTesters(); ?>
+        <li  class="testers-row"<?php if (empty($testers)): ?>style="display: none;"<?php endif;?>>
             <span class="label">Тестеры</span>
             <span class="value">
                 <?php foreach ($testers as $i => $tester) {?><?=$i>0?', ':''?> <?=$tester->getLinkedName();?><?php }?>
             </span>
-            <?php endif; ?>
             <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>"/>
         </li>
         <li class="desc">        
