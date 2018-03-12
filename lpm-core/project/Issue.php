@@ -185,11 +185,13 @@ SQL;
 
     /**
      * Загружает issue по идентификатору в проекте
+     * @param $projectId
      * @param $idInProject
      * @return Issue
      */
-	public static function loadByIdInProject($idInProject) {
-        return StreamObject::singleLoad($idInProject, __CLASS__, "", "i`.`idInProject");
+	public static function loadByIdInProject($projectId, $idInProject) {
+        return StreamObject::singleLoad($idInProject, __CLASS__, 
+        	"`i`.`projectId` = " . $projectId, "i`.`idInProject");
     }
 	
 	public static function updateCommentsCounter( $issueId ) {

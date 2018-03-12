@@ -118,10 +118,13 @@ class IssueService extends LPMBaseService
     /**
      * Загружает информацию о задаче
      * @param float $idInProject
+     * @param int $projectId
      * @return array
      */
-    public function loadByIdInProject($idInProject) {
-        if (!$issue = Issue::loadByIdInProject((float) $idInProject))
+    public function loadByIdInProject($idInProject, $projectId) {
+    	$projectId = (int) $projectId;
+
+        if (!$issue = Issue::loadByIdInProject($projectId, (float) $idInProject))
             return $this->error('Нет такой задачи');
 
         // TODO проверка на возможность просмотра
