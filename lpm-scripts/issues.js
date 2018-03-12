@@ -1340,8 +1340,9 @@ issuePage.changeSPVisibility = function (value) {
 
 issuePage.addIssueBy = function (issueIdInProject) {
     issueIdInProject = parseInt(issueIdInProject);
+    var projectId = parseInt($('#issueProjectID').val());
 
-    if (issueIdInProject <= 0)
+    if (issueIdInProject <= 0 || projectId <= 0)
         return;
 
     // показываем прелоадер
@@ -1350,6 +1351,7 @@ issuePage.addIssueBy = function (issueIdInProject) {
     // Пробуем загрузить данные задачи
     srv.issue.loadByIdInProject(
         issueIdInProject,
+        projectId,
         function (res) {
             // скрываем прелоадер
             preloader.hide();
