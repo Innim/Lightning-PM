@@ -1041,6 +1041,13 @@ table.issues-list td .priority-change-animation {
 	position: absolute;
 	user-select: none;
 }
+table.issues-list tr.verify-issue.tester {
+	background: #FFEC80;
+}
+/* Активная задача, на которую назначен тестером. Раскомментировать, если тоже нужно подсвечивать.
+table.issues-list tr.active-issue.tester {
+	background: #FFEC80;
+}*/
 
 /* просмотр задачи */
 #issueView h1 {
