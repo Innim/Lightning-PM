@@ -236,7 +236,7 @@ class LPMImgUpload {
   				$stream = fopen($value, "r", false, $context);
   				if (!$stream) 
   				{
-	    			$this->error('Не удалось загрузить файл ' . $url .  ' getFilesizeByURL: ' . $this->getFilesizeByURL($value));
+	    			$this->error('Не удалось загрузить файл ' . $url);
   				}
   				//берем ее параметры из url
 				else if ($imageData = stream_get_meta_data($stream)) 
