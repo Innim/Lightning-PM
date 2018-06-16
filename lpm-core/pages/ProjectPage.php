@@ -344,7 +344,23 @@ class ProjectPage extends BasePage
 			if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				$engine->addError( 'Ошибка записи в базу' );
 			} else {
-				if (!$editMode) $issueId = $this->_db->insert_id;
+				if (!$editMode) {
+				    $issueId = $this->_db->insert_id;
+                    $issue = Issue::
+
+				    $baseId = (int)$_POST['baseIdInProject'];
+                    if ($baseId > 0)
+                    {
+                        $baseIssue = Issue::loadByIdInProject($this->_project->id, $baseId);
+                        if ($baseIssue != null)
+                        {
+                            $textComment = "Задача по доделкам: " .
+                                $this->getBaseUrl(ProjectPage::PUID_ISSUE, $issue->projectId);
+                            Comment::add(LPMInstanceTypes::ISSUE, $baseIssue->id,
+                                $engine->getAuth()->getUserId(), $textComment);
+                        }
+                    }
+                }
 				else {
 					// выберем из базы текущих участников задачи
 					$sql = "SELECT `userId` FROM `%s` " .

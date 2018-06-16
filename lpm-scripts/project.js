@@ -11,6 +11,7 @@ $(document).ready(
       states.addState( $("#projectView"), 'by-user:#', issuePage.showIssuesByUser);
       states.addState( $("#issueForm"  ), 'add-issue');
       states.addState( $("#issueForm"  ), 'copy-issue:#', issuePage.addIssueBy);
+      states.addState( $("#issueForm"  ), 'finished-issue:#', issuePage.finishedIssueBy);
       //states.addState( $("#issueView"  ), 'issue-view' );
       
       //if ( window.location.search += 'iid=' + issueId;
