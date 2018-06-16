@@ -12,6 +12,7 @@
 			<th>Исполнители</th>
 			<th>Описание</th>
 			<th>Дата завершения</th>
+			<th style="display: none">Дата создания</th>
 			<th>Управление</th>
 		</tr>
 	</thead>
@@ -56,6 +57,7 @@
 			</td>
 			<td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
 			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
+			<td class="issue-created" style="display: none;"><?=$issue->createDate;?></td>
 			<td> 	
 				<input type="hidden" name="issueId" value="<?=$issue->id;?>"/>
 				<button onclick="restoreIssue( event );" class="restore-btn">Открыть</button>

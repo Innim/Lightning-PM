@@ -1212,6 +1212,26 @@ issuePage.showIssues4Me = function () {
     return false;
 };
 
+issuePage.showLastCreated = function () {
+    window.location.hash = 'last-created';
+    var table = $('#issuesList');
+    window.defaultIssues = table.html();
+    table.find('tr:not(:first)').sort(function(a, b) {
+        return $('td.issue-created', b).text().localeCompare($('td.issue-created', a).text());
+    }).appendTo(table);
+    $('#showLastCreated').hide();
+    $('#sortDefault').show();
+    return false;
+};
+
+issuePage.sortDefault = function () {
+    window.location.hash = '';
+    var table = $('#issuesList');
+    table.html(window.defaultIssues);
+    $('#sortDefault').hide();
+    $('#showLastCreated').show();
+};
+
 issuePage.showIssuesByUser = function (memberId) {
     window.location.hash = 'by-user:' + memberId;
     issuePage.filterByMemberId( memberId );
