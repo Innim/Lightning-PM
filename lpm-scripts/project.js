@@ -8,6 +8,7 @@ $(document).ready(
   {
       states.addState( $("#projectView") );
       states.addState( $("#projectView"), 'only-my', issuePage.showIssues4Me);
+      states.addState( $("#projectView"), 'last-created', issuePage.showLastCreated);
       states.addState( $("#projectView"), 'by-user:#', issuePage.showIssuesByUser);
       states.addState( $("#issueForm"  ), 'add-issue');
       states.addState( $("#issueForm"  ), 'copy-issue:#', issuePage.addIssueBy);

@@ -309,7 +309,7 @@ class ProjectPage extends BasePage
                         unset($labels[$index]);
                     }
                 }
-                if (!empty($labels))
+				if (!empty($countedLabels))
                     Issue::addLabelsUsing($countedLabels, $this->_project->id);
 			    if (!empty($labels)) {
 			        foreach ($labels as $newLabel) {
