@@ -88,16 +88,6 @@ class LPMBaseService extends SecureService
 			return false;
 		}
 
-		$text = $this->_db->real_escape_string($text);
-		$text = str_replace( '%', '%%', $text );
-		//$text = $this->_db->escape_string_t( $text ); // там баг
-		
-		$sql = "insert into `%s` (`instanceId`, `instanceType`, `authorId`, `date`, `text` ) " .
-		         "values ( '" . $instanceId . "', '" . $instanceType . "', " . 
-		         		   "'" . $user->userId . "', '" . DateTimeUtils::mysqlDate() . "', " .
-		         		   "'" . $text . "' )";
-		if (!$this->_db->queryt( $sql, LPMTables::COMMENTS )) return false;
-		
-		return Comment::load( $this->_db->insert_id );
+		return Comment::add($instanceType, $instanceId, $user->userId, $text);
 	}
 }

@@ -66,6 +66,24 @@ SQL;
 
 		return $list;
 	}
+
+	public static function add($instanceType, $instanceId, $userId, $text)
+    {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+
+        $text = $db->real_escape_string($text);
+        $text = str_replace( '%', '%%', $text );
+
+        $sql = "insert into `%s` (`instanceId`, `instanceType`, `authorId`, `date`, `text` ) " .
+            "values ( '" . $instanceId . "', '" . $instanceType . "', " .
+            "'" . $userId . "', '" . DateTimeUtils::mysqlDate() . "', " .
+            "'" . $text . "' )";
+
+        if (!$db->queryt( $sql, LPMTables::COMMENTS ))
+            return false;
+
+        return self::load($db->insert_id);
+    }
 	
 	/**
 	 * 

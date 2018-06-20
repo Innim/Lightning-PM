@@ -476,6 +476,21 @@ SQL;
 	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
 	}
 
+	/**
+	 * Возвращает постоянный URL задачи.
+	 * @param  string $projectUID       Уникальный строковый идентификатор проекта.
+	 * @param  int    $issueIdInProject Идентификатор задачи в проекте.
+	 * @return URL задачи или URL сайта, идентификатор проекта пуст.
+	 */
+	public static function getConstURLBy($projectUID, $issueIdInProject) {
+		if (empty($projectUID)) {
+			return SITE_URL;
+		} else {
+			return Link::getUrlByUid(ProjectPage::UID, $projectUID, 
+				ProjectPage::PUID_ISSUE, $issueIdInProject);
+		}
+	}
+
 	const TYPE_DEVELOP     	= 0;
 	const TYPE_BUG         	= 1;
 	const TYPE_SUPPORT     	= 2;
@@ -558,6 +573,8 @@ SQL;
 
 		if ($this->author)
 			$obj->author = $this->author->getClientObject();
+
+		$obj->url = $this->getConstURL();
 
 	    return $obj;
 	}
@@ -672,13 +689,7 @@ SQL;
 	 * чтобы был загружен uid проекта
 	 */
 	public function getConstURL() {
-		if ($this->projectUID == '') return SITE_URL;
-		else return Link::getUrlByUid( 
-						ProjectPage::UID, 
-						$this->projectUID,
-						ProjectPage::PUID_ISSUE, 
-						$this->idInProject//$this->id
-					);
+		return self::getConstURLBy($this->projectUID, $this->idInProject);
 	}
 	
 	public function getName() {
