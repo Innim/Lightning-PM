@@ -346,7 +346,6 @@ class ProjectPage extends BasePage
 			} else {
 				if (!$editMode) {
 				    $issueId = $this->_db->insert_id;
-                    $issue = Issue::load($issueId);
 
 				    $baseId = (int)$_POST['baseIdInProject'];
                     if ($baseId > 0)
@@ -355,7 +354,7 @@ class ProjectPage extends BasePage
                         if ($baseIssue != null)
                         {
                             $textComment = "Задача по доделкам: " .
-                                $this->getBaseUrl(ProjectPage::PUID_ISSUE, $issue->idInProject);
+                            	Issue::getConstURLBy($this->_project->uid, $idInProject);
                             Comment::add(LPMInstanceTypes::ISSUE, $baseIssue->id,
                                 $engine->getAuth()->getUserId(), $textComment);
                         }

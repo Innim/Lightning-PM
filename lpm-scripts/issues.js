@@ -1379,7 +1379,7 @@ issuePage.addIssueBy = function (issueIdInProject) {
 
             if (res.success) {
                 var issue = new Issue( res.issue );
-                console.log("issue-name: " + issue.name);
+                // console.log("issue-name: " + issue.name);
 
                 issuePage.setIssueBy({
                     name: issue.name,
@@ -1424,13 +1424,13 @@ issuePage.finishedIssueBy = function (issueIdInProject) {
 
             if (res.success) {
                 var issue = new Issue( res.issue );
-                console.log("issue-name: " + issue.name);
+                // console.log("issue-name: " + issue.name);
 
-                var url = $("#projectView").data('projectUrl');
+                //var url = $("#projectView").data('projectUrl');
                 issuePage.setIssueBy({
                     name: issue.name,
                     hours: issue.hours,
-                    desc: issue.desc + "\n" + "Оригинальная задача: " + url + "/issue/" + issueIdInProject,
+                    desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
                     priority : issue.priority,
                     completeDate : issue.getCompleteDateInput(),
                     type : issue.type,
@@ -1442,7 +1442,6 @@ issuePage.finishedIssueBy = function (issueIdInProject) {
                     isOnBoard : issue.isOnBoard,
                     baseIdInProject : issueIdInProject
                 });
-
             } else {
                 srv.err( res );
             }
@@ -1472,6 +1471,7 @@ function Issue( obj ) {
     this.testers      = obj.testers;
     this.images       = obj.images;
     this.isOnBoard    = obj.isOnBoard;
+    this.url          = obj.url;
     
     this.getCompleteDate = function () {
         return this.getDate( this.completeDate );

@@ -6,7 +6,7 @@
 ?><article>
     <h1><?php lpm_print_header();?></h1>
     <?php $project = lpm_get_project();?>
-	<article id="projectView" data-project-id="<?=$project->getID();?>" data-project-url="<?=$project->getUrl();?>">
+	<article id="projectView" data-project-id="<?=$project->getID();?>">
 		<h3>Список задач
 			<span class="issues-operations">
 				<a href="#" onclick="return issuePage.showExportXls(event);" title="Экспорт в Excel"><i class="fa fa-file-excel" aria-hidden="true"></i></a>
