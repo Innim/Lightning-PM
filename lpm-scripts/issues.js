@@ -1217,7 +1217,7 @@ issuePage.showLastCreated = function () {
     var table = $('#issuesList');
     window.defaultIssues = table.html();
     table.find('tr:not(:first)').sort(function(a, b) {
-        return $('td.issue-created', b).text().localeCompare($('td.issue-created', a).text());
+        return $(b).data('createDate') - $(a).data('createDate');
     }).appendTo(table);
     $('#showLastCreated').hide();
     $('#sortDefault').show();
