@@ -1028,6 +1028,7 @@ issuePage.setIssueBy = function (value) {
     // $( "#issueForm form input[name=issueId]" ).val( value.issueId/*$( "#issueInfo input[name=issueId]" ).val()*/ );
     // действие меняем на редактирование
     $( "#issueForm form input[name=actionType]" ).val( 'addIssue' );
+    $( "#issueForm form input[name=baseIdInProject]" ).val(value.baseIdInProject);
     // меняем заголовок кнопки сохранения
     $( "#issueForm form .save-line button[type=submit]" ).text( "Сохранить" );
 
@@ -1378,7 +1379,7 @@ issuePage.addIssueBy = function (issueIdInProject) {
 
             if (res.success) {
                 var issue = new Issue( res.issue );
-                console.log("issue-name: " + issue.name);
+                // console.log("issue-name: " + issue.name);
 
                 issuePage.setIssueBy({
                     name: issue.name,
@@ -1392,9 +1393,55 @@ issuePage.addIssueBy = function (issueIdInProject) {
                     parentId : issue.parentId,
                     issueId : issue.id,
                     images : issue.images,
-                    isOnBoard : issue.isOnBoard
+                    isOnBoard : issue.isOnBoard,
+                    baseIdInProject : 0
                 });
 
+            } else {
+                srv.err( res );
+            }
+        }
+    );
+}
+
+issuePage.finishedIssueBy = function (issueIdInProject) {
+    issueIdInProject = parseInt(issueIdInProject);
+    var projectId = parseInt($('#issueProjectID').val());
+
+    if (issueIdInProject <= 0 || projectId <= 0)
+        return;
+
+    // показываем прелоадер
+    preloader.show();
+
+    // Пробуем загрузить данные задачи
+    srv.issue.loadByIdInProject(
+        issueIdInProject,
+        projectId,
+        function (res) {
+            // скрываем прелоадер
+            preloader.hide();
+
+            if (res.success) {
+                var issue = new Issue( res.issue );
+                // console.log("issue-name: " + issue.name);
+
+                //var url = $("#projectView").data('projectUrl');
+                issuePage.setIssueBy({
+                    name: issue.name,
+                    hours: issue.hours,
+                    desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
+                    priority : issue.priority,
+                    completeDate : issue.getCompleteDateInput(),
+                    type : issue.type,
+                    members : issue.getMemberIds(),
+                    testers : issue.getTesterIds(),
+                    parentId : issue.parentId,
+                    issueId : issue.id,
+                    images : issue.images,
+                    isOnBoard : issue.isOnBoard,
+                    baseIdInProject : issueIdInProject
+                });
             } else {
                 srv.err( res );
             }
@@ -1424,6 +1471,7 @@ function Issue( obj ) {
     this.testers      = obj.testers;
     this.images       = obj.images;
     this.isOnBoard    = obj.isOnBoard;
+    this.url          = obj.url;
     
     this.getCompleteDate = function () {
         return this.getDate( this.completeDate );

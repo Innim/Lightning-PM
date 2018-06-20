@@ -309,7 +309,7 @@ class ProjectPage extends BasePage
                         unset($labels[$index]);
                     }
                 }
-                if (!empty($countedLabels))
+				if (!empty($countedLabels))
                     Issue::addLabelsUsing($countedLabels, $this->_project->id);
 			    if (!empty($labels)) {
 			        foreach ($labels as $newLabel) {
@@ -344,7 +344,22 @@ class ProjectPage extends BasePage
 			if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				$engine->addError( 'Ошибка записи в базу' );
 			} else {
-				if (!$editMode) $issueId = $this->_db->insert_id;
+				if (!$editMode) {
+				    $issueId = $this->_db->insert_id;
+
+				    $baseId = (int)$_POST['baseIdInProject'];
+                    if ($baseId > 0)
+                    {
+                        $baseIssue = Issue::loadByIdInProject($this->_project->id, $baseId);
+                        if ($baseIssue != null)
+                        {
+                            $textComment = "Задача по доделкам: " .
+                            	Issue::getConstURLBy($this->_project->uid, $idInProject);
+                            Comment::add(LPMInstanceTypes::ISSUE, $baseIssue->id,
+                                $engine->getAuth()->getUserId(), $textComment);
+                        }
+                    }
+                }
 				else {
 					// выберем из базы текущих участников задачи
 					$sql = "SELECT `userId` FROM `%s` " .
