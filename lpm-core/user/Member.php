@@ -1,23 +1,25 @@
 <?php
 class Member extends User
 {
-	public static function loadListByInstance( $instanceType, $instanceId ) {
+	public static function loadListByInstance( $instanceType, $instanceId, $onlyNotLocked = false ) {
 		$sql = "select * from `%1\$s`, `%2\$s` " .
 					   "where `%1\$s`.`instanceId`   = '" . $instanceId   . "' " .
 						 "and `%1\$s`.`instanceType` = '" . $instanceType . "' " .
 						 "and `%1\$s`.`userId`       = `%2\$s`.`userId`";
+		if ($onlyNotLocked)						 
+			$sql .= " and `%2\$s`.`locked` = 0";
 		return StreamObject::loadObjList( self::getDB(), array( $sql, LPMTables::MEMBERS, LPMTables::USERS ), __CLASS__ );		
 	}
 	
-	public static function loadListByProject( $projectId ) {
+	public static function loadListByProject( $projectId, $onlyNotLocked = false ) {
 		return self::loadListByInstance( LPMInstanceTypes::PROJECT, $projectId );
 	}
 	
-	public static function loadListByIssue($issueId) {
+	public static function loadListByIssue($issueId, $onlyNotLocked = false) {
 		return self::loadListByInstance(LPMInstanceTypes::ISSUE, $issueId);
 	}
 
-	public static function loadListByIssueForTest($issueId) {
+	public static function loadListByIssueForTest($issueId, $onlyNotLocked = false) {
 	    return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId);
     }
 

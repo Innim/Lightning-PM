@@ -83,9 +83,9 @@ class PageConstructor
 		return Project::$currentProject;
 	}
 	
-	public static function getProjectMembers() {
+	public static function getProjectMembers($onlyNotLocked = true) {
 		return ( Project::$currentProject != null ) 
-				? Project::$currentProject->getMembers() : array();
+				? Project::$currentProject->getMembers($onlyNotLocked) : array();
 	}
 	
 	public static function getIssueLabels() {
