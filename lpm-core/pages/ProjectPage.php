@@ -50,8 +50,19 @@ class ProjectPage extends BasePage
             $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
 		}
 
-		if (!parent::init())
+		if (!parent::init()) {
+			// Если мы на странице задачи, но не авторизовались,
+			// запомним заголовок в OG, чтобы в превью нормально показывалось
+			if (!$this->_curSubpage && $this->getPUID() == self::PUID_ISSUE) {
+				$issueId = $this->getCurentIssueId((float)$this->getAddParam());
+				if ($issueId > 0 && ($issue = Issue::load((float)$issueId))) {
+					// TODO: может приложить картинку если есть?
+					$this->SetOpenGraph($this->getTitleByIssue($issue));
+				}
+			}
+			
             return false;
+		}
 		
 		// проверим, можно ли текущему пользователю смотреть этот проект
 		if (!$user = LightningEngine::getInstance()->getUser())
@@ -108,7 +119,7 @@ class ProjectPage extends BasePage
 				
 				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
 
-				$this->_title  =$issue->name .' - '. $this->_project->name ;
+				$this->_title = $this->getTitleByIssue($issue);
 				$this->_pattern = 'issue';
 				ArrayUtils::remove( $this->_js,	'project' );
 				array_push( $this->_js,	'issue' );
@@ -581,8 +592,7 @@ class ProjectPage extends BasePage
 		return $this->getPageArg();
 	}
 
-	private function saveImages4Issue( $issueId, $hasCnt = 0 ) 
-	{
+	private function saveImages4Issue($issueId, $hasCnt = 0) {
 		$uploader = new LPMImgUpload( 
 			Issue::MAX_IMAGES_COUNT - $hasCnt, 
 			true,
@@ -606,6 +616,10 @@ class ProjectPage extends BasePage
             return false;
         }
         return $uploader;    
+	}
+
+	private function getTitleByIssue(Issue $issue) { 
+		return $issue->name .' - '. $this->_project->name;
 	}
 }
 ?>
