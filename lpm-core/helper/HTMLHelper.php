@@ -10,7 +10,7 @@ class HTMLHelper
 	{
     	return preg_replace(
     		"/(https?:\/\/[^<\s]+[[:alnum:]])([^[:alnum:]]*(?:<br ?\/?>)*[^a-zа-я0-9]|\s|$)/iu", 
-    		'<a href="$1">$1</a>$2', $text);
+    		'<a href="$1" target="_blank">$1</a>$2', $text);
 	}
 
 	/**
