@@ -73,8 +73,8 @@ class LightningEngine
 	{
 		if (self::$_instance != '') throw new Exception( __CLASS__ . ' are singleton' );
 		self::$_instance = $this;
-		$this->_auth         = new LPMAuth();	
 		$this->_params       = new LPMParams();	
+		$this->_auth         = new LPMAuth($this->_params->getQueryArg(LPMParams::QUERY_ARG_SID));	
 		$this->_pagesManager = new PagesManager( $this );		
 		$this->_contructor   = new PageConstructor( $this->_pagesManager );
 	}
@@ -152,7 +152,7 @@ class LightningEngine
 	 */
 	public function getCurrentUrlPath() {
 		$args = $this->_params->getArgs();
-		$currentUrl = implode("/",array_filter($args));
+		$currentUrl = implode("/", array_filter($args));
 	
 		return $currentUrl;
 	}
@@ -195,7 +195,10 @@ class LightningEngine
 				}
 			}
 			// пересылка на главную 
-			self::go2URL();	
+			// т.к. нам надо пересылать данные OG, то нужно обязательно
+			// сохранить сессиию, но грабберы сайтов (для которых и нужен OG)
+			// не поддерживают cookie, поэтому передаем явно
+			self::go2URL(null, [LPMParams::QUERY_ARG_SID => session_id()]);
 		} 
 		return $res;
 	}
