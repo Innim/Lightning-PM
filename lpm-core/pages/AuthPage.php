@@ -2,6 +2,10 @@
 class AuthPage extends BasePage
 {
 	const SESSION_REDIRECT = 'lightning_redirect';
+	/**
+	 * Поле для сериализованных в json Open Graph данных.
+	 */
+	const SESSION_REDIRECT_OG = 'lightning_redirect_og';
 
 	function __construct() {
 		parent::__construct('auth', 'Авторизация', false, true);
@@ -109,6 +113,13 @@ class AuthPage extends BasePage
 						$engine->addError( 'Пользователь с таким email не зарегистрирован' );
 					}
 				}
+			}
+		} else {
+			// Если есть Open Graph данные от страницы пересылки, то используем их
+			$redirectOG = Session::getInstance()->get(self::SESSION_REDIRECT_OG);
+			if (!empty($redirectOG)) {
+				$og = json_decode($redirectOG);
+				$this->_openGraph = $og;
 			}
 		}
 		

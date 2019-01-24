@@ -14,10 +14,20 @@ class LightningEngine
 		return self::$_instance;
 	}
 	
-	public static function go2URL( $url = '' ) {
-		if ($url == '') $url = SITE_URL;
-		header( 'Location: '. $url . '#' );
+	public static function go2URL($url = '', $queryArgs = null) {
+		if ($url == '')
+			$url = SITE_URL;
+		if (!empty($queryArgs))
+			$url .= '?' . http_build_query($queryArgs);
+		header('Location: '. $url . '#');
 		exit;
+	}
+	
+	public static function getURL($path, $queryArgs = null) {
+		$url = SITE_URL . $path;
+		if (!empty($queryArgs))
+			$url .= '?' . http_build_query($queryArgs);
+		return $url;
 	}
 	
 	/**
@@ -174,8 +184,15 @@ class LightningEngine
 			if (!$this->isAuth() && $page->needAuth)
 			{
 				$redirectPath = $this->getCurrentUrlPath();
-				if (!empty($redirectPath)) 
-					Session::getInstance()->set(AuthPage::SESSION_REDIRECT, $redirectPath);
+				if (!empty($redirectPath)) {
+					$session = Session::getInstance();
+					$session->set(AuthPage::SESSION_REDIRECT, $redirectPath);
+					$og = $page->getOpenGraph();
+					$ogStr = "";
+					if (!empty($og))
+						$ogStr = json_encode($og);
+					$session->set(AuthPage::SESSION_REDIRECT_OG, $ogStr);
+				}
 			}
 			// пересылка на главную 
 			self::go2URL();	

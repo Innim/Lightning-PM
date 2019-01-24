@@ -45,6 +45,12 @@ class BasePage extends LPMBaseObject
 	 * @var LightningEngine
 	 */
 	protected $_engine;
+
+	/**
+	 * Ассоциативный массив данных Open Graph.
+	 * @var array 
+	 */
+	protected $_openGraph;
 	
 	private $_isCurrent = false; 
 
@@ -111,6 +117,17 @@ class BasePage extends LPMBaseObject
 	public function getLabel() {
 		return $this->_label == '' ? $this->_title : $this->_label;
 	} 
+
+	/**
+	 * Возвращает данные Open Graph.
+	 * Эти же данные будут использоваться при редиректе с этой страницы
+	 * на страницу авторизации. Учитываем что в таком случае данные берутся даже когда
+	 * инициализация не прошла.
+	 * @return array Ассоциативный массив данных.
+	 */
+	public function getOpenGraph() {
+		return $this->_openGraph;
+	}
 	
 	/**
 	 * @return string
@@ -283,5 +300,15 @@ class BasePage extends LPMBaseObject
 	protected function getUser() {
 		return 
 	}*/
+
+	protected function SetOpenGraph($title, $url = null, $image = null, $type = "website") {
+		if ($url == null)
+			$url = LightningEngine::getURL(LightningEngine::getInstance()->getCurrentUrlPath());
+		if ($image == null)
+			$image = LPMOptions::getInstance()->logo;
+		$og = compact('title', 'type', 'url', 'image');		
+		$og = array_filter($og);
+		$this->_openGraph = $og;
+	}
 }
 ?>

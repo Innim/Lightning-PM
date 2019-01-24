@@ -152,9 +152,9 @@ class PageConstructor
 	
 	public  $_title    = '';
 	public  $_header   = '';
-	private $_themeDir = '';
 
-
+	private $_openGraph = '';
+	private $_themeDir  = '';
 	
 	/**
 	 * @var PagesManager
@@ -174,8 +174,9 @@ class PageConstructor
 
 	public function createPage() {		
 		$page = LightningEngine::getInstance()->getCurrentPage();
-		$this->_title  = $page->getTitle();
-		$this->_header = $page->getHeader();
+		$this->_title  		= $page->getTitle();
+		$this->_header	 	= $page->getHeader();
+		$this->_openGraph   = $page->getOpenGraph();
 		self::$_usingScripts = array_merge( self::$_usingScripts, $page->getJS() );
 		self::includePattern( 'page' );
 	}
@@ -198,6 +199,10 @@ class PageConstructor
 		else
 			$file = $file . '.js?' . $this->_versionParam;
 		return SITE_URL . SCRIPTS_DIR . $file;
+	}
+	
+	public function getOpenGraph() {
+		return $this->_openGraph;
 	}
 	
 	public function getThemePath()
