@@ -14,10 +14,20 @@ class LightningEngine
 		return self::$_instance;
 	}
 	
-	public static function go2URL( $url = '' ) {
-		if ($url == '') $url = SITE_URL;
-		header( 'Location: '. $url . '#' );
+	public static function go2URL($url = '', $queryArgs = null) {
+		if ($url == '')
+			$url = SITE_URL;
+		if (!empty($queryArgs))
+			$url .= '?' . http_build_query($queryArgs);
+		header('Location: '. $url . '#');
 		exit;
+	}
+	
+	public static function getURL($path, $queryArgs = null) {
+		$url = SITE_URL . $path;
+		if (!empty($queryArgs))
+			$url .= '?' . http_build_query($queryArgs);
+		return $url;
 	}
 	
 	/**
@@ -63,8 +73,8 @@ class LightningEngine
 	{
 		if (self::$_instance != '') throw new Exception( __CLASS__ . ' are singleton' );
 		self::$_instance = $this;
-		$this->_auth         = new LPMAuth();	
 		$this->_params       = new LPMParams();	
+		$this->_auth         = new LPMAuth($this->_params->getQueryArg(LPMParams::QUERY_ARG_SID));	
 		$this->_pagesManager = new PagesManager( $this );		
 		$this->_contructor   = new PageConstructor( $this->_pagesManager );
 	}
@@ -142,7 +152,7 @@ class LightningEngine
 	 */
 	public function getCurrentUrlPath() {
 		$args = $this->_params->getArgs();
-		$currentUrl = implode("/",array_filter($args));
+		$currentUrl = implode("/", array_filter($args));
 	
 		return $currentUrl;
 	}
@@ -174,11 +184,21 @@ class LightningEngine
 			if (!$this->isAuth() && $page->needAuth)
 			{
 				$redirectPath = $this->getCurrentUrlPath();
-				if (!empty($redirectPath)) 
-					Session::getInstance()->set(AuthPage::SESSION_REDIRECT, $redirectPath);
+				if (!empty($redirectPath)) {
+					$session = Session::getInstance();
+					$session->set(AuthPage::SESSION_REDIRECT, $redirectPath);
+					$og = $page->getOpenGraph();
+					$ogStr = "";
+					if (!empty($og))
+						$ogStr = json_encode($og);
+					$session->set(AuthPage::SESSION_REDIRECT_OG, $ogStr);
+				}
 			}
 			// пересылка на главную 
-			self::go2URL();	
+			// т.к. нам надо пересылать данные OG, то нужно обязательно
+			// сохранить сессиию, но грабберы сайтов (для которых и нужен OG)
+			// не поддерживают cookie, поэтому передаем явно
+			self::go2URL(null, [LPMParams::QUERY_ARG_SID => session_id()]);
 		} 
 		return $res;
 	}

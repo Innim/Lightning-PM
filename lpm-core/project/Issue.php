@@ -560,7 +560,7 @@ SQL;
 		$this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
 		
 		$this->addClientFields( 
-			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
+			'id', 'parentId', 'idInProject', 'name', 'type', 'authorId', 'createDate', 
 			'completeDate','completedDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
 		);
 
@@ -575,6 +575,7 @@ SQL;
 			$obj->author = $this->author->getClientObject();
 
 		$obj->url = $this->getConstURL();
+		$obj->desc = $this->getDesc();
 
 	    return $obj;
 	}
@@ -901,17 +902,46 @@ SQL;
 	 */
 	public function getVideoLinks()
 	{
-		preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
+		$preg = [
+			// YouTube
+			"(?:youtube.)\w{2,4}\/(?:watch\?v=)",
+			// Droplr
+			"d.pr\/v\/",
+			// Innim owncloud
+			"cloud.innim.ru\/index.php\/s\/"
+		];
+
+		preg_match_all("/(" . implode("|", $preg) . ")(\S*)\"/", $this->getDesc(), $video);
+		// preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
 		$list = array();
-		foreach ($video[0] as $key => $value)
-		{
-			//$value = ( empty($video[2][$key]) ) ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+";
-			$yt = empty($video[2][$key]);
-			$list[] = (object)array(
-				'type' => $yt ? 'youtube' : 'video',
-				'url'  => $yt ? "http://www.youtube.com/embed/".$video[1][$key] : "http://d.pr/v/".$video[2][$key]."+"
-			);
+		foreach ($video[0] as $key => $value) {
+			$urlPrefix = $video[1][$key];
+			$videoUid = $video[2][$key];
+			$type = 'video';
+			$url = null;
+
+			if (strpos($urlPrefix, 'youtube') === 0) {
+				// Это YouTube
+				$type = 'youtube';
+				$url = "http://www.youtube.com/embed/" . $videoUid;
+			} else if (strpos($urlPrefix, 'd.pr') === 0) {
+				// Это Droplr
+				// $url = "http://d.pr/v/" . $videoUid . "+";
+				$url = "http://" . $urlPrefix . $videoUid . "+";
+			} else {
+				// Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
+				$url = "https://" . $urlPrefix . $videoUid . "/download";
+				$header = get_headers($url, 1);
+				if (empty($header) || !isset($header['Content-Type']) ||
+						strpos($header['Content-Type'], 'video/') !== 0) {
+					$url = null;
+				}
+			}
+			
+			if (!empty($url))
+				$list[] = (object) compact('type', 'url');
 		}
+
 		return $list;
 	}
 }

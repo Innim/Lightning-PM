@@ -94,6 +94,15 @@ class PagePrinter {
 		}
 	}
 	
+	public static function openGraphMeta() {
+		$data = self::getPC()->getOpenGraph();
+		if (!empty($data)) {
+			foreach ($data as $key => $value) {
+				self::openGraph($key, $value);
+			}
+		}
+	}
+	
 	public static function pageContent() {
 		LightningEngine::getInstance()->getCurrentPage()->printContent();
 	}
@@ -112,6 +121,10 @@ class PagePrinter {
 		echo '<link rel="stylesheet" href="' . 
 			 self::getPC()->getCSSLink( $file ) . 
 			 '" type="text/css">';
+	}
+	
+	private static function openGraph($property, $content) {
+		echo '<meta property="og:' . $property . '" content="' . str_replace('"', '', $content) . '" />';
 	}
 	
 	/**

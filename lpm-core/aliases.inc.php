@@ -68,6 +68,13 @@ function lpm_print_scripts() {
 }
 
 /**
+ * Распечатывает Open Graph мету.
+ */
+function lpm_print_open_graph_meta() {
+	PagePrinter::openGraphMeta();
+}
+
+/**
  * Выводит список пользователей
  */
 function lpm_print_users_list() {

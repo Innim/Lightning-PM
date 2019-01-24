@@ -6,25 +6,49 @@
  * @property-read string $uid основной идентификатор страницы
  * @property-read string $suid идентификатор второго уровня
  */
-class LPMParams extends LPMBaseObject
-{
+class LPMParams extends LPMBaseObject {
+	const QUERY_ARG_SID = 'sid';
 	/*public $uid  = '';
 	public $suid = '';
 	public $puid = '';*/
 	
 	private $_args = array();
+	private $_queryArgs = [];
 		
-	function __construct() 
-	{
+	function __construct() {
 		parent::__construct();	
+
+		$args = [];
+
+		// TODO: это бы перенести в роутер
+		if (isset($_GET['route'])) {
+			$path = explode('/', $_GET['route']);
+			foreach ($path as $i => $value) {
+				if (!empty($value))
+					$args[$i] = $this->_db->escape_string($value);
+			}
+			unset($_GET['route']);
+		}
+
+		// Некоторые аргументы могут быть переданы напрямую,
+		// но только те, которые мы ждем
+		$queryArgNames = [self::QUERY_ARG_SID];
+		$queryArgs = [];
+		foreach ($queryArgNames as $name) {
+			if (isset($_GET[$name]))
+				$queryArgs[$name] = $this->_db->escape_string($_GET[$name]);
+		}
+
+		$this->_args = $args;
+		$this->_queryArgs = $queryArgs;
 		
 		//$this->parseData( $_GET );
-		if (isset( $_GET['args'] ) && is_array( $_GET['args'] )) {
-			$this->_args = $_GET['args'];
-			foreach ($this->_args as $i => $value) {
-				$this->_args[$i] = $this->_db->escape_string( $value );
-			}
-		}
+		// if (isset( $_GET['args'] ) && is_array( $_GET['args'] )) {
+		// 	$this->_args = $_GET['args'];
+		// 	foreach ($this->_args as $i => $value) {
+		// 		$this->_args[$i] = $this->_db->escape_string( $value );
+		// 	}
+		// }
 		unset( $_GET );
 	}
 	
@@ -56,6 +80,10 @@ class LPMParams extends LPMBaseObject
 
 	public function getArgs() {
 		return $this->_args;
+	}
+
+	public function getQueryArg($name) {
+		return isset($this->_queryArgs[$name]) ? $this->_queryArgs[$name] : null;
 	}
 	
 	/*public function setVar( $var, $value ) {

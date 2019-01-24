@@ -1,18 +1,28 @@
 <?php
-class MembersInstance extends LPMBaseObject
+abstract class MembersInstance extends LPMBaseObject
 {
 	protected $_members = null;
 	
-	public function getMembers() {
+	public function getMembers($onlyNotLocked = false) {
 		if ($this->_members == null && !$this->loadMembers()) 
 			return array();
-		return $this->_members;
+		if ($onlyNotLocked) {
+			$arr = [];
+			foreach ($this->_members as $member) {
+				if (!$member->locked)
+					$arr[] = $member;
+			}
+			return $arr;
+		} else {
+			return $this->_members;
+		}
 	}
 	
-	public function getMemberIds() {
-		if ($this->_members == null && !$this->loadMembers()) return array();
+	public function getMemberIds($onlyNotLocked = false) {
+		$members = $this->getMembers();
 		$arr = array();
-		foreach ($this->_members as $member) array_push( $arr, $member->userId ); 
+		foreach ($members as $member) 
+			$arr[] = $member->userId; 
 		return $arr;
 	}
 	
@@ -20,9 +30,6 @@ class MembersInstance extends LPMBaseObject
 		return implode( ',', $this->getMemberIds() );
 	}
 	
-	protected function loadMembers() {
-		// требует переопределения в наследниках
-		return false;
-	}
+	protected abstract function loadMembers();
 	
 }

@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html prefix="og: http://ogp.me/ns#">
 	<head>
 		<meta charset="UTF-8">
 		<link rel="shortcut icon" href="<?=lpm_get_site_url();?>favicon.ico">
-		<title><? lpm_print_title(); ?></title>
-		<? lpm_print_css_links(); ?>
-		<? lpm_print_scripts(); ?>		
+		<title><?php lpm_print_title(); ?></title>
+		<?php lpm_print_open_graph_meta(); ?>
+		<?php lpm_print_css_links(); ?>
+		<?php lpm_print_scripts(); ?>		
 	</head>
 	<body>
-	    <?if (lpm_is_auth()) {?>
+	    <?php if (lpm_is_auth()):?>
 	    <input id="curUserId" value="<?=lpm_get_user()->getID();?>" type="hidden"/>
 		<div id="userMenuLine">
 		  <p>Добро пожаловать, <span class="user-name"><?=lpm_get_user()->getName();?></span>!</p>
 		  <div id="userMenu">
-		      <? foreach (lpm_get_user_menu() as $link) {?>
+		      <?php foreach (lpm_get_user_menu() as $link):?>
               <a href="<?=$link->href;?>"><?=$link->label;?></a>
-              <? }?>
+              <?php endforeach;?>
 		  </div>
 		</div>
-		<?}?>
+		<?php endif;?>
 		<header>
 			<div id="siteLogo">
 			 <a href="<?=lpm_get_site_url();?>">

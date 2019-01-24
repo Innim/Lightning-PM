@@ -31,10 +31,9 @@ class LPMAuth {
      */
     private $_hashId = 0;
 
-	function __construct()
+	function __construct($sessionId = null)
 	{
-		Session::getInstance()->startSession();
-
+		Session::getInstance($sessionId);
 		$siteURL = parse_url(SITE_URL);
 
 		//соответствует ли куки-путь пути сайта

@@ -2,9 +2,14 @@ AddDefaultCharset utf-8
 
 RewriteEngine On
 
-#RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteCond %{REQUEST_FILENAME} -f
 #RewriteRule .* - [L]
 
-RewriteRule ^([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?/?[^\.]*$ index.php?args[]=$1&args[]=$2&args[]=$3&args[]=$4&args[]=$5
+#RewriteRule ^([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?\/?([a-zA-Z_0-9\-]+)?/?[^\.]*$ index.php?args[]=$1&args[]=$2&args[]=$3&args[]=$4&args[]=$5
+#RewriteRule ^([a-zA-Z_0-9\-/]+)?(\?[&a-zA-Z_0-9=%,.-]+)?(#.*)?$ index.php?route=$1&args=$2&args1=$3
+RewriteRule ^([a-zA-Z_0-9\-/]+)?(/.*)?$ index.php?route=$1&%{QUERY_STRING}
+
 RewriteRule ^[a-zA-Z/\_0-9/\-]{0,}(lpm\-libs/flash2php/gateway\.php){1}$ $1
 #RewriteRule ^[a-zA-Z/\_0-9/\-]{0,}(_private/.*)$ $1
