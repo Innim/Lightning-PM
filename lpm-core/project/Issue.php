@@ -560,7 +560,7 @@ SQL;
 		$this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
 		
 		$this->addClientFields( 
-			'id', 'parentId', 'idInProject', 'name', 'type', 'authorId', 'createDate', 
+			'id', 'parentId', 'idInProject', 'name', 'desc', 'type', 'authorId', 'createDate', 
 			'completeDate','completedDate', 'startDate', 'priority', 'status' ,'commentsCount', 'hours'
 		);
 
@@ -575,7 +575,7 @@ SQL;
 			$obj->author = $this->author->getClientObject();
 
 		$obj->url = $this->getConstURL();
-		$obj->desc = $this->getDesc();
+		$obj->formattedDesc = $this->getDesc();
 
 	    return $obj;
 	}

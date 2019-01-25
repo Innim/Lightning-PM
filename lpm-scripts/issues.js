@@ -1111,7 +1111,7 @@ function setIssueInfo( issue ) {
         issue.getAuthor(),
         issue.getMembers(),
         testers,
-        issue.getDesc()
+        issue.getDesc(true)
     ];
     
     for (var i = 0; i < values.length; i++) {
@@ -1462,6 +1462,7 @@ function Issue( obj ) {
     this.completedDate = obj.completedDate;
     this.createDate   = obj.createDate;
     this.desc         = obj.desc;
+    this.formattedDesc = obj.formattedDesc;
     this.name         = obj.name;
     this.status       = obj.status;
     this.type         = obj.type;
@@ -1544,8 +1545,8 @@ function Issue( obj ) {
         return str;
     };
     
-    this.getDesc = function () {
-        return this.desc;
+    this.getDesc = function (formatted = false) {
+        return formatted ? this.formattedDesc : this.desc;
     };
     
     this.getStatus = function () {
