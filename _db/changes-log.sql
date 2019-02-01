@@ -149,4 +149,4 @@ ADD `slackNotifyChannel` varchar(255) NOT NULL COMMENT 'имя канала дл
 ALTER TABLE `lpm_projects`
 ADD `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте';
 
--- 
+-- 0.7a.001
