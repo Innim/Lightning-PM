@@ -139,3 +139,14 @@ CREATE TABLE `lpm_issue_labels` (
 ALTER TABLE `lpm_issue_labels` ADD `deleted` TINYINT(1) NOT NULL DEFAULT '0' AFTER `countUses`;
 
 -- 2018-02-02 12:16:00
+
+ALTER TABLE `lpm_users`
+ADD `slackName` varchar(255) NOT NULL COMMENT 'имя в Slack' AFTER `secret`;
+
+ALTER TABLE `lpm_projects`
+ADD `slackNotifyChannel` varchar(255) NOT NULL COMMENT 'имя канала для оповещений в Slack';
+
+ALTER TABLE `lpm_projects`
+ADD `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте';
+
+-- 0.7a.001

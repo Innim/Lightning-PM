@@ -54,4 +54,7 @@ define( 'SITE_URL', '' );
  * @var int
  */
 define( 'TIMEADJUST', 0 );
+
+// Token для интеграции со Slack
+define('SLACK_TOKEN', '');
 ?>
