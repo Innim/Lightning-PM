@@ -1154,7 +1154,8 @@ issuePage.toogleCommentForm = function () {
 };
 
 issuePage.commentPassTesting = function () { 
-    issuePage.postCommentForCurrentIssue('Прошла тестирование');
+    //issuePage.postCommentForCurrentIssue('Прошла тестирование');
+    issuePage.passTest();
 };
 
 issuePage.commentMergeInDevelop = function () { 
@@ -1181,27 +1182,51 @@ issuePage.postCommentForCurrentIssue = function (text) {
         function (res) {
             preloader.hide();
             if (res.success) {
-                $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
-                $( '#issueView .comments ol.comments-list' ).prepend( 
-                       '<li>' +  
-                        '<img src="' + res.comment.author.avatarUrl + '" class="user-avatar small"/>' +
-                        '<p class="author">' + res.comment.author.linkedName + '</p> ' +
-                        '<p class="date"><a class="anchor" id="'+res.comment.id+
-                        '"href="#comment-'+res.comment.id+'">'+res.comment.dateLabel+'</a></p>' +
-                        '<p class="text">' + res.comment.text + '</p>' +
-                       '</li>' 
-                );
-                issuePage.hideCommentForm();
-                $( '#issueView .comments .links-bar a.toggle-comments' ).show();
-                
-                if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
-                    issuePage.toogleCommentForm();
+                issuePage.addComment(res.comment);
             } else {
                 srv.err(res);
             }
         } 
      );
     }
+}
+
+issuePage.passTest = function () {
+    var issueId = $( '#issueView .comments form.add-comment input[name=issueId]'        ).val();
+    
+    // TODO проверку на пустоту
+    if (issueId > 0) { 
+     preloader.show();
+     srv.issue.passTest( 
+        issueId, 
+        function (res) {
+            preloader.hide();
+            if (res.success) {
+                issuePage.addComment(res.comment);
+            } else {
+                srv.err(res);
+            }
+        } 
+     );
+    }
+}
+
+issuePage.addComment = function (comment) {
+    $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
+    $( '#issueView .comments ol.comments-list' ).prepend( 
+           '<li>' +  
+            '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
+            '<p class="author">' + comment.author.linkedName + '</p> ' +
+            '<p class="date"><a class="anchor" id="'+comment.id+
+            '"href="#comment-'+comment.id+'">'+comment.dateLabel+'</a></p>' +
+            '<p class="text">' + comment.text + '</p>' +
+           '</li>' 
+    );
+    issuePage.hideCommentForm();
+    $( '#issueView .comments .links-bar a.toggle-comments' ).show();
+    
+    if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
+        issuePage.toogleCommentForm();
 }
 
 issuePage.showIssues4Me = function () {
