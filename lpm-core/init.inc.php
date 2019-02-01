@@ -74,6 +74,8 @@ function init()
     $importer->import( 'upload', ROOT . LIBS_DIR . 'class.upload.php' );
     
     GMFramework::addAutoload( 'ImportClasses::load' );
+
+    require_once ROOT . LIBS_DIR . '/vendor/autoload.php';
 	
     // инициализация таблицы опций
     //Options::$tableName = LPMTables::OPTIONS;

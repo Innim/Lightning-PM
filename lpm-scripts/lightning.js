@@ -115,6 +115,9 @@ var srv = {
         comment: function (issueId, text, onResult) {
             this.s._('comment');
         },
+        passTest: function (issueId, onResult) {
+            this.s._('passTest');
+        },
         changePriority: function (issueId, delta, onResult) {
             this.s._('changePriority');
         },

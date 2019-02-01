@@ -167,35 +167,49 @@ class IssueService extends LPMBaseService
 	}
 	
 	public function comment( $issueId, $text ) {
-		$issueId = (float)$issueId;
-		// удалять задачу может создатель задачи или модератор
-		if (!$issue = Issue::load( (float)$issueId )) return $this->error( 'Нет такой задачи' );
-		
-		// TODO проверка прав
-		//if (!$issue->check???Permit( $this->_auth->getUserId() ))
-		//return $this->error( 'У Вас нет прав на комментировние задачи' );
-		
-		if (!$comment = $this->addComment( LPMInstanceTypes::ISSUE, $issueId, $text )) 
-			return $this->error();				
-		
-		// отправка оповещений
-		$members = $issue->getMemberIds();
-		array_push( $members, $issue->authorId );
-		
-		EmailNotifier::getInstance()->sendMail2Allowed(
-			'Новый комментарий к задаче "' . $issue->name . '"',
-			$this->getUser()->getName() . ' оставил комментарий к задаче "' .
-			$issue->name .  '":' . "\n" .
-			strip_tags( $comment->text ) . "\n\n" .
-			'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
-			$members,
-			EmailNotifier::PREF_ISSUE_COMMENT
-		);
-		
-		// обновляем счетчик коментариев для задачи
-		Issue::updateCommentsCounter( $issueId );
-		
-		$this->add2Answer( 'comment', $comment->getClientObject() );
+		$issueId = (int)$issueId;
+
+		try {
+	        $issue = Issue::load($issueId);
+	        if (!$issue)
+	        	return $this->error('Нет такой задачи');
+
+			$comment = $this->postComment($issue, $text);
+
+	        $this->add2Answer('comment', $issue->getClientObject());
+	    } catch (\Exception $e) { 
+	        return $this->exception($e); 
+	    }
+
+		return $this->answer();
+	}
+
+	/**
+	 * Отмечает что задача прошла тестирование.
+	 * @param  int $issueId Идентификатор задачи
+	 * @return {
+	 *     string comment Добавленный комментарий.
+	 * }
+	 */
+	public function passTest($issueId) {
+		$issueId = (int)$issueId;
+
+		try {
+	        $issue = Issue::load($issueId);
+	        if (!$issue)
+	        	return $this->error('Нет такой задачи');
+
+			$comment = $this->postComment($issue, 'Прошла тестирование');
+
+			// Отправляем оповещенив в slack
+			$slack = SlackIntegration::getInstance();
+			$slack->notifyIssuePassTest($issue);
+
+	        $this->add2Answer('comment', $comment->getClientObject());
+	    } catch (\Exception $e) { 
+	        return $this->exception($e); 
+	    } 
+
 		return $this->answer();
 	}
 
@@ -521,6 +535,32 @@ SQL;
 		}
 
 		return $obj;
+	}
+
+	// TODO: вынести из сервиса
+	private function postComment(Issue $issue, $text) {
+		$issueId = $issue->id;
+		if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text)) 
+			throw new Exception("Не удалось добавить комментарий");
+		
+		// отправка оповещений
+		$members = $issue->getMemberIds();
+		$members[] = $issue->authorId;
+		
+		EmailNotifier::getInstance()->sendMail2Allowed(
+			'Новый комментарий к задаче "' . $issue->name . '"',
+			$this->getUser()->getName() . ' оставил комментарий к задаче "' .
+			$issue->name .  '":' . "\n" .
+			strip_tags( $comment->text ) . "\n\n" .
+			'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
+			$members,
+			EmailNotifier::PREF_ISSUE_COMMENT
+		);
+		
+		// обновляем счетчик коментариев для задачи
+		Issue::updateCommentsCounter($issueId);
+
+		return $comment;
 	}
 }
 ?>

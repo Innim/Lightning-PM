@@ -391,7 +391,7 @@ SQL;
 		}
 	}
 
-	public static function updateStatus(User $user, Issue $issue, $status, $sendEmail = true) {
+	public static function updateStatus(User $user, Issue $issue, $status, $sendNotify = true) {
 		$issue->status = $status;
 	    $hash = [
 	    	'UPDATE' => LPMTables::ISSUES,
@@ -419,8 +419,12 @@ SQL;
 
 	    Project::updateIssuesCount($issue->projectId);
 
-	    if ($sendEmail) {
+	    if ($sendNotify) {
 	    	// Отправка оповещений
+	    	
+	    	// Slack
+			$slack = SlackIntegration::getInstance();
+
 			$subject = '';
 			$text = '';
 			switch ($issue->status) {
@@ -428,19 +432,26 @@ SQL;
 					$subject = 'Завершена задача "' . $issue->name . '"';
 					$text = $user->getName() . ' отметил задачу "' .
 						$issue->name . '" как завершённую';
+
+					$slack->notifyIssueCompleted($issue);
 					break;
 				case Issue::STATUS_IN_WORK : 
 					$subject = 'Открыта задача "' . $issue->name . '"';
 					$text = $user->getName() . ' заново открыл задачу "' .
 						$issue->name . '"';
+					
+					// TODO: оповестить в slaсk если вернули в работу
 					break;
 				case Issue::STATUS_WAIT : 
 					$subject = 'Задача "' . $issue->name . '"ожидает проверки';
 					$text = $user->getName() . ' поставил задачу "' .
 						$issue->name . '"'.  '" на проверку';
+
+					$slack->notifyIssueForTest($issue);
 					break;
 			}
 
+			// Почта
 			if (!empty($subject) && !empty($text)) {
 				$members = $issue->getMemberIds();
 				$members[] = $issue->authorId;

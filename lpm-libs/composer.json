@@ -1,0 +1,15 @@
+{
+    "name": "innim/lightning-pm",
+    "type": "project",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "authors": [
+        {
+            "name": "greymag",
+            "email": "greymag@gmail.com"
+        }
+    ],
+    "require": {
+        "coderstephen/slack-client": "^0.3.0"
+    }
+}

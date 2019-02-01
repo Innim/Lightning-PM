@@ -142,10 +142,27 @@ class Project extends MembersInstance
 	 */
 	public $scrum = false;
 
+	/**
+	 * Имя канала для оповещений в Slack (без решетки).
+	 * @var string
+	 */
+	public $slackNotifyChannel;
+
+	/**
+	 * Идентификатор пользователя, являющегося мастером в проекте.
+	 * @var int
+	 */
+	public $masterId;
+
 	private $_importantIssuesCount = -1;
 
 	private $_sumOpenedIssuesHours = -1;
 	private $_totalIssuesCount = -1;
+
+	/**
+	 * @var User
+	 */
+	private $_master;
 	
 	function __construct() 
 	{
@@ -259,6 +276,18 @@ class Project extends MembersInstance
 			return $query->num_rows > 0;
 		}
 	}
+    
+    /**
+     * Возвращает пользователя, назначенного мастером проекта.
+     * Если пользователь не выставлен, он будет загружен.
+     * @return User|null
+     */
+    public function getMaster() {
+        if ($this->_master === null && $this->masterId > 0)
+        	$this->_master = User::load($this->masterId);
+
+        return $this->_master;
+    }
 	
 	protected function loadMembers() {
 		if (!$this->_members = Member::loadListByProject( $this->id )) return false;
