@@ -176,7 +176,7 @@ class IssueService extends LPMBaseService
 
 			$comment = $this->postComment($issue, $text);
 
-	        $this->add2Answer('comment', $issue->getClientObject());
+	        $this->add2Answer('comment', $comment->getClientObject());
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    }
