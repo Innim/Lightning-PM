@@ -71,6 +71,7 @@ class User extends LPMBaseObject
 	public $nick      = '';
 	public $firstName = '';
 	public $lastName  = '';
+	public $slackName  = '';
 	public $lastVisit = 0;
 	public $regDate   = 0;
 	public $role      = 0;
@@ -154,13 +155,13 @@ class User extends LPMBaseObject
 		return self::checkCurRole( $this->role, $reqRole );
 	}
 	
-	protected function onLoadStream( $hash )
-	{
-		$this->pref->loadStream( $hash );
+	protected function onLoadStream($hash) {
+		$this->pref->loadStream($hash);
 		
-		if ($this->avatarUrl == '') $this->avatarUrl = $this->getMyGravatar();
+		if (empty($this->avatarUrl))
+			$this->avatarUrl = $this->getMyGravatar();
 		
-		parent::onLoadStream( $hash );
+		parent::onLoadStream($hash);
 	}
 	
 	protected function clientObjectCreated( $obj ) {
