@@ -248,58 +248,37 @@ issuePage.issueNameChanged = function (value) {
     }
 }
 
-issuePage.addIssueMember = function() {
+issuePage.addIssueMember = function(sp) {
     /**
      * @type HTMLSelectElement
      */
-    var selectElement = document.getElementById( 'addIssueMembers' );
+    var selectElement = document.getElementById('addIssueMembers');
+    var index = selectElement.selectedIndex;
+    if (index == 0)
+        return;
 
-    var option = selectElement.options[selectElement.selectedIndex];
-    
-    /**
-     * @type HTMLOListElement
-     */
-    
-    var members = document.getElementById( 'issueMembers' );
+    var scrum = $('#issueForm').data('projectScrum') == 1;
+    var option = selectElement.options[index];
+    var $memberLi = $('<li>');
 
-    /**
-     * @type HTMLOListElement
-     */
-    var li = document.createElement( 'li' );
+    $memberLi.
+        append($('<span class="user-name">').html(option.innerHTML)).
+        append($('<input type="hidden" name="members[]">').val(option.value));
+
+    // проверка что это скрам проект
+    if (scrum)
+        $memberLi.
+            append($('<input type="text" name="membersSp[]" class="member-sp">').val(sp > 0 ? sp : "")).
+            append($('<span class="member-sp-label">').html("SP"));
+
+
+    $memberLi.
+        append($('<a class="remove-btn">').click(issuePage.removeIssueMember));
     
-    /**
-     * @type HTMLSpanElement 
-     */
-    var nameLabel = document.createElement( 'span' );
-    nameLabel.innerHTML = option.innerHTML;
-    nameLabel.className = 'user-name';
+    $('#issueMembers').append($memberLi);
     
-    /**
-     * @type HTMLLinkElement
-     */
-    var idField = document.createElement( 'input' );
-    idField.type  = 'hidden';
-    idField.name  = 'members[]';
-    idField.value = option.value;
-    
-    /**
-     * @type HTMLButtonElement
-     */
-    var removeBtn = document.createElement( 'a' );
-    //removeBtn.innerHTML = 'Удалить';
-    removeBtn.className = 'remove-btn';    
-    removeBtn.onclick   = issuePage.removeIssueMember;
-    
-    li.appendChild( nameLabel );
-    li.appendChild( idField   );
-    li.appendChild( removeBtn );
-    
-    members.appendChild( li );
-    
-    selectElement.removeChild( option );
+    selectElement.removeChild(option);
     selectElement.selectedIndex = 0;
-    
-    //$( '#issueMembers' )
 };
 
 issuePage.removeIssueMember = function(e) {
@@ -893,12 +872,13 @@ issuePage.setEditInfo = function () {
         $( "#issueInfo li input[name=completeDate]" ).val() 
     );
     // исполнители
-    var memberIds = $( "#issueInfo li input[name=members]" ).val() .split( ',' );
+    var memberIds = $("#issueInfo li input[name=members]").val().split(',');
+    var membersSp = $("#issueInfo li input[name=membersSp]").val().split(',');
     var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
         $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'selected' );
-        issuePage.addIssueMember();
+        issuePage.addIssueMember(membersSp[i]);
     }
 
     // Тестеры
@@ -1530,10 +1510,13 @@ function Issue( obj ) {
     this.getMembers = function () {
         var str = '';
         if (this.members)
-        for (var i = 0; i < this.members.length; i++) {
-            if (i > 0) str += ', ';
-            str += this.members[i].linkedName;
-        }
+            for (var i = 0; i < this.members.length; i++) {
+                var member = this.members[i];
+                if (i > 0) str += ', ';
+                str += this.members[i].linkedName;
+                if (member.sp)
+                    str += " (" + member.sp + " SP)";
+            }
         return str;
     };
 

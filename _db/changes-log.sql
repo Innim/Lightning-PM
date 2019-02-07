@@ -150,3 +150,10 @@ ALTER TABLE `lpm_projects`
 ADD `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте';
 
 -- 0.7a.001
+
+CREATE TABLE `lpm_issue_member_info` (
+  `instanceId` bigint(18) NOT NULL COMMENT 'идентификатор задачи',
+  `userId` bigint(18) NOT NULL COMMENT 'идентификатор пользователя',
+  `sp` decimal(10,1) NOT NULL COMMENT 'Значения SP за задачу',
+  PRIMARY KEY (`instanceId`,`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='информация об участнике задачи';

@@ -287,7 +287,7 @@ class ProjectPage extends BasePage
 			$_POST['name'] = trim(str_replace( '%', '%%', $_POST['name'] ));
 
 			foreach ($_POST as $key => $value) {
-				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers')
+				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers' && $key != 'membersSp')
 					$_POST[$key] = $this->_db->real_escape_string($value);
 			}
 
@@ -329,7 +329,21 @@ class ProjectPage extends BasePage
                 }
             }
 
+			// Считаем SP
             $hours = $this->parseSP($_POST['hours']);
+            $membersSp = null;
+            if (isset($_POST['membersSp']) && is_array($_POST['membersSp'])) {
+            	$membersSp = [];
+            	$spTotal = 0;
+				foreach ($_POST['membersSp'] as $sp) {
+					$sp = $this->parseSP($sp, true);
+					$membersSp[] = $sp;
+					$spTotal += $sp;
+				}
+
+				if ($spTotal > 0 && $spTotal != $hours)
+					return $engine->addError('Количество SP по исполнителям не совпадает с общим');
+            }
 
 			// сохраняем задачу
 			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
@@ -367,8 +381,10 @@ class ProjectPage extends BasePage
                     }
                 } 
 
+                // Валидируем заданное количество SP по участникам
+
 				// Сохраняем участников
-				if (!$this->saveMembers($issueId, $_POST['members'], $editMode))
+				if (!$this->saveMembers($issueId, $_POST['members'], $editMode, $membersSp))
                     return;
 
 				// Сохраняем тестеров
@@ -490,9 +506,42 @@ class ProjectPage extends BasePage
         return $uploader;    
 	}
 
-	private function saveMembers($issueId, $memberIds, $editMode) {
-		return $this->saveMembersByInstanceType(
-			$issueId, $memberIds, $editMode, LPMInstanceTypes::ISSUE);
+	private function saveMembers($issueId, $memberIds, $editMode, $spByMembers = null) {
+		$engine = $this->_engine;
+		$users4Delete = [];
+		if (!$this->saveMembersByInstanceType(
+				$issueId, $memberIds, $editMode, LPMInstanceTypes::ISSUE, $users4Delete))
+			return false;
+			
+		// Удаляем пользователей из таблицы информации об участниках задачи
+		if (!empty($users4Delete) &&
+				!IssueMember::deleteInfo($issueId, $users4Delete))
+			return $engine->addError('Ошибка при удалении информации об участниках');
+
+		if ($this->_project->scrum) {
+			if ($spByMembers == null || !is_array($spByMembers))
+				return $engine->addError('Требуется количество SP по участникам');
+			if (count($spByMembers) != count($memberIds))
+				return $engine->addError('Количество SP по участникам не соответствует количеству участников');
+
+			// Записываем информацию об участниках
+			$sql = "REPLACE INTO `%s` (`userId`, `instanceId`, `sp`) VALUES (?, '" . $issueId . "', ?)";
+			if (!$prepare = $this->_db->preparet($sql, LPMTables::ISSUE_MEMBER_INFO))
+				return $engine->addError('Ошибка при сохранении информации об участниках');
+
+			$spTotal = 0;
+			foreach ($memberIds as $i => $memberId) {
+				$memberId = (float)$memberId;
+				$sp = $this->parseSP($spByMembers[$i]);
+				$prepare->bind_param('dd', $memberId, $sp);
+				$prepare->execute();
+
+			}
+
+			$prepare->close();
+		}
+
+		return true;
 	}
 
 	private function saveTesters($issueId, $testerIds, $editMode) {
@@ -500,7 +549,7 @@ class ProjectPage extends BasePage
 			$issueId, $testerIds, $editMode, LPMInstanceTypes::ISSUE_FOR_TEST);
 	}
 
-	private function saveMembersByInstanceType($issueId, $userIds, $editMode, $instanceType) {
+	private function saveMembersByInstanceType($issueId, $userIds, $editMode, $instanceType, &$users4Delete = null) {
 		$engine = $this->_engine;
 		if (empty($userIds))
 			$userIds = [];
@@ -512,7 +561,8 @@ class ProjectPage extends BasePage
 			if (!$query = $this->_db->queryt($sql, LPMTables::MEMBERS))
 				return $engine->addError('Ошибка загрузки участников');
 			
-			$users4Delete = [];		
+			if ($users4Delete === null)
+				$users4Delete = [];
 			while ($row = $query->fetch_assoc()) {
 				$tmpId = (float)$row['userId'];
 				$userInArr = false;
@@ -585,9 +635,10 @@ class ProjectPage extends BasePage
 		return $issue->name .' - '. $this->_project->name;
 	}
 
-	private function parseSP($value) {
+	private function parseSP($value, $allowFloat = false) {
 		// из дробных разрешаем только 1/2
-		return ($value == "0.5" || $value == "0,5" || $value == "1/2") ? 0.5 : (int)$value;
+		return ($value == "0.5" || $value == "0,5" || $value == "1/2") ? 0.5 : 
+			($allowFloat ? floatval(str_replace(',', '.', (string)$value)) : (int)$value);
 	}
 }
 ?>

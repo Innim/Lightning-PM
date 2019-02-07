@@ -4,7 +4,7 @@
     $project - текущий проект
     $issue - редактируемая задача (при добавлении задачи - null)
 */
-?><article id="issueForm" class="container">
+?><article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
     <h3>Добавить задачу</h3>
     <div class="validateError"><? lpm_print_errors(); ?></div>
     <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data" onsubmit="return removeImage(imageId);">

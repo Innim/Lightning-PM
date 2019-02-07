@@ -889,6 +889,18 @@ SQL;
     public function getTesterIdsStr() {
         return implode( ',', $this->getTesterIds() );
     }
+	
+	public function getMembersSp() {
+		$members = $this->getMembers();
+		$arr = array();
+		foreach ($members as $member) 
+			$arr[] = $member->sp; 
+		return $arr;
+	}
+	
+	public function getMembersSpStr() {
+		return implode(',', $this->getMembersSp());
+	}
 
 	protected function loadMembers() {
 		$this->_members = Member::loadListByIssue( $this->id );
