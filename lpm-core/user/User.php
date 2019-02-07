@@ -33,8 +33,7 @@ class User extends LPMBaseObject
 		return $curRole <= $reqRole;
 	}
 
-   public static function blowfishSalt($cost = 13)
-    {
+    public static function blowfishSalt($cost = 13) {
         if (!is_numeric($cost) || $cost < 4 || $cost > 31) {
             throw new Exception("cost parameter must be between 4 and 31");
         }

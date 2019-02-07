@@ -522,7 +522,7 @@ SQL;
 	public $desc          = '';
 	/**
 	 * Нормачасы. Для проектов, использующих Scrum - здесь story points
-	 * @var integer
+	 * @var float
 	 */
 	public $hours		  =  0;
 	public $type          = -1;

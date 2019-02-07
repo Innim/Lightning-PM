@@ -305,20 +305,20 @@ issuePage.addIssueMember = function() {
 issuePage.removeIssueMember = function(e) {
     var li           = e.currentTarget.parentNode;
     
-    var userId       = $( 'input[type=hidden][type=members\[\]]', li ).attr( 'value' );
-    var userName     = $( 'span.user-name', li ).html();
+    var userId       = $('input[type=hidden][type=members\[\]]', li).attr('value');
+    var userName     = $('span.user-name', li).html();
     
-    var option       = document.createElement( 'option' );
+    var option       = document.createElement('option');
     option.value     = userId;
     option.innerHTML = userName;
     
-    if (li.parentNode) li.parentNode.removeChild( li );
+    if (li.parentNode) li.parentNode.removeChild(li);
     
-    var selectElement = document.getElementById( 'addIssueMembers' );
+    var selectElement = document.getElementById('addIssueMembers');
     for (var i = 1; i < selectElement.options.length; i++) {
         if (userName < selectElement.options[i].innerHTML) break;
     }
-    selectElement.appendChild( option, i );
+    selectElement.appendChild(option, i);
 };
 
 issuePage.addIssueTester = function() {
@@ -952,31 +952,28 @@ issuePage.setIssueBy = function (value) {
     // заполняем всю информацию
     //$( "" ).value( $( "" ) );
     // меняем заголовок
-    $( "#issueForm > h3" ).text( "Добавить задачу" );
+    $("#issueForm > h3").text( "Добавить задачу" );
     // имя
-    $( "#issueForm form input[name=name]" ).val( value.name );
+    $("#issueForm form input[name=name]").val(value.name);
     // часы
-    $( "#issueForm form input[name=hours]" ).val( value.hours );
+    $("#issueForm form input[name=hours]").val(value.hours);
 
     // тип
-    $('form input:radio[name=type]:checked', "#issueForm").removeAttr( 'checked' );
+    $('form input:radio[name=type]:checked', "#issueForm").removeAttr('checked');
     $('form input:radio[name=type][value=' + /*$( "#issueInfo li input[name=type]" ).val()*/ value.type + ']',
-        "#issueForm" ).attr( 'checked', 'checked' );
+        "#issueForm").attr('checked', 'checked');
     // приоритет
     // var priorityVal = $( "#issueInfo li input[name=priority]" ).val();
-    $( "#issueForm form input[name=priority]" ).val( value.priority );
-    issuePage.setPriorityVal( value.priority );
+    $("#issueForm form input[name=priority]").val(value.priority);
+    issuePage.setPriorityVal(value.priority);
     // дата окончания
-    $( "#issueForm form input[name=completeDate]" ).val(
-        //$( "#issueInfo li input[name=completeDate]" ).val()
-        value.completeDate
-    );
+    $("#issueForm form input[name=completeDate]").val(value.completeDate);
     // исполнители
-    var memberIds = value.members/*$( "#issueInfo li input[name=members]" ).val()*/ .split( ',' );
+    var memberIds = value.members.split(',');
     var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
-        $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'selected' );
+        $("#addIssueMembers option[value=" + memberIds[i] + "]").attr('selected', 'selected');
         issuePage.addIssueMember();
     }
 

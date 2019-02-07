@@ -86,9 +86,9 @@
                 <ol id="issueMembers" class="members-list"></ol>
                 <select id="addIssueMembers" onchange="issuePage.addIssueMember();">
                     <option>Добавить</option>
-                    <?foreach( lpm_get_project_members() as $member) {?>
+                    <?php foreach(lpm_get_project_members() as $member):?>
                     <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
-                    <?}?>
+                    <?php endforeach;?>
                 </select>
             </fieldset>
         </li>
