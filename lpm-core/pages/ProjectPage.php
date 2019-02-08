@@ -9,6 +9,7 @@ class ProjectPage extends BasePage
 	const PUID_ISSUE   = 'issue';
 	const PUID_SCRUM_BOARD = 'scrum_board';
 	const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
+	const PUID_SPRINT_STAT = 'sprint_stat';
 
 	/**
 	 * 
@@ -44,10 +45,11 @@ class ProjectPage extends BasePage
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
 		// Если это scrum проект - добавляем новый подраздел
-		if ($this->_project->scrum)
-		{
+		if ($this->_project->scrum) {
 			$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
             $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
+            $this->addSubPage(self::PUID_SPRINT_STAT, 'Статистика спринта', 'sprint-stat',
+        		['sprint-stat'], '', -1, false);
 		}
 
 		if (!parent::init()) {
@@ -176,9 +178,7 @@ class ProjectPage extends BasePage
 			// Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело 
 			if (count($comments) === $commentsPerPage)
 				$this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
-		}
-		else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) 
-		{
+		} else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) {
 			$this->addTmplVar('project', $this->_project);
 			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
 		} else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
@@ -197,6 +197,12 @@ class ProjectPage extends BasePage
                     }
                 }
             }
+        } else if ($this->_curSubpage->uid == self::PUID_SPRINT_STAT) {
+            $sidInProject = (int) $this->getParam(3);
+            $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
+
+            $this->addTmplVar('project', $this->_project);
+            $this->addTmplVar('snapshot', $snapshot);
         }
 		
 		return $this;

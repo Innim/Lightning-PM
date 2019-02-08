@@ -28,6 +28,9 @@
         <a href="<?=$snapshot->getUrl()?>"><h3><u>SCRUM архив:</u></h3></a>
         <div class="scrum-snapshot-stat">
             <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->idInProject?></i> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+            <span class="scrum-snapshot-links">
+                <a href="<?=$snapshot->getStatUrl()?>">Статистика спринта</a>
+            </span>
             <span class="num-issues">Всего: <?=$snapshot->getNumStickers()?> шт, <?=$snapshot->getNumSP()?> SP</span>
         </div>
 

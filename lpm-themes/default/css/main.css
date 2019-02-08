@@ -1533,7 +1533,9 @@ div.ftp
 	margin-left: 5px;
 	margin-bottom: 10px;
 }
-
+#scrumBoard .scrum-snapshot-stat .scrum-snapshot-links{
+	font-size: smaller;
+}
 #scrumBoard .scrum-snapshot-stat .num-issues {
 	float: right;
 	margin-right: 5px;
@@ -1546,6 +1548,10 @@ div.ftp
 #scrumSnapshot .scrum-snapshot-list li {
 	margin-top: 10px;
 	margin-bottom: 10px;
+}
+
+#sprint-stat .sprint-members-stat {
+	margin-top: 10px;
 }
 
 .issue-labels-container {
