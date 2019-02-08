@@ -18,6 +18,16 @@ abstract class MembersInstance extends LPMBaseObject
 		}
 	}
 	
+	public function getMember($userId) {
+		$members = $this->getMembers();
+		foreach ($members as $member) {
+			if ($member->userId == $userId)
+				return $member;
+		}
+
+		return null;
+	}
+	
 	public function getMemberIds($onlyNotLocked = false) {
 		$members = $this->getMembers();
 		$arr = array();

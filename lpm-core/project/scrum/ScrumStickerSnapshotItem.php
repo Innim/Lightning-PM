@@ -68,11 +68,22 @@ SQL;
      * @var string
      */
 	public $issue_sp;
+
+    /**
+     * Количество SP по учатникам.     
+     * Может быть не задано, если в задаче 1 участник или
+     * если запись старая и была сделана до введения функицонала.
+     * @var string
+     */
+    public $issue_members_sp;
     /**
      * Приоритет задачи
      * @var int
      */
 	public $issue_priority;
+
+    // userId => sp
+    private $_spByMemberId;
 
 	function __construct($id = 0) {
 		parent::__construct();
@@ -99,7 +110,24 @@ SQL;
     }
 
 	public function loadStream($raw) {
-	    parent::loadStream($raw);
+	    $res = parent::loadStream($raw);
+
+        $this->_spByMemberId = [];
+        if (!empty($this->issue_members_sp)) {
+            $membersSp = json_decode($this->issue_members_sp);
+            if (is_array($membersSp)) {
+                foreach ($membersSp as $item) {
+                    if (!is_object($item) || !isset($item->userId, $item->sp)) {
+                        throw new Exception(
+                            "Некорректные данные SP по учатникам для стикера #" . $this->id, 1);
+                    }
+
+                    $this->_spByMemberId[$item->userId] = $item->sp;
+                }
+            }
+        }
+
+        return $res;
 	}
 
     public function isMember($userId) {
@@ -126,6 +154,32 @@ SQL;
 	    if ($testers === false)
 	        $testers = array();
 	    return $testers;
+    }
+
+    /**
+     * Получает количество SP по участнику.
+     * Если такого учатсника нет - вернет 0. Если учатсник есть, но для него не заданы
+     * SP (при условии что участников больше одного) - будет порождено исключение.
+     * @param  int $userId
+     * @return float
+     */
+    public function getSpByMember($userId) {
+        if (!$this->isMember($userId)) {
+            return 0;
+        } else {
+            if (count($this->getMembers()) > 1) {
+                if (isset($this->_spByMemberId[$userId])) {
+                    return $this->_spByMemberId[$userId];
+                } else {
+                    // TODO: наверное кидать исключение надо только для задача в готово/тесте?
+                    $member = $this->getMember($userId);
+                    throw new Exception("SP для участника " . $member->getName() .
+                        " не заданы. Задача \"" . $this->issue_name . "\"");
+                }                    
+            } else {
+                return $this->issue_sp;
+            }
+        }
     }
 
     /**

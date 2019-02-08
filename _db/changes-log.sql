@@ -157,3 +157,8 @@ CREATE TABLE `lpm_issue_member_info` (
   `sp` decimal(10,1) NOT NULL COMMENT 'Значения SP за задачу',
   PRIMARY KEY (`instanceId`,`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='информация об участнике задачи';
+
+-- 0.7a.002
+
+ALTER TABLE `lpm_scrum_snapshot`
+ADD `issue_members_sp` text COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Количество SP по участникам' AFTER `issue_sp`;

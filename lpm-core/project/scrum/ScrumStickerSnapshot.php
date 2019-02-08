@@ -25,6 +25,28 @@ SQL;
 		return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
 	}
 
+    /**
+     * Загружает снепшот по идентификатору проекта и идентификатору снепшота в проекте.
+     * @param int $projectId
+     * @param int $idInProject
+     * @return ScrumStickerSnapshot|null
+     * @throws DBException
+     * @throws Exception
+     */
+    public static function loadSnapshot($projectId, $idInProject) {
+        $db = self::getDB();
+        $projectId = (int) $projectId;
+        $idInProject = (int) $idInProject;
+
+        $sql = <<<SQL
+        SELECT * FROM `%1\$s` WHERE `%1\$s`.`pid` = '${projectId}'
+           AND `%1\$s`.`idInProject` = '${idInProject}'
+SQL;
+
+        $list = StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
+        return empty($list) ? null : $list[0];
+    }
+
 	/**
 	 * Создает snapshot по текущему состоянию доски для переданного проекта.
      * @param int $projectId
@@ -35,6 +57,32 @@ SQL;
 		// получаем список всех стикеров на текущей доске
 		$stickers = ScrumSticker::loadList($projectId);
 
+        // Проверяем, что для всех задач в тесте/готово указаны все SP по участникам
+        $membersSpByIssueId = [];
+        foreach ($stickers as $sticker) {
+            if ($sticker->isDone() || $sticker->isTesting()) {
+                $issue = $sticker->getIssue();
+                $members = $issue->getMembers();
+                if (count($members) > 1) {
+                    $membersSp = [];
+                    $totalSp = 0;
+                    foreach ($members as $member) {
+                        $totalSp += $member->sp;
+                        $membersSp[] = (object)[
+                            'userId' => $member->userId,
+                            'sp' => $member->sp
+                        ];
+                    }
+                    if ($totalSp != $issue->hours) {
+                        throw new Exception("Не заполнены SP по исполнителям для задачи \"" .
+                            $issue->name . "\"");
+                    }
+                    $membersSpByIssueId[$issue->id] = $membersSp;
+                }
+            }
+        }
+
+        // Готовимся делать снимок
 		$pid = $projectId;
 		$created = DateTimeUtils::mysqlDate();
 		$creatorId = $userId;
@@ -61,8 +109,9 @@ SQL;
 
             // добавляем всю необходимую информацию по снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`sid`, `issue_uid`, `issue_pid`, `issue_name`, `issue_state`, `issue_sp`, `issue_priority`)
-                VALUES ('${sid}', ?, ?, ?, ?, ?, ?)
+                INSERT INTO `%s` (`sid`, `issue_uid`, `issue_pid`, `issue_name`,
+                    `issue_state`, `issue_sp`, `issue_members_sp`, `issue_priority`)
+                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
             // подготавливаем запрос для вставки данных о стикерах снепшота
@@ -81,9 +130,11 @@ SQL;
                 $issueName = $sticker->getName();
                 $issueState = $sticker->state;
                 $issueSP = $issue->hours;
+                $issueMembersSP = json_encode($membersSpByIssueId[$sticker->issueId]);
                 $issuePriority = $issue->priority;
 
-                $prepare->bind_param('ddsisi', $issueUid, $issuePid, $issueName, $issueState, $issueSP, $issuePriority);
+                $prepare->bind_param('ddsissi', $issueUid, $issuePid, $issueName, $issueState,
+                    $issueSP, $issueMembersSP, $issuePriority);
 
                 if (!$prepare->execute())
                     throw new Exception("Ошибка при вставке данных стикера.");
@@ -176,6 +227,7 @@ SQL;
 
 	private $_creator;
 	private $_stickers;
+    private $_members;
 
 	function __construct($id = 0) {
 		parent::__construct();
@@ -211,19 +263,27 @@ SQL;
         return $curPage->getBaseUrl(ProjectPage::PUID_SCRUM_BOARD_SNAPSHOT);
     }
 
+    /**
+     * URL статистики спринта.
+     */
+    public function getStatUrl() {
+        $curPage = LightningEngine::getInstance()->getCurrentPage();
+        return $curPage->getBaseUrl(ProjectPage::PUID_SPRINT_STAT, $this->idInProject);
+    }
+
     public function getCreateDate() {
         return self::getDateStr($this->created);
     }
 
     public function getCreatorShortName() {
-        if (!isset($this->_creator))
+        if ($this->_creator === null)
             $this->_creator = User::load($this->creatorId);
 
         return $this->_creator->getShortName();
     }
 
     public function getStickers() {
-        if (!isset($this->_stickers))
+        if ($this->_stickers === null)
             $this->_stickers = ScrumStickerSnapshotItem::loadList($this->id);
         return $this->_stickers;
     }
@@ -232,13 +292,63 @@ SQL;
         return count($this->getStickers());
     }
 
+    /**
+     * Возвращает список участников спринта.
+     * Участниками считаются все, кто назначен в качестве исполнителя хотя бы одной задаче.
+     * @return Member[]
+     */
+    public function getMembers() {
+        if ($this->_members === null) {
+            $this->_members = [];
+            $membersMap = [];
+            $stickers = $this->getStickers();
+            foreach ($stickers as $sticker) {
+                $issueMembers = $sticker->getMembers();
+                foreach ($issueMembers as $member) {
+                    if (!isset($membersMap[$member->userId])) {
+                        $membersMap[$member->userId] = $member;
+                        $this->_members[] = $member;
+                    }
+                }
+            }
+        }
+        return $this->_members;
+    }
+
     public function getNumSp() {
+        return $this->countSp();
+    }
+
+    public function getMemberSP($userId, $stickerState) {
+        return $this->countMemberSp($userId, function ($sticker) use ($stickerState) {
+            return $sticker->issue_state == $stickerState;
+        });
+    }
+
+    public function getMemberDoneSP($userId) {
+        return $this->countMemberSp($userId, function ($sticker) {
+            return ($sticker->issue_state == ScrumStickerState::TESTING || 
+                    $sticker->issue_state == ScrumStickerState::DONE);
+        });
+    }
+
+    private function countSp($filterCallback = null, $getSpCallback = null) {
         $count = 0;
         $stickers = $this->getStickers();
         foreach ($stickers as $sticker) {
-            $count += $sticker->issue_sp;
+            if ($filterCallback == null || $filterCallback($sticker))
+                $count += $getSpCallback == null ? $sticker->issue_sp : $getSpCallback($sticker);
         }
 
         return $count;
+    }
+
+    private function countMemberSp($userId, $filterCallback = null) {
+        return $this->countSp(function ($sticker) use ($userId, $filterCallback) {
+            return $sticker->isMember($userId) &&
+                ($filterCallback == null || $filterCallback($sticker));
+        }, function ($sticker) use ($userId) {
+            return $sticker->getSpByMember($userId);
+        });
     }
 }
