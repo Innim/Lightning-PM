@@ -181,7 +181,7 @@ var srv = {
     },
 
     err : function (res) {
-        alert( ( typeof res.error != 'undefined' ) ? res.error : 'Ошибка при запросе к серверу' );
+      showError(typeof res.error != 'undefined' ? res.error : 'Ошибка при запросе к серверу');
     }
 };
 
@@ -381,3 +381,7 @@ $(document).ready(
        window.lpInfo.userId = $( '#curUserId' ).val();
    }
 );
+
+function showError(error) {
+  alert(error)
+}

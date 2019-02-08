@@ -321,4 +321,11 @@ function lpm_is_moderator() {
 function lpm_is_auth() {
 	return PageConstructor::isAuth();
 }
+
+/**
+ * Возвращает текущие ошибки и очищает список
+ */
+function lpm_get_errors() {
+	return PageConstructor::getErrors();
+}
 ?>
