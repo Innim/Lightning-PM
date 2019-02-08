@@ -5,12 +5,16 @@
  * @version 0.2.2a 
  *
  */
-class LightningEngine
-{
+class LightningEngine {
+	/**
+	 * Поле для хранения URL предыдущей страницы.
+	 */
+	const SESSION_PREV_PATH = 'lightning_prev_path';
 	/**
 	 * Сообщения об ошибках, которые надо показать после смены страниы.
 	 */
 	const SESSION_NEXT_ERRORS = 'lightning_next_errors';
+
 	/**
 	 * @return LightningEngine
 	 */
@@ -95,8 +99,22 @@ class LightningEngine
 			}
 			$session->unsetVar(self::SESSION_NEXT_ERRORS);
 		}
+
 		$this->_curPage = $this->initCurrentPage();
-		$this->_contructor->createPage();
+		try {
+			$this->_contructor->createPage();
+		} catch (Exception $e) {
+			$this->addNextError($e->getMessage());
+			$path = $session->get(self::SESSION_PREV_PATH);
+			$session->unsetVar(self::SESSION_PREV_PATH);
+
+			$url = empty($path) ? SITE_URL : self::getURL($path);
+			PagePrinter::jsRedirect($url);
+			exit();
+		}
+
+		// Все прошло успешно - запоминаем URL как предыдущий
+		$session->set(self::SESSION_PREV_PATH, $this->getCurrentUrlPath());
 	}
 	
 	public function addError( $errString ) {

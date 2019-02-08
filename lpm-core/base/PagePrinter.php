@@ -111,6 +111,10 @@ class PagePrinter {
 		echo isset( $_POST[$var] ) ? $_POST[$var] : $default;
 	}
 	
+	public static function jsRedirect($url) {
+		echo '<script type="text/javascript">redirectTo("' . $url . '");</script>';
+	}
+	
 	private static function jsScriptLink( $file ) {
 		echo '<script type="text/javascript" src="' .
 			 self::getPC()->getJSLink( $file ) .  

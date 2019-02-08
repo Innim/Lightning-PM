@@ -382,6 +382,10 @@ $(document).ready(
    }
 );
 
+function redirectTo(url) {
+  window.location.replace(url);
+}
+
 function showError(error) {
   alert(error)
 }
