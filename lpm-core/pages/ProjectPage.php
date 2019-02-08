@@ -9,6 +9,7 @@ class ProjectPage extends BasePage
 	const PUID_ISSUE   = 'issue';
 	const PUID_SCRUM_BOARD = 'scrum_board';
 	const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
+	const PUID_SPRINT_STAT = 'sprint_stat';
 
 	/**
 	 * 
@@ -44,10 +45,11 @@ class ProjectPage extends BasePage
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
 		// Если это scrum проект - добавляем новый подраздел
-		if ($this->_project->scrum)
-		{
+		if ($this->_project->scrum) {
 			$this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
             $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
+            $this->addSubPage(self::PUID_SPRINT_STAT, 'Статистика спринта', 'sprint-stat',
+        		['sprint-stat'], '', -1, false);
 		}
 
 		if (!parent::init()) {
@@ -176,9 +178,7 @@ class ProjectPage extends BasePage
 			// Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело 
 			if (count($comments) === $commentsPerPage)
 				$this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
-		}
-		else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) 
-		{
+		} else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) {
 			$this->addTmplVar('project', $this->_project);
 			$this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
 		} else if ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
@@ -197,6 +197,12 @@ class ProjectPage extends BasePage
                     }
                 }
             }
+        } else if ($this->_curSubpage->uid == self::PUID_SPRINT_STAT) {
+            $sidInProject = (int) $this->getParam(3);
+            $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
+
+            $this->addTmplVar('project', $this->_project);
+            $this->addTmplVar('snapshot', $snapshot);
         }
 		
 		return $this;
@@ -287,8 +293,8 @@ class ProjectPage extends BasePage
 			$_POST['name'] = trim(str_replace( '%', '%%', $_POST['name'] ));
 
 			foreach ($_POST as $key => $value) {
-				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers')
-					$_POST[$key] = $this->_db->real_escape_string( $value );
+				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers' && $key != 'membersSp')
+					$_POST[$key] = $this->_db->real_escape_string($value);
 			}
 
 			$_POST['type'] = (int)$_POST['type'];
@@ -329,9 +335,21 @@ class ProjectPage extends BasePage
                 }
             }
 
-			// из дробных разрешаем только 1/2
-            $hours = $_POST['hours'];
-            $hours = ($hours == "0.5" || $hours == "0,5" || $hours == "1/2") ? 0.5 : (int)$hours;
+			// Считаем SP
+            $hours = $this->parseSP($_POST['hours']);
+            $membersSp = null;
+            if (isset($_POST['membersSp']) && is_array($_POST['membersSp'])) {
+            	$membersSp = [];
+            	$spTotal = 0;
+				foreach ($_POST['membersSp'] as $sp) {
+					$sp = $this->parseSP($sp, true);
+					$membersSp[] = $sp;
+					$spTotal += $sp;
+				}
+
+				if ($spTotal > 0 && $spTotal != $hours)
+					return $engine->addError('Количество SP по исполнителям не совпадает с общим');
+            }
 
 			// сохраняем задачу
 			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
@@ -349,9 +367,6 @@ class ProjectPage extends BasePage
 									"`type` = VALUES( `type` ), " .
 									"`completeDate` = VALUES( `completeDate` ), " .
 									"`priority` = VALUES( `priority` )";			
-			$members = array();
-			$testers = array();
-
 			if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) {
 				$engine->addError( 'Ошибка записи в базу' );
 			} else {
@@ -370,218 +385,97 @@ class ProjectPage extends BasePage
                                 $engine->getAuth()->getUserId(), $textComment);
                         }
                     }
-                }
-				else {
-					// выберем из базы текущих участников задачи
-					$sql = "SELECT `userId` FROM `%s` " .
-							"WHERE `instanceType` = '" . LPMInstanceTypes::ISSUE . "' " .
-						      "AND `instanceId` = '" . $issueId . "'";
-					if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) {
-						return $engine->addError( 'Ошибка загрузки участников' );
+                } 
+
+                // Валидируем заданное количество SP по участникам
+
+				// Сохраняем участников
+				if (!$this->saveMembers($issueId, $_POST['members'], $editMode, $membersSp))
+                    return;
+
+				// Сохраняем тестеров
+				if (!$this->saveTesters($issueId, $_POST['testers'], $editMode))
+                    return;
+
+				//удаление старых изображений
+				if (!empty($_POST["removedImages"])) {
+					$delImg = $_POST["removedImages"];
+					$delImg = explode(',', $delImg);
+					$imgIds = array();
+					foreach ($delImg as $imgIt) {
+						$imgIt = (int)$imgIt;
+						if ($imgIt > 0) $imgIds[] = $imgIt;
 					}
-					
-					$users4Delete = array();
-					
-					while ($row = $query->fetch_assoc()) {
-						$tmpId = (float)$row['userId'];
-						$memberInArr = false;
-						foreach ($_POST['members'] as $i => $memberId) {													
-							if ($memberId == $tmpId) {
-								ArrayUtils::removeByIndex( $_POST['members'], $i );
-								array_push( $members, (float)$memberId );
-								$memberInArr = true;
-								break;
-							}
-						}
-						if (!$memberInArr) array_push( $users4Delete, $tmpId );
+					if (!empty($imgIds)){
+						$sql = "UPDATE `%s` ". 
+									"SET `deleted`='1' ".
+									"WHERE `imgId` IN (".implode(',',$imgIds).") ".
+									 "AND `deleted` = '0' ".
+									 "AND `itemId`='".$issueId."' ".
+									 "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
+						$this->_db->queryt($sql, LPMTables::IMAGES);
 					}
-					
-					if (count($users4Delete) > 0 && 
-							!Member::deleteIssueMembers($issueId, $users4Delete)) 
-						return $engine->addError('Ошибка при сохранении участников');
-
-                    // выборка тестеров задачи
-                    $sql = "SELECT `userId` FROM `%s` " .
-                        "WHERE `instanceType` = '" . LPMInstanceTypes::ISSUE_FOR_TEST . "' " .
-                        "AND `instanceId` = '" . $issueId . "'";
-                    if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS )) {
-                        return $engine->addError( 'Ошибка загрузки тестеров' );
-                    }
-
-                    $users4Delete = array();
-
-                    while ($row = $query->fetch_assoc()) {
-                        $tmpId = (float)$row['userId'];
-                        $memberInArr = false;
-                        if (!empty($_POST['testers'])) {
-                            foreach ($_POST['testers'] as $i => $testerId) {
-                                if ($testerId == $tmpId) {
-                                    ArrayUtils::removeByIndex($_POST['testers'], $i);
-                                    array_push($members, (float)$testerId);
-                                    $memberInArr = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!$memberInArr)
-                            array_push($users4Delete, $tmpId);
-                    }
-
-                    if (count($users4Delete) > 0 && !Member::deleteIssueTesters($issueId, $users4Delete))
-                        return $engine->addError('Ошибка при удалении старых тестеров');
 				}
 
-				// сохраняем исполнителей задачи
-				$sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
-							     "VALUES ( ?, '" . LPMInstanceTypes::ISSUE . "', '" . $issueId . "' )";
+				// загружаем изображения
+				if ($editMode) {
+					// если задача редактируется
+					// считаем из базы кол-во картинок, имеющихся для задачи
+					$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
+						"WHERE `itemId` = '" . $issueId. "'".
+						"AND `itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
+						"AND `deleted` = '0'";
 					
-				if (!$prepare = $this->_db->preparet( $sql, LPMTables::MEMBERS )) {
-					if (!$editMode)
-						$this->_db->queryt( "DELETE FROM `%s` WHERE `id` = '" . $issueId . "'",
-											LPMTables::ISSUES );
-					$engine->addError( 'Ошибка при сохранении участников' );
-				} else {
-					$saved = array();
-					foreach ($_POST['members'] as $memberId) {
-						$memberId = (float)$memberId;
-						array_push( $members, $memberId );
-						if (!in_array( $memberId, $saved )) {
-							$prepare->bind_param( 'd', $memberId );
-							$prepare->execute();
-							array_push( $saved, $memberId );
-						}
-					}
-					$prepare->close();
-
-					if (!empty($_POST['testers'])) {
-                        // Сохранение тестеров задачи
-                        $sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
-                            "VALUES ( ?, '" . LPMInstanceTypes::ISSUE_FOR_TEST . "', '" . $issueId . "' )";
-
-                        if (!$prepare = $this->_db->preparet( $sql, LPMTables::MEMBERS )) {
-                            $engine->addError( 'Ошибка при сохранении тестеров' );
-                        } else {
-                            $saved = array();
-                            foreach ($_POST['testers'] as $testerId) {
-                                $testerId = (float)$testerId;
-                                array_push($testers, $testerId);
-                                if (!in_array($testerId, $saved)) {
-                                    $prepare->bind_param('d', $testerId);
-                                    $prepare->execute();
-                                    array_push($saved, $testerId);
-                                }
-                            }
-                            $prepare->close();
-                        }
-                    }
-
-					//удаление старых изображений
-					if (!empty($_POST["removedImages"]))
-					{
-						$delImg = $_POST["removedImages"];
-						$delImg = explode(',', $delImg);
-						$imgIds = array();
-						foreach ($delImg as $imgIt) {
-							$imgIt = (int)$imgIt;
-							if ($imgIt > 0) $imgIds[] = $imgIt;
-						}
-						if (!empty($imgIds)){
-							$sql = "UPDATE `%s` ". 
-										"SET `deleted`='1' ".
-										"WHERE `imgId` IN (".implode(',',$imgIds).") ".
-										 "AND `deleted` = '0' ".
-										 "AND `itemId`='".$issueId."' ".
-										 "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
-							$this->_db->queryt($sql, LPMTables::IMAGES);
-						}
-					}
-					// загружаем изображения
-					//если задача редактируется
-					if ($editMode) {
-						//считаем из базы кол-во картинок, имеющихся для задачи
-						$sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
-							"WHERE `itemId` = '" . $issueId. "'".
-							"AND `itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
-							"AND `deleted` = '0'";
-						
-						if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) 
-						{
-							$row =  $query->fetch_assoc();
-							$loadedImgs = (int)$row['cnt'];
-						}
-						else 
-						{
-							$engine->addError('Ошибка доступа к БД. Не удалось загрузить количество изображений');
-							return;
-						}
-					}
-					//если добавляется
-					else
-						$loadedImgs = 0;
-
-					$uploader = $this->saveImages4Issue( $issueId, $loadedImgs);
-
-					if ($uploader === false)
-						return $engine->addError( 'Не удалось загрузить изображение' );
-
-					$issue = Issue::load($issueId);
-					if (!$issue) {
-						$engine->addError('Не удалось загрузить данные задачи');
+					if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) {
+						$row = $query->fetch_assoc();
+						$loadedImgs = (int)$row['cnt'];
+					} else {
+						$engine->addError('Ошибка доступа к БД. Не удалось загрузить количество изображений');
 						return;
 					}
+				} else {
+					// если добавляется
+					$loadedImgs = 0;
+				}
 
-					// Если это SCRUM проект
-					if ($this->_project->scrum) {
-						$putOnBoard = !empty($_POST['putToBoard']);
-						if ($issue->isOnBoard() != $putOnBoard) {
-							if ($putOnBoard) {
-								if (!ScrumSticker::putStickerOnBoard($issue))
-									return $engine->addError('Не удалось поместить стикер на доску');
-							} else {
-								if (!ScrumSticker::updateStickerState($issue->id, 
-										ScrumStickerState::BACKLOG))
-									return $engine->addError('Не удалось снять стикер с доски');
-							}
+				$uploader = $this->saveImages4Issue($issueId, $loadedImgs);
+
+				if ($uploader === false)
+					return $engine->addError('Не удалось загрузить изображение');
+
+				$issue = Issue::load($issueId);
+				if (!$issue) {
+					$engine->addError('Не удалось загрузить данные задачи');
+					return;
+				}
+
+				// Если это SCRUM проект
+				if ($this->_project->scrum) {
+					$putOnBoard = !empty($_POST['putToBoard']);
+					if ($issue->isOnBoard() != $putOnBoard) {
+						if ($putOnBoard) {
+							if (!ScrumSticker::putStickerOnBoard($issue))
+								return $engine->addError('Не удалось поместить стикер на доску');
+						} else {
+							if (!ScrumSticker::updateStickerState($issue->id, 
+									ScrumStickerState::BACKLOG))
+								return $engine->addError('Не удалось снять стикер с доски');
 						}
 					}
-
-					// обновляем счетчики
-					if ($uploader->getLoadedCount() > 0 || $editMode) 
-						Issue::updateImgsCounter( $issueId, $uploader->getLoadedCount() );
-					
-					$issueURL = $this->getBaseUrl( ProjectPage::PUID_ISSUE, $idInProject );
-					
-					// отсылаем оповещения
-					if ($editMode) {
-						array_push( $members, $issue->authorId ); // TODO фильтр, чтобы не добавлялся дважды
-						EmailNotifier::getInstance()->sendMail2Allowed(
-							'Изменена задача "' . $issue->name . '"', 
-							$engine->getUser()->getName() . ' изменил задачу "' .
-							$issue->name .  '", в которой Вы принимаете участие' . "\n" .
-							'Просмотреть задачу можно по ссылке ' .	$issueURL, 
-							$members,
-							EmailNotifier::PREF_EDIT_ISSUE
-						);
-					} else {
-						EmailNotifier::getInstance()->sendMail2Allowed(
-							'Добавлена задача "' . $issue->name . '"', 
-							$engine->getUser()->getName() . ' добавил задачу "' . 
-							$issue->name .  '", в которой Вы назначены исполнителем' . "\n" . 
-							'Просмотреть задачу можно по ссылке ' .	$issueURL, 
-							$members, 
-							EmailNotifier::PREF_ADD_ISSUE
-						);
-					}	
-
-					Project::updateIssuesCount($issue->projectId);
-				
-					LightningEngine::go2URL($issueURL);
-					// LightningEngine::go2URL( 
-						// $editMode 
-							// ? $issueURL
-							// : $this->_project->getUrl() 
-					// );
 				}
+
+				// обновляем счетчики изображений
+				if ($uploader->getLoadedCount() > 0 || $editMode) 
+					Issue::updateImgsCounter($issueId, $uploader->getLoadedCount());
+				
+				$issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
+				
+				// отсылаем оповещения
+				$this->notifyAboutIssueChange($issue, $issueURL, $editMode);
+
+				Project::updateIssuesCount($issue->projectId);
+			
+				LightningEngine::go2URL($issueURL);
 			}
 		}
 	}
@@ -618,8 +512,139 @@ class ProjectPage extends BasePage
         return $uploader;    
 	}
 
+	private function saveMembers($issueId, $memberIds, $editMode, $spByMembers = null) {
+		$engine = $this->_engine;
+		$users4Delete = [];
+		if (!$this->saveMembersByInstanceType(
+				$issueId, $memberIds, $editMode, LPMInstanceTypes::ISSUE, $users4Delete))
+			return false;
+			
+		// Удаляем пользователей из таблицы информации об участниках задачи
+		if (!empty($users4Delete) &&
+				!IssueMember::deleteInfo($issueId, $users4Delete))
+			return $engine->addError('Ошибка при удалении информации об участниках');
+
+		if ($this->_project->scrum) {
+			if ($spByMembers == null || !is_array($spByMembers))
+				return $engine->addError('Требуется количество SP по участникам');
+			if (count($spByMembers) != count($memberIds))
+				return $engine->addError('Количество SP по участникам не соответствует количеству участников');
+
+			// Записываем информацию об участниках
+			$sql = "REPLACE INTO `%s` (`userId`, `instanceId`, `sp`) VALUES (?, '" . $issueId . "', ?)";
+			if (!$prepare = $this->_db->preparet($sql, LPMTables::ISSUE_MEMBER_INFO))
+				return $engine->addError('Ошибка при сохранении информации об участниках');
+
+			$spTotal = 0;
+			foreach ($memberIds as $i => $memberId) {
+				$memberId = (float)$memberId;
+				$sp = $spByMembers[$i];
+				$prepare->bind_param('dd', $memberId, $sp);
+				$prepare->execute();
+
+			}
+
+			$prepare->close();
+		}
+
+		return true;
+	}
+
+	private function saveTesters($issueId, $testerIds, $editMode) {
+		return $this->saveMembersByInstanceType(
+			$issueId, $testerIds, $editMode, LPMInstanceTypes::ISSUE_FOR_TEST);
+	}
+
+	private function saveMembersByInstanceType($issueId, $userIds, $editMode, $instanceType, &$users4Delete = null) {
+		$engine = $this->_engine;
+		if (empty($userIds))
+			$userIds = [];
+		if ($editMode) {
+			// выберем из базы текущих участников
+			$sql = "SELECT `userId` FROM `%s` " .
+					"WHERE `instanceType` = '" . $instanceType . "' " .
+				      "AND `instanceId` = '" . $issueId . "'";
+			if (!$query = $this->_db->queryt($sql, LPMTables::MEMBERS))
+				return $engine->addError('Ошибка загрузки участников');
+			
+			if ($users4Delete === null)
+				$users4Delete = [];
+			while ($row = $query->fetch_assoc()) {
+				$tmpId = (float)$row['userId'];
+				$userInArr = false;
+				foreach ($userIds as $i => $memberId) {			
+					if ($memberId == $tmpId) {
+						ArrayUtils::removeByIndex($userIds, $i);
+						$userInArr = true;
+						break;
+					}
+				}
+				if (!$userInArr)
+					$users4Delete[] = $tmpId;
+			}
+			
+			if (!empty($users4Delete) && !Member::deleteMembers($instanceType, $issueId, $users4Delete)) 
+				return $engine->addError('Ошибка при удалении участников');
+		}
+		if (empty($userIds))
+			return true;
+
+		// сохраняем исполнителей задачи
+		$sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
+					     "VALUES ( ?, '" . $instanceType . "', '" . $issueId . "' )";
+			
+		if (!$prepare = $this->_db->preparet($sql, LPMTables::MEMBERS)) {
+			if (!$editMode)
+				$this->_db->queryt("DELETE FROM `%s` WHERE `id` = '" . $issueId . "'", LPMTables::ISSUES);
+			return $engine->addError( 'Ошибка при сохранении участников' );
+		} else {
+			$saved = array();
+			foreach ($userIds as $memberId) {
+				$memberId = (float)$memberId;
+				if (!in_array($memberId, $saved)) {
+					$prepare->bind_param('d', $memberId);
+					$prepare->execute();
+					$saved[] = $memberId;
+				}
+			}
+			$prepare->close();
+			return true;
+		}
+	}
+
+	private function notifyAboutIssueChange(Issue $issue, $issueURL, $editMode) {
+		$engine = $this->_engine;
+		$members = $issue->getMemberIds();
+		if ($editMode) {
+			$members[] = $issue->authorId; // TODO фильтр, чтобы не добавлялся дважды
+			EmailNotifier::getInstance()->sendMail2Allowed(
+				'Изменена задача "' . $issue->name . '"', 
+				$engine->getUser()->getName() . ' изменил задачу "' .
+				$issue->name .  '", в которой Вы принимаете участие' . "\n" .
+				'Просмотреть задачу можно по ссылке ' .	$issueURL, 
+				$members,
+				EmailNotifier::PREF_EDIT_ISSUE
+			);
+		} else {
+			EmailNotifier::getInstance()->sendMail2Allowed(
+				'Добавлена задача "' . $issue->name . '"', 
+				$engine->getUser()->getName() . ' добавил задачу "' . 
+				$issue->name .  '", в которой Вы назначены исполнителем' . "\n" . 
+				'Просмотреть задачу можно по ссылке ' .	$issueURL, 
+				$members, 
+				EmailNotifier::PREF_ADD_ISSUE
+			);
+		}	
+	}
+
 	private function getTitleByIssue(Issue $issue) { 
 		return $issue->name .' - '. $this->_project->name;
+	}
+
+	private function parseSP($value, $allowFloat = false) {
+		// из дробных разрешаем только 1/2
+		return ($value == "0.5" || $value == "0,5" || $value == "1/2") ? 0.5 : 
+			($allowFloat ? floatval(str_replace(',', '.', (string)$value)) : (int)$value);
 	}
 }
 ?>

@@ -26,6 +26,11 @@ class LPMTables {
 	 */
 	const ISSUE_COUNTERS = 'issue_counters';	
 	/**
+	 * Информация об участнике задачи.
+	 * @var string
+	 */
+	const ISSUE_MEMBER_INFO = 'issue_member_info';	
+	/**
 	 * Стикеры для Scrum доски
 	 * @var string
 	 */

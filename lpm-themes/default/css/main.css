@@ -414,6 +414,20 @@ ol.members-list {
 	position : relative;
 	
 }
+ol.members-list input.member-sp {
+	width: 20px;
+	margin-left: 5px;
+	display: inline-block;	
+	font-size: smaller;
+	padding: 1px 2px;
+	height: 14px;
+}
+ol.members-list .member-sp-label {
+	font-size: smaller;
+	margin-left: 5px;
+	display: inline-block;	
+}
+
 fieldset > ol.members-list {
     margin-bottom: 10px;
     padding-top: 5px;
@@ -1519,7 +1533,9 @@ div.ftp
 	margin-left: 5px;
 	margin-bottom: 10px;
 }
-
+#scrumBoard .scrum-snapshot-stat .scrum-snapshot-links{
+	font-size: smaller;
+}
 #scrumBoard .scrum-snapshot-stat .num-issues {
 	float: right;
 	margin-right: 5px;
@@ -1532,6 +1548,10 @@ div.ftp
 #scrumSnapshot .scrum-snapshot-list li {
 	margin-top: 10px;
 	margin-bottom: 10px;
+}
+
+#sprint-stat .sprint-members-stat {
+	margin-top: 10px;
 }
 
 .issue-labels-container {

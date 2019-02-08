@@ -75,7 +75,8 @@ class BasePage extends LPMBaseObject
 	public function getSubMenu() {
 		$subMenu = array();
 		foreach ($this->_subPages as /*@var $subpage SubPage */ $subpage) {
-			array_push( $subMenu, $subpage->link );
+			if ($subpage->showInMenu)
+				$subMenu[] = $subpage->link;
 		}
 		return $subMenu;
 	}
@@ -246,7 +247,7 @@ class BasePage extends LPMBaseObject
 		return false;
 	}
 	
-	protected function addSubPage( $uid, $label, $pattern = '', $js = null, $title = '', $reqRole = -1 ) {
+	protected function addSubPage($uid, $label, $pattern = '', $js = null, $title = '', $reqRole = -1, $showInMenu = true) {
 		$args = array( $this->uid );
 		for ($i = 1; $i < $this->_baseParamsCount; $i++) {
 			array_push( $args, LightningEngine::getInstance()->getParams()->getArg( $i ) );
@@ -262,12 +263,8 @@ class BasePage extends LPMBaseObject
 		
 		if ($title == '') $title = $label; 
 
-		$subpage = new SubPage( $uid, $link, $title, $pattern, $js );
-		
-		array_push( 
-			$this->_subPages,
-			$subpage
-		);
+		$subpage = new SubPage($uid, $link, $title, $pattern, $js, $showInMenu);
+		$this->_subPages[] = $subpage;
 
 		return $subpage;
 	}	

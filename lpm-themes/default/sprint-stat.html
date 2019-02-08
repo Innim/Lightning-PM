@@ -1,0 +1,33 @@
+<?php
+/* 
+Требуются: 
+    $project - проект
+    $snapshot - данные конкретного снимка, если задано - будет показан он, если нет - список
+*/
+?>
+<article id="sprint-stat" data-project-id="<?=$project->id;?>" data-snapshot-id="<?=$snapshot->id;?>">
+    <h1><?lpm_print_header();?></h1>
+
+    <h3>Статистика <a href="<?=$snapshot->getSnapshotUrl();?>">спринта #<?=$snapshot->idInProject;?></a></h3>
+    
+    <table class="sprint-members-stat">
+    	<tr>
+    		<th>Участник</th>
+    		<th>SP в Тестировании</th>
+    		<th>SP в Готово</th>
+    		<th>Сделано SP</th>
+    	</tr>
+    	<?php
+		foreach($snapshot->getMembers() as $member):
+    		$doneSp = $snapshot->getMemberDoneSP($member->userId);
+		?>
+    	<tr data-done-sp="<?=$doneSp;?>">
+    		<td><?=$member->getLinkedName();?></td>
+    		<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::TESTING);?></td>
+    		<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::DONE);?></td>
+    		<td><?=$doneSp;?></td>
+    	</tr>
+    	<?php endforeach;?>
+    	
+    </table>
+</article>

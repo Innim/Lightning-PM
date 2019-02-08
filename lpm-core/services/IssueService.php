@@ -2,8 +2,7 @@
 require_once(dirname( __FILE__ ) . '/../init.inc.php');
 use \GMFramework\DateTimeUtils as DTU;
 
-class IssueService extends LPMBaseService
-{
+class IssueService extends LPMBaseService {
 	/**
 	 * Завершаем задачу
 	 * @param  int $issueId 

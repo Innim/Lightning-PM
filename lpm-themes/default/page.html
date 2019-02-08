@@ -37,12 +37,12 @@
 			<? }?>
 		</nav>
 		<nav id="subMenu">
-            <? foreach (lpm_get_sub_menu() as $link) {?>
+            <?php foreach (lpm_get_sub_menu() as $link):?>
             <a href="<?=$link->href;?>"><?=$link->label;?></a>
-            <? }?>
+            <?php endforeach;?>
         </nav>
 		<div id="content">
-			<? lpm_print_page_content(); ?>
+			<?php lpm_print_page_content(); ?>
 		</div>
         <article id="noway">
             <div class="qtcontent">
@@ -61,5 +61,15 @@
 			<span class="version"><? lpm_print_product_name(); ?> v.<? lpm_print_version(); ?></span>
 		</footer>
 		<div id="preloader"></div>
+		<?php
+			$errors = lpm_get_errors();
+			if (!empty($errors)):
+		?>
+		<script type="text/javascript">
+		<?php foreach ($errors as $error): ?>	
+			showError("<?=addslashes($error);?>");
+		<?php endforeach; ?>
+		</script>
+		<?php endif; ?>
 	</body>
 </html>

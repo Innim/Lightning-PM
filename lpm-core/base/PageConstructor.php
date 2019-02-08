@@ -96,6 +96,10 @@ class PageConstructor
 		//if (!WorkStudyPage::isCurrent()) return array();		
 		return LightningEngine::getInstance()->getCurrentPage()->getWorkers();
 	}
+
+	public static function getErrors() {
+		return LightningEngine::getInstance()->getErrors();
+	}
 	
 	public static function getDefaultDate() {
 		/* return DateTimeUtils::date(

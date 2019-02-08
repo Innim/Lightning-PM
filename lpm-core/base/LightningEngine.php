@@ -5,8 +5,16 @@
  * @version 0.2.2a 
  *
  */
-class LightningEngine
-{
+class LightningEngine {
+	/**
+	 * Поле для хранения URL предыдущей страницы.
+	 */
+	const SESSION_PREV_PATH = 'lightning_prev_path';
+	/**
+	 * Сообщения об ошибках, которые надо показать после смены страниы.
+	 */
+	const SESSION_NEXT_ERRORS = 'lightning_next_errors';
+
 	/**
 	 * @return LightningEngine
 	 */
@@ -68,6 +76,7 @@ class LightningEngine
 	 * @var array
 	 */
 	private $_errors = array();
+	private $_nextErrors = array();
 	
 	function __construct()
 	{
@@ -81,8 +90,31 @@ class LightningEngine
 
 	public function createPage() 
 	{
+		$session = Session::getInstance();
+		$nextErrors = $session->get(self::SESSION_NEXT_ERRORS);
+		if (!empty($nextErrors)) {
+			$nextErrors = unserialize($nextErrors);
+			foreach ($nextErrors as $error) {
+				$this->addError($error);
+			}
+			$session->unsetVar(self::SESSION_NEXT_ERRORS);
+		}
+
 		$this->_curPage = $this->initCurrentPage();
-		$this->_contructor->createPage();
+		try {
+			$this->_contructor->createPage();
+		} catch (Exception $e) {
+			$this->addNextError($e->getMessage());
+			$path = $session->get(self::SESSION_PREV_PATH);
+			$session->unsetVar(self::SESSION_PREV_PATH);
+
+			$url = empty($path) ? SITE_URL : self::getURL($path);
+			PagePrinter::jsRedirect($url);
+			exit();
+		}
+
+		// Все прошло успешно - запоминаем URL как предыдущий
+		$session->set(self::SESSION_PREV_PATH, $this->getCurrentUrlPath());
 	}
 	
 	public function addError( $errString ) {
@@ -95,6 +127,12 @@ class LightningEngine
         	}
 		}
 		array_push( $this->_errors, $errString );
+		return false;
+	}
+	
+	public function addNextError($errString) {
+		$this->_nextErrors[] = $errString;
+		Session::getInstance()->set(self::SESSION_NEXT_ERRORS, serialize($this->_nextErrors));
 		return false;
 	}
 	
@@ -164,8 +202,11 @@ class LightningEngine
 		return $this->_curPage;
 	}
 	
-	public function getErrors() {
-		return $this->_errors;
+	public function getErrors($clear = true) {
+		$arr = $this->_errors;
+		if ($clear)
+			$this->_errors = [];
+		return $arr;
 	}
 	
 	/**
@@ -200,6 +241,7 @@ class LightningEngine
 			// не поддерживают cookie, поэтому передаем явно
 			self::go2URL(null, [LPMParams::QUERY_ARG_SID => session_id()]);
 		} 
+
 		return $res;
 	}
 }
