@@ -532,7 +532,7 @@ class ProjectPage extends BasePage
 			$spTotal = 0;
 			foreach ($memberIds as $i => $memberId) {
 				$memberId = (float)$memberId;
-				$sp = $this->parseSP($spByMembers[$i]);
+				$sp = $spByMembers[$i];
 				$prepare->bind_param('dd', $memberId, $sp);
 				$prepare->execute();
 
