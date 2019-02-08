@@ -162,3 +162,5 @@ CREATE TABLE `lpm_issue_member_info` (
 
 ALTER TABLE `lpm_scrum_snapshot`
 ADD `issue_members_sp` text COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Количество SP по участникам' AFTER `issue_sp`;
+
+-- 0.7a.003
