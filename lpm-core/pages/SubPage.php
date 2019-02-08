@@ -10,13 +10,16 @@ class SubPage extends LPMBaseObject
 	public $title;
 	public $pattern;
 	public $js;
+
+	public $showInMenu;
 	
-	function __construct( $uid, Link $link, $title, $pattern, $js = null ) {
+	function __construct($uid, Link $link, $title, $pattern, $js = null, $showInMenu = true) {
 		$this->uid     = $uid;
 		$this->link    = $link;
 		$this->title   = $title;
 		$this->pattern = $pattern;
 		$this->js      = ($js == null) ? array() : $js;
+		$this->showInMenu = $showInMenu;
 	}
 }
 ?>
