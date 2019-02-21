@@ -114,6 +114,7 @@ class LightningEngine {
 		}
 
 		// Все прошло успешно - запоминаем URL как предыдущий
+		// TODO: тут косяк если параллельно открыто несколько страниц
 		$session->set(self::SESSION_PREV_PATH, $this->getCurrentUrlPath());
 	}
 	
