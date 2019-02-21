@@ -26,13 +26,20 @@ class SlackIntegration {
 	}
 
 	public function notifyIssueForTest(Issue $issue) {
-		if (!($channel = $this->getChannelByProject($issue->getProject())))
-			return;
+		// if (!($channel = $this->getChannelByProject($issue->getProject())))
+			// return;
 
 		$text = $this->getIssuePrefix($issue) . '_"' . $issue->name . '"_ - в *тестирование*';
 		$text = $this->addMentionsByUsers($text, $issue->getTesters());
 
-		$this->postMessage($channel, $text, [[
+		// $this->postMessage($channel, $text, [[
+		// 	'fallback' => $issue->getName(),
+		// 	'title' => $issue->getName(),
+		// 	'text' => $issue->getShortDesc(),
+		// 	'title_link' => $issue->getConstURL()
+		// ]]);
+
+		$this->postMessageForIssue($issue, $text, [[
 			'fallback' => $issue->getName(),
 			'title' => $issue->getName(),
 			'text' => $issue->getShortDesc(),
@@ -59,20 +66,20 @@ class SlackIntegration {
 	}
 
 	public function notifyIssueCompleted(Issue $issue) {
-		if (!($channel = $this->getChannelByProject($issue->getProject())))
-			return;
+		// if (!($channel = $this->getChannelByProject($issue->getProject())))
+			// return;
 
 		// TODO: постить в канал
 		$text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *завершена*';
 		$text = $this->addMentionsByUsers($text, $issue->getMembers());
 
-		$this->postMessage($channel, $text);
+		$this->postMessageForIssue($issue, $text);
 	}
 
 	public function notifyIssuePassTest(Issue $issue) {
 		$project = $issue->getProject();
-		if (!($channel = $this->getChannelByProject($project)))
-			return;
+		// if (!($channel = $this->getChannelByProject($project)))
+			// return;
 
 		$master = $project->getMaster();
 
@@ -80,7 +87,7 @@ class SlackIntegration {
 		$text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *прошла тестирование*';
 		$text = $this->addMentionsByUsers($text, $master !== null ? [$master] : null);
 
-		$this->postMessage($channel, $text);
+		$this->postMessageForIssue($issue, $text);
 	}
 
 	private function getClient() {
@@ -96,11 +103,47 @@ class SlackIntegration {
 		return $this->_client;
 	}
 
-	private function postMessage($channel, $text, $attachments = null) {
+	private function postMessageForIssue(Issue $issue, $text, $attachments = null) {
+		$project = $issue->getProject();
+		if (!($channel = $this->getChannelByProject($project)))
+			return;
+
+		// Ищем сообщение, которое будет как базовое для ветки
+		$prefix = $this->getIssuePrefix($issue);
+		$client = $this->getClient();
+		$client->apiCall('groups.history', ['channel' => $channel, 'count' => 50])->then(function (\Slack\Payload $res) use ($client, $channel, $text, $attachments, $prefix) {
+			$data = $res->getData();
+			// echo '<pre>groups.history: '; var_dump($data); echo '</pre>';
+			$threadTs = null;
+			if (!empty($data['ok']))				
+			{
+				foreach ($data['messages'] as $message) {
+					if (mb_strpos($message['text'], $prefix) !== false) {
+						$threadTs = isset($message['thread_ts']) ?
+							$message['thread_ts'] : $message['ts'];
+						break;
+					}
+				}
+			}
+			// else
+			// {
+			// 	// TODO: обработка ошибки
+			// }
+
+			$this->postMessage($channel, $text, $attachments, $threadTs);
+		});
+
+		$this->_loop->run();
+	}
+
+	private function postMessage($channel, $text, $attachments = null, $threadTs = null) {
+
 		$client = $this->getClient();
 		$args = ['channel' => $channel, 'text' => $text];
 		if (!empty($attachments))
 			$args['attachments'] = json_encode($attachments);
+		if (!empty($threadTs))
+			$args['thread_ts'] = $threadTs;
 		$client->apiCall('chat.postMessage', $args)->then(function (\Slack\Payload $res) {
 			$data = $res->getData();
 			if (empty($data['ok']))
