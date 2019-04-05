@@ -9,7 +9,7 @@ class UsersPage extends BasePage {
 
 		$this->_defaultPUID = self::UID;
 
-		$this->addSubPage(self::PUID_STAT , 'Статистика пользователей', 'users-stat', array());
+		$this->addSubPage(self::PUID_STAT, 'Статистика пользователей', 'users-stat', array('users-stat'));
 	}
 
 	public function init() {
@@ -51,7 +51,7 @@ class UsersPage extends BasePage {
 		$prevMonth = $month == 1 ? 12 : $month - 1;
 		$prevYear = $month == 1 ? $year - 1 : $year;
 
-		$startDate = strtotime(sprintf('%02d.%02d.%04d', $dayInMonthForSprint, $month, $year));
+		$startDate = strtotime(sprintf('%02d.%02d.%04d', $dayInMonthForSprint + 1, $month, $year));
 		$endDate = strtotime(sprintf('%02d.%02d.%04d', $dayInMonthForSprint, $nextMonth, $nextYear));
 
 		$users = User::loadList('');
