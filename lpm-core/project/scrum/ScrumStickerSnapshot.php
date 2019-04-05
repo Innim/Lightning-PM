@@ -26,6 +26,34 @@ SQL;
 	}
 
     /**
+     * Загружает список снепшотов по идентификатору проекта (вначале новые).
+     * @param int $createFrom
+     * @param int $createdTo
+     * @return ScrumStickerSnapshot[]
+     * @throws DBException
+     * @throws Exception
+     */
+    public static function loadListByDate($createFrom, $createdTo) {
+        $db = self::getDB();
+
+        $dateWhere = self::whereBetween('created', $createFrom, $createdTo);
+        $sql = <<<SQL
+        SELECT * FROM `%1\$s` WHERE ${dateWhere}
+        ORDER BY `%1\$s`.`created` DESC, `%1\$s`.`pid` DESC
+SQL;
+
+// echo $db->sprintft([$sql, LPMTables::SCRUM_SNAPSHOT_LIST]);
+        return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
+    }
+
+    private static function whereBetween($field, $dateFrom, $dateTo) {
+        $from = DateTimeUtils::mysqlDate($dateFrom, false) . ' 00:00:00';
+        $to = DateTimeUtils::mysqlDate($dateTo, false) . ' 23:59:59';
+        return '`' . $field . '` BETWEEN STR_TO_DATE(\'' . $from . '\', \'%%Y-%%m-%%d %%H:%%i:%%s\') ' .
+            'AND STR_TO_DATE(\'' . $to . '\', \'%%Y-%%m-%%d %%H:%%i:%%s\')';
+    }
+
+    /**
      * Загружает снепшот по идентификатору проекта и идентификатору снепшота в проекте.
      * @param int $projectId
      * @param int $idInProject
@@ -313,6 +341,21 @@ SQL;
             }
         }
         return $this->_members;
+    }
+
+    /**
+     * Проверяет, участвовал ли указанный пользователь в спринте
+     * (считается что участвовал, если на него была поставлена хотья бы одна задача)
+     * @return bool
+     */
+    public function hasMembers($userId) {
+        $list = $this->getMembers();
+        foreach ($list as $member) {
+            if ($member->userId == $userId)
+                return true;
+        }
+
+        return false;
     }
 
     public function getNumSp() {

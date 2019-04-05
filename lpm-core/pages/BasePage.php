@@ -63,7 +63,7 @@ class BasePage extends LPMBaseObject
 		
 		$this->uid       = $uid;
 		$this->_title    = $title;
-		$this->_label    = $label;
+		$this->_label    = empty($label) ? $title : $label;
 		$this->_pattern  = $pattern;
 		$this->needAuth  = $needAuth;
 		$this->notInMenu = $notInMenu;
