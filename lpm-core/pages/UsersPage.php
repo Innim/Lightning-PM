@@ -63,7 +63,9 @@ class UsersPage extends BasePage {
 				if ($snapshot->hasMembers($user->userId))
 					$userStat->addSnapshot($snapshot);
 			}
-			$usersStat[] = $userStat;
+			
+			if ($userStat->getSnapshotsCount() > 0)
+				$usersStat[] = $userStat;
 		}
 
 		$this->addTmplVar('month', $month);
