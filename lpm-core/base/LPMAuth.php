@@ -78,7 +78,7 @@ class LPMAuth {
             $sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`,`hasCreated`) 
                           values ('". $cookieHash ."','". $userId . "','". $userAgent ."','". DateTimeUtils::mysqlDate() ."')";
             if (!$db->queryt($sqlCookie, LPMTables::USER_AUTH)) {
-                $this->addError('Ошибка при сохранении данных авторизации');
+            	throw new Exception('Ошибка при сохранении данных авторизации');
             } else {
                 $this->_hashId = $db->insert_id;
 
