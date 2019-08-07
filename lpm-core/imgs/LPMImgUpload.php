@@ -198,13 +198,23 @@ class LPMImgUpload {
 	 * @param  array $urls Массив URL адресов
 	 * @return boolean
 	 */
-	public function uploadFromUrls($urls)
-	{
+	public function uploadFromUrls($urls) {
 		// Создадим временную директорию 
 	    $dirTempPath = LPMImg::getSrcImgPath('temp');
 
-	    if (!is_dir($dirTempPath) && !mkdir($dirTempPath))
-	    	return $this->error('Ошибка при создании директории');
+	    if (!is_dir($dirTempPath) && !mkdir($dirTempPath, 0777, true)) {
+	    	$msg = 'Ошибка при создании директории';
+	    	if (DefaultGlobals::isDebugMode()) {
+	    		$msg .= ' "' . $dirTempPath . '" - ';
+	    		$error = error_get_last();
+	    		if (!empty($error) && isset($error['message']))
+	    			$msg .= $error['message'];
+	    		else
+	    			$msg .= 'unknown error';
+	    	}
+
+	    	return $this->error($msg);
+	    }
 
     	$files = array();
     	$names = array();
