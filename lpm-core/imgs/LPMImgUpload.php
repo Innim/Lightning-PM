@@ -321,7 +321,7 @@ class LPMImgUpload {
 		}
 		else
 		{
-			return $this->addImages($files, false, $names);
+			return empty($files) ? true : $this->addImages($files, false, $names);
 		}
 	}
 
