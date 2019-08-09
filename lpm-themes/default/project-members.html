@@ -1,4 +1,4 @@
-<article id="projectMembers">
+<article  id="projectMembers">
     <h1><?lpm_print_header();?></h1>
     <h3>Участники проекта</h3>
     <input type="hidden" name="projectId" value="<?=lpm_get_project()->getID();?>"/>
@@ -6,12 +6,26 @@
         <?foreach (lpm_get_project_members() as $member) {?>
         <li>
             <span class="user-name"><?=$member->getLinkedName();?></span>
-            <input type="hidden" name="userId" value="<?=$member->getID();?>">
+            <input id="userIdId" type="hidden" name="userId" value="<?=$member->getID();?>">
         </li>
         <?}?>
     </ul>
+    <h3 style="margin-top: 5px; margin-bottom: 5px;" > Тестировшик проекта  </h3>
+<!-- Выбор Тестировшика проекта  -->
+<div id="NameTester">  Тестер не выбран </div>
+    <form id="formOption">
+        <select id="select">
+            <option val="testerNotSelect">Выбрать тестера</option>
+        <?foreach (lpm_get_project_members() as $member) {?>
+            <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
+        <?}?>
+        </select>
+        <div id="btnSellect"> Подтвердить </div>
+    </form>
+
     <p class="buttons-bar">
         <button onclick="openMembersChooser();">Добавить</button>
-    </p> 
+    </p>
     <?lpm_print_users_chooser();?>
+    <script src="../../lpm-scripts/project-tester-add.js"></script>
 </article>
