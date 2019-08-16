@@ -49,7 +49,7 @@ try {
 	unset( $_POST );
 	$service->execute();
 } catch( F2PException $e ) {
-    $service->exception( $e );
+     $service->exception( $e );
 } catch( Exception $e ) {
 	$service->simpleException( $e );
 }

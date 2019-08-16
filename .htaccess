@@ -13,3 +13,6 @@ RewriteRule ^([a-zA-Z_0-9\-/]+)?(/.*)?$ index.php?route=$1&%{QUERY_STRING}
 
 RewriteRule ^[a-zA-Z/\_0-9/\-]{0,}(lpm\-libs/flash2php/gateway\.php){1}$ $1
 #RewriteRule ^[a-zA-Z/\_0-9/\-]{0,}(_private/.*)$ $1
+
+SetEnv force-no-vary
+SetEnv downgrade-1.0

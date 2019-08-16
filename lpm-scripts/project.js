@@ -56,7 +56,10 @@ function addMembers( arr ) {
         $( "#projectMembers input[name=projectId]" ).val(), 
         arr, 
         function (res) {
+          console.log(arr);
+          console.log(res);
             preloader.hide();
+
             if (res.success) {
                 $( "#projectMembers > ul.users-list > li" ).remove();
                 var j = 0;
@@ -87,9 +90,75 @@ function addMembers( arr ) {
                         '<input type="hidden" name="userId" value="' + user.userId + '"></li>'
                     );
                 }
+                location.reload();
             } else {
                 srv.err( res );
             }
         } 
     );
 };
+
+
+//Проверка, есть тестер у проекта или нету если нет,
+//добавляем тестера функцией add TEster,
+//ЕСЛИ есть, отображаем тестера  
+function CheckTester(){
+  let IdProjectURL = window.location.href;
+  srv.project.CheckTester(
+  IdProjectURL,
+   function( res ) {
+      if(res){
+        $("form").hide();
+        console.log( res );
+          if( res.IdProjectURL ===  "NotFoundProgect"){
+            addTester();
+          } else {
+            console.log( res.IdProjectURL );
+            $('#NameTester').text(res.IdProjectURL);
+          }
+      } else {
+        srv.err( res );
+      }
+}); 
+}
+
+//Добавляем тестера 
+function addTester(){
+  $("form").show();
+
+  $('#btnSellect').click(function (event) {
+    valueSelected = $('select').val();
+    textSelected = $('select option:selected').text();
+    //Если тестер не выбран, но кнопка нажата, сбрасываем  
+    if(valueSelected === "Выбрать тестера"){
+      event.preventDefault();
+    }
+    //Отправляем ID Тестера, Его имя, фамилию и логин, Url проекта
+      else {
+        $('#NameTester').empty();
+        urlProject = window.location.href;
+        srv.project.writeTester(
+          valueSelected,
+          textSelected,
+          urlProject,
+          function( res ){
+            if( res ){
+              console.log( res );
+            } else {
+              srv.err( res );
+            }
+          });
+        funHideAppend();
+    }
+
+    });
+//Показываем добавленного тестера 
+  function funHideAppend(){
+    $('form').hide();
+    $('#NameTester').append(textSelected).show();
+  }
+
+  };
+      
+
+

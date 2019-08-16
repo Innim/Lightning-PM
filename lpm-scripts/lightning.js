@@ -154,6 +154,12 @@ var srv = {
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
         },
+        CheckTester : function ( IdProjectURL, onResult ) {
+            this.s._('CheckTester');
+        },
+        writeTester : function ( valueSelected, textSelected, urlProject, onResult ){
+          this.s._('TesterAddToServer');
+        },
         getSumOpenedIssuesHours : function ( projectId, onResult ) {
             this.s._( 'getSumOpenedIssuesHours' );
         },
