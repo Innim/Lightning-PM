@@ -34,9 +34,9 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addTester( $IdProject, $IdUser ){
-        $projectId = (float)$IdProject;
-        $IdUser = (float)$IdUser;
+    public function addTester( $projectId, $userId ){
+        $projectId = (float)$projectId;
+        $userId = (float)$userId;
 
 
         // проверяем права пользователя
@@ -45,7 +45,7 @@ class ProjectService extends LPMBaseService
         // проверим, что существует такой проект
         if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
 
-        $query = "SELECT idUser FROM lpm_tester WHERE idPost='$IdProject' ";
+        $query = "SELECT userId FROM lpm_tester WHERE projectId='$projectId' ";
 
         $STH = $this->_db->query($query);
         $row = $STH->fetch_row();
@@ -54,13 +54,13 @@ class ProjectService extends LPMBaseService
             return $this->error("Tester exists");
         }
 
-        $tester_val = $this->_db->preparet("INSERT INTO `%s` (`idUser`, `idPost`) VALUES ( '{$IdUser}', '{$IdProject}')", LPMTables::TESTER);
+        $tester_val = $this->_db->preparet("INSERT INTO `%s` (`userId`, `projectId`) VALUES ( '{$userId}', '{$projectId}')", LPMTables::TESTER);
         $result = $tester_val->execute();
 
         if(!$result) {
             return $this->error("error ");
         }
-        $this->add2Answer("TESTER", $IdUser);
+        $this->add2Answer("TESTER", $userId);
 
         return $this->answer();
     }
