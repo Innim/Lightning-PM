@@ -154,10 +154,10 @@ var srv = {
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
         },
-        CheckTester : function ( IdProjectURL, onResult ) {
-            this.s._('CheckTester');
+        CheckTester : function ( IdProject, IdUser, onResult ) {
+            this.s._('addTester');
         },
-        writeTester : function ( valueSelected, textSelected, urlProject, onResult ){
+        writeTester : function ( valueSelected, textSelected, IdProject, onResult ){
           this.s._('TesterAddToServer');
         },
         getSumOpenedIssuesHours : function ( projectId, onResult ) {

@@ -99,22 +99,21 @@ function addMembers( arr ) {
 };
 
 
-//Проверка, есть тестер у проекта или нету если нет,
-//добавляем тестера функцией add TEster,
-//ЕСЛИ есть, отображаем тестера  
+
+
 function CheckTester(){
-  let IdProjectURL = window.location.href;
   srv.project.CheckTester(
-  IdProjectURL,
+      $( "#projectMembers input[name=projectId]" ).val(),
+      IdUser = $('select').val(),
    function( res ) {
       if(res){
         $("form").hide();
         console.log( res );
-          if( res.IdProjectURL ===  "NotFoundProgect"){
+          if( res.IdProject ===  "NotFoundProgect"){
             addTester();
           } else {
-            console.log( res.IdProjectURL );
-            $('#NameTester').text(res.IdProjectURL);
+            console.log( res.IdProject );
+            $('#NameTester').text(res.IdProject);
           }
       } else {
         srv.err( res );
@@ -122,7 +121,6 @@ function CheckTester(){
 }); 
 }
 
-//Добавляем тестера 
 function addTester(){
   $("form").show();
 
@@ -133,14 +131,12 @@ function addTester(){
     if(valueSelected === "Выбрать тестера"){
       event.preventDefault();
     }
-    //Отправляем ID Тестера, Его имя, фамилию и логин, Url проекта
       else {
         $('#NameTester').empty();
-        urlProject = window.location.href;
         srv.project.writeTester(
           valueSelected,
           textSelected,
-          urlProject,
+            $( "#projectMembers input[name=projectId]" ).val(),
           function( res ){
             if( res ){
               console.log( res );
@@ -159,6 +155,5 @@ function addTester(){
   }
 
   };
-      
 
 
