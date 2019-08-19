@@ -101,59 +101,83 @@ function addMembers( arr ) {
 
 
 
-function CheckTester(){
-  srv.project.CheckTester(
-      $( "#projectMembers input[name=projectId]" ).val(),
-      IdUser = $('select').val(),
-   function( res ) {
-      if(res){
-        $("form").hide();
-        console.log( res );
-          if( res.IdProject ===  "NotFoundProgect"){
-            addTester();
-          } else {
-            console.log( res.IdProject );
-            $('#NameTester').text(res.IdProject);
-          }
-      } else {
-        srv.err( res );
-      }
-}); 
-}
+// function addTester(){
+//   srv.project.addTester(
+//       $( "#projectMembers input[name=projectId]" ).val(),
+//       IdUser = $('select').val(),
+//    function( res ) {
+//       if(res){
+//         $("form").hide();
+//         console.log( res );
+//           if( res.IdProject ===  "NotFoundProgect"){
+//             addTester();
+//           } else {
+//             console.log( res.IdProject );
+//             $('#NameTester').text(res.IdProject);
+//           }
+//       } else {
+//         srv.err( res );
+//       }
+// });
+// }
 
-function addTester(){
-  $("form").show();
+// function addTester(){
+//   $("form").show();
+//
+//   $('#btnSellect').click(function (event) {
+//     userId = $('select').val();
+//     textSelected = $('select option:selected').text();
+//     //Если тестер не выбран, но кнопка нажата, сбрасываем
+//     if(valueSelected === "Выбрать тестера"){
+//       event.preventDefault();
+//     }
+//       else {
+//         $('#NameTester').empty();
+//         srv.project.addTester(
+//           $( "#projectMembers input[name=projectId]" ).val(),
+//           userId = $('select').val(),
+//           function( res ){
+//             if( res ){
+//               console.log( res );
+//             } else {
+//               srv.err( res );
+//             }
+//           });
+//         funHideAppend();
+//     }
+//
+//     });
+// //Показываем добавленного тестера
+//   function funHideAppend(){
+//     $('form').hide();
+//     $('#NameTester').append(textSelected).show();
+//   }
+//
+//   };
 
-  $('#btnSellect').click(function (event) {
-    valueSelected = $('select').val();
-    textSelected = $('select option:selected').text();
-    //Если тестер не выбран, но кнопка нажата, сбрасываем  
-    if(valueSelected === "Выбрать тестера"){
-      event.preventDefault();
-    }
-      else {
-        $('#NameTester').empty();
-        srv.project.writeTester(
-          valueSelected,
-          textSelected,
-            $( "#projectMembers input[name=projectId]" ).val(),
-          function( res ){
-            if( res ){
-              console.log( res );
-            } else {
-              srv.err( res );
-            }
-          });
-        funHideAppend();
-    }
+function addTester() {
+    $('#btnSellect').click(function (event) {
+        userId = $('select').val();
+        textSelected = $('select option:selected').val();
+        console.log(textSelected);
+        //Если тестер не выбран, но кнопка нажата, сбрасываем
+        if (!!textSelected){
+            event.preventDefault();
+        }
+        else {
+            srv.project.addTester(
+                $( "#projectMembers input[name=projectId]" ).val(),
+                userId,
+                function(res) {
+                    if( res.success ) {
+                        console.log(res.TESTER);
+                    } else {
+                        srv.err( res );
+                        console.log( res );
+                    }
+                }
+            );
+        }
 
     });
-//Показываем добавленного тестера 
-  function funHideAppend(){
-    $('form').hide();
-    $('#NameTester').append(textSelected).show();
-  }
-
-  };
-
-
+}

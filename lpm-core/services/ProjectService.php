@@ -54,6 +54,10 @@ class ProjectService extends LPMBaseService
             return $this->error("Tester exists");
         }
 
+        if(empty($userId)) {
+            return $this->error("TesterID Empty");
+        }
+
         $tester_val = $this->_db->preparet("INSERT INTO `%s` (`userId`, `projectId`) VALUES ( '{$userId}', '{$projectId}')", LPMTables::TESTER);
         $result = $tester_val->execute();
 
