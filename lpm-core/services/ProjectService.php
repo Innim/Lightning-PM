@@ -38,7 +38,6 @@ class ProjectService extends LPMBaseService
         $projectId = (float)$projectId;
         $userId = (float)$userId;
 
-
         // проверяем права пользователя
         if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
 

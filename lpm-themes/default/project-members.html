@@ -11,16 +11,26 @@
         <?}?>
     </ul>
     <h3 style="margin-top: 5px; margin-bottom: 5px;" > Тестировшик проекта  </h3>
+
 <!-- Выбор Тестировшика проекта  -->
-    <div id="NameTester"> Тестер не выбран </div>
+    <?
+            $tester = lpm_get_project_tester();
+            if(!is_null( $tester)):
+        ?>
+    <div id="NameTester" >
+        <?=$tester->getLinkedName();?>
+    </div>
+    <?endif;?>
+
     <form id="formOption">
         <select id="select">
-            <option value="0">Выбрать тестера</option>
+            <option value="0">Тестер не выбран</option>
+
         <?foreach (lpm_get_project_members() as $member) {?>
             <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
         <?}?>
         </select>
-        <div id="btnSellect"> Подтвердить </div>
+        <button id="btnSelect" type="button">Подтвердить</button>
     </form>
 
     <p class="buttons-bar">
