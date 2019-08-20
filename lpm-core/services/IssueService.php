@@ -280,12 +280,6 @@ class IssueService extends LPMBaseService {
 
 	    return $this->answer();
 	}
-	function idtest( $issueId ) {
-        $issue = Issue::load((float)$issueId);
-        echo '<pre>';
-	     var_dump($issue);
-	     echo '</pre>';
-    }
     /**
      * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
      */
