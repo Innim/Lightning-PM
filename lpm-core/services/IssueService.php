@@ -284,7 +284,7 @@ class IssueService extends LPMBaseService {
      * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
      */
     public function checkTester( $instanceId ) {
-        $type = LPMInstanceTypes::ISSUE_FOR_TEST;
+        (int)$type = LPMInstanceTypes::ISSUE_FOR_TEST;
 
         #Просматриваю в БД, тип учасника.
         $query = "SELECT instanceType FROM lpm_members WHERE instanceId='$instanceId' ";
@@ -314,7 +314,6 @@ class IssueService extends LPMBaseService {
         $db->query($sqll);
 
         return $this->answer();
-
 
     }
 
