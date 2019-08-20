@@ -265,6 +265,7 @@ class IssueService extends LPMBaseService {
 	        if ($state === ScrumStickerState::TESTING) {
 	        	// Если состояние "Тестируется" - ставим задачу на проверку
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
+                IssueService::checkTester( $issueId );
 	        } else if ($state === ScrumStickerState::DONE) {
 	        	// Если "Готово" - закрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_COMPLETED);
@@ -279,6 +280,12 @@ class IssueService extends LPMBaseService {
 
 	    return $this->answer();
 	}
+	function idtest( $issueId ) {
+        $issue = Issue::load((float)$issueId);
+        echo '<pre>';
+	     var_dump($issue);
+	     echo '</pre>';
+    }
     /**
      * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
      */
