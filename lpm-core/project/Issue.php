@@ -923,11 +923,14 @@ SQL;
 	 *  url:string
 	 * ]>
 	 */
+
 	public function getVideoLinks()
 	{
 		$preg = [
 			// YouTube
 			"(?:youtube.)\w{2,4}\/(?:watch\?v=)",
+			//Youtu.be
+			":?youtu.be",
 			// Droplr
 			"d.pr\/v\/",
 			// Innim owncloud
@@ -935,7 +938,7 @@ SQL;
 		];
 
 		preg_match_all("/(" . implode("|", $preg) . ")(\S*)\"/", $this->getDesc(), $video);
-		// preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
+		#preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
 		$list = array();
 		foreach ($video[0] as $key => $value) {
 			$urlPrefix = $video[1][$key];
@@ -945,6 +948,10 @@ SQL;
 
 			if (strpos($urlPrefix, 'youtube') === 0) {
 				// Это YouTube
+				$type = 'youtube';
+				$url = "http://www.youtube.com/embed/" . $videoUid;
+			} else if (strpos($urlPrefix, 'youtu.be') === 0) {
+				// Это YouTu.be
 				$type = 'youtube';
 				$url = "http://www.youtube.com/embed/" . $videoUid;
 			} else if (strpos($urlPrefix, 'd.pr') === 0) {
@@ -960,7 +967,7 @@ SQL;
 					$url = null;
 				}
 			}
-			
+
 			if (!empty($url))
 				$list[] = (object) compact('type', 'url');
 		}
