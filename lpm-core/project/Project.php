@@ -303,7 +303,7 @@ class Project extends MembersInstance
 	// }
 
     public function getProjectTester() {
-        // проверим, что существует такой проект\
+        // проверим, что существует такой проект
         $idProject = self::$currentProject->getID();
         if (!Project::loadById($idProject)) return $this->error('Нет такого проекта');
 
