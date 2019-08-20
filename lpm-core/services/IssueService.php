@@ -284,6 +284,8 @@ class IssueService extends LPMBaseService {
      * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
      */
     public function checkTester( $instanceId ) {
+        $type = LPMInstanceTypes::ISSUE_FOR_TEST;
+
         #Просматриваю в БД, тип учасника.
         $query = "SELECT instanceType FROM lpm_members WHERE instanceId='$instanceId' ";
         $db = LPMGlobals::getInstance()->getDBConnect();
@@ -292,7 +294,7 @@ class IssueService extends LPMBaseService {
 
         (int)$rows = array_map('current', $row);
         #Есди учасник === 4,  значит он тестер
-        if(in_array(4,$rows)) {
+        if(in_array($type, $rows)) {
             return "1";
         }
         #берём id проекта и извлекаем из проекта тестера
@@ -308,7 +310,7 @@ class IssueService extends LPMBaseService {
             $idTester = (int)$idTesters[0];
         }
         #Добавляем тестера к задаче
-        $sqll = "INSERT INTO `lpm_members`(`userId`, `instanceType`, `instanceId`) VALUES ('$idTester', '4', '$instanceId')";
+        $sqll = "INSERT INTO `lpm_members`(`userId`, `instanceType`, `instanceId`) VALUES ('$idTester', '$type', '$instanceId')";
         $db->query($sqll);
 
         return $this->answer();
