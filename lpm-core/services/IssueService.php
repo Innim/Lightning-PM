@@ -263,9 +263,11 @@ class IssueService extends LPMBaseService {
 
 	        $issue = $sticker->getIssue();
 	        if ($state === ScrumStickerState::TESTING) {
+
+                $this->checkTester( $issue );
 	        	// Если состояние "Тестируется" - ставим задачу на проверку
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
-                IssueService::checkTester( $issueId );
+
 	        } else if ($state === ScrumStickerState::DONE) {
 	        	// Если "Готово" - закрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_COMPLETED);
@@ -283,37 +285,31 @@ class IssueService extends LPMBaseService {
     /**
      * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
      */
-    public function checkTester( $instanceId ) {
-        (int)$type = LPMInstanceTypes::ISSUE_FOR_TEST;
 
-        #Просматриваю в БД, тип учасника.
-        $query = "SELECT instanceType FROM lpm_members WHERE instanceId='$instanceId' ";
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $STH = $db->query($query);
-        $row = $STH->fetch_all();
+    public function checkTester(Issue $issue) {
+        $testers = $issue->getTesters();
+        $issueId = $issue->getID();
+        $type = (int)LPMInstanceTypes::ISSUE_FOR_TEST;
 
-        (int)$rows = array_map('current', $row);
-        #Есди учасник === 4,  значит он тестер
-        if(in_array($type, $rows)) {
-            return "1";
+
+        if (empty($testers)) {
+            $project = $issue->getProject();
+            $db = LPMGlobals::getInstance()->getDBConnect();
+            $projectId = $project->getID();
+
+            $sql = "SELECT userId FROM lpm_tester WHERE projectId='$projectId' ";
+            $result = $db->query($sql);
+            $idTester = $result->fetch_row();
+            $tester = (int)$idTester[0];
+
+            if (empty($tester)) {
+                return $this->answer();
+            }
+            $sql = "INSERT INTO `lpm_members`(`userId`, `instanceType`, `instanceId`) VALUES ('$tester','$type', '$issueId')";
+            $db->query($sql);
+
+            return $this->answer();
         }
-        #берём id проекта и извлекаем из проекта тестера
-        $querys = "SELECT projectId FROM lpm_issues WHERE id='$instanceId' ";
-        $ST = $db->query($querys);
-        while($idProject = $ST->fetch_row()) {
-            $idProjects = (int)$idProject[0];
-        }
-
-        $sql = "SELECT userId FROM lpm_tester WHERE projectId='$idProjects' ";
-        $STT = $db->query($sql);
-        while($idTesters = $STT->fetch_row()) {
-            $idTester = (int)$idTesters[0];
-        }
-        #Добавляем тестера к задаче
-        $sqll = "INSERT INTO `lpm_members`(`userId`, `instanceType`, `instanceId`) VALUES ('$idTester', '$type', '$instanceId')";
-        $db->query($sqll);
-
-        return $this->answer();
 
     }
 
