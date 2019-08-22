@@ -1621,4 +1621,14 @@ div.ftp
 .table-cell {
 	display: table-cell;
 }
+#setProjectSettings {
+	margin: 20px;
+}
+#slackСhannel {
+	height: 24px;
+	width: 170px;
+	position:absolute;
+	margin-left: 38px;
+}
+
 

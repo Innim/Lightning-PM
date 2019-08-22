@@ -1,0 +1,24 @@
+<h1><?lpm_print_header();?></h1>
+<article id="projectSettings" class="container">
+
+    <? $scrum = lpm_get_project_settings()['scrum'];
+       $slack = lpm_get_project_settings()['slack'];
+     ?>
+    <input type="hidden" id="projectId" value="<?=lpm_get_project()->getID();?>"/>
+    <input id ="scrumHiddenValue" type="hidden" value="<? echo $scrum ;?>">
+
+    <h3> Настройки проекта </h3>
+    <ol class="form-fields">
+        <li style="list-style-type: none;">
+            <input id="checkboxScrum" type="checkbox">
+            <label for="checkboxScrum"> &nbsp;&nbsp;&nbsp;Проект использует Scrum</label>
+        </li>
+    </ol>
+    <input id="slackСhannel" type="text" placeholder="<? echo $slack ?>">
+    <h4 style="margin-left: 230px; margin-top: 23px;"> &nbsp;&nbsp;&nbsp;Канал оповещения в Slack</h4>
+    <p class="save-line" style="margin-top: 60px;">
+        <button id="setProjectSettings" type="submit"> Сохранить </button>
+        <button id="resetButton" type="submit">Отмена</button>
+
+
+</article>

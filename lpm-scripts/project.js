@@ -30,7 +30,8 @@ $(document).ready(
 		  //$('#issueForm > div.validateError' ).html( '' );
 	  //}	  
 		  
-	  issuePage.updateStat(); 
+	  issuePage.updateStat();
+      setProjectSettings();
   }
 );
 
@@ -92,4 +93,43 @@ function addMembers( arr ) {
             }
         } 
     );
+};
+
+
+function setProjectSettings() {
+    var projectId = $('input#projectId').val();
+    let scrumHiddenValue = $('input#scrumHiddenValue').val();
+    if (scrumHiddenValue !== '1') {
+        $('#checkboxScrum').attr('checked', false);
+    } else {
+        $('#checkboxScrum').attr('checked', true);
+    }
+    $('button#setProjectSettings').click(function() {
+        let check = $('#checkboxScrum').prop('checked');
+        if(check) {
+            scrumValue = '1';
+        } else {
+            scrumValue = '0';
+        }
+         slack = $('#slackСhannel').val();
+        if(!slack) {
+            slack = $('#slackСhannel').attr('placeholder');
+        }
+        srv.project.setProjectSettings(
+            scrumValue,
+            slack,
+            projectId,
+            function( res ) {
+                if (res.success ) {
+                    console.log( res );
+                } else {
+                    srv.err( res);
+                }
+            }
+        );
+    });
+    $('#resetButton').click(function() {
+        location.reload();
+    });
+
 };

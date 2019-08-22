@@ -10,6 +10,7 @@ class ProjectPage extends BasePage
 	const PUID_SCRUM_BOARD = 'scrum_board';
 	const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
 	const PUID_SPRINT_STAT = 'sprint_stat';
+	const PUID_SETTINGS = 'project-settings';
 
 	/**
 	 * 
@@ -35,13 +36,14 @@ class ProjectPage extends BasePage
 		$this->addSubPage(self::PUID_COMMENTS , 'Комментарии', 'project-comments');
 		$this->addSubPage(self::PUID_MEMBERS, 'Участники', 'project-members', 
 				array('users-chooser'), '', User::ROLE_MODERATOR);
+		$this->addSubPage(self::PUID_SETTINGS, 'Настройки проекта',  'project-settings');
 	}
 	
 	public function init() {
 		$engine = LightningEngine::getInstance();
 
 		// загружаем проект, на странице которого находимся
-		if ($engine->getParams()->suid == '' 
+		if ($engine->getParams()->suid == ''
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
 		// Если это scrum проект - добавляем новый подраздел

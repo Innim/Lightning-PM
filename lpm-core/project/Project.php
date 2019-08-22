@@ -301,5 +301,21 @@ class Project extends MembersInstance
 	// 			"WHERE `id` = '" . $projectId . "'";
 	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
 	// }
+
+    public function getProgectSettings() {
+        $project =  self::$currentProject;
+        $projectId  = $project->getID();
+
+        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $scrum = $project->scrum;
+        $slackNotifyChannel = $project->slackNotifyChannel;
+        $result = [ "scrum" => $scrum,
+                    "slack" => $slackNotifyChannel
+        ];
+
+        return $result;
+
+    }
 }
 ?>
