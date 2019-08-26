@@ -117,7 +117,6 @@ function setProjectSettings() {
             projectId,
             function( res ) {
                 if (res.success ) {
-                    location.reload();
                 } else {
                     srv.err( res);
                 }

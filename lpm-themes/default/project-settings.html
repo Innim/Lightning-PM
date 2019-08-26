@@ -1,8 +1,6 @@
 <h1><?lpm_print_header();?></h1>
-<script src="../../\/lpm-scripts/profile.js"></script>
 <article id="projectSettings" class="container">
-    <form methos="post" action="" onsubmit="alert('Сохранено');">
-        <div class="info-message"></div>
+    <form methos="post" action="" onsubmit="messages.alert('Сохранено');">
 
         <? $scrum = lpm_get_project_settings()['scrum'];
        $slack = lpm_get_project_settings()['slack'];
@@ -11,6 +9,7 @@
     <input id ="scrumHiddenValue" type="hidden" value="<? echo $scrum ;?>">
 
     <h3> Настройки проекта </h3>
+        <div class="info-message"></div>
     <ol class="form-fields">
         <li style="list-style-type: none;">
             <label for="checkboxScrum"> Проект использует Scrum</label>
@@ -23,5 +22,4 @@
         <button id="setProjectSettings" type="submit"> Сохранить </button>
         <button type="reset">Отмена</button>
     </form>
-
 </article>
