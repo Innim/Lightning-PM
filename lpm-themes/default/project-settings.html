@@ -1,7 +1,10 @@
 <h1><?lpm_print_header();?></h1>
+<script src="../../\/lpm-scripts/profile.js"></script>
 <article id="projectSettings" class="container">
+    <form methos="post" action="" onsubmit="alert('Сохранено');">
+        <div class="info-message"></div>
 
-    <? $scrum = lpm_get_project_settings()['scrum'];
+        <? $scrum = lpm_get_project_settings()['scrum'];
        $slack = lpm_get_project_settings()['slack'];
      ?>
     <input type="hidden" id="projectId" value="<?=lpm_get_project()->getID();?>"/>
@@ -10,15 +13,15 @@
     <h3> Настройки проекта </h3>
     <ol class="form-fields">
         <li style="list-style-type: none;">
-            <input id="checkboxScrum" type="checkbox">
-            <label for="checkboxScrum"> &nbsp;&nbsp;&nbsp;Проект использует Scrum</label>
+            <label for="checkboxScrum"> Проект использует Scrum</label>
+            <input style="margin-left: 40px;" id="checkboxScrum" type="checkbox">
         </li>
     </ol>
-    <input id="slackСhannel" type="text" placeholder="<? echo $slack ?>">
-    <h4 style="margin-left: 230px; margin-top: 23px;"> &nbsp;&nbsp;&nbsp;Канал оповещения в Slack</h4>
+    <input id="slackСhannel" type="text" value="<? echo $slack ?>">
+        <h4 style="margin-left: 230px; margin-top: 44px;" align="left"> &nbsp;&nbsp;&nbsp;Канал оповещения в Slack</h4>
     <p class="save-line" style="margin-top: 60px;">
         <button id="setProjectSettings" type="submit"> Сохранить </button>
-        <button id="resetButton" type="submit">Отмена</button>
-
+        <button type="reset">Отмена</button>
+    </form>
 
 </article>

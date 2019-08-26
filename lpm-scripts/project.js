@@ -95,7 +95,6 @@ function addMembers( arr ) {
     );
 };
 
-
 function setProjectSettings() {
     var projectId = $('input#projectId').val();
     let scrumHiddenValue = $('input#scrumHiddenValue').val();
@@ -111,25 +110,18 @@ function setProjectSettings() {
         } else {
             scrumValue = '0';
         }
-         slack = $('#slackСhannel').val();
-        if(!slack) {
-            slack = $('#slackСhannel').attr('placeholder');
-        }
+        slack = $('#slackСhannel').val();
         srv.project.setProjectSettings(
             scrumValue,
             slack,
             projectId,
             function( res ) {
                 if (res.success ) {
-                    console.log( res );
+                    location.reload();
                 } else {
                     srv.err( res);
                 }
             }
         );
     });
-    $('#resetButton').click(function() {
-        location.reload();
-    });
-
 };
