@@ -17,9 +17,11 @@
             $tester = lpm_get_project_tester();
             if(!is_null( $tester)):
         ?>
-    <div id="NameTester" >
+    <ul>
+    <li id="NameTester" >
         <?=$tester->getLinkedName();?>
-    </div>
+    </li>
+    </ul>
     <?endif;?>
 
     <form id="formOption">
