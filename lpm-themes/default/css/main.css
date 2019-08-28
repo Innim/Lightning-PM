@@ -1,4 +1,4 @@
-@CHARSET "UTF-8";
+﻿@CHARSET "UTF-8";
 body {
 	font-family: Arial;
 	font-size  : 11pt;
@@ -1620,5 +1620,30 @@ div.ftp
 
 .table-cell {
 	display: table-cell;
+}
+
+#btnSellect {
+	background: #e9eae2;
+	border-radius: 3px;
+	text-align-last: center ;
+	color: #000000;
+	font-size: 15px;
+	height: 16px;
+	width: 95px;
+	margin: 10px 0 0 3px;
+	overflow: hidden;
+	display: block;
+	padding: 15px;
+}
+#btnSellect:hover {
+	background: #c4c5bd;
+	cursor: pointer;
+	border-radius: 10px;
+	text-align: center;
+	height: 21px;
+	width: 100px;
+	margin: 10px 0 0 3px;
+	overflow: hidden;
+	display: block;
 }
 

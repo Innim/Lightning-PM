@@ -249,10 +249,10 @@ class IssueService extends LPMBaseService {
 		$state   = (int)$state;
 
 	    try {
-	    	// Проверяем состояние 
+	    	// Проверяем состояние
 	    	if (!ScrumStickerState::validateValue($state))
 	    		throw new Exception('Неизвестный стейт');
-	    	 
+
 	        $sticker = ScrumSticker::load($issueId);
 	        if ($sticker === null)
 	        	throw new Exception('Нет стикера для этой задачи');
@@ -263,22 +263,55 @@ class IssueService extends LPMBaseService {
 
 	        $issue = $sticker->getIssue();
 	        if ($state === ScrumStickerState::TESTING) {
+
+                $this->checkTester( $issue );
 	        	// Если состояние "Тестируется" - ставим задачу на проверку
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
+
 	        } else if ($state === ScrumStickerState::DONE) {
 	        	// Если "Готово" - закрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_COMPLETED);
-	        } else if ($issue->status == Issue::STATUS_WAIT && 
+	        } else if ($issue->status == Issue::STATUS_WAIT &&
 	        		($state === ScrumStickerState::TODO || $state === ScrumStickerState::IN_PROGRESS)) {
 				// Если она в режиме ожидания - переоткрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_IN_WORK);
 	        }
-	    } catch (\Exception $e) { 
-	        return $this->exception($e); 
-	    } 
-	
+	    } catch (\Exception $e) {
+	        return $this->exception($e);
+	    }
+
 	    return $this->answer();
 	}
+    /**
+     * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
+     */
+
+    public function checkTester(Issue $issue) {
+        $testers = $issue->getTesters();
+        $issueId = $issue->getID();
+        $type = (int)LPMInstanceTypes::ISSUE_FOR_TEST;
+
+
+        if (empty($testers)) {
+            $project = $issue->getProject();
+            $db = LPMGlobals::getInstance()->getDBConnect();
+            $projectId = $project->getID();
+
+            $sql = "SELECT userId FROM lpm_tester WHERE projectId='$projectId' ";
+            $result = $db->query($sql);
+            $idTester = $result->fetch_row();
+            $tester = (int)$idTester[0];
+
+            if (empty($tester)) {
+                return $this->answer();
+            }
+            $sql = "INSERT INTO `lpm_members`(`userId`, `instanceType`, `instanceId`) VALUES ('$tester','$type', '$issueId')";
+            $db->query($sql);
+
+            return $this->answer();
+        }
+
+    }
 
 	/**
 	 * Помещает стикер задачи на скрам доску
