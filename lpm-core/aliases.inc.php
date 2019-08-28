@@ -328,7 +328,4 @@ function lpm_is_auth() {
 function lpm_get_errors() {
 	return PageConstructor::getErrors();
 }
-function lpm_get_project_settings() {
-    return PageConstructor::getProgectSettings();
-}
 ?>

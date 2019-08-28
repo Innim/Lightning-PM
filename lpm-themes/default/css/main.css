@@ -1621,13 +1621,31 @@ div.ftp
 .table-cell {
 	display: table-cell;
 }
-#setProjectSettings {
-	margin: 20px;
-}
+
 #slackСhannel {
 	height: 24px;
 	width: 170px;
-	position:absolute;
-	margin-left: 38px;
+	margin: 0;
+	margin-left: 210px;
+
 }
+ul#ulProjectSettings {
+	padding: 10px;
+	list-style-type: none;
+}
+.con {
+	width: 100%;
+	height: 30px;
+	padding: 10px;
+}
+.con label {
+	margin-top: 5px;
+	float: left;
+}
+#checkboxScrumONE, #checkboxScrumTWO {
+	float: left;
+	margin-top: 4px;
+	margin-left: 5%;
+}
+
 

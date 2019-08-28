@@ -218,9 +218,5 @@ class PageConstructor
 	{
 		return SITE_URL . $this->_themeDir;
 	}
-
-	public function getProgectSettings() {
-	    return Project::getProgectSettings();
-    }
 }
 ?>

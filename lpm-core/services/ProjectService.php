@@ -45,27 +45,29 @@ class ProjectService extends LPMBaseService
 
 	    return $this->answer();
 	}
-	public function setProjectSettings( $scrumValue, $slack, $projectId ) {
-        $scrum = (int)$scrumValue;
-        $slack = (string)$slack;
+
+	public function setProjectSettings( $scrum, $slackNotifyChannel, $projectId ) {
+        $scrum = (bool)$scrum;
+        $slackNotifyChannel = (string)$slackNotifyChannel;
         $projectId = (int)$projectId;
 
         // проверяем права пользователя
-        if (!$this->checkRole( User::ROLE_MODERATOR )) return $this->error( 'Недостаточно прав' );
+        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
 
         // проверим, что существует такой проект
-        if (!Project::loadById( $projectId )) return $this->error( 'Нет такого проекта' );
+        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
 
+        $result = Project::updateSettingsProject($scrum, $slackNotifyChannel, $projectId);
 
-        $sql = "UPDATE `%s` SET slackNotifyChannel='$slack' WHERE id='$projectId' ";
-        $sqls = "UPDATE `%s` SET scrum='$scrum' WHERE id='$projectId' ";
-        $this->_db->queryt($sql, LPMTables::PROJECTS);
-        $this->_db->queryt($sqls, LPMTables::PROJECTS);
+        if( !$result ) return $this->error('Error update table');
 
-        $this->add2Answer('scrumValue', $scrum);
-        $this->add2Answer('slack', $slack);
+        $this->add2Answer('scrum', $scrum);
+        $this->add2Answer('slackNotifyChannel', $slackNotifyChannel);
         $this->add2Answer('projectId', $projectId);
+
         return $this->answer();
     }
+
+
 }
 ?>

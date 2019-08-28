@@ -29,9 +29,10 @@ $(document).ready(
 		  //$("#issueForm").hide();
 		  //$('#issueForm > div.validateError' ).html( '' );
 	  //}	  
-		  
+
 	  issuePage.updateStat();
       setProjectSettings();
+
   }
 );
 
@@ -96,27 +97,23 @@ function addMembers( arr ) {
 };
 
 function setProjectSettings() {
-    var projectId = $('input#projectId').val();
-    let scrumHiddenValue = $('input#scrumHiddenValue').val();
-    if (scrumHiddenValue !== '1') {
-        $('#checkboxScrum').attr('checked', false);
-    } else {
-        $('#checkboxScrum').attr('checked', true);
-    }
     $('button#setProjectSettings').click(function() {
-        let check = $('#checkboxScrum').prop('checked');
-        if(check) {
-            scrumValue = '1';
+        var scrum = 0;
+        let scrumCheck = $(".checkboxScrum").prop('checked');
+        if (scrumCheck) {
+            scrum = 1;
         } else {
-            scrumValue = '0';
+            scrum = 0;
         }
-        slack = $('#slackСhannel').val();
         srv.project.setProjectSettings(
-            scrumValue,
-            slack,
-            projectId,
+            scrum,
+            $('#slackСhannel').val(),
+            $('input#projectId').val(),
             function( res ) {
                 if (res.success ) {
+                    console.log(res);
+                    messages.alert('Сохранено');
+                    location.reload();
                 } else {
                     srv.err( res);
                 }

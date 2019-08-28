@@ -302,20 +302,26 @@ class Project extends MembersInstance
 	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
 	// }
 
-    public function getProgectSettings() {
-        $project =  self::$currentProject;
-        $projectId  = $project->getID();
+    public static function updateSettingsProject($scrum, $slackNotifyChannel, $projectId) {
+        $scrum = (bool)$scrum;
+        $slackNotifyChannel = (string)$slackNotifyChannel;
+        $projectId = (int)$projectId;
 
-        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
         $db = LPMGlobals::getInstance()->getDBConnect();
-        $scrum = $project->scrum;
-        $slackNotifyChannel = $project->slackNotifyChannel;
-        $result = [ "scrum" => $scrum,
-                    "slack" => $slackNotifyChannel
+
+        $hash = [
+            'UPDATE' => LPMTables::PROJECTS,
+            'SET' => [
+                'scrum' => $scrum,
+                'slackNotifyChannel' => $slackNotifyChannel
+            ],
+            'WHERE' => [
+                'id' => $projectId
+            ]
         ];
 
-        return $result;
-
+        return  $db->queryb($hash);
     }
+
 }
 ?>
