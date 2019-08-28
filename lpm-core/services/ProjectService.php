@@ -34,7 +34,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addTester( $projectId, $userId ){
+    public function addTester( $projectId, $userId ) {
         $projectId = (float)$projectId;
         $userId = (float)$userId;
 
@@ -79,6 +79,30 @@ class ProjectService extends LPMBaseService
         $this->add2Answer('count', $count);
 
         return $this->answer();
+    }
+
+    public function addDefaultIssuePerformer($projectId, $performerByDefaultId) {
+        $projectId = (int)$projectId;
+        $performerByDefaultId = (int)$performerByDefaultId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR )) return $this->error('Недостаточно прав');
+
+        // проверим, что существует такой проект
+        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
+
+        $result = Project::updateDefaultIssuePerformer($projectId, $performerByDefaultId);
+
+        if ( !$result ) {
+            return $this->error('Ошибка изменения данных');
+        }
+
+        $this->add2Answer("projectId", $projectId);
+        $this->add2Answer("performerByDefaultId", $performerByDefaultId);
+        $this->add2Answer('result', $result);
+
+        return $this->answer();
+
     }
 
 }

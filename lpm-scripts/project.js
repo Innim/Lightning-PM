@@ -98,40 +98,64 @@ function addMembers( arr ) {
     );
 };
 
-function addTester() {
-    $('#btnSelect').click(function (event) {
-        var userId = $('select').val();
 
-        //Если тестер не выбран, но кнопка нажата, сбрасываем
-        if (userId === "0") {
-            return event.preventDefault();
-        }
+$('#btnSelect').click(function (event) {
+    var userId = $('#selectTester').val();
 
-        srv.project.addTester(
-            $( "#projectMembers input[name=projectId]" ).val(),
-            userId,
-            function(res) {
-                if( res.success ) {
-                    disabled();
-                    location.reload();
-                } else {
-                    srv.err( res );
-                    disabled();
-                }
+    //Если тестер не выбран, но кнопка нажата, сбрасываем
+    if (userId === "0") {
+        return event.preventDefault();
+    }
+
+    srv.project.addTester(
+        $( "#projectMembers input[name=projectId]" ).val(),
+        userId,
+        function(res) {
+            if( res.success ) {
+                disabled();
+                location.reload();
+            } else {
+                srv.err( res );
+                disabled();
             }
-        );
-    });
-}
+        }
+    );
+});
 
 function disabled() {
     $("#btnSelect").remove();
-    $("select").remove();
+    $("#selectTester").remove();
 }
 
-(function() {
-    var userId = $('select').val();
+(function checkStart() {
+    var userId = $('#selectTester').val();
     var valueDivTEster = $("#NameTester").text();
     if ( valueDivTEster !== "" ) {
         disabled();
     }
+    let vars = $('#liNamePerformer').val()
+    if(vars) {
+        $('#divPerformer').hide();
+    }
 })();
+
+$('#btnSelectPerformer').click(function (event) {
+    var performerByDefaultId = $('#selectPerformer').val();
+
+    //Если Исполнитель не выбран, но кнопка нажата, сбрасываем
+    if (performerByDefaultId === "0") {
+        return event.preventDefault();
+    }
+    srv.project.addDefaultIssuePerformer(
+        $( "#projectMembers input[name=projectId]" ).val(),
+        performerByDefaultId,
+        function(res) {
+            if( res.success ) {
+                console.log( res );
+            } else {
+                srv.err( res );
+                console.log( res );
+            }
+        }
+    );
+});

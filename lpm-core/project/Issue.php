@@ -909,6 +909,7 @@ SQL;
 		return true;
 	}
 
+
 	protected function loadTesters() {
 	    $this->_testers = Member::loadListByIssueForTest($this->id);
 	    if ($this->_testers === false)

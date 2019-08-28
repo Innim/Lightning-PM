@@ -1646,4 +1646,8 @@ div.ftp
 	overflow: hidden;
 	display: block;
 }
+.headersProjectsMembers {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
 

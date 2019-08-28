@@ -10,12 +10,12 @@
         </li>
         <?}?>
     </ul>
-    <h3 style="margin-top: 5px; margin-bottom: 5px;" > Тестировшик проекта  </h3>
+    <h3 class="headersProjectsMembers" > Тестировшик проекта  </h3>
 
 <!-- Выбор Тестировшика проекта  -->
     <?
             $tester = lpm_get_project_tester();
-            if(!is_null( $tester)):
+            if(!is_null( $tester )):
         ?>
     <ul>
     <li id="NameTester" >
@@ -25,7 +25,7 @@
     <?endif;?>
 
     <form id="formOption">
-        <select id="select">
+        <select id="selectTester">
             <option value="0">Тестер не выбран</option>
 
         <?foreach (lpm_get_project_members() as $member) {?>
@@ -35,16 +35,35 @@
         <button id="btnSelect" type="button">Подтвердить</button>
     </form>
 
+    <!-- Добавить исполнителя по умолчанию -->
+    <h3 class="headersProjectsMembers"> Исполнитель проекта по умолчанию  </h3>
+    <?php
+    $defaultIssueMemberId = (int)lpm_get_project()->defaultIssueMemberId;
+    ?>
+
+    <?foreach (lpm_get_project_members() as $member) {?>
+    <? if($member->getID() === $defaultIssueMemberId) { ?>
+    <ul>
+    <li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?></li>
+        </ul>
+    <? } ?>
+    <?}?>
+    <form id="divPerformer">
+    <select id="selectPerformer">
+        <option value="0">Исполнитель не выбран</option>
+
+        <?foreach (lpm_get_project_members() as $member) {?>
+        <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
+        <?}?>
+    </select>
+    <button id="btnSelectPerformer" type="submit">Подтвердить</button>
+    </form>
+    <!-- End perfomens by default -->
     <p class="buttons-bar">
         <button onclick="openMembersChooser();">Добавить</button>
     </p>
     <?lpm_print_users_chooser();?>
     <script src="../../lpm-scripts/project.js">
-    </script>
-    <script>
-        $(document).ready(function(){
-            addTester();
-        });
     </script>
 
 </article>

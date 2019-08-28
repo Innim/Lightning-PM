@@ -135,6 +135,7 @@ class Project extends MembersInstance
 	public $uid;
 	public $name;
 	public $desc;
+	public $defaultIssueMemberId;
 
 	/**
 	 * Проект ведется с помощью методологии Scrum
@@ -317,6 +318,21 @@ class Project extends MembersInstance
         }
 
         return self::$currentProject->getMember((int)$row[0]);
+    }
+
+    public static function updateDefaultIssuePerformer ($projectId, $performerByDefaultId) {
+        $projectId = (int)$projectId;
+        $performerByDefaultId = (int)$performerByDefaultId;
+        $db = LPMGlobals::getInstance()->getDBConnect();
+
+        if ($projectId != null && $performerByDefaultId != null) {
+            $sql = "update `%s` set `defaultIssueMemberId`='". $performerByDefaultId ."'  where  `id` = '". $projectId ."'";
+            $result = $db->queryt($sql, LPMTables::PROJECTS);
+
+            if( $result ) return true;
+        }
+
+        return false;
     }
 }
 ?>
