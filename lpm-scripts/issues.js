@@ -15,8 +15,16 @@ $(document).ready(
             var a = e.currentTarget;
             issuePage.insertTag(a.innerText);
         });
+
+        var selectedPerformer = $('#selected-performer').val();
+        if (selectedPerformer) {
+            issuePage.addIssueMember();
+        }
+
     }
 );
+
+
 
 function DropDown(el) {
     this.dd = el;
@@ -260,6 +268,7 @@ issuePage.addIssueMember = function(sp) {
     var scrum = $('#issueForm').data('projectScrum') == 1;
     var option = selectElement.options[index];
     var $memberLi = $('<li>');
+
 
     $memberLi.
         append($('<span class="user-name">').html(option.innerHTML)).
