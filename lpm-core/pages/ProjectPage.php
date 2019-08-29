@@ -36,7 +36,7 @@ class ProjectPage extends BasePage
 		$this->addSubPage(self::PUID_COMMENTS , 'Комментарии', 'project-comments');
 		$this->addSubPage(self::PUID_MEMBERS, 'Участники', 'project-members', 
 				array('users-chooser'), '', User::ROLE_MODERATOR);
-		$this->addSubPage(self::PUID_SETTINGS, 'Настройки проекта',  'project-settings');
+		$this->addSubPage(self::PUID_SETTINGS, 'Настройки проекта',  'project-settings', '', '',User::ROLE_ADMIN);
 	}
 	
 	public function init() {

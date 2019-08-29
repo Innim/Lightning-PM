@@ -157,7 +157,7 @@ var srv = {
         getSumOpenedIssuesHours : function ( projectId, onResult ) {
             this.s._( 'getSumOpenedIssuesHours' );
         },
-        setProjectSettings : function( scrum, slackNotifyChannel, projectId, onResult ) {
+        setProjectSettings : function(projectId, scrum, slackNotifyChannel, onResult) {
             this.s._('setProjectSettings');
         }
     },

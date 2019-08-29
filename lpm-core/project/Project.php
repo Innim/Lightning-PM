@@ -20,6 +20,28 @@ class Project extends MembersInstance
 	public static function loadList( $where ) {
 		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
 	}
+
+    /**
+     * Обновляет настройки проекта
+     *
+     */
+    public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel) {
+
+        $db = LPMGlobals::getInstance()->getDBConnect();
+
+        $hash = [
+            'UPDATE' => LPMTables::PROJECTS,
+            'SET' => [
+                'scrum' => $scrum,
+                'slackNotifyChannel' => $slackNotifyChannel
+            ],
+            'WHERE' => [
+                'id' => $projectId
+            ]
+        ];
+
+        return  $db->queryb($hash);
+    }
 		
 	public static function getAvailList( $isArchive ) {
 		if (self::$_availList == null ) {
@@ -301,27 +323,6 @@ class Project extends MembersInstance
 	// 			"WHERE `id` = '" . $projectId . "'";
 	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
 	// }
-
-    public static function updateSettingsProject($scrum, $slackNotifyChannel, $projectId) {
-        $scrum = (bool)$scrum;
-        $slackNotifyChannel = (string)$slackNotifyChannel;
-        $projectId = (int)$projectId;
-
-        $db = LPMGlobals::getInstance()->getDBConnect();
-
-        $hash = [
-            'UPDATE' => LPMTables::PROJECTS,
-            'SET' => [
-                'scrum' => $scrum,
-                'slackNotifyChannel' => $slackNotifyChannel
-            ],
-            'WHERE' => [
-                'id' => $projectId
-            ]
-        ];
-
-        return  $db->queryb($hash);
-    }
 
 }
 ?>

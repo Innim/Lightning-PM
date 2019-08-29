@@ -98,17 +98,14 @@ function addMembers( arr ) {
 
 function setProjectSettings() {
     $('button#setProjectSettings').click(function() {
-        var scrum = 0;
-        let scrumCheck = $(".checkboxScrum").prop('checked');
-        if (scrumCheck) {
-            scrum = 1;
-        } else {
-            scrum = 0;
-        }
+        let scrumCheck = $("#scrumCheckbox").prop('checked');
+        var scrum = scrumCheck ? 1 : 0;
+        scrum = parseInt(scrum);
+        alert(scrum);
         srv.project.setProjectSettings(
+            $('input#projectId').val(),
             scrum,
             $('#slackСhannel').val(),
-            $('input#projectId').val(),
             function( res ) {
                 if (res.success ) {
                     console.log(res);

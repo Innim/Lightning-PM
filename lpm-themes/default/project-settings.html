@@ -1,7 +1,7 @@
 <h1><?lpm_print_header();?></h1>
 <article id="projectSettings" class="container">
     <form methos="post" action="">
-        <?
+        <?php
        	$scrum = (int)lpm_get_project()->scrum;
         $slackNotifyChannel = lpm_get_project()->slackNotifyChannel;
      ?>
@@ -10,20 +10,13 @@
 
         <h3> Настройки проекта </h3>
         <ul id="ulProjectSettings">
-            <li><div class="con">
-                <div><label id="slackСhannelLabel" for="slackСhannel" >Канал оповещения в Slack</label></div>
-                <input id="slackСhannel" type="text" value="<? echo $slackNotifyChannel ?>"></div>
+            <li class="con">
+                <label id="slackСhannelLabel" for="slackСhannel" >Канал оповещения в Slack</label>
+                <input id="slackСhannel" type="text" value="<? echo $slackNotifyChannel ?>">
             </li>
-            <li><div class="con">
-                <?php if ($scrum === 1) { ?>
-                <label> Проект использует Scrum</label>
-                <div id="checkboxScrumONE"> <input class="checkboxScrum" type="checkbox" checked></div>
-                <?php } else { ?>
-                <label> Проект использует Scrum</label>
-                <div id="checkboxScrumTWO"><input class="checkboxScrum" type="checkbox"></div>
-                 <?php } ?>
-
-            </div>
+            <li id="project-scrum-item">
+                <label for="scrumCheckbox"> Проект использует Scrum</label>
+                <input id="scrumCheckbox" type="checkbox" <?=$scrum===1 ? "checked" : ""?>>
             </li>
         </ul>
 
