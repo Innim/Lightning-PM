@@ -157,8 +157,8 @@ var srv = {
         addTester : function ( projectId, userId, onResult ) {
             this.s._('addTester');
         },
-        addDefaultIssuePerformer : function( projectId, performerByDefaultId, onResult ) {
-            this.s._('addDefaultIssuePerformer');
+        addIssuePerformerDefault : function( projectId, performerByDefaultId, onResult ) {
+            this.s._('addIssuePerformerDefault');
         },
         getSumOpenedIssuesHours : function ( projectId, onResult ) {
             this.s._( 'getSumOpenedIssuesHours' );

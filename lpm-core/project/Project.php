@@ -20,6 +20,21 @@ class Project extends MembersInstance
 	public static function loadList( $where ) {
 		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
 	}
+
+    public static function updateIssuePerformerDefault ($projectId, $performerByDefaultId) {
+        $projectId = (int)$projectId;
+        $performerByDefaultId = (int)$performerByDefaultId;
+        $db = LPMGlobals::getInstance()->getDBConnect();
+
+        if ($projectId != null && $performerByDefaultId != null) {
+            $sql = "update `%s` set `defaultIssueMemberId`='". $performerByDefaultId ."'  where  `id` = '". $projectId ."'";
+            $result = $db->queryt($sql, LPMTables::PROJECTS);
+
+            if( $result ) return true;
+        }
+
+        return false;
+    }
 		
 	public static function getAvailList( $isArchive ) {
 		if (self::$_availList == null ) {
@@ -320,19 +335,5 @@ class Project extends MembersInstance
         return self::$currentProject->getMember((int)$row[0]);
     }
 
-    public static function updateDefaultIssuePerformer ($projectId, $performerByDefaultId) {
-        $projectId = (int)$projectId;
-        $performerByDefaultId = (int)$performerByDefaultId;
-        $db = LPMGlobals::getInstance()->getDBConnect();
-
-        if ($projectId != null && $performerByDefaultId != null) {
-            $sql = "update `%s` set `defaultIssueMemberId`='". $performerByDefaultId ."'  where  `id` = '". $projectId ."'";
-            $result = $db->queryt($sql, LPMTables::PROJECTS);
-
-            if( $result ) return true;
-        }
-
-        return false;
-    }
 }
 ?>

@@ -81,7 +81,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addDefaultIssuePerformer($projectId, $performerByDefaultId) {
+    public function addIssuePerformerDefault($projectId, $performerByDefaultId) {
         $projectId = (int)$projectId;
         $performerByDefaultId = (int)$performerByDefaultId;
 
@@ -91,7 +91,7 @@ class ProjectService extends LPMBaseService
         // проверим, что существует такой проект
         if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
 
-        $result = Project::updateDefaultIssuePerformer($projectId, $performerByDefaultId);
+        $result = Project::updateIssuePerformerDefault($projectId, $performerByDefaultId);
 
         if ( !$result ) {
             return $this->error('Ошибка изменения данных');

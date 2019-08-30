@@ -146,7 +146,7 @@ $('#btnSelectPerformer').click(function (event) {
     if (performerByDefaultId === "0") {
         return event.preventDefault();
     }
-    srv.project.addDefaultIssuePerformer(
+    srv.project.addIssuePerformerDefault(
         $( "#projectMembers input[name=projectId]" ).val(),
         performerByDefaultId,
         function(res) {
