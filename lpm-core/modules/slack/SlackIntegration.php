@@ -90,6 +90,28 @@ class SlackIntegration {
 		$this->postMessageForIssue($issue, $text);
 	}
 
+    public function notifyIssueTesterToMember(Issue $issue) {
+        $project = $issue->getProject();
+        $master = $project->getMaster();
+
+        // TODO: постить в канал
+        $text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *Новый комментарий от Тестеровшика*';
+        $text = $this->addMentionsByUsers($text, $master !== null ? [$master] : null);
+
+        $this->postMessageForIssue($issue, $text);
+    }
+
+    public function notifyIssueMemberToTester(Issue $issue) {
+        $project = $issue->getProject();
+        $master = $project->getMaster();
+
+        // TODO: постить в канал
+        $text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *Новый комментарий от Исполнителя*';
+        $text = $this->addMentionsByUsers($text, $master !== null ? [$master] : null);
+
+        $this->postMessageForIssue($issue, $text);
+    }
+
 	private function getClient() {
 		if ($this->_client == null) {
 			$loop = \React\EventLoop\Factory::create();
