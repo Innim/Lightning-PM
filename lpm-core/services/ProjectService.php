@@ -51,20 +51,20 @@ class ProjectService extends LPMBaseService
         $slackNotifyChannel = (string)$slackNotifyChannel;
 
         if ($scrum !== 0 and $scrum !== 1 ) {
-            return $this->error('Invalid input parameters');
+            return $this->error('Неверные входные параметры');
         }
 
         $scrum = (bool)$scrum;
 
         // проверяем права пользователя
-        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Not enough rights');
+        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
 
         // проверим, что существует такой проект
-        if (!Project::loadById($projectId)) return $this->error('No such project');
+        if (!Project::loadById($projectId)) return $this->error('Проект не найден');
 
         $result = Project::updateProjectSettings($projectId, $scrum, $slackNotifyChannel);
 
-        if (!$result) return $this->error('Error update table');
+        if (!$result) return $this->error('Ошибка обновления таблицы');
 
         $this->add2Answer('projectId', $projectId);
         $this->add2Answer('scrum', $scrum);

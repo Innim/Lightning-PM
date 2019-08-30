@@ -27,7 +27,7 @@ class Project extends MembersInstance
      */
     public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel) {
 
-        $db = LPMGlobals::getInstance()->getDBConnect();
+        $db = self::getDB();
 
         $hash = [
             'UPDATE' => LPMTables::PROJECTS,
