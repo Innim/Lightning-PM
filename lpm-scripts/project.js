@@ -31,7 +31,6 @@ $(document).ready(
 	  //}	  
 
 	  issuePage.updateStat();
-      setProjectSettings();
 
   }
 );
@@ -96,25 +95,22 @@ function addMembers( arr ) {
     );
 };
 
-function setProjectSettings() {
-    $('button#setProjectSettings').click(function() {
-        let scrumCheck = $("#scrumCheckbox").prop('checked');
-        var scrum = scrumCheck ? 1 : 0;
-        scrum = parseInt(scrum);
-        alert(scrum);
-        srv.project.setProjectSettings(
-            $('input#projectId').val(),
-            scrum,
-            $('#slackСhannel').val(),
-            function( res ) {
-                if (res.success ) {
-                    console.log(res);
-                    messages.alert('Сохранено');
-                    location.reload();
-                } else {
-                    srv.err( res);
-                }
+$('button#setProjectSettings').click(function() {
+    let scrumCheck = $("#scrumCheckbox").prop('checked');
+    var scrum = scrumCheck ? 1 : 0;
+    scrum = parseInt(scrum);
+    srv.project.setProjectSettings(
+        $('input#projectId').val(),
+        scrum,
+        $('#slackСhannel').val(),
+        function( res ) {
+            if (res.success ) {
+                console.log(res);
+                messages.alert('Сохранено');
+                location.reload();
+            } else {
+                srv.err( res);
             }
-        );
-    });
-};
+        }
+    );
+});
