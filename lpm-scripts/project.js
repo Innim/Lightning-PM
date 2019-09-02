@@ -139,22 +139,21 @@ function disabled() {
     }
 })();
 
-$('#btnSelectPerformer').click(function (event) {
-    var performerByDefaultId = $('#selectPerformer').val();
+$('#btnSelectMember').click(function (event) {
+    var memberByDefaultId = $('#selectMember').val();
 
     //Если Исполнитель не выбран, но кнопка нажата, сбрасываем
-    if (performerByDefaultId === "0") {
+    if (memberByDefaultId === "0") {
         return event.preventDefault();
     }
-    srv.project.addIssuePerformerDefault(
+    srv.project.addIssueMemberDefault(
         $( "#projectMembers input[name=projectId]" ).val(),
-        performerByDefaultId,
+        memberByDefaultId,
         function(res) {
-            if( res.success ) {
-                console.log( res );
+            if(res.success) {
+                location.reload();
             } else {
-                srv.err( res );
-                console.log( res );
+                srv.err(res);
             }
         }
     );

@@ -83,21 +83,17 @@
         <li>
             <fieldset>
                 <legend>Исполнители*</legend>
-                <?php $performerId = (int)lpm_get_project()->defaultIssueMemberId; ?>
+                <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
                 <ol id="issueMembers" class="members-list"></ol>
                 <select id="addIssueMembers" onchange="issuePage.addIssueMember();">
                     <option>Добавить</option>
                     <?php foreach(lpm_get_project_members() as $member):?>
                     <?php if ($member->userId === $performerId) { $performerName =  $member->getName(); ?>
                         <option id="selected-performer" value="<?=$member->userId;?>" selected><?=$member->getName();?></option>
-                    <?php continue;} ?>
+                    <?php continue; } ?>
                     <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
                     <?php endforeach;?>
                 </select>
-                <?php if ($performerId && $performerName): ?>
-                <?="<input id='performer-Id' type='hidden' value='$performerId'>"?>
-                <?="<input id='performer-Name' type='hidden' value='$performerName'>"?>
-                <?php endif ?>
             </fieldset>
         </li>
           <li>

@@ -81,25 +81,30 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addIssuePerformerDefault($projectId, $performerByDefaultId) {
+    public function addIssueMemberDefault($projectId, $memberByDefaultId) {
         $projectId = (int)$projectId;
-        $performerByDefaultId = (int)$performerByDefaultId;
-
-        // проверяем права пользователя
-        if (!$this->checkRole(User::ROLE_MODERATOR )) return $this->error('Недостаточно прав');
+        $memberByDefaultId = (int)$memberByDefaultId;
 
         // проверим, что существует такой проект
         if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
 
-        $result = Project::updateIssuePerformerDefault($projectId, $performerByDefaultId);
+        $memberProject = Project::loadById($projectId)->getMember($memberByDefaultId);
+
+        if(!$memberProject) {
+            return $this->error('Исполнитель не найден в участниках проекта');
+        }
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR )) return $this->error('Недостаточно прав');
+
+        $result = Project::updateIssueMemberDefault($projectId, $memberByDefaultId);
 
         if ( !$result ) {
             return $this->error('Ошибка изменения данных');
         }
 
         $this->add2Answer("projectId", $projectId);
-        $this->add2Answer("performerByDefaultId", $performerByDefaultId);
-        $this->add2Answer('result', $result);
+        $this->add2Answer("performerByDefaultId", $memberByDefaultId);
 
         return $this->answer();
 

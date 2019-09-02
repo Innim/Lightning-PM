@@ -21,16 +21,14 @@ class Project extends MembersInstance
 		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
 	}
 
-    public static function updateIssuePerformerDefault ($projectId, $performerByDefaultId) {
-        $projectId = (int)$projectId;
-        $performerByDefaultId = (int)$performerByDefaultId;
-        $db = LPMGlobals::getInstance()->getDBConnect();
+    public static function updateIssueMemberDefault($projectId, $memberByDefaultId) {
+        $db = self::getDB();
 
-        if ($projectId != null && $performerByDefaultId != null) {
-            $sql = "update `%s` set `defaultIssueMemberId`='". $performerByDefaultId ."'  where  `id` = '". $projectId ."'";
+        if ($projectId != null && $memberByDefaultId != null) {
+            $sql = "update `%s` set `defaultIssueMemberId`='". $memberByDefaultId ."'  where  `id` = '". $projectId ."'";
             $result = $db->queryt($sql, LPMTables::PROJECTS);
 
-            if( $result ) return true;
+            if($result) return true;
         }
 
         return false;
@@ -185,6 +183,7 @@ class Project extends MembersInstance
 		parent::__construct();
 		$this->_typeConverter->addIntVars('id');
 		$this->_typeConverter->addBoolVars('scrum');
+		$this->_typeConverter->addIntVars('defaultIssueMemberId');
 	}
 	
 	public function getID() {

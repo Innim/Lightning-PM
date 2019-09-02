@@ -38,25 +38,23 @@
     <!-- Добавить исполнителя по умолчанию -->
     <h3 class="headersProjectsMembers"> Исполнитель проекта по умолчанию  </h3>
     <?php
-    $defaultIssueMemberId = (int)lpm_get_project()->defaultIssueMemberId;
-    ?>
-
-    <?foreach (lpm_get_project_members() as $member) {?>
-    <? if($member->getID() === $defaultIssueMemberId) { ?>
+    $memberByDefaultId = lpm_get_project()->defaultIssueMemberId;
+    foreach (lpm_get_project_members() as $member):
+        if($member->getID() === $memberByDefaultId): ?>
     <ul>
     <li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?></li>
         </ul>
-    <? } ?>
-    <?}?>
-    <form id="divPerformer">
-    <select id="selectPerformer">
+    <?php endif;
+    endforeach; ?>
+    <form id="divPerformer" onsubmit="return false;">
+    <select id="selectMember">
         <option value="0">Исполнитель не выбран</option>
 
-        <?foreach (lpm_get_project_members() as $member) {?>
+        <?php foreach (lpm_get_project_members() as $member): ?>
         <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
-        <?}?>
+        <?php endforeach; ?>
     </select>
-    <button id="btnSelectPerformer" type="submit">Подтвердить</button>
+    <button id="btnSelectMember" type="submit">Подтвердить</button>
     </form>
     <!-- End perfomens by default -->
     <p class="buttons-bar">

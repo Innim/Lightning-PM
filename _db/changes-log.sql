@@ -173,4 +173,4 @@ CREATE TABLE `lpm_tester` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- 2019-08-28 17:55:00
-ALTER TABLE `lpm_projects` ADD `defaultIssueMemberId` INT NOT NULL;
+ALTER TABLE `lpm_projects` ADD `defaultIssueMemberId` INT NOT NULL COMMENT 'Исполнитель умолчанию';
