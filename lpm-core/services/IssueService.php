@@ -546,6 +546,7 @@ SQL;
         $members = $issue->getMemberIds();
         $members[] = $issue->authorId;
         // Здесь сделать проверку. если задача прошла тестирование создать метод, который будет отсылать сообшения.
+        $this->notificationCommentTesterOrMembers( $issue, $text);
 
 		EmailNotifier::getInstance()->sendMail2Allowed(
 			'Новый комментарий к задаче "' . $issue->name . '"',
@@ -563,8 +564,7 @@ SQL;
 		return $comment;
 	}
 
-	public function notificationTesterOrMembers($issue, $text) {
-        $issue = Issue::load($issue);
+	public function notificationCommentTesterOrMembers(Issue $issue, $comment) {
         $testerIssue = $issue->getTesterIds();
         $membersIssue = $issue->getMemberIds();
         $userSendMessage = $this->getUser()->getID();
@@ -572,9 +572,9 @@ SQL;
 
         if ($issue->status == Issue::STATUS_WAIT) {
            if(in_array($userSendMessage, $testerIssue)) {
-               return $slack->notifyIssueTesterToMember($issue);
+               return $slack->notifyCommentTesterToMember($issue, $comment);
            } elseif (in_array($userSendMessage, $membersIssue)) {
-               return $slack->notifyIssueMemberToTester($issue);
+               return $slack->notifyCommentMemberToTester($issue, $comment);
            }
         }
 
