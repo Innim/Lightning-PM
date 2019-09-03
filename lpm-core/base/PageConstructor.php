@@ -4,6 +4,10 @@ class PageConstructor
 	public static function getSiteURL() {
 		return SITE_URL;
 	}
+
+	public static function getSprintCurrent() {
+	    return Issue::getSprintCurrent();
+    }
 	
 	public static function getUsingScripts() {
 		return self::$_usingScripts;
