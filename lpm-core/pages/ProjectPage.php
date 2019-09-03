@@ -22,7 +22,7 @@ class ProjectPage extends BasePage
 	{
 		parent::__construct( self::UID, '', true, true );
 		
-		array_push( $this->_js,'libs/jquery.zclip', 'project', 'issues');
+		array_push( $this->_js,'libs/clipboard.min', 'project', 'issues');
 		$this->_pattern = 'project';
 		
 		$this->_baseParamsCount = 2;

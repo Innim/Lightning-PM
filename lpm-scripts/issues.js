@@ -1654,22 +1654,7 @@ $('.issues-list > tbody > tr > td:first-of-type').mouseleave(
     }
 );
 
-$('.issues-list > tbody > tr > td:first-of-type a').mouseleave( 
-    function()
-    {
-        $('a.issue-commit-copy-link').zclip(
-        {
-            path : window.lpmOptions.url+'lpm-scripts/libs/ZeroClipboard.swf',
-            copy : function()
-            { 
-                var a = $(this).parent().prev('a').text();
-                var b = $(this).parent().parent().next('td').next('td').children('a').children('.issue-name').text();
-                return Issue.getCommitMessage(a, b);
-            }
-        });
-    }
-);
-});  
+});
 
 function pasteClipboardImage( event ){
     var clipboard = event.clipboardData;
