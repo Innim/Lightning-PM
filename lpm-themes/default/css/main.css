@@ -1622,3 +1622,20 @@ div.ftp
 	display: table-cell;
 }
 
+.tooltip div {
+	display: none;
+	position: absolute;
+	margin: 20px;
+	bottom: -1px;
+	left: -1px;
+	z-index: 1000;
+	padding: 8px 12px;
+	text-align: left;
+	font-size: 12px;
+	line-height: 16px;
+	color: #000;
+	box-shadow: 0 1px 3px #C4C4C4;
+	background: #f6fff7;
+	border-radius: 2px;
+}
+

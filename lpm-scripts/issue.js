@@ -41,15 +41,11 @@ function showMain() {
 $(document).ready(
     function ()
     {
-        var clipboard = new ClipboardJS('.commit-message');
+            var text = $('span.issue-id').text();
+            var text2 = $('span.commit-message').text();
+            $('#copyText').attr('data-clipboard-text', 'Issue #' + text + ': ' +  text2);
 
-        clipboard.on('success', function(e) {
-            if (window.getSelection) {
-                window.getSelection().removeAllRanges();
-            } else { // старый IE
-                document.selection.empty();
-            }
-        });
+        var clipboard = new ClipboardJS('#copyText');
     }
 );
 

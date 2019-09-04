@@ -3,7 +3,8 @@
 Требуются: 
 	$list - список задач
 */
-?><table id="issuesList" class="issues-list">
+?>
+<table id="issuesList" class="issues-list">
 	<thead>
 		<tr>
 			<th>#</th>
@@ -26,10 +27,10 @@
     		 <?php if ($issue->isOnBoard()):?>
     		 <span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
 			 <?php endif; ?>
-			 <a href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
-             <div class="issue_copy popup-menu">
-             	   	<a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
-             </div>
+				<div class="tooltip" title="<a class='copy-commit-message' href='javascript: void(0);' data-clipboard-text='Issue #<?= $issue->getIdInProject() . ': ' . $issue->getName();?>'>Копировать коммит сообщение
+					</a>">
+						<a class="id-issue" href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
+					</div>
 			</td>
 			<td>
 			 <nobr>
