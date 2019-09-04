@@ -492,16 +492,20 @@ SQL;
      * Получаем номер текущего спринта
      * @return mixed
      */
-    public static function getSprintCurrent() {
+    public static function getSprintCurrentNumber() {
         $sql = "SELECT MAX(idInProject) FROM `%s`";
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $result = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST);
-        if($result) {
-            $maxNumber = $result->fetch_row();
-            $maxNumber[0]++;
 
-            return $maxNumber[0];
+        try {
+            $db = self::getDB();
+            $query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST);
+            if (!$query) {
+                throw new Exception('Ошибка запроса в базу данных');
+            }
 
+            return ((int)$query->fetch_row()[0]) + 1;
+
+        } catch (Exception $e) {
+            return  $e->getMessage();
         }
     }
 

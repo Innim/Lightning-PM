@@ -5,8 +5,8 @@ class PageConstructor
 		return SITE_URL;
 	}
 
-	public static function getSprintCurrent() {
-	    return Issue::getSprintCurrent();
+	public static function getSprintCurrentNumber() {
+	    return Issue::getSprintCurrentNumber();
     }
 	
 	public static function getUsingScripts() {
