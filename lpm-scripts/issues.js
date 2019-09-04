@@ -1288,6 +1288,7 @@ issuePage.resetFilter = function ()//e)
 };
 
 issuePage.scumColUpdateInfo = function () {
+    $('.put-to-board-line').load(document.URL + ' .put-to-board-line');
     var cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     var totalSP = 0;
     var totalNum = 0;
