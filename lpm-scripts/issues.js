@@ -787,10 +787,11 @@ issuePage.putStickerOnBoard = function (issueId) {
         preloader.hide();
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
+            $('#putToBoardField').attr('checked', true);
             issuePage.scumColUpdateInfo();
         }
     });
-}
+};
 
 issuePage.takeIssue = function (e) {
     var $control = $(e.currentTarget);
@@ -804,7 +805,7 @@ issuePage.takeIssue = function (e) {
             issuePage.scumColUpdateInfo();
         }
     });
-}
+};
 
 function showIssue (issueId) {
     srv.issue.load( 
@@ -1288,7 +1289,6 @@ issuePage.resetFilter = function ()//e)
 };
 
 issuePage.scumColUpdateInfo = function () {
-    $('.put-to-board-line').load(document.URL + ' .put-to-board-line');
     var cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     var totalSP = 0;
     var totalNum = 0;
