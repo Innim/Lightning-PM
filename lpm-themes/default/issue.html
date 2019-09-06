@@ -17,9 +17,9 @@
         <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
         <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
         <?php endif;?>
-    </h3>     
+    </h3>
     <div class="issue_copy">
-        <a id="copyText" class="commit-message" href="#"  >скопировать commit сообщение</a>
+        <a id="copyText" class="copy-commit-message" href="javascript:void(0);"  data-clipboard-text='Issue #<?=$issue->getIdInProject() . ": " . $issue->getName();?>' >скопировать commit сообщение</a>
     </div>
     <ol class="info-list <?switch($issue->status): 
     case 0: ?>active-issue <?break;?> 

@@ -151,6 +151,7 @@ class PageConstructor
 		'libs/iLoad',
 		'libs/highlight.pack',
 		'js-options.php$' ,
+        'libs/clipboard.min',
 		'lightning'
 	);
 	

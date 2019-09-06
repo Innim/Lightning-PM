@@ -15,6 +15,18 @@ $(document).ready(
             var a = e.currentTarget;
             issuePage.insertTag(a.innerText);
         });
+
+
+        $('div.tooltip').hover(
+            function() {
+                $(this).find('div').clearQueue().show();
+            },
+            function() {
+                $(this).find('div')
+                    .animate({width: 'width' + 20, height: 'height' + 20}, 150)
+                    .animate({width: 'hide', height: 'hide'}, 1);
+            }
+        )
     }
 );
 
@@ -1695,33 +1707,3 @@ function removeClipboardImage(){
     var elem = event.target.parentNode;
     elem.parentNode.removeChild(elem);
 };
-
-
-$(document).ready(function() {
-    $('div.tooltip').each(function() {
-        var el = $(this);
-        var title = el.attr('title');
-        if (title && title != '') {
-            el.attr('title', '').append('<div class="commit-message-list">' + title + '</div>');
-            var clipboard = new ClipboardJS('.copy-commit-message');
-            var width = el.find('div').width();
-            var height = el.find('div').height();
-            el.hover(
-                function() {
-                    el.find('div')
-                        .clearQueue()
-                        .delay(250)
-                        .animate({width: width + 20, height: height + 20}, 200).show(200)
-                        .animate({width: width, height: height}, 200);
-                },
-                function() {
-                    el.find('div')
-                        .animate({width: width + 20, height: height + 20}, 150)
-                        .animate({width: 'hide', height: 'hide'}, 150);
-                }
-            ).mouseleave(function() {
-                if (el.children().is(':hidden')) el.find('div').clearQueue();
-            });
-        }
-    })
-});
