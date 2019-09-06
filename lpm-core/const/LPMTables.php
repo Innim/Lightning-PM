@@ -1,11 +1,6 @@
 <?php
 class LPMTables {
 	/**
-	* Тблица с тестером 
-	* @var string
-	*/
-	const TESTER = 'tester';
-	/**
 	* Таблица настроек
 	* @var string
 	*/

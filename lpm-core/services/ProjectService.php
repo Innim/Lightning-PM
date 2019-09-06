@@ -44,25 +44,16 @@ class ProjectService extends LPMBaseService
         // проверим, что существует такой проект
         if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
 
-        $query = "SELECT userId FROM lpm_tester WHERE projectId='$projectId' ";
-
-        $STH = $this->_db->query($query);
-        $row = $STH->fetch_row();
-
-        if ($row !== null) {
-            return $this->error("Tester exists");
-        }
-
         if(empty($userId)) {
-            return $this->error("TesterID Empty");
+            return $this->error("Неверные входные параметры");
+        }
+            //Должен проверить, есть ли тестировшик у проекта .
+        if (Member::loadProjectForTester($projectId)) {
+            return $this->error("Тестеровшик уже добавлен");
         }
 
-        $tester_val = $this->_db->preparet("INSERT INTO `%s` (`userId`, `projectId`) VALUES ( '{$userId}', '{$projectId}')", LPMTables::TESTER);
-        $result = $tester_val->execute();
+        Member::saveProjectForTester($projectId, $userId);
 
-        if(!$result) {
-            return $this->error("error ");
-        }
         $this->add2Answer("TESTER", $userId);
 
         return $this->answer();
@@ -77,6 +68,21 @@ class ProjectService extends LPMBaseService
         if ($count === false) return $this->error('Ошибка получения данных суммы часов');
 
         $this->add2Answer('count', $count);
+
+        return $this->answer();
+    }
+
+    public function deleteTester($projectId) {
+        $projectId = (int)$projectId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
+
+
+        if(!Member::deleteMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId))
+            return $this->error("Ошибка удаления тестера.");
+
+        $this->add2Answer('$testerId', $projectId);
 
         return $this->answer();
     }

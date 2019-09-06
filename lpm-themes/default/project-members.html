@@ -1,25 +1,29 @@
 <article  id="projectMembers">
     <h1><?lpm_print_header();?></h1>
+    <div class="info-message" style="display: none;" >Сохранено</div>
     <h3>Участники проекта</h3>
     <input type="hidden" name="projectId" value="<?=lpm_get_project()->getID();?>"/>
     <ul class="users-list">
-        <?foreach (lpm_get_project_members() as $member) {?>
+        <?php foreach (lpm_get_project_members() as $member): ?>
         <li>
             <span class="user-name"><?=$member->getLinkedName();?></span>
             <input id="userIdId" type="hidden" name="userId" value="<?=$member->getID();?>">
         </li>
-        <?}?>
+        <?php endforeach; ?>
     </ul>
-    <h3 class="headersProjectsMembers" > Тестировшик проекта  </h3>
+
+        <button onclick="openMembersChooser();">Добавить</button>
 
 <!-- Выбор Тестировшика проекта  -->
-    <?
+    <h3 class="headersProjectsMembers" > Тестировшик проекта  </h3>
+    <div id="select-tester-option">
+    <?php
             $tester = lpm_get_project_tester();
-            if(!is_null( $tester)):
+            if(!is_null($tester)):
         ?>
     <ul>
-    <li id="NameTester" >
-        <?=$tester->getLinkedName();?>
+    <li id="NameTester" value="<?=$tester->getName();?>" >
+        <?=$tester->getName();?><i class="delete-tester"></i>
     </li>
     </ul>
     <?endif;?>
@@ -28,16 +32,14 @@
         <select id="selectTester">
             <option value="0">Тестер не выбран</option>
 
-        <?foreach (lpm_get_project_members() as $member) {?>
+        <?php foreach (lpm_get_project_members() as $member): ?>
             <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
-        <?}?>
+        <?php endforeach; ?>
         </select>
         <button id="btnSelect" type="button">Подтвердить</button>
     </form>
+    </div>
 
-    <p class="buttons-bar">
-        <button onclick="openMembersChooser();">Добавить</button>
-    </p>
     <?lpm_print_users_chooser();?>
     <script src="../../lpm-scripts/project.js">
     </script>

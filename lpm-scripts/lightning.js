@@ -157,6 +157,9 @@ var srv = {
         addTester : function ( projectId, userId, onResult ) {
             this.s._('addTester');
         },
+        deleteTester : function ($projectId, onResult) {
+            this.s._('deleteTester');
+        },
         getSumOpenedIssuesHours : function ( projectId, onResult ) {
             this.s._( 'getSumOpenedIssuesHours' );
         },

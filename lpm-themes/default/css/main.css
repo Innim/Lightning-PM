@@ -1622,31 +1622,32 @@ div.ftp
 	display: table-cell;
 }
 
-#btnSellect {
-	background: #e9eae2;
-	border-radius: 3px;
-	text-align-last: center ;
-	color: #000000;
-	font-size: 15px;
-	height: 16px;
-	width: 95px;
-	margin: 10px 0 0 3px;
-	overflow: hidden;
-	display: block;
-	padding: 15px;
-}
-#btnSellect:hover {
-	background: #c4c5bd;
-	cursor: pointer;
-	border-radius: 10px;
-	text-align: center;
-	height: 21px;
-	width: 100px;
-	margin: 10px 0 0 3px;
-	overflow: hidden;
-	display: block;
-}
 .headersProjectsMembers {
 	margin-top: 10px;
 	margin-bottom: 10px;
+}
+
+.delete-tester {
+	opacity: 0.3;
+}
+.delete-tester:hover {
+	opacity: 1;
+	cursor: pointer;
+}
+.delete-tester:before, .delete-tester:after {
+	position: absolute;
+	left: 10px;
+	content: ' ';
+	height: 20px;
+	width: 5px;
+	background-color: #8d0e00;
+}
+.delete-tester:before {
+	transform: rotate(45deg);
+}
+.delete-tester:after {
+	transform: rotate(-45deg);
+}
+.btnSelect {
+	float: left;
 }

@@ -112,26 +112,37 @@ $('#btnSelect').click(function (event) {
         userId,
         function(res) {
             if( res.success ) {
-                disabled();
                 location.reload();
             } else {
-                srv.err( res );
-                disabled();
+                srv.err(res);
             }
         }
     );
 });
 
-
 function disabled() {
-    $("#btnSelect").remove();
-    $("#selectTester").remove();
+    $("#btnSelect").hide();
+    $("#selectTester").hide();
 }
 
 (function() {
     var userId = $('#selectTester').val();
-    var valueDivTEster = $("#NameTester").text();
-    if ( valueDivTEster !== "" ) {
+    var valueDivTester = $("#NameTester").text();
+    if ( valueDivTester !== "" ) {
         disabled();
     }
+
+    $('.delete-tester').click(function() {
+        srv.project.deleteTester(
+            $( "#projectMembers input[name=projectId]" ).val(),
+            function(res) {
+                if(res.success) {
+                    location.reload();
+                } else {
+                    srv.err(res);
+                }
+            }
+        );
+
+    });
 })();
