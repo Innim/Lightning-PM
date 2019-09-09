@@ -30,7 +30,7 @@ $(document).ready(
 		  //$('#issueForm > div.validateError' ).html( '' );
 	  //}	  
 		  
-	  issuePage.updateStat(); 
+	  issuePage.updateStat();
   }
 );
 
@@ -98,47 +98,6 @@ function addMembers( arr ) {
     );
 };
 
-
-$('#btnSelect').click(function (event) {
-    var userId = $('#selectTester').val();
-
-    //Если тестер не выбран, но кнопка нажата, сбрасываем
-    if (userId === "0") {
-        return event.preventDefault();
-    }
-
-    srv.project.addTester(
-        $( "#projectMembers input[name=projectId]" ).val(),
-        userId,
-        function(res) {
-            if( res.success ) {
-                disabled();
-                location.reload();
-            } else {
-                srv.err( res );
-                disabled();
-            }
-        }
-    );
-});
-
-function disabled() {
-    $("#btnSelect").remove();
-    $("#selectTester").remove();
-}
-
-(function checkStart() {
-    var userId = $('#selectTester').val();
-    var valueDivTEster = $("#NameTester").text();
-    if ( valueDivTEster !== "" ) {
-        disabled();
-    }
-    let vars = $('#liNamePerformer').val()
-    if(vars) {
-        $('#divPerformer').hide();
-    }
-})();
-
 $('#btnSelectMember').click(function (event) {
     var memberByDefaultId = $('#selectMember').val();
 
@@ -158,3 +117,18 @@ $('#btnSelectMember').click(function (event) {
         }
     );
 });
+
+$('.delete-member-default').click(function() {
+    srv.project.deleteMemberDefault(
+        $("#projectMembers input[name=projectId]").val(),
+        function (res) {
+            if (res.success) {
+                location.reload();
+            } else {
+                srv.err(res);
+            }
+        }
+    )
+});
+
+

@@ -34,40 +34,6 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addTester( $projectId, $userId ) {
-        $projectId = (float)$projectId;
-        $userId = (float)$userId;
-
-        // проверяем права пользователя
-        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
-
-        // проверим, что существует такой проект
-        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
-
-        $query = "SELECT userId FROM lpm_tester WHERE projectId='$projectId' ";
-
-        $STH = $this->_db->query($query);
-        $row = $STH->fetch_row();
-
-        if ($row !== null) {
-            return $this->error("Tester exists");
-        }
-
-        if(empty($userId)) {
-            return $this->error("TesterID Empty");
-        }
-
-        $tester_val = $this->_db->preparet("INSERT INTO `%s` (`userId`, `projectId`) VALUES ( '{$userId}', '{$projectId}')", LPMTables::TESTER);
-        $result = $tester_val->execute();
-
-        if(!$result) {
-            return $this->error("error ");
-        }
-        $this->add2Answer("TESTER", $userId);
-
-        return $this->answer();
-    }
-
     public function getSumOpenedIssuesHours($projectId)
     {
         // TODO проверить права доступа для этого проекта
@@ -81,7 +47,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addIssueMemberDefault($projectId, $memberByDefaultId) {
+    public function addIssueMemberDefault ($projectId, $memberByDefaultId) {
         $projectId = (int)$projectId;
         $memberByDefaultId = (int)$memberByDefaultId;
 
@@ -97,6 +63,12 @@ class ProjectService extends LPMBaseService
         // проверяем права пользователя
         if (!$this->checkRole(User::ROLE_MODERATOR )) return $this->error('Недостаточно прав');
 
+        $defaultIssueMemberId = Project::loadById($projectId)->defaultIssueMemberId;
+
+        if ($defaultIssueMemberId) {
+            return $this->error('Исполнитель уже назначен для проекта');
+        }
+
         $result = Project::updateIssueMemberDefault($projectId, $memberByDefaultId);
 
         if ( !$result ) {
@@ -108,6 +80,31 @@ class ProjectService extends LPMBaseService
 
         return $this->answer();
 
+    }
+
+    public function deleteMemberDefault ($projectId) {
+        $projectId = (int)$projectId;
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
+
+        // проверим, что существует такой проект
+        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
+
+        $defaultIssueMemberId = Project::loadById($projectId)->defaultIssueMemberId;
+
+        if (!$defaultIssueMemberId) {
+            return $this->error('Исполнитель не назначен для проекта');
+        }
+
+        $result = Project::deleteMemberDefault($defaultIssueMemberId, $projectId);
+
+        if (!$result) {
+            return $this->error('Ошибка удаления.');
+        }
+
+         $this->add2Answer('$result', $result);
+
+        return $this->answer();
     }
 
 }

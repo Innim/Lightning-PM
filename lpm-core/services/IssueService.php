@@ -264,7 +264,6 @@ class IssueService extends LPMBaseService {
 	        $issue = $sticker->getIssue();
 	        if ($state === ScrumStickerState::TESTING) {
 
-                $this->checkTester( $issue );
 	        	// Если состояние "Тестируется" - ставим задачу на проверку
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
 
@@ -282,36 +281,6 @@ class IssueService extends LPMBaseService {
 
 	    return $this->answer();
 	}
-    /**
-     * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
-     */
-
-    public function checkTester(Issue $issue) {
-        $testers = $issue->getTesters();
-        $issueId = $issue->getID();
-        $type = (int)LPMInstanceTypes::ISSUE_FOR_TEST;
-
-
-        if (empty($testers)) {
-            $project = $issue->getProject();
-            $db = LPMGlobals::getInstance()->getDBConnect();
-            $projectId = $project->getID();
-
-            $sql = "SELECT userId FROM lpm_tester WHERE projectId='$projectId' ";
-            $result = $db->query($sql);
-            $idTester = $result->fetch_row();
-            $tester = (int)$idTester[0];
-
-            if (empty($tester)) {
-                return $this->answer();
-            }
-            $sql = "INSERT INTO `lpm_members`(`userId`, `instanceType`, `instanceId`) VALUES ('$tester','$type', '$issueId')";
-            $db->query($sql);
-
-            return $this->answer();
-        }
-
-    }
 
 	/**
 	 * Помещает стикер задачи на скрам доску

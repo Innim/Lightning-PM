@@ -33,6 +33,11 @@ class Project extends MembersInstance
 
         return false;
     }
+
+    public static function deleteMemberDefault ($defaultIssueMemberId, $projectId) {
+            $sql = "UPDATE `%s` SET `defaultIssueMemberId`=null WHERE `id`='$projectId' ";
+            return self::getDB()->queryt($sql, LPMTables::PROJECTS);
+    }
 		
 	public static function getAvailList( $isArchive ) {
 		if (self::$_availList == null ) {
@@ -316,23 +321,6 @@ class Project extends MembersInstance
 	// 			"WHERE `id` = '" . $projectId . "'";
 	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
 	// }
-
-    public function getProjectTester() {
-        // проверим, что существует такой проект
-        $idProject = self::$currentProject->getID();
-        if (!Project::loadById($idProject)) return $this->error('Нет такого проекта');
-
-        $query = "SELECT userId FROM lpm_tester WHERE projectId='$idProject' ";
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $STH = $db->query($query);
-        $row = $STH->fetch_row();
-
-        if (empty($row) || empty($row[0])) {
-           return null;
-        }
-
-        return self::$currentProject->getMember((int)$row[0]);
-    }
 
 }
 ?>

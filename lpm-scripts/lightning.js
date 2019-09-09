@@ -154,8 +154,8 @@ var srv = {
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
         },
-        addTester : function ( projectId, userId, onResult ) {
-            this.s._('addTester');
+        deleteMemberDefault : function (projectId, onResult) {
+            this.s._('deleteMemberDefault');
         },
         addIssueMemberDefault : function( projectId, memberByDefaultId, onResult ) {
             this.s._('addIssueMemberDefault');

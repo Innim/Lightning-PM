@@ -10,30 +10,8 @@
         </li>
         <?}?>
     </ul>
-    <h3 class="headersProjectsMembers" > Тестировшик проекта  </h3>
 
-<!-- Выбор Тестировшика проекта  -->
-    <?
-            $tester = lpm_get_project_tester();
-            if(!is_null( $tester )):
-        ?>
-    <ul>
-    <li id="NameTester" >
-        <?=$tester->getLinkedName();?>
-    </li>
-    </ul>
-    <?endif;?>
-
-    <form id="formOption">
-        <select id="selectTester">
-            <option value="0">Тестер не выбран</option>
-
-        <?foreach (lpm_get_project_members() as $member) {?>
-            <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
-        <?}?>
-        </select>
-        <button id="btnSelect" type="button">Подтвердить</button>
-    </form>
+        <button onclick="openMembersChooser();">Добавить</button>
 
     <!-- Добавить исполнителя по умолчанию -->
     <h3 class="headersProjectsMembers"> Исполнитель проекта по умолчанию  </h3>
@@ -42,24 +20,25 @@
     foreach (lpm_get_project_members() as $member):
         if($member->getID() === $memberByDefaultId): ?>
     <ul>
-    <li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?></li>
+        <i class="delete-member-default"></i><li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?></li>
         </ul>
-    <?php endif;
-    endforeach; ?>
-    <form id="divPerformer" onsubmit="return false;">
-    <select id="selectMember">
-        <option value="0">Исполнитель не выбран</option>
+    <?php $namePerformer = true; endif; ?>
+    <?php endforeach; ?>
 
-        <?php foreach (lpm_get_project_members() as $member): ?>
-        <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
-        <?php endforeach; ?>
-    </select>
-    <button id="btnSelectMember" type="submit">Подтвердить</button>
+    <?php if (!$namePerformer): ?>
+    <form id="divPerformer" onsubmit="return false;">
+        <select id="selectMember">
+            <option value="0">Исполнитель не выбран</option>
+
+            <?php foreach (lpm_get_project_members() as $member): ?>
+            <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
+            <?php endforeach; ?>
+        </select>
+        <button id="btnSelectMember" type="submit">Подтвердить</button>
     </form>
+    <?php endif;?>
+
     <!-- End perfomens by default -->
-    <p class="buttons-bar">
-        <button onclick="openMembersChooser();">Добавить</button>
-    </p>
     <?lpm_print_users_chooser();?>
     <script src="../../lpm-scripts/project.js">
     </script>

@@ -88,10 +88,6 @@ class PageConstructor
 				? Project::$currentProject->getMembers($onlyNotLocked) : array();
 	}
 
-	public static function getProjectTester() {
-        return Project::getProjectTester();
-    }
-	
 	public static function getIssueLabels() {
         return Issue::getLabels();
     }
