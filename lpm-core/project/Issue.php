@@ -493,20 +493,11 @@ SQL;
      * @return mixed
      */
     public static function getSprintCurrentNumber() {
-        $sql = "SELECT MAX(idInProject) FROM `%s`";
+        $projectId = Project::$currentProject->getID();
+        $scrumStickerSnapshot = ScrumStickerSnapshot::loadList($projectId);
+        $currentSprintNumber = $scrumStickerSnapshot[0]->idInProject + 1;
 
-        try {
-            $db = self::getDB();
-            $query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST);
-            if (!$query) {
-                throw new Exception('Ошибка запроса в базу данных');
-            }
-
-            return ((int)$query->fetch_row()[0]) + 1;
-
-        } catch (Exception $e) {
-            return  $e->getMessage();
-        }
+        return $currentSprintNumber;
     }
 
 	/**
