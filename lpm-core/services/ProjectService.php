@@ -47,14 +47,15 @@ class ProjectService extends LPMBaseService
         if(empty($userId)) {
             return $this->error("Неверные входные параметры");
         }
-            //Должен проверить, есть ли тестировшик у проекта .
-        if (Member::loadProjectForTester($projectId)) {
+
+        if (Member::hasMember(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $userId )) {
             return $this->error("Тестеровшик уже добавлен");
         }
 
         Member::saveProjectForTester($projectId, $userId);
 
-        $this->add2Answer("TESTER", $userId);
+        $this->add2Answer("projectId", $projectId);
+        $this->add2Answer("userId", $userId);
 
         return $this->answer();
     }

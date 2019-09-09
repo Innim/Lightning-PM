@@ -19,14 +19,14 @@
     <div id="select-tester-option">
     <?php
             $tester = lpm_get_project_tester();
-            if(!is_null($tester)):
+            if(!is_null($tester)) {
         ?>
     <ul>
     <li id="NameTester" value="<?=$tester->getName();?>" >
         <?=$tester->getName();?><i class="delete-tester"></i>
     </li>
     </ul>
-    <?endif;?>
+    <?php } else { ?>
 
     <form id="formOption">
         <select id="selectTester">
@@ -38,6 +38,7 @@
         </select>
         <button id="btnSelect" type="button">Подтвердить</button>
     </form>
+        <?php } ?>
     </div>
 
     <?lpm_print_users_chooser();?>

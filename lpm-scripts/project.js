@@ -102,7 +102,6 @@ function addMembers( arr ) {
 $('#btnSelect').click(function (event) {
     var userId = $('#selectTester').val();
 
-    //Если тестер не выбран, но кнопка нажата, сбрасываем
     if (userId === "0") {
         return event.preventDefault();
     }
@@ -120,29 +119,16 @@ $('#btnSelect').click(function (event) {
     );
 });
 
-function disabled() {
-    $("#btnSelect").hide();
-    $("#selectTester").hide();
-}
-
-(function() {
-    var userId = $('#selectTester').val();
-    var valueDivTester = $("#NameTester").text();
-    if ( valueDivTester !== "" ) {
-        disabled();
-    }
-
-    $('.delete-tester').click(function() {
-        srv.project.deleteTester(
-            $( "#projectMembers input[name=projectId]" ).val(),
-            function(res) {
-                if(res.success) {
-                    location.reload();
-                } else {
-                    srv.err(res);
-                }
+$('.delete-tester').click(function() {
+    srv.project.deleteTester(
+        $( "#projectMembers input[name=projectId]" ).val(),
+        function(res) {
+            if(res.success) {
+                location.reload();
+            } else {
+                srv.err(res);
             }
-        );
+        }
+    );
 
-    });
-})();
+});

@@ -32,29 +32,8 @@ class Member extends User
 	    return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId);
     }
 
-    public static function loadProjectForTester($projectId, $onlyNotLocked = false) {
+    public static function loadTesterForProject($projectId, $onlyNotLocked = false) {
 	    return self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId);
-    }
-
-    public static function getProjectForTesterId($projectId) {
-	        $hash = [
-	            'SELECT' => 'userId',
-                'FROM' => LPMTables::MEMBERS,
-                'WHERE' => [
-                    'instanceId' => $projectId,
-                    'instanceType' => LPMInstanceTypes::TESTER_FOR_PROJECT
-                ]
-            ];
-
-	        $result = self::getDB()->queryb($hash);
-
-	        if (!$result) {
-                 return null;
-            }
-
-            $row = $result->fetch_row();
-
-            return $row[0];
     }
 
 	public static function hasIssueMember($issueId, $userId) {

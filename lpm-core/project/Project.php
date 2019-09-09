@@ -304,16 +304,12 @@ class Project extends MembersInstance
 
     public function getProjectTester() {
         $projectId = self::$currentProject->getID();
-            //
-        $userId = Member::getProjectForTesterId($projectId);
-        if(!$userId) {
+        $tester = Member::loadTesterForProject($projectId);
+        if(!$tester) {
             return null;
         }
 
-        $resultId = (int)$userId;
-        $tester = User::load($resultId);
-
-        return $tester;
+        return $tester[0];
     }
 }
 ?>
