@@ -1430,7 +1430,7 @@ issuePage.finishedIssueBy = function (issueIdInProject) {
 
                 //var url = $("#projectView").data('projectUrl');
                 issuePage.setIssueBy({
-                    name: issue.name,
+                    name: 'Доделать задачу ' + issue.name,
                     hours: issue.hours,
                     desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
                     priority : issue.priority,
