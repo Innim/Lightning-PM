@@ -1650,25 +1650,14 @@ div.ftp
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
-
-.delete-member-default {
+.delete-member-default-i {
 	opacity: 0.3;
+	margin-left: 20px;
+	text-decoration: underline;
 }
-.delete-member-default:hover {
+.delete-member-default-i:hover {
 	opacity: 1;
 	cursor: pointer;
-}
-.delete-member-default:before, .delete-member-default:after {
-	position: absolute;
-	left: 10px;
-	content: ' ';
-	height: 20px;
-	width: 5px;
-	background-color: #8d0e00;
-}
-.delete-member-default:before {
-	transform: rotate(45deg);
-}
-.delete-member-default:after {
-	transform: rotate(-45deg);
+	color: #000000;
+	text-decoration: none;
 }

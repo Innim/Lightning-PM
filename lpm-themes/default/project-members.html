@@ -20,7 +20,9 @@
     foreach (lpm_get_project_members() as $member):
         if($member->getID() === $memberByDefaultId): ?>
     <ul>
-        <i class="delete-member-default"></i><li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?></li>
+        <li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?>
+            <b class="delete-member-default-i">Удалить</b>
+        </li>
         </ul>
     <?php $namePerformer = true; endif; ?>
     <?php endforeach; ?>
@@ -40,7 +42,5 @@
 
     <!-- End perfomens by default -->
     <?lpm_print_users_chooser();?>
-    <script src="../../lpm-scripts/project.js">
-    </script>
 
 </article>
