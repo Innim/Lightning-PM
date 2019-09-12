@@ -32,7 +32,7 @@ class ProjectPage extends BasePage
 		$this->addSubPage(self::PUID_ISSUES , 'Список задач',
 			'', array('project-issues', 'issues-export-to-excel'));
 		$this->addSubPage(self::PUID_COMPLETED_ISSUES , 'Завершенные',
-			'', array('issues-export-to-excel'));
+			'', array('project-completed', 'issues-export-to-excel'));
 		$this->addSubPage(self::PUID_COMMENTS , 'Комментарии', 'project-comments');
 		$this->addSubPage(self::PUID_MEMBERS, 'Участники', 'project-members', 
 				array('users-chooser'), '', User::ROLE_MODERATOR);
