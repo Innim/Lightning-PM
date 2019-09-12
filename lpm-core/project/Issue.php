@@ -407,10 +407,12 @@ SQL;
 			$issue->completedDate = (float)DateTimeUtils::date();
 	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
 	    } else if ($issue->status === Issue::STATUS_IN_WORK) {
-	    	// Сбрасываем дату завершения	    	
+	    	// Сбрасываем дату завершения
 			$issue->completedDate = null;
 	    	$hash['SET']['completedDate'] = '0000-00-00 00:00:00';
-	    }
+	    } else if ($issue->status === Issue::STATUS_WAIT) {
+            IssueService::checkTester( $issue );
+        }
 
 
 	    $db = self::getDB();

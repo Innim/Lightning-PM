@@ -264,7 +264,6 @@ class IssueService extends LPMBaseService {
 	        $issue = $sticker->getIssue();
 	        if ($state === ScrumStickerState::TESTING) {
 
-                $this->checkTester( $issue );
 	        	// Если состояние "Тестируется" - ставим задачу на проверку
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
 
@@ -285,7 +284,7 @@ class IssueService extends LPMBaseService {
     /**
      * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
      */
-    public function checkTester(Issue $issue) {
+    public static function checkTester(Issue $issue) {
         $testers = $issue->getTesters();
         $issueId = $issue->getID();
         $type = LPMInstanceTypes::ISSUE_FOR_TEST;
@@ -300,8 +299,6 @@ class IssueService extends LPMBaseService {
             }
             $testerId = (int)$testerId;
             Member::saveMembers($type, $issueId, [$testerId]);
-
-            return $this->answer();
         }
 
     }
