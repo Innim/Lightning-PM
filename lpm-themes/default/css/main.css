@@ -1627,26 +1627,16 @@ div.ftp
 	margin-bottom: 10px;
 }
 
-.delete-tester {
+.delete-tester-i {
 	opacity: 0.3;
+	margin-left: 20px;
+	text-decoration: underline;
 }
-.delete-tester:hover {
+.delete-tester-i:hover {
 	opacity: 1;
 	cursor: pointer;
-}
-.delete-tester:before, .delete-tester:after {
-	position: absolute;
-	left: 10px;
-	content: ' ';
-	height: 20px;
-	width: 5px;
-	background-color: #8d0e00;
-}
-.delete-tester:before {
-	transform: rotate(45deg);
-}
-.delete-tester:after {
-	transform: rotate(-45deg);
+	color: #000000;
+	text-decoration: none;
 }
 .btnSelect {
 	float: left;

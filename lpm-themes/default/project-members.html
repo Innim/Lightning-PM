@@ -23,7 +23,8 @@
         ?>
     <ul>
     <li id="NameTester" value="<?=$tester->getName();?>" >
-        <?=$tester->getName();?><i class="delete-tester"></i>
+        <?=$tester->getName();?>
+        <b class="delete-tester-i">Удалить</b>
     </li>
     </ul>
     <?php } else { ?>
@@ -42,7 +43,5 @@
     </div>
 
     <?lpm_print_users_chooser();?>
-    <script src="../../lpm-scripts/project.js">
-    </script>
 
 </article>

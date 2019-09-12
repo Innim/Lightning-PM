@@ -2,6 +2,40 @@ $(document).ready(
   function ()
   {
       $( "#usersChooser" ).dialog( {autoOpen:false, modal:true, resizable:false} );
+      //Добовляем тестера.
+      $('#btnSelect').click(function (event) {
+          var userId = $('#selectTester').val();
+
+          if (userId === "0") {
+              return event.preventDefault();
+          }
+
+          srv.project.addTester(
+              $( "#projectMembers input[name=projectId]" ).val(),
+              userId,
+              function(res) {
+                  if( res.success ) {
+                      location.reload();
+                  } else {
+                      srv.err(res);
+                  }
+              }
+          );
+      });
+        //Удаляем тестера.
+      $('.delete-tester-i').click(function() {
+          srv.project.deleteTester(
+              $( "#projectMembers input[name=projectId]" ).val(),
+              function(res) {
+                  if(res.success) {
+                      location.reload();
+                  } else {
+                      srv.err(res);
+                  }
+              }
+          );
+
+      });
   }
 );
 
