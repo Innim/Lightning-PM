@@ -1,12 +1,11 @@
 $(document).ready(
-    function ()
-    {
+    function () {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
-        
+
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -15,12 +14,6 @@ $(document).ready(
             var a = e.currentTarget;
             issuePage.insertTag(a.innerText);
         });
-
-        var selectedPerformer = $('#selected-performer').val();
-        if (selectedPerformer) {
-            issuePage.addIssueMember();
-        }
-
     }
 );
 
@@ -838,6 +831,11 @@ issuePage.showAddForm = function ( type, parentId ) {
     //$("#projectView").hide();
     window.location.hash = 'add-issue';
     states.updateView();
+
+    var selectedPerformer = $('#selected-performer').val();
+    if (selectedPerformer) {
+        issuePage.addIssueMember();
+    }
     
     if (typeof type != 'undefined') {
         //$('#issueForm > form > ')

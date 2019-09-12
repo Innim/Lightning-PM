@@ -88,9 +88,9 @@
                 <select id="addIssueMembers" onchange="issuePage.addIssueMember();">
                     <option>Добавить</option>
                     <?php foreach(lpm_get_project_members() as $member):?>
-                    <?php if ($member->userId === $performerId) { $performerName =  $member->getName(); ?>
+                    <?php if ($member->userId === $performerId): $performerName =  $member->getName(); ?>
                         <option id="selected-performer" value="<?=$member->userId;?>" selected><?=$member->getName();?></option>
-                    <?php continue; } ?>
+                    <?php continue; endif; ?>
                     <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
                     <?php endforeach;?>
                 </select>
