@@ -1621,4 +1621,11 @@ div.ftp
 .table-cell {
 	display: table-cell;
 }
+.href-delete-cookie, .href-delete-cookie:hover {
+	text-decoration: underline;
+	cursor: pointer;
+	float: right;
+	font-size: 10px;
+	padding: 0px;
+}
 

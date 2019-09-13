@@ -164,6 +164,7 @@
     <ol class="comments-list">
         <?php foreach (lpm_get_comments() as $comment): ?>
         <li>
+            <p class="href-delete-cookie" data-text='<?=$comment->id;?>' data-cookie="" data-user-id="<?=lpm_get_user()->getID();?>"><?=$_COOKIE['Delete'];?> </p>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>

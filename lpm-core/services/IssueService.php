@@ -561,5 +561,30 @@ SQL;
 
 		return $comment;
 	}
+
+	public function deleteComment($id, $userId) {
+        $id = (int)$id;
+        $userId = (int)$userId;
+
+	    # Проверяем что коммент существует
+        $comment = Comment::load($id);
+        if (!$comment) {
+            return $this->error('Комментария несуществует');
+        }
+        # Проверяем что коммент удаляет пользователь который его оставил или Админ.
+        $authorId = $comment->authorId;
+        $user = User::load($userId);
+        $userId = $user->getID();
+
+        if ($authorId != $userId && !$this->checkRole( User::ROLE_ADMIN )) {
+            return $this->error('Вы не можете удалять комментарий');
+        }
+        # Удаляем коммент
+        $comment->removeComment($id);
+
+	    $this->add2Answer('comentId', $authorId);
+        $this->add2Answer('user', $userId);
+	    return $this->answer();
+    }
 }
 ?>

@@ -107,6 +107,7 @@ SQL;
 	public $date         = 0;
 	public $text         = '';
 	public $dateLabel    = '';
+
 	
 	/**
 	 * 
@@ -186,6 +187,12 @@ SQL;
 		
 		return parent::setVar( $var, $value );
 	}
+
+	public function removeComment($id) {
+        $sql = "UPDATE `%s` SET `deleted` = 1 WHERE `id` = '$id'";
+        $db = self::getDB();
+        return $db->queryt($sql, LPMTables::COMMENTS);
+    }
 }
 
 ?>

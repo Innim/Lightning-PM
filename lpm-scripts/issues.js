@@ -15,6 +15,21 @@ $(document).ready(
             var a = e.currentTarget;
             issuePage.insertTag(a.innerText);
         });
+
+        $('.href-delete-cookie').click(function() {
+            let id = $(this).attr('data-text');
+            let userId = $(this).attr('data-user-id');
+            var el = $(this);
+            var cooki = el.attr('data-cookie');
+            issuePage.deleteComment(id, userId, function(res) {
+                if (res) {
+                    el.closest('li').remove();
+                    if (el.cooki) {
+                        cookie.eraseCookie(cooki);
+                    }
+                }
+            });
+        });
     }
 );
 
@@ -1159,6 +1174,7 @@ issuePage.postCommentForCurrentIssue = function (text) {
         function (res) {
             preloader.hide();
             if (res.success) {
+                //
                 issuePage.addComment(res.comment);
             } else {
                 srv.err(res);
@@ -1166,6 +1182,32 @@ issuePage.postCommentForCurrentIssue = function (text) {
         } 
      );
     }
+}
+
+issuePage.cookie = () => {
+    function setCookie(name,value,days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+    function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        }
+        return null;
+    }
+    function eraseCookie(name) {
+        document.cookie = name+'=; Max-Age=-99999999;';
+    }
+
 }
 
 issuePage.passTest = function () {
@@ -1709,4 +1751,44 @@ function pasteClipboardImage( event ){
 function removeClipboardImage(){
     var elem = event.target.parentNode;
     elem.parentNode.removeChild(elem);
+};
+
+issuePage.deleteComment = (id, userId, callback) => {
+    //Получает id Комментария и отправляет на сервер, на сервере проверяет и удаляет
+    srv.issue.deleteComment(
+        id,
+        userId,
+        function (res) {
+            if (res.success) {
+                callback(true);
+            } else {
+                srv.err(res);
+            }
+        }
+    )
+};
+
+var cookie = {};
+
+cookie.setCookie = (name,value,days) => {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+};
+cookie.getCookie = (name) => {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+};
+cookie.eraseCookie = (name) => {
+    document.cookie = name+'=; Max-Age=-99999999;';
 };
