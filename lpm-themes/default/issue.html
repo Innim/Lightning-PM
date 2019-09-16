@@ -3,7 +3,7 @@
 Требуются: 
     $issue - текущая задача
 */
-?><article id="issueView">  
+?><article id="issueView">
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
   <div class="header-operations-bar">
     <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
@@ -163,8 +163,13 @@
     </form>
     <ol class="comments-list">
         <?php foreach (lpm_get_comments() as $comment): ?>
-        <li>
-            <p class="href-delete-cookie" data-text='<?=$comment->id;?>' data-cookie="" data-user-id="<?=lpm_get_user()->getID();?>"><?=$_COOKIE['Delete'];?> </p>
+        <li> <?php if (lpm_get_user()->role == 1 or lpm_get_user()->getID() == $comment->authorId): ?>
+            <?php if ($_COOKIE['comment'.$comment->id]): ?>
+            <p class="href-delete-cookie"
+               data-text="<?=$_COOKIE['comment'.$comment->id];?>"
+               data-user="<?=lpm_get_user()->getID();?>">   Удалить</p>
+            <?php endif; ?>
+            <?php endif; ?>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
@@ -174,6 +179,7 @@
     </ol>
   </article>
 </article>
+<input id='user-id-hidden' type="hidden" value="<?=lpm_get_user()->getID();?>">
 <script type="text/javascript">
     var issueLabels = <?=json_encode($issue->getLabelNames());?>;
 </script>

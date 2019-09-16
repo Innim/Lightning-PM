@@ -1,7 +1,6 @@
 <?php
 require_once(dirname( __FILE__ ) . '/../init.inc.php');
 use \GMFramework\DateTimeUtils as DTU;
-
 class IssueService extends LPMBaseService {
 	/**
 	 * Завершаем задачу
@@ -180,6 +179,10 @@ class IssueService extends LPMBaseService {
 	        return $this->exception($e); 
 	    }
 
+        $timeCommentDelete =  time()+600;
+        setcookie('comment' . $comment->id, $comment->id, $timeCommentDelete, '/');
+
+        $this->add2Answer('timeCommentDelete', $timeCommentDelete);
 		return $this->answer();
 	}
 
@@ -566,12 +569,15 @@ SQL;
         $id = (int)$id;
         $userId = (int)$userId;
 
-	    # Проверяем что коммент существует
+        if (!$_COOKIE['comment'.$id]) {
+            return $this->error('Время удаления истекло.');
+        }
+
         $comment = Comment::load($id);
         if (!$comment) {
             return $this->error('Комментария несуществует');
         }
-        # Проверяем что коммент удаляет пользователь который его оставил или Админ.
+
         $authorId = $comment->authorId;
         $user = User::load($userId);
         $userId = $user->getID();
@@ -582,9 +588,10 @@ SQL;
         # Удаляем коммент
         $comment->removeComment($id);
 
-	    $this->add2Answer('comentId', $authorId);
+	    $this->add2Answer('authorId', $authorId);
         $this->add2Answer('user', $userId);
 	    return $this->answer();
     }
+
 }
 ?>

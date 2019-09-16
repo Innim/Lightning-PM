@@ -16,17 +16,13 @@ $(document).ready(
             issuePage.insertTag(a.innerText);
         });
 
-        $('.href-delete-cookie').click(function() {
+        $('.href-delete-cookie').live('click', function() {
             let id = $(this).attr('data-text');
-            let userId = $(this).attr('data-user-id');
+            let userId = $(this).attr('data-user');
             var el = $(this);
-            var cooki = el.attr('data-cookie');
             issuePage.deleteComment(id, userId, function(res) {
                 if (res) {
-                    el.closest('li').remove();
-                    if (el.cooki) {
-                        cookie.eraseCookie(cooki);
-                    }
+                    el.parent('li').remove();
                 }
             });
         });
@@ -1174,7 +1170,6 @@ issuePage.postCommentForCurrentIssue = function (text) {
         function (res) {
             preloader.hide();
             if (res.success) {
-                //
                 issuePage.addComment(res.comment);
             } else {
                 srv.err(res);
@@ -1182,32 +1177,6 @@ issuePage.postCommentForCurrentIssue = function (text) {
         } 
      );
     }
-}
-
-issuePage.cookie = () => {
-    function setCookie(name,value,days) {
-        var expires = "";
-        if (days) {
-            var date = new Date();
-            date.setTime(date.getTime() + (days*24*60*60*1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-    }
-    function getCookie(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for(var i=0;i < ca.length;i++) {
-            var c = ca[i];
-            while (c.charAt(0)==' ') c = c.substring(1,c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-        }
-        return null;
-    }
-    function eraseCookie(name) {
-        document.cookie = name+'=; Max-Age=-99999999;';
-    }
-
 }
 
 issuePage.passTest = function () {
@@ -1231,9 +1200,11 @@ issuePage.passTest = function () {
 }
 
 issuePage.addComment = function (comment) {
+    var userId = $('#user-id-hidden').val();
     $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
     $( '#issueView .comments ol.comments-list' ).prepend( 
-           '<li>' +  
+           '<li>' +
+                '<p class="href-delete-cookie" data-text="' + comment.id + '" data-user="'+ userId +'">Удалить</p>' +
             '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
             '<p class="author">' + comment.author.linkedName + '</p> ' +
             '<p class="date"><a class="anchor" id="'+comment.id+
@@ -1754,7 +1725,6 @@ function removeClipboardImage(){
 };
 
 issuePage.deleteComment = (id, userId, callback) => {
-    //Получает id Комментария и отправляет на сервер, на сервере проверяет и удаляет
     srv.issue.deleteComment(
         id,
         userId,
@@ -1766,29 +1736,4 @@ issuePage.deleteComment = (id, userId, callback) => {
             }
         }
     )
-};
-
-var cookie = {};
-
-cookie.setCookie = (name,value,days) => {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-};
-cookie.getCookie = (name) => {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for(var i=0;i < ca.length;i++) {
-        var c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-    }
-    return null;
-};
-cookie.eraseCookie = (name) => {
-    document.cookie = name+'=; Max-Age=-99999999;';
 };
