@@ -98,7 +98,11 @@ SQL;
 		return self::$_curIType > 0 && self::$_curIId > 0
 		? self::getListByInstance( self::$_curIType, self::$_curIId )
 		: array();
-	}		
+	}
+
+    public static function cookie($comment, $time) {
+        setcookie('comment' . $comment->id, $comment->id, time()+$time, '/');
+    }
 	
 	public $id           = 0;
 	public $instanceId   = 0;
@@ -188,10 +192,11 @@ SQL;
 		return parent::setVar( $var, $value );
 	}
 
-	public function removeComment($id) {
-        $sql = "UPDATE `%s` SET `deleted` = 1 WHERE `id` = '$id'";
+    public function removeComment($comment) {
+        $sql = "UPDATE `%s` SET `deleted` = 1 WHERE `id` = '$comment->id'";
         $db = self::getDB();
-        return $db->queryt($sql, LPMTables::COMMENTS);
+        $this->cookie($comment, 0);
+        $db->queryt($sql, LPMTables::COMMENTS);
     }
 }
 

@@ -16,15 +16,19 @@ $(document).ready(
             issuePage.insertTag(a.innerText);
         });
 
-        $('.href-delete-cookie').live('click', function() {
-            let id = $(this).attr('data-text');
-            let userId = $(this).attr('data-user');
-            var el = $(this);
-            issuePage.deleteComment(id, userId, function(res) {
-                if (res) {
-                    el.parent('li').remove();
-                }
-            });
+        $('.delete-comment').live('click', function() {
+            let id = $(this).attr('data-comment-id');
+            let userId = $(this).attr('data-user-id');
+            let el = $(this);
+            let result = confirm('Удалить комментарий?');
+            if (result) {
+                issuePage.deleteComment(id, userId, function(res) {
+                    if (res) {
+                        el.parent('li').remove();
+                        el = null;
+                    }
+                });
+            }
         });
     }
 );
@@ -1204,7 +1208,7 @@ issuePage.addComment = function (comment) {
     $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
     $( '#issueView .comments ol.comments-list' ).prepend( 
            '<li>' +
-                '<p class="href-delete-cookie" data-text="' + comment.id + '" data-user="'+ userId +'">Удалить</p>' +
+                '<p class="delete-comment" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'">Удалить</p>' +
             '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
             '<p class="author">' + comment.author.linkedName + '</p> ' +
             '<p class="date"><a class="anchor" id="'+comment.id+

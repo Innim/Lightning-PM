@@ -2,6 +2,9 @@
 require_once(dirname( __FILE__ ) . '/../init.inc.php');
 use \GMFramework\DateTimeUtils as DTU;
 class IssueService extends LPMBaseService {
+
+    const COMMENT_DELETE_TIME = 600;
+
 	/**
 	 * Завершаем задачу
 	 * @param  int $issueId 
@@ -174,15 +177,13 @@ class IssueService extends LPMBaseService {
 
 			$comment = $this->postComment($issue, $text);
 
+            Comment::cookie($comment, self::COMMENT_DELETE_TIME);
+
 	        $this->add2Answer('comment', $comment->getClientObject());
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    }
 
-        $timeCommentDelete =  time()+600;
-        setcookie('comment' . $comment->id, $comment->id, $timeCommentDelete, '/');
-
-        $this->add2Answer('timeCommentDelete', $timeCommentDelete);
 		return $this->answer();
 	}
 
@@ -565,32 +566,37 @@ SQL;
 		return $comment;
 	}
 
-	public function deleteComment($id, $userId) {
+    public function deleteComment($id, $userId) {
         $id = (int)$id;
         $userId = (int)$userId;
-
-        if (!$_COOKIE['comment'.$id]) {
-            return $this->error('Время удаления истекло.');
-        }
+        $role = $this->checkRole( User::ROLE_ADMIN );
 
         $comment = Comment::load($id);
         if (!$comment) {
-            return $this->error('Комментария несуществует');
+            return $this->error('Комментария не существует');
+        }
+
+        if ($role) {
+            $comment->removeComment($comment);
+
+            return $this->answer();
+        }
+
+        if (!$_COOKIE['comment'.$id]) {
+            return $this->error('Время удаления истекло.');
         }
 
         $authorId = $comment->authorId;
         $user = User::load($userId);
         $userId = $user->getID();
 
-        if ($authorId != $userId && !$this->checkRole( User::ROLE_ADMIN )) {
+        if ($authorId != $userId) {
             return $this->error('Вы не можете удалять комментарий');
         }
         # Удаляем коммент
-        $comment->removeComment($id);
+        $comment->removeComment($comment);
 
-	    $this->add2Answer('authorId', $authorId);
-        $this->add2Answer('user', $userId);
-	    return $this->answer();
+        return $this->answer();
     }
 
 }

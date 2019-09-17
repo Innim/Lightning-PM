@@ -163,12 +163,11 @@
     </form>
     <ol class="comments-list">
         <?php foreach (lpm_get_comments() as $comment): ?>
-        <li> <?php if (lpm_get_user()->role == 1 or lpm_get_user()->getID() == $comment->authorId): ?>
-            <?php if ($_COOKIE['comment'.$comment->id]): ?>
-            <p class="href-delete-cookie"
-               data-text="<?=$_COOKIE['comment'.$comment->id];?>"
-               data-user="<?=lpm_get_user()->getID();?>">   Удалить</p>
-            <?php endif; ?>
+        <li>
+            <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
+            <p class="delete-comment"
+               data-comment-id="<?=$comment->id?>"
+               data-user-id="<?=lpm_get_user()->getID();?>">Удалить</p>
             <?php endif; ?>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>

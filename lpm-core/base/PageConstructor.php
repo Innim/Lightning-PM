@@ -132,6 +132,10 @@ class PageConstructor
 	public static function getUser() {
 		return LightningEngine::getInstance()->getUser();
 	}
+
+	public static function checkDeleteComment ($author, $cookie) {
+	    return Project::checkDeleteComment($author, $cookie);
+    }
 	
 	/*public static function includeCSS( $name ) {
 		include self::$_instance->getThemeDir() . 'css/' . $name . '.css';

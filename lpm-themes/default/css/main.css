@@ -1621,7 +1621,7 @@ div.ftp
 .table-cell {
 	display: table-cell;
 }
-.href-delete-cookie, .href-delete-cookie:hover {
+.delete-comment, .delete-comment:hover {
 	text-decoration: underline;
 	cursor: pointer;
 	float: right;

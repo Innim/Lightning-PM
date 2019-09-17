@@ -20,9 +20,9 @@
     	<li id="comment-<?=$comment->id;?>" class="projects-comments-list-item">
 			<?php if (lpm_get_user()->role == 1 or lpm_get_user()->getID() == $comment->authorId): ?>
 			<?php if ($_COOKIE['comment'.$comment->id]): ?>
-			<p class="href-delete-cookie"
-			   data-text="<?=$_COOKIE['comment'.$comment->id];?>"
-			   data-user="<?=lpm_get_user()->getID();?>">   Удалить</p>
+			<p class="delete-comment"
+			   data-comment-id="<?=$_COOKIE['comment'.$comment->id];?>"
+			   data-user-id="<?=lpm_get_user()->getID();?>">Удалить</p>
 			<?php endif; ?>
 			<?php endif; ?>
 			<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
