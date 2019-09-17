@@ -18,12 +18,10 @@
     <ul class="projects-comments-list comments-list">
     	<?php foreach ($comments as $comment): ?>
     	<li id="comment-<?=$comment->id;?>" class="projects-comments-list-item">
-			<?php if (lpm_get_user()->role == 1 or lpm_get_user()->getID() == $comment->authorId): ?>
-			<?php if ($_COOKIE['comment'.$comment->id]): ?>
+			<?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
 			<p class="delete-comment"
-			   data-comment-id="<?=$_COOKIE['comment'.$comment->id];?>"
+			   data-comment-id="<?=$comment->id?>"
 			   data-user-id="<?=lpm_get_user()->getID();?>">Удалить</p>
-			<?php endif; ?>
 			<?php endif; ?>
 			<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
