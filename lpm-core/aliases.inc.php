@@ -334,4 +334,10 @@ function lpm_get_errors() {
 function lpm_check_delete_comment($author, $cookie) {
     return PageConstructor::checkDeleteComment($author, $cookie);
 }
+/**
+ *  Определяет Админа.
+ */
+function lpm_is_admin() {
+    return PageConstructor::isAdmin();
+}
 ?>

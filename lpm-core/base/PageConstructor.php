@@ -144,7 +144,12 @@ class PageConstructor
 	public static function includePattern( $name, $args = null) {
 		if (null !== $args) extract($args);
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
-	}	
+	}
+
+	public static function isAdmin() {
+        $user = LightningEngine::getInstance()->getUser();
+        return $user->isAdmin();
+    }
 
 	private static $_usingScripts = array( 
 		'libs/jquery-1.6.4.min',

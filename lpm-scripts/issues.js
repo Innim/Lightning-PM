@@ -30,6 +30,27 @@ $(document).ready(
                 });
             }
         });
+
+        if (!$('#is-admin').val()) {
+            let arr = $('li').children('.delete-comment');
+            let data = new Date();
+            for (let i = 0; i < arr.length; i++) {
+                let time = $(arr[i]).attr('data-time').split(' ')[1].split(':');
+                let getTime = Number(time[0]+ time[1]);
+                let thisTime = data.toLocaleTimeString().split(':');
+                let timeToLocal = Number(thisTime[0] + thisTime[1]);
+                let Difference = getTime - timeToLocal;
+
+                if (Difference > -10) {
+                    Difference = Difference +- Difference*2;
+                    let timeDelete = 1000 * 60 * (10 - Difference);
+                    setTimeout(() => $(arr[i]).remove(),  timeDelete);
+                } else {
+                    $(arr[i]).remove();
+                }
+            }
+        }
+
     }
 );
 

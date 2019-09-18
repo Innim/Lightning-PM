@@ -100,8 +100,16 @@ SQL;
 		: array();
 	}
 
-    public function setCookieToDeleteComment($comment, $time) {
+    public static function setCookieToDeleteComment($comment, $time) {
         setcookie('comment' . $comment->id, $comment->id, time()+$time, '/');
+    }
+
+    public static function checkCookie ($id) {
+        if ($_COOKIE['comment'.$id]) {
+            return true;
+        };
+
+        return false;
     }
 	
 	public $id           = 0;

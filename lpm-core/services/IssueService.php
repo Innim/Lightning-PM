@@ -581,7 +581,7 @@ SQL;
             return $this->answer();
         }
 
-        if (!$_COOKIE['comment'.$id]) {
+        if (!Comment::checkCookie($id)) {
             return $this->error('Время удаления истекло.');
         }
 

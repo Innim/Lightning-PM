@@ -167,7 +167,8 @@
             <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
             <p class="delete-comment"
                data-comment-id="<?=$comment->id?>"
-               data-user-id="<?=lpm_get_user()->getID();?>">Удалить</p>
+               data-user-id="<?=lpm_get_user()->getID();?>"
+               data-time="<?=$comment->getDate();?>">Удалить</p>
             <?php endif; ?>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
@@ -176,6 +177,7 @@
         </li>
         <?php endforeach; ?>
     </ol>
+      <input id='is-admin' type="hidden" value="<?=lpm_is_admin();?>">
   </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=lpm_get_user()->getID();?>">
