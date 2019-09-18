@@ -3,7 +3,7 @@ require_once(dirname( __FILE__ ) . '/../init.inc.php');
 use \GMFramework\DateTimeUtils as DTU;
 class IssueService extends LPMBaseService {
 
-    const COMMENT_DELETE_TIME = 600;
+    const SECONDS_ON_COMMENT_DELETE = 600;
 
 	/**
 	 * Завершаем задачу
@@ -177,7 +177,7 @@ class IssueService extends LPMBaseService {
 
 			$comment = $this->postComment($issue, $text);
 
-            Comment::cookie($comment, self::COMMENT_DELETE_TIME);
+            Comment::setCookieToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
 	        $this->add2Answer('comment', $comment->getClientObject());
 	    } catch (\Exception $e) { 
@@ -569,14 +569,13 @@ SQL;
     public function deleteComment($id, $userId) {
         $id = (int)$id;
         $userId = (int)$userId;
-        $role = $this->checkRole( User::ROLE_ADMIN );
 
         $comment = Comment::load($id);
         if (!$comment) {
             return $this->error('Комментария не существует');
         }
 
-        if ($role) {
+        if ($this->checkRole( User::ROLE_ADMIN )) {
             $comment->removeComment($comment);
 
             return $this->answer();

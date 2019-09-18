@@ -130,13 +130,9 @@ class Project extends MembersInstance
 	public static function checkDeleteComment ($author, $cookie) {
 	    $user = LightningEngine::getInstance()->getUser();
 
-	    if ($user->role == 1) {
-	        return true;
-        } elseif ($user->getID() == $author && $_COOKIE['comment'. $cookie]) {
+	    if ($user->role == User::ROLE_ADMIN || $user->getID() == $author && $_COOKIE['comment'. $cookie]) {
 	        return true;
         }
-
-	    return false;
     }
 	
 	/**
