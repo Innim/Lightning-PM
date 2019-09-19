@@ -146,11 +146,6 @@ class PageConstructor
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
 	}
 
-	public static function isAdmin() {
-        $user = LightningEngine::getInstance()->getUser();
-        return $user->isAdmin();
-    }
-
 	private static $_usingScripts = array( 
 		'libs/jquery-1.6.4.min',
 		'libs/jquery-ui-1.8.16.min',

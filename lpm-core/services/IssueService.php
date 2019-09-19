@@ -563,6 +563,8 @@ SQL;
 		// обновляем счетчик коментариев для задачи
 		Issue::updateCommentsCounter($issueId);
 
+        Comment::setCookieToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
+
 		return $comment;
 	}
 

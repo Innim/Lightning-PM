@@ -31,25 +31,7 @@ $(document).ready(
             }
         });
 
-        if (!$('#is-admin').val()) {
-            let arr = $('li').children('.delete-comment');
-            let data = new Date();
-            for (let i = 0; i < arr.length; i++) {
-                let time = $(arr[i]).attr('data-time').split(' ')[1].split(':');
-                let getTime = Number(time[0]+ time[1]);
-                let thisTime = data.toLocaleTimeString().split(':');
-                let timeToLocal = Number(thisTime[0] + thisTime[1]);
-                let Difference = getTime - timeToLocal;
-
-                if (Difference > -10) {
-                    Difference = Difference +- Difference*2;
-                    let timeDelete = 1000 * 60 * (10 - Difference);
-                    setTimeout(() => $(arr[i]).remove(),  timeDelete);
-                } else {
-                    $(arr[i]).remove();
-                }
-            }
-        }
+        issuePage.timeDeleteComment();
 
     }
 );
@@ -1242,7 +1224,7 @@ issuePage.addComment = function (comment) {
     
     if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
         issuePage.toogleCommentForm();
-}
+};
 
 issuePage.showIssues4Me = function () {
     window.location.hash = 'only-my';
@@ -1762,3 +1744,27 @@ issuePage.deleteComment = (id, userId, callback) => {
         }
     )
 };
+
+issuePage.timeDeleteComment = () => {
+
+        if (!$('#is-admin').val()) {
+            let arr = $('li').children('.delete-comment');
+            let data = new Date();
+                for (let i = 0; i < arr.length; i++) {
+                    let time = $(arr[i]).attr('data-time').split(' ')[1].split(':');
+                    let getTime = Number(time[0] + time[1]);
+                    let thisTime = data.toLocaleTimeString().split(':');
+                    let timeToLocal = Number(thisTime[0] + thisTime[1]);
+                    let Difference = getTime - timeToLocal;
+
+                }
+        }
+};
+
+function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds) {
+    const delay = (Math.ceil(startTimeInSeconds + delayTimeInSeconds) * 1000) - Date.now();
+    const timerId = setTimeout(() => {
+        $('#' + elementId).remove();
+        clearTimeout(timerId);
+    }, delay);
+}

@@ -105,11 +105,7 @@ SQL;
     }
 
     public static function checkCookie ($id) {
-        if ($_COOKIE['comment'.$id]) {
-            return true;
-        };
-
-        return false;
+        return $_COOKIE['comment'.$id];
     }
 	
 	public $id           = 0;
@@ -203,7 +199,7 @@ SQL;
     public function removeComment($comment) {
         $sql = "UPDATE `%s` SET `deleted` = 1 WHERE `id` = '$comment->id'";
         $db = self::getDB();
-        $this->setCookieToDeleteComment($comment, 0);
+        self::setCookieToDeleteComment($comment, 0);
         $db->queryt($sql, LPMTables::COMMENTS);
     }
 }

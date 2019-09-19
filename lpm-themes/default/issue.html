@@ -177,7 +177,7 @@
         </li>
         <?php endforeach; ?>
     </ol>
-      <input id='is-admin' type="hidden" value="<?=lpm_is_admin();?>">
+      <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
   </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=lpm_get_user()->getID();?>">
