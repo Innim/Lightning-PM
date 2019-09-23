@@ -31,8 +31,13 @@ $(document).ready(
             }
         });
 
-        issuePage.timeDeleteComment();
-
+        if (!$('#is-admin').val()) {
+            $('.delete-comment').each(function (index) {
+                let elementId = $(this).attr('id');
+                let startTime = $(this).attr('data-time');
+                hideElementAfterDelay(elementId, startTime);
+            });
+        }
     }
 );
 
@@ -1207,11 +1212,14 @@ issuePage.passTest = function () {
 }
 
 issuePage.addComment = function (comment) {
-    var userId = $('#user-id-hidden').val();
+    let userId = $('#user-id-hidden').val();
+    let elementId = 'comment_' + comment.id;
+    let commentTime = comment.date;
     $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
     $( '#issueView .comments ol.comments-list' ).prepend( 
            '<li>' +
-                '<p class="delete-comment" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'">Удалить</p>' +
+                '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'"' +
+        '               data-time="'+ commentTime +'">Удалить</p>' +
             '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
             '<p class="author">' + comment.author.linkedName + '</p> ' +
             '<p class="date"><a class="anchor" id="'+comment.id+
@@ -1224,6 +1232,8 @@ issuePage.addComment = function (comment) {
     
     if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
         issuePage.toogleCommentForm();
+
+    hideElementAfterDelay(elementId, commentTime);
 };
 
 issuePage.showIssues4Me = function () {
@@ -1745,26 +1755,15 @@ issuePage.deleteComment = (id, userId, callback) => {
     )
 };
 
-issuePage.timeDeleteComment = () => {
+function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds = 600) {
+    let delay = (Number(startTimeInSeconds) + Number(delayTimeInSeconds))  * 1000 - Date.now();
 
-        if (!$('#is-admin').val()) {
-            let arr = $('li').children('.delete-comment');
-            let data = new Date();
-                for (let i = 0; i < arr.length; i++) {
-                    let time = $(arr[i]).attr('data-time').split(' ')[1].split(':');
-                    let getTime = Number(time[0] + time[1]);
-                    let thisTime = data.toLocaleTimeString().split(':');
-                    let timeToLocal = Number(thisTime[0] + thisTime[1]);
-                    let Difference = getTime - timeToLocal;
-
-                }
-        }
-};
-
-function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds) {
-    const delay = (Math.ceil(startTimeInSeconds + delayTimeInSeconds) * 1000) - Date.now();
-    const timerId = setTimeout(() => {
+    if (delay >= 0) {
+        const timerId = setTimeout(() => {
+            $('#' + elementId).remove();
+            clearTimeout(timerId);
+        }, delay);
+    } else {
         $('#' + elementId).remove();
-        clearTimeout(timerId);
-    }, delay);
+    }
 }
