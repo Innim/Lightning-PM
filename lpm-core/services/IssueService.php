@@ -177,7 +177,7 @@ class IssueService extends LPMBaseService {
 
 			$comment = $this->postComment($issue, $text);
 
-            Comment::setCookieToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
+            Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
 	        $this->add2Answer('comment', $comment->getClientObject());
 	    } catch (\Exception $e) { 
@@ -563,7 +563,7 @@ SQL;
 		// обновляем счетчик коментариев для задачи
 		Issue::updateCommentsCounter($issueId);
 
-        Comment::setCookieToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
+        Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
 		return $comment;
 	}
@@ -583,7 +583,7 @@ SQL;
             return $this->answer();
         }
 
-        if (!Comment::checkCookie($id)) {
+        if (!Comment::checkDeleteCommentById($id)) {
             return $this->error('Время удаления истекло.');
         }
 

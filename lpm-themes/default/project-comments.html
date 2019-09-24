@@ -38,7 +38,7 @@
     	</li>
     	<?php endforeach; ?>
     </ul>
-	<input id='is-admin' type="hidden" value="<?=lpm_is_admin();?>">
+	<input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
 
     <?php if (!empty($nextPageUrl)):?>
     	<div class="pages-nav-bar"><a href="<?=$nextPageUrl;?>">Раньше</a></div>

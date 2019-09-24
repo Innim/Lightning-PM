@@ -100,11 +100,11 @@ SQL;
 		: array();
 	}
 
-    public static function setCookieToDeleteComment($comment, $time) {
+    public static function setTimeToDeleteComment($comment, $time) {
         setcookie('comment' . $comment->id, $comment->id, time()+$time, '/');
     }
 
-    public static function checkCookie ($id) {
+    public static function checkDeleteCommentById ($id) {
         return $_COOKIE['comment'.$id];
     }
 	
@@ -199,7 +199,7 @@ SQL;
     public function removeComment($comment) {
         $sql = "UPDATE `%s` SET `deleted` = 1 WHERE `id` = '$comment->id'";
         $db = self::getDB();
-        self::setCookieToDeleteComment($comment, 0);
+        self::setTimeToDeleteComment($comment, 0);
         $db->queryt($sql, LPMTables::COMMENTS);
     }
 }
