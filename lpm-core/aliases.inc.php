@@ -328,4 +328,10 @@ function lpm_is_auth() {
 function lpm_get_errors() {
 	return PageConstructor::getErrors();
 }
+/**
+ * Возвращает писок Снапшотов
+ */
+function lpm_print_sprint_current() {
+    return PageConstructor::getSprintCurrentNumber();
+}
 ?>

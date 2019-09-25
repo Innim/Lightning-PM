@@ -17,6 +17,7 @@ class Issue extends MembersInstance
 	 *                             [алиас => таблица].
 	 * @return array<Issue> Массив загруженных задач.
 	 */
+
 	protected static function loadList($where, $extraSelect = '', $extraTables = null) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
 		$sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
@@ -486,6 +487,18 @@ SQL;
 	    if (!$db->queryb($hash))
 	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
 	}
+
+    /**
+     * Получаем номер текущего спринта
+     * @return mixed
+     */
+    public static function getSprintCurrentNumber() {
+        $projectId = Project::$currentProject->getID();
+        $scrumStickerSnapshot = ScrumStickerSnapshot::loadList($projectId);
+        $currentSprintNumber = $scrumStickerSnapshot[0]->idInProject + 1;
+
+        return $currentSprintNumber;
+    }
 
 	/**
 	 * Возвращает постоянный URL задачи.
