@@ -45,10 +45,10 @@ class PassRecoveryPage extends BasePage{
         } elseif ($this->getPUID() == 'reclink') {
             
             $key = $this->getAddParam(0);
-            $userId = $this->getAddParam(1);            
-            
+            $userId = $this->_engine->getParams()->getQueryArg('userId');
+
+            $userId = base64_decode(urldecode($userId));
             if (!empty($key)&& !empty($userId)) {
-                $userId = base64_decode(urldecode($userId));               
                if($this->checkUrlKey($key,$userId)){                   
                 $this->_userId = $userId;
                 $this->_recoveryKey = $key;                
@@ -90,15 +90,15 @@ class PassRecoveryPage extends BasePage{
                 $this->_engine->addError( 'Ошибка записи в базу' );
             }            
 	} else {
-            $recoveryLink = "<a href=\"pass-recovery/reclink/" . $key . "/" . urlencode(base64_encode($userId)) . 
-                            "\"> " . SITE_URL . "pass-recovery/reclink/" . $key . "/" . urlencode(base64_encode($userId)) . "</a>";
+            $href = "pass-recovery/reclink/" . $key . "/?userId=" . urlencode(base64_encode($userId));
+            $recoveryLink ='<a href="'. SITE_URL . $href .'"> ' . SITE_URL .  $href . '</a>';
             $message  = "Здравствуйте $firstName,\r\n";
 	    $message .= "Для восстановления пароля перейдите по ссылке:\r\n";
             $message .= "-----------------------\r\n";
             $message .= "$recoveryLink\r\n";
             $message .= "-----------------------\r\n";
             $message .= "Ссылка будет действительна в течении суток.\r\n\r\n";
-            $subject = "Восстановление пароля";            
+            $subject = "Восстановление пароля";
             EmailNotifier::getInstance()->send($email, $firstName, $subject, $message);
             return true;
         }
