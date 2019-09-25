@@ -539,13 +539,15 @@ SQL;
 	// TODO: вынести из сервиса
 	private function postComment(Issue $issue, $text) {
 		$issueId = $issue->id;
-		if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text)) 
+		if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text))
 			throw new Exception("Не удалось добавить комментарий");
-		
+
 		// отправка оповещений
-		$members = $issue->getMemberIds();
-		$members[] = $issue->authorId;
-		
+        $members = $issue->getMemberIds();
+        $members[] = $issue->authorId;
+        // Здесь сделать проверку. если задача прошла тестирование создать метод, который будет отсылать сообшения.
+        $this->notificationCommentTesterOrMembers( $issue, $text);
+
 		EmailNotifier::getInstance()->sendMail2Allowed(
 			'Новый комментарий к задаче "' . $issue->name . '"',
 			$this->getUser()->getName() . ' оставил комментарий к задаче "' .
@@ -555,11 +557,27 @@ SQL;
 			$members,
 			EmailNotifier::PREF_ISSUE_COMMENT
 		);
-		
+
 		// обновляем счетчик коментариев для задачи
 		Issue::updateCommentsCounter($issueId);
 
 		return $comment;
 	}
+
+	public function notificationCommentTesterOrMembers(Issue $issue, $comment) {
+        $testerIssue = $issue->getTesterIds();
+        $membersIssue = $issue->getMemberIds();
+        $userSendMessage = $this->getUser()->getID();
+        $slack = SlackIntegration::getInstance();
+
+        if ($issue->status == Issue::STATUS_WAIT) {
+           if(in_array($userSendMessage, $testerIssue)) {
+               return $slack->notifyCommentTesterToMember($issue, $comment);
+           } elseif (in_array($userSendMessage, $membersIssue)) {
+               return $slack->notifyCommentMemberToTester($issue, $comment);
+           }
+        }
+
+    }
 }
 ?>
