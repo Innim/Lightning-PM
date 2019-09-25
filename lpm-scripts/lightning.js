@@ -141,6 +141,9 @@ var srv = {
         },
         exportCompletedIssuesToExcel: function (projectId, fromDate, toDate, onResult) {
             this.s._('exportCompletedIssuesToExcel');
+        },
+        deleteComment : function (id, $userId, onResult) {
+            this.s._('deleteComment');
         }
     },
     workStudy : {

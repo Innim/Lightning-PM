@@ -88,6 +88,8 @@ class LPMBaseService extends SecureService
 			return false;
 		}
 
+		setcookie('Delete', 'Удалить', time()+600, "/");
+
 		return Comment::add($instanceType, $instanceId, $user->userId, $text);
 	}
 }

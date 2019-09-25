@@ -1,8 +1,10 @@
 <?php
 require_once(dirname( __FILE__ ) . '/../init.inc.php');
 use \GMFramework\DateTimeUtils as DTU;
-
 class IssueService extends LPMBaseService {
+
+    const SECONDS_ON_COMMENT_DELETE = 600;
+
 	/**
 	 * Завершаем задачу
 	 * @param  int $issueId 
@@ -174,6 +176,8 @@ class IssueService extends LPMBaseService {
 	        	return $this->error('Нет такой задачи');
 
 			$comment = $this->postComment($issue, $text);
+
+            Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
 	        $this->add2Answer('comment', $comment->getClientObject());
 	    } catch (\Exception $e) { 
@@ -563,8 +567,42 @@ SQL;
 		// обновляем счетчик коментариев для задачи
 		Issue::updateCommentsCounter($issueId);
 
+        Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
+
 		return $comment;
 	}
+
+    public function deleteComment($id, $userId) {
+        $id = (int)$id;
+        $userId = (int)$userId;
+
+        $comment = Comment::load($id);
+        if (!$comment) {
+            return $this->error('Комментария не существует');
+        }
+
+        if ($this->checkRole( User::ROLE_ADMIN )) {
+            $comment->removeComment($comment);
+
+            return $this->answer();
+        }
+
+        if (!Comment::checkDeleteCommentById($id)) {
+            return $this->error('Время удаления истекло.');
+        }
+
+        $authorId = $comment->authorId;
+        $user = User::load($userId);
+        $userId = $user->getID();
+
+        if ($authorId != $userId) {
+            return $this->error('Вы не можете удалять комментарий');
+        }
+        # Удаляем коммент
+        $comment->removeComment($comment);
+
+        return $this->answer();
+    }
 
 	public function notificationCommentTesterOrMembers(Issue $issue, $comment) {
         $testerIssue = $issue->getTesterIds();
@@ -582,4 +620,3 @@ SQL;
 
     }
 }
-?>

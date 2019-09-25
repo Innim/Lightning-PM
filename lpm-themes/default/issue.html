@@ -13,11 +13,11 @@
   <article id="issueInfo" class="container">
     <h3>
         <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-        <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
+		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
         <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
         <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
         <?php endif;?>
-    </h3>
+    </h3>     
     <div class="issue_copy">
         <a id="copyText" class="copy-commit-message" href="javascript:void(0);"  data-clipboard-text='Issue #<?=$issue->getIdInProject() . ": " . $issue->getName();?>' >скопировать commit сообщение</a>
     </div>
@@ -165,6 +165,13 @@
     <ol class="comments-list">
         <?php foreach (lpm_get_comments() as $comment): ?>
         <li>
+            <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
+            <p id="<?='comment_' . $comment->id?>"
+               class="delete-comment"
+               data-comment-id="<?=$comment->id?>"
+               data-user-id="<?=lpm_get_user()->getID();?>"
+               data-time="<?=$comment->date?>">Удалить</p>
+            <?php endif; ?>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
@@ -172,8 +179,10 @@
         </li>
         <?php endforeach; ?>
     </ol>
+      <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
   </article>
 </article>
+<input id='user-id-hidden' type="hidden" value="<?=lpm_get_user()->getID();?>">
 <script type="text/javascript">
     var issueLabels = <?=json_encode($issue->getLabelNames());?>;
 </script>

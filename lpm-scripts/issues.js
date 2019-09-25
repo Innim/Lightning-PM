@@ -15,6 +15,28 @@ $(document).ready(
             issuePage.insertTag(a.innerText);
         });
 
+        $('.delete-comment').live('click', function() {
+            let id = $(this).attr('data-comment-id');
+            let userId = $(this).attr('data-user-id');
+            let el = $(this);
+            let result = confirm('Удалить комментарий?');
+            if (result) {
+                issuePage.deleteComment(id, userId, function(res) {
+                    if (res) {
+                        el.parent('li').remove();
+                        el = null;
+                    }
+                });
+            }
+        });
+
+        if (!$('#is-admin').val()) {
+            $('.delete-comment').each(function (index) {
+                let elementId = $(this).attr('id');
+                let startTime = $(this).attr('data-time');
+                hideElementAfterDelay(elementId, startTime);
+            });
+        }
 
         $('div.tooltip').hover(
             function() {
@@ -1208,9 +1230,14 @@ issuePage.passTest = function () {
 }
 
 issuePage.addComment = function (comment) {
+    let userId = $('#user-id-hidden').val();
+    let elementId = 'comment_' + comment.id;
+    let commentTime = comment.date;
     $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
     $( '#issueView .comments ol.comments-list' ).prepend( 
-           '<li>' +  
+           '<li>' +
+                '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'"' +
+        '               data-time="'+ commentTime +'">Удалить</p>' +
             '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
             '<p class="author">' + comment.author.linkedName + '</p> ' +
             '<p class="date"><a class="anchor" id="'+comment.id+
@@ -1223,7 +1250,9 @@ issuePage.addComment = function (comment) {
     
     if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
         issuePage.toogleCommentForm();
-}
+
+    hideElementAfterDelay(elementId, commentTime);
+};
 
 issuePage.showIssues4Me = function () {
     window.location.hash = 'only-my';
@@ -1714,3 +1743,30 @@ function removeClipboardImage(){
     var elem = event.target.parentNode;
     elem.parentNode.removeChild(elem);
 };
+
+issuePage.deleteComment = (id, userId, callback) => {
+    srv.issue.deleteComment(
+        id,
+        userId,
+        function (res) {
+            if (res.success) {
+                callback(true);
+            } else {
+                srv.err(res);
+            }
+        }
+    )
+};
+
+function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds = 600) {
+    let delay = (Number(startTimeInSeconds) + Number(delayTimeInSeconds))  * 1000 - Date.now();
+
+    if (delay >= 0) {
+        const timerId = setTimeout(() => {
+            $('#' + elementId).remove();
+            clearTimeout(timerId);
+        }, delay);
+    } else {
+        $('#' + elementId).remove();
+    }
+}

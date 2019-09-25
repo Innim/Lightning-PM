@@ -166,6 +166,12 @@ class Project extends MembersInstance
 	{
 	    
 	}
+
+	public static function checkDeleteComment ($author, $cookie) {
+	    $user = LightningEngine::getInstance()->getUser();
+
+	    return  $user->isAdmin() || $user->getID() == $author && Comment::checkDeleteCommentById($cookie);
+    }
 	
 	/**
 	 * 
