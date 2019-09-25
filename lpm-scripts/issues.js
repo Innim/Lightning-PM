@@ -823,10 +823,11 @@ issuePage.putStickerOnBoard = function (issueId) {
         preloader.hide();
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
+            $('#putToBoardField').attr('checked', true);
             issuePage.scumColUpdateInfo();
         }
     });
-}
+};
 
 issuePage.takeIssue = function (e) {
     var $control = $(e.currentTarget);
@@ -840,7 +841,7 @@ issuePage.takeIssue = function (e) {
             issuePage.scumColUpdateInfo();
         }
     });
-}
+};
 
 function showIssue (issueId) {
     srv.issue.load( 
