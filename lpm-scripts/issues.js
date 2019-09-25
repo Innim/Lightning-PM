@@ -1,12 +1,11 @@
 $(document).ready(
-    function ()
-    {
+    function () {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
         document.addEventListener('paste', pasteClipboardImage);
-        
+
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
@@ -29,6 +28,8 @@ $(document).ready(
         )
     }
 );
+
+
 
 function DropDown(el) {
     this.dd = el;
@@ -272,6 +273,7 @@ issuePage.addIssueMember = function(sp) {
     var scrum = $('#issueForm').data('projectScrum') == 1;
     var option = selectElement.options[index];
     var $memberLi = $('<li>');
+
 
     $memberLi.
         append($('<span class="user-name">').html(option.innerHTML)).
@@ -841,6 +843,11 @@ issuePage.showAddForm = function ( type, parentId ) {
     //$("#projectView").hide();
     window.location.hash = 'add-issue';
     states.updateView();
+
+    var selectedPerformer = $('#selected-performer').val();
+    if (selectedPerformer) {
+        issuePage.addIssueMember();
+    }
     
     if (typeof type != 'undefined') {
         //$('#issueForm > form > ')

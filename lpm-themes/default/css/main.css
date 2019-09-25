@@ -1666,3 +1666,42 @@ ul#ulProjectSettings {
 	background: #f6fff7;
 	border-radius: 2px;
 }
+#btnSellect {
+	background: #e9eae2;
+	border-radius: 3px;
+	text-align-last: center ;
+	color: #000000;
+	font-size: 15px;
+	height: 16px;
+	width: 95px;
+	margin: 10px 0 0 3px;
+	overflow: hidden;
+	display: block;
+	padding: 15px;
+}
+#btnSellect:hover {
+	background: #c4c5bd;
+	cursor: pointer;
+	border-radius: 10px;
+	text-align: center;
+	height: 21px;
+	width: 100px;
+	margin: 10px 0 0 3px;
+	overflow: hidden;
+	display: block;
+}
+.headersProjectsMembers {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+.delete-member-default-i {
+	opacity: 0.3;
+	margin-left: 20px;
+	text-decoration: underline;
+}
+.delete-member-default-i:hover {
+	opacity: 1;
+	cursor: pointer;
+	color: #000000;
+	text-decoration: none;
+}

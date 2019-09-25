@@ -246,5 +246,5 @@ CREATE TABLE `lpm_work_study` (
   UNIQUE KEY `workerId` (`workerId`,`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-
--- 2019-08-06 07:24:23
+ALTER TABLE `lpm_projects` ADD `defaultIssueMemberId` INT NOT NULL COMMENT 'Исполнитель умолчанию';
+-- 2019-09-02 16:24:23

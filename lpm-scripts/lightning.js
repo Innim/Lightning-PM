@@ -154,6 +154,12 @@ var srv = {
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
         },
+        deleteMemberDefault : function (projectId, onResult) {
+            this.s._('deleteMemberDefault');
+        },
+        addIssueMemberDefault : function( projectId, memberByDefaultId, onResult ) {
+            this.s._('addIssueMemberDefault');
+        },
         getSumOpenedIssuesHours : function ( projectId, onResult ) {
             this.s._( 'getSumOpenedIssuesHours' );
         },

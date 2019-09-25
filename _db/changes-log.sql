@@ -164,3 +164,13 @@ ALTER TABLE `lpm_scrum_snapshot`
 ADD `issue_members_sp` text COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Количество SP по участникам' AFTER `issue_sp`;
 
 -- 0.7a.003
+
+CREATE TABLE `lpm_tester` (
+  `id` int(11) NOT NULL  AUTO_INCREMENT COMMENT 'Идентификатор',
+  `userId` bigint(20) NOT NULL COMMENT 'Идентификатор пользователя',
+  `projectId` int(11) NOT NULL COMMENT 'Идентификатор проекта',
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- 2019-08-28 17:55:00
+ALTER TABLE `lpm_projects` ADD `defaultIssueMemberId` INT NOT NULL COMMENT 'Исполнитель умолчанию';

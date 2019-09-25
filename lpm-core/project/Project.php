@@ -42,6 +42,24 @@ class Project extends MembersInstance
 
         return  $db->queryb($hash);
     }
+
+    public static function updateIssueMemberDefault($projectId, $memberByDefaultId) {
+        $db = self::getDB();
+
+        if ($projectId != null && $memberByDefaultId != null) {
+            $sql = "update `%s` set `defaultIssueMemberId`='". $memberByDefaultId ."'  where  `id` = '". $projectId ."'";
+            $result = $db->queryt($sql, LPMTables::PROJECTS);
+
+            if($result) return true;
+        }
+
+        return false;
+    }
+
+    public static function deleteMemberDefault ($defaultIssueMemberId, $projectId) {
+            $sql = "UPDATE `%s` SET `defaultIssueMemberId`=null WHERE `id`='$projectId' ";
+            return self::getDB()->queryt($sql, LPMTables::PROJECTS);
+    }
 		
 	public static function getAvailList( $isArchive ) {
 		if (self::$_availList == null ) {
@@ -157,6 +175,7 @@ class Project extends MembersInstance
 	public $uid;
 	public $name;
 	public $desc;
+	public $defaultIssueMemberId;
 
 	/**
 	 * Проект ведется с помощью методологии Scrum
@@ -191,6 +210,7 @@ class Project extends MembersInstance
 		parent::__construct();
 		$this->_typeConverter->addIntVars('id');
 		$this->_typeConverter->addBoolVars('scrum');
+		$this->_typeConverter->addIntVars('defaultIssueMemberId');
 	}
 	
 	public function getID() {

@@ -24,6 +24,7 @@ function addMembers( arr ) {
         arr, 
         function (res) {
             preloader.hide();
+
             if (res.success) {
                 $( "#projectMembers > ul.users-list > li" ).remove();
                 var j = 0;
@@ -54,6 +55,8 @@ function addMembers( arr ) {
                         '<input type="hidden" name="userId" value="' + user.userId + '"></li>'
                     );
                 }
+                // XXX: плохое решение, надо переписать
+                location.reload();
             } else {
                 srv.err( res );
             }

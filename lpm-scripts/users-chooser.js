@@ -2,6 +2,39 @@ $(document).ready(
   function ()
   {
       $( "#usersChooser" ).dialog( {autoOpen:false, modal:true, resizable:false} );
+
+      $('#btnSelectMember').click(function (event) {
+          var memberByDefaultId = $('#selectMember').val();
+
+          //Если Исполнитель не выбран, но кнопка нажата, сбрасываем
+          if (memberByDefaultId === "0") {
+              return event.preventDefault();
+          }
+          srv.project.addIssueMemberDefault(
+              $( "#projectMembers input[name=projectId]" ).val(),
+              memberByDefaultId,
+              function(res) {
+                  if(res.success) {
+                      location.reload();
+                  } else {
+                      srv.err(res);
+                  }
+              }
+          );
+      });
+
+      $('.delete-member-default-i').click(function() {
+          srv.project.deleteMemberDefault(
+              $("#projectMembers input[name=projectId]").val(),
+              function (res) {
+                  if (res.success) {
+                      location.reload();
+                  } else {
+                      srv.err(res);
+                  }
+              }
+          )
+      });
   }
 );
 

@@ -91,7 +91,7 @@ class PageConstructor
 		return ( Project::$currentProject != null ) 
 				? Project::$currentProject->getMembers($onlyNotLocked) : array();
 	}
-	
+
 	public static function getIssueLabels() {
         return Issue::getLabels();
     }

@@ -249,10 +249,10 @@ class IssueService extends LPMBaseService {
 		$state   = (int)$state;
 
 	    try {
-	    	// Проверяем состояние 
+	    	// Проверяем состояние
 	    	if (!ScrumStickerState::validateValue($state))
 	    		throw new Exception('Неизвестный стейт');
-	    	 
+
 	        $sticker = ScrumSticker::load($issueId);
 	        if ($sticker === null)
 	        	throw new Exception('Нет стикера для этой задачи');
@@ -263,20 +263,22 @@ class IssueService extends LPMBaseService {
 
 	        $issue = $sticker->getIssue();
 	        if ($state === ScrumStickerState::TESTING) {
+
 	        	// Если состояние "Тестируется" - ставим задачу на проверку
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
+
 	        } else if ($state === ScrumStickerState::DONE) {
 	        	// Если "Готово" - закрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_COMPLETED);
-	        } else if ($issue->status == Issue::STATUS_WAIT && 
+	        } else if ($issue->status == Issue::STATUS_WAIT &&
 	        		($state === ScrumStickerState::TODO || $state === ScrumStickerState::IN_PROGRESS)) {
 				// Если она в режиме ожидания - переоткрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_IN_WORK);
 	        }
-	    } catch (\Exception $e) { 
-	        return $this->exception($e); 
-	    } 
-	
+	    } catch (\Exception $e) {
+	        return $this->exception($e);
+	    }
+
 	    return $this->answer();
 	}
 
