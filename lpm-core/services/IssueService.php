@@ -545,7 +545,7 @@ SQL;
 		// отправка оповещений
         $members = $issue->getMemberIds();
         $members[] = $issue->authorId;
-        // Здесь сделать проверку. если задача прошла тестирование создать метод, который будет отсылать сообшения.
+        
         $this->notificationCommentTesterOrMembers( $issue, $text);
 
 		EmailNotifier::getInstance()->sendMail2Allowed(
@@ -571,10 +571,10 @@ SQL;
         $slack = SlackIntegration::getInstance();
 
         if ($issue->status == Issue::STATUS_WAIT) {
-           if(in_array($userSendMessage, $testerIssue)) {
-               return $slack->notifyCommentTesterToMember($issue, $comment);
+           if (in_array($userSendMessage, $testerIssue)) {
+               $slack->notifyCommentTesterToMember($issue, $comment);
            } elseif (in_array($userSendMessage, $membersIssue)) {
-               return $slack->notifyCommentMemberToTester($issue, $comment);
+               $slack->notifyCommentMemberToTester($issue, $comment);
            }
         }
 
