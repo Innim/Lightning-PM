@@ -163,6 +163,9 @@ var srv = {
         addIssueMemberDefault : function( projectId, memberByDefaultId, onResult ) {
             this.s._('addIssueMemberDefault');
         },
+        addTester : function ( projectId, userId, onResult ) {
+            this.s._('addTester');
+        },
         deleteTester : function ($projectId, onResult) {
             this.s._('deleteTester');
         },

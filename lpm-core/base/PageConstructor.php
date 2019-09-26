@@ -140,6 +140,10 @@ class PageConstructor
 	public static function checkDeleteComment ($author, $cookie) {
 	    return Project::checkDeleteComment($author, $cookie);
     }
+
+    public static function getProjectTester() {
+        return Project::getProjectTester();
+    }
 	
 	/*public static function includeCSS( $name ) {
 		include self::$_instance->getThemeDir() . 'css/' . $name . '.css';

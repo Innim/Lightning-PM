@@ -236,6 +236,13 @@ function lpm_get_project_members() {
 }
 
 /**
+ * Возврашает тестера проекта
+ */
+function lpm_get_project_tester() {
+    return PageConstructor::getProjectTester();
+}
+
+/**
  * Возвращает список меток для задачи.
  */
 function lpm_get_issue_labels() {
