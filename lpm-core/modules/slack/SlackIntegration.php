@@ -76,6 +76,30 @@ class SlackIntegration {
 		$this->postMessageForIssue($issue, $text);
 	}
 
+	public function notifyCommentTesterToMember(Issue $issue, $comment) {
+	    $text = $this->getIssuePrefix($issue) . '' . $issue->getConstURL() . ' - *Комментирует тестировщик*';
+        $text = $this->addMentionsByUsers($text, $issue->getMembers());
+
+        $this->postMessageForIssue($issue, $text, [[
+            'fallback' => $issue->getName(),
+            'title' => $issue->getName(),
+            'text' => $comment,
+            'title_link' => $issue->getConstURL()
+        ]]);
+    }
+
+    public function notifyCommentMemberToTester(Issue $issue, $comment) {
+        $text = $this->getIssuePrefix($issue) . '' . $issue->getConstURL() . ' - *Комментирует исполнитель *';
+        $text = $this->addMentionsByUsers($text, $issue->getTesters());
+
+        $this->postMessageForIssue($issue, $text, [[
+            'fallback' => $issue->getName(),
+            'title' => $issue->getName(),
+            'text' => $comment,
+            'title_link' => $issue->getConstURL()
+        ]]);
+    }
+
 	public function notifyIssuePassTest(Issue $issue) {
 		$project = $issue->getProject();
 		// if (!($channel = $this->getChannelByProject($project)))

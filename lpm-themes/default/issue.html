@@ -3,7 +3,8 @@
 Требуются: 
     $issue - текущая задача
 */
-?><article id="issueView">  
+?>
+<article id="issueView">
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
   <div class="header-operations-bar">
     <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
@@ -18,7 +19,7 @@
         <?php endif;?>
     </h3>     
     <div class="issue_copy">
-        <a href="javascript:;" class="issue-commit-copy-link">скопировать commit сообщение</a>
+        <a id="copyText" class="copy-commit-message" href="javascript:void(0);"  data-clipboard-text='Issue #<?=$issue->getIdInProject() . ": " . $issue->getName();?>' >скопировать commit сообщение</a>
     </div>
     <ol class="info-list <?switch($issue->status): 
     case 0: ?>active-issue <?break;?> 
@@ -164,6 +165,13 @@
     <ol class="comments-list">
         <?php foreach (lpm_get_comments() as $comment): ?>
         <li>
+            <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
+            <p id="<?='comment_' . $comment->id?>"
+               class="delete-comment"
+               data-comment-id="<?=$comment->id?>"
+               data-user-id="<?=lpm_get_user()->getID();?>"
+               data-time="<?=$comment->date?>">Удалить</p>
+            <?php endif; ?>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
@@ -171,8 +179,10 @@
         </li>
         <?php endforeach; ?>
     </ol>
+      <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
   </article>
 </article>
+<input id='user-id-hidden' type="hidden" value="<?=lpm_get_user()->getID();?>">
 <script type="text/javascript">
     var issueLabels = <?=json_encode($issue->getLabelNames());?>;
 </script>

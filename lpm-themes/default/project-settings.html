@@ -1,0 +1,27 @@
+<h1><?lpm_print_header();?></h1>
+<article id="projectSettings" class="container">
+    <h3> Настройки проекта </h3>
+    <form method="post" action="" onsubmit="return false;">
+        <div class="info-message"></div>
+        <?php
+       	$scrum = (int)lpm_get_project()->scrum;
+        $slackNotifyChannel = lpm_get_project()->slackNotifyChannel;
+     ?>
+        <input type="hidden" id="projectId" value="<?=lpm_get_project()->getID();?>"/>
+
+        <ul id="ulProjectSettings">
+            <li class="con">
+                <label id="slackСhannelLabel" for="slackСhannel" >Канал оповещения в Slack</label>
+                <input id="slackСhannel" type="text" value="<?=$slackNotifyChannel ?>">
+            </li>
+            <li id="project-scrum-item">
+                <label for="scrumCheckbox"> Проект использует Scrum</label>
+                <input id="scrumCheckbox" type="checkbox" <?=$scrum===1 ? "checked" : ""?>>
+            </li>
+        </ul>
+
+    <div class="save-line">
+        <button id="setProjectSettings" type="submit"> Сохранить </button>
+        <button type="reset">Отмена</button> </div>
+    </form>
+</article>

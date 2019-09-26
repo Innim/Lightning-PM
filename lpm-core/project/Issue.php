@@ -17,6 +17,7 @@ class Issue extends MembersInstance
 	 *                             [алиас => таблица].
 	 * @return array<Issue> Массив загруженных задач.
 	 */
+
 	protected static function loadList($where, $extraSelect = '', $extraTables = null) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
 		$sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
@@ -407,10 +408,12 @@ SQL;
 			$issue->completedDate = (float)DateTimeUtils::date();
 	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
 	    } else if ($issue->status === Issue::STATUS_IN_WORK) {
-	    	// Сбрасываем дату завершения	    	
+	    	// Сбрасываем дату завершения
 			$issue->completedDate = null;
 	    	$hash['SET']['completedDate'] = '0000-00-00 00:00:00';
-	    }
+	    } else if ($issue->status === Issue::STATUS_WAIT) {
+            IssueService::checkTester( $issue );
+        }
 
 
 	    $db = self::getDB();
@@ -486,6 +489,18 @@ SQL;
 	    if (!$db->queryb($hash))
 	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
 	}
+
+    /**
+     * Получаем номер текущего спринта
+     * @return mixed
+     */
+    public static function getSprintCurrentNumber() {
+        $projectId = Project::$currentProject->getID();
+        $scrumStickerSnapshot = ScrumStickerSnapshot::loadList($projectId);
+        $currentSprintNumber = $scrumStickerSnapshot[0]->idInProject + 1;
+
+        return $currentSprintNumber;
+    }
 
 	/**
 	 * Возвращает постоянный URL задачи.
@@ -909,6 +924,7 @@ SQL;
 		return true;
 	}
 
+
 	protected function loadTesters() {
 	    $this->_testers = Member::loadListByIssueForTest($this->id);
 	    if ($this->_testers === false)
@@ -923,49 +939,56 @@ SQL;
 	 *  url:string
 	 * ]>
 	 */
-	public function getVideoLinks()
-	{
-		$preg = [
-			// YouTube
-			"(?:youtube.)\w{2,4}\/(?:watch\?v=)",
-			// Droplr
-			"d.pr\/v\/",
-			// Innim owncloud
-			"cloud.innim.ru\/index.php\/s\/"
-		];
+    public function getVideoLinks()
+    {
+        $preg = [
+            // YouTube
+            "(?:youtube.)\w{2,4}\/(?:watch\?v=)",
+            //Youtu.be
+            ":?youtu.be",
+            // Droplr
+            "d.pr\/v\/",
+            // Innim owncloud
+            "cloud.innim.ru\/index.php\/s\/"
+        ];
 
-		preg_match_all("/(" . implode("|", $preg) . ")(\S*)\"/", $this->getDesc(), $video);
-		// preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
-		$list = array();
-		foreach ($video[0] as $key => $value) {
-			$urlPrefix = $video[1][$key];
-			$videoUid = $video[2][$key];
-			$type = 'video';
-			$url = null;
+        preg_match_all("/(" . implode("|", $preg) . ")(\S*)\"/", $this->getDesc(), $video);
+        #preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
+        $list = array();
+        foreach ($video[0] as $key => $value) {
+            $urlPrefix = $video[1][$key];
+            $videoUid = $video[2][$key];
+            $type = 'video';
+            $url = null;
+            $youtubeUid = reset(explode('&', $videoUid));
 
-			if (strpos($urlPrefix, 'youtube') === 0) {
-				// Это YouTube
-				$type = 'youtube';
-				$url = "http://www.youtube.com/embed/" . $videoUid;
-			} else if (strpos($urlPrefix, 'd.pr') === 0) {
-				// Это Droplr
-				// $url = "http://d.pr/v/" . $videoUid . "+";
-				$url = "http://" . $urlPrefix . $videoUid . "+";
-			} else {
-				// Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
-				$url = "https://" . $urlPrefix . $videoUid . "/download";
-				$header = get_headers($url, 1);
-				if (empty($header) || !isset($header['Content-Type']) ||
-						strpos($header['Content-Type'], 'video/') !== 0) {
-					$url = null;
-				}
-			}
-			
-			if (!empty($url))
-				$list[] = (object) compact('type', 'url');
-		}
+            if (strpos($urlPrefix, 'youtube') === 0) {
+                // Это YouTube
+                $type = 'youtube';
+                $url = "http://www.youtube.com/embed/" .  $youtubeUid;
+            } else if (strpos($urlPrefix, 'youtu.be') === 0) {
+                // Это YouTu.be
+                $type = 'youtube';
+                $url = "http://www.youtube.com/embed/" . $videoUid;
+            } else if (strpos($urlPrefix, 'd.pr') === 0) {
+                // Это Droplr
+                // $url = "http://d.pr/v/" . $videoUid . "+";
+                $url = "http://" . $urlPrefix . $videoUid . "+";
+            } else {
+                // Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
+                $url = "https://" . $urlPrefix . $videoUid . "/download";
+                $header = get_headers($url, 1);
+                if (empty($header) || !isset($header['Content-Type']) ||
+                    strpos($header['Content-Type'], 'video/') !== 0) {
+                    $url = null;
+                }
+            }
 
-		return $list;
-	}
+            if (!empty($url))
+                $list[] = (object) compact('type', 'url');
+        }
+
+        return $list;
+    }
 }
 ?>

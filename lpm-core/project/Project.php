@@ -20,6 +20,46 @@ class Project extends MembersInstance
 	public static function loadList( $where ) {
 		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
 	}
+
+    /**
+     * Обновляет настройки проекта
+     *
+     */
+    public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel) {
+
+        $db = self::getDB();
+
+        $hash = [
+            'UPDATE' => LPMTables::PROJECTS,
+            'SET' => [
+                'scrum' => $scrum,
+                'slackNotifyChannel' => $slackNotifyChannel
+            ],
+            'WHERE' => [
+                'id' => $projectId
+            ]
+        ];
+
+        return  $db->queryb($hash);
+    }
+
+    public static function updateIssueMemberDefault($projectId, $memberByDefaultId) {
+        $db = self::getDB();
+
+        if ($projectId != null && $memberByDefaultId != null) {
+            $sql = "update `%s` set `defaultIssueMemberId`='". $memberByDefaultId ."'  where  `id` = '". $projectId ."'";
+            $result = $db->queryt($sql, LPMTables::PROJECTS);
+
+            if($result) return true;
+        }
+
+        return false;
+    }
+
+    public static function deleteMemberDefault ($defaultIssueMemberId, $projectId) {
+            $sql = "UPDATE `%s` SET `defaultIssueMemberId`=null WHERE `id`='$projectId' ";
+            return self::getDB()->queryt($sql, LPMTables::PROJECTS);
+    }
 		
 	public static function getAvailList( $isArchive ) {
 		if (self::$_availList == null ) {
@@ -52,7 +92,6 @@ class Project extends MembersInstance
 		return ( $isArchive ) ? self::$_availList['archive'] : self::$_availList['develop'];
 	}
 
-
 	public static function updateIssuesCount( $projectId ) {
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$sql = "UPDATE `%1\$s` ".
@@ -65,8 +104,7 @@ class Project extends MembersInstance
 		return $db->queryt( $sql, LPMTables::PROJECTS, LPMTables::ISSUES );
 	}
 
-	public static function sumHoursActiveIssues($projectId)
-	{
+	public static function sumHoursActiveIssues($projectId) {
 		$db = LPMGlobals::getInstance()->getDBConnect();
         $sql ="SELECT SUM(`hours`) AS `sum` FROM `%s` WHERE `projectId` = ".$projectId." ".
                "AND `deleted` = 0 ".
@@ -81,8 +119,8 @@ class Project extends MembersInstance
 	 * @param string $projectUID
 	 * @return Project
 	 */
-	public static function load( $projectUID ) {
-		return StreamObject::singleLoad( $projectUID, __CLASS__, '', 'uid' );
+	public static function load($projectUID) {
+		return StreamObject::singleLoad($projectUID, __CLASS__, '', 'uid');
 	}		
 	
 	/**
@@ -93,15 +131,11 @@ class Project extends MembersInstance
 	 * даже если есть уже загруженные данные
 	 * @return Project
 	 */
-	public static function loadById($projectId, $forceReload = false) 
-	{
-		if ($forceReload || !isset(self::$_projectsByIds[$projectId]))
-		{
+	public static function loadById($projectId, $forceReload = false) {
+		if ($forceReload || !isset(self::$_projectsByIds[$projectId])) {
 			$project = StreamObject::singleLoad($projectId, __CLASS__, '');;
 			self::$_projectsByIds[$projectId] = $project;
-		}
-		else 
-		{
+		} else {
 			$project = self::$_projectsByIds[$projectId];
 		}
 
@@ -116,16 +150,23 @@ class Project extends MembersInstance
 	 */
 	public static function getURLByProjectUID($projectUID, $hash = '') {
 		return Link::getUrl(ProjectPage::UID, [$projectUID], $hash);
-	} 
-
-	/**
-	 * Сбрасывает загруженные 
-	 * @return [type] [description]
-	 */
-	public static function resetLoaded()
-	{
-	    
 	}
+
+	public static function checkDeleteComment($author, $cookie) {
+	    $user = LightningEngine::getInstance()->getUser();
+
+	    return  $user->isAdmin() || $user->getID() == $author && Comment::checkDeleteCommentById($cookie);
+    }
+
+    public static function getProjectTester() {
+        $projectId = self::$currentProject->getID();
+        $tester = Member::loadTesterForProject($projectId);
+        if (!$tester) {
+            return null;
+        }
+
+        return $tester[0];
+    }
 	
 	/**
 	 * 
@@ -135,6 +176,7 @@ class Project extends MembersInstance
 	public $uid;
 	public $name;
 	public $desc;
+	public $defaultIssueMemberId;
 
 	/**
 	 * Проект ведется с помощью методологии Scrum
@@ -169,6 +211,7 @@ class Project extends MembersInstance
 		parent::__construct();
 		$this->_typeConverter->addIntVars('id');
 		$this->_typeConverter->addBoolVars('scrum');
+		$this->_typeConverter->addIntVars('defaultIssueMemberId');
 	}
 	
 	public function getID() {
@@ -302,4 +345,3 @@ class Project extends MembersInstance
 	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
 	// }
 }
-?>

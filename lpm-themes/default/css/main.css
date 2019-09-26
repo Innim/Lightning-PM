@@ -1,4 +1,4 @@
-@CHARSET "UTF-8";
+﻿@CHARSET "UTF-8";
 body {
 	font-family: Arial;
 	font-size  : 11pt;
@@ -1621,4 +1621,101 @@ div.ftp
 .table-cell {
 	display: table-cell;
 }
+.delete-comment, .delete-comment:hover {
+	text-decoration: underline;
+	cursor: pointer;
+	float: right;
+	font-size: 10px;
+	padding: 0px;
+}
 
+#slackСhannel {
+	height: 24px;
+	width: 170px;
+	margin: 0;
+	margin-left: 210px;
+
+}
+ul#ulProjectSettings {
+	padding: 10px;
+	list-style-type: none;
+}
+.con {
+	width: 100%;
+	height: 30px;
+	padding: 10px;
+	margin-bottom: 20px;
+}
+.con label {
+	margin-top: 5px;
+	float: left;
+}
+#scrumCheckbox {
+	margin-left: 4%;
+}
+
+#project-scrum-item {
+	margin-left: 10px;
+}
+.tooltip div {
+	display: none;
+	position: absolute;
+	margin: 20px;
+	bottom: -1px;
+	left: -1px;
+	z-index: 1000;
+	padding: 8px 12px;
+	text-align: left;
+	font-size: 12px;
+	line-height: 16px;
+	color: #000;
+	box-shadow: 0 1px 3px #C4C4C4;
+	background: #f6fff7;
+	border-radius: 2px;
+}
+#btnSellect {
+	background: #e9eae2;
+	border-radius: 3px;
+	text-align-last: center ;
+	color: #000000;
+	font-size: 15px;
+	height: 16px;
+	width: 95px;
+	margin: 10px 0 0 3px;
+	overflow: hidden;
+	display: block;
+	padding: 15px;
+}
+.headersProjectsMembers {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+.delete-tester-i {
+	opacity: 0.3;
+	margin-left: 20px;
+	text-decoration: underline;
+}
+.delete-tester-i:hover {
+	opacity: 1;
+	cursor: pointer;
+	color: #000000;
+	text-decoration: none;
+}
+.btnSelect {
+	float: left;
+}
+.headersProjectsMembers {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+.delete-member-default-i {
+	opacity: 0.3;
+	margin-left: 20px;
+	text-decoration: underline;
+}
+.delete-member-default-i:hover {
+	opacity: 1;
+	cursor: pointer;
+	color: #000000;
+	text-decoration: none;
+}

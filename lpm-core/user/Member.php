@@ -32,6 +32,10 @@ class Member extends User
 	    return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId);
     }
 
+    public static function loadTesterForProject($projectId, $onlyNotLocked = false) {
+	    return self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId);
+    }
+
 	public static function hasIssueMember($issueId, $userId) {
 		return self::hasMember(LPMInstanceTypes::ISSUE, $issueId, $userId);
 	}
@@ -86,6 +90,10 @@ class Member extends User
 	public static function saveIssueMembers($issueId, $userIds) {
 		return self::saveMembers(LPMInstanceTypes::ISSUE, $issueId, $userIds);
 	}
+
+	public static function saveProjectForTester($projectId, $userId) {
+	    return self::saveMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, [$userId]);
+    }
 
 	public static function saveMembers($instanceType, $instanceId, $userIds) {
 		$values = [];

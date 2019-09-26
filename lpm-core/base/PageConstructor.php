@@ -4,6 +4,10 @@ class PageConstructor
 	public static function getSiteURL() {
 		return SITE_URL;
 	}
+
+	public static function getSprintCurrentNumber() {
+	    return Issue::getSprintCurrentNumber();
+    }
 	
 	public static function getUsingScripts() {
 		return self::$_usingScripts;
@@ -87,7 +91,7 @@ class PageConstructor
 		return ( Project::$currentProject != null ) 
 				? Project::$currentProject->getMembers($onlyNotLocked) : array();
 	}
-	
+
 	public static function getIssueLabels() {
         return Issue::getLabels();
     }
@@ -132,6 +136,14 @@ class PageConstructor
 	public static function getUser() {
 		return LightningEngine::getInstance()->getUser();
 	}
+
+	public static function checkDeleteComment ($author, $cookie) {
+	    return Project::checkDeleteComment($author, $cookie);
+    }
+
+    public static function getProjectTester() {
+        return Project::getProjectTester();
+    }
 	
 	/*public static function includeCSS( $name ) {
 		include self::$_instance->getThemeDir() . 'css/' . $name . '.css';
@@ -140,7 +152,7 @@ class PageConstructor
 	public static function includePattern( $name, $args = null) {
 		if (null !== $args) extract($args);
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
-	}	
+	}
 
 	private static $_usingScripts = array( 
 		'libs/jquery-1.6.4.min',
@@ -151,6 +163,7 @@ class PageConstructor
 		'libs/iLoad',
 		'libs/highlight.pack',
 		'js-options.php$' ,
+        'libs/clipboard.min',
 		'lightning'
 	);
 	

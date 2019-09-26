@@ -236,6 +236,13 @@ function lpm_get_project_members() {
 }
 
 /**
+ * Возврашает тестера проекта
+ */
+function lpm_get_project_tester() {
+    return PageConstructor::getProjectTester();
+}
+
+/**
  * Возвращает список меток для задачи.
  */
 function lpm_get_issue_labels() {
@@ -328,4 +335,15 @@ function lpm_is_auth() {
 function lpm_get_errors() {
 	return PageConstructor::getErrors();
 }
-?>
+/**
+ * Проверяет кто удаляет комментарий.
+ */
+function lpm_check_delete_comment($author, $cookie) {
+    return PageConstructor::checkDeleteComment($author, $cookie);
+}
+/**
+ * Возвращает писок Снапшотов
+ */
+function lpm_print_sprint_current() {
+    return PageConstructor::getSprintCurrentNumber();
+}

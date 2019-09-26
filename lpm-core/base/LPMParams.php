@@ -8,6 +8,7 @@
  */
 class LPMParams extends LPMBaseObject {
 	const QUERY_ARG_SID = 'sid';
+	const USER_ID = 'userId';
 	/*public $uid  = '';
 	public $suid = '';
 	public $puid = '';*/
@@ -32,7 +33,7 @@ class LPMParams extends LPMBaseObject {
 
 		// Некоторые аргументы могут быть переданы напрямую,
 		// но только те, которые мы ждем
-		$queryArgNames = [self::QUERY_ARG_SID];
+		$queryArgNames = [self::QUERY_ARG_SID, self::USER_ID];
 		$queryArgs = [];
 		foreach ($queryArgNames as $name) {
 			if (isset($_GET[$name]))
