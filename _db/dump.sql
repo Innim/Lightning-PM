@@ -125,6 +125,7 @@ CREATE TABLE `lpm_projects` (
   `isArchive` tinyint(1) NOT NULL DEFAULT '0',
   `slackNotifyChannel` varchar(255) NOT NULL COMMENT 'имя канала для оповещений в Slack',
   `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте',
+  `defaultIssueMemberId` int(11) NOT NULL COMMENT 'Исполнитель умолчанию',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -134,11 +135,11 @@ DROP TABLE IF EXISTS `lpm_recovery_emails`;
 CREATE TABLE `lpm_recovery_emails` (
   `id` bigint(19) unsigned zerofill NOT NULL AUTO_INCREMENT,
   `userId` bigint(19) NOT NULL,
-  `recoveryKey` varchar(255) NOT NULL,
+  `recoveryKey` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `expDate` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `userId` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
 DROP TABLE IF EXISTS `lpm_scrum_snapshot`;
@@ -153,7 +154,7 @@ CREATE TABLE `lpm_scrum_snapshot` (
   `issue_members_sp` text CHARACTER SET utf8 NOT NULL COMMENT 'Количество SP по участникам',
   `issue_priority` tinyint(2) NOT NULL COMMENT 'Приоритет задачи',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
 DROP TABLE IF EXISTS `lpm_scrum_snapshot_list`;
@@ -164,7 +165,7 @@ CREATE TABLE `lpm_scrum_snapshot_list` (
   `creatorId` bigint(19) NOT NULL COMMENT 'Идентификатор создателя snapshot-а',
   `created` datetime NOT NULL COMMENT 'Время создания snapshot-а',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
 DROP TABLE IF EXISTS `lpm_scrum_sticker`;
@@ -246,5 +247,5 @@ CREATE TABLE `lpm_work_study` (
   UNIQUE KEY `workerId` (`workerId`,`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-ALTER TABLE `lpm_projects` ADD `defaultIssueMemberId` INT NOT NULL COMMENT 'Исполнитель умолчанию';
--- 2019-09-02 16:24:23
+
+-- 2019-09-26 12:29:41
