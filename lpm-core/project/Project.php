@@ -92,7 +92,6 @@ class Project extends MembersInstance
 		return ( $isArchive ) ? self::$_availList['archive'] : self::$_availList['develop'];
 	}
 
-
 	public static function updateIssuesCount( $projectId ) {
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$sql = "UPDATE `%1\$s` ".
@@ -105,8 +104,7 @@ class Project extends MembersInstance
 		return $db->queryt( $sql, LPMTables::PROJECTS, LPMTables::ISSUES );
 	}
 
-	public static function sumHoursActiveIssues($projectId)
-	{
+	public static function sumHoursActiveIssues($projectId) {
 		$db = LPMGlobals::getInstance()->getDBConnect();
         $sql ="SELECT SUM(`hours`) AS `sum` FROM `%s` WHERE `projectId` = ".$projectId." ".
                "AND `deleted` = 0 ".
@@ -121,8 +119,8 @@ class Project extends MembersInstance
 	 * @param string $projectUID
 	 * @return Project
 	 */
-	public static function load( $projectUID ) {
-		return StreamObject::singleLoad( $projectUID, __CLASS__, '', 'uid' );
+	public static function load($projectUID) {
+		return StreamObject::singleLoad($projectUID, __CLASS__, '', 'uid');
 	}		
 	
 	/**
@@ -133,15 +131,11 @@ class Project extends MembersInstance
 	 * даже если есть уже загруженные данные
 	 * @return Project
 	 */
-	public static function loadById($projectId, $forceReload = false) 
-	{
-		if ($forceReload || !isset(self::$_projectsByIds[$projectId]))
-		{
+	public static function loadById($projectId, $forceReload = false) {
+		if ($forceReload || !isset(self::$_projectsByIds[$projectId])) {
 			$project = StreamObject::singleLoad($projectId, __CLASS__, '');;
 			self::$_projectsByIds[$projectId] = $project;
-		}
-		else 
-		{
+		} else {
 			$project = self::$_projectsByIds[$projectId];
 		}
 
@@ -156,21 +150,22 @@ class Project extends MembersInstance
 	 */
 	public static function getURLByProjectUID($projectUID, $hash = '') {
 		return Link::getUrl(ProjectPage::UID, [$projectUID], $hash);
-	} 
-
-	/**
-	 * Сбрасывает загруженные 
-	 * @return [type] [description]
-	 */
-	public static function resetLoaded()
-	{
-	    
 	}
 
-	public static function checkDeleteComment ($author, $cookie) {
+	public static function checkDeleteComment($author, $cookie) {
 	    $user = LightningEngine::getInstance()->getUser();
 
 	    return  $user->isAdmin() || $user->getID() == $author && Comment::checkDeleteCommentById($cookie);
+    }
+
+    public static function getProjectTester() {
+        $projectId = self::$currentProject->getID();
+        $tester = Member::loadTesterForProject($projectId);
+        if (!$tester) {
+            return null;
+        }
+
+        return $tester[0];
     }
 	
 	/**
@@ -349,14 +344,4 @@ class Project extends MembersInstance
 	// 			"WHERE `id` = '" . $projectId . "'";
 	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
 	// }
-
-    public function getProjectTester() {
-        $projectId = self::$currentProject->getID();
-        $tester = Member::loadTesterForProject($projectId);
-        if (!$tester) {
-            return null;
-        }
-
-        return $tester[0];
-    }
 }
