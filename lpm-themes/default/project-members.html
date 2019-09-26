@@ -15,7 +15,7 @@
         <button onclick="openMembersChooser();">Добавить</button>
 
     <!-- Добавить исполнителя по умолчанию -->
-    <h3 class="headersProjectsMembers"> Исполнитель проекта по умолчанию  </h3>
+    <h3 class="headersProjectsMembers">Исполнитель задач по умолчанию</h3>
     <?php
     $memberByDefaultId = lpm_get_project()->defaultIssueMemberId;
     foreach (lpm_get_project_members() as $member):
@@ -44,7 +44,7 @@
     <!-- End perfomens by default -->
 
     <!-- Выбор Тестировшика проекта  -->
-    <h3 class="headersProjectsMembers" > Тестировшик проекта  </h3>
+    <h3 class="headersProjectsMembers">Тестировщик</h3>
     <div id="select-tester-option">
     <?php
             $tester = lpm_get_project_tester();
@@ -63,7 +63,7 @@
             <option value="0">Тестер не выбран</option>
 
         <?php foreach (lpm_get_project_members() as $member): ?>
-            <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
+            <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
         <?php endforeach; ?>
         </select>
         <button id="btnSelect" type="button">Подтвердить</button>
