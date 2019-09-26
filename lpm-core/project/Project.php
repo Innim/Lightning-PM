@@ -350,5 +350,13 @@ class Project extends MembersInstance
 	// 	return $db->queryt( $sql, LPMTables::PROJECTS );
 	// }
 
+    public function getProjectTester() {
+        $projectId = self::$currentProject->getID();
+        $tester = Member::loadTesterForProject($projectId);
+        if (!$tester) {
+            return null;
+        }
+
+        return $tester[0];
+    }
 }
-?>

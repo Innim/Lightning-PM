@@ -1,14 +1,15 @@
 <article  id="projectMembers">
     <h1><?lpm_print_header();?></h1>
+    <div class="info-message" style="display: none;" >Сохранено</div>
     <h3>Участники проекта</h3>
     <input type="hidden" name="projectId" value="<?=lpm_get_project()->getID();?>"/>
     <ul class="users-list">
-        <?foreach (lpm_get_project_members() as $member) {?>
+        <?php foreach (lpm_get_project_members() as $member): ?>
         <li>
             <span class="user-name"><?=$member->getLinkedName();?></span>
             <input id="userIdId" type="hidden" name="userId" value="<?=$member->getID();?>">
         </li>
-        <?}?>
+        <?php endforeach; ?>
     </ul>
 
         <button onclick="openMembersChooser();">Добавить</button>
@@ -36,11 +37,38 @@
             <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
             <?php endforeach; ?>
         </select>
-        <button id="btnSelectMember" type="submit">Подтвердить</button>
     </form>
     <?php endif;?>
 
     <!-- End perfomens by default -->
+
+    <!-- Выбор Тестировшика проекта  -->
+    <h3 class="headersProjectsMembers" > Тестировшик проекта  </h3>
+    <div id="select-tester-option">
+    <?php
+            $tester = lpm_get_project_tester();
+            if(!is_null($tester)) {
+        ?>
+    <ul>
+    <li id="NameTester" value="<?=$tester->getName();?>" >
+        <?=$tester->getName();?>
+        <b class="delete-tester-i">Удалить</b>
+    </li>
+    </ul>
+    <?php } else { ?>
+
+    <form id="formOption">
+        <select id="selectTester">
+            <option value="0">Тестер не выбран</option>
+
+        <?php foreach (lpm_get_project_members() as $member): ?>
+            <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
+        <?php endforeach; ?>
+        </select>
+        <button id="btnSelect" type="button">Подтвердить</button>
+    </form>
+        <?php } ?>
+    </div>
     <?lpm_print_users_chooser();?>
 
 </article>

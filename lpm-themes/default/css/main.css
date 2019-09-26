@@ -1,4 +1,4 @@
-@CHARSET "UTF-8";
+﻿@CHARSET "UTF-8";
 body {
 	font-family: Arial;
 	font-size  : 11pt;
@@ -1686,16 +1686,23 @@ ul#ulProjectSettings {
 	display: block;
 	padding: 15px;
 }
-#btnSellect:hover {
-	background: #c4c5bd;
+.headersProjectsMembers {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+.delete-tester-i {
+	opacity: 0.3;
+	margin-left: 20px;
+	text-decoration: underline;
+}
+.delete-tester-i:hover {
+	opacity: 1;
 	cursor: pointer;
-	border-radius: 10px;
-	text-align: center;
-	height: 21px;
-	width: 100px;
-	margin: 10px 0 0 3px;
-	overflow: hidden;
-	display: block;
+	color: #000000;
+	text-decoration: none;
+}
+.btnSelect {
+	float: left;
 }
 .headersProjectsMembers {
 	margin-top: 10px;

@@ -85,6 +85,47 @@ class ProjectService extends LPMBaseService
 
     }
 
+    public function addTester( $projectId, $userId ){
+        $projectId = (float)$projectId;
+        $userId = (float)$userId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
+
+        // проверим, что существует такой проект
+        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
+
+        if(empty($userId)) {
+            return $this->error("Неверные входные параметры");
+        }
+
+        if (Member::hasMember(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $userId )) {
+            return $this->error("Тестеровшик уже добавлен");
+        }
+
+        Member::saveProjectForTester($projectId, $userId);
+
+        $this->add2Answer("projectId", $projectId);
+        $this->add2Answer("userId", $userId);
+
+        return $this->answer();
+    }
+
+    public function deleteTester($projectId) {
+        $projectId = (int)$projectId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
+
+
+        if(!Member::deleteMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId))
+            return $this->error("Ошибка удаления тестера.");
+
+        $this->add2Answer('$testerId', $projectId);
+
+        return $this->answer();
+    }
+
     public function deleteMemberDefault ($projectId) {
         $projectId = (int)$projectId;
         // проверяем права пользователя
@@ -114,7 +155,7 @@ class ProjectService extends LPMBaseService
         $projectId = (int)$projectId;
         $slackNotifyChannel = (string)$slackNotifyChannel;
 
-        if ($scrum !== 0 and $scrum !== 1 ) {
+        if ($scrum !== 0 and $scrum !== 1) {
             return $this->error('Неверные входные параметры');
         }
 
