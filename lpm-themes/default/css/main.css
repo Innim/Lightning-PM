@@ -1392,6 +1392,9 @@ div.ftp
 	font-weight: normal;
 	font-size: 0.8em;
 } 
+#scrumBoard h3 .scrum-board-info .scrum-board-sprint-num {
+	font-weight: bold;
+} 
 #scrumBoard .scrum-board-actions {
 	float: right;
 	padding-right: 5px;

@@ -1,6 +1,5 @@
 <?php
-class Issue extends MembersInstance
-{
+class Issue extends MembersInstance {
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
 	
@@ -489,18 +488,6 @@ SQL;
 	    if (!$db->queryb($hash))
 	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
 	}
-
-    /**
-     * Получаем номер текущего спринта
-     * @return mixed
-     */
-    public static function getSprintCurrentNumber() {
-        $projectId = Project::$currentProject->getID();
-        $scrumStickerSnapshot = ScrumStickerSnapshot::loadList($projectId);
-        $currentSprintNumber = $scrumStickerSnapshot[0]->idInProject + 1;
-
-        return $currentSprintNumber;
-    }
 
 	/**
 	 * Возвращает постоянный URL задачи.
@@ -991,4 +978,3 @@ SQL;
         return $list;
     }
 }
-?>

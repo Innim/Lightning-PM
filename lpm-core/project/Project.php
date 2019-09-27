@@ -201,6 +201,8 @@ class Project extends MembersInstance
 	private $_sumOpenedIssuesHours = -1;
 	private $_totalIssuesCount = -1;
 
+	private $_currentSprintNum = -1;
+
 	/**
 	 * @var User
 	 */
@@ -275,6 +277,21 @@ class Project extends MembersInstance
 	    }
 
 	    return $this->_sumOpenedIssuesHours;
+	}
+
+	/**
+	 * Возвращает номер текущего спринта (с 1), если проект является SCRUM проектом, иначе - 0.
+	 * @return int
+	 */
+	public function getCurrentSpintNum() {
+		if ($this->scrum) {
+			if ($this->_currentSprintNum === -1)
+				$this->_currentSprintNum = ScrumStickerSnapshot::getLastSnapshotId($this->id) + 1;
+			
+			return $this->_currentSprintNum;
+		} else {
+			return 0;
+		}
 	}
 	
 	/**

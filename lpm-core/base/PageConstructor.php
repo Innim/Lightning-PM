@@ -1,13 +1,8 @@
 <?php
-class PageConstructor
-{		
+class PageConstructor {		
 	public static function getSiteURL() {
 		return SITE_URL;
 	}
-
-	public static function getSprintCurrentNumber() {
-	    return Issue::getSprintCurrentNumber();
-    }
 	
 	public static function getUsingScripts() {
 		return self::$_usingScripts;
@@ -232,4 +227,3 @@ class PageConstructor
 		return SITE_URL . $this->_themeDir;
 	}
 }
-?>
