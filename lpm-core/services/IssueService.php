@@ -296,14 +296,11 @@ class IssueService extends LPMBaseService {
 
         if (empty($testers)) {
             $projectId = $issue->getProject()->getID();
-            $tester = Member::loadTesterForProject($projectId);
-            $testerId = $tester[0]->getID();
+            $projectTesters = Member::loadTesterForProject($projectId);
+            if (empty($projectTesters))
+            	return null;
 
-            if (!$testerId) {
-                return null;
-            }
-            
-            $testerId = (int)$testerId;
+            $testerId = (int) $projectTesters[0]->getID();
             Member::saveMembers($type, $issueId, [$testerId]);
         }
     }
