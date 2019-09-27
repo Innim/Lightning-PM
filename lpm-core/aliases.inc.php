@@ -341,9 +341,3 @@ function lpm_get_errors() {
 function lpm_check_delete_comment($author, $cookie) {
     return PageConstructor::checkDeleteComment($author, $cookie);
 }
-/**
- * Возвращает писок Снапшотов
- */
-function lpm_print_sprint_current() {
-    return PageConstructor::getSprintCurrentNumber();
-}
