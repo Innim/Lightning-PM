@@ -70,14 +70,14 @@ class SlackIntegration {
 			// return;
 
 		// TODO: постить в канал
-		$text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *завершена*';
+		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *завершена*';
 		$text = $this->addMentionsByUsers($text, $issue->getMembers());
 
 		$this->postMessageForIssue($issue, $text);
 	}
 
 	public function notifyCommentTesterToMember(Issue $issue, $comment) {
-	    $text = $this->getIssuePrefix($issue) . '' . $issue->getConstURL() . ' - *Комментирует тестировщик*';
+	    $text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *Комментирует тестировщик*';
         $text = $this->addMentionsByUsers($text, $issue->getMembers());
 
         $this->postMessageForIssue($issue, $text, [[
@@ -89,7 +89,7 @@ class SlackIntegration {
     }
 
     public function notifyCommentMemberToTester(Issue $issue, $comment) {
-        $text = $this->getIssuePrefix($issue) . '' . $issue->getConstURL() . ' - *Комментирует исполнитель *';
+        $text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *Комментирует исполнитель *';
         $text = $this->addMentionsByUsers($text, $issue->getTesters());
 
         $this->postMessageForIssue($issue, $text, [[
@@ -108,7 +108,7 @@ class SlackIntegration {
 		$master = $project->getMaster();
 
 		// TODO: постить в канал
-		$text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *прошла тестирование*';
+		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *прошла тестирование*';
 		$text = $this->addMentionsByUsers($text, $master !== null ? [$master] : null);
 
 		$this->postMessageForIssue($issue, $text);
