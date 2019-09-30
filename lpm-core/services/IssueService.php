@@ -223,7 +223,7 @@ class IssueService extends LPMBaseService {
 	        $issue = Issue::load($issueId);
 	        if (!$issue)
 	        	return $this->error('Нет такой задачи');
-	        Issue::changePriority($issue, $delta);
+	        Issue::changePriority($this->getUser(), $issue, $delta);
 
 	        $this->add2Answer('priority', $issue->priority);
 	    } catch (\Exception $e) { 
@@ -366,8 +366,12 @@ SQL;
 			if (!Member::deleteIssueMembers($issueId))
 				return $this->errorDBSave();
 
-			if (!Member::saveIssueMembers($issueId, [$this->getUser()->userId]))
+			$userId = $this->getUser()->userId;
+			if (!Member::saveIssueMembers($issueId, [$userId]))
 				return $this->errorDBSave();
+
+	    	// Записываем лог
+	    	UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    } 
@@ -552,6 +556,49 @@ SQL;
 		return $obj;
 	}
 
+    public function deleteComment($id) {
+        $id = (int)$id;
+
+        $comment = Comment::load($id);
+        if (!$comment) {
+            return $this->error('Комментария не существует');
+        }
+
+        $user = $this->getUser();
+
+        if (!$this->checkRole(User::ROLE_ADMIN)) {
+            if (!Comment::checkDeleteCommentById($id)) 
+            	return $this->error('Время удаления истекло.');
+        	
+        	$authorId = $comment->authorId;
+	        if ($authorId != $user->getID())
+	            return $this->error('Вы не можете удалять комментарий');
+        }
+
+		try {
+			Comment::remove($user, $comment);
+		} catch (Exception $e) {
+			return $this->exception($e);
+		}
+
+        return $this->answer();
+    }
+
+	private function notificationCommentTesterOrMembers(Issue $issue, $comment) {
+        $testerIssue = $issue->getTesterIds();
+        $membersIssue = $issue->getMemberIds();
+        $userSendMessage = $this->getUser()->getID();
+        $slack = SlackIntegration::getInstance();
+
+        if ($issue->status == Issue::STATUS_WAIT) {
+           if (in_array($userSendMessage, $testerIssue)) {
+               $slack->notifyCommentTesterToMember($issue, $comment);
+           } elseif (in_array($userSendMessage, $membersIssue)) {
+               $slack->notifyCommentMemberToTester($issue, $comment);
+           }
+        }
+    }
+
 	// TODO: вынести из сервиса
 	private function postComment(Issue $issue, $text) {
 		$issueId = $issue->id;
@@ -581,48 +628,4 @@ SQL;
 
 		return $comment;
 	}
-
-    public function deleteComment($id) {
-        $id = (int)$id;
-
-        $comment = Comment::load($id);
-        if (!$comment) {
-            return $this->error('Комментария не существует');
-        }
-
-        $user = $this->getUser();
-
-        if (!$this->checkRole(User::ROLE_ADMIN)) {
-            if (!Comment::checkDeleteCommentById($id)) 
-            	return $this->error('Время удаления истекло.');
-        	
-        	$authorId = $comment->authorId;
-	        if ($authorId != $user->getID())
-	            return $this->error('Вы не можете удалять комментарий');
-        }
-
-		try {
-			Comment::remove($user, $comment);
-		} catch (Exception $e) {
-			return $this->exception($e);
-		}
-
-        return $this->answer();
-    }
-
-	public function notificationCommentTesterOrMembers(Issue $issue, $comment) {
-        $testerIssue = $issue->getTesterIds();
-        $membersIssue = $issue->getMemberIds();
-        $userSendMessage = $this->getUser()->getID();
-        $slack = SlackIntegration::getInstance();
-
-        if ($issue->status == Issue::STATUS_WAIT) {
-           if (in_array($userSendMessage, $testerIssue)) {
-               $slack->notifyCommentTesterToMember($issue, $comment);
-           } elseif (in_array($userSendMessage, $membersIssue)) {
-               $slack->notifyCommentMemberToTester($issue, $comment);
-           }
-        }
-
-    }
 }

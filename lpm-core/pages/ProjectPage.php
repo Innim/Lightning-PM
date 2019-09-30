@@ -482,7 +482,8 @@ class ProjectPage extends BasePage
 	    		// Записываем лог
 	    		UserLogEntry::create($userId, DateTimeUtils::$currentDate,
 	    			$editMode ? UserLogEntryType::EDIT_ISSUE : UserLogEntryType::ADD_ISSUE,
-	    			$issue->id);
+	    			$issue->id,
+	    			$editMode ? 'Full edit' : '');
 			
 				LightningEngine::go2URL($issueURL);
 			}
