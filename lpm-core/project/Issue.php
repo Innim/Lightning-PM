@@ -391,6 +391,29 @@ SQL;
 		}
 	}
 
+    /**
+     * Помечает задачу как удаленную.
+     */
+    public static function remove(User $user, Issue $issue) {		
+	    $db = self::getDB();
+		$sql = "update `%s` set `deleted` = '1' where `id` = '" . $issue->id . "'";
+	    if (!$db->queryt($sql, LPMTables::ISSUES))
+	    	throw new Exception('Remove issue failed', \GMFramework\ErrorCode::SAVE_DATA);
+
+		Project::updateIssuesCount($issue->projectId);
+
+		// отправка оповещений
+		$members = $issue->getMemberIds();
+		array_push( $members, $issue->authorId );
+		
+		EmailNotifier::getInstance()->sendMail2Allowed(
+			'Удалена задача "' . $issue->name . '"', 
+			$this->getUser()->getName() . ' удалил задачу "' . $issue->name .  '"', 
+			$members,
+			EmailNotifier::PREF_ISSUE_STATE
+		);
+    }
+
 	public static function updateStatus(User $user, Issue $issue, $status, $sendNotify = true) {
 		$issue->status = $status;
 	    $hash = [

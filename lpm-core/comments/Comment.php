@@ -107,6 +107,16 @@ SQL;
     public static function checkDeleteCommentById ($id) {
         return $_COOKIE['comment'.$id];
     }
+
+    public static function remove(User $user, Comment $comment) {
+        $db = self::getDB();
+        $sql = "UPDATE `%s` SET `deleted` = 1 WHERE `id` = '$comment->id'";
+        if (!$db->queryt($sql, LPMTables::COMMENTS))
+	    	throw new Exception('Remove comment failed', \GMFramework\ErrorCode::SAVE_DATA);
+
+        self::setTimeToDeleteComment($comment, 0);
+		
+    }
 	
 	public $id           = 0;
 	public $instanceId   = 0;
@@ -195,13 +205,6 @@ SQL;
 		
 		return parent::setVar( $var, $value );
 	}
-
-    public function removeComment($comment) {
-        $sql = "UPDATE `%s` SET `deleted` = 1 WHERE `id` = '$comment->id'";
-        $db = self::getDB();
-        self::setTimeToDeleteComment($comment, 0);
-        $db->queryt($sql, LPMTables::COMMENTS);
-    }
 }
 
 ?>

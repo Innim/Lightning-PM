@@ -148,21 +148,12 @@ class IssueService extends LPMBaseService {
 		//if (!$issue->checkEditPermit( $this->_auth->getUserId() ))
 		//return $this->error( 'У Вас нет прав на редактирование этой задачи' );
 		
-		// отправка оповещений
-		$members = $issue->getMemberIds();
-		array_push( $members, $issue->authorId );
-		
-		EmailNotifier::getInstance()->sendMail2Allowed(
-			'Удалена задача "' . $issue->name . '"', 
-			$this->getUser()->getName() . ' удалил задачу "' . $issue->name .  '"', 
-			$members,
-			EmailNotifier::PREF_ISSUE_STATE
-		);
-		
-		$sql = "update `%s` set `deleted` = '1' where `id` = '" . $issueId . "'";
-		if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) return $this->errorDBSave();
-
-		Project::updateIssuesCount(  $issue->projectId );
+		try {
+			Issue::remove($this->getUser(), $issue);
+		} catch (Exception $e) {
+			return $this->exception($e);
+		}
+	
 		
 		return $this->answer();
 	}
@@ -610,8 +601,11 @@ SQL;
 	            return $this->error('Вы не можете удалять комментарий');
         }
 
-        # Удаляем коммент
-        $comment->removeComment($comment);
+		try {
+			Comment::remove($user, $comment);
+		} catch (Exception $e) {
+			return $this->exception($e);
+		}
 
         return $this->answer();
     }
