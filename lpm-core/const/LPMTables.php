@@ -75,6 +75,10 @@ class LPMTables {
 	 * @var string
 	 */
 	const USERS = 'users';
+    /**
+     * Лог действий пользователей
+     */
+    const USERS_LOG = 'users_log';
 	/**
 	 * Таблица настроек пользователей
 	 * @var string
