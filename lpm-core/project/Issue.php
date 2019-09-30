@@ -408,7 +408,7 @@ SQL;
 		
 		EmailNotifier::getInstance()->sendMail2Allowed(
 			'Удалена задача "' . $issue->name . '"', 
-			$this->getUser()->getName() . ' удалил задачу "' . $issue->name .  '"', 
+			$user->getName() . ' удалил задачу "' . $issue->name .  '"', 
 			$members,
 			EmailNotifier::PREF_ISSUE_STATE
 		);
