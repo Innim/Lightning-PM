@@ -499,10 +499,11 @@ SQL;
 
 	/**
 	 * Обновляет значение приоритета задачи.
+	 * @param  User   $user Пользователь, который меняет приоритет.
 	 * @param  Issue  $issue Задача, у которой меняется приоритет.
 	 * @param  int    $delta Изменение приоритета.
 	 */
-	public static function changePriority(Issue $issue, $delta) {
+	public static function changePriority(User $user, Issue $issue, $delta) {
 		$issue->priority = (int)max(0, min($issue->priority + $delta, 100));
 	    $hash = [
 	    	'UPDATE' => LPMTables::ISSUES,
@@ -517,6 +518,10 @@ SQL;
 	    $db = self::getDB();
 	    if (!$db->queryb($hash))
 	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
+
+	    // Записываем лог
+	    UserLogEntry::issueEdit($user->userId, $issue->id,
+	    	'Change priority: ' . ($delta > 0 ? '+' : '') . $delta);
 	}
 
 	/**

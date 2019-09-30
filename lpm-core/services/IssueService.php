@@ -223,7 +223,7 @@ class IssueService extends LPMBaseService {
 	        $issue = Issue::load($issueId);
 	        if (!$issue)
 	        	return $this->error('Нет такой задачи');
-	        Issue::changePriority($issue, $delta);
+	        Issue::changePriority($this->getUser(), $issue, $delta);
 
 	        $this->add2Answer('priority', $issue->priority);
 	    } catch (\Exception $e) { 
@@ -366,8 +366,12 @@ SQL;
 			if (!Member::deleteIssueMembers($issueId))
 				return $this->errorDBSave();
 
-			if (!Member::saveIssueMembers($issueId, [$this->getUser()->userId]))
+			$userId = $this->getUser()->userId;
+			if (!Member::saveIssueMembers($issueId, [$userId]))
 				return $this->errorDBSave();
+
+	    	// Записываем лог
+	    	UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    } 
