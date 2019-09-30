@@ -184,3 +184,5 @@ CREATE TABLE `lpm_users_log` (
 -- 2019-09-30 17:46:00
 ALTER TABLE `lpm_users_log`
 ADD `comment` varchar(255) NOT NULL COMMENT 'Комментарий действия';
+
+-- v.0.8a.005
