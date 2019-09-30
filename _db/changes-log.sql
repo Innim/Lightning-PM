@@ -178,3 +178,5 @@ CREATE TABLE `lpm_users_log` (
   `type` mediumint(5) NOT NULL COMMENT 'Тип действия',
   `entityId` int(11) NOT NULL COMMENT 'Идентификатор сущности, с которой было произведено действие'
 ) COMMENT='Лог действий пользователя';
+
+-- v.0.8a.004
