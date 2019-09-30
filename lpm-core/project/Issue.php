@@ -449,7 +449,7 @@ SQL;
 	    Project::updateIssuesCount($issue->projectId);
 
 	    // Записываем лог
-	    UserLogEntry::issueEdit($user->userId, $issue->id);
+	    UserLogEntry::issueEdit($user->userId, $issue->id, 'Update status to ' . $status);
 
 	    if ($sendNotify) {
 	    	// Отправка оповещений
