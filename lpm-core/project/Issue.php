@@ -402,6 +402,10 @@ SQL;
 
 		Project::updateIssuesCount($issue->projectId);
 
+	    // Записываем лог
+	    UserLogEntry::create($user->userId, DateTimeUtils::$currentDate,
+	    	UserLogEntryType::DELETE_ISSUE, $issue->id);
+
 		// отправка оповещений
 		$members = $issue->getMemberIds();
 		array_push( $members, $issue->authorId );
@@ -443,6 +447,9 @@ SQL;
 	    	throw new Exception('Status save failed', \GMFramework\ErrorCode::SAVE_DATA);
 
 	    Project::updateIssuesCount($issue->projectId);
+
+	    // Записываем лог
+	    UserLogEntry::issueEdit($user->userId, $issue->id);
 
 	    if ($sendNotify) {
 	    	// Отправка оповещений

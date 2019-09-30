@@ -355,12 +355,13 @@ class ProjectPage extends BasePage
             }
 
 			// сохраняем задачу
+			$userId = $engine->getAuth()->getUserId();
 			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
 			           		 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
 			           		 		  "'" . $_POST['name'] . "', '" . $hours . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
-			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
+			           		 		  "'" . $userId . "', " .
 									  "'" . DateTimeUtils::mysqlDate() . "', " .
 									  "'" . $completeDate . "', " . 
 									  "'" . $priority . "' ) " .
@@ -477,6 +478,11 @@ class ProjectPage extends BasePage
 				$this->notifyAboutIssueChange($issue, $issueURL, $editMode);
 
 				Project::updateIssuesCount($issue->projectId);
+
+	    		// Записываем лог
+	    		UserLogEntry::create($userId, DateTimeUtils::$currentDate,
+	    			$editMode ? UserLogEntryType::EDIT_ISSUE : UserLogEntryType::ADD_ISSUE,
+	    			$issue->id);
 			
 				LightningEngine::go2URL($issueURL);
 			}

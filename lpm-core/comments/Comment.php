@@ -114,6 +114,9 @@ SQL;
 
         self::setTimeToDeleteComment($comment, 0);
 		
+	    // Записываем лог
+	    UserLogEntry::create($user->userId, DateTimeUtils::$currentDate,
+	    	UserLogEntryType::DELETE_COMMENT, $comment->id);
     }
 	
 	public $id           = 0;
