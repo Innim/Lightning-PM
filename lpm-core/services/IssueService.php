@@ -591,32 +591,25 @@ SQL;
 		return $comment;
 	}
 
-    public function deleteComment($id, $userId) {
+    public function deleteComment($id) {
         $id = (int)$id;
-        $userId = (int)$userId;
 
         $comment = Comment::load($id);
         if (!$comment) {
             return $this->error('Комментария не существует');
         }
 
-        if ($this->checkRole( User::ROLE_ADMIN )) {
-            $comment->removeComment($comment);
+        $user = $this->getUser();
 
-            return $this->answer();
+        if (!$this->checkRole(User::ROLE_ADMIN)) {
+            if (!Comment::checkDeleteCommentById($id)) 
+            	return $this->error('Время удаления истекло.');
+        	
+        	$authorId = $comment->authorId;
+	        if ($authorId != $user->getID())
+	            return $this->error('Вы не можете удалять комментарий');
         }
 
-        if (!Comment::checkDeleteCommentById($id)) {
-            return $this->error('Время удаления истекло.');
-        }
-
-        $authorId = $comment->authorId;
-        $user = User::load($userId);
-        $userId = $user->getID();
-
-        if ($authorId != $userId) {
-            return $this->error('Вы не можете удалять комментарий');
-        }
         # Удаляем коммент
         $comment->removeComment($comment);
 

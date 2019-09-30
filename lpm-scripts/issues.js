@@ -17,11 +17,10 @@ $(document).ready(
 
         $('.delete-comment').live('click', function() {
             let id = $(this).attr('data-comment-id');
-            let userId = $(this).attr('data-user-id');
             let el = $(this);
             let result = confirm('Удалить комментарий?');
             if (result) {
-                issuePage.deleteComment(id, userId, function(res) {
+                issuePage.deleteComment(id, function(res) {
                     if (res) {
                         el.parent('li').remove();
                         el = null;
@@ -1745,10 +1744,9 @@ function removeClipboardImage(){
     elem.parentNode.removeChild(elem);
 };
 
-issuePage.deleteComment = (id, userId, callback) => {
+issuePage.deleteComment = (id, callback) => {
     srv.issue.deleteComment(
         id,
-        userId,
         function (res) {
             if (res.success) {
                 callback(true);
