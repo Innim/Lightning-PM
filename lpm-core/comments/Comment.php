@@ -5,20 +5,20 @@ class Comment extends LPMBaseObject
 	private static $_curIType = -1;
 	private static $_curIId   = -1;
 	
-	protected static function loadList( $where ) {
+	protected static function loadList($where) {
 		$sql = "select * from `%1\$s`, `%2\$s` where `%1\$s`.`deleted` = '0'";
 		if ($where != '') $sql  .= " and " . $where;
 		$sql .= " and `%1\$s`.`authorId` = `%2\$s`.`userId` ".
 					"order by `%1\$s`.`date` desc";	
-		GMLog::writeLog( $sql );	
+		//GMLog::writeLog($sql);	
 		return StreamObject::loadObjList(
 				self::getDB(), 
-				array( $sql, LPMTables::COMMENTS, LPMTables::USERS ), 
+				[$sql, LPMTables::COMMENTS, LPMTables::USERS], 
 				__CLASS__ 
 		);
 	}
 	
-	public static function setCurrentInstance( $curIType, $curIId ) {
+	public static function setCurrentInstance($curIType, $curIId) {
 		self::$_curIType = $curIType;
 		self::$_curIId   = $curIId;
 	}
@@ -67,19 +67,18 @@ SQL;
 		return $list;
 	}
 
-	public static function add($instanceType, $instanceId, $userId, $text)
-    {
+	public static function add($instanceType, $instanceId, $userId, $text) {
         $db = LPMGlobals::getInstance()->getDBConnect();
 
         $text = $db->real_escape_string($text);
-        $text = str_replace( '%', '%%', $text );
+        $text = str_replace('%', '%%', $text);
 
         $sql = "insert into `%s` (`instanceId`, `instanceType`, `authorId`, `date`, `text` ) " .
             "values ( '" . $instanceId . "', '" . $instanceType . "', " .
             "'" . $userId . "', '" . DateTimeUtils::mysqlDate() . "', " .
             "'" . $text . "' )";
 
-        if (!$db->queryt( $sql, LPMTables::COMMENTS ))
+        if (!$db->queryt($sql, LPMTables::COMMENTS))
             return false;
 
         return self::load($db->insert_id);
@@ -90,14 +89,13 @@ SQL;
 	 * @param float $id
 	 * @return Comment
 	 */
-	public static function load( $id ) {
-		return StreamObject::singleLoad( $id, __CLASS__, '', '%1$s`.`id' );
+	public static function load($id) {
+		return StreamObject::singleLoad($id, __CLASS__, '', '%1$s`.`id');
 	}
 	
 	public static function getCurrentList() {
-		return self::$_curIType > 0 && self::$_curIId > 0
-		? self::getListByInstance( self::$_curIType, self::$_curIId )
-		: array();
+		return self::$_curIType > 0 && self::$_curIId > 0 ?
+			self::getListByInstance(self::$_curIType, self::$_curIId) : array();
 	}
 
     public static function setTimeToDeleteComment($comment, $time) {
@@ -139,14 +137,13 @@ SQL;
 	 */
 	public $issue;
 	
-	function __construct()
-	{
+	function __construct() {
 		parent::__construct();
 	
 		//$this->id = 0;
 	
-		$this->_typeConverter->addFloatVars( 'id', 'instanceId', 'instanceType', 'authorId' );
-		$this->addDateTimeFields( 'date' );
+		$this->_typeConverter->addFloatVars('id', 'instanceId', 'instanceType', 'authorId');
+		$this->addDateTimeFields('date');
 	
 		$this->author = new User();
 	}
@@ -167,14 +164,14 @@ SQL;
 		return $this->dateLabel;//parent::getDateTime( $this->date );
 	}
 	
-	public function loadStream( $hash ) {
-		return parent::loadStream( $hash ) && $this->author->loadStream( $hash );
+	public function loadStream($hash) {
+		return parent::loadStream($hash) && $this->author->loadStream($hash);
 	}
 	
-	protected function setVar( $var, $value ) {
+	protected function setVar($var, $value) {
 		switch ($var) {
 			case 'text' : {
-				$value = htmlspecialchars( $value );
+				$value = htmlspecialchars($value);
 
 				$value = preg_replace( 
 					array( 
@@ -197,14 +194,13 @@ SQL;
 				$value = HTMLHelper::codeIt($value, false);
 			} break;
 			case 'date' : {
-				if (!parent::setVar( $var, $value )) return false;
-				$this->dateLabel = self::getDateTimeStr( $this->date );
+				if (!parent::setVar($var, $value))
+					return false;
+				$this->dateLabel = self::getDateTimeStr($this->date);
 				return true;
 			} break;
 		}
 		
-		return parent::setVar( $var, $value );
+		return parent::setVar($var, $value);
 	}
 }
-
-?>

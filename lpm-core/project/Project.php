@@ -208,12 +208,10 @@ class Project extends MembersInstance
 	 */
 	private $_master;
 	
-	function __construct() 
-	{
+	function __construct() {
 		parent::__construct();
-		$this->_typeConverter->addIntVars('id');
+		$this->_typeConverter->addIntVars('id', 'defaultIssueMemberId');
 		$this->_typeConverter->addBoolVars('scrum');
-		$this->_typeConverter->addIntVars('defaultIssueMemberId');
 	}
 	
 	public function getID() {
