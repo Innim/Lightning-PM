@@ -197,12 +197,14 @@ CREATE TABLE `lpm_users` (
 
 DROP TABLE IF EXISTS `lpm_users_log`;
 CREATE TABLE `lpm_users_log` (
-  `id` int(11) NOT NULL COMMENT 'Идентификатор записи' AUTO_INCREMENT PRIMARY KEY,
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи',
   `userId` int(11) NOT NULL COMMENT 'Идентификатор пользователя',
   `date` datetime NOT NULL COMMENT 'Дата совершения действия',
   `type` mediumint(5) NOT NULL COMMENT 'Тип действия',
-  `entityId` int(11) NOT NULL COMMENT 'Идентификатор сущности, с которой было произведено действие'
-) COMMENT='Лог действий пользователя';
+  `entityId` int(11) NOT NULL COMMENT 'Идентификатор сущности, с которой было произведено действие',
+  `comment` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Комментарий действия',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Лог действий пользователя';
 
 
 DROP TABLE IF EXISTS `lpm_users_pref`;
