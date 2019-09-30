@@ -82,6 +82,7 @@ class LPMBaseService extends SecureService
 	protected function addComment( $instanceType, $instanceId, $text ) {
 		if (!$user = $this->getUser()) return false;
 		
+		// TODO: перенести в Comment
 		$text = trim( $text );
 		if ($text == '') {
 			$this->error( 'Недопустимый текст' );
@@ -90,6 +91,13 @@ class LPMBaseService extends SecureService
 
 		setcookie('Delete', 'Удалить', time()+600, "/");
 
-		return Comment::add($instanceType, $instanceId, $user->userId, $text);
+		$comment = Comment::add($instanceType, $instanceId, $user->userId, $text);
+		if ($comment) {			
+		    // Записываем лог
+		    UserLogEntry::create($user->userId, DateTimeUtils::$currentDate,
+		    	UserLogEntryType::ADD_COMMENT, $comment->id);
+		}
+
+		return $comment;
 	}
 }

@@ -195,6 +195,16 @@ CREATE TABLE `lpm_users` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
+DROP TABLE IF EXISTS `lpm_users_log`;
+CREATE TABLE `lpm_users_log` (
+  `id` int(11) NOT NULL COMMENT 'Идентификатор записи' AUTO_INCREMENT PRIMARY KEY,
+  `userId` int(11) NOT NULL COMMENT 'Идентификатор пользователя',
+  `date` datetime NOT NULL COMMENT 'Дата совершения действия',
+  `type` mediumint(5) NOT NULL COMMENT 'Тип действия',
+  `entityId` int(11) NOT NULL COMMENT 'Идентификатор сущности, с которой было произведено действие'
+) COMMENT='Лог действий пользователя';
+
+
 DROP TABLE IF EXISTS `lpm_users_pref`;
 CREATE TABLE `lpm_users_pref` (
   `userId` bigint(20) NOT NULL COMMENT 'идентификатор пользователя',

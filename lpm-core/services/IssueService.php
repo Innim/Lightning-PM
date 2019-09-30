@@ -148,21 +148,12 @@ class IssueService extends LPMBaseService {
 		//if (!$issue->checkEditPermit( $this->_auth->getUserId() ))
 		//return $this->error( 'У Вас нет прав на редактирование этой задачи' );
 		
-		// отправка оповещений
-		$members = $issue->getMemberIds();
-		array_push( $members, $issue->authorId );
-		
-		EmailNotifier::getInstance()->sendMail2Allowed(
-			'Удалена задача "' . $issue->name . '"', 
-			$this->getUser()->getName() . ' удалил задачу "' . $issue->name .  '"', 
-			$members,
-			EmailNotifier::PREF_ISSUE_STATE
-		);
-		
-		$sql = "update `%s` set `deleted` = '1' where `id` = '" . $issueId . "'";
-		if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) return $this->errorDBSave();
-
-		Project::updateIssuesCount(  $issue->projectId );
+		try {
+			Issue::remove($this->getUser(), $issue);
+		} catch (Exception $e) {
+			return $this->exception($e);
+		}
+	
 		
 		return $this->answer();
 	}
@@ -591,34 +582,30 @@ SQL;
 		return $comment;
 	}
 
-    public function deleteComment($id, $userId) {
+    public function deleteComment($id) {
         $id = (int)$id;
-        $userId = (int)$userId;
 
         $comment = Comment::load($id);
         if (!$comment) {
             return $this->error('Комментария не существует');
         }
 
-        if ($this->checkRole( User::ROLE_ADMIN )) {
-            $comment->removeComment($comment);
+        $user = $this->getUser();
 
-            return $this->answer();
+        if (!$this->checkRole(User::ROLE_ADMIN)) {
+            if (!Comment::checkDeleteCommentById($id)) 
+            	return $this->error('Время удаления истекло.');
+        	
+        	$authorId = $comment->authorId;
+	        if ($authorId != $user->getID())
+	            return $this->error('Вы не можете удалять комментарий');
         }
 
-        if (!Comment::checkDeleteCommentById($id)) {
-            return $this->error('Время удаления истекло.');
-        }
-
-        $authorId = $comment->authorId;
-        $user = User::load($userId);
-        $userId = $user->getID();
-
-        if ($authorId != $userId) {
-            return $this->error('Вы не можете удалять комментарий');
-        }
-        # Удаляем коммент
-        $comment->removeComment($comment);
+		try {
+			Comment::remove($user, $comment);
+		} catch (Exception $e) {
+			return $this->exception($e);
+		}
 
         return $this->answer();
     }
