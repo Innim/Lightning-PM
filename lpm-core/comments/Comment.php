@@ -1,6 +1,7 @@
 <?php
-class Comment extends LPMBaseObject
-{
+class Comment extends LPMBaseObject {
+	private static $_tags = ['b', 'i', 'u', 'code'];
+
 	private static $_listByInstance = array();
 	private static $_curIType = -1;
 	private static $_curIId   = -1;
@@ -159,8 +160,53 @@ SQL;
 	public function getIssueCommentUrl(Issue $issue) {
 		return $issue->getConstURL() . '#comment-' . $this->id;
 	}
+
+	/**
+	 * Возвращает обработанный текст, который можно выводить на html странице.
+	 * @return string
+	 */
 	public function getText() {
-		return $this->text;
+		$value = htmlspecialchars($this->text);
+		$tags = implode('|', self::$_tags);
+		$value = preg_replace( 
+			array( 
+				//"/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is",
+				//"/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is",
+				"/(https?:\/\/[^<\s]+[[:alnum:]])([^[:alnum:]]*(?:<br ?\/?>)*[^a-zа-я0-9]|\s|$)/iu",
+				"/((?:\n\r)|(?:\r\n)|\n|\r){1}/",
+				"/\[(" . $tags . ")\](.*?)\[\/\\1\]/",
+			), 
+		    array(  
+		    	//"$1$2<a href=\"http://$3\" >$3</a>",
+		    	//"$1$2<a href=\"$3\" >$3</a>",
+		    	'<a href="$1">$1</a>$2',
+		    	"<br />",
+		    	"<$1>$2</$1>" 
+		    ),
+			$value 
+		);
+
+		$value = HTMLHelper::codeIt($value, false);
+		return $value;
+	}
+
+	/**
+	 * Возвращает текст без тегов.
+	 *
+	 * Вырезает все теги подсветки.
+	 * @return string
+	 */
+	public function getCleanText() {
+		$value = $this->text;
+
+		$replaceTags = [];
+		foreach (self::$_tags as $tag) {
+			$replaceTags[] = '[' . $tag . ']';
+			$replaceTags[] = '[/' . $tag . ']';
+		}
+
+		$value = str_replace($replaceTags, '', $value);
+		return $value;
 	}
 	
 	public function getAuthorLinkedName() {
@@ -181,29 +227,6 @@ SQL;
 	
 	protected function setVar($var, $value) {
 		switch ($var) {
-			case 'text' : {
-				$value = htmlspecialchars($value);
-
-				$value = preg_replace( 
-					array( 
-						//"/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is",
-						//"/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is",
-						"/(https?:\/\/[^<\s]+[[:alnum:]])([^[:alnum:]]*(?:<br ?\/?>)*[^a-zа-я0-9]|\s|$)/iu",
-						"/((?:\n\r)|(?:\r\n)|\n|\r){1}/",
-						"/\[(b|i|u|code)\](.*?)\[\/\\1\]/",
-					), 
-				    array(  
-				    	//"$1$2<a href=\"http://$3\" >$3</a>",
-				    	//"$1$2<a href=\"$3\" >$3</a>",
-				    	'<a href="$1">$1</a>$2',
-				    	"<br />",
-				    	"<$1>$2</$1>" 
-				    ),
-					$value 
-				);
-
-				$value = HTMLHelper::codeIt($value, false);
-			} break;
 			case 'date' : {
 				if (!parent::setVar($var, $value))
 					return false;
@@ -213,5 +236,10 @@ SQL;
 		}
 		
 		return parent::setVar($var, $value);
+	}
+
+	protected function clientObjectCreated($obj) {
+		$obj->text = $this->getText();
+		return $obj;
 	}
 }

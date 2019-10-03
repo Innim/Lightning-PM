@@ -616,7 +616,7 @@ SQL;
 			'Новый комментарий к задаче "' . $issue->name . '"',
 			$this->getUser()->getName() . ' оставил комментарий к задаче "' .
 			$issue->name .  '":' . "\n" .
-			strip_tags( $comment->text ) . "\n\n" .
+			$comment->getCleanText() . "\n\n" .
 			'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
 			$members,
 			EmailNotifier::PREF_ISSUE_COMMENT
