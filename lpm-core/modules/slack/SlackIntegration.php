@@ -76,28 +76,14 @@ class SlackIntegration {
 		$this->postMessageForIssue($issue, $text);
 	}
 
-	public function notifyCommentTesterToMember(Issue $issue, $comment) {
-	    $text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *Комментирует тестировщик*';
-        $text = $this->addMentionsByUsers($text, $issue->getMembers());
-
-        $this->postMessageForIssue($issue, $text, [[
-            'fallback' => $issue->getName(),
-            'title' => $issue->getName(),
-            'text' => $comment,
-            'title_link' => $issue->getConstURL()
-        ]]);
+	public function notifyCommentTesterToMember(Issue $issue, Comment $comment) {
+        $this->postMessageForIssueComment($issue, $comment,
+        	$issue->getMembers(), 'Тестировщик оставил комментарий');
     }
 
     public function notifyCommentMemberToTester(Issue $issue, $comment) {
-        $text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *Комментирует исполнитель *';
-        $text = $this->addMentionsByUsers($text, $issue->getTesters());
-
-        $this->postMessageForIssue($issue, $text, [[
-            'fallback' => $issue->getName(),
-            'title' => $issue->getName(),
-            'text' => $comment,
-            'title_link' => $issue->getConstURL()
-        ]]);
+        $this->postMessageForIssueComment($issue, $comment,
+        	$issue->getTesters(), 'Исполнитель оставил комментарий');
     }
 
 	public function notifyIssuePassTest(Issue $issue) {
@@ -126,6 +112,20 @@ class SlackIntegration {
 
 		return $this->_client;
 	}
+
+    private function postMessageForIssueComment(Issue $issue, Comment $comment, $mentionUsers, $title) {
+    	$commentUrl = $comment->getIssueCommentUrl($issue);
+		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *' . $title . '*';
+        $text = $this->addMentionsByUsers($text, $mentionUsers);
+
+        $this->postMessageForIssue($issue, $text, [[
+            'fallback' => $issue->getName(),
+            //'title' => $issue->getName(),
+            'title' => $comment->author->getShortName() . ' написал:',
+            'text' => $comment->getCleanText(),
+            'title_link' => $commentUrl
+        ]]);
+    }
 
 	private function postMessageForIssue(Issue $issue, $text, $attachments = null) {
 		$project = $issue->getProject();

@@ -27,7 +27,7 @@
             <?php endif; ?>
 			<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
-            <p class="date"><a class="anchor" href="#comment-<?=$comment->id;?>"><?=$comment->getDate();?></a></p>
+            <p class="date"><a class="anchor" href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
             <article class="text"><?=$comment->getText();?></article>
             <?php if ($comment->issue):?>
     		<div class="comment-issue-line">

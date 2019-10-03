@@ -193,7 +193,7 @@ class IssueService extends LPMBaseService {
 	        if (!$issue)
 	        	return $this->error('Нет такой задачи');
 
-			$comment = $this->postComment($issue, 'Прошла тестирование');
+			$comment = $this->postComment($issue, 'Прошла тестирование', true);
 
 			// Отправляем оповещенив в slack
 			$slack = SlackIntegration::getInstance();
@@ -584,13 +584,13 @@ SQL;
         return $this->answer();
     }
 
-	private function notificationCommentTesterOrMembers(Issue $issue, $comment) {
-        $testerIssue = $issue->getTesterIds();
-        $membersIssue = $issue->getMemberIds();
-        $userSendMessage = $this->getUser()->getID();
-        $slack = SlackIntegration::getInstance();
-
+	private function slackNotificationCommentTesterOrMembers(Issue $issue, Comment $comment) {
         if ($issue->status == Issue::STATUS_WAIT) {
+	        $testerIssue = $issue->getTesterIds();
+	        $membersIssue = $issue->getMemberIds();
+	        $userSendMessage = $comment->author->getID();
+	        $slack = SlackIntegration::getInstance();
+
            if (in_array($userSendMessage, $testerIssue)) {
                $slack->notifyCommentTesterToMember($issue, $comment);
            } elseif (in_array($userSendMessage, $membersIssue)) {
@@ -600,7 +600,7 @@ SQL;
     }
 
 	// TODO: вынести из сервиса
-	private function postComment(Issue $issue, $text) {
+	private function postComment(Issue $issue, $text, $ignoreSlackNotification = false) {
 		$issueId = $issue->id;
 		if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text))
 			throw new Exception("Не удалось добавить комментарий");
@@ -609,13 +609,14 @@ SQL;
         $members = $issue->getMemberIds();
         $members[] = $issue->authorId;
         
-        $this->notificationCommentTesterOrMembers( $issue, $text);
+        if (!$ignoreSlackNotification)
+        	$this->slackNotificationCommentTesterOrMembers($issue, $comment);
 
 		EmailNotifier::getInstance()->sendMail2Allowed(
 			'Новый комментарий к задаче "' . $issue->name . '"',
 			$this->getUser()->getName() . ' оставил комментарий к задаче "' .
 			$issue->name .  '":' . "\n" .
-			strip_tags( $comment->text ) . "\n\n" .
+			$comment->getCleanText() . "\n\n" .
 			'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
 			$members,
 			EmailNotifier::PREF_ISSUE_COMMENT
