@@ -584,13 +584,13 @@ SQL;
         return $this->answer();
     }
 
-	private function notificationCommentTesterOrMembers(Issue $issue, $comment) {
-        $testerIssue = $issue->getTesterIds();
-        $membersIssue = $issue->getMemberIds();
-        $userSendMessage = $this->getUser()->getID();
-        $slack = SlackIntegration::getInstance();
-
+	private function slackNotificationCommentTesterOrMembers(Issue $issue, Comment $comment) {
         if ($issue->status == Issue::STATUS_WAIT) {
+	        $testerIssue = $issue->getTesterIds();
+	        $membersIssue = $issue->getMemberIds();
+	        $userSendMessage = $comment->author->getID();
+	        $slack = SlackIntegration::getInstance();
+
            if (in_array($userSendMessage, $testerIssue)) {
                $slack->notifyCommentTesterToMember($issue, $comment);
            } elseif (in_array($userSendMessage, $membersIssue)) {

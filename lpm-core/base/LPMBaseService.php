@@ -92,7 +92,8 @@ class LPMBaseService extends SecureService
 		setcookie('Delete', 'Удалить', time()+600, "/");
 
 		$comment = Comment::add($instanceType, $instanceId, $user->userId, $text);
-		if ($comment) {			
+		if ($comment) {	
+			$comment->author = $user;		
 		    // Записываем лог
 		    UserLogEntry::create($user->userId, DateTimeUtils::$currentDate,
 		    	UserLogEntryType::ADD_COMMENT, $comment->id);
