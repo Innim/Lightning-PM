@@ -193,7 +193,7 @@ class IssueService extends LPMBaseService {
 	        if (!$issue)
 	        	return $this->error('Нет такой задачи');
 
-			$comment = $this->postComment($issue, 'Прошла тестирование');
+			$comment = $this->postComment($issue, 'Прошла тестирование', true);
 
 			// Отправляем оповещенив в slack
 			$slack = SlackIntegration::getInstance();
@@ -600,7 +600,7 @@ SQL;
     }
 
 	// TODO: вынести из сервиса
-	private function postComment(Issue $issue, $text) {
+	private function postComment(Issue $issue, $text, $ignoreSlackNotification = false) {
 		$issueId = $issue->id;
 		if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text))
 			throw new Exception("Не удалось добавить комментарий");
@@ -609,7 +609,8 @@ SQL;
         $members = $issue->getMemberIds();
         $members[] = $issue->authorId;
         
-        $this->notificationCommentTesterOrMembers( $issue, $text);
+        if (!$ignoreSlackNotification)
+        	$this->slackNotificationCommentTesterOrMembers($issue, $comment);
 
 		EmailNotifier::getInstance()->sendMail2Allowed(
 			'Новый комментарий к задаче "' . $issue->name . '"',
