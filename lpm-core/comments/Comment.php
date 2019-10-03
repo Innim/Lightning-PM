@@ -151,6 +151,14 @@ SQL;
 		$this->author = new User();
 	}
 
+	/**
+	 * Возвращает URL комментария на странице задачи.
+	 * @param  Issue  $issue Задача, к которой оставлен комментарий.
+	 * @return string        URL комментария на странице задачи.
+	 */
+	public function getIssueCommentUrl(Issue $issue) {
+		return $issue->getConstURL() . '#comment-' . $this->id;
+	}
 	public function getText() {
 		return $this->text;
 	}
