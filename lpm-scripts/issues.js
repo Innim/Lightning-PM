@@ -73,6 +73,13 @@ DropDown.prototype = {
 
 var issuePage = {};
 
+issuePage.onShowAddIssue = function () {
+    var selectedPerformer = $('#selected-performer').val();
+    if (selectedPerformer) {
+        issuePage.addIssueMember();
+    }
+}
+
 issuePage.addIssueLabel = function() {
     $("#addIssueLabelFormContainer").dialog({
         resizable: false,
@@ -865,11 +872,6 @@ issuePage.showAddForm = function ( type, parentId ) {
     //$("#projectView").hide();
     window.location.hash = 'add-issue';
     states.updateView();
-
-    var selectedPerformer = $('#selected-performer').val();
-    if (selectedPerformer) {
-        issuePage.addIssueMember();
-    }
     
     if (typeof type != 'undefined') {
         //$('#issueForm > form > ')
