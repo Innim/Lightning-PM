@@ -3,8 +3,8 @@
  */
 $(document).ready(
     function () {
-        states.addState( $("#issueForm"  ), 'add-issue');
         states.addState($("#projectView"));
+        states.addState($("#issueForm"  ), 'add-issue', issuePage.onShowAddIssue);
 
         states.updateView();
         issuePage.updateStat();
