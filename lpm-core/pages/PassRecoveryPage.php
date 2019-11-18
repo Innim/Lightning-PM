@@ -64,36 +64,57 @@ class PassRecoveryPage extends BasePage{
     }    
     
     private function checkUrlKey($key, $userId){
-        $curDate = date("Y-m-d H:i:s");
-        $sql = "SELECT `userId` FROM `%s` WHERE `recoveryKey` = '" . $key . 
-               "' AND `userId` = '" . $userId . "' AND `expDate` >= '". $curDate . "'";
-        if (!$query = $this->_db->queryt($sql, LPMTables::RECOVERY_EMAILS)){
-            $this->_engine->addError('Ошибка чтения из базы');
-        } elseif ($Info = $query->fetch_assoc()) { 
-             return true;
-        } else {
-            $this->_engine->addError('Запись не найдена');
-        } 
+        $savedKey = $this->getActualKey($userId);
+        if ($savedKey !== false) {
+            if ($savedKey === null || $savedKey !== $key) {
+                $this->_engine->addError('Запись не найдена');
+            } else {
+                return true;
+            }
+        }
+
         return false;
     }
+
+    private function getActualKey($userId) {
+        $curDate = DateTimeUtils::mysqlDate();
+        $sql = "SELECT `recoveryKey` FROM `%s` WHERE `userId` = '" . $userId .
+            "' AND `expDate` >= '". $curDate . "' LIMIT 1";
+        if (!$query = $this->_db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
+            $this->_engine->addError('Ошибка чтения из базы');
+            return false;
+        } elseif ($row = $query->fetch_assoc()) {
+            return $row['recoveryKey'];
+        } else {
+            return null;
+        } 
+    }
     
-    private function sendRecoveryEmail($userId, $firstName, $email){
+    private function sendRecoveryEmail($userId, $firstName, $email) {
+        // Проверим, нет ли актуального письма
+        $currentKey = $this->getActualKey($userId);
+        if ($currentKey === false)
+            return false;
+
+        if ($currentKey != null) {
+            $this->_engine->addError('Письмо уже было отправлено на данный email');
+            return false;
+        }
+
         $expFormat = mktime(date("H"), date("i"), date("s"), date("m")  , date("d")+1, date("Y"));
 	$expDate = date("Y-m-d H:i:s",$expFormat);
         $key = md5(BaseString::randomStr());
-        $sql = "INSERT INTO `%s` (`userId`, `recoveryKey`, `expDate` )" .
+        $sql = "REPLACE INTO `%s` (`userId`, `recoveryKey`, `expDate` )" .
                "VALUES ('" . $userId . "', '" . $key . "', '" . $expDate . "' )";
-        if (!$this->_db->queryt($sql, LPMTables::RECOVERY_EMAILS)){            
-            if ($this->_db->errno == 1062) {
-                $this->_engine->addError( ' Письмо уже было отправлено на данный email ' );
-            } else {
-                $this->_engine->addError( 'Ошибка записи в базу' );
-            }            
-	} else {
+
+        if (!$this->_db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {            
+            $this->_engine->addError('Ошибка записи в базу');
+            return false;
+        } else {
             $href = "pass-recovery/reclink/" . $key . "/?userId=" . urlencode(base64_encode($userId));
             $recoveryLink ='<a href="'. SITE_URL . $href .'"> ' . SITE_URL .  $href . '</a>';
             $message  = "Здравствуйте $firstName,\r\n";
-	    $message .= "Для восстановления пароля перейдите по ссылке:\r\n";
+            $message .= "Для восстановления пароля перейдите по ссылке:\r\n";
             $message .= "-----------------------\r\n";
             $message .= "$recoveryLink\r\n";
             $message .= "-----------------------\r\n";
@@ -102,7 +123,6 @@ class PassRecoveryPage extends BasePage{
             EmailNotifier::getInstance()->send($email, $firstName, $subject, $message);
             return true;
         }
-        return false;
     }
     
     private function updatePass($newPass, $userId, $key){
