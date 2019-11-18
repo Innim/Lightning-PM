@@ -3,4 +3,4 @@
  * Версия приложения
  * @var string
  */
-define('VERSION', '0.8a.007');
+define('VERSION', '0.8a.008');
