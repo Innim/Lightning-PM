@@ -186,3 +186,8 @@ ALTER TABLE `lpm_users_log`
 ADD `comment` varchar(255) NOT NULL COMMENT 'Комментарий действия';
 
 -- v.0.8a.005
+
+ALTER TABLE `lpm_recovery_emails`
+CHANGE `id` `id` bigint(19) unsigned NOT NULL AUTO_INCREMENT FIRST;
+
+-- v.0.8a.008

@@ -133,7 +133,7 @@ CREATE TABLE `lpm_projects` (
 
 DROP TABLE IF EXISTS `lpm_recovery_emails`;
 CREATE TABLE `lpm_recovery_emails` (
-  `id` bigint(19) unsigned zerofill NOT NULL AUTO_INCREMENT,
+  `id` bigint(19) unsigned NOT NULL AUTO_INCREMENT,
   `userId` bigint(19) NOT NULL,
   `recoveryKey` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `expDate` datetime NOT NULL,
