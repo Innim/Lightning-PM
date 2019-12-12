@@ -14,6 +14,11 @@ before_script:
   - source venv/bin/activate
   - pip install -r ./ci/requirements.txt
 
+cache:
+  paths:
+    - venv/
+    - .cache/pip
+
 deploy to production:
   image: python:3.8
   stage: deploy
