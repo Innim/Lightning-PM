@@ -1,0 +1,11 @@
+stages:
+  - deploy
+
+deploy-prod:
+  image: python3.8
+  stage: deploy
+  only:
+    - master
+    - ci/176.add-ci
+  script:
+    - echo "start deploy to vds01.innim.ru"
