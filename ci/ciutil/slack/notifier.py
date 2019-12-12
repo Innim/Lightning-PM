@@ -71,8 +71,6 @@ class SlackMessenger:
         res = requests.post(url=self.MESSAGE_URL,
                             headers=self._get_authorization_header(),
                             data=slack_data)
-        print(slack_data)
-        print(res.status_code, res.json())
         return res.status_code, res.json()
 
     def upload_file(self, slack_data, file_path):

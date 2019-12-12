@@ -48,10 +48,10 @@ def log_error(title, text):
     print('-' * 80)
 
 
-@runner(msg_title='Deploy to PRODUCTION')
+@runner(msg_title='Deploy to PROD')
 def prod_deploy():
     worker.deploy()
-    notifier.deploy_message(deploy_type='production')
+    notifier.deploy_message(deploy_type='prod')
 
 
 if __name__ == '__main__':

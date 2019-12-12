@@ -13,7 +13,7 @@ class PMNotifier(GitlabSlackNotifier):
     def deploy_message(self, deploy_type: str):
         title = "DEPLOY for {deploy_type} is SUCCESS".format(deploy_type=deploy_type.upper())
         brief_text = 'https://task.innim.ru'
-        text = f'Деплой завершен для {deploy_type}'
+        text = f'Деплой успешно завершен для {deploy_type}'
 
         self.success_message(title=title, brief_text=brief_text, text=text)
 
