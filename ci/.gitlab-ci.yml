@@ -9,3 +9,4 @@ deploy-prod:
     - ci/176.add-ci
   script:
     - echo "start deploy to vds01.innim.ru"
+    - python --version
