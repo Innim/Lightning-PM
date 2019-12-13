@@ -30,7 +30,12 @@ class PMDeployer(SshWorker):
 
         # cmd = f'cd {tmp_dir} && git checkout {self.git_branch} && git pull'
         # self.ssh_cmd(cmd)
-        git_clone = f'git clone {self.git_user}:{self.git_passwd}@{self.git_project}.git'
+        s = '://'
+        ind = self.git_project.find(s) + len(s)
+        uri = self.git_project[:ind] + f'{self.git_user}:{self.git_passwd}@' + self.git_project[ind:] + '.git'
+
+        # git_clone = f'git clone {self.git_user}:{self.git_passwd}@{self.git_project}.git'
+        git_clone = f'git clone {uri}'
         cmd = f'cd {tmp_dir} && {git_clone} && git checkout {self.git_branch} && git pull'
         self.ssh_cmd(cmd)
 
