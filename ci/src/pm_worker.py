@@ -20,6 +20,9 @@ class PMWorker(CIWorker):
         deployer = PMDeployer(ssh_info=ssh_info,
                               upload_path=self.info.deploy_upload_path,
                               remote_app_path=self.info.deploy_app_path,
-                              git_branch=self.info.git_branch)
+                              git_branch=self.info.git_branch,
+                              git_user=self.info.deploy_git_user,
+                              git_passwd=self.info.deploy_git_passwd,
+                              git_project=self.info.project_url)
 
         deployer.deploy()
