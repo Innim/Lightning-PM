@@ -8,15 +8,15 @@ from shutil import copy2, copytree
 
 
 class PMDeployer(SshWorker):
-    def __init__(self, ssh_info: SshInfo, upload_path, remote_app_path):
+    def __init__(self, ssh_info: SshInfo, upload_path, remote_app_path, git_branch):
         super().__init__(ssh_info)
+        self.git_branch = git_branch
         self.upload_dir = upload_path
         self.remote_app_dir = remote_app_path
-        # self.src_dir = Path(src_dir).resolve()
-        # self.deploy_dir = Path(self.src_dir).resolve()
 
     def deploy(self):
         self.connect()
-        cmd = f'cd {self.upload_dir} && pwd && git checkout master && git pull'
+        cmd = f'cd {self.upload_dir} && pwd && git checkout {self.git_branch} && git pull'
         self.ssh_cmd(cmd)
-        
+
+
