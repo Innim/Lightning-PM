@@ -43,7 +43,7 @@ class PMDeployer(SshWorker):
         cmd = f'cd {tmp_dir} && rm -rf {exclude}'
         self.ssh_cmd(cmd)
 
-        cmd = f'cp -r {self.upload_path}/. {self.remote_app_path}'
+        cmd = f'cp -r {tmp_dir}/. {self.remote_app_path}'
         self.ssh_cmd(cmd)
 
         cmd = f'rm -rf {tmp_dir}'
