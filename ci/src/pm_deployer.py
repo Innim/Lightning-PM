@@ -9,7 +9,6 @@ from shutil import copy2, copytree
 
 class PMDeployer(SshWorker):
 
-    # project_data = ['lpm_core', 'lpm_files', 'lpm_libs', 'lpm_scripts', 'lpm_themes', '.htaccess']
     exclude_data = ['ci', '_db', '_private', 'CHANGELOG.md', 'README.md', 'lpm-config.inc.template.php', '.git']
 
     def __init__(self, ssh_info: SshInfo, upload_path, remote_app_path, git_branch, git_user, git_passwd, git_project):
