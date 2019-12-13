@@ -30,3 +30,4 @@ class SshWorker:
     def put(self, local_src, remote_dst):
         result = self.fab.put(local_src, remote_dst)
         print(f'Uploaded "{result.local}" to "{result.remote}"')
+
