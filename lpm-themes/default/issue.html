@@ -3,6 +3,7 @@
 Требуются: 
     $issue - текущая задача
 */
+$userId = lpm_get_user()->getID();
 ?>
 <article id="issueView">
   <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
@@ -122,13 +123,13 @@
     <?endswitch;?>">
         <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
         <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>      
-        <button class="restore-btn" onclick="restoreIssue( event );">Открыть</button>
-        <?php if ( $issue->isMember(lpm_get_user()->getID()) ): ?>
-        <button class="verify-btn" onclick="verifyIssue( event )">Отправить на проверку</button>
+        <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
+        <?php if ($issue->isMember($userId) || $issue->getProject()->masterId == $userId): ?>
+        <button class="verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
         <?php endif ?>
-        <button class="complete-btn" onclick="completeIssue( event );">Завершить</button>
+        <button class="complete-btn" onclick="completeIssue(event);">Завершить</button>
         <button onclick="issuePage.showEditForm();">Редактировать</button> 
-        <button onclick="issuePage.removeIssue( event );">Удалить</button>
+        <button onclick="issuePage.removeIssue(event);">Удалить</button>
     </p>
     <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
     <a href="<?=$issue->getProjectUrl() . '#copy-issue:' . $issue->idInProject;?>" target="_blank"
@@ -169,7 +170,7 @@
             <p id="<?='comment_' . $comment->id?>"
                class="delete-comment"
                data-comment-id="<?=$comment->id?>"
-               data-user-id="<?=lpm_get_user()->getID();?>"
+               data-user-id="<?=$userId;?>"
                data-time="<?=$comment->date?>">Удалить</p>
             <?php endif; ?>
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
@@ -182,7 +183,7 @@
       <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
   </article>
 </article>
-<input id='user-id-hidden' type="hidden" value="<?=lpm_get_user()->getID();?>">
+<input id='user-id-hidden' type="hidden" value="<?=$userId;?>">
 <script type="text/javascript">
     var issueLabels = <?=json_encode($issue->getLabelNames());?>;
 </script>
