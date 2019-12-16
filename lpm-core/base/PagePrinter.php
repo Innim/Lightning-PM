@@ -77,6 +77,14 @@ class PagePrinter {
 	}
 	
 	/**
+	 * Распечатывает список видео.
+	 * @param  array $videoLinks Список объектов с данными ссылок на видео.
+	 */
+	public static function videoList($videoLinks) {
+		PageConstructor::includePattern('entity-video-list', compact('videoLinks'));
+	}
+	
+	/**
 	 * Распечатывает форму экспорта задач в Excel.
 	 */
 	public static function issuesExportToExcel() {

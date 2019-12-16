@@ -28,7 +28,10 @@
 			<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
-            <article class="text"><?=$comment->getText();?></article>
+            <article class="text">
+                <?=$comment->getText();?>
+                <?php lpm_print_video_list($comment->getVideoLinks()); ?>
+            </article>
             <?php if ($comment->issue):?>
     		<div class="comment-issue-line">
     			<span>Задача </span>
