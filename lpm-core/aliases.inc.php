@@ -140,6 +140,13 @@ function lpm_print_users_chooser() {
 }
 
 /**
+ * Распечатывает список видео.
+ */
+function lpm_print_video_list($videoLinks) {
+	return PagePrinter::videoList($videoLinks);
+}
+
+/**
  * Распечатывает форму экспорта задач в Excel.
  */
 function lpm_print_issues_export_to_excel() {

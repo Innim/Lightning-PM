@@ -191,6 +191,13 @@ SQL;
 	}
 
 	/**
+	 * @see ParseTextHelper::parseVideoLinks()
+	 */
+    public function getVideoLinks() {
+        return ParseTextHelper::parseVideoLinks($this->getText());
+    }
+
+	/**
 	 * Возвращает текст без тегов.
 	 *
 	 * Вырезает все теги подсветки.
