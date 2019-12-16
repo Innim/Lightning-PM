@@ -160,7 +160,10 @@ $userId = lpm_get_user()->getID();
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="<?=$comment->getIssueCommentUrl($issue);?>"><?=$comment->getDate();?></a></p>
-            <article class="text"><?=$comment->getText();?></article>
+            <article class="text">
+                <?=$comment->getText();?>
+                <?php lpm_print_video_list($comment->getVideoLinks()); ?>        
+            </article>
         </li>
         <?php endforeach; ?>
     </ol>
