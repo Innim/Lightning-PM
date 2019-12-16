@@ -85,28 +85,12 @@ $userId = lpm_get_user()->getID();
             <div class="value"><?=$issue->getDesc();?></div>
         </li>
         <?php if ($videoLinks = $issue->getVideoLinks()): ?>
-            <li>
-                <ul class="video-line">
-                    <?php foreach ($videoLinks as $item): ?>
-                        <li>
-                            <?php if ($item->type == 'youtube'): ?>
-                                <object  width="480" height="320" class="video ytb"
-                                    data="<?php echo $item->url; ?>">
-                                </object>
-                            <?php else: ?>
-                                <video width="480" height="320" controls preload class="video dplr">
-                                    <source src="<?php echo $item->url; ?>">
-                                </video>
-                            <?php endif ?>
-                        </li>
-                    <?php endforeach ?>
-                </ul>
-            </li>            
+        <li><?php lpm_print_video_list($videoLinks); ?></li>
         <?php endif ?>
-        <?php if ( $picture = $issue->getImages() ): ?>
+        <?php if ($picture = $issue->getImages()): ?>
             <li>
                 <ul class="images-line">
-                    <?php foreach($picture as $img): ?>
+                    <?php foreach ($picture as $img): ?>
                         <li>
                             <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
                             <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
@@ -114,7 +98,7 @@ $userId = lpm_get_user()->getID();
                     <?endforeach;?>
                 </ul>
             </li>
-        <?php endif ?>
+        <?php endif; ?>
     </ol>
     <p class="buttons-bar <? switch($issue->status): 
     case 0: ?>active-issue<?break;?> 
