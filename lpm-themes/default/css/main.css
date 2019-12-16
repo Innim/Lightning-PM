@@ -708,7 +708,7 @@ ul.images-url > li > input {
 /*#projectComments.comments .comments-list {
 	padding: 0;
 }*/
-.comments .comments-list li {
+.comments .comments-list > li {
 	border-top: solid 1px #cccccc;	
 }
 .comments .comments-list li .comment-issue-line {

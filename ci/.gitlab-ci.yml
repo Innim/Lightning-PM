@@ -25,13 +25,13 @@ deploy to production:
   only:
     - master
   variables:
-    DEPLOY_HOST: 'vds.innim.ru'
-    DEPLOY_PORT: '22'
-    DEPLOY_USER: 'task'
+    DEPLOY_HOST: "${PROD_HOST}"
+    DEPLOY_PORT: "${PROD_SSH_PORT}"
+    DEPLOY_USER: "${PROD_USER}"
     DEPLOY_PASSWORD_ENV: 'VDS01_TASK_PASS'
     DEPLOY_UPLOAD_PATH: '/home/task/upload/'
     DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
   script:
-    - echo "start deploy to vds01.innim.ru"
+    - echo "start deploy to ${DEPLOY_HOST}"
     - python --version
     - python ./ci/main.py prod_deploy
