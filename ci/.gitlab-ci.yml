@@ -24,15 +24,13 @@ deploy to production:
   stage: deploy
   only:
     - master
-    - ci/176.add-ci
   variables:
     DEPLOY_HOST: 'vds.innim.ru'
     DEPLOY_PORT: '22'
     DEPLOY_USER: 'task'
     DEPLOY_PASSWORD_ENV: 'VDS01_TASK_PASS'
     DEPLOY_UPLOAD_PATH: '/home/task/upload/'
-#    DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
-    DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http-test/'
+    DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
   script:
     - echo "start deploy to vds01.innim.ru"
     - python --version
