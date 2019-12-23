@@ -94,7 +94,9 @@ class GitlabMessageInfo:
     """Предоставляет инормацию из GitLab CI: пользователь, commit, job, pipeline"""
     def __init__(self, slack_bot_token, slack_channel, slack_username, slack_icon,
                  project_url, project_path_slug, commit_sha, commit_message,
-                 gitlab_user_email, git_branch, pipeline_id, job_id, commit_date):
+                 gitlab_user_email, git_branch, pipeline_id, job_id, commit_date, env_name, env_url):
+        self.env_name = env_name
+        self.env_url = env_url
         self.project_path_slug = project_path_slug
         self.project_url = project_url
         self.slack_icon = slack_icon
