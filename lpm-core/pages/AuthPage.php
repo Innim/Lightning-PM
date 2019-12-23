@@ -32,16 +32,7 @@ class AuthPage extends BasePage {
 
 			if (isset($input['email'])) {
 				// регистрация 				
-				if (empty($input['email']) || empty($input['pass']) || empty($input['repass'])
-					|| empty($input['firstName']) || empty($input['lastName']))  {
-					$engine->addError('Заполнены не все обязательные поля');
-				} elseif ($input['pass'] != $input['repass']) {
-					$engine->addError('Введённые пароли не совпадают');
-				} elseif (!Validation::checkEmail($input['email'])) {
-					$engine->addError('Введён некорректный email');
-				} elseif (!Validation::checkPass($input['pass'], 24, 1, true)) {
-					$engine->addError('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
-				} else {
+				if ($this->validateSignUp($engine, $input)) {
 					$pass = User::passwordHash($input['pass']);					
 					$cookieHash = $this->createCookieHash();
 					
@@ -126,18 +117,12 @@ class AuthPage extends BasePage {
 		
 		return $this;
 	}
-
-	public function printContent() 
-	{
-		parent::printContent();		
-	}
 	
 	private function createCookieHash() {
-		return md5( BaseString::randomStr() );
+		return md5(BaseString::randomStr());
 	}
 	
-	private function auth( $userId, $email, $cookieHash ) 
-	{
+	private function auth($userId, $email, $cookieHash) {
 		LightningEngine::getInstance()->getAuth()->init(
 			$userId, $email, $cookieHash);
 
@@ -152,6 +137,26 @@ class AuthPage extends BasePage {
 		}
 
 		LightningEngine::go2URL($redirect);
-		//header( 'Location: ' . SITE_URL );
+	}
+
+	private function validateSignUp($engine, $input) {
+		if (empty($input['email']) || empty($input['pass']) || empty($input['repass'])
+					|| empty($input['firstName']) || empty($input['lastName'])) {
+			return $engine->addError('Заполнены не все обязательные поля');
+		}
+
+		if ($input['pass'] != $input['repass']) {
+			return $engine->addError('Введённые пароли не совпадают');
+		}
+
+		if (!Validation::checkEmail($input['email'])) {
+			return $engine->addError('Введён некорректный email');
+		} 
+
+		if (!Validation::checkPass($input['pass'], 24, 1, true)) {
+			return $engine->addError('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
+		}
+
+		return true;
 	}
 }
