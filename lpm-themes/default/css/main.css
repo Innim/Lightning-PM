@@ -171,6 +171,7 @@ code {
 	border: solid 1px #DDDDE5;
 	border-radius: 2px;
 	padding: 1px 4px;
+	line-height: 1.5;
 }
 code.nohighlight {
 	display: block;

@@ -19,7 +19,30 @@ cache:
     - venv/
     - .cache/pip
 
-deploy to production:
+deploy to test:
+  image: python:3.8
+  stage: deploy
+  only:
+    - pipe/test
+    - develop
+  variables:
+    DEPLOY_HOST: "${TEST_HOST}"
+    DEPLOY_PORT: "${TEST_SSH_PORT}"
+    DEPLOY_USER: "${TEST_USER}"
+    DEPLOY_PASSWORD: "${TEST_TASK_PASS}"
+    DEPLOY_UPLOAD_PATH: '/tmp/'
+    DEPLOY_APP_PATH: '/var/www/'
+  environment:
+    name: test
+    url: http://vds02.innim.ru:8083
+  script:
+    - echo "start deploy to ${DEPLOY_HOST}"
+    - python --version
+    - python ./ci/main.py prod_deploy
+
+
+
+deploy to prod:
   image: python:3.8
   stage: deploy
   only:
@@ -28,9 +51,12 @@ deploy to production:
     DEPLOY_HOST: "${PROD_HOST}"
     DEPLOY_PORT: "${PROD_SSH_PORT}"
     DEPLOY_USER: "${PROD_USER}"
-    DEPLOY_PASSWORD_ENV: 'VDS01_TASK_PASS'
+    DEPLOY_PASSWORD: "${VDS01_TASK_PASS}"
     DEPLOY_UPLOAD_PATH: '/home/task/upload/'
     DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
+  environment:
+    name: test
+    url: https://task.innim.ru
   script:
     - echo "start deploy to ${DEPLOY_HOST}"
     - python --version

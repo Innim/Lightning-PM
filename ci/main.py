@@ -54,5 +54,11 @@ def prod_deploy():
     notifier.deploy_message(deploy_type='prod')
 
 
+@runner(msg_title='Deploy to TEST')
+def prod_deploy():
+    worker.deploy()
+    notifier.deploy_message(deploy_type='test')
+
+
 if __name__ == '__main__':
     fire.Fire()

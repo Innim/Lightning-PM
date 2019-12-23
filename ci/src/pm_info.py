@@ -13,6 +13,8 @@ class PMInfo(Info):
 
     deploy_user = getenv('DEPLOY_USER', '')
 
+    deploy_password = getenv('DEPLOY_PASSWORD', '')
+
     deploy_upload_path = getenv('DEPLOY_UPLOAD_PATH', '')
 
     deploy_app_path = getenv('DEPLOY_APP_PATH', '')
@@ -21,7 +23,7 @@ class PMInfo(Info):
 
     deploy_git_passwd = getenv('DEPLOY_GIT_PASSWD', '')
 
-    @property
-    def deploy_password(self):
-        pass_env = self.get_env('DEPLOY_PASSWORD_ENV')
-        return self.get_env(pass_env)
+    # @property
+    # def deploy_password(self):
+    #     pass_env = self.get_env('DEPLOY_PASSWORD_ENV')
+    #     return self.get_env(pass_env)

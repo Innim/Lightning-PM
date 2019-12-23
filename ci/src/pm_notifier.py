@@ -13,7 +13,7 @@ class PMNotifier(GitlabSlackNotifier):
     def deploy_message(self, deploy_type: str):
         title = "DEPLOY for {deploy_type} is SUCCESS".format(deploy_type=deploy_type.upper())
         brief_text = f'Деплой для "{deploy_type.upper()}"-окружения успешно завершен\n\n' \
-                     f'https://task.innim.ru\n\n' \
+                     f'{self.info.env_url}\n\n' \
                      f'*Обновите БД, если требуется!*'
         text = ''
 
@@ -32,5 +32,7 @@ class PMNotifier(GitlabSlackNotifier):
                                  git_branch=self.pm_info.git_branch,
                                  pipeline_id=self.pm_info.pipeline_id,
                                  job_id=self.pm_info.job_id,
-                                 commit_date=self.pm_info.commit_date)
+                                 commit_date=self.pm_info.commit_date,
+                                 env_name=self.pm_info.env_name,
+                                 env_url=self.pm_info.env_url)
         self.set_info(info)

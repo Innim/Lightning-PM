@@ -1,30 +1,24 @@
 <article id="authForm" class="container">
 	<h3>Авторизация</h3>
-	<div class="validateError"><? lpm_print_errors(); ?></div>
+	<div class="validateError"><?php if (isset($_POST['signIn'])) lpm_print_errors();?></div>
 	<form method="post">
 		<input placeholder="Email" type="email" name="aemail" required="required" value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>"/>
 		<input placeholder="Пароль" type="password" name="apass" required="required"/>
 		<div>
 			<p class="enter-line">
-				<!--  <span>
-					<input type="checkbox"/>
-					запомнить меня
-				</span>-->
-				<button type="submit">Вход</button>
+				<button name="signIn" type="submit">Вход</button>
 			</p>
 			<p class="links-line">
-				<!-- <a href="#">Восстановление пароля</a> -->
 				<a href="javascript:showRegistration();">Регистрация</a>
-                                &nbsp&nbsp&nbsp
-                                <a href="pass-recovery">Забыли пароль?</a>
-                                <!--<a href="javascript:showRecPass();">Забыли пароль?</a>-->
+				&nbsp&nbsp&nbsp
+				<a href="pass-recovery">Забыли пароль?</a>
 			</p>			
 		</div>		
 	</form>
 </article>
 <article id="registrationForm" class="container">
 	<h3>Регистрация</h3>
-	<div class="validateError"><? lpm_print_errors(); ?></div>
+	<div class="validateError"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
 	<form onsubmit="return validateReg();" action="#reg" method="post">		
 		<input placeholder="Email*" type="email" name="email" required="required" value="<?=isset($_POST['email'])?$_POST['email']:'';?>"/>
 		<input placeholder="Пароль*" type="password" name="pass" required="required" maxlength="24"/>
@@ -34,11 +28,7 @@
 		<input placeholder="Ник" type="text" name="nick" maxlength="64" value="<?=isset($_POST['nick'])?$_POST['nick']:'';?>"/>
 		<div>
 			<p class="save-line">
-				<!--  <span>
-					<input type="checkbox"/>
-					запомнить меня
-				</span>-->
-				<button type="submit">Регистрация</button>
+				<button name="signUp" type="submit">Регистрация</button>
 			</p>
 			<p class="links-line">
 				<a href="javascript:showAuth();">Назад</a>
@@ -46,19 +36,3 @@
 		</div>		
 	</form>
 </article>
-
-<!--<article id="recPassForm" class="container">
-    <h3>Восстановление пароля</h3>
-    <div class="validateError"><? lpm_print_errors(); ?></div>
-    <form method="post">
-        <input placeholder="Email" type="email" name="remail" required="required" value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>" />        
-        <div>
-            <p class="enter-line">
-                <button type="submit">Восстановить</button>
-            </p>
-            <p class="links-line">
-                <a href="javascript:showAuth();">Назад</a>
-            </p>	
-        </div>
-    </form>
-</article>-->
