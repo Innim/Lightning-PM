@@ -9,6 +9,9 @@ class AuthPage extends BasePage {
 	 */
 	const SESSION_REDIRECT_OG = 'lightning_redirect_og';
 
+	const NICK_MAX_LENGTH = 64;
+	const NICK_MIN_LENGTH = 3;
+
 	function __construct() {
 		parent::__construct('auth', 'Авторизация', false, true);
 		
@@ -41,7 +44,7 @@ class AuthPage extends BasePage {
 						'pass' => $pass,
 						'firstName' => mb_substr($input['firstName'], 0, 128),
 						'lastName' => mb_substr($input['lastName'], 0, 128),
-						'nick' => mb_substr($input['nick'], 0, 64),
+						'nick' => empty($input['nick']) ? '' : mb_substr($input['nick'], 0, self::NICK_MAX_LENGTH),
 						'lastVisit' => DateTimeUtils::mysqlDate(),
 						'regDate' => DateTimeUtils::mysqlDate()
 					];
@@ -155,6 +158,17 @@ class AuthPage extends BasePage {
 
 		if (!Validation::checkPass($input['pass'], 24, 1, true)) {
 			return $engine->addError('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
+		}
+
+
+		if (!Validation::checkPass($input['pass'], 24, 1, true)) {
+			return $engine->addError('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
+		}
+
+		if (!empty($input['nick']) && !Validation::check($input['nick'],
+				self::NICK_MAX_LENGTH, self::NICK_MIN_LENGTH, true, true, false, false, true,
+				"._")) {
+			return $engine->addError('Неверный формат для поля "Ник".');
 		}
 
 		return true;

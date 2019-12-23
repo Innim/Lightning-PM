@@ -42,6 +42,11 @@ function validateReg() {
 		errors.push('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
 	}
 	
+	var nick = $('input[name=nick]', "#registrationForm" ).val();
+	if (nick != '' && !(/^([a-z0-9._-]){3,64}$/i).test(nick)) {
+		errors.push('Введён недопустимый Ник - используйте латинские буквы, цифры и знаки: ".", "-" или "_".');
+	}
+	
 	$('#registrationForm > div.validateError').html(errors.join('<br/>'));
 	
 	if (errors.length == 0) {
