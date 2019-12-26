@@ -24,7 +24,6 @@ deploy to test:
   stage: deploy
   only:
     - pipe/test
-    - develop
   variables:
     DEPLOY_HOST: "${TEST_HOST}"
     DEPLOY_PORT: "${TEST_SSH_PORT}"
@@ -55,7 +54,7 @@ deploy to prod:
     DEPLOY_UPLOAD_PATH: '/home/task/upload/'
     DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
   environment:
-    name: test
+    name: prod
     url: https://task.innim.ru
   script:
     - echo "start deploy to ${DEPLOY_HOST}"

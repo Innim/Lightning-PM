@@ -360,6 +360,18 @@ SQL;
         return $this->countSp();
     }
 
+    /**
+     * Возвращает количество сделанны SP спринта.
+     * Сделанными считаются задачи в Готово и Тестировании.
+     * @return int
+     */
+    public function getDoneSp() {
+        return $this->countSp(function ($sticker) {
+            return ($sticker->issue_state == ScrumStickerState::TESTING || 
+                    $sticker->issue_state == ScrumStickerState::DONE);
+        });
+    }
+
     public function getMemberSP($userId, $stickerState) {
         return $this->countMemberSp($userId, function ($sticker) use ($stickerState) {
             return $sticker->issue_state == $stickerState;
