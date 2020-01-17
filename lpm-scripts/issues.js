@@ -11,8 +11,8 @@ $(document).ready(
         });
 
         $('#issueForm .note.tags-line a.tag').click(function (e) {
-            var a = e.currentTarget;
-            issuePage.insertTag(a.innerText);
+            var a = $(e.currentTarget);
+            issuePage.insertMarker(a.data('marker'));
         });
 
         $('.delete-comment').live('click', function() {
@@ -522,47 +522,38 @@ issuePage.validateIssueForm = function () {
     }
 };
 
-issuePage.insertTag = function(tag){
+issuePage.insertMarker = function(marker){
     var text = document.getElementsByName('desc').item(0);
-    var subtext = text.value.substring(text.selectionStart, text.selectionEnd);
+    var selectionStart = text.selectionStart;
+    var subtext = text.value.substring(selectionStart, text.selectionEnd);
     var caretPos = 0;
-    const closetag = '</' +tag+ '>';
+    const closetag = marker;
     //Если в описании задачи есть текст
     if (!$.isEmptyObject({text})) { 
         // берем все, что до выделения
-        var desc = text.value.substring(0,text.selectionStart)+
-        // вставляем стартовый тег
-        '<'+tag+'>'+
-        // вставляем выделенный текст
-        subtext +
-        // вставляем закрывающий тег
-        closetag +
-        // вставляем все, что после выделения
-        text.value.substring(text.selectionEnd,text.value.length);
+        var desc = text.value.substring(0, selectionStart) +
+            marker + subtext + closetag +
+            text.value.substring(text.selectionEnd, text.value.length);
         //определяем позицию курсора(перед закрывающим тэгом)
         //если есть выделенный текст
         if (subtext == "")
             //определяем фокус перед '/' тэгом
-            caretPos = text.selectionStart + closetag.length-1;
+            caretPos = selectionStart + marker.length;
         else //после тэга       
-            caretPos = text.selectionStart + subtext.length + closetag.length*2;
+            caretPos = selectionStart + subtext.length + marker.length * 2;
+
         //добавляем итог в описание задачи
         $('#issueForm textarea.desc').val(desc);
+
         //устанавливаем курсор на полученную позицию
-        setCaretPosition(text,caretPos);
+        setCaretPosition(text, caretPos);
     }
 }
     
-function setCaretPosition(elem, pos ) {
-    //если есть выделение
-    if(elem.selectionStart) {
-        //фокусим курсор на нужной позиции   
-        elem.setSelectionRange(pos, pos);
-        elem.focus();
-    }
-    //иначе фокусим сам элемент
-    else elem.focus();
-};
+function setCaretPosition(elem, pos) {
+    elem.setSelectionRange(pos, pos);
+    elem.focus();
+}
 
 function completeIssue(e) {    
     var parent   = e.currentTarget.parentElement;
