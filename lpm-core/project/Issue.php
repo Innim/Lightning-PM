@@ -782,8 +782,9 @@ SQL;
 			}
 
 			$desc = HTMLHelper::codeIt($desc);
-			$desc = nl2br($desc);
-			$desc = HTMLHelper::linkIt($desc);
+			$desc = HTMLHelper::formatIt($desc);
+			// $desc = nl2br($desc);
+			// $desc = HTMLHelper::linkIt($desc);
 
 			$this->_htmlDesc = $desc;
 		}
