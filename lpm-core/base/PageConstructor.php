@@ -178,6 +178,8 @@ class PageConstructor {
 	
 	function __construct( PagesManager $pagesManager ) {		
 		$this->_versionParam = mb_substr(md5(VERSION), 0, 7);
+		if (Globals::isDebugMode())
+			$this->_versionParam = uniqid();
 		$this->_themeDir = THEMES_DIR . LPMOptions::getInstance()->currentTheme . '/';
 		
 		$this->_pagesManager = $pagesManager;
