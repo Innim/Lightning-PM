@@ -895,19 +895,19 @@ issuePage.setEditInfo = function () {
 
     // тип
     $('form input:radio[name=type]:checked', "#issueForm").removeAttr( 'checked' );
-    $('form input:radio[name=type][value=' + $( "#issueInfo li input[name=type]" ).val() + ']', 
+    $('form input:radio[name=type][value=' + $( "#issueInfo div input[name=type]" ).val() + ']', 
        "#issueForm" ).attr( 'checked', 'checked' ); 
     // приоритет
-    var priorityVal = $( "#issueInfo li input[name=priority]" ).val();
+    var priorityVal = $( "#issueInfo div input[name=priority]" ).val();
     $( "#issueForm form input[name=priority]" ).val( priorityVal );
     issuePage.setPriorityVal( priorityVal );
     // дата окончания
     $( "#issueForm form input[name=completeDate]" ).val( 
-        $( "#issueInfo li input[name=completeDate]" ).val() 
+        $( "#issueInfo div input[name=completeDate]" ).val() 
     );
     // исполнители
-    var memberIds = $("#issueInfo li input[name=members]").val().split(',');
-    var membersSp = $("#issueInfo li input[name=membersSp]").val().split(',');
+    var memberIds = $("#issueInfo div input[name=members]").val().split(',');
+    var membersSp = $("#issueInfo div input[name=membersSp]").val().split(',');
     var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
@@ -916,7 +916,7 @@ issuePage.setEditInfo = function () {
     }
 
     // Тестеры
-    var testerIds = $( "#issueInfo li input[name=testers]" ).val() .split( ',' );
+    var testerIds = $( "#issueInfo div input[name=testers]" ).val() .split( ',' );
     l = testerIds.length;
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];
@@ -932,7 +932,7 @@ issuePage.setEditInfo = function () {
     // вообще видимо надо переделать это все
     //$( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).html() );
     // изображения
-    var imgs = $("#issueInfo li > .images-line > li");
+    var imgs = $("#issueInfo div > .images-line > li");
     l = imgs.length;
     var $imgInputField = $('#issueForm form .images-list > li').has('input[name="images[]"]');
     var $imgInput = $('#issueForm form .images-list').empty();
@@ -1080,8 +1080,8 @@ function addImagebyUrl(imageUrl) {
  * @param {Issue} issue
  */
 function setIssueInfo( issue ) {        
-    $("#issueInfo > h3 .issue-name").text( issue.name );
-    var fields = $("#issueInfo > ol > li > .value");
+    $("#issueInfo > h3 .issue-name").text(issue.name);
+    var fields = $("#issueInfo > .info-list > div > .value");
     
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
