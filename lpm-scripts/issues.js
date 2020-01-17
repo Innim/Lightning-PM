@@ -49,6 +49,7 @@ $(document).ready(
         )
 
         bindFormattingHotkeys('#issueForm form textarea[name=desc]');
+        bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
     }
 );
 
