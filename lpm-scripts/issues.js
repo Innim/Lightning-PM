@@ -1268,7 +1268,7 @@ issuePage.addComment = function (comment) {
             '<p class="author">' + comment.author.linkedName + '</p> ' +
             '<p class="date"><a class="anchor" id="'+comment.id+
             '"href="#comment-'+comment.id+'">'+comment.dateLabel+'</a></p>' +
-            '<p class="text">' + comment.text + '</p>' +
+            '<article class="text">' + comment.text + '</p>' +
            '</li>' 
     );
     issuePage.hideCommentForm();
