@@ -12,7 +12,7 @@ $(document).ready(
 
         $('#issueForm .note.tags-line a.tag').click(function (e) {
             var a = $(e.currentTarget);
-            issuePage.insertMarker(a.data('marker'));
+            insertMarker(a.data('marker'));
         });
 
         $('.delete-comment').live('click', function() {
@@ -47,10 +47,37 @@ $(document).ready(
                     .animate({width: 'hide', height: 'hide'}, 1);
             }
         )
+
+        bindFormattingHotkeys('#issueForm form textarea[name=desc]');
     }
 );
 
+function bindFormattingHotkeys(selector) {
+    $(selector).keypress(function(e) {
+        if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
+            return;
 
+        if (e.ctrlKey || e.metaKey) {
+            var code = e.originalEvent.code;
+            switch (code) {
+                case 'KeyB':
+                    insertFormattingMarker(this, '*');
+                    break;
+                case 'KeyI':
+                    insertFormattingMarker(this, '_');
+                    break;
+                case 'KeyU':
+                    insertFormattingMarker(this, '__');
+                    break;
+                default:
+                    return;
+            }
+            
+            event.stopImmediatePropagation();
+            event.preventDefault();
+        }
+    });
+}
 
 function DropDown(el) {
     this.dd = el;
@@ -522,8 +549,13 @@ issuePage.validateIssueForm = function () {
     }
 };
 
-issuePage.insertMarker = function(marker){
-    var text = document.getElementsByName('desc').item(0);
+function insertMarker(marker) {
+    insertFormattingMarker($('#issueForm textarea[name=desc]'), marker);
+}
+
+function insertFormattingMarker(input, marker) {
+    var $input = $(input);
+    var text = $input[0];
     var selectionStart = text.selectionStart;
     var subtext = text.value.substring(selectionStart, text.selectionEnd);
     var caretPos = 0;
@@ -543,7 +575,7 @@ issuePage.insertMarker = function(marker){
             caretPos = selectionStart + subtext.length + marker.length * 2;
 
         //добавляем итог в описание задачи
-        $('#issueForm textarea.desc').val(desc);
+        $input.val(desc);
 
         //устанавливаем курсор на полученную позицию
         setCaretPosition(text, caretPos);
