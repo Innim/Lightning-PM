@@ -2,8 +2,7 @@
 /**
  * Архив scrum досок.
  */
-class ScrumStickerSnapshot extends LPMBaseObject
-{
+class ScrumStickerSnapshot extends LPMBaseObject {
     /**
      * Загружает список снепшотов по идентификатору проекта (вначале новые).
      * @param int $projectId
@@ -118,7 +117,7 @@ SQL;
 
         try {
             // получаем идентификатор снепшота в проекте
-            $idInProject = self::getLastSnapshotId($projectId);
+            $idInProject = self::getLastSnapshotId($projectId) + 1;
 
             // начинаем транзакцию
             $db->begin_transaction();
@@ -207,11 +206,10 @@ SQL;
     /**
      * Возвращает номер последнего снепшота в архиве.
      * @param int $projectId идентификатор проекта, для которого создается снепшот.
-     * @return int номер последнего снепшота в проекте.
+     * @return int Номер последнего снепшота в проекте или 0 - если еще не было снимков.
      * @throws Exception В случае, если произошла ошибка при запросе к БД.
      */
-    private static function getLastSnapshotId($projectId)
-    {
+    public static function getLastSnapshotId($projectId) {
         $db = self::getDB();
         $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
             "WHERE `pid` = '" . $projectId . "'";
@@ -220,10 +218,10 @@ SQL;
         }
 
         if ($query->num_rows == 0) {
-            return 1;
+            return 0;
         } else {
             $result = $query->fetch_assoc();
-            return (int) $result['maxID'] + 1;
+            return (int) $result['maxID'];
         }
     }
 
@@ -360,6 +358,18 @@ SQL;
 
     public function getNumSp() {
         return $this->countSp();
+    }
+
+    /**
+     * Возвращает количество сделанны SP спринта.
+     * Сделанными считаются задачи в Готово и Тестировании.
+     * @return int
+     */
+    public function getDoneSp() {
+        return $this->countSp(function ($sticker) {
+            return ($sticker->issue_state == ScrumStickerState::TESTING || 
+                    $sticker->issue_state == ScrumStickerState::DONE);
+        });
     }
 
     public function getMemberSP($userId, $stickerState) {

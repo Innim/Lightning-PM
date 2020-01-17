@@ -81,7 +81,7 @@ profilePage.saveNewPass = function () {
                 preloader.hide();
                 if (res.success) {
                     $('#changePass > div.validateError').hide();
-                    messages.info('Сохранено');                    
+                    messages.info('Сохранено');
                 } else {
                     $('#changePass > div.validateError').html(res.error + '<br/>');
                     $('#changePass > div.validateError').show();
@@ -90,7 +90,7 @@ profilePage.saveNewPass = function () {
             }
         );
     }
-   
+
 }
 
 profilePage.saveEmailPref = function () {            

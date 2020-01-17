@@ -10,6 +10,7 @@ class ProjectPage extends BasePage
 	const PUID_SCRUM_BOARD = 'scrum_board';
 	const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
 	const PUID_SPRINT_STAT = 'sprint_stat';
+	const PUID_SETTINGS = 'project-settings';
 
 	/**
 	 * 
@@ -22,26 +23,28 @@ class ProjectPage extends BasePage
 	{
 		parent::__construct( self::UID, '', true, true );
 		
-		array_push( $this->_js,'libs/jquery.zclip', 'project', 'issues');
+		array_push( $this->_js, 'project', 'issues');
 		$this->_pattern = 'project';
 		
 		$this->_baseParamsCount = 2;
 		$this->_defaultPUID     = self::PUID_ISSUES;
 
 		$this->addSubPage(self::PUID_ISSUES , 'Список задач',
-			'', array('issues-export-to-excel'));
+			'', array('project-issues', 'issues-export-to-excel'));
 		$this->addSubPage(self::PUID_COMPLETED_ISSUES , 'Завершенные',
-			'', array('issues-export-to-excel'));
+			'', array('project-completed', 'issues-export-to-excel'));
 		$this->addSubPage(self::PUID_COMMENTS , 'Комментарии', 'project-comments');
 		$this->addSubPage(self::PUID_MEMBERS, 'Участники', 'project-members', 
 				array('users-chooser'), '', User::ROLE_MODERATOR);
+		$this->addSubPage(self::PUID_SETTINGS, 'Настройки проекта',  'project-settings',
+            ['project-settings'], '',User::ROLE_MODERATOR);
 	}
 	
 	public function init() {
 		$engine = LightningEngine::getInstance();
 
 		// загружаем проект, на странице которого находимся
-		if ($engine->getParams()->suid == '' 
+		if ($engine->getParams()->suid == ''
 			|| !$this->_project = Project::load($engine->getParams()->suid)) return false;
 
 		// Если это scrum проект - добавляем новый подраздел
@@ -352,12 +355,13 @@ class ProjectPage extends BasePage
             }
 
 			// сохраняем задачу
+			$userId = $engine->getAuth()->getUserId();
 			$sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
 			                          "`authorId`, `createDate`, `completeDate`, `priority` ) " .
 			           		 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
 			           		 		  "'" . $_POST['name'] . "', '" . $hours . "', '" . $_POST['desc'] . "', " .
 			           		 		  "'" . (int)$_POST['type'] . "', " .
-			           		 		  "'" . $engine->getAuth()->getUserId() . "', " .
+			           		 		  "'" . $userId . "', " .
 									  "'" . DateTimeUtils::mysqlDate() . "', " .
 									  "'" . $completeDate . "', " . 
 									  "'" . $priority . "' ) " .
@@ -474,6 +478,12 @@ class ProjectPage extends BasePage
 				$this->notifyAboutIssueChange($issue, $issueURL, $editMode);
 
 				Project::updateIssuesCount($issue->projectId);
+
+	    		// Записываем лог
+	    		UserLogEntry::create($userId, DateTimeUtils::$currentDate,
+	    			$editMode ? UserLogEntryType::EDIT_ISSUE : UserLogEntryType::ADD_ISSUE,
+	    			$issue->id,
+	    			$editMode ? 'Full edit' : '');
 			
 				LightningEngine::go2URL($issueURL);
 			}

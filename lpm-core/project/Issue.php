@@ -1,6 +1,5 @@
 <?php
-class Issue extends MembersInstance
-{
+class Issue extends MembersInstance {
 	private static $_listByProjects = array();
 	private static $_listByUser = array();
 	
@@ -17,6 +16,7 @@ class Issue extends MembersInstance
 	 *                             [алиас => таблица].
 	 * @return array<Issue> Массив загруженных задач.
 	 */
+
 	protected static function loadList($where, $extraSelect = '', $extraTables = null) {
 		//return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
 		$sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
@@ -391,6 +391,33 @@ SQL;
 		}
 	}
 
+    /**
+     * Помечает задачу как удаленную.
+     */
+    public static function remove(User $user, Issue $issue) {		
+	    $db = self::getDB();
+		$sql = "update `%s` set `deleted` = '1' where `id` = '" . $issue->id . "'";
+	    if (!$db->queryt($sql, LPMTables::ISSUES))
+	    	throw new Exception('Remove issue failed', \GMFramework\ErrorCode::SAVE_DATA);
+
+		Project::updateIssuesCount($issue->projectId);
+
+	    // Записываем лог
+	    UserLogEntry::create($user->userId, DateTimeUtils::$currentDate,
+	    	UserLogEntryType::DELETE_ISSUE, $issue->id);
+
+		// отправка оповещений
+		$members = $issue->getMemberIds();
+		array_push( $members, $issue->authorId );
+		
+		EmailNotifier::getInstance()->sendMail2Allowed(
+			'Удалена задача "' . $issue->name . '"', 
+			$user->getName() . ' удалил задачу "' . $issue->name .  '"', 
+			$members,
+			EmailNotifier::PREF_ISSUE_STATE
+		);
+    }
+
 	public static function updateStatus(User $user, Issue $issue, $status, $sendNotify = true) {
 		$issue->status = $status;
 	    $hash = [
@@ -407,10 +434,12 @@ SQL;
 			$issue->completedDate = (float)DateTimeUtils::date();
 	    	$hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
 	    } else if ($issue->status === Issue::STATUS_IN_WORK) {
-	    	// Сбрасываем дату завершения	    	
+	    	// Сбрасываем дату завершения
 			$issue->completedDate = null;
 	    	$hash['SET']['completedDate'] = '0000-00-00 00:00:00';
-	    }
+	    } else if ($issue->status === Issue::STATUS_WAIT) {
+            IssueService::checkTester( $issue );
+        }
 
 
 	    $db = self::getDB();
@@ -418,6 +447,9 @@ SQL;
 	    	throw new Exception('Status save failed', \GMFramework\ErrorCode::SAVE_DATA);
 
 	    Project::updateIssuesCount($issue->projectId);
+
+	    // Записываем лог
+	    UserLogEntry::issueEdit($user->userId, $issue->id, 'Update status to ' . $status);
 
 	    if ($sendNotify) {
 	    	// Отправка оповещений
@@ -467,10 +499,11 @@ SQL;
 
 	/**
 	 * Обновляет значение приоритета задачи.
+	 * @param  User   $user Пользователь, который меняет приоритет.
 	 * @param  Issue  $issue Задача, у которой меняется приоритет.
 	 * @param  int    $delta Изменение приоритета.
 	 */
-	public static function changePriority(Issue $issue, $delta) {
+	public static function changePriority(User $user, Issue $issue, $delta) {
 		$issue->priority = (int)max(0, min($issue->priority + $delta, 100));
 	    $hash = [
 	    	'UPDATE' => LPMTables::ISSUES,
@@ -485,6 +518,10 @@ SQL;
 	    $db = self::getDB();
 	    if (!$db->queryb($hash))
 	    	throw new Exception('Priority save failed', \GMFramework\ErrorCode::SAVE_DATA);
+
+	    // Записываем лог
+	    UserLogEntry::issueEdit($user->userId, $issue->id,
+	    	'Change priority: ' . ($delta > 0 ? '+' : '') . $delta);
 	}
 
 	/**
@@ -909,6 +946,7 @@ SQL;
 		return true;
 	}
 
+
 	protected function loadTesters() {
 	    $this->_testers = Member::loadListByIssueForTest($this->id);
 	    if ($this->_testers === false)
@@ -917,55 +955,13 @@ SQL;
     }
 
 	/**
-	 * 
 	 * @return array<{
 	 *  type:string = youtube|video,
 	 *  url:string
 	 * ]>
+	 * @see ParseTextHelper::parseVideoLinks()
 	 */
-	public function getVideoLinks()
-	{
-		$preg = [
-			// YouTube
-			"(?:youtube.)\w{2,4}\/(?:watch\?v=)",
-			// Droplr
-			"d.pr\/v\/",
-			// Innim owncloud
-			"cloud.innim.ru\/index.php\/s\/"
-		];
-
-		preg_match_all("/(" . implode("|", $preg) . ")(\S*)\"/", $this->getDesc(), $video);
-		// preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
-		$list = array();
-		foreach ($video[0] as $key => $value) {
-			$urlPrefix = $video[1][$key];
-			$videoUid = $video[2][$key];
-			$type = 'video';
-			$url = null;
-
-			if (strpos($urlPrefix, 'youtube') === 0) {
-				// Это YouTube
-				$type = 'youtube';
-				$url = "http://www.youtube.com/embed/" . $videoUid;
-			} else if (strpos($urlPrefix, 'd.pr') === 0) {
-				// Это Droplr
-				// $url = "http://d.pr/v/" . $videoUid . "+";
-				$url = "http://" . $urlPrefix . $videoUid . "+";
-			} else {
-				// Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
-				$url = "https://" . $urlPrefix . $videoUid . "/download";
-				$header = get_headers($url, 1);
-				if (empty($header) || !isset($header['Content-Type']) ||
-						strpos($header['Content-Type'], 'video/') !== 0) {
-					$url = null;
-				}
-			}
-			
-			if (!empty($url))
-				$list[] = (object) compact('type', 'url');
-		}
-
-		return $list;
-	}
+    public function getVideoLinks() {
+        return ParseTextHelper::parseVideoLinks($this->getDesc());
+    }
 }
-?>

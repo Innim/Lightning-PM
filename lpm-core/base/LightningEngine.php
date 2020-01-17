@@ -118,16 +118,15 @@ class LightningEngine {
 		$session->set(self::SESSION_PREV_PATH, $this->getCurrentUrlPath());
 	}
 	
-	public function addError( $errString ) {
+	public function addError($errString) {
 		if (LPMGlobals::isDebugMode()) {
 			// В дебаге добавляем ошибку БД в текст, чтобы проще отлаживать	
 			$db = LPMGlobals::getInstance()->getDBConnect();		
-			if ($db->errno > 0)
-        	{
+			if ($db->errno > 0) {
         		$errString .= ' (DB error #' . $db->errno . ': ' . $db->error . ')';
         	}
 		}
-		array_push( $this->_errors, $errString );
+		$this->_errors[] = $errString;
 		return false;
 	}
 	

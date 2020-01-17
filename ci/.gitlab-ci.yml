@@ -1,0 +1,62 @@
+stages:
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  WORK_DIR: './'
+  SLACK_USER: 'task'
+  SLACK_CHANNEL: 'task-ci'
+
+before_script:
+  - python -V
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+  - pip install -r ./ci/requirements.txt
+
+cache:
+  paths:
+    - venv/
+    - .cache/pip
+
+deploy to test:
+  image: python:3.8
+  stage: deploy
+  only:
+    - pipe/test
+  variables:
+    DEPLOY_HOST: "${TEST_HOST}"
+    DEPLOY_PORT: "${TEST_SSH_PORT}"
+    DEPLOY_USER: "${TEST_USER}"
+    DEPLOY_PASSWORD: "${TEST_TASK_PASS}"
+    DEPLOY_UPLOAD_PATH: '/tmp/'
+    DEPLOY_APP_PATH: '/var/www/'
+  environment:
+    name: test
+    url: http://vds02.innim.ru:8083
+  script:
+    - echo "start deploy to ${DEPLOY_HOST}"
+    - python --version
+    - python ./ci/main.py test_deploy
+
+
+
+deploy to prod:
+  image: python:3.8
+  stage: deploy
+  only:
+    - master
+  variables:
+    DEPLOY_HOST: "${PROD_HOST}"
+    DEPLOY_PORT: "${PROD_SSH_PORT}"
+    DEPLOY_USER: "${PROD_USER}"
+    DEPLOY_PASSWORD: "${VDS01_TASK_PASS}"
+    DEPLOY_UPLOAD_PATH: '/home/task/upload/'
+    DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
+  environment:
+    name: prod
+    url: https://task.innim.ru
+  script:
+    - echo "start deploy to ${DEPLOY_HOST}"
+    - python --version
+    - python ./ci/main.py prod_deploy

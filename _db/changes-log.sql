@@ -164,3 +164,30 @@ ALTER TABLE `lpm_scrum_snapshot`
 ADD `issue_members_sp` text COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Количество SP по участникам' AFTER `issue_sp`;
 
 -- 0.7a.003
+
+-- 2019-08-28 17:55:00
+ALTER TABLE `lpm_projects` ADD `defaultIssueMemberId` INT NOT NULL COMMENT 'Исполнитель умолчанию';
+
+-- 0.8a.001
+
+-- 2019-09-30 17:20:00
+CREATE TABLE `lpm_users_log` (
+  `id` int(11) NOT NULL COMMENT 'Идентификатор записи' AUTO_INCREMENT PRIMARY KEY,
+  `userId` int(11) NOT NULL COMMENT 'Идентификатор пользователя',
+  `date` datetime NOT NULL COMMENT 'Дата совершения действия',
+  `type` mediumint(5) NOT NULL COMMENT 'Тип действия',
+  `entityId` int(11) NOT NULL COMMENT 'Идентификатор сущности, с которой было произведено действие'
+) COMMENT='Лог действий пользователя';
+
+-- v.0.8a.004
+
+-- 2019-09-30 17:46:00
+ALTER TABLE `lpm_users_log`
+ADD `comment` varchar(255) NOT NULL COMMENT 'Комментарий действия';
+
+-- v.0.8a.005
+
+ALTER TABLE `lpm_recovery_emails`
+CHANGE `id` `id` bigint(19) unsigned NOT NULL AUTO_INCREMENT FIRST;
+
+-- v.0.8a.008

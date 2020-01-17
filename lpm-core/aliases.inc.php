@@ -140,6 +140,13 @@ function lpm_print_users_chooser() {
 }
 
 /**
+ * Распечатывает список видео.
+ */
+function lpm_print_video_list($videoLinks) {
+	return PagePrinter::videoList($videoLinks);
+}
+
+/**
  * Распечатывает форму экспорта задач в Excel.
  */
 function lpm_print_issues_export_to_excel() {
@@ -236,6 +243,13 @@ function lpm_get_project_members() {
 }
 
 /**
+ * Возврашает тестера проекта
+ */
+function lpm_get_project_tester() {
+    return PageConstructor::getProjectTester();
+}
+
+/**
  * Возвращает список меток для задачи.
  */
 function lpm_get_issue_labels() {
@@ -328,4 +342,9 @@ function lpm_is_auth() {
 function lpm_get_errors() {
 	return PageConstructor::getErrors();
 }
-?>
+/**
+ * Проверяет кто удаляет комментарий.
+ */
+function lpm_check_delete_comment($author, $cookie) {
+    return PageConstructor::checkDeleteComment($author, $cookie);
+}

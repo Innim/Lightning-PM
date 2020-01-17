@@ -1,8 +1,10 @@
 <?php
 require_once(dirname( __FILE__ ) . '/../init.inc.php');
 use \GMFramework\DateTimeUtils as DTU;
-
 class IssueService extends LPMBaseService {
+
+    const SECONDS_ON_COMMENT_DELETE = 600;
+
 	/**
 	 * Завершаем задачу
 	 * @param  int $issueId 
@@ -146,21 +148,12 @@ class IssueService extends LPMBaseService {
 		//if (!$issue->checkEditPermit( $this->_auth->getUserId() ))
 		//return $this->error( 'У Вас нет прав на редактирование этой задачи' );
 		
-		// отправка оповещений
-		$members = $issue->getMemberIds();
-		array_push( $members, $issue->authorId );
-		
-		EmailNotifier::getInstance()->sendMail2Allowed(
-			'Удалена задача "' . $issue->name . '"', 
-			$this->getUser()->getName() . ' удалил задачу "' . $issue->name .  '"', 
-			$members,
-			EmailNotifier::PREF_ISSUE_STATE
-		);
-		
-		$sql = "update `%s` set `deleted` = '1' where `id` = '" . $issueId . "'";
-		if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) return $this->errorDBSave();
-
-		Project::updateIssuesCount(  $issue->projectId );
+		try {
+			Issue::remove($this->getUser(), $issue);
+		} catch (Exception $e) {
+			return $this->exception($e);
+		}
+	
 		
 		return $this->answer();
 	}
@@ -174,6 +167,8 @@ class IssueService extends LPMBaseService {
 	        	return $this->error('Нет такой задачи');
 
 			$comment = $this->postComment($issue, $text);
+
+            Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
 	        $this->add2Answer('comment', $comment->getClientObject());
 	    } catch (\Exception $e) { 
@@ -198,7 +193,7 @@ class IssueService extends LPMBaseService {
 	        if (!$issue)
 	        	return $this->error('Нет такой задачи');
 
-			$comment = $this->postComment($issue, 'Прошла тестирование');
+			$comment = $this->postComment($issue, 'Прошла тестирование', true);
 
 			// Отправляем оповещенив в slack
 			$slack = SlackIntegration::getInstance();
@@ -228,7 +223,7 @@ class IssueService extends LPMBaseService {
 	        $issue = Issue::load($issueId);
 	        if (!$issue)
 	        	return $this->error('Нет такой задачи');
-	        Issue::changePriority($issue, $delta);
+	        Issue::changePriority($this->getUser(), $issue, $delta);
 
 	        $this->add2Answer('priority', $issue->priority);
 	    } catch (\Exception $e) { 
@@ -249,10 +244,10 @@ class IssueService extends LPMBaseService {
 		$state   = (int)$state;
 
 	    try {
-	    	// Проверяем состояние 
+	    	// Проверяем состояние
 	    	if (!ScrumStickerState::validateValue($state))
 	    		throw new Exception('Неизвестный стейт');
-	    	 
+
 	        $sticker = ScrumSticker::load($issueId);
 	        if ($sticker === null)
 	        	throw new Exception('Нет стикера для этой задачи');
@@ -263,22 +258,43 @@ class IssueService extends LPMBaseService {
 
 	        $issue = $sticker->getIssue();
 	        if ($state === ScrumStickerState::TESTING) {
+
 	        	// Если состояние "Тестируется" - ставим задачу на проверку
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
+
 	        } else if ($state === ScrumStickerState::DONE) {
 	        	// Если "Готово" - закрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_COMPLETED);
-	        } else if ($issue->status == Issue::STATUS_WAIT && 
+	        } else if ($issue->status == Issue::STATUS_WAIT &&
 	        		($state === ScrumStickerState::TODO || $state === ScrumStickerState::IN_PROGRESS)) {
 				// Если она в режиме ожидания - переоткрываем задачу
 				Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_IN_WORK);
 	        }
-	    } catch (\Exception $e) { 
-	        return $this->exception($e); 
-	    } 
-	
+	    } catch (\Exception $e) {
+	        return $this->exception($e);
+	    }
+
 	    return $this->answer();
 	}
+
+    /**
+     * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
+     */
+    public static function checkTester(Issue $issue) {
+        $testers = $issue->getTesters();
+        $issueId = $issue->getID();
+        $type = LPMInstanceTypes::ISSUE_FOR_TEST;
+
+        if (empty($testers)) {
+            $projectId = $issue->getProject()->getID();
+            $projectTesters = Member::loadTesterForProject($projectId);
+            if (empty($projectTesters))
+            	return null;
+
+            $testerId = (int) $projectTesters[0]->getID();
+            Member::saveMembers($type, $issueId, [$testerId]);
+        }
+    }
 
 	/**
 	 * Помещает стикер задачи на скрам доску
@@ -350,8 +366,12 @@ SQL;
 			if (!Member::deleteIssueMembers($issueId))
 				return $this->errorDBSave();
 
-			if (!Member::saveIssueMembers($issueId, [$this->getUser()->userId]))
+			$userId = $this->getUser()->userId;
+			if (!Member::saveIssueMembers($issueId, [$userId]))
 				return $this->errorDBSave();
+
+	    	// Записываем лог
+	    	UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    } 
@@ -536,30 +556,77 @@ SQL;
 		return $obj;
 	}
 
+    public function deleteComment($id) {
+        $id = (int)$id;
+
+        $comment = Comment::load($id);
+        if (!$comment) {
+            return $this->error('Комментария не существует');
+        }
+
+        $user = $this->getUser();
+
+        if (!$this->checkRole(User::ROLE_ADMIN)) {
+            if (!Comment::checkDeleteCommentById($id)) 
+            	return $this->error('Время удаления истекло.');
+        	
+        	$authorId = $comment->authorId;
+	        if ($authorId != $user->getID())
+	            return $this->error('Вы не можете удалять комментарий');
+        }
+
+		try {
+			Comment::remove($user, $comment);
+		} catch (Exception $e) {
+			return $this->exception($e);
+		}
+
+        return $this->answer();
+    }
+
+	private function slackNotificationCommentTesterOrMembers(Issue $issue, Comment $comment) {
+        if ($issue->status == Issue::STATUS_WAIT) {
+	        $testerIssue = $issue->getTesterIds();
+	        $membersIssue = $issue->getMemberIds();
+	        $userSendMessage = $comment->author->getID();
+	        $slack = SlackIntegration::getInstance();
+
+           if (in_array($userSendMessage, $testerIssue)) {
+               $slack->notifyCommentTesterToMember($issue, $comment);
+           } elseif (in_array($userSendMessage, $membersIssue)) {
+               $slack->notifyCommentMemberToTester($issue, $comment);
+           }
+        }
+    }
+
 	// TODO: вынести из сервиса
-	private function postComment(Issue $issue, $text) {
+	private function postComment(Issue $issue, $text, $ignoreSlackNotification = false) {
 		$issueId = $issue->id;
-		if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text)) 
+		if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text))
 			throw new Exception("Не удалось добавить комментарий");
-		
+
 		// отправка оповещений
-		$members = $issue->getMemberIds();
-		$members[] = $issue->authorId;
-		
+        $members = $issue->getMemberIds();
+        $members[] = $issue->authorId;
+        
+        if (!$ignoreSlackNotification)
+        	$this->slackNotificationCommentTesterOrMembers($issue, $comment);
+
 		EmailNotifier::getInstance()->sendMail2Allowed(
 			'Новый комментарий к задаче "' . $issue->name . '"',
 			$this->getUser()->getName() . ' оставил комментарий к задаче "' .
 			$issue->name .  '":' . "\n" .
-			strip_tags( $comment->text ) . "\n\n" .
+			$comment->getCleanText() . "\n\n" .
 			'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
 			$members,
 			EmailNotifier::PREF_ISSUE_COMMENT
 		);
-		
+
 		// обновляем счетчик коментариев для задачи
 		Issue::updateCommentsCounter($issueId);
+
+        Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
 		return $comment;
 	}
 }
-?>

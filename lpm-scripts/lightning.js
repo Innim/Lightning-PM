@@ -141,6 +141,9 @@ var srv = {
         },
         exportCompletedIssuesToExcel: function (projectId, fromDate, toDate, onResult) {
             this.s._('exportCompletedIssuesToExcel');
+        },
+        deleteComment : function (id, onResult) {
+            this.s._('deleteComment');
         }
     },
     workStudy : {
@@ -154,9 +157,24 @@ var srv = {
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
         },
+        deleteMemberDefault : function (projectId, onResult) {
+            this.s._('deleteMemberDefault');
+        },
+        addIssueMemberDefault : function( projectId, memberByDefaultId, onResult ) {
+            this.s._('addIssueMemberDefault');
+        },
+        addTester : function ( projectId, userId, onResult ) {
+            this.s._('addTester');
+        },
+        deleteTester : function ($projectId, onResult) {
+            this.s._('deleteTester');
+        },
         getSumOpenedIssuesHours : function ( projectId, onResult ) {
             this.s._( 'getSumOpenedIssuesHours' );
         },
+        setProjectSettings : function(projectId, scrum, slackNotifyChannel, onResult) {
+            this.s._('setProjectSettings');
+        }
     },
     projects : {
         s          : new BaseService( 'ProjectsService' ),
@@ -379,6 +397,8 @@ $(document).ready(
        
        
        window.lpInfo.userId = $( '#curUserId' ).val();
+       // Инициализация копирования в буфер
+       (new ClipboardJS('.copy-commit-message'));
    }
 );
 

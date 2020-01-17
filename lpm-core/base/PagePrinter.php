@@ -53,7 +53,7 @@ class PagePrinter {
 	}
 	
 	public static function errors() {
-		echo implode( ', ', LightningEngine::getInstance()->getErrors() );
+		echo implode(', ', LightningEngine::getInstance()->getErrors());
 	}
 	
 	public static function issues($list) {
@@ -74,6 +74,14 @@ class PagePrinter {
 	
 	public static function usersChooser() {
 		PageConstructor::includePattern( 'users-chooser' );
+	}
+	
+	/**
+	 * Распечатывает список видео.
+	 * @param  array $videoLinks Список объектов с данными ссылок на видео.
+	 */
+	public static function videoList($videoLinks) {
+		PageConstructor::includePattern('entity-video-list', compact('videoLinks'));
 	}
 	
 	/**

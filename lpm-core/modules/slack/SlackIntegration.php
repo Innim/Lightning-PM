@@ -70,11 +70,21 @@ class SlackIntegration {
 			// return;
 
 		// TODO: постить в канал
-		$text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *завершена*';
+		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *завершена*';
 		$text = $this->addMentionsByUsers($text, $issue->getMembers());
 
 		$this->postMessageForIssue($issue, $text);
 	}
+
+	public function notifyCommentTesterToMember(Issue $issue, Comment $comment) {
+        $this->postMessageForIssueComment($issue, $comment,
+        	$issue->getMembers(), 'Тестировщик оставил комментарий');
+    }
+
+    public function notifyCommentMemberToTester(Issue $issue, $comment) {
+        $this->postMessageForIssueComment($issue, $comment,
+        	$issue->getTesters(), 'Исполнитель оставил комментарий');
+    }
 
 	public function notifyIssuePassTest(Issue $issue) {
 		$project = $issue->getProject();
@@ -84,7 +94,7 @@ class SlackIntegration {
 		$master = $project->getMaster();
 
 		// TODO: постить в канал
-		$text = $this->getIssuePrefix($issue) . ' ' . $issue->getConstURL() . ' - *прошла тестирование*';
+		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *прошла тестирование*';
 		$text = $this->addMentionsByUsers($text, $master !== null ? [$master] : null);
 
 		$this->postMessageForIssue($issue, $text);
@@ -102,6 +112,20 @@ class SlackIntegration {
 
 		return $this->_client;
 	}
+
+    private function postMessageForIssueComment(Issue $issue, Comment $comment, $mentionUsers, $title) {
+    	$commentUrl = $comment->getIssueCommentUrl($issue);
+		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *' . $title . '*';
+        $text = $this->addMentionsByUsers($text, $mentionUsers);
+
+        $this->postMessageForIssue($issue, $text, [[
+            'fallback' => $issue->getName(),
+            //'title' => $issue->getName(),
+            'title' => $comment->author->getShortName() . ' написал:',
+            'text' => $comment->getCleanText(),
+            'title_link' => $commentUrl
+        ]]);
+    }
 
 	private function postMessageForIssue(Issue $issue, $text, $attachments = null) {
 		$project = $issue->getProject();
