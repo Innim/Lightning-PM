@@ -781,13 +781,13 @@ ul.panel-submenu li {
 }
 
 /* панелька с информацией */
-ol.info-list {
-    list-style: none;
+.info-list {
+	padding-left: 40px;
 }
-ol.info-list li {
+div.info-list > div {
 	margin: 10px 0px;
 }
-ol.info-list li span.label {
+div.info-list > div span.label {
     width      : 150px;
     /*display    : inline-block;*/
     display: block;
@@ -795,14 +795,14 @@ ol.info-list li span.label {
     font-weight: bold;
     font-size: smaller;
 }
-ol.info-list li span.label:after {
+div.info-list > div span.label:after {
     content: ":";
 }
-ol.info-list li span.value {
+div.info-list > div span.value {
 	display: block;
 	margin-left: 155px;
 }
-ol.info-list li
+div.info-list > div
 {
 	clear: both;
 }
