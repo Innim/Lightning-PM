@@ -1207,15 +1207,13 @@ issuePage.commentMergeInDevelop = function () {
 };
 
 issuePage.postComment = function () {
-    var text    = $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val();
-    
+    var text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
     issuePage.postCommentForCurrentIssue(text);
-    
     return false;
 };
 
 issuePage.postCommentForCurrentIssue = function (text) {
-    var issueId = $( '#issueView .comments form.add-comment input[name=issueId]'        ).val();
+    var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
     
     // TODO проверку на пустоту
     if (issueId > 0 && text != '') { 
@@ -1259,8 +1257,8 @@ issuePage.addComment = function (comment) {
     let userId = $('#user-id-hidden').val();
     let elementId = 'comment_' + comment.id;
     let commentTime = comment.date;
-    $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
-    $( '#issueView .comments ol.comments-list' ).prepend( 
+    $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
+    $('#issueView .comments ol.comments-list').prepend(
            '<li>' +
                 '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'"' +
         '               data-time="'+ commentTime +'">Удалить</p>' +
