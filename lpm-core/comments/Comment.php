@@ -104,7 +104,7 @@ SQL;
     }
 
     public static function checkDeleteCommentById ($id) {
-        return $_COOKIE['comment'.$id];
+        return !empty($_COOKIE['comment' . $id]);
     }
 
     public static function remove(User $user, Comment $comment) {

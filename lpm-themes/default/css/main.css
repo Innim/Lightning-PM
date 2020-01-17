@@ -62,7 +62,7 @@ button, a.button, input[type=submit] {
     padding        : 5px 10px;
     border-radius  : 2px 2px;
     border         : solid 1px rgb(153, 153, 153);
-    background     : -moz-linear-gradient(top,#ffffff,#ddddd);
+    background     : -moz-linear-gradient(top,#ffffff, #ddd);
     background     : -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(255, 255, 255)), to(rgb(221, 221, 221)));
     color          : #333333;
     text-decoration: none;
@@ -1236,7 +1236,7 @@ table.issues-list tr.active-issue.tester {
 p.no-items
 {
 	
-}}
+}
 
 /* доступы */
 .access-list

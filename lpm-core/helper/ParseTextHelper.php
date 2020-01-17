@@ -33,12 +33,13 @@ class ParseTextHelper {
             $videoUid = $video[2][$key];
             $type = 'video';
             $url = null;
-            $youtubeUid = reset(explode('&', $videoUid));
 
             if (strpos($urlPrefix, 'youtube') === 0) {
+                $uidParts = explode('&', $videoUid);
+
                 // Это YouTube
                 $type = 'youtube';
-                $url = "http://www.youtube.com/embed/" .  $youtubeUid;
+                $url = "http://www.youtube.com/embed/" .  (!empty($uidParts) ? $uidParts[0] : '');
             } else if (strpos($urlPrefix, 'youtu.be') === 0) {
                 // Это YouTu.be
                 $type = 'youtube';
