@@ -1474,13 +1474,13 @@ issuePage.finishedIssueBy = function (issueIdInProject) {
             // скрываем прелоадер
             preloader.hide();
 
+            // Если создаётся задача по доделкам
             if (res.success) {
-                var issue = new Issue( res.issue );
-                // console.log("issue-name: " + issue.name);
+                const issue = new Issue( res.issue );
+                // var url = $("#projectView").data('projectUrl');
 
-                //var url = $("#projectView").data('projectUrl');
                 issuePage.setIssueBy({
-                    name: 'Доделать задачу ' + issue.name,
+                    name: Issue.getCompletionName(issue.name),
                     hours: issue.hours,
                     desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
                     priority : issue.priority,
@@ -1673,6 +1673,16 @@ Issue.getPriorityStr = function (priority) {
 
 Issue.getCommitMessage = function (num, title) {
     return 'Issue #' + num + ': ' + title;
+}
+
+/**
+ * Возвращает название задачи "По доделкам"
+ */
+Issue.getCompletionName = function (issueName, prefix = 'Доделать задачу') {
+    const lastTagIndex = issueName.lastIndexOf(']');
+    return (~lastTagIndex) ?
+        `${issueName.substring(0, lastTagIndex+1)} ${prefix} ${issueName.substring(lastTagIndex+1).trim()}`
+        : `${prefix} ${issueName.trim()}`;
 }
 
 // Всплывающее окно скопировать commit сообщение
