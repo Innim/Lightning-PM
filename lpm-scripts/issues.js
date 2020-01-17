@@ -70,6 +70,9 @@ function bindFormattingHotkeys(selector) {
                 case 'KeyU':
                     insertFormattingMarker(this, '__');
                     break;
+                case 'KeyG':
+                    insertFormattingMarker(this, '> ', true);
+                    break;
                 default:
                     return;
             }
@@ -554,13 +557,13 @@ function insertMarker(marker) {
     insertFormattingMarker($('#issueForm textarea[name=desc]'), marker);
 }
 
-function insertFormattingMarker(input, marker) {
+function insertFormattingMarker(input, marker, single) {
     var $input = $(input);
     var text = $input[0];
     var selectionStart = text.selectionStart;
     var subtext = text.value.substring(selectionStart, text.selectionEnd);
     var caretPos = 0;
-    const closetag = marker;
+    const closetag = single ? "" : marker;
     //Если в описании задачи есть текст
     if (!$.isEmptyObject({text})) { 
         // берем все, что до выделения
