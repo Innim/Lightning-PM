@@ -140,7 +140,7 @@ $userId = lpm_get_user()->getID();
     </div>
     <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
      <textarea name="commentText"></textarea>
-     <p class="comment-note">Можете использовать [b], [i], [u], [code] для разметки текста</p>
+     <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>, <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>
      <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>
      <p class="buttons-bar">
         <button type="submit">Отправить</button>

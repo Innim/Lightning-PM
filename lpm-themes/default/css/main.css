@@ -741,6 +741,10 @@ ul.images-url > li > input {
     padding         : 10px;
     clear           : both;
 }
+.comments .comments-list li .text > p {
+    margin: 0;
+    padding: 0;
+}
 #projectComments .pages-nav-bar {
 	text-align: center;
 	text-transform: uppercase;
