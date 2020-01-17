@@ -9,6 +9,7 @@
 class ParsedownExt extends Parsedown {
     private $_strongRegex;
     private $_delRegex;
+    private $_underlineRegex;
 
     function __construct() {
         array_unshift($this->InlineTypes['*'], 'Strong');
@@ -18,10 +19,21 @@ class ParsedownExt extends Parsedown {
          
         $this->InlineTypes['~'][] = 'Del';
         $this->_delRegex = '/^~(?=\S)(.+?)(?<=\S)~/';
+
+        array_unshift($this->InlineTypes['_'], 'Underline');
+        // Нам подходит Strong по __
+        $this->_underlineRegex = $this->StrongRegex['_'];
     }
 
     protected function inlineStrong($Excerpt) {
         return $this->inline($Excerpt, $this->_strongRegex, 'strong');
+    }
+
+    protected function inlineUnderline($Excerpt) {
+        if (!isset($Excerpt['text'][1]) || $Excerpt['text'][1] !== '_')
+            return;
+
+        return $this->inline($Excerpt, $this->_underlineRegex, 'u');
     }
 
     protected function inlineDel($Excerpt) {
