@@ -10,6 +10,7 @@
         }
     ],
     "require": {
-        "coderstephen/slack-client": "^0.3.0"
+        "coderstephen/slack-client": "^0.3.0",
+        "erusev/parsedown": "^1.7"
     }
 }
