@@ -104,7 +104,7 @@ SQL;
     }
 
     public static function checkDeleteCommentById ($id) {
-        return $_COOKIE['comment'.$id];
+        return !empty($_COOKIE['comment' . $id]);
     }
 
     public static function remove(User $user, Comment $comment) {
@@ -131,7 +131,7 @@ SQL;
 
 	private $_htmlText;
 
-	
+
 	/**
 	 * 
 	 * @var User
@@ -179,7 +179,7 @@ SQL;
 
 			$this->_htmlText = $value;
 		}
-		
+
 		return $this->_htmlText;
 	}
 
@@ -245,22 +245,22 @@ SQL;
 
 	private function proceedBBCode($value) {
 		$tags = implode('|', self::$_tags);
-		$value = preg_replace( 
-			array( 
+		$value = preg_replace(
+			array(
 				//"/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is",
 				//"/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is",
 				"/(https?:\/\/[^<\s]+[[:alnum:]])([^[:alnum:]]*(?:<br ?\/?>)*[^a-zа-я0-9]|\s|$)/iu",
 				"/((?:\n\r)|(?:\r\n)|\n|\r){1}/",
 				"/\[(" . $tags . ")\](.*?)\[\/\\1\]/",
-			), 
-		    array(  
+			),
+		    array(
 		    	//"$1$2<a href=\"http://$3\" >$3</a>",
 		    	//"$1$2<a href=\"$3\" >$3</a>",
 		    	'<a href="$1">$1</a>$2',
 		    	"<br />",
-		    	"<$1>$2</$1>" 
+		    	"<$1>$2</$1>"
 		    ),
-			$value 
+			$value
 		);
 
 		return $value;
