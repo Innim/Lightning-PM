@@ -22,46 +22,46 @@ $userId = lpm_get_user()->getID();
     <div class="issue_copy">
         <a id="copyText" class="copy-commit-message" href="javascript:void(0);"  data-clipboard-text='Issue #<?=$issue->getIdInProject() . ": " . $issue->getName();?>' >скопировать commit сообщение</a>
     </div>
-    <ol class="info-list <?switch($issue->status): 
+    <div class="info-list <?switch($issue->status): 
     case 0: ?>active-issue <?break;?> 
     <? case 1: ?>verify-issue <?break;?> 
     <?case 2: ?>completed-issue<?break;?>
     <?endswitch;?>">
-        <li>
+        <div>
             <span class="label">Статус</span>
             <span class="value"><?=$issue->getStatus();?></span>
-        </li>
-        <li>
+        </div>
+        <div>
             <span class="label">Тип</span>
             <span class="value"><?=$issue->getType();?></span>
             <input type="hidden" name="type" value="<?=$issue->type;?>"/>
-        </li>
-        <li>
+        </div>
+        <div>
             <span class="label">Приоритет</span>
             <span class="value">
                 <span class="priority-val circle"><?=$issue->priority;?></span>
                 <?=$issue->getPriorityStr();?> (<?=($issue->priority+1);?>%)
             </span>
             <input type="hidden" name="priority" value="<?=$issue->priority;?>"/>
-        </li>
-        <li>
+        </div>
+        <div>
             <span class="label">Дата создания</span>
             <span class="value"><?=$issue->getCreateDate();?></span>
-        </li>
-        <li>
+        </div>
+        <div>
             <span class="label">Дата завершения</span>
             <span class="value"><?=$issue->getCompleteDate();?></span>
             <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>"/>
-        </li>
-        <li class="issue-completed-date-row">
+        </div>
+        <div class="issue-completed-date-row">
             <span class="label">Завершена</span>
             <span class="value"><?=$issue->getCompletedDate();?></span>
-        </li>
-        <li>
+        </div>
+        <div>
             <span class="label">Создал</span>
             <span class="value"><?=$issue->getAuthorLinkedName();?></span>
-        </li>
-        <li>
+        </div>
+        <div>
             <span class="label">Исполнители</span>
             <span class="value">
                 <?php foreach ($issue->getMembers() as $i => $member):
@@ -72,23 +72,23 @@ $userId = lpm_get_user()->getID();
             </span>
             <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
             <input type="hidden" name="membersSp" value="<?=$issue->getMembersSpStr();?>"/>
-        </li>
+        </div>
         <?php $testers = $issue->getTesters(); ?>
-        <li  class="testers-row"<?php if (empty($testers)): ?>style="display: none;"<?php endif;?>>
+        <div  class="testers-row"<?php if (empty($testers)): ?>style="display: none;"<?php endif;?>>
             <span class="label">Тестеры</span>
             <span class="value">
                 <?php foreach ($testers as $i => $tester) {?><?=$i>0?', ':''?> <?=$tester->getLinkedName();?><?php }?>
             </span>
             <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>"/>
-        </li>
-        <li class="desc">        
+        </div>
+        <div class="desc">        
             <div class="value"><?=$issue->getDesc();?></div>
-        </li>
+        </div>
         <?php if ($videoLinks = $issue->getVideoLinks()): ?>
-        <li><?php lpm_print_video_list($videoLinks); ?></li>
+        <div><?php lpm_print_video_list($videoLinks); ?></div>
         <?php endif ?>
         <?php if ($picture = $issue->getImages()): ?>
-            <li>
+            <div>
                 <ul class="images-line">
                     <?php foreach ($picture as $img): ?>
                         <li>
@@ -97,9 +97,9 @@ $userId = lpm_get_user()->getID();
                         </li>
                     <?endforeach;?>
                 </ul>
-            </li>
+            </div>
         <?php endif; ?>
-    </ol>
+    </div>
     <p class="buttons-bar <? switch($issue->status): 
     case 0: ?>active-issue<?break;?> 
     <?case 1: ?>verify-issue<?break;?> 
@@ -140,7 +140,7 @@ $userId = lpm_get_user()->getID();
     </div>
     <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
      <textarea name="commentText"></textarea>
-     <p class="comment-note">Можете использовать [b], [i], [u], [code] для разметки текста</p>
+     <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>, <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>
      <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>
      <p class="buttons-bar">
         <button type="submit">Отправить</button>

@@ -768,13 +768,10 @@ SQL;
 	}
 	
 	public function getDesc() {
-
-		if (empty($this->_htmlDesc))
-		{
+		if (empty($this->_htmlDesc)) {
 			$desc = $this->desc;
 
-			if (strpos($desc, '<ul>') !== false)
-			{
+			if (strpos($desc, '<ul>') !== false) {
 				// Предварительно порежем переносы в списках
 				$desc = str_replace("\r\n", "\n", $desc);
 				$desc = str_replace(array("</li>\n<li>","</li> \n<li>"), '</li><li>', $desc);
@@ -782,8 +779,9 @@ SQL;
 			}
 
 			$desc = HTMLHelper::codeIt($desc);
-			$desc = nl2br($desc);
-			$desc = HTMLHelper::linkIt($desc);
+			$desc = HTMLHelper::formatIt($desc);
+			// $desc = nl2br($desc);
+			// $desc = HTMLHelper::linkIt($desc);
 
 			$this->_htmlDesc = $desc;
 		}
