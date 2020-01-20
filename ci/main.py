@@ -55,7 +55,7 @@ def prod_deploy():
 
 
 @runner(msg_title='Deploy to TEST')
-def prod_deploy():
+def test_deploy():
     worker.deploy()
     notifier.deploy_message(deploy_type='test')
 

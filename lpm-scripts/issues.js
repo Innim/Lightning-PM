@@ -11,8 +11,8 @@ $(document).ready(
         });
 
         $('#issueForm .note.tags-line a.tag').click(function (e) {
-            var a = e.currentTarget;
-            issuePage.insertTag(a.innerText);
+            var a = $(e.currentTarget);
+            insertMarker(a.data('marker'));
         });
 
         $('.delete-comment').live('click', function() {
@@ -47,10 +47,41 @@ $(document).ready(
                     .animate({width: 'hide', height: 'hide'}, 1);
             }
         )
+
+        bindFormattingHotkeys('#issueForm form textarea[name=desc]');
+        bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
     }
 );
 
+function bindFormattingHotkeys(selector) {
+    $(selector).keypress(function(e) {
+        if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
+            return;
 
+        if (e.ctrlKey || e.metaKey) {
+            var code = e.originalEvent.code;
+            switch (code) {
+                case 'KeyB':
+                    insertFormattingMarker(this, '*');
+                    break;
+                case 'KeyI':
+                    insertFormattingMarker(this, '_');
+                    break;
+                case 'KeyU':
+                    insertFormattingMarker(this, '__');
+                    break;
+                case 'KeyG':
+                    insertFormattingMarker(this, '> ', true);
+                    break;
+                default:
+                    return;
+            }
+
+            event.stopImmediatePropagation();
+            event.preventDefault();
+        }
+    });
+}
 
 function DropDown(el) {
     this.dd = el;
@@ -522,47 +553,43 @@ issuePage.validateIssueForm = function () {
     }
 };
 
-issuePage.insertTag = function(tag){
-    var text = document.getElementsByName('desc').item(0);
-    var subtext = text.value.substring(text.selectionStart, text.selectionEnd);
+function insertMarker(marker) {
+    insertFormattingMarker($('#issueForm textarea[name=desc]'), marker);
+}
+
+function insertFormattingMarker(input, marker, single) {
+    var $input = $(input);
+    var text = $input[0];
+    var selectionStart = text.selectionStart;
+    var subtext = text.value.substring(selectionStart, text.selectionEnd);
     var caretPos = 0;
-    const closetag = '</' +tag+ '>';
+    const closetag = single ? "" : marker;
     //Если в описании задачи есть текст
     if (!$.isEmptyObject({text})) { 
         // берем все, что до выделения
-        var desc = text.value.substring(0,text.selectionStart)+
-        // вставляем стартовый тег
-        '<'+tag+'>'+
-        // вставляем выделенный текст
-        subtext +
-        // вставляем закрывающий тег
-        closetag +
-        // вставляем все, что после выделения
-        text.value.substring(text.selectionEnd,text.value.length);
+        var desc = text.value.substring(0, selectionStart) +
+            marker + subtext + closetag +
+            text.value.substring(text.selectionEnd, text.value.length);
         //определяем позицию курсора(перед закрывающим тэгом)
         //если есть выделенный текст
         if (subtext == "")
             //определяем фокус перед '/' тэгом
-            caretPos = text.selectionStart + closetag.length-1;
+            caretPos = selectionStart + marker.length;
         else //после тэга       
-            caretPos = text.selectionStart + subtext.length + closetag.length*2;
+            caretPos = selectionStart + subtext.length + marker.length * 2;
+
         //добавляем итог в описание задачи
-        $('#issueForm textarea.desc').val(desc);
+        $input.val(desc);
+
         //устанавливаем курсор на полученную позицию
-        setCaretPosition(text,caretPos);
+        setCaretPosition(text, caretPos);
     }
 }
     
-function setCaretPosition(elem, pos ) {
-    //если есть выделение
-    if(elem.selectionStart) {
-        //фокусим курсор на нужной позиции   
-        elem.setSelectionRange(pos, pos);
-        elem.focus();
-    }
-    //иначе фокусим сам элемент
-    else elem.focus();
-};
+function setCaretPosition(elem, pos) {
+    elem.setSelectionRange(pos, pos);
+    elem.focus();
+}
 
 function completeIssue(e) {    
     var parent   = e.currentTarget.parentElement;
@@ -904,19 +931,19 @@ issuePage.setEditInfo = function () {
 
     // тип
     $('form input:radio[name=type]:checked', "#issueForm").removeAttr( 'checked' );
-    $('form input:radio[name=type][value=' + $( "#issueInfo li input[name=type]" ).val() + ']', 
+    $('form input:radio[name=type][value=' + $( "#issueInfo div input[name=type]" ).val() + ']',
        "#issueForm" ).attr( 'checked', 'checked' ); 
     // приоритет
-    var priorityVal = $( "#issueInfo li input[name=priority]" ).val();
+    var priorityVal = $( "#issueInfo div input[name=priority]" ).val();
     $( "#issueForm form input[name=priority]" ).val( priorityVal );
     issuePage.setPriorityVal( priorityVal );
     // дата окончания
     $( "#issueForm form input[name=completeDate]" ).val( 
-        $( "#issueInfo li input[name=completeDate]" ).val() 
+        $( "#issueInfo div input[name=completeDate]" ).val()
     );
     // исполнители
-    var memberIds = $("#issueInfo li input[name=members]").val().split(',');
-    var membersSp = $("#issueInfo li input[name=membersSp]").val().split(',');
+    var memberIds = $("#issueInfo div input[name=members]").val().split(',');
+    var membersSp = $("#issueInfo div input[name=membersSp]").val().split(',');
     var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
@@ -925,7 +952,7 @@ issuePage.setEditInfo = function () {
     }
 
     // Тестеры
-    var testerIds = $( "#issueInfo li input[name=testers]" ).val() .split( ',' );
+    var testerIds = $( "#issueInfo div input[name=testers]" ).val() .split( ',' );
     l = testerIds.length;
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];
@@ -941,7 +968,7 @@ issuePage.setEditInfo = function () {
     // вообще видимо надо переделать это все
     //$( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).html() );
     // изображения
-    var imgs = $("#issueInfo li > .images-line > li");
+    var imgs = $("#issueInfo div > .images-line > li");
     l = imgs.length;
     var $imgInputField = $('#issueForm form .images-list > li').has('input[name="images[]"]');
     var $imgInput = $('#issueForm form .images-list').empty();
@@ -1089,8 +1116,8 @@ function addImagebyUrl(imageUrl) {
  * @param {Issue} issue
  */
 function setIssueInfo( issue ) {        
-    $("#issueInfo > h3 .issue-name").text( issue.name );
-    var fields = $("#issueInfo > ol > li > .value");
+    $("#issueInfo > h3 .issue-name").text(issue.name);
+    var fields = $("#issueInfo > .info-list > div > .value");
     
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
@@ -1183,15 +1210,13 @@ issuePage.commentMergeInDevelop = function () {
 };
 
 issuePage.postComment = function () {
-    var text    = $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val();
-    
+    var text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
     issuePage.postCommentForCurrentIssue(text);
-    
     return false;
 };
 
 issuePage.postCommentForCurrentIssue = function (text) {
-    var issueId = $( '#issueView .comments form.add-comment input[name=issueId]'        ).val();
+    var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
     
     // TODO проверку на пустоту
     if (issueId > 0 && text != '') { 
@@ -1235,8 +1260,8 @@ issuePage.addComment = function (comment) {
     let userId = $('#user-id-hidden').val();
     let elementId = 'comment_' + comment.id;
     let commentTime = comment.date;
-    $( '#issueView .comments form.add-comment textarea[name=commentText]' ).val( '' );
-    $( '#issueView .comments ol.comments-list' ).prepend( 
+    $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
+    $('#issueView .comments ol.comments-list').prepend(
            '<li>' +
                 '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'"' +
         '               data-time="'+ commentTime +'">Удалить</p>' +
@@ -1244,7 +1269,7 @@ issuePage.addComment = function (comment) {
             '<p class="author">' + comment.author.linkedName + '</p> ' +
             '<p class="date"><a class="anchor" id="'+comment.id+
             '"href="#comment-'+comment.id+'">'+comment.dateLabel+'</a></p>' +
-            '<p class="text">' + comment.text + '</p>' +
+            '<article class="text">' + comment.text + '</p>' +
            '</li>' 
     );
     issuePage.hideCommentForm();
@@ -1474,13 +1499,13 @@ issuePage.finishedIssueBy = function (issueIdInProject) {
             // скрываем прелоадер
             preloader.hide();
 
+            // Если создаётся задача по доделкам
             if (res.success) {
-                var issue = new Issue( res.issue );
-                // console.log("issue-name: " + issue.name);
+                const issue = new Issue( res.issue );
+                // var url = $("#projectView").data('projectUrl');
 
-                //var url = $("#projectView").data('projectUrl');
                 issuePage.setIssueBy({
-                    name: issue.name,
+                    name: Issue.getCompletionName(issue.name),
                     hours: issue.hours,
                     desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
                     priority : issue.priority,
@@ -1673,6 +1698,16 @@ Issue.getPriorityStr = function (priority) {
 
 Issue.getCommitMessage = function (num, title) {
     return 'Issue #' + num + ': ' + title;
+}
+
+/**
+ * Возвращает название задачи "По доделкам"
+ */
+Issue.getCompletionName = function (issueName, prefix = 'Доделать задачу') {
+    const lastTagIndex = issueName.lastIndexOf(']');
+    return (~lastTagIndex) ?
+        `${issueName.substring(0, lastTagIndex+1)} ${prefix} ${issueName.substring(lastTagIndex+1).trim()}`
+        : `${prefix} ${issueName.trim()}`;
 }
 
 // Всплывающее окно скопировать commit сообщение

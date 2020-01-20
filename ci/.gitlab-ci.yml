@@ -37,7 +37,7 @@ deploy to test:
   script:
     - echo "start deploy to ${DEPLOY_HOST}"
     - python --version
-    - python ./ci/main.py prod_deploy
+    - python ./ci/main.py test_deploy
 
 
 

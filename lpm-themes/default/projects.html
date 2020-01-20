@@ -48,7 +48,7 @@
 	<h3>Добавить проект</h3>
 	<div class="validateError"><? lpm_print_errors(); ?></div>
 	<form onsubmit="return validateAddProj();" method="post">		
-		<input placeholder="Название проекта*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('email');?>"/>
+		<input placeholder="Название проекта*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>"/>
 		<input placeholder="Уникальный идентификатор*" title="Допустимы строчные буквы (a-z), цифры и дефис" type="text" name="uid" required="required" maxlength="255" value="<?lpm_print_post_var('uid');?>"/>
 		<textarea placeholder="Описание" name="desc" maxlength="65535"><?lpm_print_post_var('desc');?></textarea>
 		<div>
