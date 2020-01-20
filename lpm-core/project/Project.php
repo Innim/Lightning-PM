@@ -228,7 +228,7 @@ class Project extends MembersInstance
 	}
 	
 	public function getDesc() {
-		$text = nl2br( $this->desc);
+		$text = nl2br($this->desc);
 		$text = HTMLHelper::linkIt($text);
 		return $text;
 	}
