@@ -147,9 +147,9 @@ $userId = lpm_get_user()->getID();
         <button type="reset" onclick="issuePage.hideCommentForm();">Отмена</button>
      </p>
     </form>
-    <ol class="comments-list">
+    <section class="comments-list">
         <?php foreach (lpm_get_comments() as $comment): ?>
-        <li>
+        <div class="comments-list-item">
             <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
             <p id="<?='comment_' . $comment->id?>"
                class="delete-comment"
@@ -164,10 +164,10 @@ $userId = lpm_get_user()->getID();
                 <?=$comment->getText();?>
                 <?php lpm_print_video_list($comment->getVideoLinks()); ?>        
             </article>
-        </li>
+        </div>
         <?php endforeach; ?>
-    </ol>
-      <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
+    </section>
+    <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
   </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=$userId;?>">

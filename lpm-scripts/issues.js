@@ -1193,7 +1193,7 @@ issuePage.toogleCommentForm = function () {
         link.html('Свернуть комментарии');
     } else {
         link.html('Показать комментарии (' + 
-            $( '#issueView .comments .comments-list li' ).size() + ')');
+            $( '#issueView .comments .comments-list .comments-list-item' ).size() + ')');
     }
 
     link.show();
@@ -1261,8 +1261,8 @@ issuePage.addComment = function (comment) {
     let elementId = 'comment_' + comment.id;
     let commentTime = comment.date;
     $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
-    $('#issueView .comments ol.comments-list').prepend(
-           '<li>' +
+    $('#issueView .comments .comments-list').prepend(
+           '<div class="comments-list-item">' +
                 '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'"' +
         '               data-time="'+ commentTime +'">Удалить</p>' +
             '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
@@ -1270,7 +1270,7 @@ issuePage.addComment = function (comment) {
             '<p class="date"><a class="anchor" id="'+comment.id+
             '"href="#comment-'+comment.id+'">'+comment.dateLabel+'</a></p>' +
             '<article class="text">' + comment.text + '</p>' +
-           '</li>' 
+           '</div>' 
     );
     issuePage.hideCommentForm();
     $( '#issueView .comments .links-bar a.toggle-comments' ).show();
