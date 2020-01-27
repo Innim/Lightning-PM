@@ -172,6 +172,7 @@ code {
 	border-radius: 2px;
 	padding: 1px 4px;
 	line-height: 1.5;
+	word-wrap: break-word;
 }
 code.nohighlight {
 	display: block;
