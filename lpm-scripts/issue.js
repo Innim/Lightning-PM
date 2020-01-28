@@ -13,7 +13,7 @@ $(document).ready(
                 issuePage.getPriorityColor( $( "#issueInfo li input[name=priority]" ).val() ) 
         );*/
         
-        if ($( '#issueView .comments .comments-list > li' ).size() == 0) 
+        if ($( '#issueView .comments .comments-list .comments-list-item' ).size() == 0) 
             $( '#issueView .comments .links-bar a.toggle-comments' ).hide();
 
         function highlightComment() 
@@ -21,7 +21,7 @@ $(document).ready(
             var hash = window.location.hash;
             if (hash.substr(0, 9) === '#comment-')
             {
-                 $( "#issueView ol.comments-list li" ).has("a.anchor[id="+hash.substr(1)+"]")
+                 $( "#issueView .comments-list .comments-list-item" ).has("a.anchor[id="+hash.substr(1)+"]")
                     .find(".text").css("backgroundColor","#868686")
                     .animate({ backgroundColor: "#eeeeee" }, 1200);
             }
