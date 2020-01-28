@@ -82,7 +82,7 @@ $userId = lpm_get_user()->getID();
             <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>"/>
         </div>
         <div class="desc">        
-            <div class="value"><?=$issue->getDesc();?></div>
+            <div class="value formatted-desc"><?=$issue->getDesc();?></div>
         </div>
         <?php if ($videoLinks = $issue->getVideoLinks()): ?>
         <div><?php lpm_print_video_list($videoLinks); ?></div>
@@ -160,7 +160,7 @@ $userId = lpm_get_user()->getID();
             <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
             <p class="author"><?=$comment->getAuthorLinkedName();?></p>
             <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="<?=$comment->getIssueCommentUrl($issue);?>"><?=$comment->getDate();?></a></p>
-            <article class="text">
+            <article class="text formatted-desc">
                 <?=$comment->getText();?>
                 <?php lpm_print_video_list($comment->getVideoLinks()); ?>        
             </article>
