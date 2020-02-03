@@ -22,7 +22,7 @@ $(document).ready(
             if (result) {
                 issuePage.deleteComment(id, function(res) {
                     if (res) {
-                        el.parent('li').remove();
+                        el.parent('div.comments-list-item').remove();
                         el = null;
                     }
                 });
