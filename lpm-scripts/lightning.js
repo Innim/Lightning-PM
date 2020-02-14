@@ -157,6 +157,12 @@ var srv = {
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
         },
+        setMaster : function (projectId, masterId, onResult) { 
+          this.s._('setMaster'); 
+        },
+        deleteMaster : function (projectId, onResult) { 
+          this.s._('deleteMaster'); 
+        },
         deleteMemberDefault : function (projectId, onResult) {
             this.s._('deleteMemberDefault');
         },
@@ -193,8 +199,11 @@ var srv = {
     },
     users :{
         s   : new BaseService ('UsersService'),
-        lockUser : function (userId, isLock){
+        lockUser : function (userId, isLock) {
             this.s._('lockUser');
+        },
+        setSlackName : function (userId, slackName) {
+            this.s._('setSlackName');
         },
     },
 

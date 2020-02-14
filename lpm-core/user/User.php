@@ -4,9 +4,7 @@
  * @author GreyMag
  *
  */
-class User extends LPMBaseObject 
-{	
-
+class User extends LPMBaseObject {
 	public static function loadList( $where ) {
 		if ($where != '') $where = ' AND (' . $where . ')'; 
 		return StreamObject::loadListDefault( 
@@ -24,6 +22,38 @@ class User extends LPMBaseObject
 	public static function load( $userId ) {
 		//return StreamObject::loadListDefault( $where, LPMTables::USERS, __CLASS__ );
 		return StreamObject::singleLoad( $userId, __CLASS__, '', '%1$s`.`userId' );
+	}
+	
+	/**
+	 * Обновляет поле блокировки пользователя.
+	 * @param int $userId
+	 * @param bool $isLocked
+	 */
+	public static function updateLocked($userId, $isLocked) {
+        return self::updateField($userId, 'locked', $isLocked);
+	}
+	
+	/**
+	 * Обновляет поле с именем в Slack для пользователя.
+	 * @param int $userId
+	 * @param string $slackName
+	 */
+	public static function updateSlackName($userId, $slackName) {
+        return self::updateField($userId, 'slackName', $slackName);
+	}
+	
+	/**
+	 * Обновляет поле блокировки пользователя.
+	 * @param int $userId
+	 * @param bool $isLocked
+	 */
+	private static function updateField($userId, $fieldName, $value) {
+        $db = self::getDB();
+        return $db->queryb([
+        	'UPDATE' => LPMTables::USERS,
+        	'SET' => [$fieldName => $value],
+        	'WHERE' => ['userId' => $userId]
+        ]);
 	}
 	
 	public static function checkCurRole( $curRole, $reqRole ) {

@@ -56,9 +56,18 @@ class Project extends MembersInstance
         return false;
     }
 
-    public static function deleteMemberDefault ($defaultIssueMemberId, $projectId) {
-            $sql = "UPDATE `%s` SET `defaultIssueMemberId`=null WHERE `id`='$projectId' ";
-            return self::getDB()->queryt($sql, LPMTables::PROJECTS);
+    public static function deleteMemberDefault($projectId) {
+        $sql = "UPDATE `%s` SET `defaultIssueMemberId`=null WHERE `id`='$projectId' ";
+        return self::getDB()->queryt($sql, LPMTables::PROJECTS);
+    }
+
+    public static function updateMaster($projectId, $masterId) {
+        $db = self::getDB();
+        return $db->queryb([
+        	'UPDATE' => LPMTables::PROJECTS,
+        	'SET' => ['masterId' => $masterId],
+        	'WHERE' => ['id' => $projectId]
+        ]);
     }
 		
 	public static function getAvailList( $isArchive ) {

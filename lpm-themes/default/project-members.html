@@ -1,10 +1,22 @@
+<?php
+/* 
+Требуются: 
+    $project - проект
+    $projectMembers - участники проекта
+    $projectTester - Тестировщик по умолчанию
+*/
+
+$project = lpm_get_project();
+$projectMembers = lpm_get_project_members();
+$projectTester = lpm_get_project_tester();
+?>
 <article  id="projectMembers">
     <h1><?lpm_print_header();?></h1>
-    <div class="info-message" style="display: none;" >Сохранено</div>
+    <div class="info-message" style="display: none;">Сохранено</div>
     <h3>Участники проекта</h3>
-    <input type="hidden" name="projectId" value="<?=lpm_get_project()->getID();?>"/>
+    <input type="hidden" name="projectId" value="<?=$project->getID();?>"/>
     <ul class="users-list">
-        <?php foreach (lpm_get_project_members() as $member): ?>
+        <?php foreach ($projectMembers as $member): ?>
         <li>
             <span class="user-name"><?=$member->getLinkedName();?></span>
             <input id="userIdId" type="hidden" name="userId" value="<?=$member->getID();?>">
@@ -12,63 +24,89 @@
         <?php endforeach; ?>
     </ul>
 
-        <button onclick="openMembersChooser();">Добавить</button>
+    <button onclick="openMembersChooser();">Добавить</button>
+
+    <!-- Выбор мастера проекта // Начало -->
+    <h3 class="headersProjectsMembers">Мастер проекта</h3>
+    <div id="projectMaster" class="project-members-selector">
+    <?php
+        $master = $project->getMaster();
+        if(!empty($master)): 
+    ?>
+        <ul>
+            <li id="projectMaster" value="<?=$master->getName();?>">
+                <?=$master->getName();?>
+                <a href="javascript:;" id="removeMaster" class="remove-link">Удалить</a>
+            </li>
+        </ul>
+        <?php else: ?>
+        <form id="chooseMaster">
+            <select id="selectMaster">
+                <option value="0">Мастер не выбран</option>
+                <?php foreach ($projectMembers as $member): ?>
+                <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
+                <?php endforeach; ?>
+            </select>
+            <button id="saveMaster" type="button">Подтвердить</button>
+        </form>
+    <?php endif; ?>
+    </div>
+
+    <!-- Выбор мастера проекта // Конец -->
 
     <!-- Добавить исполнителя по умолчанию -->
     <h3 class="headersProjectsMembers">Исполнитель задач по умолчанию</h3>
-    <?php
-    $memberByDefaultId = lpm_get_project()->defaultIssueMemberId;
-    foreach (lpm_get_project_members() as $member):
-        if($member->getID() === $memberByDefaultId): ?>
-    <ul>
-        <li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?>
-            <b class="delete-member-default-i">Удалить</b>
-        </li>
-        </ul>
-    <?php $namePerformer = true; endif; ?>
-    <?php endforeach; ?>
+    <div class="project-members-selector">
+        <?php
+        $memberByDefaultId = $project->defaultIssueMemberId;
+        foreach ($projectMembers as $member):
+            if($member->getID() === $memberByDefaultId): ?>
+        <ul>
+            <li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?>
+                <a href="javascript:;" id="removeDefaultMember" class="remove-link">Удалить</a>
+            </li>
+            </ul>
+        <?php $namePerformer = true; endif; ?>
+        <?php endforeach; ?>
 
-    <?php if (!$namePerformer): ?>
-    <form id="divPerformer" onsubmit="return false;">
-        <select id="selectMember">
-            <option value="0">Исполнитель не выбран</option>
+        <?php if (!$namePerformer): ?>
+        <form id="divPerformer" onsubmit="return false;">
+            <select id="selectMember">
+                <option value="0">Исполнитель не выбран</option>
 
-            <?php foreach (lpm_get_project_members() as $member): ?>
-            <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
-            <?php endforeach; ?>
-        </select>
-        <button id="btnSelectMember" type="submit">Подтвердить</button>
-    </form>
-    <?php endif;?>
+                <?php foreach ($projectMembers as $member): ?>
+                <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
+                <?php endforeach; ?>
+            </select>
+            <button id="btnSelectMember" type="submit">Подтвердить</button>
+        </form>
+        <?php endif;?>
+    </div>
 
     <!-- End perfomens by default -->
 
     <!-- Выбор Тестировшика проекта  -->
     <h3 class="headersProjectsMembers">Тестировщик</h3>
-    <div id="select-tester-option">
-    <?php
-            $tester = lpm_get_project_tester();
-            if(!is_null($tester)) {
-        ?>
-    <ul>
-    <li id="NameTester" value="<?=$tester->getName();?>" >
-        <?=$tester->getName();?>
-        <b class="delete-tester-i">Удалить</b>
-    </li>
-    </ul>
-    <?php } else { ?>
+    <div id="select-tester-option" class="project-members-selector">
+    <?php if(!empty($projectTester)): ?>
+        <ul>
+            <li id="NameTester" value="<?=$projectTester->getName();?>" >
+                <?=$projectTester->getName();?>
+                <a href="javascript:;" id="removeTester" class="remove-link">Удалить</a>
+            </li>
+        </ul>
+        <?php else: ?>
+        <form id="formOption">
+            <select id="selectTester">
+                <option value="0">Тестер не выбран</option>
 
-    <form id="formOption">
-        <select id="selectTester">
-            <option value="0">Тестер не выбран</option>
-
-        <?php foreach (lpm_get_project_members() as $member): ?>
-            <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
-        <?php endforeach; ?>
-        </select>
-        <button id="btnSelect" type="button">Подтвердить</button>
-    </form>
-        <?php } ?>
+            <?php foreach ($projectMembers as $member): ?>
+                <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
+            <?php endforeach; ?>
+            </select>
+            <button id="btnSelect" type="button">Подтвердить</button>
+        </form>
+    <?php endif; ?>
     </div>
     <?lpm_print_users_chooser();?>
 

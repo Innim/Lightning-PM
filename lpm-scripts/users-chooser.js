@@ -1,75 +1,58 @@
 $(document).ready(
-  function ()
-  {
-      $( "#usersChooser" ).dialog( {autoOpen:false, modal:true, resizable:false} );
+  function () {
+      let projectId = $("#projectMembers input[name=projectId]").val();
+
+      function reloadOnSuccees(res) {
+        if (res.success) {
+            location.reload();
+        } else {
+            srv.err(res);
+        }
+      }
+
+      $("#usersChooser").dialog( {autoOpen:false, modal:true, resizable:false} );
+      
+      $('#saveMaster').click(function (event) {
+          let masterId = $('#selectMaster').val();
+
+          if (masterId == "0")
+              return event.preventDefault();
+
+          srv.project.setMaster(projectId, masterId, reloadOnSuccees);
+      });
+
+      $('#removeMaster').click(function() {
+          srv.project.deleteMaster(projectId, reloadOnSuccees);
+      });
 
       $('#btnSelectMember').click(function (event) {
-          var memberByDefaultId = $('#selectMember').val();
+          let memberByDefaultId = $('#selectMember').val();
 
           // Если Исполнитель не выбран, но кнопка нажата, сбрасываем
           if (memberByDefaultId === "0") {
               return event.preventDefault();
           }
-          srv.project.addIssueMemberDefault(
-              $( "#projectMembers input[name=projectId]" ).val(),
-              memberByDefaultId,
-              function(res) {
-                  if(res.success) {
-                      location.reload();
-                  } else {
-                      srv.err(res);
-                  }
-              }
-          );
+          srv.project.addIssueMemberDefault(projectId, memberByDefaultId, reloadOnSuccees);
       });
 
-      $('.delete-member-default-i').click(function() {
-          srv.project.deleteMemberDefault(
-              $("#projectMembers input[name=projectId]").val(),
-              function (res) {
-                  if (res.success) {
-                      location.reload();
-                  } else {
-                      srv.err(res);
-                  }
-              }
-          )
+      $('#removeDefaultMember').click(function() {
+          srv.project.deleteMemberDefault(projectId, reloadOnSuccees);
       });
 
       // Добавляем тестера.
       $('#btnSelect').click(function (event) {
-          var userId = $('#selectTester').val();
+          let userId = $('#selectTester').val();
 
           if (userId === "0") {
               return event.preventDefault();
           }
 
-          srv.project.addTester(
-              $( "#projectMembers input[name=projectId]" ).val(),
-              userId,
-              function(res) {
-                  if( res.success ) {
-                      location.reload();
-                  } else {
-                      srv.err(res);
-                  }
-              }
-          );
+          srv.project.addTester(projectId, userId, reloadOnSuccees);
       });
       
       // Удаляем тестера.
-      $('.delete-tester-i').click(function() {
-          srv.project.deleteTester(
-              $( "#projectMembers input[name=projectId]" ).val(),
-              function(res) {
-                  if(res.success) {
-                      location.reload();
-                  } else {
-                      srv.err(res);
-                  }
-              }
-          );
-
+      $('#removeTester').click(function() {
+          srv.project.deleteTester(projectId, reloadOnSuccees);
       });
   }
 );

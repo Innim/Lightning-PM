@@ -1283,7 +1283,7 @@ issuePage.addComment = function (comment) {
 
 issuePage.showIssues4Me = function () {
     window.location.hash = 'only-my';
-    issuePage.filterByMemberId( lpInfo.userId );
+    issuePage.filterByMemberId(lpInfo.userId);
 
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
@@ -1328,18 +1328,20 @@ issuePage.filterByMemberId = function (userId) {
         row = rows[i];
         hide = true;
         
-        if (!row.classList.contains('verify-issue')) {
-            fields_members = row.children[3].getElementsByTagName('a');        
-            for (var j = 0; j < fields_members.length; j++) {
-               if (fields_members[j].getAttribute('data-member-id') == userId) {
-                  hide = false;   
-                  break;  
-               }
-            }
+        //if (!row.classList.contains('verify-issue')) {
+        fields_members = row.children[3].getElementsByTagName('a');        
+        for (var j = 0; j < fields_members.length; j++) {
+           if (fields_members[j].getAttribute('data-member-id') == userId) {
+              hide = false;   
+              break;  
+           }
         }
+        // }
 
-        if (hide) row.hide();
-        else row.show();
+        if (hide)
+            row.hide();
+        else
+            row.show();
     }
 };
 

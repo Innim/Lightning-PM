@@ -61,8 +61,13 @@ class ProjectPage extends BasePage
 			if (!$this->_curSubpage && $this->getPUID() == self::PUID_ISSUE) {
 				$issueId = $this->getCurentIssueId((float)$this->getAddParam());
 				if ($issueId > 0 && ($issue = Issue::load((float)$issueId))) {
-					// TODO: может приложить картинку если есть?
-					$this->SetOpenGraph($this->getTitleByIssue($issue));
+					// Получаем картинку из задачи
+					// TODO: вообще-то это не очень безопасно, т.к. OG возвращается без авторизации
+					// а в картинках теоретически может быть что-то важное.
+					// Но пока есть такоей запрос, сделаем так.
+					$images = $issue->getImages();
+					$imageUrl = empty($images) ? null : $images[0]->getSource();
+					$this->SetOpenGraph($this->getTitleByIssue($issue), null, $imageUrl);
 				}
 			}
 			

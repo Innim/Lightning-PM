@@ -10,19 +10,19 @@
         <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li>
     </ul>
     <ol id="profileInfo" class="info-list">
-        <li>
+        <li class="info-list-item">
             <span class="label">Имя</span>
             <span class="value"><?=$user->firstName;?></span>
         </li>
-        <li>
+        <li class="info-list-item">
             <span class="label">Фамилия</span>
             <span class="value"><?=$user->lastName;?></span>
         </li>
-        <li>
+        <li class="info-list-item">
             <span class="label">Ник</span>
             <span class="value"><?=$user->nick;?></span>
         </li> 
-        <li>
+        <li class="info-list-item">
             <span class="label">Регистрация</span>
             <span class="value"><?=$user->getRegDate();?></span>
         </li>
@@ -35,16 +35,16 @@
             <div class="info-message"></div>          
             <ol class="form-fields">
                 <li>
+                    <!-- <label for="curentPass">Текущий пароль</label> -->
                     <input id="curentPass" placeholder="Текущий пароль" type="password" name="curentPass" maxlength="24" required/>
-                    <label for="curentPass">Текущий пароль</label>
                 </li>
                 <li>
+                    <!-- <label for="newPass">Новый пароль</label> -->
                     <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24" required/>
-                    <label for="newPass">Новый пароль</label>
                 </li>
                 <li>
+                    <!-- <label for="repeatPass">Подтвержение пароля</label> -->
                     <input id="repeatPass" placeholder="Подтвержение пароля" type="password" name="repeatPass" maxlength="24" required/>
-                    <label for="repeatPass">Подтвержение пароля</label>
                 </li>
             </ol>
             <p class="save-line">

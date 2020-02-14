@@ -200,7 +200,8 @@ SQL;
 					   "ON DUPLICATE KEY UPDATE `commentsCount` = " . 
 							"(SELECT COUNT(*) FROM `%2\$s` " .
 							  "WHERE `%2\$s`.`instanceType` = '" . LPMInstanceTypes::ISSUE . "' " .
-								"AND `%2\$s`.`instanceId` = '" . $issueId . "')";
+								"AND `%2\$s`.`instanceId` = '" . $issueId . "' " .
+								"AND `%2\$s`.`deleted` = 0)";
 		$db = LPMGlobals::getInstance()->getDBConnect();
 		$db->queryt( $sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS );
 	} 
