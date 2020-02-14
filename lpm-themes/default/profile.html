@@ -10,19 +10,19 @@
         <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li>
     </ul>
     <ol id="profileInfo" class="info-list">
-        <li>
+        <li class="info-list-item">
             <span class="label">Имя</span>
             <span class="value"><?=$user->firstName;?></span>
         </li>
-        <li>
+        <li class="info-list-item">
             <span class="label">Фамилия</span>
             <span class="value"><?=$user->lastName;?></span>
         </li>
-        <li>
+        <li class="info-list-item">
             <span class="label">Ник</span>
             <span class="value"><?=$user->nick;?></span>
         </li> 
-        <li>
+        <li class="info-list-item">
             <span class="label">Регистрация</span>
             <span class="value"><?=$user->getRegDate();?></span>
         </li>

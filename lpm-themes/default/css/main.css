@@ -345,11 +345,15 @@ div.container > h3 {
 	text-align: center;
 }
 
-#profileView input[type="password"]
-{
+/* Страница профиля */
+#profileView input[type="password"] {
     width: auto;
     display: inline-block;    
     vertical-align: top;
+}
+
+ol#profileInfo.info-list {
+	list-style: none;
 }
 
 #changePass form label {
@@ -802,10 +806,10 @@ ul.panel-submenu li {
 .info-list {
 	padding-left: 40px;
 }
-div.info-list > div {
+.info-list > .info-list-item {
 	margin: 10px 0px;
 }
-div.info-list > div span.label {
+.info-list > .info-list-item span.label {
     width      : 150px;
     /*display    : inline-block;*/
     display: block;
@@ -813,14 +817,14 @@ div.info-list > div span.label {
     font-weight: bold;
     font-size: smaller;
 }
-div.info-list > div span.label:after {
+.info-list > .info-list-item span.label:after {
     content: ":";
 }
-div.info-list > div span.value {
+.info-list > .info-list-item span.value {
 	display: block;
 	margin-left: 155px;
 }
-div.info-list > div
+.info-list > .info-list-item
 {
 	clear: both;
 }
