@@ -1750,17 +1750,6 @@ ul#ulProjectSettings {
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
-.delete-tester-i {
-	opacity: 0.3;
-	margin-left: 20px;
-	text-decoration: underline;
-}
-.delete-tester-i:hover {
-	opacity: 1;
-	cursor: pointer;
-	color: #000000;
-	text-decoration: none;
-}
 .btnSelect {
 	float: left;
 }
@@ -1768,12 +1757,13 @@ ul#ulProjectSettings {
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
-.delete-member-default-i {
+.project-members-selector .remove-link {
 	opacity: 0.3;
 	margin-left: 20px;
 	text-decoration: underline;
+	font-size: 0.9em;
 }
-.delete-member-default-i:hover {
+.project-members-selector .remove-link:hover {
 	opacity: 1;
 	cursor: pointer;
 	color: #000000;
