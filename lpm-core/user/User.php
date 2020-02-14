@@ -4,9 +4,7 @@
  * @author GreyMag
  *
  */
-class User extends LPMBaseObject 
-{	
-
+class User extends LPMBaseObject {
 	public static function loadList( $where ) {
 		if ($where != '') $where = ' AND (' . $where . ')'; 
 		return StreamObject::loadListDefault( 
@@ -24,6 +22,20 @@ class User extends LPMBaseObject
 	public static function load( $userId ) {
 		//return StreamObject::loadListDefault( $where, LPMTables::USERS, __CLASS__ );
 		return StreamObject::singleLoad( $userId, __CLASS__, '', '%1$s`.`userId' );
+	}
+	
+	/**
+	 * Обновляет поле блокировки пользователя.
+	 * @param int $userId
+	 * @param bool $isLocked
+	 */
+	public static function updateLocked($userId, $isLocked) {
+        $db = self::getDB();
+        return $db->queryb([
+        	'UPDATE' => LPMTables::USERS,
+        	'SET' => ['locked' => $isLocked ? 1 : 0],
+        	'WHERE' => ['userId' => $userId]
+        ]);
 	}
 	
 	public static function checkCurRole( $curRole, $reqRole ) {
