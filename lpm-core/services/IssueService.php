@@ -577,6 +577,11 @@ SQL;
 
 		try {
 			Comment::remove($user, $comment);
+
+			if ($comment->instanceType == LPMInstanceTypes::ISSUE) {
+				// обновляем счетчик коментариев для задачи
+				Issue::updateCommentsCounter($comment->instanceId);
+			}
 		} catch (Exception $e) {
 			return $this->exception($e);
 		}
