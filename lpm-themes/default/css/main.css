@@ -352,8 +352,10 @@ div.container > h3 {
     vertical-align: top;
 }
 
-#changePass label{
+#changePass form label {
     line-height: 30px;
+    width: 180px;
+    display: inline-block;
 }
 
 #profileView form{
@@ -444,7 +446,7 @@ form > ol > li {
     margin: 10px auto;
 }
 form > ol > li label {
-	margin-left  : 5%;
+	margin-right : 20px;
 	margin-bottom: 5px;
 }
 form > ol > li .put-to-board-line {
@@ -455,6 +457,13 @@ form > ol > li .put-to-board-line label {
 }
 form > ol > li p {
     text-align: center;
+}
+form > ol > li div.hint {
+    display: block;
+    font-size: .8em;
+}
+form ol.form-fields > li:last-child {
+	margin-top: 25px;
 }
 .priority-val {
 	padding: 3px;
