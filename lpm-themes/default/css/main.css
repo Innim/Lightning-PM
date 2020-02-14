@@ -414,9 +414,6 @@ fieldset.radio-group ol li {
     margin-left: 10px;    
     list-style : none;    
 }
-fieldset.radio-group ol li label {
-	margin: 0px;
-}
 ol.members-list {
 	margin-bottom: 10px;
 	position : relative;
@@ -455,9 +452,6 @@ form > ol > li label {
 }
 form > ol > li .put-to-board-line {
 	text-align: center;
-}
-form > ol > li .put-to-board-line label {
-	margin: 0 5px;
 }
 form > ol > li p {
     text-align: center;
@@ -1182,6 +1176,16 @@ blockquote > p {
 
 
 /* Редактирование задачи */
+#issueForm form > ol > li label {
+	margin-left: 5%;
+	margin-bottom: 5px;
+}
+#issueForm form fieldset.radio-group ol li label {
+	margin: 0px;
+}
+#issueForm form > ol > li .put-to-board-line label {
+	margin: 0 5px;
+}
 #issueForm .note
 {
 	width: 90%;
