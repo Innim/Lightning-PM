@@ -1,3 +1,12 @@
+<?php
+/**
+ * Требуются:
+ * $users - список пользователей
+ */
+
+$users = lpm_get_users_list();
+$isModerator = lpm_is_moderator();
+?>
 <table class="users-list">
     <thead>
         <tr>
@@ -5,26 +14,26 @@
             <th>Пользователь</th>
             <th>Email</th>
             <th>Последний вход</th>
-            <? if (lpm_is_moderator()): ?>
+            <?php if ($isModerator): ?>
             <th>Операции</th>
-            <? endif; ?>
+            <?php endif; ?>
         </tr>
     </thead>
     <tbody>
-        <? foreach (lpm_get_users_list() as $user) {?>
+        <?php foreach ($users as $user): ?>
         <tr class="<?=$user->isLocked()?'locked-user':'active-user';?>">
             <td><img class="user-avatar middle" src="<?=$user->getAvatarUrl();?>" /></td>
             <td><?=$user->getName();?></td>
             <td><?=$user->getEmail();?></td>
             <td><?=$user->getLastVisit();?></td>
-            <? if (lpm_is_moderator()): ?>
+            <?php if ($isModerator): ?>
             <td>
                 <input type="hidden" name="userId" value="<?=$user->userId;?>" />
                 <button id="unlocked-btn" onclick="usersPage.lockUser(event);">Разблокировать</button>
-                <button id="locked-btn" onclick="usersPage.lockUser(event);">Заблокировать</button>                
+                <button id="locked-btn" onclick="usersPage.lockUser(event);">Заблокировать</button>
             </td>            
-            <? endif; ?>
+            <?php endif; ?>
         </tr>           
-        <? }?>
+        <?php endforeach; ?>
     </tbody>
 </table>
