@@ -60,6 +60,15 @@ class Project extends MembersInstance
         $sql = "UPDATE `%s` SET `defaultIssueMemberId`=null WHERE `id`='$projectId' ";
         return self::getDB()->queryt($sql, LPMTables::PROJECTS);
     }
+
+    public static function updateMaster($projectId, $masterId) {
+        $db = self::getDB();
+        return $db->queryb([
+        	'UPDATE' => LPMTables::PROJECTS,
+        	'SET' => ['masterId' => $masterId],
+        	'WHERE' => ['id' => $projectId]
+        ]);
+    }
 		
 	public static function getAvailList( $isArchive ) {
 		if (self::$_availList == null ) {

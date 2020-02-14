@@ -12,6 +12,19 @@ $(document).ready(
 
       $("#usersChooser").dialog( {autoOpen:false, modal:true, resizable:false} );
       
+      $('#saveMaster').click(function (event) {
+          let masterId = $('#selectMaster').val();
+
+          if (masterId == "0")
+              return event.preventDefault();
+
+          srv.project.setMaster(projectId, masterId, reloadOnSuccees);
+      });
+
+      $('#removeMaster').click(function() {
+          srv.project.deleteMaster(projectId, reloadOnSuccees);
+      });
+
       $('#btnSelectMember').click(function (event) {
           let memberByDefaultId = $('#selectMember').val();
 

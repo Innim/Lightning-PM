@@ -26,6 +26,34 @@ $projectTester = lpm_get_project_tester();
 
     <button onclick="openMembersChooser();">Добавить</button>
 
+    <!-- Выбор мастера проекта // Начало -->
+    <h3 class="headersProjectsMembers">Мастер проекта</h3>
+    <div id="projectMaster" class="project-members-selector">
+    <?php
+        $master = $project->getMaster();
+        if(!empty($master)): 
+    ?>
+        <ul>
+            <li id="projectMaster" value="<?=$master->getName();?>">
+                <?=$master->getName();?>
+                <a href="javascript:;" id="removeMaster" class="remove-link">Удалить</a>
+            </li>
+        </ul>
+        <?php else: ?>
+        <form id="chooseMaster">
+            <select id="selectMaster">
+                <option value="0">Мастер не выбран</option>
+                <?php foreach ($projectMembers as $member): ?>
+                <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
+                <?php endforeach; ?>
+            </select>
+            <button id="saveMaster" type="button">Подтвердить</button>
+        </form>
+    <?php endif; ?>
+    </div>
+
+    <!-- Выбор мастера проекта // Конец -->
+
     <!-- Добавить исполнителя по умолчанию -->
     <h3 class="headersProjectsMembers">Исполнитель задач по умолчанию</h3>
     <div class="project-members-selector">

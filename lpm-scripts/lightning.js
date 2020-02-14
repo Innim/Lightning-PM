@@ -157,6 +157,12 @@ var srv = {
         addMembers : function ( projectId, userIds, onResult ) {
             this.s._( 'addMembers' );
         },
+        setMaster : function (projectId, masterId, onResult) { 
+          this.s._('setMaster'); 
+        },
+        deleteMaster : function (projectId, onResult) { 
+          this.s._('deleteMaster'); 
+        },
         deleteMemberDefault : function (projectId, onResult) {
             this.s._('deleteMemberDefault');
         },

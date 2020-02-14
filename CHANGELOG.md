@@ -1,6 +1,7 @@
 ## Next release
 
 ### Added
+- Выбор мастера проекта
 
 ### Fixed
 
