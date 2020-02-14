@@ -32,6 +32,7 @@ class PagesManager
 			$this->_defaultPage,                        
 			new ProjectPage(),
 			new UsersPage(),
+			new UserPage(),
 			new WorkStudyPage(),
 			new ProfilePage()
 		);

@@ -30,10 +30,28 @@ class User extends LPMBaseObject {
 	 * @param bool $isLocked
 	 */
 	public static function updateLocked($userId, $isLocked) {
+        return self::updateField($userId, 'locked', $isLocked);
+	}
+	
+	/**
+	 * Обновляет поле с именем в Slack для пользователя.
+	 * @param int $userId
+	 * @param string $slackName
+	 */
+	public static function updateSlackName($userId, $slackName) {
+        return self::updateField($userId, 'slackName', $slackName);
+	}
+	
+	/**
+	 * Обновляет поле блокировки пользователя.
+	 * @param int $userId
+	 * @param bool $isLocked
+	 */
+	private static function updateField($userId, $fieldName, $value) {
         $db = self::getDB();
         return $db->queryb([
         	'UPDATE' => LPMTables::USERS,
-        	'SET' => ['locked' => $isLocked ? 1 : 0],
+        	'SET' => [$fieldName => $value],
         	'WHERE' => ['userId' => $userId]
         ]);
 	}

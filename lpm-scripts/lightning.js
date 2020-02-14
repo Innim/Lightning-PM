@@ -199,8 +199,11 @@ var srv = {
     },
     users :{
         s   : new BaseService ('UsersService'),
-        lockUser : function (userId, isLock){
+        lockUser : function (userId, isLock) {
             this.s._('lockUser');
+        },
+        setSlackName : function (userId, slackName) {
+            this.s._('setSlackName');
         },
     },
 
