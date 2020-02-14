@@ -54,35 +54,28 @@ class ProjectService extends LPMBaseService
         $projectId = (int)$projectId;
         $memberByDefaultId = (int)$memberByDefaultId;
 
-        // проверим, что существует такой проект
-        if (!Project::loadById($projectId)) return $this->error('Нет такого проекта');
-
-        $memberProject = Project::loadById($projectId)->getMember($memberByDefaultId);
-
-        if(!$memberProject) {
-            return $this->error('Исполнитель не найден в участниках проекта');
-        }
-
         // проверяем права пользователя
-        if (!$this->checkRole(User::ROLE_MODERATOR )) return $this->error('Недостаточно прав');
+        if (!$this->checkRole(User::ROLE_MODERATOR ))
+            return $this->error('Недостаточно прав');
 
-        $defaultIssueMemberId = Project::loadById($projectId)->defaultIssueMemberId;
+        // проверим, что существует такой проект
+        $project = Project::loadById($projectId);
+        if (!$project)
+            return $this->error('Нет такого проекта');
 
-        if ($defaultIssueMemberId) {
+        $memberProject = $project->getMember($memberByDefaultId);
+        if (!$memberProject)
+            return $this->error('Исполнитель не найден в участниках проекта');
+
+        $defaultIssueMemberId = $project->defaultIssueMemberId;
+
+        if ($defaultIssueMemberId)
             return $this->error('Исполнитель уже назначен для проекта');
-        }
 
-        $result = Project::updateIssueMemberDefault($projectId, $memberByDefaultId);
-
-        if ( !$result ) {
-            return $this->error('Ошибка изменения данных');
-        }
-
-        $this->add2Answer("projectId", $projectId);
-        $this->add2Answer("performerByDefaultId", $memberByDefaultId);
+        if (!Project::updateIssueMemberDefault($projectId, $memberByDefaultId))
+            return $this->error('Не удалось сохранить данные.');
 
         return $this->answer();
-
     }
 
     public function addTester( $projectId, $userId ){
@@ -121,8 +114,6 @@ class ProjectService extends LPMBaseService
         if(!Member::deleteMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId))
             return $this->error("Ошибка удаления тестера.");
 
-        $this->add2Answer('$testerId', $projectId);
-
         return $this->answer();
     }
 
@@ -140,7 +131,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Исполнитель не назначен для проекта');
         }
 
-        $result = Project::deleteMemberDefault($defaultIssueMemberId, $projectId);
+        $result = Project::deleteMemberDefault($projectId);
 
         if (!$result) {
             return $this->error('Ошибка удаления.');
