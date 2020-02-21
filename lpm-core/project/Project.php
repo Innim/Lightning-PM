@@ -1,6 +1,8 @@
 <?php
-class Project extends MembersInstance 
-{
+/**
+ * Проект.
+ */
+class Project extends MembersInstance {
 	/**
 	 * 
 	 * @var Project
@@ -17,8 +19,10 @@ class Project extends MembersInstance
 	 */
 	private static $_projectsByIds = [];
 	
-	public static function loadList( $where ) {
-		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
+	public static function loadList($where = null) {
+		return StreamObject::loadListDefault(self::getDB(),
+			$where, LPMTables::PROJECTS, __CLASS__);
+	}
 	}
 
     /**
@@ -26,7 +30,6 @@ class Project extends MembersInstance
      *
      */
     public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel) {
-
         $db = self::getDB();
 
         $hash = [
