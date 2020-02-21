@@ -400,6 +400,11 @@ ol#profileInfo.info-list {
 	font-size : smaller;
 	text-align: right;
 }
+
+.page-desc {
+	margin: 0 0 10px;
+	font-size: 0.9em;
+}
 fieldset.radio-group legend {
 	float  : left;
 	display: inline-block;
@@ -1789,4 +1794,14 @@ ul#ulProjectSettings {
 	cursor: pointer;
 	color: #000000;
 	text-decoration: none;
+}
+
+/* Страница SCRUM статистики */
+.stat-summary {
+	margin: 5px 0;
+	text-align: right;
+}
+.stat-summary .stat-summary-label {}
+.stat-summary .stat-summary-value {
+	font-weight: bold;
 }

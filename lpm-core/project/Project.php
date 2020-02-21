@@ -23,6 +23,18 @@ class Project extends MembersInstance {
 		return StreamObject::loadListDefault(self::getDB(),
 			$where, LPMTables::PROJECTS, __CLASS__);
 	}
+
+	/**
+	 * Загружает список scrum проектов.
+	 * @param  boolean $includeArchive `true` если надо загружать также и заархивированные проекты,
+	 * @return array<Project>
+	 */
+	public static function loadScrumList($includeArchive = false) {
+		$where = ['`scrum` = 1'];
+		if (!$includeArchive)
+			$where[] = '`isArchive` = 0';
+
+		return self::loadList($where);
 	}
 
     /**
