@@ -100,7 +100,19 @@ class LightningEngine {
 			$session->unsetVar(self::SESSION_NEXT_ERRORS);
 		}
 
-		$this->_curPage = $this->initCurrentPage();
+		try {
+			$this->_curPage = $this->initCurrentPage();
+		} catch (Exception $e) {
+			if (LPMGlobals::isDebugMode()) {
+				$this->addError($e->getMessage() . "\n" . $e->getTraceAsString() . "\n");
+				echo '<pre>';
+				var_dump($this->_errors);
+				echo '</pre>';
+			}
+
+			die('Fatal error');
+		}
+
 		try {
 			$this->_contructor->createPage();
 		} catch (Exception $e) {
