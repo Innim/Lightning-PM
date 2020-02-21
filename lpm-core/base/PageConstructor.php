@@ -36,10 +36,6 @@ class PageConstructor {
 		return Issue::getCurrentList();
 	}
 	
-	public static function getComments() {
-		return Comment::getCurrentList();
-	}
-	
 	public static function getUsersList() {
 		return User::loadList( '' );
 	}

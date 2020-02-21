@@ -215,13 +215,6 @@ function lpm_get_issues_list() {
 }
 
 /**
- * Возвращает комментарии для текущей инстанции
- */
-function lpm_get_comments() {
-	return PageConstructor::getComments();
-}
-
-/**
 * Возвращает список сотрудников
 */
 function lpm_get_workers_list() {

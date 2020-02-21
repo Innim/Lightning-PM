@@ -1,10 +1,11 @@
 <?php
+/**
+ * Комментарий.
+ */
 class Comment extends LPMBaseObject {
 	private static $_tags = ['b', 'i', 'u', 'code'];
 
 	private static $_listByInstance = array();
-	private static $_curIType = -1;
-	private static $_curIId   = -1;
 	
 	protected static function loadList($where) {
 		$sql = "select * from `%1\$s`, `%2\$s` where `%1\$s`.`deleted` = '0'";
@@ -17,11 +18,6 @@ class Comment extends LPMBaseObject {
 				[$sql, LPMTables::COMMENTS, LPMTables::USERS], 
 				__CLASS__ 
 		);
-	}
-	
-	public static function setCurrentInstance($curIType, $curIId) {
-		self::$_curIType = $curIType;
-		self::$_curIId   = $curIId;
 	}
 
 	public static function getIssuesListByProject($projectId, $from = 0, $limit = 0) {
@@ -92,11 +88,6 @@ SQL;
 	 */
 	public static function load($id) {
 		return StreamObject::singleLoad($id, __CLASS__, '', '%1$s`.`id');
-	}
-	
-	public static function getCurrentList() {
-		return self::$_curIType > 0 && self::$_curIId > 0 ?
-			self::getListByInstance(self::$_curIType, self::$_curIId) : array();
 	}
 
     public static function setTimeToDeleteComment($comment, $time) {

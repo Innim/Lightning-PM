@@ -2,6 +2,7 @@
 /* 
 Требуются: 
     $issue - текущая задача
+    $comments - комментарии к задаче
 */
 $userId = lpm_get_user()->getID();
 ?>
@@ -148,7 +149,7 @@ $userId = lpm_get_user()->getID();
      </p>
     </form>
     <section class="comments-list">
-        <?php foreach (lpm_get_comments() as $comment): ?>
+        <?php foreach ($comments as $comment): ?>
         <div class="comments-list-item">
             <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
             <p id="<?='comment_' . $comment->id?>"
