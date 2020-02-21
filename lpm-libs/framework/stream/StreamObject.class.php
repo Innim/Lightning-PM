@@ -319,10 +319,8 @@ abstract class StreamObject implements IStreamObject
     * @see StreamObject::setVar()
     * @see StreamObject::decodeStreamString()
     */
-    public function loadStream( $data )
-    {
-    	if (!is_array($data))
-        {
+    public function loadStream($data) {
+    	if (!is_array($data)) {
     		if (is_object($data)) $data = get_object_vars($data);
     		else throw new Exception('Неверный формат входных данных для загрузки');
     	}
@@ -346,7 +344,11 @@ abstract class StreamObject implements IStreamObject
     		unset( $data[$this->_trFieldName] );
     	}*/
     
-    	foreach ($data as $var => $value) $this->setVar($var, $value);
+    	foreach ($data as $var => $value) {
+            if (isset($this->_aliases[$var]))
+                $var = $this->_aliases[$var];
+            $this->setVar($var, $value);
+        }
     	
     	$this->onLoadStream($data);
     }
