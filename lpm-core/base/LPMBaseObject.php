@@ -1,9 +1,29 @@
 <?php
-class LPMBaseObject extends StreamObject 
-{
-
+class LPMBaseObject extends StreamObject {
 	protected static function getDB() {
 		return LPMGlobals::getInstance()->getDBConnect();
+	}
+
+	protected static function loadFromDb($hash, $tables = null) {
+		$res = self::getDB()->queryb($hash, $tables);
+		if ($res === false)
+			throw new \GMFramework\ProviderLoadException();
+		return $res;
+	}
+
+	protected static function loadValFromDb($table, $field, $where) {
+		$res = self::getDB()->querybSingle([
+			'SELECT' => $field,
+			'FROM'   => $table,
+			'WHERE'  => $where,
+			'LIMIT'  => 1
+		]);
+
+		return $res[$field];
+	}
+
+	protected static function loadIntValFromDb($table, $field, $where) {
+		return intval(self::loadValFromDb($table, $field, $where));
 	}
 
 	protected  static function getDateStr( $date ) {
@@ -67,4 +87,3 @@ class LPMBaseObject extends StreamObject
 		return $this->loadStream( $hash );
 	}
 }
-?>
