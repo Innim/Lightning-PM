@@ -57,4 +57,12 @@ define( 'TIMEADJUST', 0 );
 
 // Token для интеграции со Slack
 define('SLACK_TOKEN', '');
-?>
+
+// GitLab URL
+define('GITLAB_URL', '');
+
+// Token для интеграции со GitLab
+define('GITLAB_TOKEN', '');
+
+// Sudo пользователь для интеграции со GitLab
+define('GITLAB_SUDO_USER', '');

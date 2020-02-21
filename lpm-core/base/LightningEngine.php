@@ -165,6 +165,14 @@ class LightningEngine {
 	public function getPagesManager() {
 		return $this->_pagesManager;
 	}
+
+	/**
+	 * Возвращает инстанцию интеграции с GitLab.
+	 * @return GitlabIntegration
+	 */
+	public function gitlab() {
+		return GitlabIntegration::getInstance($this->getUser());
+	}
 	
 	/**
 	 * @var User
