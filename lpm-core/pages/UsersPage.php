@@ -28,31 +28,13 @@ class UsersPage extends BasePage {
 	}
 
 	private function statByUsers() {
-		$nowYear = (int)date('Y');
-		$nowMonth = (int)date('m');
-
-		$monthStr = $this->getParam(2);
-		if (!empty($monthStr)) {
-			$monthArr = explode('-', $monthStr);
-			$month = intval($monthArr[0]);
-			$year = intval($monthArr[1]);
-		} else {
-			$month = $nowMonth;
-			$year = $nowYear;
-		}
+		list($month, $year) = StatHelper::parseMonthYearFromArg($this->getParam(2));
 
 		$usersStat = [];
-		// День в месяце, законченный до которого спринт относим к предыдущему
-		// TODO: вынести в поции? или просто константу?
-		$dayInMonthForSprint = 5;
-		$nextMonth = $month == 12 ? 1 : $month + 1;
-		$nextYear = $month == 12 ? $year + 1 : $year;
+		list($prevMonth, $prevYear) = StatHelper::getPrevMonthYear($month, $year);
+		list($nextMonth, $nextYear) = StatHelper::getNextMonthYear($month, $year);
 
-		$prevMonth = $month == 1 ? 12 : $month - 1;
-		$prevYear = $month == 1 ? $year - 1 : $year;
-
-		$startDate = strtotime(sprintf('%02d.%02d.%04d', $dayInMonthForSprint + 1, $month, $year));
-		$endDate = strtotime(sprintf('%02d.%02d.%04d', $dayInMonthForSprint, $nextMonth, $nextYear));
+		list($startDate, $endDate) = StatHelper::getStatDaysRange($month, $year);
 
 		$users = User::loadList('');
 		$snapshots = ScrumStickerSnapshot::loadListByDate($startDate, $endDate);
@@ -72,13 +54,13 @@ class UsersPage extends BasePage {
 		$this->addTmplVar('year', $year);
 		$this->addTmplVar('usersStat', $usersStat);
 		$this->addTmplVar('prevLink', $this->getMonthLink($prevMonth, $prevYear));
-		if ($nextYear < $nowYear || $nextMonth <= $nowMonth)
+		if (StatHelper::isAvailable($nextMonth, $nextYear))
 			$this->addTmplVar('nextLink', $this->getMonthLink($nextMonth, $nextYear));
 	}
 
 	private function getMonthLink($month, $year) {
 		return new Link(sprintf('%02d.%04d', $month, $year),
-			$this->getUrl(sprintf('%02d-%04d', $month, $year)));
+			$this->getUrl(StatHelper::getMonthForUrl($month, $year)));
 	}
 }
 ?>
