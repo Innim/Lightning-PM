@@ -190,6 +190,7 @@ CREATE TABLE `lpm_users` (
   `locked` tinyint(1) NOT NULL DEFAULT '0',
   `secret` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'скрытый пользователь',
   `slackName` varchar(255) NOT NULL COMMENT 'имя в Slack',
+  `gitlabToken` varchar(255) NOT NULL COMMENT 'Gitlab токен',
   PRIMARY KEY (`userId`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
