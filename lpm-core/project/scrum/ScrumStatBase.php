@@ -8,6 +8,8 @@
 abstract class ScrumStatBase {
 	protected $_snapshots = [];
 
+	private $_cachedTotalSp;
+
 	/**
 	 * Количество SP, которое должно отображаться в статистике.
 	 *
@@ -29,6 +31,8 @@ abstract class ScrumStatBase {
 	 */
 	public function addSnapshot(ScrumStickerSnapshot $snapshot) {
 		$this->_snapshots[] = $snapshot;
+
+		$this->_cachedTotalSp = null;
 	}
 
 	/**
@@ -36,10 +40,15 @@ abstract class ScrumStatBase {
 	 * @return int
 	 */
 	protected function getTotalDoneSP() {
+		if ($this->_cachedTotalSp !== null)
+			return $this->_cachedTotalSp;
+
 		$sum = 0;
 		foreach ($this->_snapshots as $snapshot) {
 			$sum += $snapshot->getDoneSp();
 		}
+
+		$this->_cachedTotalSp = $sum;
 		
 		return $sum;
 	}
