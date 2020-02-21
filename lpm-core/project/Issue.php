@@ -839,12 +839,16 @@ SQL;
 	 * Возвращает краткое описание задачи - для превью.
 	 * @return string Краткое описание.
 	 */
-	public function getShortDesc() {
+	public function getShortDesc($rich = true) {
 		$desc = $this->desc;
 		// Для короткого описания вырежем весь код
 		$desc = HTMLHelper::stripCode($desc);
+		$desc = parent::getShort($desc);
 
-		return parent::getRich(parent::getShort($desc));
+		if ($rich)
+			$desc = parent::getRich($desc);
+
+		return $desc;
 	}
 	
 	public function getCreateDate() {

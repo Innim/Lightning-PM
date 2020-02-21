@@ -32,7 +32,7 @@ class SlackIntegration {
 		$this->postMessageForIssue($issue, $text, [[
 			'fallback' => $issue->getName(),
 			'title' => $issue->getName(),
-			'text' => $issue->getShortDesc(),
+			'text' => $issue->getShortDesc(false),
 			'title_link' => $issue->getConstURL()
 		]]);
 	}
