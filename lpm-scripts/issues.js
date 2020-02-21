@@ -208,7 +208,8 @@ issuePage.createLabel = function (label, id, projectId) {
 }
 
 issuePage.clearLabel = function (labelName) {
-
+    if (typeof issueLabels === 'undefined')
+        issueLabels = [];
     if (issueLabels.indexOf(labelName) != -1)
         issuePage.addLabelToName(labelName);
 
