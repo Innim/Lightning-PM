@@ -134,6 +134,8 @@ SQL;
 	 * @var Issue
 	 */
 	public $issue;
+
+	private $_mergeRequests;
 	
 	function __construct() {
 		parent::__construct();
@@ -179,6 +181,15 @@ SQL;
 	 */
     public function getVideoLinks() {
         return ParseTextHelper::parseVideoLinks($this->getText());
+    }
+
+	/**
+	 * @see ParseTextHelper::parseVideoLinks()
+	 */
+    public function getMergeRequests() {
+    	if ($this->_mergeRequests === null)
+        	$this->_mergeRequests = ParseTextHelper::findMergeRequests($this->text);
+        return $this->_mergeRequests;
     }
 
 	/**

@@ -762,6 +762,40 @@ ul.images-url > li > input {
     margin: 0;
     padding: 0;
 }
+.comments .comments-list .comments-list-item ul.merge-requests {
+	margin: 10px 0 0;
+	padding: 10px;
+	list-style: none;
+	background-color: #dddddd;
+}
+
+.comments .comments-list .comments-list-item ul.merge-requests li {
+	padding: 5px;
+	border-radius: 5px;
+}
+
+.comments .comments-list .comments-list-item ul.merge-requests li.opened {
+	background-color: #ffffbc;
+}
+
+.comments .comments-list .comments-list-item ul.merge-requests li.opened .state-icon {
+	color: #838982;
+}
+
+.comments .comments-list .comments-list-item ul.merge-requests li.closed {
+	background-color: #fdcabe;
+}
+.comments .comments-list .comments-list-item ul.merge-requests li.closed .state-icon {
+	color: #e50000;
+}
+
+.comments .comments-list .comments-list-item ul.merge-requests li.merged {
+	background-color: #e2ffd9;
+}
+.comments .comments-list .comments-list-item ul.merge-requests li.merged .state-icon {
+	color: #2bbd00;
+}
+
 #projectComments .pages-nav-bar {
 	text-align: center;
 	text-transform: uppercase;

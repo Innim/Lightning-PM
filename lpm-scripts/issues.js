@@ -1258,6 +1258,7 @@ issuePage.passTest = function () {
 }
 
 issuePage.addComment = function (comment) {
+    // TODO: выпилить отсюда шаблон - сложно поддерживать и не отображает видео и MR
     let userId = $('#user-id-hidden').val();
     let elementId = 'comment_' + comment.id;
     let commentTime = comment.date;
