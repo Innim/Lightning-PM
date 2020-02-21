@@ -127,7 +127,10 @@ class ProjectPage extends BasePage
 				$issue->getMembers();
 				$issue->getTesters();
 				
-				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
+				$comments = Comment::getListByInstance(LPMInstanceTypes::ISSUE, $issue->id);
+				foreach ($comments as $comment) {
+					$comment->issue = $issue;
+				}
 
 				$this->_title = $this->getTitleByIssue($issue);
 				$this->_pattern = 'issue';
@@ -135,6 +138,7 @@ class ProjectPage extends BasePage
 				array_push( $this->_js,	'issue' );
 
 				$this->addTmplVar('issue', $issue);
+				$this->addTmplVar('comments', $comments);
 			} 
 		}
 

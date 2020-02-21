@@ -191,3 +191,8 @@ ALTER TABLE `lpm_recovery_emails`
 CHANGE `id` `id` bigint(19) unsigned NOT NULL AUTO_INCREMENT FIRST;
 
 -- v.0.8a.008
+
+ALTER TABLE `lpm_users`
+ADD `gitlabToken` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Gitlab токен';
+
+-- 0.8a.016

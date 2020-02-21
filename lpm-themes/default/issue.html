@@ -2,6 +2,7 @@
 /* 
 Требуются: 
     $issue - текущая задача
+    $comments - комментарии к задаче
 */
 $userId = lpm_get_user()->getID();
 ?>
@@ -148,23 +149,9 @@ $userId = lpm_get_user()->getID();
      </p>
     </form>
     <section class="comments-list">
-        <?php foreach (lpm_get_comments() as $comment): ?>
+        <?php foreach ($comments as $comment): ?>
         <div class="comments-list-item">
-            <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
-            <p id="<?='comment_' . $comment->id?>"
-               class="delete-comment"
-               data-comment-id="<?=$comment->id?>"
-               data-user-id="<?=$userId;?>"
-               data-time="<?=$comment->date?>">Удалить</p>
-            <?php endif; ?>
-            <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
-            <p class="author"><?=$comment->getAuthorLinkedName();?></p>
-            <p class="date"><a class="anchor" id="comment-<?=$comment->id;?>" href="<?=$comment->getIssueCommentUrl($issue);?>"><?=$comment->getDate();?></a></p>
-            <article class="text formatted-desc">
-                <?=$comment->getText();?>
-                <?php lpm_print_video_list($comment->getVideoLinks()); ?>        
-            </article>
-        </div>
+            <?php lpm_print_comment($comment);?>
         <?php endforeach; ?>
     </section>
     <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">

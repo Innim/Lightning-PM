@@ -118,6 +118,13 @@ function lpm_print_issue_form($project, $issue = null) {
 }
 
 /**
+* Распечатывает отображение отдельного комментария.
+*/
+function lpm_print_comment(Comment $comment) {
+	return PagePrinter::comment($comment);
+}
+
+/**
 * Распечатывает задачу
 */
 function lpm_print_issue_view() {
@@ -212,13 +219,6 @@ function lpm_get_projects_list($achive = false) {
  */
 function lpm_get_issues_list() {
 	return PageConstructor::getIssuesList();
-}
-
-/**
- * Возвращает комментарии для текущей инстанции
- */
-function lpm_get_comments() {
-	return PageConstructor::getComments();
 }
 
 /**
