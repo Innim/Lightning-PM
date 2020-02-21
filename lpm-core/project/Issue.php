@@ -193,6 +193,19 @@ SQL;
         return StreamObject::singleLoad($idInProject, __CLASS__, 
         	"`i`.`projectId` = " . $projectId, "i`.`idInProject");
     }
+
+    /**
+     * Загружает идентификатор задачи по идентификатору в проекте
+     * @param $projectId
+     * @param $idInProject
+     * @return int
+     */
+	public static function loadIssueId($projectId, $idInProject) {
+        return self::loadIntValFromDb(LPMTables::ISSUES, 'id', [
+        	'projectId' => $projectId,
+			'idInProject' => $idInProject
+        ]);
+    }
 	
 	public static function updateCommentsCounter( $issueId ) {
 		$sql = "INSERT INTO `%1\$s` (`issueId`, `commentsCount`) " .
