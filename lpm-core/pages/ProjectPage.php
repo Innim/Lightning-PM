@@ -399,7 +399,8 @@ class ProjectPage extends BasePage
                     return;
 
 				// Сохраняем тестеров
-				if (!$this->saveTesters($issueId, $_POST['testers'], $editMode))
+				$testers = isset($_POST['testers']) ? $_POST['testers'] : [];
+				if (!$this->saveTesters($issueId, $testers, $editMode))
                     return;
 
 				//удаление старых изображений
