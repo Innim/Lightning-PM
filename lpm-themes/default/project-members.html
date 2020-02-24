@@ -9,6 +9,17 @@
 $project = lpm_get_project();
 $projectMembers = lpm_get_project_members();
 $projectTester = lpm_get_project_tester();
+
+$defaultIssueMember = null;
+$memberByDefaultId = $project->defaultIssueMemberId;
+if (!empty($memberByDefaultId)) {
+    foreach ($projectMembers as $member) {
+        if ($member->getID() === $memberByDefaultId) {
+            $defaultIssueMember = $member;
+            break;
+        }
+    }
+}
 ?>
 <article  id="projectMembers">
     <h1><?lpm_print_header();?></h1>
@@ -31,7 +42,7 @@ $projectTester = lpm_get_project_tester();
     <div id="projectMaster" class="project-members-selector">
     <?php
         $master = $project->getMaster();
-        if(!empty($master)): 
+        if (!empty($master)): 
     ?>
         <ul>
             <li id="projectMaster" value="<?=$master->getName();?>">
@@ -57,19 +68,13 @@ $projectTester = lpm_get_project_tester();
     <!-- Добавить исполнителя по умолчанию -->
     <h3 class="headersProjectsMembers">Исполнитель задач по умолчанию</h3>
     <div class="project-members-selector">
-        <?php
-        $memberByDefaultId = $project->defaultIssueMemberId;
-        foreach ($projectMembers as $member):
-            if($member->getID() === $memberByDefaultId): ?>
+        <?php if (!empty($defaultIssueMember)): ?>
         <ul>
-            <li id="liNamePerformer" value="1"><?=$member->getLinkedName(); ?>
+            <li id="liNamePerformer" value="1"><?=$defaultIssueMember->getLinkedName(); ?>
                 <a href="javascript:;" id="removeDefaultMember" class="remove-link">Удалить</a>
             </li>
-            </ul>
-        <?php $namePerformer = true; endif; ?>
-        <?php endforeach; ?>
-
-        <?php if (!$namePerformer): ?>
+        </ul>
+        <?php else: ?>
         <form id="divPerformer" onsubmit="return false;">
             <select id="selectMember">
                 <option value="0">Исполнитель не выбран</option>
