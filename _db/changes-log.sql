@@ -195,4 +195,4 @@ CHANGE `id` `id` bigint(19) unsigned NOT NULL AUTO_INCREMENT FIRST;
 ALTER TABLE `lpm_users`
 ADD `gitlabToken` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Gitlab токен';
 
--- 0.8a.016
+-- 0.9.1
