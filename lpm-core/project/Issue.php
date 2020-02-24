@@ -193,6 +193,19 @@ SQL;
         return StreamObject::singleLoad($idInProject, __CLASS__, 
         	"`i`.`projectId` = " . $projectId, "i`.`idInProject");
     }
+
+    /**
+     * Загружает идентификатор задачи по идентификатору в проекте
+     * @param $projectId
+     * @param $idInProject
+     * @return int
+     */
+	public static function loadIssueId($projectId, $idInProject) {
+        return self::loadIntValFromDb(LPMTables::ISSUES, 'id', [
+        	'projectId' => $projectId,
+			'idInProject' => $idInProject
+        ]);
+    }
 	
 	public static function updateCommentsCounter( $issueId ) {
 		$sql = "INSERT INTO `%1\$s` (`issueId`, `commentsCount`) " .
@@ -826,12 +839,16 @@ SQL;
 	 * Возвращает краткое описание задачи - для превью.
 	 * @return string Краткое описание.
 	 */
-	public function getShortDesc() {
+	public function getShortDesc($rich = true) {
 		$desc = $this->desc;
 		// Для короткого описания вырежем весь код
 		$desc = HTMLHelper::stripCode($desc);
+		$desc = parent::getShort($desc);
 
-		return parent::getRich(parent::getShort($desc));
+		if ($rich)
+			$desc = parent::getRich($desc);
+
+		return $desc;
 	}
 	
 	public function getCreateDate() {

@@ -1,6 +1,8 @@
 <?php
-class Project extends MembersInstance 
-{
+/**
+ * Проект.
+ */
+class Project extends MembersInstance {
 	/**
 	 * 
 	 * @var Project
@@ -17,8 +19,22 @@ class Project extends MembersInstance
 	 */
 	private static $_projectsByIds = [];
 	
-	public static function loadList( $where ) {
-		return StreamObject::loadListDefault( self::getDB(), $where, LPMTables::PROJECTS, __CLASS__ );
+	public static function loadList($where = null) {
+		return StreamObject::loadListDefault(self::getDB(),
+			$where, LPMTables::PROJECTS, __CLASS__);
+	}
+
+	/**
+	 * Загружает список scrum проектов.
+	 * @param  boolean $includeArchive `true` если надо загружать также и заархивированные проекты,
+	 * @return array<Project>
+	 */
+	public static function loadScrumList($includeArchive = false) {
+		$where = ['`scrum` = 1'];
+		if (!$includeArchive)
+			$where[] = '`isArchive` = 0';
+
+		return self::loadList($where);
 	}
 
     /**
@@ -26,7 +42,6 @@ class Project extends MembersInstance
      *
      */
     public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel) {
-
         $db = self::getDB();
 
         $hash = [

@@ -100,10 +100,18 @@ class LightningEngine {
 			$session->unsetVar(self::SESSION_NEXT_ERRORS);
 		}
 
-		$this->_curPage = $this->initCurrentPage();
+		try {
+			$this->_curPage = $this->initCurrentPage();
+		} catch (Exception $e) {
+			$this->debugOnException($e);
+			die('Fatal error');
+		}
+
 		try {
 			$this->_contructor->createPage();
 		} catch (Exception $e) {
+			$this->debugOnException($e);
+
 			$this->addNextError($e->getMessage());
 			$path = $session->get(self::SESSION_PREV_PATH);
 			$session->unsetVar(self::SESSION_PREV_PATH);
@@ -152,6 +160,14 @@ class LightningEngine {
 	 */
 	public function getPagesManager() {
 		return $this->_pagesManager;
+	}
+
+	/**
+	 * Возвращает инстанцию интеграции с GitLab.
+	 * @return GitlabIntegration
+	 */
+	public function gitlab() {
+		return GitlabIntegration::getInstance($this->getUser());
 	}
 	
 	/**
@@ -243,6 +259,20 @@ class LightningEngine {
 		} 
 
 		return $res;
+	}
+
+	private function debugOnException(Exception $e, $title = 'Fatal Error') {
+		if (!LPMGlobals::isDebugMode())
+			return;
+
+		$this->addError(
+			'[' . get_class($e) . '] #' . $e->getCode() . ': ' . $e->getMessage() . "\n" . 
+			$e->getTraceAsString() . "\n");
+		echo '<h1>[DEBUG] ' . $title . '</h1>';
+		echo '<pre>';
+		var_dump($this->_errors);
+		echo '</pre>';
+		exit;
 	}
 }
 ?>

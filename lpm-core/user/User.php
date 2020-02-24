@@ -43,6 +43,15 @@ class User extends LPMBaseObject {
 	}
 	
 	/**
+	 * Обновляет поле с токеном GitLab для пользователя.
+	 * @param int $userId
+	 * @param string $gitlabToken
+	 */
+	public static function updateGitlabToken($userId, $gitlabToken) {
+        return self::updateField($userId, 'gitlabToken', $gitlabToken);
+	}
+	
+	/**
 	 * Обновляет поле блокировки пользователя.
 	 * @param int $userId
 	 * @param bool $isLocked
@@ -100,7 +109,8 @@ class User extends LPMBaseObject {
 	public $nick      = '';
 	public $firstName = '';
 	public $lastName  = '';
-	public $slackName  = '';
+	public $slackName = '';
+	public $gitlabToken = '';
 	public $lastVisit = 0;
 	public $regDate   = 0;
 	public $role      = 0;

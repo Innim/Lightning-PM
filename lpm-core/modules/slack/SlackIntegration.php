@@ -26,50 +26,18 @@ class SlackIntegration {
 	}
 
 	public function notifyIssueForTest(Issue $issue) {
-		// if (!($channel = $this->getChannelByProject($issue->getProject())))
-			// return;
-
 		$text = $this->getIssuePrefix($issue) . '_"' . $issue->name . '"_ - в *тестирование*';
 		$text = $this->addMentionsByUsers($text, $issue->getTesters());
-
-		// $this->postMessage($channel, $text, [[
-		// 	'fallback' => $issue->getName(),
-		// 	'title' => $issue->getName(),
-		// 	'text' => $issue->getShortDesc(),
-		// 	'title_link' => $issue->getConstURL()
-		// ]]);
 
 		$this->postMessageForIssue($issue, $text, [[
 			'fallback' => $issue->getName(),
 			'title' => $issue->getName(),
-			'text' => $issue->getShortDesc(),
+			'text' => $issue->getShortDesc(false),
 			'title_link' => $issue->getConstURL()
 		]]);
-
-		//priority -> цвет?
-		//getImages -> image_url/thumb_url
-		// TODO: прикрутить thread
-		// $client = $this->getClient();
-		// $message = $client->getMessageBuilder()->
-		// 	setText($text)->
-		// 	setChannel($channel)->
-		// 	addAttachment((new AttachmentBuilder())->
-		//     	setTitle($issue->getName())->
-		//     	setText($issue->getShortDesc())->
-		//     	setFallbackText($issue->getName())->
-		//     	setColor('#BADA55')->
-		//     	create()
-		//     )->
-		// 	create();
-
-		// $client->postMessage($message);
 	}
 
 	public function notifyIssueCompleted(Issue $issue) {
-		// if (!($channel = $this->getChannelByProject($issue->getProject())))
-			// return;
-
-		// TODO: постить в канал
 		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *завершена*';
 		$text = $this->addMentionsByUsers($text, $issue->getMembers());
 
@@ -88,12 +56,8 @@ class SlackIntegration {
 
 	public function notifyIssuePassTest(Issue $issue) {
 		$project = $issue->getProject();
-		// if (!($channel = $this->getChannelByProject($project)))
-			// return;
-
 		$master = $project->getMaster();
 
-		// TODO: постить в канал
 		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *прошла тестирование*';
 		$text = $this->addMentionsByUsers($text, $master !== null ? [$master] : null);
 

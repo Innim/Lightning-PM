@@ -76,6 +76,10 @@ class PagePrinter {
 		PageConstructor::includePattern( 'users-chooser' );
 	}
 	
+	public static function comment(Comment $comment) {
+		PageConstructor::includePattern('comment', compact('comment'));
+	}
+	
 	/**
 	 * Распечатывает список видео.
 	 * @param  array $videoLinks Список объектов с данными ссылок на видео.

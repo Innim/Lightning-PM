@@ -1,13 +1,38 @@
 <?php
-class LPMBaseObject extends StreamObject 
-{
-
+/**
+ * Базовый объект модели.
+ */
+class LPMBaseObject extends StreamObject {
 	protected static function getDB() {
 		return LPMGlobals::getInstance()->getDBConnect();
 	}
 
-	protected  static function getDateStr( $date ) {
-		if ($date == 0 ) return  '';
+	protected static function loadFromDb($hash, $tables = null) {
+		$res = self::getDB()->queryb($hash, $tables);
+		if ($res === false)
+			throw new \GMFramework\ProviderLoadException();
+		return $res;
+	}
+
+	protected static function loadValFromDb($table, $field, $where) {
+		$res = self::getDB()->querybSingle([
+			'SELECT' => $field,
+			'FROM'   => $table,
+			'WHERE'  => $where,
+			'LIMIT'  => 1
+		]);
+
+		return $res[$field];
+	}
+
+	protected static function loadIntValFromDb($table, $field, $where) {
+		return intval(self::loadValFromDb($table, $field, $where));
+	}
+
+	protected  static function getDateStr($date) {
+		if ($date == 0) 
+			return  '';
+
 		return DateTimeUtils::date(
 			DateTimeFormat::DAY_OF_MONTH_2 . '-' .
 			DateTimeFormat::MONTH_NUMBER_2_DIGITS . '-' .
@@ -16,8 +41,10 @@ class LPMBaseObject extends StreamObject
 		);
 	}
 	
-	public static function getDate4Input( $date ) {
-		if ($date == 0 ) return  '';
+	public static function getDate4Input($date) {
+		if ($date == 0) 
+			return  '';
+
 		return DateTimeUtils::date(
 			DateTimeFormat::DAY_OF_MONTH_2 . '/' .
 			DateTimeFormat::MONTH_NUMBER_2_DIGITS . '/' .
@@ -26,7 +53,7 @@ class LPMBaseObject extends StreamObject
 		);
 	}
 	
-	protected static function getDateTimeStr( $date ) {
+	protected static function getDateTimeStr($date) {
 		if ($date == 0) return  '';
 				
 		return DateTimeUtils::date(				
@@ -39,17 +66,13 @@ class LPMBaseObject extends StreamObject
 		);
 	}
 	
-	protected function getShort( $text, $len = 100 ) {		
-		$txtLen = mb_strlen( $text, 'UTF-8' );
+	protected function getShort($text, $len = 100) {
+		$txtLen = mb_strlen($text, 'UTF-8');
 		if ($txtLen > $len) {
-			/*$i = 1;
-			while ($len - $i >= 0 || $len + $i < $txtLen ) {
-				if (substr( $text, ) )
-			}*/
-			if (preg_match( '/(^[\w\W]{0,' . $len . '}\s{1})/u', $text, $matches )) 
-				$text = trim( $matches[1] );
+			if (preg_match('/(^[\w\W]{0,' . $len . '}\s{1})/u', $text, $matches)) 
+				$text = trim($matches[1]);
 			else 
-				$text = mb_substr( $text, 0, $len, 'UTF-8' );
+				$text = mb_substr($text, 0, $len, 'UTF-8');
 			
 			$text .= '...';
 		} 
@@ -57,14 +80,12 @@ class LPMBaseObject extends StreamObject
 		return $text;
 	}
 	
-	protected function getRich( $text ) {
-		$text = str_replace( "\n", '<br/>', $text );
+	protected function getRich($text) {
+		$text = str_replace("\n", '<br/>', $text);
 		return $text;
 	}
 
-	public function parseData( $hash )
-	{
-		return $this->loadStream( $hash );
+	public function parseData($hash) {
+		return $this->loadStream($hash);
 	}
 }
-?>

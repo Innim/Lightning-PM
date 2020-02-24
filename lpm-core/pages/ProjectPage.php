@@ -57,7 +57,7 @@ class ProjectPage extends BasePage
 
 		if (!parent::init()) {
 			// Если мы на странице задачи, но не авторизовались,
-			// запомним заголовок в OG, чтобы в превью нормально показывалось
+			// запомним заголовок в Open Graph, чтобы в превью нормально показывалось
 			if (!$this->_curSubpage && $this->getPUID() == self::PUID_ISSUE) {
 				$issueId = $this->getCurentIssueId((float)$this->getAddParam());
 				if ($issueId > 0 && ($issue = Issue::load((float)$issueId))) {
@@ -127,7 +127,10 @@ class ProjectPage extends BasePage
 				$issue->getMembers();
 				$issue->getTesters();
 				
-				Comment::setCurrentInstance( LPMInstanceTypes::ISSUE, $issue->id );
+				$comments = Comment::getListByInstance(LPMInstanceTypes::ISSUE, $issue->id);
+				foreach ($comments as $comment) {
+					$comment->issue = $issue;
+				}
 
 				$this->_title = $this->getTitleByIssue($issue);
 				$this->_pattern = 'issue';
@@ -135,6 +138,7 @@ class ProjectPage extends BasePage
 				array_push( $this->_js,	'issue' );
 
 				$this->addTmplVar('issue', $issue);
+				$this->addTmplVar('comments', $comments);
 			} 
 		}
 
@@ -221,16 +225,8 @@ class ProjectPage extends BasePage
      * @param mixed $idInProject 
      * @return $issueId
      */
-    private function getCurentIssueId($idInProject)
-    {
-        $sql = "SELECT `id` FROM `%s` WHERE `idInProject` = '" . $idInProject . "' " .
-										   "AND `projectId` = '" . $this->_project->id . "'";
-        if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
-            return $engine->addError( 'Ошибка доступа к базе' );
-        }else{
-            $result = $query->fetch_assoc();
-            return $result['id'];
-        }        
+    private function getCurentIssueId($idInProject) {
+        return Issue::loadIssueId($this->_project->id, $idInProject);
     }
     
     /**

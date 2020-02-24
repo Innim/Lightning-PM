@@ -2,9 +2,8 @@
 /**
  * Статистика пользователя по скрам спринтам.
  */
-class UserScrumStat {
+class UserScrumStat extends ScrumStatBase  {
 	public $user;
-	private $_snapshots = [];
 
 	function __construct(User $user) {
 		$this->user = $user;
@@ -18,17 +17,5 @@ class UserScrumStat {
 		}
 		
 		return $sum;
-	}
-
-	public function getSnapshotsCount() {
-		return count($this->_snapshots);
-	}
-
-	/**
-	 * Добавляет в список снимок спринта, в котором принимал участие пользователь.
-	 * @param ScrumStickerSnapshot $snapshot [description]
-	 */
-	public function addSnapshot(ScrumStickerSnapshot $snapshot) {
-		$this->_snapshots[] = $snapshot;
 	}
 }
