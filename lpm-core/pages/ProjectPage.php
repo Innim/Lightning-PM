@@ -1,12 +1,25 @@
 <?php
-class ProjectPage extends BasePage
-{
+/**
+ * Страница проекта.
+ *
+ * Сюда входит:
+ * - список задач (открытых и завершенных)
+ * - отображение задачи
+ * - добавление/редакторивание задачи
+ * - участники проекта
+ * - список комментов к задачам проекта
+ * - скрам-борд
+ * - архив спринтов
+ * - статистка спринтов
+ * - настройки проекта
+ */
+class ProjectPage extends BasePage {
 	const UID = 'project';
 	const PUID_MEMBERS = 'members';
-	const PUID_ISSUES  = 'issues';
-	const PUID_COMPLETED_ISSUES  = 'completed';
+	const PUID_ISSUES = 'issues';
+	const PUID_COMPLETED_ISSUES = 'completed';
 	const PUID_COMMENTS  = 'comments';
-	const PUID_ISSUE   = 'issue';
+	const PUID_ISSUE = 'issue';
 	const PUID_SCRUM_BOARD = 'scrum_board';
 	const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
 	const PUID_SPRINT_STAT = 'sprint_stat';
@@ -19,11 +32,10 @@ class ProjectPage extends BasePage
 	private $_project;
 	private $_currentPage;
 
-	function __construct()
-	{
-		parent::__construct( self::UID, '', true, true );
+	function __construct() {
+		parent::__construct(self::UID, '', true, true);
 		
-		array_push( $this->_js, 'project', 'issues');
+		array_push($this->_js, 'project', 'issues');
 		$this->_pattern = 'project';
 		
 		$this->_baseParamsCount = 2;
@@ -80,36 +92,22 @@ class ProjectPage extends BasePage
 
         if (!$this->_project->hasReadPermission($user))
         	return false;
-
-		// if (!$user->isModerator()) {
-		// 	$sql = "SELECT `instanceId` FROM `%s` " .
-		// 	                 "WHERE `instanceId`   = '" . $this->_project->id . "' " .
-		// 					   "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-		// 					   "AND `userId`       = '" . $user->userId . "'";
-
-		// 	if (!$query = $this->_db->queryt( $sql, LPMTables::MEMBERS ))
-  //               return false;
-
-		// 	if ($query->num_rows == 0)
-  //               return false;
-		// }
 		
 		$iCount = (int)$this->_project->getImportantIssuesCount();
-		if ($iCount > 0)
-		{
+		if ($iCount > 0) {
 			$issuesSubPage = $this->getSubPage(self::PUID_ISSUES);
 			$issuesSubPage->link->label .= " (" . $iCount . ")";
 		}
 
 		Project::$currentProject = $this->_project;
 		
-		$this->_header = 'Проект &quot;' . $this->_project->name . '&quot;';// . $this->_title;
+		$this->_header = 'Проект &quot;' . $this->_project->name . '&quot;';
 		$this->_title  = $this->_project->name;		
 		
 		// проверяем, не добавили ли задачу или может отредактировали
-		if (isset( $_POST['actionType'] )) {			 
+		if (isset($_POST['actionType'])) {
 			 if ($_POST['actionType'] == 'addIssue') $this->saveIssue();
-			 elseif ($_POST['actionType'] == 'editIssue' && isset( $_POST['issueId'] )) 
+			 elseif ($_POST['actionType'] == 'editIssue' && isset($_POST['issueId']))
 			 	$this->saveIssue( true );
 			 elseif ($_POST['actionType'] == 'editIssueLabel') {
 			     $this->saveLabel();
@@ -118,10 +116,9 @@ class ProjectPage extends BasePage
 		
 		// может быть это страница просмотра задачи?
 		if (!$this->_curSubpage) {
-			if ($this->getPUID() == self::PUID_ISSUE) 
-			{
+			if ($this->getPUID() == self::PUID_ISSUE) {
 				$issueId = $this->getCurentIssueId((float)$this->getAddParam());
-				if ($issueId <= 0 || !$issue = Issue::load( (float)$issueId) )
+				if ($issueId <= 0 || !$issue = Issue::load((float)$issueId))
 						LightningEngine::go2URL( $this->getUrl() );				
 				
 				$issue->getMembers();
@@ -134,28 +131,24 @@ class ProjectPage extends BasePage
 
 				$this->_title = $this->getTitleByIssue($issue);
 				$this->_pattern = 'issue';
-				ArrayUtils::remove( $this->_js,	'project' );
-				array_push( $this->_js,	'issue' );
+				ArrayUtils::remove($this->_js,	'project');
+				array_push($this->_js, 'issue');
 
 				$this->addTmplVar('issue', $issue);
 				$this->addTmplVar('comments', $comments);
 			} 
 		}
-
-		// загружаем задачи
-		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) 
-		{			
-			$this->addTmplVar('issues', Issue::loadListByProject( $this->_project->id,
-                array(Issue::STATUS_IN_WORK, Issue::STATUS_WAIT) ));
-		}
-		// загружаем  завершенные задачи
-		else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) 
-		{			
-			$this->addTmplVar('issues', Issue::loadListByProject(
-				$this->_project->id, array( Issue::STATUS_COMPLETED )));	
-		}
-		else if ($this->_curSubpage->uid == self::PUID_COMMENTS) 
-		{
+		if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {
+			// загружаем задачи
+			$openedIssues = Issue::loadListByProject($this->_project->id,
+				[Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
+			$this->addTmplVar('issues', $openedIssues);
+		} else if ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) {	
+			// загружаем  завершенные задачи
+			$completedIssues = Issue::loadListByProject(
+				$this->_project->id, [Issue::STATUS_COMPLETED]);
+			$this->addTmplVar('issues', $completedIssues);
+		} else if ($this->_curSubpage->uid == self::PUID_COMMENTS) {
 			$page = $this->getProjectedCommentsPage();
 			$commentsPerPage = 100;
 
@@ -200,8 +193,7 @@ class ProjectPage extends BasePage
 
             $sidInProject = (int) $this->getParam(3);
 
-            if ($sidInProject > 0)
-            {
+            if ($sidInProject > 0) {
                 foreach ($snapshots as $snapshot) {
                     if ($snapshot->idInProject == $sidInProject) {
                         $this->addTmplVar('snapshot', $snapshot);
@@ -233,23 +225,22 @@ class ProjectPage extends BasePage
      * Номер последнего задания в проекте
      * @return idInProject
      */
-    private function getLastIssueId() 
-    {
+    private function getLastIssueId() {
         $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
                "WHERE `projectId` = '" . $this->_project->id . "'";
-        if(!$query = $this->_db->queryt($sql, LPMTables::ISSUES)){
-            return $engine->addError( 'Ошибка доступа к базе' );
+        if (!$query = $this->_db->queryt($sql, LPMTables::ISSUES)) {
+            return $engine->addError('Ошибка доступа к базе');
         }
         
         if ($query->num_rows == 0) {
             return 1;
-        }else{
+        } else {
             $result = $query->fetch_assoc();
             return $result['maxID'] + 1;
         }    
     }
     
-	private function saveIssue( $editMode = false ) {
+	private function saveIssue($editMode = false) {
 		$engine = $this->_engine;
 		// если это редактирование, то проверим идентификатор задачи
 		// на соответствие её проекту и права пользователя
@@ -259,12 +250,12 @@ class ProjectPage extends BasePage
 			// проверяем что такая задача есть и она принадлежит текущему проекту
 			$sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
 										   "AND `projectId` = '" . $this->_project->id . "'";
-			if (!$query = $this->_db->queryt( $sql, LPMTables::ISSUES )) {
-				return $engine->addError( 'Ошибка записи в базу' );
+			if (!$query = $this->_db->queryt($sql, LPMTables::ISSUES)) {
+				return $engine->addError('Ошибка записи в базу');
 			}
 			
 			if ($query->num_rows == 0) 
-				return $engine->addError( 'Нет такой задачи для текущего проекта' );
+				return $engine->addError('Нет такой задачи для текущего проекта');
             $result = $query->fetch_assoc(); 
 			$idInProject = $result['idInProject'];
 			$issueName = $result['name'];
@@ -276,25 +267,24 @@ class ProjectPage extends BasePage
             $issueName = null;
         }
 		
-		if (empty( $_POST['name'] ) || !isset( $_POST['members'] )
-		|| !isset( $_POST['type'] ) || empty( $_POST['completeDate'] )
-		|| !isset( $_POST['priority'] ) )  {
-			$engine->addError( 'Заполнены не все обязательные поля' );
-		} elseif (preg_match( "/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
-					$_POST['completeDate'], $completeDateArr ) == 0 ) {
-			$engine->addError( 'Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ' );
-		} elseif ($_POST['type'] != Issue::TYPE_BUG
-					&& $_POST['type'] != Issue::TYPE_DEVELOP) {
-			$engine->addError( 'Недопустимый тип' );
-		} elseif (!is_array( $_POST['members'] ) || count( $_POST['members'] ) == 0 ) {
-			$engine->addError( 'Необходимо указать хотя бы одного исполнителя проекта' );
+		if (empty($_POST['name']) || !isset($_POST['members'])
+				|| !isset($_POST['type'] ) || empty($_POST['completeDate'])
+				|| !isset($_POST['priority'])) {
+			$engine->addError('Заполнены не все обязательные поля');
+		} elseif (preg_match("/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
+				$_POST['completeDate'], $completeDateArr ) == 0) {
+			$engine->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
+		} elseif ($_POST['type'] != Issue::TYPE_BUG && $_POST['type'] != Issue::TYPE_DEVELOP) {
+			$engine->addError('Недопустимый тип');
+		} elseif (!is_array($_POST['members']) || empty($_POST['members'])) {
+			$engine->addError('Необходимо указать хотя бы одного исполнителя проекта');
 		} elseif ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
-			$engine->addError( 'Недопустимое значение приоритета' );
+			$engine->addError('Недопустимое значение приоритета');
 		} else {
 			// TODO наверное нужен "белый список" тегов
-			$_POST['desc'] = str_replace( '%', '%%', $_POST['desc'] );
-			$_POST['hours']= str_replace( '%', '%%', $_POST['hours'] );
-			$_POST['name'] = trim(str_replace( '%', '%%', $_POST['name'] ));
+			$_POST['desc'] = str_replace('%', '%%', $_POST['desc']);
+			$_POST['hours']= str_replace('%', '%%', $_POST['hours']);
+			$_POST['name'] = trim(str_replace('%', '%%', $_POST['name']));
 
 			foreach ($_POST as $key => $value) {
 				if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers' && $key != 'membersSp')
@@ -307,7 +297,7 @@ class ProjectPage extends BasePage
 							$completeDateArr[2] . '-' .
 							$completeDateArr[1] . ' ' .
 							'00:00:00';
-			$priority = min( 99, max( 0, (int)$_POST['priority'] ) );
+			$priority = min(99, max(0, (int)$_POST['priority']));
 
 			// Обновляем меткам кол-во использований.
             $origLabels = Issue::getLabelsByName($_POST['name']);
@@ -320,6 +310,7 @@ class ProjectPage extends BasePage
                         unset($labels[$key]);
                 }
             }
+
             if (!empty($labels)) {
 			    $allLabels = Issue::getLabels();
 			    $countedLabels = array();
@@ -330,8 +321,10 @@ class ProjectPage extends BasePage
                         unset($labels[$index]);
                     }
                 }
+
 				if (!empty($countedLabels))
                     Issue::addLabelsUsing($countedLabels, $this->_project->id);
+
 			    if (!empty($labels)) {
 			        foreach ($labels as $newLabel) {
                         Issue::saveLabel($newLabel, $this->_project->id, 0, 1);
@@ -372,8 +365,8 @@ class ProjectPage extends BasePage
 									"`type` = VALUES( `type` ), " .
 									"`completeDate` = VALUES( `completeDate` ), " .
 									"`priority` = VALUES( `priority` )";			
-			if (!$this->_db->queryt( $sql, LPMTables::ISSUES )) {
-				$engine->addError( 'Ошибка записи в базу' );
+			if (!$this->_db->queryt($sql, LPMTables::ISSUES)) {
+				$engine->addError('Ошибка записи в базу');
 			} else {
 				if (!$editMode) {
 				    $issueId = $this->_db->insert_id;
@@ -399,7 +392,8 @@ class ProjectPage extends BasePage
                     return;
 
 				// Сохраняем тестеров
-				if (!$this->saveTesters($issueId, $_POST['testers'], $editMode))
+				$testers = isset($_POST['testers']) ? $_POST['testers'] : [];
+				if (!$this->saveTesters($issueId, $testers, $editMode))
                     return;
 
 				//удаление старых изображений
@@ -501,7 +495,7 @@ class ProjectPage extends BasePage
 		$uploader = new LPMImgUpload( 
 			Issue::MAX_IMAGES_COUNT - $hasCnt, 
 			true,
-            array( LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT ), 
+            [LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT],
             'issues', 
             'scr_',
 			LPMInstanceTypes::ISSUE, 
@@ -531,8 +525,7 @@ class ProjectPage extends BasePage
 			return false;
 			
 		// Удаляем пользователей из таблицы информации об участниках задачи
-		if (!empty($users4Delete) &&
-				!IssueMember::deleteInfo($issueId, $users4Delete))
+		if (!empty($users4Delete) && !IssueMember::deleteInfo($issueId, $users4Delete))
 			return $engine->addError('Ошибка при удалении информации об участниках');
 
 		if ($this->_project->scrum) {
@@ -607,7 +600,7 @@ class ProjectPage extends BasePage
 		if (!$prepare = $this->_db->preparet($sql, LPMTables::MEMBERS)) {
 			if (!$editMode)
 				$this->_db->queryt("DELETE FROM `%s` WHERE `id` = '" . $issueId . "'", LPMTables::ISSUES);
-			return $engine->addError( 'Ошибка при сохранении участников' );
+			return $engine->addError('Ошибка при сохранении участников');
 		} else {
 			$saved = array();
 			foreach ($userIds as $memberId) {
@@ -649,7 +642,7 @@ class ProjectPage extends BasePage
 	}
 
 	private function getTitleByIssue(Issue $issue) { 
-		return $issue->name .' - '. $this->_project->name;
+		return $issue->name . ' - ' . $this->_project->name;
 	}
 
 	private function parseSP($value, $allowFloat = false) {
@@ -658,4 +651,3 @@ class ProjectPage extends BasePage
 			($allowFloat ? floatval(str_replace(',', '.', (string)$value)) : (int)$value);
 	}
 }
-?>

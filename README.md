@@ -4,7 +4,7 @@
 
 ## Требования
 
-- PHP 5.5
+- PHP 7.1
 - MySQL 5.5
 - Apache с поддержкой `.htaccess` и включенным модулем `mod_rewrite`
 

@@ -11,10 +11,10 @@ class GitlabIntegration {
 	 */
 	public static function getInstance(/*User */$user) {
 		if (self::$_instance === null) {
-			// TODO: проверка на пустоту и существование?
-			// TODO: токен юзера
 			$userToken = $user == null || empty($user->gitlabToken) ? null : $user->gitlabToken;
-			self::$_instance = new GitlabIntegration(GITLAB_URL, $userToken, GITLAB_TOKEN, GITLAB_SUDO_USER);
+			self::$_instance = new GitlabIntegration(defined('GITLAB_URL') ? GITLAB_URL : '',
+				$userToken, defined('GITLAB_TOKEN') ? GITLAB_TOKEN : '',
+				defined('GITLAB_SUDO_USER') ? GITLAB_SUDO_USER : '');
 
 			// Если токена нет, то имеет смысл его создать
 			if ($userToken == null && $user != null) {
@@ -53,11 +53,18 @@ class GitlabIntegration {
 	}
 
 	/**
+	 * Доступна ли интеграция.
+	 */
+	public function isAvailable() {
+		return !empty($this->_url) && !empty($this->_sudoToken) && !empty($this->_sudoUser);
+	}
+
+	/**
 	 * Можно ли делать пользовательские (не sudo) запросы.
 	 * @return boolean [description]
 	 */
 	public function isAvailableForUser() {
-		return $this->client() != null;
+		return $this->isAvailable() && $this->client() != null;
 	}
 
 	/**
@@ -66,6 +73,9 @@ class GitlabIntegration {
 	 * @return string       Созданный токен
 	 */
 	public function sudoCreateUserToken(User $user) {
+		if (!$this->isAvailable())
+			return false;
+
 		$gitlabUser = $this->sudoGetUserByEmail($user->email);
 
 		if ($gitlabUser == null)
@@ -118,6 +128,9 @@ class GitlabIntegration {
 	}
 
 	private function client() {
+		if (!$this->isAvailable())
+			return null;
+
 		if ($this->_client === null && $this->_token !== null) {
 			$this->_client = \Gitlab\Client::create($this->_url)->authenticate(
 				$this->_token, \Gitlab\Client::AUTH_URL_TOKEN);
@@ -127,6 +140,9 @@ class GitlabIntegration {
 	}
 
 	private function sudoClient() {
+		if (!$this->isAvailable())
+			return null;
+		
 		if ($this->_sudoClient === null) {
 			$this->_sudoClient = \Gitlab\Client::create($this->_url)->authenticate(
 				$this->_sudoToken, \Gitlab\Client::AUTH_URL_TOKEN, $this->_sudoUser);

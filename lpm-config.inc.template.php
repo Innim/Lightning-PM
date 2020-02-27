@@ -61,8 +61,8 @@ define('SLACK_TOKEN', '');
 // GitLab URL
 define('GITLAB_URL', '');
 
-// Token для интеграции со GitLab
+// Token для интеграции с GitLab
 define('GITLAB_TOKEN', '');
 
-// Sudo пользователь для интеграции со GitLab
+// Sudo пользователь для интеграции с GitLab
 define('GITLAB_SUDO_USER', '');

@@ -152,12 +152,15 @@ SQL;
 
                 $issue = $sticker->getIssue();
 
+                $membersSpList = isset($membersSpByIssueId[$sticker->issueId])
+                    ? $membersSpByIssueId[$sticker->issueId] : [];
+
                 $issueUid = $sticker->issueId;
                 $issuePid = $issue->idInProject;
                 $issueName = $sticker->getName();
                 $issueState = $sticker->state;
                 $issueSP = $issue->hours;
-                $issueMembersSP = json_encode($membersSpByIssueId[$sticker->issueId]);
+                $issueMembersSP = json_encode($membersSpList);
                 $issuePriority = $issue->priority;
 
                 $prepare->bind_param('ddsissi', $issueUid, $issuePid, $issueName, $issueState,
