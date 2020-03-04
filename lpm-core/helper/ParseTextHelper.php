@@ -53,7 +53,17 @@ class ParseTextHelper {
             } else {
                 // Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
                 $url = "https://" . $urlPrefix . $videoUid . "/download";
-                $header = get_headers($url, 1);
+                $prev = stream_context_get_options(stream_context_get_default());
+                // Устаналиваем таймаут поменьше
+                // TODO: вообще желательно бы перенести на клиент
+                stream_context_set_default([
+                    'http' => [
+                        'timeout' => 2, // seconds
+                    ]
+                ]);
+                $header = @get_headers($url, 1);
+                stream_context_set_default($prev);
+
                 if (empty($header) || !isset($header['Content-Type']) ||
                     strpos($header['Content-Type'], 'video/') !== 0) {
                     $url = null;
