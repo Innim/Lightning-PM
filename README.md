@@ -12,6 +12,10 @@
 
 `short_open_tag = On`
 
+Требуемые расширения, которые могут быть выключены по умолчанию:
+ - [mbstring](https://www.php.net/manual/ru/intro.mbstring.php)
+ - [Разбор XML](https://www.php.net/manual/ru/intro.xml.php)
+
 ## Установка
 
 1. Скопируйте все, кроме `_dp`, `_private`, `ci`, `README.md` и `CHANGELOG.md` на сервер.
