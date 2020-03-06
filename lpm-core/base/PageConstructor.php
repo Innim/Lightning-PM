@@ -145,9 +145,9 @@ class PageConstructor {
 		include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
 	}
 
-	private static $_usingScripts = array( 
-		'libs/jquery-1.6.4.min',
-		'libs/jquery-ui-1.8.16.min',
+	private static $_usingScripts = [
+		'libs/jquery-1.12.4.min',
+		'libs/jquery-ui-1.12.1.min',
 		'libs/jquery.form',
 		'libs/jquery.validate.min',
 		'libs/F2PInvoker', 
@@ -156,7 +156,7 @@ class PageConstructor {
 		'js-options.php$' ,
         'libs/clipboard.min',
 		'lightning'
-	);
+	];
 	
 	public  $_title    = '';
 	public  $_header   = '';

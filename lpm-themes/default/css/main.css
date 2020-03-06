@@ -75,6 +75,10 @@ button, a.button, input[type=submit] {
     min-height     : 30px;
     font-size      : 12pt; 
 }
+button.ui-button {
+    min-width: 0;
+    min-height: 0;
+}
 table {
 	width: 100%;
 	border: 1px solid #cccccc;

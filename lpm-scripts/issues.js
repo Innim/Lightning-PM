@@ -43,7 +43,7 @@ $(document).ready(
 
         // Настройка формы -- END
 
-        $('.delete-comment').live('click', function() {
+        $('.delete-comment').on('click', function() {
             let id = $(this).attr('data-comment-id');
             let el = $(this);
             let result = confirm('Удалить комментарий?');

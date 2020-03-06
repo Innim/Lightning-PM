@@ -46,8 +46,7 @@ class PagePrinter {
 		}
 		return $str;*/
 		self::cssLink('main');
-		self::cssLink('jquery-ui-1.8.16');
-		self::cssLink('jquery-ui-1.8.16');
+		self::cssLink('jquery-ui-1.12.1.min');
 		self::cssLink('highlightjs-styles/default');
 		self::cssLink('font-awesome5/css/fontawesome-all.min');
 	}
