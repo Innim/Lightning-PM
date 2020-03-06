@@ -1,10 +1,8 @@
 <?php
+require_once(__DIR__ . '/../init.inc.php');
 
-require_once( dirname( __FILE__ ) . '/../init.inc.php' );
-
-class ProjectService extends LPMBaseService
-{
-	public function addMembers( $projectId, $userIds ) {
+class ProjectService extends LPMBaseService {
+	public function addMembers($projectId, $userIds) {
 		$projectId = (float)$projectId;
 		
 		if (!$userIds = $this->floatArr($userIds))
@@ -37,8 +35,8 @@ class ProjectService extends LPMBaseService
 		return $this->answer();
 	}
 
-	public function getSumOpenedIssuesHours($projectId)
-	{
+
+	public function getSumOpenedIssuesHours($projectId) {
 		// TODO проверить права доступа для этого проекта
 		
 	    $count = Project::sumHoursActiveIssues($projectId);
@@ -133,7 +131,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addTester( $projectId, $userId ){
+    public function addTester($projectId, $userId) {
         $projectId = (float)$projectId;
         $userId = (float)$userId;
 
@@ -172,7 +170,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function deleteMemberDefault ($projectId) {
+    public function deleteMemberDefault($projectId) {
         $projectId = (int)$projectId;
         // проверяем права пользователя
         if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');
