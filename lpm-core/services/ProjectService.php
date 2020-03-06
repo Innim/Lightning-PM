@@ -35,6 +35,31 @@ class ProjectService extends LPMBaseService {
 		return $this->answer();
 	}
 
+    /**
+     * Возвращает участников проекта.
+     * @param int $projectId Идентификатор проекта.
+     * @return [
+     *    list: User[]
+     * ]
+     */
+    public function getMembers($projectId) {
+        $projectId = (float)$projectId;
+
+        if (!$user = $this->getUser())
+            return $this->error('Ошибка при загрузке пользователя');
+        
+        if (!$project = Project::loadById($projectId))
+            return $this->error('Нет такого проекта');
+        
+        if (!$project->hasReadPermission($user))
+            return $this->error('Недостаточно прав доступа');
+        
+        if (!$members = $project->getMembers())
+            return $this->error('Ошибка при загрузке участников');
+        
+        $this->add2Answer('members', $members);
+        return $this->answer();
+    }
 
 	public function getSumOpenedIssuesHours($projectId) {
 		// TODO проверить права доступа для этого проекта

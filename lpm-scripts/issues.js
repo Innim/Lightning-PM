@@ -1,6 +1,7 @@
 $(document).ready(
     function () {
         //$( '#issueView .comments form.add-comment' ).hide();
+        issuePage.projectId = parseInt($('#issueProjectID').val());
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
@@ -130,7 +131,26 @@ DropDown.prototype = {
     }
 }
 
-var issuePage = {};
+var issuePage = {
+    projectId: null,
+    members: null
+};
+
+issuePage.loadMembers = function (handler) {
+    if (issuePage.members != null) {
+        handler(issuePage.members);
+    } else {
+        srv.project.getMembers(issuePage.projectId, function (res) {
+            if (res.success) {
+                issuePage.members = res.members;
+                handler(issuePage.members);
+            } else {
+                handler(null);
+                srv.err(res);
+            }
+        });
+    }
+}
 
 issuePage.onShowAddIssue = function () {
     var selectedPerformer = $('#selected-performer').val();

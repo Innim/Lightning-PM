@@ -154,8 +154,11 @@ var srv = {
     },
     project : {
         s          : new BaseService( 'ProjectService' ),
-        addMembers : function ( projectId, userIds, onResult ) {
-            this.s._( 'addMembers' );
+        addMembers : function (projectId, userIds, onResult) {
+            this.s._('addMembers');
+        },
+        getMembers : function (projectId, onResult) {
+            this.s._('getMembers');
         },
         setMaster : function (projectId, masterId, onResult) { 
           this.s._('setMaster'); 
