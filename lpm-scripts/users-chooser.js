@@ -65,15 +65,14 @@ $(document).ready(
  */
 function ucOpen(checked, onComplete) {
     $("#usersChooser").dialog('open');
-    var checkboxes = $("#usersChooser table.users-list > " +
-            "tbody > tr > td > input[type=checkbox][name=userId]")
+    var checkboxes = $("#usersChooser input[type=checkbox][name=userId]")
       .removeAttr('checked')
       .removeAttr('_hidden');
     $("#usersChooser table.users-list > tbody > tr").show();
     if (checked && checked.length > 0) {
         var j = 0;
         for (var i = 0; i < checkboxes.length; i++) {            
-            if (checkboxes.eq(i).attr('checked'))
+            if (checkboxes.eq(i).prop('checked'))
               userIds.push(checkboxes.eq(i).val());
             for (j = 0; j < checked.length; j++) {
                 if (checked[j].toString() == checkboxes.eq(i).val()) {
@@ -88,7 +87,7 @@ function ucOpen(checked, onComplete) {
 }
 
 function ucInput() {
-    var pattern = $( "#usersChooser input[name=usersFilter]" ).val();
+    var pattern = $("#usersChooser input[name=usersFilter]").val();
     if (ucInput.pattern == pattern)
       return;
 
@@ -106,9 +105,9 @@ function ucInput() {
 function ucDone() {
     if (ucOpen.onComplete) {
         var userIds = [];
-        var checkboxes = $("#usersChooser table.users-list > tbody > tr > td > input[type=checkbox][name=userId]");
+        var checkboxes = $("#usersChooser input[type=checkbox][name=userId]");
         for (var i = 0; i < checkboxes.length; i++) {            
-            if (checkboxes.eq(i).attr('checked'))
+            if (checkboxes.eq(i).prop('checked'))
               userIds.push(checkboxes.eq(i).val());
         }
         if (userIds.length > 0)
