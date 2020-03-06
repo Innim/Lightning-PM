@@ -10,10 +10,38 @@ $(document).ready(
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
 
+
+        // BEGIN -- Настройка формы 
+        
         $('#issueForm .note.tags-line a.tag').click(function (e) {
             var a = $(e.currentTarget);
             insertMarker(a.data('marker'));
         });
+
+        $('#issueForm input[name=hours]').focus(function(e) {
+            let field = $(e.currentTarget);
+            if (!field.val()) {
+                var sum = 0;
+                $('#issueForm input.member-sp').each(function(i) {
+                    if (sum === -1)
+                        return;
+
+                    let val = $(this).val();
+                    if (val === '') {
+                        sum = -1;
+                        return;
+                    }
+
+                    let memberSp = val === '1/2' ? .5 : parseFloat(val);
+                    sum += memberSp;
+                });
+
+                if (sum > 0)
+                    field.val(sum);
+            }
+        });
+
+        // Настройка формы -- END
 
         $('.delete-comment').live('click', function() {
             let id = $(this).attr('data-comment-id');
