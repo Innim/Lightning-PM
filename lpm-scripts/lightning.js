@@ -385,9 +385,8 @@ window.onload = function () {
 };
 
 $(document).ready(
-   function ()
-   {
-       $( "input.date" ).datepicker({ 
+   function () {
+       $("input.date").datepicker({ 
            dateFormat     : 'dd/mm/yy',
            dayNames       : ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 
                              'Четверг', 'Пятница', 'Суббота'],
@@ -406,6 +405,21 @@ $(document).ready(
        });
 
        if (hljs) hljs.initHighlightingOnLoad();
+
+       $(document).tooltip({
+        position: {
+          my: "center bottom-20",
+          at: "center top",
+          using: function(position, feedback) {
+            $(this).css(position);
+            $("<div>")
+              .addClass("arrow")
+              .addClass(feedback.vertical)
+              .addClass(feedback.horizontal)
+              .appendTo(this);
+          }
+        }
+      });
        
        
        window.lpInfo.userId = $( '#curUserId' ).val();
