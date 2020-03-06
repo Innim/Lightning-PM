@@ -35,7 +35,7 @@ class ProjectPage extends BasePage {
 	function __construct() {
 		parent::__construct(self::UID, '', true, true);
 		
-		array_push($this->_js, 'project', 'issues');
+		array_push($this->_js, 'project', 'issues', 'libs/tribute');
 		$this->_pattern = 'project';
 		
 		$this->_baseParamsCount = 2;

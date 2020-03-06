@@ -42,6 +42,9 @@ $(document).ready(
             }
         });
 
+        setupMembersAutoComplete(['#issueForm textarea[name=desc]',
+            'form.add-comment textarea[name=commentText]']);
+
         // Настройка формы -- END
 
         $('.delete-comment').on('click', function() {
@@ -110,6 +113,38 @@ function bindFormattingHotkeys(selector) {
             event.preventDefault();
         }
     });
+}
+
+function setupMembersAutoComplete(selectors) {
+    var members = null;
+    let tribute = new Tribute({
+        trigger: '@',
+        values: function (text, cb) {
+            if (members !== null) {
+                cb(members);
+                return;
+            }
+
+            issuePage.loadMembers(function (list) {
+                if (!list) {
+                    cb([])
+                } else {
+                    members = [];
+                    for (var i = 0; i < list.length; i++) {
+                        let user = list[i];
+                        let name = user.nick ? user.nick : user.firstName;
+
+                        members[i] = {key: name, value: name};
+                    }
+                    cb(members);
+                }
+            });
+        },
+    });
+    
+    for (var i = 0; i < selectors.length; i++) {
+        tribute.attach($(selectors[i]).get());
+    }
 }
 
 function DropDown(el) {
