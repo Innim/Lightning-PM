@@ -24,6 +24,8 @@ deploy to test:
   stage: deploy
   only:
     - pipe/test
+  tags:
+    - docker
   variables:
     DEPLOY_HOST: "${TEST_HOST}"
     DEPLOY_PORT: "${TEST_SSH_PORT}"
@@ -46,6 +48,8 @@ deploy to prod:
   stage: deploy
   only:
     - master
+  tags:
+    - docker
   variables:
     DEPLOY_HOST: "${PROD_HOST}"
     DEPLOY_PORT: "${PROD_SSH_PORT}"
