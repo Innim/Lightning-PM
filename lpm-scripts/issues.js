@@ -439,22 +439,7 @@ issuePage.addIssueMember = function(sp) {
 };
 
 issuePage.removeIssueMember = function(e) {
-    var li           = e.currentTarget.parentNode;
-    
-    var userId       = $('input[type=hidden][type=members\[\]]', li).attr('value');
-    var userName     = $('span.user-name', li).html();
-    
-    var option       = document.createElement('option');
-    option.value     = userId;
-    option.innerHTML = userName;
-    
-    if (li.parentNode) li.parentNode.removeChild(li);
-    
-    var selectElement = document.getElementById('addIssueMembers');
-    for (var i = 1; i < selectElement.options.length; i++) {
-        if (userName < selectElement.options[i].innerHTML) break;
-    }
-    selectElement.appendChild(option, i);
+    issuePage.removeIssueMemberCommon(e, 'members', 'addIssueMembers');
 };
 
 issuePage.addIssueTester = function() {
@@ -510,23 +495,28 @@ issuePage.addIssueTester = function() {
 };
 
 issuePage.removeIssueTester = function(e) {
-    var li           = e.currentTarget.parentNode;
+    issuePage.removeIssueMemberCommon(e, 'testers', 'addIssueTesters');
+};
 
-    var userId       = $( 'input[type=hidden][type=testers\[\]]', li ).attr( 'value' );
-    var userName     = $( 'span.user-name', li ).html();
-
-    var option       = document.createElement( 'option' );
+issuePage.removeIssueMemberCommon = function(e, fieldName, selectName) {
+    var li           = $(e.currentTarget).parent('li');
+    
+    var userId       = $('input[name="' + fieldName + '[]"]', li).val();
+    var userName     = $('span.user-name', li).html();
+    
+    var option       = document.createElement('option');
     option.value     = userId;
     option.innerHTML = userName;
-
-    if (li.parentNode)
-        li.parentNode.removeChild( li );
-
-    var selectElement = document.getElementById( 'addIssueTesters' );
+    
+    var selectElement = document.getElementById(selectName);
     for (var i = 1; i < selectElement.options.length; i++) {
         if (userName < selectElement.options[i].innerHTML) break;
     }
-    selectElement.appendChild( option, i );
+    selectElement.appendChild(option, i);
+
+    setTimeout(function() {
+        li.remove();
+    }, 0)
 };
 
 issuePage.updatePriorityVals = function () {
@@ -625,7 +615,7 @@ issuePage.validateIssueForm = function () {
     if (len > window.lpmOptions.issueImgsCount)
         errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений' );
 
-    if ($('#issueForm #issueMembers input[type=hidden][name=members\[\]]').size() == 0)
+    if ($('#issueForm #issueMembers input[type=hidden][name="members[]"]').size() == 0)
         errors.push( 'Задаче должен быть назначен хотя бы один исполнитель' );
     
       if (errors.length == 0 ) {
@@ -677,7 +667,7 @@ function setCaretPosition(elem, pos) {
 
 function completeIssue(e) {    
     var parent   = e.currentTarget.parentElement;
-    var issueId  = $('input[name=issueId]', parent).attr('value');
+    var issueId  = $('input[name=issueId]', parent).val();
     
     if (issueId > 0) {
         preloader.show();
@@ -686,27 +676,16 @@ function completeIssue(e) {
             function (res) {
                 //btn.disabled = false;
                 preloader.hide();
-                if (res.success) {
-                    //var row = cell.parentElement;
-                    //row.parentElement.appendChild( row );
-                    //row.className = 'completed-issue';
-                    // находим в таблице строку с этой задачей и переставляем
-                    //var row =                     
-                    if ($( '#issuesList' ).length > 0) {
-                        $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();                   
+                if (res.success) {          
+                    if ($('#issuesList').length > 0) {
+                        $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();                   
                         showMain();
-                    } else if ($( '#issueView' ).length > 0) {
-                        /*$( "#issueInfo .buttons-bar" ).
-                        addClass   ( 'completed-issue'     ).
-                        removeClass( 'active-issue'        );*/
-                        setIssueInfo( new Issue( res.issue ) );
+                    } else if ($('#issueView').length > 0) {
+                        setIssueInfo(new Issue(res.issue));
                     }
                     issuePage.updateStat();
-                    //cell.removeChild( btn );
-                    //btn.innerText = 'Открыть';
-                    //btn.onclick   = restoreIssue;
                 } else {
-                    srv.err( res );
+                    srv.err(res);
                 }
             }  
         );
@@ -716,7 +695,7 @@ function completeIssue(e) {
 issuePage.changePriority = function (e) {
     var $control = $(e.currentTarget);
     var $row = $control.parents('tr');
-    var issueId = $('input[name=issueId]', $row).attr('value');
+    var issueId = $('input[name=issueId]', $row).val();
     var delta = $control.hasClass('priority-up') ? 1 : -1;
 
     if (issueId > 0) {
@@ -795,60 +774,34 @@ issuePage.changePriority = function (e) {
     }
 }
 
-function restoreIssue( e ) {
+function restoreIssue(e) {
     var parent   = e.currentTarget.parentElement;
-    //var issueId = $( 'input[type=hidden][name=issueId]', cell ).attr( 'value' );
-    //var btn     = $( 'button', cell );
-   // btn.attr( 'disabled', 'disabled' );
-    
-    var issueId  = $( 'input[name=issueId]', parent ).attr( 'value' );
+    var issueId  = $('input[name=issueId]', parent).val();
     preloader.show();
     
     srv.issue.restore( 
         issueId, 
         function (res) {
-            //btn.removeAttr( 'disabled' );
             preloader.hide();
             if (res.success) {
-                //var row    = cell.parentElement;
-                //var parent = row.parentElement;
-                /*var tmpRow;
-                for (var i = 0; i < parent.numChilder; i++) {
-                    tmpRow = parent.getChildAt( i );
-                    if (tmpRow.className == 'completed-issue' || )
-                }*/
-                //parent.insertBefore( row, parent.rows[0] );
-                //row.className = 'active-issue';                
-                
-                if ($( '#issuesList' ).length > 0) {
-                    $( "#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).remove();
-                    //addClass   ( 'active-issue'        ).
-                    //removeClass( 'completed-issue'     ).
-                    //prependTo  ( '#issuesList > tbody' );
-                    //$( "#completedIssuess #issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])" ).hide();
+                if ($('#issuesList').length > 0) {
+                    $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
                     showMain();
-                } else if ($( '#issueView' ).length > 0) {
-                    /*$( "#issueInfo .buttons-bar" ).
-                    addClass   ( 'active-issue'        ).
-                    removeClass( 'completed-issue'     );*/
-                    setIssueInfo( new Issue( res.issue ) );
+                } else if ($('#issueView').length > 0) {
+                    setIssueInfo(new Issue(res.issue));
                 }
                 issuePage.updateStat();
-                                                    
-                //btn.attr( 'onclick', completeIssue ); 
-                //btn.text( 'Завершить' );
-                //btn.click( completeIssue );
             } else {
-                srv.err( res );
+                srv.err(res);
             }
         }
     );
 };
 
-function verifyIssue( e ) {
+function verifyIssue(e) {
     var parent   = e.currentTarget.parentElement;
     
-    var issueId  = $( 'input[name=issueId]', parent ).attr( 'value' );
+    var issueId  = $('input[name=issueId]', parent).val();
     preloader.show();
     
     srv.issue.verify( 
@@ -856,21 +809,21 @@ function verifyIssue( e ) {
         function (res) {
             preloader.hide();
             if (res.success) {        
-                    if ($( '#issueView' ).length > 0) {
-                    setIssueInfo( new Issue( res.issue ) );
+                if ($('#issueView').length > 0) {
+                    setIssueInfo(new Issue(res.issue));
                 }
                 issuePage.updateStat();
             } else {
-                srv.err( res );
+                srv.err(res);
             }
         }
     );
 };
 
-issuePage.removeIssue = function( e ) {    
+issuePage.removeIssue = function(e) {    
     if (confirm( 'Вы действительно хотите удалить эту задачу?' )) {    
         var btn     = e.currentTarget;
-        var issueId = $( 'input[type=hidden][name=issueId]', btn.parentElement ).attr( 'value' );
+        var issueId = $('input[type=hidden][name=issueId]', btn.parentElement).val();
         
         preloader.show();
         
@@ -880,10 +833,10 @@ issuePage.removeIssue = function( e ) {
                 preloader.hide();
                 if (res.success) {
                     //window.location.hash = '';
-                    window.location.href = $( "#issueView a.back-link" ).attr( 'href' );
+                    window.location.href = $("#issueView a.back-link").attr('href');
                     //window.location.reload();
                 } else {
-                    srv.err( res );
+                    srv.err(res);
                 }
             }
         );
@@ -940,7 +893,7 @@ issuePage.putStickerOnBoard = function (issueId) {
         preloader.hide();
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
-            $('#putToBoardField').attr('checked', true);
+            $('#putToBoardField').prop('checked', true);
             issuePage.scumColUpdateInfo();
         }
     });
@@ -978,19 +931,16 @@ function showIssue (issueId) {
     );
 };
 
-issuePage.showAddForm = function ( type, parentId ) {
-    //$("#issueForm").show();
-    //$("#projectView").hide();
+issuePage.showAddForm = function (type, parentId) {
     window.location.hash = 'add-issue';
     states.updateView();
     
     if (typeof type != 'undefined') {
-        //$('#issueForm > form > ')
-        $('form input:radio[name=type]:checked', "#issueForm").attr( 'checked', 'checked' );
-        $('form input:radio[value=1]', "#issueForm" ).attr( 'checked', 'checked' ); 
+        $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
+        $('form input:radio[value=1]', "#issueForm").prop('checked', true); 
     } else {
-        $('form input:radio[name=type]:checked', "#issueForm").attr( 'checked', 'checked' );
-        $('form input:radio[value=0]', "#issueForm" ).attr( 'checked', 'checked' ); 
+        $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
+        $('form input:radio[value=0]', "#issueForm").prop('checked', true); 
     }    
 };
 
@@ -1016,7 +966,7 @@ issuePage.setEditInfo = function () {
     // тип
     $('form input:radio[name=type]:checked', "#issueForm").removeAttr( 'checked' );
     $('form input:radio[name=type][value=' + $( "#issueInfo div input[name=type]" ).val() + ']',
-       "#issueForm" ).attr( 'checked', 'checked' ); 
+       "#issueForm" ).prop('checked', true);
     // приоритет
     var priorityVal = $( "#issueInfo div input[name=priority]" ).val();
     $( "#issueForm form input[name=priority]" ).val( priorityVal );
@@ -1031,7 +981,7 @@ issuePage.setEditInfo = function () {
     var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
-        $( "#addIssueMembers option[value=" + memberIds[i] + "]" ).attr( 'selected', 'selected' );
+        $("#addIssueMembers option[value=" + memberIds[i] + "]").prop('selected', true);
         issuePage.addIssueMember(membersSp[i]);
     }
 
@@ -1041,7 +991,7 @@ issuePage.setEditInfo = function () {
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];
         if (testerId.length > 0) {
-            $("#addIssueTesters option[value=" + testerId + "]").attr('selected', 'selected');
+            $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
             issuePage.addIssueTester();
         }
     }
@@ -1094,8 +1044,7 @@ issuePage.setIssueBy = function (value) {
 
     // тип
     $('form input:radio[name=type]:checked', "#issueForm").removeAttr('checked');
-    $('form input:radio[name=type][value=' + /*$( "#issueInfo li input[name=type]" ).val()*/ value.type + ']',
-        "#issueForm").attr('checked', 'checked');
+    $('form input:radio[name=type][value=' + value.type + ']', "#issueForm").prop('checked', true);
     // приоритет
     // var priorityVal = $( "#issueInfo li input[name=priority]" ).val();
     $("#issueForm form input[name=priority]").val(value.priority);
@@ -1107,7 +1056,7 @@ issuePage.setIssueBy = function (value) {
     var i, l = 0;
     l = memberIds.length;
     for (i = 0; i < l; i++) {
-        $("#addIssueMembers option[value=" + memberIds[i] + "]").attr('selected', 'selected');
+        $("#addIssueMembers option[value=" + memberIds[i] + "]").prop('selected', true);
         issuePage.addIssueMember();
     }
 
@@ -1117,7 +1066,7 @@ issuePage.setIssueBy = function (value) {
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];
         if (testerId.length > 0) {
-            $("#addIssueTesters option[value=" + testerId + "]").attr('selected', 'selected');
+            $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
             issuePage.addIssueTester();
         }
     }
@@ -1256,7 +1205,7 @@ function setIssueInfo( issue ) {
     
     issuePage.updatePriorityVals();
     
-    $("#issueInfo > p > input[name=issueId]").attr('value', issue.id);
+    $("#issueInfo > p > input[name=issueId]").val(issue.id);
 };
 
 issuePage.showCommentForm = function () {

@@ -52,11 +52,11 @@ function validateAddProj() {
 	}
 };
 
-function setIsArchive( e ){
+function setIsArchive(e) {
 	var parent = e.currentTarget.parentElement;
-	var projectId = $('input[name=projectId]', parent).attr('value');
+	var projectId = $('input[name=projectId]', parent).val();
 	var value = ($("a", parent).hasClass('archive btn')) ? true : false;
-	srv.projects.setIsArchive( projectId , value, reload = function(){
+	srv.projects.setIsArchive( projectId , value, reload = function() {
 		location.reload();
 	});
 };
