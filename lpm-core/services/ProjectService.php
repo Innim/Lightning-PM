@@ -1,10 +1,8 @@
 <?php
+require_once(__DIR__ . '/../init.inc.php');
 
-require_once( dirname( __FILE__ ) . '/../init.inc.php' );
-
-class ProjectService extends LPMBaseService
-{
-	public function addMembers( $projectId, $userIds ) {
+class ProjectService extends LPMBaseService {
+	public function addMembers($projectId, $userIds) {
 		$projectId = (float)$projectId;
 		
 		if (!$userIds = $this->floatArr($userIds))
@@ -37,8 +35,33 @@ class ProjectService extends LPMBaseService
 		return $this->answer();
 	}
 
-	public function getSumOpenedIssuesHours($projectId)
-	{
+    /**
+     * Возвращает участников проекта.
+     * @param int $projectId Идентификатор проекта.
+     * @return [
+     *    list: User[]
+     * ]
+     */
+    public function getMembers($projectId) {
+        $projectId = (float)$projectId;
+
+        if (!$user = $this->getUser())
+            return $this->error('Ошибка при загрузке пользователя');
+        
+        if (!$project = Project::loadById($projectId))
+            return $this->error('Нет такого проекта');
+        
+        if (!$project->hasReadPermission($user))
+            return $this->error('Недостаточно прав доступа');
+        
+        if (!$members = $project->getMembers())
+            return $this->error('Ошибка при загрузке участников');
+        
+        $this->add2Answer('members', $members);
+        return $this->answer();
+    }
+
+	public function getSumOpenedIssuesHours($projectId) {
 		// TODO проверить права доступа для этого проекта
 		
 	    $count = Project::sumHoursActiveIssues($projectId);
@@ -133,7 +156,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function addTester( $projectId, $userId ){
+    public function addTester($projectId, $userId) {
         $projectId = (float)$projectId;
         $userId = (float)$userId;
 
@@ -172,7 +195,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function deleteMemberDefault ($projectId) {
+    public function deleteMemberDefault($projectId) {
         $projectId = (int)$projectId;
         // проверяем права пользователя
         if (!$this->checkRole(User::ROLE_MODERATOR)) return $this->error('Недостаточно прав');

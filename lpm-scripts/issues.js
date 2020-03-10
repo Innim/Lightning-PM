@@ -1,6 +1,7 @@
 $(document).ready(
     function () {
         //$( '#issueView .comments form.add-comment' ).hide();
+        issuePage.projectId = parseInt($('#issueProjectID').val());
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
@@ -10,12 +11,43 @@ $(document).ready(
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
 
+
+        // BEGIN -- Настройка формы 
+        
         $('#issueForm .note.tags-line a.tag').click(function (e) {
             var a = $(e.currentTarget);
             insertMarker(a.data('marker'));
         });
 
-        $('.delete-comment').live('click', function() {
+        $('#issueForm input[name=hours]').focus(function(e) {
+            let field = $(e.currentTarget);
+            if (!field.val()) {
+                var sum = 0;
+                $('#issueForm input.member-sp').each(function(i) {
+                    if (sum === -1)
+                        return;
+
+                    let val = $(this).val();
+                    if (val === '') {
+                        sum = -1;
+                        return;
+                    }
+
+                    let memberSp = val === '1/2' ? .5 : parseFloat(val);
+                    sum += memberSp;
+                });
+
+                if (sum > 0)
+                    field.val(sum);
+            }
+        });
+
+        setupMembersAutoComplete(['#issueForm textarea[name=desc]',
+            'form.add-comment textarea[name=commentText]']);
+
+        // Настройка формы -- END
+
+        $('.delete-comment').on('click', function() {
             let id = $(this).attr('data-comment-id');
             let el = $(this);
             let result = confirm('Удалить комментарий?');
@@ -83,6 +115,38 @@ function bindFormattingHotkeys(selector) {
     });
 }
 
+function setupMembersAutoComplete(selectors) {
+    var members = null;
+    let tribute = new Tribute({
+        trigger: '@',
+        values: function (text, cb) {
+            if (members !== null) {
+                cb(members);
+                return;
+            }
+
+            issuePage.loadMembers(function (list) {
+                if (!list) {
+                    cb([])
+                } else {
+                    members = [];
+                    for (var i = 0; i < list.length; i++) {
+                        let user = list[i];
+                        let name = user.nick ? user.nick : user.firstName;
+
+                        members[i] = {key: name, value: name};
+                    }
+                    cb(members);
+                }
+            });
+        },
+    });
+    
+    for (var i = 0; i < selectors.length; i++) {
+        tribute.attach($(selectors[i]).get());
+    }
+}
+
 function DropDown(el) {
     this.dd = el;
     //this.placeholder = this.dd.children('span');
@@ -102,7 +166,26 @@ DropDown.prototype = {
     }
 }
 
-var issuePage = {};
+var issuePage = {
+    projectId: null,
+    members: null
+};
+
+issuePage.loadMembers = function (handler) {
+    if (issuePage.members != null) {
+        handler(issuePage.members);
+    } else {
+        srv.project.getMembers(issuePage.projectId, function (res) {
+            if (res.success) {
+                issuePage.members = res.members;
+                handler(issuePage.members);
+            } else {
+                handler(null);
+                srv.err(res);
+            }
+        });
+    }
+}
 
 issuePage.onShowAddIssue = function () {
     var selectedPerformer = $('#selected-performer').val();

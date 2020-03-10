@@ -75,6 +75,10 @@ button, a.button, input[type=submit] {
     min-height     : 30px;
     font-size      : 12pt; 
 }
+button.ui-button {
+    min-width: 0;
+    min-height: 0;
+}
 table {
 	width: 100%;
 	border: 1px solid #cccccc;
@@ -1793,6 +1797,50 @@ ul#ulProjectSettings {
 	background: #f6fff7;
 	border-radius: 2px;
 }
+.ui-widget.ui-widget-content.ui-tooltip, .ui-tooltip .arrow:after {
+	background: #666;
+	border: 0;
+}
+.ui-widget.ui-tooltip {
+	padding: 5px 10px;
+	color: white;
+	border-radius: 15px;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.6);
+	font-size: 0.9em;
+}
+.ui-tooltip .arrow {
+	width: 50px;
+	height: 10px;
+	overflow: hidden;
+	position: absolute;
+	left: 50%;
+	margin-left: -35px;
+	bottom: -10px;
+}
+.ui-tooltip .arrow.top {
+	top: -10px;
+	bottom: auto;
+}
+.ui-tooltip .arrow.left {
+	left: 20%;
+}
+.ui-tooltip .arrow:after {
+	content: "";
+	position: absolute;
+	left: 20px;
+	top: -20px;
+	width: 25px;
+	height: 25px;
+	box-shadow: 6px 5px 9px -9px black;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+.ui-tooltip .arrow.top:after {
+	bottom: -20px;
+	top: auto;
+}
+
 #btnSellect {
 	background: #e9eae2;
 	border-radius: 3px;
