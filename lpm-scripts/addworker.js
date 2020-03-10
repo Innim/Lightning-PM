@@ -23,7 +23,7 @@ workersPage.showAddForm = function ( event ) {
     var row = event.currentTarget.parentNode.parentNode;    
             
     $( '#addWorkerForm form li:first-child > p' ).text( row.cells[0].innerText );
-    $( '#addWorkerForm form input[name=userId]' ).attr( 'value', $( "input[type=hidden]", row ).attr( 'value' ) );
+    $( '#addWorkerForm form input[name=userId]' ).val($( "input[type=hidden]", row ).val());
 };
 
 function showMain() {
@@ -33,9 +33,9 @@ function showMain() {
 };
 
 function addWorker() {
-    var hours      = $( '#addWorkerForm form input[name=hours]'      ).attr( 'value' );
-    var comingTime = $( '#addWorkerForm form input[name=comingTime]' ).attr( 'value' );
-    var userId     = $( '#addWorkerForm form input[name=userId]'     ).attr( 'value' );
+    var hours      = $( '#addWorkerForm form input[name=hours]'      ).val();
+    var comingTime = $( '#addWorkerForm form input[name=comingTime]' ).val();
+    var userId     = $( '#addWorkerForm form input[name=userId]'     ).val();
     
     var errors = [];
     if (comingTime != '' && !(/^[0-9]{2}:[0-9]{2}$/i).test( comingTime )) {
