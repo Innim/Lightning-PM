@@ -112,7 +112,7 @@
             <input placeholder="Story Points" type="text" name="hours"  maxlength="5" value="<?lpm_print_post_var('hours');?>"/>
         </li>
         <li>
-            <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?$issue && lpm_print_post_var('desc', $issue->desc);?></textarea>
+            <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?php lpm_print_post_var('desc', $issue ? $issue->desc : '');?></textarea>
             <div class="note tags-line">Вы можете использовать <a href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи: <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*">*жирный*</a>, 
             <a class="tag" href="javascript:void(0)" style="font-style: italic;" data-marker="_">_курсив_</a>, <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-marker="__">__подчеркнутый__</a>, <a class="tag" href="javascript:void(0)" style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>, <span class="tag quote">&gt; цитата</span>. </div>
             <div class="note tags-line">Также используйте <code>`</code> для строчного кода и <code>```</code> для многострочного (можно указать язык: as, js, php и тд, добавляется сразу после открывающих кавычек, требуется перенос строки)</div>
