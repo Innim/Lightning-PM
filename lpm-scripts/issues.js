@@ -37,8 +37,12 @@ $(document).ready(
                     sum += memberSp;
                 });
 
-                if (sum > 0)
+                if (sum > 0) {
                     field.val(sum);
+                    setTimeout(function () {
+                        field.select();
+                    }, 50);
+                }
             }
         });
 
