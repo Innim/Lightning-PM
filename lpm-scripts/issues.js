@@ -976,9 +976,8 @@ issuePage.setEditInfo = function () {
     $( "#issueForm form input[name=priority]" ).val( priorityVal );
     issuePage.setPriorityVal( priorityVal );
     // дата окончания
-    $( "#issueForm form input[name=completeDate]" ).val( 
-        $( "#issueInfo div input[name=completeDate]" ).val()
-    );
+    $("#issueForm form input[name=completeDate]").val(
+        $("#issueInfo div input[name=completeDate]").val());
     // исполнители
     var memberIds = $("#issueInfo div input[name=members]").val().split(',');
     var membersSp = $("#issueInfo div input[name=membersSp]").val().split(',');
@@ -990,7 +989,7 @@ issuePage.setEditInfo = function () {
     }
 
     // Тестеры
-    var testerIds = $( "#issueInfo div input[name=testers]" ).val() .split( ',' );
+    var testerIds = $("#issueInfo div input[name=testers]").val().split( ',' );
     l = testerIds.length;
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];
