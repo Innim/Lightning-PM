@@ -137,7 +137,7 @@ SQL;
 
             // если что-то пошло не так
             if (!$db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST))
-                throw new Exception("Ошибка при сохранении нового снепшота");
+                throw new DBException($db, "Ошибка при сохранении нового снепшота");
 
             $sid = $db->insert_id;
 
@@ -150,7 +150,7 @@ SQL;
 
             // подготавливаем запрос для вставки данных о стикерах снепшота
             if (!$prepare = $db->preparet($sql, LPMTables::SCRUM_SNAPSHOT))
-                throw new Exception("Ошибка при подготовке запроса.");
+                throw new DBException($db, "Ошибка при подготовке запроса.");
 
             $added = false;
 
