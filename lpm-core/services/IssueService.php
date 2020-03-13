@@ -366,12 +366,15 @@ SQL;
 			if (!Member::deleteIssueMembers($issueId))
 				return $this->errorDBSave();
 
-			$userId = $this->getUser()->userId;
+			$user = $this->getUser();
+			$userId = $user->userId;
 			if (!Member::saveIssueMembers($issueId, [$userId]))
 				return $this->errorDBSave();
 
 	    	// Записываем лог
 	    	UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
+
+	    	$this->add2Answer('memberName', $user->getShortName());
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    } 

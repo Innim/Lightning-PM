@@ -916,6 +916,7 @@ issuePage.takeIssue = function (e) {
         preloader.hide();
         if (res.success) {
             $sticker.addClass('mine');
+            $('.sticker-issue-members', $sticker).text(res.memberName);
             issuePage.scumColUpdateInfo();
         }
     });
