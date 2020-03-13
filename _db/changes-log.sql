@@ -205,3 +205,6 @@ ADD `added` datetime NOT NULL COMMENT 'Дата добавления стике�
 
 # Удаляем все неактиные стикеры, они теперь не нужны
 DELETE FROM `lpm_scrum_sticker` WHERE `state` NOT IN (1, 2, 3, 4);
+
+ALTER TABLE `lpm_scrum_snapshot_list`
+ADD `started` datetime NOT NULL COMMENT 'Дата начала спринта' AFTER `creatorId`;

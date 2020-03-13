@@ -86,7 +86,13 @@ SQL;
 
         // Проверяем, что для всех задач в тесте/готово указаны все SP по участникам
         $membersSpByIssueId = [];
+        $startedUnixtime = null;
         foreach ($stickers as $sticker) {
+            if (!empty($sticker->added)) {
+                if (empty($startedUnixtime) || $startedUnixtime > $sticker->added)
+                    $startedUnixtime = $sticker->added;
+            }
+
             if ($sticker->isDone() || $sticker->isTesting()) {
                 $issue = $sticker->getIssue();
                 $members = $issue->getMembers();
@@ -112,6 +118,7 @@ SQL;
         // Готовимся делать снимок
 		$pid = $projectId;
 		$created = DateTimeUtils::mysqlDate();
+        $started = empty($startedUnixtime) ? $created : DateTimeUtils::mysqlDate($startedUnixtime);
 		$creatorId = $userId;
         $db = self::getDB();
 
@@ -124,8 +131,8 @@ SQL;
 
             // запись о новом снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `created`)
-                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${created}')
+                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `created`)
+                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${created}')
 SQL;
 
             // если что-то пошло не так
@@ -244,11 +251,16 @@ SQL;
 	 * @var int
 	 */
 	public $pid;
-	/**
-	 * Дата создания snapshot-а.
-	 * @var
-	 */
-	public $created;
+    /**
+     * Дата начала спринта.
+     * @var
+     */
+    public $started;
+    /**
+     * Дата создания snapshot-а.
+     * @var
+     */
+    public $created;
 	/**
 	 * Идентификатор пользователя, создавшего snapshot.
 	 * @var
@@ -265,7 +277,7 @@ SQL;
 		$this->id = $id;
 
 		$this->_typeConverter->addFloatVars('id', 'idInProject', 'pid', 'creatorId');
-		$this->addDateTimeFields('created');
+		$this->addDateTimeFields('started', 'created');
 	}
 
     /**
