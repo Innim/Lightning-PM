@@ -202,3 +202,6 @@ ADD `added` datetime NOT NULL COMMENT 'дата добавления' AFTER `sta
 
 ALTER TABLE `lpm_scrum_snapshot`
 ADD `added` datetime NOT NULL COMMENT 'Дата добавления стикера на доску' AFTER `sid`;
+
+# Удаляем все неактиные стикеры, они теперь не нужны
+DELETE FROM `lpm_scrum_sticker` WHERE `state` NOT IN (1, 2, 3, 4);

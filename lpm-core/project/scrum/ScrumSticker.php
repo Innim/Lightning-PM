@@ -49,6 +49,22 @@ SQL;
 		return empty($list) ? null : $list[0];
 	}
 
+	/**
+	 * Удаляет все стикеры для указанного проекта.
+	 * @param  int $projectId Идентификатор проекта,
+	 * @return 
+	 */
+	public static function removeStickersForProject($projectId) {
+		$db = self::getDB();
+    	$sql = <<<SQL
+    		DELETE `s` FROM `%1\$s` `s`
+    		     INNER JOIN `%2\$s` `i` ON `i`.`id` = `s`.`issueId`
+    		 WHERE `i`.`projectId` = ${projectId}
+SQL;
+
+		return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
+	}
+
 	public static function putStickerOnBoard(Issue $issue) {
 		switch ($issue->status) {
 			case Issue::STATUS_IN_WORK : $state = ScrumStickerState::TODO; break;
@@ -60,18 +76,26 @@ SQL;
 		$added = DateTimeUtils::mysqlDate();
 
 		$db = self::getDB();
+		$isActiveState = ScrumStickerState::isActiveState($state);
+		if (!$isActiveState)
+			$sql = "DELETE FROM `%s` WHERE `issueId` = ${issueId}";
+		else 
 			$sql = <<<SQL
 		INSERT INTO `%s` (`issueId`, `state`, `added`)
 				  VALUES (${issueId}, ${state}, '${added}')
   			ON DUPLICATE KEY UPDATE `state` = ${state}
 SQL;
+
 		return $db->queryt($sql, LPMTables::SCRUM_STICKER);
 	}
 
 	public static function updateStickerState($issueId, $state) {
-        $sql = <<<SQL
-	        UPDATE `%s` SET `state` = ${state} 
-	         WHERE `issueId` = ${issueId}
+		$isActiveState = ScrumStickerState::isActiveState($state);
+		if (!$isActiveState)
+			$sql = "DELETE FROM `%s` WHERE `issueId` = ${issueId}";
+		else 
+        	$sql = <<<SQL
+        		UPDATE `%s` SET `state` = ${state} WHERE `issueId` = ${issueId}
 SQL;
 		
 		$db = self::getDB();
