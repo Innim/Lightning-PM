@@ -51,7 +51,9 @@ $(document).ready(
 
         // Настройка формы -- END
 
-        $('.delete-comment').on('click', function() {
+        // BEGIN -- Комментарии
+              
+        $(document).on('click', '.delete-comment', function() {
             let id = $(this).attr('data-comment-id');
             let el = $(this);
             let result = confirm('Удалить комментарий?');
@@ -64,6 +66,8 @@ $(document).ready(
                 });
             }
         });
+
+        // Комментарии -- END
 
         if (!$('#is-admin').val()) {
             $('.delete-comment').each(function (index) {
