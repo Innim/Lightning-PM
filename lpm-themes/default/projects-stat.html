@@ -34,6 +34,8 @@
     		<th>Участник</th>
     		<th>SP за месяц</th>
     		<th>Кол-во спринтов</th>
+            <th>Период</th>
+            <th>Недель</th>
     	</tr>
     	<?php
 		foreach($projectsStat as $projectStat):
@@ -43,6 +45,8 @@
     		<td><?=$projectStat->project->name;?></td>
     		<td><?=$doneSp;?></td>
     		<td><?=$projectStat->getSnapshotsCount();?></td>
+            <td><?=$projectStat->getPeriod();?></td>
+            <td><?=$projectStat->getWeeksCount();?></td>
     		<!-- TODO: список снапшотов -->
     	</tr>
     	<?php endforeach;?>
