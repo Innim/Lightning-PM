@@ -61,6 +61,7 @@ DROP TABLE IF EXISTS `lpm_issue_counters`;
 CREATE TABLE `lpm_issue_counters` (
   `issueId` bigint(20) NOT NULL COMMENT 'идентификатор задачи',
   `commentsCount` int(8) NOT NULL DEFAULT '0' COMMENT 'количество комментариев',
+  `imgsCount` int(11) NOT NULL DEFAULT '0' COMMENT 'количество картинок, прикрепленных к задаче',
   PRIMARY KEY (`issueId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='счетчики для задачи';
 
@@ -146,6 +147,7 @@ DROP TABLE IF EXISTS `lpm_scrum_snapshot`;
 CREATE TABLE `lpm_scrum_snapshot` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи',
   `sid` int(11) NOT NULL COMMENT 'Идентификатор snapshot-а',
+  `added` datetime NOT NULL COMMENT 'Дата добавления стикера на доску',
   `issue_uid` int(11) NOT NULL COMMENT 'Глобавльный идентификатор задачи',
   `issue_pid` int(11) NOT NULL COMMENT 'Идентификатор задачи в проекте',
   `issue_name` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT 'Название задачи',
@@ -163,6 +165,7 @@ CREATE TABLE `lpm_scrum_snapshot_list` (
   `idInProject` int(11) NOT NULL COMMENT 'Порядковый номер снепшота по проекту',
   `pid` int(11) NOT NULL COMMENT 'Идентификатор проекта',
   `creatorId` bigint(19) NOT NULL COMMENT 'Идентификатор создателя snapshot-а',
+  `started` datetime NOT NULL COMMENT 'Дата начала спринта',
   `created` datetime NOT NULL COMMENT 'Время создания snapshot-а',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -172,6 +175,7 @@ DROP TABLE IF EXISTS `lpm_scrum_sticker`;
 CREATE TABLE `lpm_scrum_sticker` (
   `issueId` bigint(18) NOT NULL COMMENT 'идентификатор задачи',
   `state` tinyint(2) NOT NULL COMMENT 'состояние стикера',
+  `added` datetime NOT NULL COMMENT 'дата добавления',
   PRIMARY KEY (`issueId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='стикер на scrum доске';
 
@@ -261,4 +265,4 @@ CREATE TABLE `lpm_work_study` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
--- 2019-09-26 12:29:41
+-- 2020-03-13 17:05:39
