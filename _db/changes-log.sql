@@ -196,3 +196,9 @@ ALTER TABLE `lpm_users`
 ADD `gitlabToken` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Gitlab токен';
 
 -- 0.9.1
+
+ALTER TABLE `lpm_scrum_sticker`
+ADD `added` datetime NOT NULL COMMENT 'дата добавления' AFTER `state`;
+
+ALTER TABLE `lpm_scrum_snapshot`
+ADD `added` datetime NOT NULL COMMENT 'Дата добавления стикера на доску' AFTER `sid`;

@@ -12,7 +12,7 @@ class ScrumSticker extends LPMBaseObject
 			ScrumStickerState::TESTING, ScrumStickerState::DONE]);
 
 		$sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
+		SELECT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`, 
 			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
 		  FROM `%1\$s` `s` 
     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
@@ -57,10 +57,13 @@ SQL;
 			default : $state = ScrumStickerState::BACKLOG;
 		}
 		$issueId = $issue->id;
+		$added = DateTimeUtils::mysqlDate();
 
 		$db = self::getDB();
-		$sql = <<<SQL
-        REPLACE `%s` SET `issueId` = ${issueId}, `state` = ${state} 
+			$sql = <<<SQL
+		INSERT INTO `%s` (`issueId`, `state`, `added`)
+				  VALUES (${issueId}, ${state}, '${added}')
+  			ON DUPLICATE KEY UPDATE `state` = ${state}
 SQL;
 		return $db->queryt($sql, LPMTables::SCRUM_STICKER);
 	}
@@ -86,6 +89,12 @@ SQL;
 	 * @see ScrumStickerState
 	 */
 	public $state;
+	/**
+	 * Дата создания стикера
+	 * (т.е. добавления задачи на доску).
+	 * @var
+	 */
+	public $added;
 
 	// Issue
 	private $_issue;
@@ -95,6 +104,7 @@ SQL;
 
 		$this->_typeConverter->addFloatVars('issueId');
 		$this->_typeConverter->addIntVars('state');
+		$this->addDateTimeFields('added');
 	}
 
 	/**

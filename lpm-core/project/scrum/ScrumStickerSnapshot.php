@@ -136,9 +136,9 @@ SQL;
 
             // добавляем всю необходимую информацию по снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`sid`, `issue_uid`, `issue_pid`, `issue_name`,
+                INSERT INTO `%s` (`sid`, `added`, `issue_uid`, `issue_pid`, `issue_name`,
                     `issue_state`, `issue_sp`, `issue_members_sp`, `issue_priority`)
-                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?)
+                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
             // подготавливаем запрос для вставки данных о стикерах снепшота
@@ -155,6 +155,7 @@ SQL;
                 $membersSpList = isset($membersSpByIssueId[$sticker->issueId])
                     ? $membersSpByIssueId[$sticker->issueId] : [];
 
+                $addedDate = DateTimeUtils::mysqlDate($sticker->added);
                 $issueUid = $sticker->issueId;
                 $issuePid = $issue->idInProject;
                 $issueName = $sticker->getName();
@@ -163,8 +164,8 @@ SQL;
                 $issueMembersSP = json_encode($membersSpList);
                 $issuePriority = $issue->priority;
 
-                $prepare->bind_param('ddsissi', $issueUid, $issuePid, $issueName, $issueState,
-                    $issueSP, $issueMembersSP, $issuePriority);
+                $prepare->bind_param('sddsissi', $addedDate, $issueUid, $issuePid, $issueName,
+                    $issueState, $issueSP, $issueMembersSP, $issuePriority);
 
                 if (!$prepare->execute())
                     throw new Exception("Ошибка при вставке данных стикера.");
