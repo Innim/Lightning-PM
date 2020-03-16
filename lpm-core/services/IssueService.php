@@ -330,18 +330,7 @@ class IssueService extends LPMBaseService {
 			// прежде чем отправлять все задачи в архив, делаем snapshot доски
 			ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
 
-			$state = ScrumStickerState::ARCHIVED;
-	    	$activeStates = implode(',', ScrumStickerState::getActiveStates());
-
-	    	$db = $this->_db;
-	    	$sql = <<<SQL
-	    	UPDATE `%1\$s` `s`
-    	INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
-	    	   SET `s`.`state` = ${state}
-	    	 WHERE `s`.`state` IN (${activeStates}) 
-	    	   AND `i`.`projectId` = ${projectId}
-SQL;
-			if (!$db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES))
+			if (!ScrumSticker::removeStickersForProject($projectId))
 				return $this->errorDBSave();
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
@@ -366,12 +355,15 @@ SQL;
 			if (!Member::deleteIssueMembers($issueId))
 				return $this->errorDBSave();
 
-			$userId = $this->getUser()->userId;
+			$user = $this->getUser();
+			$userId = $user->userId;
 			if (!Member::saveIssueMembers($issueId, [$userId]))
 				return $this->errorDBSave();
 
 	    	// Записываем лог
 	    	UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
+
+	    	$this->add2Answer('memberName', $user->getShortName());
 	    } catch (\Exception $e) { 
 	        return $this->exception($e); 
 	    } 

@@ -83,7 +83,7 @@ class HTMLHelper {
 
     private static function processCode($text, $func) {
         return preg_replace_callback(
-            "/(^|[^`])(?:`( [^\n]{1,} |[^`\n]{1,})`|```(\w{1,}\s*\n)?([^`].*?[^`])```)/ius",
+            "/(^|[^`])(?:`([^`\n]{1,})`|```(\w{1,}\s*\n)?([^`].*?[^`])```)/ius",
             $func, $text);
     }
 }

@@ -152,6 +152,7 @@ $userId = lpm_get_user()->getID();
         <?php foreach ($comments as $comment): ?>
         <div class="comments-list-item">
             <?php lpm_print_comment($comment);?>
+        </div>
         <?php endforeach; ?>
     </section>
     <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">

@@ -6,7 +6,7 @@
 */
 ?><article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
     <h3>Добавить задачу</h3>
-    <div class="validateError"><? lpm_print_errors(); ?></div>
+    <div class="validateError"><?php lpm_print_errors(); ?></div>
     <form onsubmit="return issuePage.validateIssueForm();" method="post"  enctype="multipart/form-data" onsubmit="return removeImage(imageId);">
       <ol>
         <li>
@@ -14,18 +14,18 @@
                 <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255" value="<?lpm_print_post_var('name');?>" class="edit-issue-name" oninput="issuePage.issueNameChanged(this.value)"/>
             </span>
             <span class="issue-labels-container">
-                <?php $issueLabels = $issue ? $issue->getLabelNames() : array(); ?>
-                <?php foreach( lpm_get_issue_labels() as $label): ?>
+                <?php $issueLabels = $issue ? $issue->getLabelNames() : []; ?>
+                <?php foreach (lpm_get_issue_labels() as $label): ?>
                 <?php
                     $index = array_search($label['label'], $issueLabels);
                     if ($index !== false)
                         unset($issueLabels[$index]);
                 ?>
                 <a href="javascript:void(0)" class="issue-label" onclick="issuePage.addLabelToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
-                <? endforeach; ?>
-                <?php foreach( $issueLabels as $label): ?>
+                <?php endforeach; ?>
+                <?php foreach ($issueLabels as $label): ?>
                 <a href="javascript:void(0)" class="issue-label" onclick="issuePage.addLabelToName('<?=$label;?>');"><?=$label;?></a>
-                <? endforeach; ?>
+                <?php endforeach; ?>
                 <a href="javascript:void(0)" class="add-issue-label" onclick="issuePage.addIssueLabel()">
                     <i class="far fa-plus-square" aria-hidden="true"></i>
                 </a>
@@ -57,7 +57,7 @@
         </li>
         <li>
             <label for="priopiry">Приоритет задачи</label>
-            <input type="range" id="priority" name="priority" min="0" max="99" value="49" step="1" onchange="issuePage.setPriorityVal( this.value );"/>
+            <input type="range" id="priority" name="priority" min="0" max="99" value="49" step="1" onchange="issuePage.setPriorityVal(this.value);"/>
             <div id="dropdown">
                 <span id="priorityVal" class="priority-val"></span>
                 <ul id="priority-values">
@@ -87,12 +87,12 @@
                 <ol id="issueMembers" class="members-list"></ol>
                 <select id="addIssueMembers" onchange="issuePage.addIssueMember();">
                     <option>Добавить</option>
-                    <?php foreach(lpm_get_project_members() as $member):?>
+                    <?php foreach(lpm_get_project_members() as $member): ?>
                     <?php if ($member->userId === $performerId): $performerName =  $member->getName(); ?>
                         <option id="selected-performer" value="<?=$member->userId;?>" selected><?=$member->getName();?></option>
                     <?php continue; endif; ?>
                     <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
-                    <?php endforeach;?>
+                    <?php endforeach; ?>
                 </select>
             </fieldset>
         </li>
@@ -102,9 +102,9 @@
                   <ol id="issueTesters" class="members-list"></ol>
                   <select id="addIssueTesters" onchange="issuePage.addIssueTester();">
                       <option>Добавить</option>
-                      <?foreach( lpm_get_project_members() as $tester) {?>
+                      <?php foreach (lpm_get_project_members() as $tester): ?>
                       <option value="<?=$tester->userId;?>"><?=$tester->getName();?></option>
-                      <?}?>
+                      <?php endforeach; ?>
                   </select>
               </fieldset>
           </li>
@@ -112,7 +112,7 @@
             <input placeholder="Story Points" type="text" name="hours"  maxlength="5" value="<?lpm_print_post_var('hours');?>"/>
         </li>
         <li>
-            <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?$issue && lpm_print_post_var('desc', $issue->desc);?></textarea>
+            <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"><?php lpm_print_post_var('desc', $issue ? $issue->desc : '');?></textarea>
             <div class="note tags-line">Вы можете использовать <a href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи: <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*">*жирный*</a>, 
             <a class="tag" href="javascript:void(0)" style="font-style: italic;" data-marker="_">_курсив_</a>, <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-marker="__">__подчеркнутый__</a>, <a class="tag" href="javascript:void(0)" style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>, <span class="tag quote">&gt; цитата</span>. </div>
             <div class="note tags-line">Также используйте <code>`</code> для строчного кода и <code>```</code> для многострочного (можно указать язык: as, js, php и тд, добавляется сразу после открывающих кавычек, требуется перенос строки)</div>
@@ -216,7 +216,7 @@
                     </div>
                 </div>
             <?php endforeach; ?>
-            <?php foreach( $issueLabels as $label): ?>
+            <?php foreach ($issueLabels as $label): ?>
                 <div class="table-row">
                     <div class="table-cell label-name"><?=$label?></div>
                     <div class="table-cell">0</div>

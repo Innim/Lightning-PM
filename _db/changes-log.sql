@@ -196,3 +196,28 @@ ALTER TABLE `lpm_users`
 ADD `gitlabToken` varchar(255) COLLATE 'utf8_general_ci' NOT NULL COMMENT 'Gitlab токен';
 
 -- 0.9.1
+
+ALTER TABLE `lpm_scrum_sticker`
+ADD `added` datetime NOT NULL COMMENT 'дата добавления' AFTER `state`;
+
+ALTER TABLE `lpm_scrum_snapshot`
+ADD `added` datetime NOT NULL COMMENT 'Дата добавления стикера на доску' AFTER `sid`;
+
+# Удаляем все неактиные стикеры, они теперь не нужны
+DELETE FROM `lpm_scrum_sticker` WHERE `state` NOT IN (1, 2, 3, 4);
+
+ALTER TABLE `lpm_scrum_snapshot_list`
+ADD `started` datetime NOT NULL COMMENT 'Дата начала спринта' AFTER `creatorId`;
+
+# Update snapshot started dates 
+CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_snapshot_dates_0_9_6` AS (SELECT `pid`, `idInProject`, `created` FROM `lpm_scrum_snapshot_list`);
+UPDATE `lpm_scrum_snapshot_list` `a` SET `started` = (SELECT `created` FROM `tmp_snapshot_dates_0_9_6` `b` WHERE `b`.`pid` = `a`.`pid` AND `b`.`idInProject` < `a`.`idInProject` ORDER BY `b`.`idInProject` DESC LIMIT 1);
+DROP TEMPORARY TABLE `tmp_snapshot_dates_0_9_6`;
+
+# Update sticker added dates by previous snapshot
+CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_last_snapshot_date_0_9_6` AS (SELECT `i`.`projectId`, MAX(`a`.`created`) AS `date` FROM `lpm_scrum_snapshot_list` `a`, `lpm_issues` `i`, `lpm_scrum_sticker` `s` WHERE `i`.`id` = `s`.`issueId` AND `a`.`pid` = `i`.`projectId` GROUP BY `i`.`projectId`);
+UPDATE `lpm_scrum_sticker` `s` SET `added` = (SELECT `d`.`date` FROM `tmp_last_snapshot_date_0_9_6` `d`, `lpm_issues` `i` WHERE `d`.`projectId` = `i`.`projectId` AND `i`.`id` = `s`.`issueId`) WHERE `added` = '0000-00-00 00:00:00';
+UPDATE `lpm_scrum_sticker` `s` SET `added` = NOW()  WHERE `added` = '0000-00-00 00:00:00';
+DROP TEMPORARY TABLE `tmp_last_snapshot_date_0_9_6`;
+
+-- 0.9.6

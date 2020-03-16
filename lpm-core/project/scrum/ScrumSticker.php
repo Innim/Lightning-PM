@@ -12,7 +12,7 @@ class ScrumSticker extends LPMBaseObject
 			ScrumStickerState::TESTING, ScrumStickerState::DONE]);
 
 		$sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
+		SELECT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`, 
 			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
 		  FROM `%1\$s` `s` 
     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
@@ -49,6 +49,22 @@ SQL;
 		return empty($list) ? null : $list[0];
 	}
 
+	/**
+	 * Удаляет все стикеры для указанного проекта.
+	 * @param  int $projectId Идентификатор проекта,
+	 * @return 
+	 */
+	public static function removeStickersForProject($projectId) {
+		$db = self::getDB();
+    	$sql = <<<SQL
+    		DELETE `s` FROM `%1\$s` `s`
+    		     INNER JOIN `%2\$s` `i` ON `i`.`id` = `s`.`issueId`
+    		 WHERE `i`.`projectId` = ${projectId}
+SQL;
+
+		return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
+	}
+
 	public static function putStickerOnBoard(Issue $issue) {
 		switch ($issue->status) {
 			case Issue::STATUS_IN_WORK : $state = ScrumStickerState::TODO; break;
@@ -57,18 +73,29 @@ SQL;
 			default : $state = ScrumStickerState::BACKLOG;
 		}
 		$issueId = $issue->id;
+		$added = DateTimeUtils::mysqlDate();
 
 		$db = self::getDB();
-		$sql = <<<SQL
-        REPLACE `%s` SET `issueId` = ${issueId}, `state` = ${state} 
+		$isActiveState = ScrumStickerState::isActiveState($state);
+		if (!$isActiveState)
+			$sql = "DELETE FROM `%s` WHERE `issueId` = ${issueId}";
+		else 
+			$sql = <<<SQL
+		INSERT INTO `%s` (`issueId`, `state`, `added`)
+				  VALUES (${issueId}, ${state}, '${added}')
+  			ON DUPLICATE KEY UPDATE `state` = ${state}
 SQL;
+
 		return $db->queryt($sql, LPMTables::SCRUM_STICKER);
 	}
 
 	public static function updateStickerState($issueId, $state) {
-        $sql = <<<SQL
-	        UPDATE `%s` SET `state` = ${state} 
-	         WHERE `issueId` = ${issueId}
+		$isActiveState = ScrumStickerState::isActiveState($state);
+		if (!$isActiveState)
+			$sql = "DELETE FROM `%s` WHERE `issueId` = ${issueId}";
+		else 
+        	$sql = <<<SQL
+        		UPDATE `%s` SET `state` = ${state} WHERE `issueId` = ${issueId}
 SQL;
 		
 		$db = self::getDB();
@@ -86,6 +113,12 @@ SQL;
 	 * @see ScrumStickerState
 	 */
 	public $state;
+	/**
+	 * Дата создания стикера
+	 * (т.е. добавления задачи на доску).
+	 * @var
+	 */
+	public $added;
 
 	// Issue
 	private $_issue;
@@ -95,6 +128,7 @@ SQL;
 
 		$this->_typeConverter->addFloatVars('issueId');
 		$this->_typeConverter->addIntVars('state');
+		$this->addDateTimeFields('added');
 	}
 
 	/**

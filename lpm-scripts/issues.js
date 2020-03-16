@@ -37,8 +37,12 @@ $(document).ready(
                     sum += memberSp;
                 });
 
-                if (sum > 0)
+                if (sum > 0) {
                     field.val(sum);
+                    setTimeout(function () {
+                        field.select();
+                    }, 50);
+                }
             }
         });
 
@@ -47,7 +51,9 @@ $(document).ready(
 
         // Настройка формы -- END
 
-        $('.delete-comment').on('click', function() {
+        // BEGIN -- Комментарии
+              
+        $(document).on('click', '.delete-comment', function() {
             let id = $(this).attr('data-comment-id');
             let el = $(this);
             let result = confirm('Удалить комментарий?');
@@ -60,6 +66,8 @@ $(document).ready(
                 });
             }
         });
+
+        // Комментарии -- END
 
         if (!$('#is-admin').val()) {
             $('.delete-comment').each(function (index) {
@@ -908,6 +916,7 @@ issuePage.takeIssue = function (e) {
         preloader.hide();
         if (res.success) {
             $sticker.addClass('mine');
+            $('.sticker-issue-members', $sticker).text(res.memberName);
             issuePage.scumColUpdateInfo();
         }
     });
@@ -972,9 +981,8 @@ issuePage.setEditInfo = function () {
     $( "#issueForm form input[name=priority]" ).val( priorityVal );
     issuePage.setPriorityVal( priorityVal );
     // дата окончания
-    $( "#issueForm form input[name=completeDate]" ).val( 
-        $( "#issueInfo div input[name=completeDate]" ).val()
-    );
+    $("#issueForm form input[name=completeDate]").val(
+        $("#issueInfo div input[name=completeDate]").val());
     // исполнители
     var memberIds = $("#issueInfo div input[name=members]").val().split(',');
     var membersSp = $("#issueInfo div input[name=membersSp]").val().split(',');
@@ -986,7 +994,7 @@ issuePage.setEditInfo = function () {
     }
 
     // Тестеры
-    var testerIds = $( "#issueInfo div input[name=testers]" ).val() .split( ',' );
+    var testerIds = $("#issueInfo div input[name=testers]").val().split( ',' );
     l = testerIds.length;
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];

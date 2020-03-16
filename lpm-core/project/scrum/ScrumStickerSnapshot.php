@@ -86,7 +86,13 @@ SQL;
 
         // Проверяем, что для всех задач в тесте/готово указаны все SP по участникам
         $membersSpByIssueId = [];
+        $startedUnixtime = null;
         foreach ($stickers as $sticker) {
+            if (!empty($sticker->added)) {
+                if (empty($startedUnixtime) || $startedUnixtime > $sticker->added)
+                    $startedUnixtime = $sticker->added;
+            }
+
             if ($sticker->isDone() || $sticker->isTesting()) {
                 $issue = $sticker->getIssue();
                 $members = $issue->getMembers();
@@ -112,6 +118,7 @@ SQL;
         // Готовимся делать снимок
 		$pid = $projectId;
 		$created = DateTimeUtils::mysqlDate();
+        $started = empty($startedUnixtime) ? $created : DateTimeUtils::mysqlDate($startedUnixtime);
 		$creatorId = $userId;
         $db = self::getDB();
 
@@ -124,26 +131,26 @@ SQL;
 
             // запись о новом снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `created`)
-                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${created}')
+                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `created`)
+                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${created}')
 SQL;
 
             // если что-то пошло не так
             if (!$db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST))
-                throw new Exception("Ошибка при сохранении нового снепшота");
+                throw new DBException($db, "Ошибка при сохранении нового снепшота");
 
             $sid = $db->insert_id;
 
             // добавляем всю необходимую информацию по снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`sid`, `issue_uid`, `issue_pid`, `issue_name`,
+                INSERT INTO `%s` (`sid`, `added`, `issue_uid`, `issue_pid`, `issue_name`,
                     `issue_state`, `issue_sp`, `issue_members_sp`, `issue_priority`)
-                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?)
+                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
             // подготавливаем запрос для вставки данных о стикерах снепшота
             if (!$prepare = $db->preparet($sql, LPMTables::SCRUM_SNAPSHOT))
-                throw new Exception("Ошибка при подготовке запроса.");
+                throw new DBException($db, "Ошибка при подготовке запроса.");
 
             $added = false;
 
@@ -155,6 +162,7 @@ SQL;
                 $membersSpList = isset($membersSpByIssueId[$sticker->issueId])
                     ? $membersSpByIssueId[$sticker->issueId] : [];
 
+                $addedDate = DateTimeUtils::mysqlDate($sticker->added);
                 $issueUid = $sticker->issueId;
                 $issuePid = $issue->idInProject;
                 $issueName = $sticker->getName();
@@ -163,8 +171,8 @@ SQL;
                 $issueMembersSP = json_encode($membersSpList);
                 $issuePriority = $issue->priority;
 
-                $prepare->bind_param('ddsissi', $issueUid, $issuePid, $issueName, $issueState,
-                    $issueSP, $issueMembersSP, $issuePriority);
+                $prepare->bind_param('sddsissi', $addedDate, $issueUid, $issuePid, $issueName,
+                    $issueState, $issueSP, $issueMembersSP, $issuePriority);
 
                 if (!$prepare->execute())
                     throw new Exception("Ошибка при вставке данных стикера.");
@@ -243,11 +251,16 @@ SQL;
 	 * @var int
 	 */
 	public $pid;
-	/**
-	 * Дата создания snapshot-а.
-	 * @var
-	 */
-	public $created;
+    /**
+     * Дата начала спринта.
+     * @var
+     */
+    public $started;
+    /**
+     * Дата создания snapshot-а.
+     * @var
+     */
+    public $created;
 	/**
 	 * Идентификатор пользователя, создавшего snapshot.
 	 * @var
@@ -264,7 +277,7 @@ SQL;
 		$this->id = $id;
 
 		$this->_typeConverter->addFloatVars('id', 'idInProject', 'pid', 'creatorId');
-		$this->addDateTimeFields('created');
+		$this->addDateTimeFields('started', 'created');
 	}
 
     /**

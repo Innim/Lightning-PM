@@ -32,26 +32,39 @@ class LPMBaseService extends SecureService
 	}
 
 	protected function error($message = '', $errno = 0, $useLang = true) {
+
 		if (DEBUG) {
-			if ($this->_db && $this->_db->error) {
+			$dbError = $this->_dbError;
+			if (empty($dbError)) {
+				$db = LPMGlobals::getInstance()->getDBConnect();
+				if ($db && $db->error) {
+					$dbError = '#' . $db->errno . ': ' . $db->error;
+				}
+			}
+
+			if (!empty($dbError)) {
 				if (empty($message)) 
 					$message = 'DB error';
-				$message .= ' (#' . $this->_db->errno . ': ' . $this->_db->error . ')';
-			} else if ($this->_dbError) {
-				if (empty($message)) 
-					$message = 'DB error';
-				$message .= ' (' . $this->_dbError . ')';
+				$message .= ' (' . $_dbError . ')';
 			}
 		}
-		return parent::error($message, $code, $useLang);
+
+		return parent::error($message, $errno, $useLang);
 	}
 
 	protected function exception(Exception $e) {
-		if (DEBUG && $e instanceof DBException) {
-			$db = $e->getDB();
+		if (DEBUG) {
+			if ($e instanceof DBException)
+				$db = $e->getDB();
+			elseif ($e instanceof \GMFramework\DBException)
+				$db = $e->getDB();
+			else 
+				$db = LPMGlobals::getInstance()->getDBConnect();
+
 			if ($db && $db->error)
 				$this->_dbError = '#' . $db->errno . ': ' . $db->error;
 		}
+
 		return parent::exception($e);
 	}
 	

@@ -44,6 +44,11 @@ SQL;
      */
 	public $sid;
     /**
+     * Дата добавления стикера на доску.
+     * @var int
+     */
+    public $added;
+    /**
      * Идентификатор задачи.
      * @var int
      */
@@ -92,6 +97,7 @@ SQL;
 
 		$this->_typeConverter->addFloatVars('id', 'sid', 'issue_uid', 'issue_pid');
 		$this->_typeConverter->addIntVars('issue_state', 'issue_priority');
+        $this->addDateTimeFields('added');
 	}
 
     public function toString() {
