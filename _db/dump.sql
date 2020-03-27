@@ -86,6 +86,16 @@ CREATE TABLE `lpm_issue_member_info` (
   PRIMARY KEY (`instanceId`,`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='информация об участнике задачи';
 
+DROP TABLE IF EXISTS `lpm_issue_mr`;
+CREATE TABLE `lpm_issue_mr` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID записи',
+  `mrId` int(20) NOT NULL COMMENT 'ID MR',
+  `issueId` bigint(20) NOT NULL COMMENT 'ID задачи',
+  `state` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Состояние MR',
+  PRIMARY KEY (`id`),
+  KEY `mrId_state` (`mrId`,`state`),
+  KEY `mrId` (`mrId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='GitLab MR от исполнителей по задачам.';
 
 DROP TABLE IF EXISTS `lpm_members`;
 CREATE TABLE `lpm_members` (
