@@ -231,3 +231,5 @@ CREATE TABLE `lpm_issue_mr` (
   KEY `mrId_state` (`mrId`,`state`),
   KEY `mrId` (`mrId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='GitLab MR от исполнителей по задачам.';
+
+-- 0.9.7
