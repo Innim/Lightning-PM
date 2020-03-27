@@ -1,6 +1,9 @@
 <?php
-class LPMBaseService extends SecureService
-{
+class LPMBaseService extends SecureService {
+	/**
+	 * @var LightningEngine
+	 */
+	protected $_engine;
 	/**
 	 * @var LPMAuth
 	 */
@@ -18,7 +21,8 @@ class LPMBaseService extends SecureService
 	{
 		if (in_array( $calledFunc, $this->_allowMethods )) return true;
 	
-		$this->_auth = new LPMAuth();
+		$this->_engine = new LightningEngine();
+		$this->_auth = $this->_engine->getAuth();
 	
 		return $this->_auth->isLogin();
 	}

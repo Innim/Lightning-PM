@@ -221,3 +221,15 @@ UPDATE `lpm_scrum_sticker` `s` SET `added` = NOW()  WHERE `added` = '0000-00-00 
 DROP TEMPORARY TABLE `tmp_last_snapshot_date_0_9_6`;
 
 -- 0.9.6
+
+CREATE TABLE `lpm_issue_mr` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID записи',
+  `mrId` int(20) NOT NULL COMMENT 'ID MR',
+  `issueId` bigint(20) NOT NULL COMMENT 'ID задачи',
+  `state` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Состояние MR',
+  PRIMARY KEY (`id`),
+  KEY `mrId_state` (`mrId`,`state`),
+  KEY `mrId` (`mrId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='GitLab MR от исполнителей по задачам.';
+
+-- 0.9.7

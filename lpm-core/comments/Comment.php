@@ -184,7 +184,7 @@ SQL;
     }
 
 	/**
-	 * @see ParseTextHelper::parseVideoLinks()
+	 * @see ParseTextHelper::findMergeRequests()
 	 */
     public function getMergeRequests() {
     	if ($this->_mergeRequests === null)

@@ -15,6 +15,8 @@ class LightningEngine {
 	 */
 	const SESSION_NEXT_ERRORS = 'lightning_next_errors';
 
+	const API_PATH = 'api';
+
 	/**
 	 * @return LightningEngine
 	 */
@@ -70,6 +72,10 @@ class LightningEngine {
 	 * @var BasePage
 	 */
 	private $_curPage;
+	/**
+	 * @var ExternalApiManager
+	 */
+	private $_apiManager;
 	
 	/**
 	 * Ошибки, которые надо вывести пользователю
@@ -78,18 +84,49 @@ class LightningEngine {
 	private $_errors = array();
 	private $_nextErrors = array();
 	
-	function __construct()
-	{
-		if (self::$_instance != '') throw new Exception( __CLASS__ . ' are singleton' );
+	function __construct() {
+		if (self::$_instance != '')
+			throw new Exception(__CLASS__ . ' are singleton');
+
 		self::$_instance = $this;
 		$this->_params       = new LPMParams();	
 		$this->_auth         = new LPMAuth($this->_params->getQueryArg(LPMParams::QUERY_ARG_SID));	
-		$this->_pagesManager = new PagesManager( $this );		
-		$this->_contructor   = new PageConstructor( $this->_pagesManager );
+		$this->_pagesManager = new PagesManager($this);
+		$this->_contructor   = new PageConstructor($this->_pagesManager);
+		$this->_apiManager   = new ExternalApiManager($this);
 	}
 
-	public function createPage() 
-	{
+	public function run() {
+		$params = $this->_params;
+		if ($params->getArg(0) == self::API_PATH) {
+			$params->shiftArg();
+			$this->apiCall();
+		} else {
+			$this->createPage();
+		}
+	}
+
+	private function apiCall() {
+		try {
+			$params = $this->_params;
+			$uid = $params->shiftArg();
+
+			if (!$uid)
+				throw new Exception('API uid is not defined');
+
+			$api = $this->_apiManager->getbyUid($uid);
+			if (!$api)
+				throw new Exception('API with uid ' . $uid . ' is not registered');
+
+			$result = $api->run(file_get_contents('php://input'));
+			echo $result;
+		} catch (Exception $e) {
+			$this->debugOnException($e);
+			die('Fatal API call error');
+		}
+	}
+
+	private function createPage() {
 		$session = Session::getInstance();
 		$nextErrors = $session->get(self::SESSION_NEXT_ERRORS);
 		if (!empty($nextErrors)) {
