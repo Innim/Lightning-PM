@@ -86,6 +86,14 @@ class LPMParams extends LPMBaseObject {
 	public function getQueryArg($name) {
 		return isset($this->_queryArgs[$name]) ? $this->_queryArgs[$name] : null;
 	}
+
+	/**
+	 * Удаляет и возвращает первый аргумент.
+	 * @return string
+	 */
+	public function shiftArg() {
+		return array_shift($this->_args);
+	}
 	
 	/*public function setVar( $var, $value ) {
 		$value = $this->_db->escape_string( $value );
