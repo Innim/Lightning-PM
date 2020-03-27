@@ -452,6 +452,7 @@ SQL;
 			$issue->completedDate = null;
 	    	$hash['SET']['completedDate'] = '0000-00-00 00:00:00';
 	    } else if ($issue->status === Issue::STATUS_WAIT) {
+	    	// XXX: переделать - не должно быть обращения к сервису из модели
             IssueService::checkTester( $issue );
         }
 

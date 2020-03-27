@@ -66,3 +66,6 @@ define('GITLAB_TOKEN', '');
 
 // Sudo пользователь для интеграции с GitLab
 define('GITLAB_SUDO_USER', '');
+
+// Токен для GitLab Hook
+define('GITLAB_HOOK_TOKEN', '');

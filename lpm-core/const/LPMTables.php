@@ -29,7 +29,12 @@ class LPMTables {
 	 * Информация об участнике задачи.
 	 * @var string
 	 */
-	const ISSUE_MEMBER_INFO = 'issue_member_info';	
+	const ISSUE_MEMBER_INFO = 'issue_member_info';
+	/**
+	 * GitLab MR от исполнителей по задачам.
+	 * @var string
+	 */
+	const ISSUE_MR = 'issue_mr';
 	/**
 	 * Стикеры для Scrum доски
 	 * @var string

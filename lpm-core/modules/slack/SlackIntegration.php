@@ -54,6 +54,19 @@ class SlackIntegration {
         	$issue->getTesters(), 'Исполнитель оставил комментарий');
     }
 
+    public function notifyMRMergedToTester(Issue $issue, GitlabMergeRequest $mr) {
+        $mrTitle = 'MR !' . $mr->internalId;
+		$text = $this->getIssuePrefix($issue) . $issue->getConstURL() .
+			' - *' . $mrTitle . ' влит*';
+        $text = $this->addMentionsByUsers($text, $issue->getTesters());
+
+        $this->postMessageForIssue($issue, $text, [[
+            'fallback'   => $issue->getName(),
+            'title'      => $mrTitle,
+            'title_link' => $mr->url
+        ]]);
+    }
+
 	public function notifyIssuePassTest(Issue $issue) {
 		$project = $issue->getProject();
 		$master = $project->getMaster();

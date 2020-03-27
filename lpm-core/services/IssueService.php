@@ -603,8 +603,18 @@ class IssueService extends LPMBaseService {
 			throw new Exception("Не удалось добавить комментарий");
 
 		// отправка оповещений
-        $members = $issue->getMemberIds();
-        $members[] = $issue->authorId;
+        $memberIds = $issue->getMemberIds();
+        $recipients = array_unique(array_merge($memberIds, [$issue->authorId]));
+
+        if (in_array($comment->authorId, $memberIds)) {
+        	// Если коммент оставил исполнитель, то будет искать MR в нем и запишем их в БД
+	        $mrList = $comment->getMergeRequests();
+	        if (!empty($mrList)) {
+	        	foreach ($mrList as $mr) {
+	        		IssueMR::create($mr->id, $issue->id, $mr->state);
+	        	}
+	        }
+	    }
         
         if (!$ignoreSlackNotification)
         	$this->slackNotificationCommentTesterOrMembers($issue, $comment);
@@ -615,7 +625,7 @@ class IssueService extends LPMBaseService {
 			$issue->name .  '":' . "\n" .
 			$comment->getCleanText() . "\n\n" .
 			'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
-			$members,
+			$recipients,
 			EmailNotifier::PREF_ISSUE_COMMENT
 		);
 
