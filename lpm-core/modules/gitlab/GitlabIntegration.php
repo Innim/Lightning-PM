@@ -81,13 +81,18 @@ class GitlabIntegration {
 		if ($gitlabUser == null)
 			return false;
 		
-		$res = $this->sudoClient()->users()->createImpersonationToken(
-			$gitlabUser['id'], $this->getTokenName(), ['api']);
+		try {
+			$res = $this->sudoClient()->users()->createImpersonationToken(
+				$gitlabUser['id'], $this->getTokenName(), ['api']);
 
-		$user->gitlabToken = $res['token'];
-		User::updateGitlabToken($user->userId, $user->gitlabToken);
+			$user->gitlabToken = $res['token'];
+			User::updateGitlabToken($user->userId, $user->gitlabToken);
 
-		return $user->gitlabToken;
+			return $user->gitlabToken;
+		} catch (Exception $e) {
+			GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+			return null;
+		} 
 	}
 
 	/**
@@ -117,14 +122,23 @@ class GitlabIntegration {
 		$client = $this->client();
 		if ($client == null)
 			return null;
-		
-		$res = $client->mergeRequests()->show($projectPath, $mrId);
-		return $res === null ? null : new GitlabMergeRequest($res);
+		try {
+			$res = $client->mergeRequests()->show($projectPath, $mrId);
+			return $res === null ? null : new GitlabMergeRequest($res);
+		} catch (Exception $e) {
+			GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+			return null;
+		} 
 	}
 
 	private function sudoGetUserByEmail($email) {
-		$res = $this->sudoClient()->users()->all(['search' => $email]);
-		return empty($res) ? null : $res[0];
+		try {
+			$res = $this->sudoClient()->users()->all(['search' => $email]);
+			return empty($res) ? null : $res[0];
+		} catch (Exception $e) {
+			GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+			return null;
+		} 
 	}
 
 	private function client() {
