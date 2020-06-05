@@ -879,6 +879,10 @@ ul.images-url > li > input {
 	background-color: #dddddd;
 }
 
+.comments .comments-list .comments-list-item ul.merge-requests:empty {
+   display: none;
+}
+
 .comments .comments-list .comments-list-item ul.merge-requests li {
 	padding: 5px;
 	border-radius: 5px;
