@@ -43,8 +43,8 @@ $(document).ready(function($) {
   							li.remove();
   						}
 					} else {
-					   srv.err(res);
-					   li.remove();
+					   li.empty().text(typeof res.error != 'undefined' ?
+					   		res.error : 'Не удалось получить данные MR.');
 					}
   				});
 			});
