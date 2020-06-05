@@ -321,7 +321,18 @@ var preloader = {
       if (this._showed == 0) {
           $( 'preloader' ).hide();
       }
-  }
+  },
+  getNewIndicator: function(size) {
+    let res = $('#templates .lds-spinner').clone();
+    if (size) res.addClass(size);
+    return res;
+  },
+  getNewIndicatorMedium: function() {
+    return preloader.getNewIndicator('medium');
+  },
+  getNewIndicatorSmall: function() {
+    return preloader.getNewIndicator('small');
+  },
 };
 
 var imgUpload = {
