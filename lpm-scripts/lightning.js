@@ -90,7 +90,7 @@ function BaseService( service )
      };
 };
 
-var srv = {
+let srv = {
     f2p   : new ru.vbinc.net.F2PInvoker(window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php'),
     issue : {
         s: new BaseService('IssueService'),
@@ -111,6 +111,9 @@ var srv = {
         },
         remove: function (issueId, onResult) {
             this.s._('remove');
+        },
+        getMRInfo: function (url, onResult) {
+            this.s._('getMRInfo');
         },
         comment: function (issueId, text, onResult) {
             this.s._('comment');
