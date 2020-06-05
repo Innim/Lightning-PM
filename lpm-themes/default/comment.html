@@ -13,7 +13,7 @@
 <?php endif; ?>
 <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
 <p class="author"><?=$comment->getAuthorLinkedName();?></p>
-<p class="date"><a class="anchor" href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
+<p class="date"><a id="<?='comment-' . $comment->id?>" class="anchor" href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
 <article class="text formatted-desc">
     <?=$comment->getText();?>
     <?php 
