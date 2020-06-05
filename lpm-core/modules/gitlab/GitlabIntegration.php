@@ -49,7 +49,7 @@ class GitlabIntegration {
 	 * @param string $token Токен
 	 */
 	public function setUserToken($token) {
-		$this->_token = $userToken;
+		$this->_token = $token;
 	}
 
 	/**

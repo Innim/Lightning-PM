@@ -13,28 +13,10 @@
 <?php endif; ?>
 <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
 <p class="author"><?=$comment->getAuthorLinkedName();?></p>
-<p class="date"><a class="anchor" href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
+<p class="date"><a id="<?='comment-' . $comment->id?>" class="anchor" href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
 <article class="text formatted-desc">
-    <?=$comment->getText();?>
-    <?php 
-        // TODO: подгружать данные о MR асинхронно, после загрузки страницы, делая запрос с JS
-        $mrList = $comment->getMergeRequests();
-        if (!empty($mrList)):
-    ?>
-    <ul class="merge-requests">
-        <?php foreach ($mrList as $mr): ?>
-        <li class="<?=$mr->state;?>">
-            <?php if ($mr->isMerged()):?> 
-            <i class="state-icon fas fa-check-circle"></i>
-            <?php elseif ($mr->isOpened()):?> 
-            <i class="state-icon fas fa-clock"></i>
-            <?php elseif ($mr->isClosed()):?> 
-            <i class="state-icon fas fa-times-circle"></i>
-            <?php endif;?>
-            MR <a href="<?=$mr->url;?>">!<?=$mr->internalId;?></a>
-        </li>
-        <?php endforeach; ?>
-    </ul>
-    <?php endif; ?>
+    <div class="comment-text"><?=$comment->getText();?></div>
+    <!-- Заполняется JS -->
+    <ul class="merge-requests"></ul>
     <?php lpm_print_video_list($comment->getVideoLinks()); ?>
 </article>
