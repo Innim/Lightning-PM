@@ -90,7 +90,7 @@ function BaseService( service )
      };
 };
 
-var srv = {
+let srv = {
     f2p   : new ru.vbinc.net.F2PInvoker(window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php'),
     issue : {
         s: new BaseService('IssueService'),
@@ -111,6 +111,9 @@ var srv = {
         },
         remove: function (issueId, onResult) {
             this.s._('remove');
+        },
+        getMRInfo: function (url, onResult) {
+            this.s._('getMRInfo');
         },
         comment: function (issueId, text, onResult) {
             this.s._('comment');
@@ -321,7 +324,18 @@ var preloader = {
       if (this._showed == 0) {
           $( 'preloader' ).hide();
       }
-  }
+  },
+  getNewIndicator: function(size) {
+    let res = $('#templates .lds-spinner').clone();
+    if (size) res.addClass(size);
+    return res;
+  },
+  getNewIndicatorMedium: function() {
+    return preloader.getNewIndicator('medium');
+  },
+  getNewIndicatorSmall: function() {
+    return preloader.getNewIndicator('small');
+  },
 };
 
 var imgUpload = {
@@ -435,3 +449,16 @@ function redirectTo(url) {
 function showError(error) {
   alert(error)
 }
+
+let parser = {
+  urlMrSubpath: 'merge_requests/',
+  findLinks: function (text) {
+    let urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+    return text.match(urlRegex);
+  },
+  isMRUrl: function (url) {
+    let baseUrl = lpmOptions.gitlabUrl;
+    return url.indexOf(baseUrl) === 0 &&
+      url.indexOf(parser.urlMrSubpath) !== -1;
+  }
+};

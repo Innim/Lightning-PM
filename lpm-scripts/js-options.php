@@ -6,7 +6,8 @@ $pc = LightningEngine::getInstance()->getCostructor();
 header("Content-type: application/x-javascript");
 ?>
 window.lpmOptions = {
-	url : '<?=SITE_URL;?>',
-	themeUrl : '<?=$pc->getThemeUrl();?>',
-	issueImgsCount : <?=Issue::MAX_IMAGES_COUNT;?>
+	url: '<?=SITE_URL;?>',
+	themeUrl: '<?=$pc->getThemeUrl();?>',
+	issueImgsCount: <?=Issue::MAX_IMAGES_COUNT;?>,
+	gitlabUrl: '<?=defined('GITLAB_URL') ? GITLAB_URL : '';?>',
 };
