@@ -3,7 +3,7 @@ class LPMAuth {
 	/**
 	 * @return cookieHash
 	 */
-	public function createCookieHash() {
+	public static function createCookieHash() {
 		return md5(BaseString::randomStr());
 	}
 

@@ -36,8 +36,8 @@ class AuthPage extends BasePage {
 			if (isset($input['email'])) {
 				// регистрация 				
 				if ($this->validateSignUp($engine, $input)) {
-					$pass = User::passwordHash($input['pass']);					
-					$cookieHash = $this->createCookieHash();
+					$pass = User::passwordHash($input['pass']);
+                    $cookieHash = LPMAuth::createCookieHash();
 					
 					$values = [
 						'email' => $input['email'],
@@ -119,10 +119,6 @@ class AuthPage extends BasePage {
 		}
 		
 		return $this;
-	}
-	
-	private function createCookieHash() {
-		return md5(BaseString::randomStr());
 	}
 	
 	private function auth($userId, $email, $cookieHash) {
