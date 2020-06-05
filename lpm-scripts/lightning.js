@@ -449,3 +449,16 @@ function redirectTo(url) {
 function showError(error) {
   alert(error)
 }
+
+let parser = {
+  urlMrSubpath: 'merge_requests/',
+  findLinks: function (text) {
+    let urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+    return text.match(urlRegex);
+  },
+  isMRUrl: function (url) {
+    let baseUrl = lpmOptions.gitlabUrl;
+    return url.indexOf(baseUrl) === 0 &&
+      url.indexOf(parser.urlMrSubpath) !== -1;
+  }
+};
