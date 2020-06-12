@@ -717,11 +717,18 @@ ul.video-line {
 	text-align: center;
 }
 
-ul.video-line > li > *{
-background: black;
-border: black solid 10px;
-}
+ul.video-line:empty {
+	display: none;
+ }
 
+ul.video-line > li > *{
+	background: black;
+	border: black solid 10px;
+}
+ul.video-line > li > .lds-spinner{
+	padding: 20px;
+	border-radius: 10px;
+}
 /* линия изображения */
 ul.images-line {
 	list-style: none;

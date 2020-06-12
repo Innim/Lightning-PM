@@ -1,8 +1,8 @@
 $(document).ready(
-  function () {
-      issuesExport2Excel.window = $("#issuesExportToExcel").
-      	  dialog({autoOpen:false, modal:true, resizable:false, width:450});
-  }
+	function () {
+		issuesExport2Excel.window = $("#issuesExportToExcel").
+			dialog({ autoOpen: false, modal: true, resizable: false, width: 450 });
+	}
 );
 
 var issuesExport2Excel = {

@@ -2,8 +2,9 @@
 	<h3>Авторизация</h3>
 	<div class="validateError"><?php if (isset($_POST['signIn'])) lpm_print_errors();?></div>
 	<form method="post">
-		<input placeholder="Email" type="email" name="aemail" required="required" value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>"/>
-		<input placeholder="Пароль" type="password" name="apass" required="required"/>
+		<input placeholder="Email" type="email" name="aemail" required="required"
+			value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>" />
+		<input placeholder="Пароль" type="password" name="apass" required="required" />
 		<div>
 			<p class="enter-line">
 				<button name="signIn" type="submit">Вход</button>
@@ -12,27 +13,31 @@
 				<a href="javascript:showRegistration();">Регистрация</a>
 				&nbsp&nbsp&nbsp
 				<a href="pass-recovery">Забыли пароль?</a>
-			</p>			
-		</div>		
+			</p>
+		</div>
 	</form>
 </article>
 <article id="registrationForm" class="container">
 	<h3>Регистрация</h3>
 	<div class="validateError"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
-	<form onsubmit="return validateReg();" action="#reg" method="post">		
-		<input placeholder="Email*" type="email" name="email" required="required" value="<?=isset($_POST['email'])?$_POST['email']:'';?>"/>
-		<input placeholder="Пароль*" type="password" name="pass" required="required" maxlength="24"/>
-		<input placeholder="Подтвержение пароля*" type="password" name="repass" required="required" maxlength="24"/>
-		<input placeholder="Имя*" type="text" name="firstName" required="required" maxlength="128" value="<?=isset($_POST['firstName'])?$_POST['firstName']:'';?>"/>
-		<input placeholder="Фамилия*" type="text" name="lastName" required="required" maxlength="128" value="<?=isset($_POST['lastName'])?$_POST['lastName']:'';?>"/>
-		<input placeholder="Ник" type="text" name="nick" maxlength="64" value="<?=isset($_POST['nick'])?$_POST['nick']:'';?>"/>
+	<form onsubmit="return validateReg();" action="#reg" method="post">
+		<input placeholder="Email*" type="email" name="email" required="required"
+			value="<?=isset($_POST['email'])?$_POST['email']:'';?>" />
+		<input placeholder="Пароль*" type="password" name="pass" required="required" maxlength="24" />
+		<input placeholder="Подтвержение пароля*" type="password" name="repass" required="required" maxlength="24" />
+		<input placeholder="Имя*" type="text" name="firstName" required="required" maxlength="128"
+			value="<?=isset($_POST['firstName'])?$_POST['firstName']:'';?>" />
+		<input placeholder="Фамилия*" type="text" name="lastName" required="required" maxlength="128"
+			value="<?=isset($_POST['lastName'])?$_POST['lastName']:'';?>" />
+		<input placeholder="Ник" type="text" name="nick" maxlength="64"
+			value="<?=isset($_POST['nick'])?$_POST['nick']:'';?>" />
 		<div>
 			<p class="save-line">
 				<button name="signUp" type="submit">Регистрация</button>
 			</p>
 			<p class="links-line">
 				<a href="javascript:showAuth();">Назад</a>
-			</p>			
-		</div>		
+			</p>
+		</div>
 	</form>
 </article>

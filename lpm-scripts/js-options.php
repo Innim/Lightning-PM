@@ -10,4 +10,5 @@ window.lpmOptions = {
 	themeUrl: '<?=$pc->getThemeUrl();?>',
 	issueImgsCount: <?=Issue::MAX_IMAGES_COUNT;?>,
 	gitlabUrl: '<?=defined('GITLAB_URL') ? GITLAB_URL : '';?>',
+	videoUrlPatterns: <?=json_encode(AttachmentVideoHelper::URL_PATTERNS);?>,
 };

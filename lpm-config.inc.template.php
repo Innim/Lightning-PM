@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Шаблон файла конфигурации. 
- * Необходимо заполнить значения констант 
+ * Шаблон файла конфигурации.
+ * Необходимо заполнить значения констант
  * и переменовать его в lpm-config.inc.php
  * @author GreyMag
  * @copyright 2011
@@ -13,31 +13,31 @@
  * Сервер БД mysql
  * @var string
  */
-define( 'MYSQL_SERVER', '' ); 
+define('MYSQL_SERVER', '');
 /**
  * Пользователь mysql
  * @var string
  */
-define( 'MYSQL_USER', '' ); 
+define('MYSQL_USER', '');
 /**
  * Пароль пользователя
  * @var string
  */
-define( 'MYSQL_PASS', '' ); 
+define('MYSQL_PASS', '');
 
 /**
  * Имя базы данных
  * @var string
  */
-define( 'DB_NAME', '' );
+define('DB_NAME', '');
 /**
- * Префикс таблиц проекта 
+ * Префикс таблиц проекта
  * @var string
  */
-define( 'PREFIX', 'lpm_' );
+define('PREFIX', 'lpm_');
 
 // да-да, это значит включен режим дебага
-define( 'DEBUG', false );
+define('DEBUG', false);
 
 
 // пути
@@ -45,7 +45,7 @@ define( 'DEBUG', false );
  * url сайта
  * @var string
  */
-define( 'SITE_URL', '' ); 
+define('SITE_URL', '');
                                                   
 
 // настройки времени
@@ -53,7 +53,7 @@ define( 'SITE_URL', '' );
  * Сдвиг времени сервера в часах
  * @var int
  */
-define( 'TIMEADJUST', 0 );
+define('TIMEADJUST', 0);
 
 // Token для интеграции со Slack
 define('SLACK_TOKEN', '');

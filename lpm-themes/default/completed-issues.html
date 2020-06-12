@@ -4,17 +4,19 @@
 	$issues - список задач для отображения
 */
 ?><article id="completedIssuess">
-    <?php $project = lpm_get_project();?>
+	<?php $project = lpm_get_project();?>
 	<article id="projectView" data-project-id="<?=$project->getID();?>">
 		<h3>Завершенные задачи</h3>
 		<p class="project-stat">
-		   <span class="label">Завершено:</span> 
-		   <span class="issues-completed value"></span> 	 
+			<span class="label">Завершено:</span>
+			<span class="issues-completed value"></span>
 		</p>
-        <p class="filters-line">
-            <a href="javascript:;" id="showIssues4MeLink" onclick="return issuePage.showIssues4Me();">Показать только мои задачи</a>
-            <a href="javascript:;" id="showIssues4AllLink" onclick="return issuePage.resetFilter();" style="display:none;">Показать все</a>
-        </p>
+		<p class="filters-line">
+			<a href="javascript:;" id="showIssues4MeLink" onclick="return issuePage.showIssues4Me();">Показать только
+				мои задачи</a>
+			<a href="javascript:;" id="showIssues4AllLink" onclick="return issuePage.resetFilter();"
+				style="display:none;">Показать все</a>
+		</p>
 		<? lpm_print_issues($issues); ?>
 	</article>
 	<? /*lpm_print_issue_view();*/ ?>

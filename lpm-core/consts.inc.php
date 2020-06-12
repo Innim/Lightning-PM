@@ -7,12 +7,12 @@
  * путь до корневой директории сайта
  * @var string
  */
-define('ROOT', dirname( __FILE__ ) . '/../');
+define('ROOT', dirname(__FILE__) . '/../');
 
 /**
  * путь до директории логов
  */
-define('LOGS_PATH' , ROOT . '/_private/logs/');
+define('LOGS_PATH', ROOT . '/_private/logs/');
 
 /**
 * ядро

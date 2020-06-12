@@ -2,26 +2,26 @@
  * Общие скрипты страницы-раздела Проект
  */
 function showMain() {
-	window.location.hash = '';
-	states.updateView();
+    window.location.hash = '';
+    states.updateView();
 }
 
 function openMembersChooser() {
     var memberIds = [];
     var members = $("#projectMembers > ul.users-list > li > input[type=hidden][name=userId]");
-    for (var i = 0; i < members.length; i++) {            
+    for (var i = 0; i < members.length; i++) {
         memberIds.push(members.eq(i).val());
     }
-    
+
     ucOpen(memberIds, addMembers);
 }
 
 function addMembers(arr) {
     // добавление участников 
     preloader.show();
-    srv.project.addMembers( 
-        $("#projectMembers input[name=projectId]").val(), 
-        arr, 
+    srv.project.addMembers(
+        $("#projectMembers input[name=projectId]").val(),
+        arr,
         function (res) {
             preloader.hide();
 
@@ -30,7 +30,7 @@ function addMembers(arr) {
                 var j = 0;
                 var ok = false;
                 var userId = 0;
-                var count  = res.members.length;
+                var count = res.members.length;
                 var members = $("#projectMembers > ul.users-list > li");
                 for (var i = 0; i < members.length; i++) {
                     ok = false;
@@ -42,10 +42,10 @@ function addMembers(arr) {
                             j--;
                             ok = true;
                         }
-                    }         
+                    }
                     if (!ok) members.eq(i).remove();
                 }
-                
+
                 var ul = $("#projectMembers > ul.users-list");
                 var user;
                 for (j = 0; j < count; j++) {
@@ -60,6 +60,6 @@ function addMembers(arr) {
             } else {
                 srv.err(res);
             }
-        } 
+        }
     );
 }
