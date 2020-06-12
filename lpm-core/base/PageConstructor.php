@@ -183,6 +183,13 @@ class PageConstructor
         include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
     }
 
+    public static function getHtml(callable $printHtml)
+    {
+        ob_start();
+        $printHtml();
+        return ob_get_clean();
+    }
+
     private static $_usingScripts = [
         'libs/jquery-1.12.4.min',
         'libs/jquery-ui-1.12.1.min',

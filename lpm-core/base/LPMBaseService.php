@@ -124,6 +124,11 @@ class LPMBaseService extends SecureService
         }
         return $user->checkRole($reqRole);
     }
+
+    protected function getHtml(callable $printHtml)
+    {
+        return PageConstructor::getHtml($printHtml);
+    }
     
     // TODO: выпилить из base сервиса
     protected function addComment($instanceType, $instanceId, $text)
