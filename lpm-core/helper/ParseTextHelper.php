@@ -2,19 +2,21 @@
 /**
  * Класс, содержащий вспомогательные методы парсинга для текста.
  */
-class ParseTextHelper {
+class ParseTextHelper
+{
     const URL_PATTERN = "/(https?:\/\/[^<\s]+[[:alnum:]])([^[:alnum:]]*(?:<br ?\/?>)*[^a-zа-я0-9]|\s|$)/iu";
 
-	/**
-	 * Получает ссылки на видео из текста.
-	 * @param  string $html Текст (с ссылками на видео в формате html).
-	 * @return array<{
-	 *  type:string = youtube|video,
-	 *  url:string
-	 * ]>
-	 */
-	public static function parseVideoLinks($html) {
-		$preg = [
+    /**
+     * Получает ссылки на видео из текста.
+     * @param  string $html Текст (с ссылками на видео в формате html).
+     * @return array<{
+     *  type:string = youtube|video,
+     *  url:string
+     * ]>
+     */
+    public static function parseVideoLinks($html)
+    {
+        $preg = [
             // YouTube
             "(?:youtube.)\w{2,4}\/(?:watch\?v=)",
             //Youtu.be
@@ -42,11 +44,11 @@ class ParseTextHelper {
                 // Это YouTube
                 $type = 'youtube';
                 $url = "http://www.youtube.com/embed/" .  (!empty($uidParts) ? $uidParts[0] : '');
-            } else if (strpos($urlPrefix, 'youtu.be') === 0) {
+            } elseif (strpos($urlPrefix, 'youtu.be') === 0) {
                 // Это YouTu.be
                 $type = 'youtube';
                 $url = "http://www.youtube.com/embed/" . $videoUid;
-            } else if (strpos($urlPrefix, 'd.pr') === 0) {
+            } elseif (strpos($urlPrefix, 'd.pr') === 0) {
                 // Это Droplr
                 // $url = "http://d.pr/v/" . $videoUid . "+";
                 $url = "http://" . $urlPrefix . $videoUid . "+";
@@ -70,19 +72,21 @@ class ParseTextHelper {
                 }
             }
 
-            if (!empty($url))
+            if (!empty($url)) {
                 $list[] = (object) compact('type', 'url');
+            }
         }
 
         return $list;
-	}
+    }
 
     /**
      * Находит url ссылки в тексте и возвращает их список.
-     * @param  string $text 
+     * @param  string $text
      * @return array<string>
      */
-    public static function findLinks($text) {
+    public static function findLinks($text)
+    {
         $matches = [];
         preg_match_all(self::URL_PATTERN, $text, $matches);
         return $matches[0];
@@ -90,13 +94,15 @@ class ParseTextHelper {
 
     /**
      * Находит ссылки на MR в тексте, получает для них данные и возвращает список данных MR.
-     * @param  string $text 
+     * @param  string $text
      * @return array<GitlabMergeRequest>
      */
-    public static function findMergeRequests($text) {
+    public static function findMergeRequests($text)
+    {
         $client = LightningEngine::getInstance()->gitlab();
-        if (!$client->isAvailableForUser())
+        if (!$client->isAvailableForUser()) {
             return [];
+        }
 
         $links = self::findLinks($text);
         $res = [];
@@ -104,11 +110,14 @@ class ParseTextHelper {
             if ($client->isMRUrl($url)) {
                 try {
                     $mr = $client->getMR($url);
-                    if ($mr) $res[] = $mr;
+                    if ($mr) {
+                        $res[] = $mr;
+                    }
                 } catch (Gitlab\Exception\RuntimeException $e) {
                     // Игнорим если не найдено - можжет нет прав, может удалили, может url кривой
-                    if ($e->getCode() != 404)
+                    if ($e->getCode() != 404) {
                         throw $e;
+                    }
                 }
             }
         }

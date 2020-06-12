@@ -6,12 +6,14 @@
  * - выделение жирным с помощью одной *звездочки*
  * - зачеркивание с помощью одной ~тильды~
  */
-class ParsedownExt extends Parsedown {
+class ParsedownExt extends Parsedown
+{
     private $_strongRegex;
     private $_delRegex;
     private $_underlineRegex;
 
-    function __construct() {
+    public function __construct()
+    {
         array_unshift($this->InlineTypes['*'], 'Strong');
         // Нам подходит EM по звездочке
         $this->_strongRegex = $this->EmRegex['*'];
@@ -25,24 +27,30 @@ class ParsedownExt extends Parsedown {
         $this->_underlineRegex = $this->StrongRegex['_'];
     }
 
-    protected function inlineStrong($Excerpt) {
+    protected function inlineStrong($Excerpt)
+    {
         return $this->inline($Excerpt, $this->_strongRegex, 'strong');
     }
 
-    protected function inlineUnderline($Excerpt) {
-        if (!isset($Excerpt['text'][1]) || $Excerpt['text'][1] !== '_')
+    protected function inlineUnderline($Excerpt)
+    {
+        if (!isset($Excerpt['text'][1]) || $Excerpt['text'][1] !== '_') {
             return;
+        }
 
         return $this->inline($Excerpt, $this->_underlineRegex, 'u');
     }
 
-    protected function inlineDel($Excerpt) {
+    protected function inlineDel($Excerpt)
+    {
         return $this->inline($Excerpt, $this->_delRegex, 'del');
     }
 
-    private function inline($Excerpt, $regex, $name) {
-        if (!isset($Excerpt['text'][1]))
+    private function inline($Excerpt, $regex, $name)
+    {
+        if (!isset($Excerpt['text'][1])) {
             return;
+        }
 
         if (preg_match($regex, $Excerpt['text'], $matches)) {
             return [
