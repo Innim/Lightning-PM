@@ -13,7 +13,7 @@ $userId = lpm_get_user()->getID();
         <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
     </div>
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-    <article id="issueInfo" class="container">
+    <article id="issueInfo" class="container block-with-attachments">
         <h3>
             <span class="issue-id"><?=$issue->getIdInProject();?></span>.
             <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
@@ -90,11 +90,9 @@ $userId = lpm_get_user()->getID();
                 <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>" />
             </div>
             <div class="desc info-list-item">
-                <div class="value formatted-desc"><?=$issue->getDesc();?></div>
+                <div class="value formatted-desc text-with-attachments"><?=$issue->getDesc();?></div>
             </div>
-            <?php if ($videoLinks = $issue->getVideoLinks()): ?>
-            <div class="info-list-item"><?php lpm_print_video_list($videoLinks); ?></div>
-            <?php endif ?>
+            <div class="info-list-item attachments"></div>
             <?php if ($picture = $issue->getImages()): ?>
             <div class="info-list-item">
                 <ul class="images-line">
