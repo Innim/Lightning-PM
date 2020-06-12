@@ -7,159 +7,171 @@
 $userId = lpm_get_user()->getID();
 ?>
 <article id="issueView">
-  <h1><a href="<?=lpm_get_base_page_url();?>"><?lpm_print_header();?></a></h1>
-  <div class="header-operations-bar">
-    <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
-  </div>
-  <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-  <article id="issueInfo" class="container">
-    <h3>
-        <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-		<span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span class="issues-hours-box">(<span class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
-        <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
-        <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску" class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
-        <?php endif;?>
-    </h3>     
-    <div class="issue_copy">
-        <a id="copyText" class="copy-commit-message" href="javascript:void(0);"  data-clipboard-text='Issue #<?=$issue->getIdInProject() . ": " . $issue->getName();?>' >скопировать commit сообщение</a>
+    <h1><a href="<?=lpm_get_base_page_url();?>">
+            <?lpm_print_header();?></a></h1>
+    <div class="header-operations-bar">
+        <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
     </div>
-    <div class="info-list <?switch($issue->status): 
+    <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
+    <article id="issueInfo" class="container">
+        <h3>
+            <span class="issue-id"><?=$issue->getIdInProject();?></span>.
+            <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
+                class="issues-hours-box">(<span
+                    class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
+            <?php if ($issue->getProject()->scrum && !$issue->isOnBoard()):?>
+            <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску"
+                class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
+            <?php endif;?>
+        </h3>
+        <div class="issue_copy">
+            <a id="copyText" class="copy-commit-message" href="javascript:void(0);"
+                data-clipboard-text='Issue #<?=$issue->getIdInProject() . ": " . $issue->getName();?>'>скопировать
+                commit сообщение</a>
+        </div>
+        <div class="info-list <?switch($issue->status): 
     case 0: ?>active-issue <?break;?> 
     <? case 1: ?>verify-issue <?break;?> 
     <?case 2: ?>completed-issue<?break;?>
     <?endswitch;?>">
-        <div class="info-list-item">
-            <span class="label">Статус</span>
-            <span class="value"><?=$issue->getStatus();?></span>
-        </div>
-        <div class="info-list-item">
-            <span class="label">Тип</span>
-            <span class="value"><?=$issue->getType();?></span>
-            <input type="hidden" name="type" value="<?=$issue->type;?>"/>
-        </div>
-        <div class="info-list-item">
-            <span class="label">Приоритет</span>
-            <span class="value">
-                <span class="priority-val circle"><?=$issue->priority;?></span>
-                <?=$issue->getPriorityStr();?> (<?=($issue->priority+1);?>%)
-            </span>
-            <input type="hidden" name="priority" value="<?=$issue->priority;?>"/>
-        </div>
-        <div class="info-list-item">
-            <span class="label">Дата создания</span>
-            <span class="value"><?=$issue->getCreateDate();?></span>
-        </div>
-        <div class="info-list-item">
-            <span class="label">Дата завершения</span>
-            <span class="value"><?=$issue->getCompleteDate();?></span>
-            <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>"/>
-        </div>
-        <div class="issue-completed-date-row info-list-item">
-            <span class="label">Завершена</span>
-            <span class="value"><?=$issue->getCompletedDate();?></span>
-        </div>
-        <div class="info-list-item">
-            <span class="label">Создал</span>
-            <span class="value"><?=$issue->getAuthorLinkedName();?></span>
-        </div>
-        <div class="info-list-item">
-            <span class="label">Исполнители</span>
-            <span class="value">
-                <?php foreach ($issue->getMembers() as $i => $member):
+            <div class="info-list-item">
+                <span class="label">Статус</span>
+                <span class="value"><?=$issue->getStatus();?></span>
+            </div>
+            <div class="info-list-item">
+                <span class="label">Тип</span>
+                <span class="value"><?=$issue->getType();?></span>
+                <input type="hidden" name="type" value="<?=$issue->type;?>" />
+            </div>
+            <div class="info-list-item">
+                <span class="label">Приоритет</span>
+                <span class="value">
+                    <span class="priority-val circle"><?=$issue->priority;?></span>
+                    <?=$issue->getPriorityStr();?> (<?=($issue->priority+1);?>%)
+                </span>
+                <input type="hidden" name="priority" value="<?=$issue->priority;?>" />
+            </div>
+            <div class="info-list-item">
+                <span class="label">Дата создания</span>
+                <span class="value"><?=$issue->getCreateDate();?></span>
+            </div>
+            <div class="info-list-item">
+                <span class="label">Дата завершения</span>
+                <span class="value"><?=$issue->getCompleteDate();?></span>
+                <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>" />
+            </div>
+            <div class="issue-completed-date-row info-list-item">
+                <span class="label">Завершена</span>
+                <span class="value"><?=$issue->getCompletedDate();?></span>
+            </div>
+            <div class="info-list-item">
+                <span class="label">Создал</span>
+                <span class="value"><?=$issue->getAuthorLinkedName();?></span>
+            </div>
+            <div class="info-list-item">
+                <span class="label">Исполнители</span>
+                <span class="value">
+                    <?php foreach ($issue->getMembers() as $i => $member):
                 ?><?=$i>0?',':''
                 ?> <?=$member->getLinkedName();?><?php if ($member->sp > 0):
                 ?> (<?=$member->sp;?> SP)<?php endif;?><?php
                 endforeach;?>
-            </span>
-            <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>"/>
-            <input type="hidden" name="membersSp" value="<?=$issue->getMembersSpStr();?>"/>
-        </div>
-        <?php $testers = $issue->getTesters(); ?>
-        <div  class="testers-row info-list-item"<?php if (empty($testers)): ?>style="display: none;"<?php endif;?>>
-            <span class="label">Тестеры</span>
-            <span class="value">
-                <?php foreach ($testers as $i => $tester) {?><?=$i>0?', ':''?> <?=$tester->getLinkedName();?><?php }?>
-            </span>
-            <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>"/>
-        </div>
-        <div class="desc info-list-item">        
-            <div class="value formatted-desc"><?=$issue->getDesc();?></div>
-        </div>
-        <?php if ($videoLinks = $issue->getVideoLinks()): ?>
-        <div class="info-list-item"><?php lpm_print_video_list($videoLinks); ?></div>
-        <?php endif ?>
-        <?php if ($picture = $issue->getImages()): ?>
-        <div class="info-list-item">
-            <ul class="images-line">
-                <?php foreach ($picture as $img): ?>
+                </span>
+                <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>" />
+                <input type="hidden" name="membersSp" value="<?=$issue->getMembersSpStr();?>" />
+            </div>
+            <?php $testers = $issue->getTesters(); ?>
+            <div class="testers-row info-list-item" <?php if (empty($testers)): ?>style="display: none;" <?php endif;?>>
+                <span class="label">Тестеры</span>
+                <span class="value">
+                    <?php foreach ($testers as $i => $tester) {?><?=$i>0?', ':''?>
+                    <?=$tester->getLinkedName();?><?php }?>
+                </span>
+                <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>" />
+            </div>
+            <div class="desc info-list-item">
+                <div class="value formatted-desc"><?=$issue->getDesc();?></div>
+            </div>
+            <?php if ($videoLinks = $issue->getVideoLinks()): ?>
+            <div class="info-list-item"><?php lpm_print_video_list($videoLinks); ?></div>
+            <?php endif ?>
+            <?php if ($picture = $issue->getImages()): ?>
+            <div class="info-list-item">
+                <ul class="images-line">
+                    <?php foreach ($picture as $img): ?>
                     <li>
-                        <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img src="<?=$img->getPreview();?>"/></a>
+                        <a href="<?=$img->getSource();?>" rel="iLoad|Screenshots"><img
+                                src="<?=$img->getPreview();?>" /></a>
                         <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
                     </li>
-                <?endforeach;?>
-            </ul>
+                    <?endforeach;?>
+                </ul>
+            </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
-    </div>
-    <p class="buttons-bar <? switch($issue->status): 
+        <p class="buttons-bar <? switch($issue->status): 
     case 0: ?>active-issue<?break;?> 
     <?case 1: ?>verify-issue<?break;?> 
     <?case 2: ?>completed-issue<?break;?>
     <?endswitch;?>">
-        <input type="hidden" name="parentId" value="<?=$issue->parentId;?>"/>
-        <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>      
-        <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
-        <?php if ($issue->isMember($userId) || $issue->getProject()->masterId == $userId): ?>
-        <button class="verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
-        <?php endif ?>
-        <button class="complete-btn" onclick="completeIssue(event);">Завершить</button>
-        <button onclick="issuePage.showEditForm();">Редактировать</button> 
-        <button onclick="issuePage.removeIssue(event);">Удалить</button>
-    </p>
-    <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
-    <a href="<?=$issue->getProjectUrl() . '#copy-issue:' . $issue->idInProject;?>" target="_blank"
-       class="copy-issue-link">
-        <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
-    </a>
-    <a href="<?=$issue->getProjectUrl() . '#finished-issue:' . $issue->idInProject;?>" target="_blank"
-     class="finished-issue-link">
-      <i class="fa fa-plus-square" aria-hidden="true" title="Добавить задачу по доделкам"></i>
-    </a>
-  </article>
-  <article class="comments">
-    <div class="links-bar">
-        <?php if ($issue->getProject()->scrum):?>
+            <input type="hidden" name="parentId" value="<?=$issue->parentId;?>" />
+            <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
+            <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
+            <?php if ($issue->isMember($userId) || $issue->getProject()->masterId == $userId): ?>
+            <button class="verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
+            <?php endif ?>
+            <button class="complete-btn" onclick="completeIssue(event);">Завершить</button>
+            <button onclick="issuePage.showEditForm();">Редактировать</button>
+            <button onclick="issuePage.removeIssue(event);">Удалить</button>
+        </p>
+        <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
+        <a href="<?=$issue->getProjectUrl() . '#copy-issue:' . $issue->idInProject;?>" target="_blank"
+            class="copy-issue-link">
+            <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
+        </a>
+        <a href="<?=$issue->getProjectUrl() . '#finished-issue:' . $issue->idInProject;?>" target="_blank"
+            class="finished-issue-link">
+            <i class="fa fa-plus-square" aria-hidden="true" title="Добавить задачу по доделкам"></i>
+        </a>
+    </article>
+    <article class="comments">
+        <div class="links-bar">
+            <?php if ($issue->getProject()->scrum):?>
             <div class="scrum-comments-shortcut">
-                <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i class="far fa-check-square" aria-hidden="true"></i></a>
-                <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i class="fas fa-code-branch" aria-hidden="true"></i></a>
+                <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i
+                        class="far fa-check-square" aria-hidden="true"></i></a>
+                <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i
+                        class="fas fa-code-branch" aria-hidden="true"></i></a>
             </div>
-        <?php endif;?>
-        <div class="comments-controls">
-            <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть комментарии</a>
-            <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
+            <?php endif;?>
+            <div class="comments-controls">
+                <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть
+                    комментарии</a>
+                <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
+            </div>
         </div>
-    </div>
-    <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
-     <textarea name="commentText"></textarea>
-     <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>, <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>
-     <input type="hidden" name="issueId" value="<?=$issue->getID();?>"/>
-     <p class="buttons-bar">
-        <button type="submit">Отправить</button>
-        <button type="reset" onclick="issuePage.hideCommentForm();">Отмена</button>
-     </p>
-    </form>
-    <section class="comments-list">
-        <?php foreach ($comments as $comment): ?>
-        <div class="comments-list-item">
-            <?php lpm_print_comment($comment);?>
-        </div>
-        <?php endforeach; ?>
-    </section>
-    <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
-  </article>
+        <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
+            <textarea name="commentText"></textarea>
+            <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
+                <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>
+            <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
+            <p class="buttons-bar">
+                <button type="submit">Отправить</button>
+                <button type="reset" onclick="issuePage.hideCommentForm();">Отмена</button>
+            </p>
+        </form>
+        <section class="comments-list">
+            <?php foreach ($comments as $comment): ?>
+            <div class="comments-list-item">
+                <?php lpm_print_comment($comment);?>
+            </div>
+            <?php endforeach; ?>
+        </section>
+        <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
+    </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=$userId;?>">
 <script type="text/javascript">
-    var issueLabels = <?=json_encode($issue->getLabelNames());?>;
+    var issueLabels = <?= json_encode($issue -> getLabelNames());?>;
 </script>
 <?php lpm_print_issue_form($issue->getProject(), $issue); ?>

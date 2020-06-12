@@ -7,43 +7,59 @@
     $snapshot - данные конкретного снимка, если задано - будет показан он, если нет - список
 */
 ?>
-<article id="<?=isset($snapshot) ? 'scrumBoard' : 'scrumSnapshot'?>" data-project-id="<?=$project->id;?>" class="hide-sp">
-    <h1><?lpm_print_header();?></h1>
+<article id="<?=isset($snapshot) ? 'scrumBoard' : 'scrumSnapshot'?>" data-project-id="<?=$project->id;?>"
+    class="hide-sp">
+    <h1>
+        <?lpm_print_header();?>
+    </h1>
     <?php if (!isset($snapshot)): ?>
     <h3>SCRUM архив:</h3>
-        <div class="scrum-snapshot-list">
-            <?php if (empty($snapshots)): ?>
-            <p class="no-items">Нет записей</p>
-            <?php else:?>
-            <ul>
-                <?php foreach ($snapshots as $snapshot): ?>
-                <li>
-                    <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot #<?=$snapshot->idInProject?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
-                </li>
-                <?php endforeach; ?>
-            </ul>
-            <?php endif;?>
-        </div>
+    <div class="scrum-snapshot-list">
+        <?php if (empty($snapshots)): ?>
+        <p class="no-items">Нет записей</p>
+        <?php else:?>
+        <ul>
+            <?php foreach ($snapshots as $snapshot): ?>
+            <li>
+                <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot
+                    #<?=$snapshot->idInProject?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+        <?php endif;?>
+    </div>
     <?php else: ?>
-        <a href="<?=$snapshot->getUrl()?>"><h3><u>SCRUM архив:</u></h3></a>
-        <div class="scrum-snapshot-stat">
-            <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->idInProject?></i> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
-            <span class="scrum-snapshot-links">
-                <a href="<?=$snapshot->getStatUrl()?>">Статистика спринта</a>
-            </span>
-            <span class="num-issues">Всего: <?=$snapshot->getNumStickers()?> шт, <?=$snapshot->getNumSp()?> SP (сделано <?=$snapshot->getDoneSp()?> SP)</span>
-        </div>
+    <a href="<?=$snapshot->getUrl()?>">
+        <h3><u>SCRUM архив:</u></h3>
+    </a>
+    <div class="scrum-snapshot-stat">
+        <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->idInProject?></i> создан пользователем
+        `<i><?=$snapshot->getCreatorShortName()?>`</i>
+        <span class="scrum-snapshot-links">
+            <a href="<?=$snapshot->getStatUrl()?>">Статистика спринта</a>
+        </span>
+        <span class="num-issues">Всего: <?=$snapshot->getNumStickers()?> шт, <?=$snapshot->getNumSp()?> SP (сделано
+            <?=$snapshot->getDoneSp()?> SP)</span>
+    </div>
 
-        <table class="scrum-board-table">
-            <thead>
+    <table class="scrum-board-table">
+        <thead>
             <tr>
-                <th class="col-todo">TO DO<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
-                <th class="col-in_progress">В работе<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
-                <th class="col-testing">Тестируется<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
-                <th class="col-done">Готово<span class="scrum-col-info">(<span class="scrum-col-count"><span class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span class="value"></span> SP</span>)</span></th>
+                <th class="col-todo">TO DO<span class="scrum-col-info">(<span class="scrum-col-count"><span
+                                class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
+                                class="value"></span> SP</span>)</span></th>
+                <th class="col-in_progress">В работе<span class="scrum-col-info">(<span class="scrum-col-count"><span
+                                class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
+                                class="value"></span> SP</span>)</span></th>
+                <th class="col-testing">Тестируется<span class="scrum-col-info">(<span class="scrum-col-count"><span
+                                class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
+                                class="value"></span> SP</span>)</span></th>
+                <th class="col-done">Готово<span class="scrum-col-info">(<span class="scrum-col-count"><span
+                                class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
+                                class="value"></span> SP</span>)</span></th>
             </tr>
-            </thead>
-            <tbody>
+        </thead>
+        <tbody>
             <?php
             $user = lpm_get_user();
 
@@ -98,11 +114,16 @@
                         $testersStr = substr($testersStr, 0, -2);
                     }
                     ?>
-                    <div id="scrum-sticker-<?=$sticker->issue_uid;?>" class="scrum-board-sticker <?=$color;?> <?=$userRole;?>" data-issue-id="<?=$sticker->issue_uid;?>" data-sticker-state="<?=$sticker->issue_state;?>" data-sticker-sp="<?=$sp;?>" title="<?=$testersStr;?>">
+                    <div id="scrum-sticker-<?=$sticker->issue_uid;?>"
+                        class="scrum-board-sticker <?=$color;?> <?=$userRole;?>"
+                        data-issue-id="<?=$sticker->issue_uid;?>" data-sticker-state="<?=$sticker->issue_state;?>"
+                        data-sticker-sp="<?=$sp;?>" title="<?=$testersStr;?>">
                         <span class="sticker-issue-id">#<?=$sticker->issue_pid;?></span>
-                        <a href="<?=$sticker->getURL4View();?>"><?=$sticker->issue_name;?><span class="snapshot-sticker-issue-sp">(<?=$spStr;?> SP)</span></a>
+                        <a href="<?=$sticker->getURL4View();?>"><?=$sticker->issue_name;?><span
+                                class="snapshot-sticker-issue-sp">(<?=$spStr;?> SP)</span></a>
                         <span class="sticker-issue-members"><?php
-                        foreach ($sticker->getMembers() as $j => $member) {?><?=$j>0?', ':''?> <?=$member->getShortName();?><?php }?></span>
+                        foreach ($sticker->getMembers() as $j => $member) {?><?=$j>0?', ':''?>
+                            <?=$member->getShortName();?><?php }?></span>
                     </div>
                     <?php endif;?>
                     <?php endfor;?>
@@ -110,7 +131,7 @@
                 <?php endforeach;?>
             </tr>
             <?php //endfor;?>
-            </tbody>
-        </table>
+        </tbody>
+    </table>
     <?php endif; ?>
 </article>

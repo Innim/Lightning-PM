@@ -7,18 +7,17 @@ if (!empty($videoLinks)):
 ?>
 <ul class="video-line">
     <?php foreach ($videoLinks as $item): ?>
-        <li>
-            <?php if ($item->type == 'youtube'): ?>
-                <object  width="480" height="320" class="video ytb"
-                    data="<?php echo $item->url; ?>">
-                </object>
-            <?php else: ?>
-                <video width="480" height="320" controls preload class="video dplr">
-                    <source src="<?php echo $item->url; ?>">
-                </video>
-            <?php endif ?>
-        </li>
+    <li>
+        <?php if ($item->type == 'youtube'): ?>
+        <object width="480" height="320" class="video ytb" data="<?php echo $item->url; ?>">
+        </object>
+        <?php else: ?>
+        <video width="480" height="320" controls preload class="video dplr">
+            <source src="<?php echo $item->url; ?>">
+        </video>
+        <?php endif ?>
+    </li>
     <?php endforeach ?>
 </ul>
 <?php
-endif;
+endif; 

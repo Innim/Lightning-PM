@@ -10,7 +10,9 @@
 */
 ?>
 <article id="projects-stat">
-    <h1><?lpm_print_header();?></h1>
+	<h1>
+		<?lpm_print_header();?>
+	</h1>
 
 	<div class="user-stat-nav">
 		<?php if (isset($prevLink)):?>
@@ -20,36 +22,36 @@
 		<a href="<?=$nextLink->href;?>"><?=$nextLink->label;?> &gt;</a>
 		<?php endif;?>
 	</div>
-	
-    <h3>Статистика по проектам за <?=sprintf('%02d', $month);?>.<?=$year;?></h3>
 
-    <p class="page-desc">Выводится статистика только по SCRUM проектам.</p>
+	<h3>Статистика по проектам за <?=sprintf('%02d', $month);?>.<?=$year;?></h3>
 
-    <div class="stat-summary">
-        <span class="stat-summary-label">Всего:</span> <span class="stat-summary-value"><?=$totalSP;?> SP</span>
-    </div>
-    
-    <table class="projects-stat">
-    	<tr>
-    		<th>Участник</th>
-    		<th>SP за месяц</th>
-    		<th>Кол-во спринтов</th>
-            <th>Период</th>
-            <th>Недель</th>
-    	</tr>
-    	<?php
+	<p class="page-desc">Выводится статистика только по SCRUM проектам.</p>
+
+	<div class="stat-summary">
+		<span class="stat-summary-label">Всего:</span> <span class="stat-summary-value"><?=$totalSP;?> SP</span>
+	</div>
+
+	<table class="projects-stat">
+		<tr>
+			<th>Участник</th>
+			<th>SP за месяц</th>
+			<th>Кол-во спринтов</th>
+			<th>Период</th>
+			<th>Недель</th>
+		</tr>
+		<?php
 		foreach($projectsStat as $projectStat):
     		$doneSp = $projectStat->getSP();
 		?>
-    	<tr data-done-sp="<?=$doneSp;?>">
-    		<td><?=$projectStat->project->name;?></td>
-    		<td><?=$doneSp;?></td>
-    		<td><?=$projectStat->getSnapshotsCount();?></td>
-            <td><?=$projectStat->getPeriod();?></td>
-            <td><?=$projectStat->getWeeksCount();?></td>
-    		<!-- TODO: список снапшотов -->
-    	</tr>
-    	<?php endforeach;?>
-    	
-    </table>
+		<tr data-done-sp="<?=$doneSp;?>">
+			<td><?=$projectStat->project->name;?></td>
+			<td><?=$doneSp;?></td>
+			<td><?=$projectStat->getSnapshotsCount();?></td>
+			<td><?=$projectStat->getPeriod();?></td>
+			<td><?=$projectStat->getWeeksCount();?></td>
+			<!-- TODO: список снапшотов -->
+		</tr>
+		<?php endforeach;?>
+
+	</table>
 </article>

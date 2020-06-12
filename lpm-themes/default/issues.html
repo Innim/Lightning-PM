@@ -22,17 +22,19 @@
     	case 0: ?>active-issue<?break;?> 
     	<?case 1: ?>verify-issue<?break;?> 
     	<?case 2: ?>completed-issue<?break;?>
-    	<?endswitch;?><?=$issue->isTester(lpm_get_user()->userId) ? ' tester' : '';?>" data-id="<?=$issue->id;?>" data-status="<?=$issue->status;?>" data-complete-date="<?=$issue->completeDate;?>" data-create-date="<?=$issue->createDate;?>">
+    	<?endswitch;?><?=$issue->isTester(lpm_get_user()->userId) ? ' tester' : '';?>" data-id="<?=$issue->id;?>"
+			data-status="<?=$issue->status;?>" data-complete-date="<?=$issue->completeDate;?>"
+			data-create-date="<?=$issue->createDate;?>">
 			<td>
-    		 <?php if ($issue->isOnBoard()):?>
-    		 <span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
-			 <?php endif; ?>
+				<?php if ($issue->isOnBoard()):?>
+				<span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
+				<?php endif; ?>
 				<div class="tooltip">
 
-					<div class="commit-message-list" >
+					<div class="commit-message-list">
 						<a class='copy-commit-message' href='javascript: void(0);'
-						   data-clipboard-text='Issue #<?=$issue->getIdInProject() . ': ' . $issue->getName();?>'>
-						Копировать коммит сообщение
+							data-clipboard-text='Issue #<?=$issue->getIdInProject() . ': ' . $issue->getName();?>'>
+							Копировать коммит сообщение
 						</a>
 					</div>
 
@@ -41,38 +43,46 @@
 				</div>
 			</td>
 			<td>
-			<div title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->priority;?>%)" >
-			 <nobr>
-			 	 <span href="#" class="priority-val circle"data-value="<?=$issue->priority;?>">
-			     <?=$issue->priority;?></span><?=$issue->getType();?>
-			 </nobr>	
-			 <?php if (!$issue->isCompleted()): ?>
-			 <span class="priority-change-bar" class="display:block;"><i class="fas fa-caret-up priority-control priority-up" onclick="issuePage.changePriority(event);"></i><i class="fas fa-caret-down priority-control priority-down" onclick="issuePage.changePriority(event);"></i></span>		 
-			 <?php endif;?>
-			</div>
+				<div title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->priority;?>%)">
+					<nobr>
+						<span href="#" class="priority-val circle" data-value="<?=$issue->priority;?>">
+							<?=$issue->priority;?></span><?=$issue->getType();?>
+					</nobr>
+					<?php if (!$issue->isCompleted()): ?>
+					<span class="priority-change-bar" class="display:block;"><i
+							class="fas fa-caret-up priority-control priority-up"
+							onclick="issuePage.changePriority(event);"></i><i
+							class="fas fa-caret-down priority-control priority-down"
+							onclick="issuePage.changePriority(event);"></i></span>
+					<?php endif;?>
+				</div>
 			</td>
 			<td>
-			<a href="<?=$issue->getURL4View();?>">
-			 	<span class="issue-name"><?=$issue->getName();?></span>
-			 	<?php if ($issue->hours > 0): ?> (<span class="issue-hours"><?=$issue->getStrHours();?></span> <?=$issue->getNormHoursLabel(true);?>)<?php endif;?>
-    		</a>
-			 <?if ($issue->commentsCount > 0):?>
-                 &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
-                 <?php endif; ?>
+				<a href="<?=$issue->getURL4View();?>">
+					<span class="issue-name"><?=$issue->getName();?></span>
+					<?php if ($issue->hours > 0): ?> (<span class="issue-hours"><?=$issue->getStrHours();?></span>
+					<?=$issue->getNormHoursLabel(true);?>)<?php endif;?>
+				</a>
+				<?if ($issue->commentsCount > 0):?>
+				&nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
+				<?php endif; ?>
 			</td>
 			<td class="member-list">
-			   <?php foreach ($issue->getMembers() as $i => $member): ?>
-			   <?=$i>0?', ':''?><a href="javascript:;" data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
-			   <?php endforeach; ?>
+				<?php foreach ($issue->getMembers() as $i => $member): ?>
+				<?=$i>0?', ':''?><a href="javascript:;"
+					data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
+				<?php endforeach; ?>
 			</td>
-			<td><p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p></td>
+			<td>
+				<p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p>
+			</td>
 			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
-			<td> 	
-				<input type="hidden" name="issueId" value="<?=$issue->id;?>"/>
+			<td>
+				<input type="hidden" name="issueId" value="<?=$issue->id;?>" />
 				<button onclick="restoreIssue( event );" class="restore-btn">Открыть</button>
 				<button onclick="completeIssue( event );" class="complete-btn">Завершить</button>
 			</td>
-		</tr>			
+		</tr>
 		<? }?>
 	</tbody>
 </table>

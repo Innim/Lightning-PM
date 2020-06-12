@@ -1,78 +1,106 @@
 <!DOCTYPE html>
 <html prefix="og: http://ogp.me/ns#">
-	<head>
-		<meta charset="UTF-8">
-		<link rel="shortcut icon" href="<?=lpm_get_site_url();?>favicon.ico">
-		<title><?php lpm_print_title(); ?></title>
-		<?php lpm_print_open_graph_meta(); ?>
-		<?php lpm_print_css_links(); ?>
-		<?php lpm_print_scripts(); ?>		
-	</head>
-	<body>
-	    <?php if (lpm_is_auth()):?>
-	    <input id="curUserId" value="<?=lpm_get_user()->getID();?>" type="hidden"/>
-		<div id="userMenuLine">
-		  <p>Добро пожаловать, <span class="user-name"><?=lpm_get_user()->getName();?></span>!</p>
-		  <div id="userMenu">
-		      <?php foreach (lpm_get_user_menu() as $link):?>
-              <a href="<?=$link->href;?>"><?=$link->label;?></a>
-              <?php endforeach;?>
-		  </div>
-		</div>
-		<?php endif;?>
-		<header>
-			<div id="siteLogo">
-			 <a href="<?=lpm_get_site_url();?>">
-                <? lpm_print_logo_img(); ?>
-             </a>
-            </div>			
-			<div id="siteTitle">
-				<h1><? lpm_print_site_title(); ?></h1>
-				<h2><? lpm_print_site_subtitle(); ?></h2>
-			</div>
-		</header>
-		<nav id="mainMenu">
-			<? foreach (lpm_get_main_menu() as $link) {?>
+
+<head>
+	<meta charset="UTF-8">
+	<link rel="shortcut icon" href="<?=lpm_get_site_url();?>favicon.ico">
+	<title><?php lpm_print_title(); ?></title>
+	<?php lpm_print_open_graph_meta(); ?>
+	<?php lpm_print_css_links(); ?>
+	<?php lpm_print_scripts(); ?>
+</head>
+
+<body>
+	<?php if (lpm_is_auth()):?>
+	<input id="curUserId" value="<?=lpm_get_user()->getID();?>" type="hidden" />
+	<div id="userMenuLine">
+		<p>Добро пожаловать, <span class="user-name"><?=lpm_get_user()->getName();?></span>!</p>
+		<div id="userMenu">
+			<?php foreach (lpm_get_user_menu() as $link):?>
 			<a href="<?=$link->href;?>"><?=$link->label;?></a>
-			<? }?>
-		</nav>
-		<nav id="subMenu">
-            <?php foreach (lpm_get_sub_menu() as $link):?>
-            <a href="<?=$link->href;?>"><?=$link->label;?></a>
-            <?php endforeach;?>
-        </nav>
-		<div id="content">
-			<?php lpm_print_page_content(); ?>
+			<?php endforeach;?>
 		</div>
-        <article id="noway">
-            <div class="qtcontent">
-                <h2>ВНИМАНИЕ! Вы используете устаревший браузер или Internet Explorer</h2>
-                <p>Для работы с приложением Вам необходимо выбрать и установить любой из современных браузеров. Это бесплатно и займет всего несколько минут.</p>
-                <p>
-                  <a href="http://www.google.com/chrome" onclick="return !window.open(this.href)" class="browser chrome">Google Chrome</a>
-                  <a href="http://www.mozilla.com/firefox/" onclick="return !window.open(this.href)" class="browser firefox">Mozilla Firefox</a>
-                  <a href="http://www.apple.com/safari/download/" onclick="return !window.open(this.href)" class="browser safari">Apple Safari</a>
-                  <a href="http://www.opera.com/download/" onclick="return !window.open(this.href)" class="browser opera">Opera Browser</a>
-                </p>       
-            </div>  
-        </article>
-		<footer>
-			<span class="copyright"><? lpm_print_copyrights(); ?></span><br/>
-			<span class="version"><? lpm_print_product_name(); ?> v.<? lpm_print_version(); ?></span>
-		</footer>
-		<div id="preloader"></div>
-		<?php
+	</div>
+	<?php endif;?>
+	<header>
+		<div id="siteLogo">
+			<a href="<?=lpm_get_site_url();?>">
+				<? lpm_print_logo_img(); ?>
+			</a>
+		</div>
+		<div id="siteTitle">
+			<h1>
+				<? lpm_print_site_title(); ?>
+			</h1>
+			<h2>
+				<? lpm_print_site_subtitle(); ?>
+			</h2>
+		</div>
+	</header>
+	<nav id="mainMenu">
+		<? foreach (lpm_get_main_menu() as $link) {?>
+		<a href="<?=$link->href;?>"><?=$link->label;?></a>
+		<? }?>
+	</nav>
+	<nav id="subMenu">
+		<?php foreach (lpm_get_sub_menu() as $link):?>
+		<a href="<?=$link->href;?>"><?=$link->label;?></a>
+		<?php endforeach;?>
+	</nav>
+	<div id="content">
+		<?php lpm_print_page_content(); ?>
+	</div>
+	<article id="noway">
+		<div class="qtcontent">
+			<h2>ВНИМАНИЕ! Вы используете устаревший браузер или Internet Explorer</h2>
+			<p>Для работы с приложением Вам необходимо выбрать и установить любой из современных браузеров. Это
+				бесплатно и займет всего несколько минут.</p>
+			<p>
+				<a href="http://www.google.com/chrome" onclick="return !window.open(this.href)"
+					class="browser chrome">Google Chrome</a>
+				<a href="http://www.mozilla.com/firefox/" onclick="return !window.open(this.href)"
+					class="browser firefox">Mozilla Firefox</a>
+				<a href="http://www.apple.com/safari/download/" onclick="return !window.open(this.href)"
+					class="browser safari">Apple Safari</a>
+				<a href="http://www.opera.com/download/" onclick="return !window.open(this.href)"
+					class="browser opera">Opera Browser</a>
+			</p>
+		</div>
+	</article>
+	<footer>
+		<span class="copyright">
+			<?php lpm_print_copyrights(); ?></span><br />
+		<span class="version">
+			<?php lpm_print_product_name(); ?> v.
+			<?php lpm_print_version(); ?></span>
+	</footer>
+	<div id="preloader"></div>
+	<?php
 			$errors = lpm_get_errors();
 			if (!empty($errors)):
 		?>
-		<script type="text/javascript">
-		<?php foreach ($errors as $error): ?>	
+	<script type="text/javascript">
+		<? foreach($errors as $error) : ?>
 			showError("<?=addslashes($error);?>");
-		<?php endforeach; ?>
-		</script>
-		<?php endif; ?>
-		<div id="templates" class="display:none">
-			<div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+		<? endforeach; ?>
+	</script>
+	<?php endif; ?>
+	<div id="templates" class="display:none">
+		<div class="lds-spinner">
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
 		</div>
-	</body>
+	</div>
+</body>
+
 </html>

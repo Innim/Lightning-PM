@@ -34,9 +34,9 @@ $isModerator = lpm_is_moderator();
                 <input type="hidden" name="userId" value="<?=$user->userId;?>" />
                 <button id="unlocked-btn" onclick="usersPage.lockUser(event);">Разблокировать</button>
                 <button id="locked-btn" onclick="usersPage.lockUser(event);">Заблокировать</button>
-            </td>            
+            </td>
             <?php endif; ?>
-        </tr>           
+        </tr>
         <?php endforeach; ?>
     </tbody>
 </table>
