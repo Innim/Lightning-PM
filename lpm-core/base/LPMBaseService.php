@@ -29,6 +29,13 @@ class LPMBaseService extends SecureService
     
         return $this->_auth->isLogin();
     }
+
+    protected function extract2Answer($data)
+    {
+        foreach ($data as $key => $value) {
+            $this->add2Answer($key, $value);
+        }
+    }
     
     protected function errorDBSave()
     {
@@ -118,6 +125,7 @@ class LPMBaseService extends SecureService
         return $user->checkRole($reqRole);
     }
     
+    // TODO: выпилить из base сервиса
     protected function addComment($instanceType, $instanceId, $text)
     {
         if (!$user = $this->getUser()) {
