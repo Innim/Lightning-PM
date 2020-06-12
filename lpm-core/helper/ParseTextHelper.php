@@ -16,68 +16,8 @@ class ParseTextHelper
      */
     public static function parseVideoLinks($html)
     {
-        $preg = [
-            // YouTube
-            "(?:youtube.)\w{2,4}\/(?:watch\?v=)",
-            //Youtu.be
-            ":?youtu.be",
-            // Droplr
-            "d.pr\/v\/",
-            // Innim owncloud
-            "cloud.innim.ru\/index.php\/s\/"
-        ];
-
-        $pattern = "/(" . implode("|", $preg) . ")(\S*)\"/";
-        preg_match_all($pattern, $html, $video);
-        #preg_match_all("/(?:youtube.)\w{2,4}\/(?:watch\?v=)(\S*)\"|(?:d.pr\/v\/)(\S*)\"/", $this->getDesc() , $video);
-        $list = array();
-
-        foreach ($video[0] as $key => $value) {
-            $urlPrefix = $video[1][$key];
-            $videoUid = $video[2][$key];
-            $type = 'video';
-            $url = null;
-
-            if (strpos($urlPrefix, 'youtube') === 0) {
-                $uidParts = explode('&', $videoUid);
-
-                // Это YouTube
-                $type = 'youtube';
-                $url = "http://www.youtube.com/embed/" .  (!empty($uidParts) ? $uidParts[0] : '');
-            } elseif (strpos($urlPrefix, 'youtu.be') === 0) {
-                // Это YouTu.be
-                $type = 'youtube';
-                $url = "http://www.youtube.com/embed/" . $videoUid;
-            } elseif (strpos($urlPrefix, 'd.pr') === 0) {
-                // Это Droplr
-                // $url = "http://d.pr/v/" . $videoUid . "+";
-                $url = "http://" . $urlPrefix . $videoUid . "+";
-            } else {
-                // Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
-                $url = "https://" . $urlPrefix . $videoUid . "/download";
-                $prev = stream_context_get_options(stream_context_get_default());
-                // Устаналиваем таймаут поменьше
-                // TODO: вообще желательно бы перенести на клиент
-                stream_context_set_default([
-                    'http' => [
-                        'timeout' => 2, // seconds
-                    ]
-                ]);
-                $header = @get_headers($url, 1);
-                stream_context_set_default($prev);
-
-                if (empty($header) || !isset($header['Content-Type']) ||
-                    strpos($header['Content-Type'], 'video/') !== 0) {
-                    $url = null;
-                }
-            }
-
-            if (!empty($url)) {
-                $list[] = (object) compact('type', 'url');
-            }
-        }
-
-        return $list;
+        $pattern = AttachmentVideoHelper::getPattern(null, '"');
+        return AttachmentVideoHelper::getVideoWith($html, $pattern);
     }
 
     /**
