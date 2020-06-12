@@ -5,18 +5,17 @@
 */
 ?>
 <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
-<p id="<?='comment_' . $comment->id?>"
-   class="delete-comment"
-   data-comment-id="<?=$comment->id?>"
-   data-user-id="<?=lpm_get_user()->getID();?>"
-   data-time="<?=$comment->date?>">Удалить</p>
+<p id="<?='comment_' . $comment->id?>" class="delete-comment" data-comment-id="<?=$comment->id?>"
+    data-user-id="<?=lpm_get_user()->getID();?>" data-time="<?=$comment->date?>">Удалить</p>
 <?php endif; ?>
-<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small"/>
+<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small" />
 <p class="author"><?=$comment->getAuthorLinkedName();?></p>
-<p class="date"><a id="<?='comment-' . $comment->id?>" class="anchor" href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
-<article class="text formatted-desc">
-    <div class="comment-text"><?=$comment->getText();?></div>
+<p class="date"><a id="<?='comment-' . $comment->id?>" class="anchor"
+        href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
+<article class="text formatted-desc block-with-attachments">
+    <div class="comment-text text-with-attachments"><?=$comment->getText();?></div>
     <!-- Заполняется JS -->
-    <ul class="merge-requests"></ul>
-    <?php lpm_print_video_list($comment->getVideoLinks()); ?>
+    <div class="attachments">
+        <ul class="merge-requests"></ul>
+    </div>
 </article>

@@ -1,0 +1,17 @@
+<?php
+/* 
+Требуются: 
+    $video - объект информации ({'type', 'url'})
+*/
+if (!empty($video)):
+?>
+<?php if ($video->type == 'youtube'): ?>
+<object width="480" height="320" class="video ytb" data="<?php echo $video->url; ?>">
+</object>
+<?php else: ?>
+<video width="480" height="320" controls preload class="video dplr">
+    <source src="<?php echo $video->url; ?>">
+</video>
+<?php endif ?>
+<?php
+endif; 

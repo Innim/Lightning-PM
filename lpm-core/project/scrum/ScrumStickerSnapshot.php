@@ -2,7 +2,8 @@
 /**
  * Архив scrum досок.
  */
-class ScrumStickerSnapshot extends LPMBaseObject {
+class ScrumStickerSnapshot extends LPMBaseObject
+{
     /**
      * Загружает список снепшотов по идентификатору проекта (вначале новые).
      * @param int $projectId
@@ -10,8 +11,9 @@ class ScrumStickerSnapshot extends LPMBaseObject {
      * @throws DBException
      * @throws Exception
      */
-	public static function loadList($projectId) {
-		$db = self::getDB();
+    public static function loadList($projectId)
+    {
+        $db = self::getDB();
         $projectId = (int) $projectId;
 
         // TODO: нужно ли ограничить как-то?
@@ -21,8 +23,8 @@ class ScrumStickerSnapshot extends LPMBaseObject {
         ORDER BY `%1\$s`.`created` DESC
 SQL;
 
-		return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
-	}
+        return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
+    }
 
     /**
      * Загружает список снепшотов по идентификатору проекта (вначале новые).
@@ -32,7 +34,8 @@ SQL;
      * @throws DBException
      * @throws Exception
      */
-    public static function loadListByDate($createFrom, $createdTo) {
+    public static function loadListByDate($createFrom, $createdTo)
+    {
         $db = self::getDB();
 
         $dateWhere = self::whereBetween('created', $createFrom, $createdTo);
@@ -41,11 +44,12 @@ SQL;
         ORDER BY `%1\$s`.`created` DESC, `%1\$s`.`pid` DESC
 SQL;
 
-// echo $db->sprintft([$sql, LPMTables::SCRUM_SNAPSHOT_LIST]);
+        // echo $db->sprintft([$sql, LPMTables::SCRUM_SNAPSHOT_LIST]);
         return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
     }
 
-    private static function whereBetween($field, $dateFrom, $dateTo) {
+    private static function whereBetween($field, $dateFrom, $dateTo)
+    {
         $from = DateTimeUtils::mysqlDate($dateFrom, false) . ' 00:00:00';
         $to = DateTimeUtils::mysqlDate($dateTo, false) . ' 23:59:59';
         return '`' . $field . '` BETWEEN STR_TO_DATE(\'' . $from . '\', \'%%Y-%%m-%%d %%H:%%i:%%s\') ' .
@@ -60,7 +64,8 @@ SQL;
      * @throws DBException
      * @throws Exception
      */
-    public static function loadSnapshot($projectId, $idInProject) {
+    public static function loadSnapshot($projectId, $idInProject)
+    {
         $db = self::getDB();
         $projectId = (int) $projectId;
         $idInProject = (int) $idInProject;
@@ -74,23 +79,25 @@ SQL;
         return empty($list) ? null : $list[0];
     }
 
-	/**
-	 * Создает snapshot по текущему состоянию доски для переданного проекта.
+    /**
+     * Создает snapshot по текущему состоянию доски для переданного проекта.
      * @param int $projectId
      * @param $userId
      * @throws Exception
      */
-	public static function createSnapshot($projectId, $userId) {
-		// получаем список всех стикеров на текущей доске
-		$stickers = ScrumSticker::loadList($projectId);
+    public static function createSnapshot($projectId, $userId)
+    {
+        // получаем список всех стикеров на текущей доске
+        $stickers = ScrumSticker::loadList($projectId);
 
         // Проверяем, что для всех задач в тесте/готово указаны все SP по участникам
         $membersSpByIssueId = [];
         $startedUnixtime = null;
         foreach ($stickers as $sticker) {
             if (!empty($sticker->added)) {
-                if (empty($startedUnixtime) || $startedUnixtime > $sticker->added)
+                if (empty($startedUnixtime) || $startedUnixtime > $sticker->added) {
                     $startedUnixtime = $sticker->added;
+                }
             }
 
             if ($sticker->isDone() || $sticker->isTesting()) {
@@ -116,10 +123,10 @@ SQL;
         }
 
         // Готовимся делать снимок
-		$pid = $projectId;
-		$created = DateTimeUtils::mysqlDate();
+        $pid = $projectId;
+        $created = DateTimeUtils::mysqlDate();
         $started = empty($startedUnixtime) ? $created : DateTimeUtils::mysqlDate($startedUnixtime);
-		$creatorId = $userId;
+        $creatorId = $userId;
         $db = self::getDB();
 
         try {
@@ -136,8 +143,9 @@ SQL;
 SQL;
 
             // если что-то пошло не так
-            if (!$db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST))
+            if (!$db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)) {
                 throw new DBException($db, "Ошибка при сохранении нового снепшота");
+            }
 
             $sid = $db->insert_id;
 
@@ -149,8 +157,9 @@ SQL;
 SQL;
 
             // подготавливаем запрос для вставки данных о стикерах снепшота
-            if (!$prepare = $db->preparet($sql, LPMTables::SCRUM_SNAPSHOT))
+            if (!$prepare = $db->preparet($sql, LPMTables::SCRUM_SNAPSHOT)) {
                 throw new DBException($db, "Ошибка при подготовке запроса.");
+            }
 
             $added = false;
 
@@ -171,26 +180,38 @@ SQL;
                 $issueMembersSP = json_encode($membersSpList);
                 $issuePriority = $issue->priority;
 
-                $prepare->bind_param('sddsissi', $addedDate, $issueUid, $issuePid, $issueName,
-                    $issueState, $issueSP, $issueMembersSP, $issuePriority);
+                $prepare->bind_param(
+                    'sddsissi',
+                    $addedDate,
+                    $issueUid,
+                    $issuePid,
+                    $issueName,
+                    $issueState,
+                    $issueSP,
+                    $issueMembersSP,
+                    $issuePriority
+                );
 
-                if (!$prepare->execute())
+                if (!$prepare->execute()) {
                     throw new Exception("Ошибка при вставке данных стикера.");
+                }
 
                 $members = $issue->getMemberIds();
 
                 $insertId = $prepare->insert_id;
 
                 if (count($members) > 0) {
-                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $insertId, $issue->getMemberIds()))
+                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $insertId, $issue->getMemberIds())) {
                         throw new Exception("Ошибка при сохранении участников.");
+                    }
                 }
 
                 $testers = $issue->getTesterIds();
 
                 if (count($testers) > 0) {
-                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $insertId, $testers))
+                    if (!Member::saveMembers(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $insertId, $testers)) {
                         throw new Exception("Ошибка при сохранении тестеров.");
+                    }
                 }
 
                 $added = true;
@@ -212,7 +233,7 @@ SQL;
 
             throw $ex;
         }
-	}
+    }
 
     /**
      * Возвращает номер последнего снепшота в архиве.
@@ -220,11 +241,12 @@ SQL;
      * @return int Номер последнего снепшота в проекте или 0 - если еще не было снимков.
      * @throws Exception В случае, если произошла ошибка при запросе к БД.
      */
-    public static function getLastSnapshotId($projectId) {
+    public static function getLastSnapshotId($projectId)
+    {
         $db = self::getDB();
         $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
             "WHERE `pid` = '" . $projectId . "'";
-        if (!$query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)){
+        if (!$query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)) {
             throw new Exception("Ошибка доступа к базе при получении идентификатора снепшота в проекте!");
         }
 
@@ -236,21 +258,21 @@ SQL;
         }
     }
 
-	/**
-	 * Идентификатор snapshot-а.
-	 * @var int
-	 */
-	public $id;
+    /**
+     * Идентификатор snapshot-а.
+     * @var int
+     */
+    public $id;
     /**
      * Порядковый номер снепшота по проекту.
      * @var int
      */
     public $idInProject = 0;
-	/**
-	 * Идентификатор проекта, для которого сделан snapshot.
-	 * @var int
-	 */
-	public $pid;
+    /**
+     * Идентификатор проекта, для которого сделан snapshot.
+     * @var int
+     */
+    public $pid;
     /**
      * Дата начала спринта.
      * @var
@@ -261,30 +283,32 @@ SQL;
      * @var
      */
     public $created;
-	/**
-	 * Идентификатор пользователя, создавшего snapshot.
-	 * @var
-	 */
-	public $creatorId;
+    /**
+     * Идентификатор пользователя, создавшего snapshot.
+     * @var
+     */
+    public $creatorId;
 
-	private $_creator;
-	private $_stickers;
+    private $_creator;
+    private $_stickers;
     private $_members;
 
-	function __construct($id = 0) {
-		parent::__construct();
+    public function __construct($id = 0)
+    {
+        parent::__construct();
 
-		$this->id = $id;
+        $this->id = $id;
 
-		$this->_typeConverter->addFloatVars('id', 'idInProject', 'pid', 'creatorId');
-		$this->addDateTimeFields('started', 'created');
-	}
+        $this->_typeConverter->addFloatVars('id', 'idInProject', 'pid', 'creatorId');
+        $this->addDateTimeFields('started', 'created');
+    }
 
     /**
      * Возвращает порядковый номер снепшота по проекту.
      * @return int
      */
-    public function getIdInProject(){
+    public function getIdInProject()
+    {
         return $this->idInProject;
     }
 
@@ -292,7 +316,8 @@ SQL;
      * Путь до просмотра снепшота
      * @return string
      */
-	public function getSnapshotUrl() {
+    public function getSnapshotUrl()
+    {
         $curPage = LightningEngine::getInstance()->getCurrentPage();
         return $curPage->getBaseUrl(ProjectPage::PUID_SCRUM_BOARD_SNAPSHOT, $this->idInProject);
     }
@@ -300,7 +325,8 @@ SQL;
     /**
      * Путь до списка снепшотов
      */
-    public function getUrl() {
+    public function getUrl()
+    {
         $curPage = LightningEngine::getInstance()->getCurrentPage();
         return $curPage->getBaseUrl(ProjectPage::PUID_SCRUM_BOARD_SNAPSHOT);
     }
@@ -308,29 +334,36 @@ SQL;
     /**
      * URL статистики спринта.
      */
-    public function getStatUrl() {
+    public function getStatUrl()
+    {
         $curPage = LightningEngine::getInstance()->getCurrentPage();
         return $curPage->getBaseUrl(ProjectPage::PUID_SPRINT_STAT, $this->idInProject);
     }
 
-    public function getCreateDate() {
+    public function getCreateDate()
+    {
         return self::getDateStr($this->created);
     }
 
-    public function getCreatorShortName() {
-        if ($this->_creator === null)
+    public function getCreatorShortName()
+    {
+        if ($this->_creator === null) {
             $this->_creator = User::load($this->creatorId);
+        }
 
         return $this->_creator->getShortName();
     }
 
-    public function getStickers() {
-        if ($this->_stickers === null)
+    public function getStickers()
+    {
+        if ($this->_stickers === null) {
             $this->_stickers = ScrumStickerSnapshotItem::loadList($this->id);
+        }
         return $this->_stickers;
     }
 
-    public function getNumStickers() {
+    public function getNumStickers()
+    {
         return count($this->getStickers());
     }
 
@@ -339,7 +372,8 @@ SQL;
      * Участниками считаются все, кто назначен в качестве исполнителя хотя бы одной задаче.
      * @return Member[]
      */
-    public function getMembers() {
+    public function getMembers()
+    {
         if ($this->_members === null) {
             $this->_members = [];
             $membersMap = [];
@@ -362,17 +396,20 @@ SQL;
      * (считается что участвовал, если на него была поставлена хотья бы одна задача)
      * @return bool
      */
-    public function hasMembers($userId) {
+    public function hasMembers($userId)
+    {
         $list = $this->getMembers();
         foreach ($list as $member) {
-            if ($member->userId == $userId)
+            if ($member->userId == $userId) {
                 return true;
+            }
         }
 
         return false;
     }
 
-    public function getNumSp() {
+    public function getNumSp()
+    {
         return $this->countSp();
     }
 
@@ -381,38 +418,44 @@ SQL;
      * Сделанными считаются задачи в Готово и Тестировании.
      * @return int
      */
-    public function getDoneSp() {
+    public function getDoneSp()
+    {
         return $this->countSp(function ($sticker) {
-            return ($sticker->issue_state == ScrumStickerState::TESTING || 
+            return ($sticker->issue_state == ScrumStickerState::TESTING ||
                     $sticker->issue_state == ScrumStickerState::DONE);
         });
     }
 
-    public function getMemberSP($userId, $stickerState) {
+    public function getMemberSP($userId, $stickerState)
+    {
         return $this->countMemberSp($userId, function ($sticker) use ($stickerState) {
             return $sticker->issue_state == $stickerState;
         });
     }
 
-    public function getMemberDoneSP($userId) {
+    public function getMemberDoneSP($userId)
+    {
         return $this->countMemberSp($userId, function ($sticker) {
-            return ($sticker->issue_state == ScrumStickerState::TESTING || 
+            return ($sticker->issue_state == ScrumStickerState::TESTING ||
                     $sticker->issue_state == ScrumStickerState::DONE);
         });
     }
 
-    private function countSp($filterCallback = null, $getSpCallback = null) {
+    private function countSp($filterCallback = null, $getSpCallback = null)
+    {
         $count = 0;
         $stickers = $this->getStickers();
         foreach ($stickers as $sticker) {
-            if ($filterCallback == null || $filterCallback($sticker))
+            if ($filterCallback == null || $filterCallback($sticker)) {
                 $count += $getSpCallback == null ? $sticker->issue_sp : $getSpCallback($sticker);
+            }
         }
 
         return $count;
     }
 
-    private function countMemberSp($userId, $filterCallback = null) {
+    private function countMemberSp($userId, $filterCallback = null)
+    {
         return $this->countSp(function ($sticker) use ($userId, $filterCallback) {
             return $sticker->isMember($userId) &&
                 ($filterCallback == null || $filterCallback($sticker));

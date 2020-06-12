@@ -7,7 +7,8 @@
  * @copyright (c) Innim LLC 2017
  * @author ChessMax (www.chessmax.ru)
  */
-class LPMInstanceTypes {
+class LPMInstanceTypes
+{
     /**
      * Instance тип задачи.
      * @var int
@@ -41,4 +42,3 @@ class LPMInstanceTypes {
      */
     const TESTER_FOR_PROJECT = 6;
 }
-?>

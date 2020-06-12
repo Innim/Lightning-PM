@@ -1,13 +1,12 @@
 $(document).ready(
-    function ()
-    {
-        $( '#issueView .comments form.add-comment' ).hide();
-                
+    function () {
+        $('#issueView .comments form.add-comment').hide();
+
         states.addState($("#profileInfo"), '', profilePage.onShowInfo);
         states.addState($("#changePass"), 'changepass', profilePage.onChangePass);
         //states.addState( $("#" ), 'edit', profilePage. );
-        states.addState( $("#userSettings" ), 'settings', profilePage.onShowSettings );
-                
+        states.addState($("#userSettings"), 'settings', profilePage.onShowSettings);
+
         states.updateView();
     }
 
@@ -33,12 +32,12 @@ profilePage.changePass = function () {
     return false;
 }
 
-profilePage.onShowInfo = function() {
-    $( '#profilePanel > h3' ).text( 'Информация' );
+profilePage.onShowInfo = function () {
+    $('#profilePanel > h3').text('Информация');
 };
 
-profilePage.onShowSettings = function() {
-    $( '#profilePanel > h3' ).text( 'Настройки' );
+profilePage.onShowSettings = function () {
+    $('#profilePanel > h3').text('Настройки');
 };
 
 profilePage.onChangePass = function () {
@@ -93,44 +92,44 @@ profilePage.saveNewPass = function () {
 
 }
 
-profilePage.saveEmailPref = function () {            
+profilePage.saveEmailPref = function () {
     preloader.show();
 
-    srv.profile.emailPref( 
-        $( "#userSettings form input[name=seAddIssue]" ).is(':checked'), 
-        $( "#userSettings form input[name=seEditIssue]" ).is(':checked'), 
-        $( "#userSettings form input[name=seIssueState]" ).is(':checked'), 
-        $( "#userSettings form input[name=seIssueComment]" ).is(':checked'),     
+    srv.profile.emailPref(
+        $("#userSettings form input[name=seAddIssue]").is(':checked'),
+        $("#userSettings form input[name=seEditIssue]").is(':checked'),
+        $("#userSettings form input[name=seIssueState]").is(':checked'),
+        $("#userSettings form input[name=seIssueComment]").is(':checked'),
         function (res) {
             //btn.disabled = false;
             preloader.hide();
             if (res.success) {
-                if ($( "#userSettings form input[name=seAddIssue]" ).is(':checked'))
-                    $( "#userSettings form input[name=seAddIssue]" ).attr('checked', 'checked');
+                if ($("#userSettings form input[name=seAddIssue]").is(':checked'))
+                    $("#userSettings form input[name=seAddIssue]").attr('checked', 'checked');
                 else
-                    $( "#userSettings form input[name=seAddIssue]" ).removeAttr('checked');
-                
-                if ($( "#userSettings form input[name=seEditIssue]" ).is(':checked'))
-                    $( "#userSettings form input[name=seEditIssue]" ).attr('checked', 'checked');
+                    $("#userSettings form input[name=seAddIssue]").removeAttr('checked');
+
+                if ($("#userSettings form input[name=seEditIssue]").is(':checked'))
+                    $("#userSettings form input[name=seEditIssue]").attr('checked', 'checked');
                 else
-                    $( "#userSettings form input[name=seEditIssue]" ).removeAttr('checked');
-                
-                if ($( "#userSettings form input[name=seIssueState]" ).is(':checked'))
-                    $( "#userSettings form input[name=seIssueState]" ).attr('checked', 'checked');
+                    $("#userSettings form input[name=seEditIssue]").removeAttr('checked');
+
+                if ($("#userSettings form input[name=seIssueState]").is(':checked'))
+                    $("#userSettings form input[name=seIssueState]").attr('checked', 'checked');
                 else
-                    $( "#userSettings form input[name=seIssueState]" ).removeAttr('checked');
-               
-                if ($( "#userSettings form input[name=seIssueComment]" ).is(':checked'))
-                    $( "#userSettings form input[name=seIssueComment]" ).attr('checked', 'checked');
+                    $("#userSettings form input[name=seIssueState]").removeAttr('checked');
+
+                if ($("#userSettings form input[name=seIssueComment]").is(':checked'))
+                    $("#userSettings form input[name=seIssueComment]").attr('checked', 'checked');
                 else
-                    $( "#userSettings form input[name=seIssueComment]" ).removeAttr('checked');
-                
-                messages.info( 'Сохранено' );
+                    $("#userSettings form input[name=seIssueComment]").removeAttr('checked');
+
+                messages.info('Сохранено');
             } else {
-                srv.err( res );
-                $( "#userSettings form button[type=submit]" ).click();
+                srv.err(res);
+                $("#userSettings form button[type=submit]").click();
             }
-        }  
+        }
     );
     return false;
 };

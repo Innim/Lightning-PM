@@ -1,65 +1,79 @@
 <?php
 /**
- * Базовый менеджер. 
+ * Базовый менеджер.
  * Менеджер должен выбирать данные из базы и обновлять их там
  */
 abstract class BaseManager extends LPMBaseObject
 {
-	function __construct() {
-		parent::__construct();
-	}
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-	/**
-	 * Загружает список объектов
-	 * @param string|array $from
-	 * @param string|array $where = null
-	 * @param string $class = null
-	 * @param string|array $fields = null
-	 * @param int $limitCount = 0
-	 * @param int $limitStart = -1
-	 * @param string|array $tables = null
-	 * @throws Exception В случае ошибки при выолнении запроса
-	 * @throws Exception Если переданые неврные входные параметры
-	 */
-	protected function loadObjectsList( $from, $where = null, $class = null, 
-										$fields = null, $limitCount = 0, $limitStart = -1,
-										$tables = null ) 
-	{
-		if ($class !== null && is_subclass_of($class, 'StreamObject'))
-			throw new Exception('Переданный класс должен быть наследником StreamObject');
-			
+    /**
+     * Загружает список объектов
+     * @param string|array $from
+     * @param string|array $where = null
+     * @param string $class = null
+     * @param string|array $fields = null
+     * @param int $limitCount = 0
+     * @param int $limitStart = -1
+     * @param string|array $tables = null
+     * @throws Exception В случае ошибки при выолнении запроса
+     * @throws Exception Если переданые неврные входные параметры
+     */
+    protected function loadObjectsList(
+        $from,
+        $where = null,
+        $class = null,
+        $fields = null,
+        $limitCount = 0,
+        $limitStart = -1,
+        $tables = null
+    )
+    {
+        if ($class !== null && is_subclass_of($class, 'StreamObject')) {
+            throw new Exception('Переданный класс должен быть наследником StreamObject');
+        }
+            
 
-		$sql  =  array();
+        $sql  =  array();
 
-		if ($fields === null) $fields = '*';
+        if ($fields === null) {
+            $fields = '*';
+        }
 
-		$sql['SELECT'] = $fields;
-		$sql['FROM'] = $from;
+        $sql['SELECT'] = $fields;
+        $sql['FROM'] = $from;
 
-		if ($where !== null) $sql['WHERE'] = $where;
-		if ($limitCount > 0) {
-			$sql['LIMIT'] = $limitCount;
-			if ($limitStart > 0)
-				$sql['LIMIT'] = $limitStart . ',' . $sql['LIMIT'];
-		}
+        if ($where !== null) {
+            $sql['WHERE'] = $where;
+        }
+        if ($limitCount > 0) {
+            $sql['LIMIT'] = $limitCount;
+            if ($limitStart > 0) {
+                $sql['LIMIT'] = $limitStart . ',' . $sql['LIMIT'];
+            }
+        }
 
-		$query = $this->_db->queryb( $sql, $tables );
+        $query = $this->_db->queryb($sql, $tables);
 
-		if (!$query) throw new Exception('Ошибка при выполнении запроса к БД');
-		
-		$list = array();
+        if (!$query) {
+            throw new Exception('Ошибка при выполнении запроса к БД');
+        }
+        
+        $list = array();
 
-		while ($row = $query->fetch_assoc()) {
-			if ($class === null) {
-				$list[] = $row;
-			} else {
-				$obj = new $class();
-				$obj->loadStream( $row );
-				$list[] = $obj;
-			}
-		}
+        while ($row = $query->fetch_assoc()) {
+            if ($class === null) {
+                $list[] = $row;
+            } else {
+                $obj = new $class();
+                $obj->loadStream($row);
+                $list[] = $obj;
+            }
+        }
 
-		return $list;		
-	}
+        return $list;
+    }
 }
-?>

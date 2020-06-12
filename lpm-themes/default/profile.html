@@ -1,86 +1,100 @@
-<article id="profileView">  
-  <h1><?lpm_print_header();?></h1>
-  <article id="profilePanel" class="container">
-    <?$user = lpm_get_user();?>
-    <h3><?=$user->getName();?></h3>
-    <ul class="panel-submenu">
-        <li><a href="#" onclick="return profilePage.showInfo();">Информация</a></li><!-- 
+<article id="profileView">
+    <h1>
+        <?lpm_print_header();?>
+    </h1>
+    <article id="profilePanel" class="container">
+        <?$user = lpm_get_user();?>
+        <h3><?=$user->getName();?></h3>
+        <ul class="panel-submenu">
+            <li><a href="#" onclick="return profilePage.showInfo();">Информация</a></li>
+            <!-- 
         <li><a href="#" onclick="return false;">Изменить</a></li> -->
-        <li><a href="#" onclick="return profilePage.changePass();">Сменить пароль</a></li>
-        <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li>
-    </ul>
-    <ol id="profileInfo" class="info-list">
-        <li class="info-list-item">
-            <span class="label">Имя</span>
-            <span class="value"><?=$user->firstName;?></span>
-        </li>
-        <li class="info-list-item">
-            <span class="label">Фамилия</span>
-            <span class="value"><?=$user->lastName;?></span>
-        </li>
-        <li class="info-list-item">
-            <span class="label">Ник</span>
-            <span class="value"><?=$user->nick;?></span>
-        </li> 
-        <li class="info-list-item">
-            <span class="label">Регистрация</span>
-            <span class="value"><?=$user->getRegDate();?></span>
-        </li>
-    </ol>
-    
-    <article id="changePass" class="hidden-state">
-        <div class="validateError"></div>
-        
-        <form method="post" action="" onsubmit="profilePage.saveNewPass(); return false;">  
-            <div class="info-message"></div>          
-            <ol class="form-fields">
-                <li>
-                    <!-- <label for="curentPass">Текущий пароль</label> -->
-                    <input id="curentPass" placeholder="Текущий пароль" type="password" name="curentPass" maxlength="24" required/>
-                </li>
-                <li>
-                    <!-- <label for="newPass">Новый пароль</label> -->
-                    <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24" required/>
-                </li>
-                <li>
-                    <!-- <label for="repeatPass">Подтвержение пароля</label> -->
-                    <input id="repeatPass" placeholder="Подтвержение пароля" type="password" name="repeatPass" maxlength="24" required/>
-                </li>
-            </ol>
-            <p class="save-line">
-                <button type="submit">Сохранить</button>
-            </p>
-        </form>
-    </article>     
+            <li><a href="#" onclick="return profilePage.changePass();">Сменить пароль</a></li>
+            <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li>
+        </ul>
+        <ol id="profileInfo" class="info-list">
+            <li class="info-list-item">
+                <span class="label">Имя</span>
+                <span class="value"><?=$user->firstName;?></span>
+            </li>
+            <li class="info-list-item">
+                <span class="label">Фамилия</span>
+                <span class="value"><?=$user->lastName;?></span>
+            </li>
+            <li class="info-list-item">
+                <span class="label">Ник</span>
+                <span class="value"><?=$user->nick;?></span>
+            </li>
+            <li class="info-list-item">
+                <span class="label">Регистрация</span>
+                <span class="value"><?=$user->getRegDate();?></span>
+            </li>
+        </ol>
 
-    <article id="userSettings" class="hidden-state">
-        <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
-            <h4>Настройки оповещений по email</h4>
-            <div class="info-message"></div>
-            <ol class="form-fields">
-                <li>
-                    <input id="seAddIssue" name="seAddIssue" type="checkbox" <?if($user->pref->seAddIssue){?>checked="checked"<?}?>/>
-                    <label for="seAddIssue">Добавление задачи для меня</label>                    
-                </li>
-                <li>
-                    <input id="seEditIssue" name="seEditIssue" type="checkbox" <?if($user->pref->seEditIssue){?>checked="checked"<?}?>/>
-                    <label for="seEditIssue">Изменение задачи, в которой я участвую</label>                    
-                </li>
-                <li>
-                    <input id="seIssueState" name="seIssueState" type="checkbox" <?if($user->pref->seIssueState){?>checked="checked"<?}?>/>
-                    <label for="seIssueState">Изменение статуса, удаление задачи, в которой я участвую</label>
-                </li>
-                <li>
-                    <input id="seIssueComment" name="seIssueComment" type="checkbox" <?if($user->pref->seIssueComment){?>checked="checked"<?}?>/>
-                    <label for="seIssueComment">Добавление комментария к задаче, в которой я участвую</label>
-                </li>
-            </ol>
-            <input type="hidden" name="form" value="emailPref"/>
-            <p class="save-line">
-                <button type="submit">Сохранить</button>
-                <button type="reset">Отмена</button>
-            </p>
-        </form>
+        <article id="changePass" class="hidden-state">
+            <div class="validateError"></div>
+
+            <form method="post" action="" onsubmit="profilePage.saveNewPass(); return false;">
+                <div class="info-message"></div>
+                <ol class="form-fields">
+                    <li>
+                        <!-- <label for="curentPass">Текущий пароль</label> -->
+                        <input id="curentPass" placeholder="Текущий пароль" type="password" name="curentPass"
+                            maxlength="24" required />
+                    </li>
+                    <li>
+                        <!-- <label for="newPass">Новый пароль</label> -->
+                        <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24"
+                            required />
+                    </li>
+                    <li>
+                        <!-- <label for="repeatPass">Подтвержение пароля</label> -->
+                        <input id="repeatPass" placeholder="Подтвержение пароля" type="password" name="repeatPass"
+                            maxlength="24" required />
+                    </li>
+                </ol>
+                <p class="save-line">
+                    <button type="submit">Сохранить</button>
+                </p>
+            </form>
+        </article>
+
+        <article id="userSettings" class="hidden-state">
+            <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
+                <h4>Настройки оповещений по email</h4>
+                <div class="info-message"></div>
+                <ol class="form-fields">
+                    <li>
+                        <input id="seAddIssue" name="seAddIssue" type="checkbox"
+                            <?if($user->pref->seAddIssue){?>checked="checked"
+                        <?}?>/>
+                        <label for="seAddIssue">Добавление задачи для меня</label>
+                    </li>
+                    <li>
+                        <input id="seEditIssue" name="seEditIssue" type="checkbox"
+                            <?if($user->pref->seEditIssue){?>checked="checked"
+                        <?}?>/>
+                        <label for="seEditIssue">Изменение задачи, в которой я участвую</label>
+                    </li>
+                    <li>
+                        <input id="seIssueState" name="seIssueState" type="checkbox"
+                            <?if($user->pref->seIssueState){?>checked="checked"
+                        <?}?>/>
+                        <label for="seIssueState">Изменение статуса, удаление задачи, в которой я участвую</label>
+                    </li>
+                    <li>
+                        <input id="seIssueComment" name="seIssueComment" type="checkbox"
+                            <?if($user->pref->seIssueComment){?>checked="checked"
+                        <?}?>/>
+                        <label for="seIssueComment">Добавление комментария к задаче, в которой я участвую</label>
+                    </li>
+                </ol>
+                <input type="hidden" name="form" value="emailPref" />
+                <p class="save-line">
+                    <button type="submit">Сохранить</button>
+                    <button type="reset">Отмена</button>
+                </p>
+            </form>
+        </article>
     </article>
-  </article>
 </article>

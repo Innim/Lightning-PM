@@ -9,7 +9,9 @@
 */
 ?>
 <article id="users-stat">
-    <h1><?lpm_print_header();?></h1>
+	<h1>
+		<?lpm_print_header();?>
+	</h1>
 
 	<div class="user-stat-nav">
 		<?php if (isset($prevLink)):?>
@@ -19,30 +21,30 @@
 		<a href="<?=$nextLink->href;?>"><?=$nextLink->label;?> &gt;</a>
 		<?php endif;?>
 	</div>
-	
-    <h3>Статистика пользователей за <?=sprintf('%02d', $month);?>.<?=$year;?></h3>
-    
-    <table class="users-stat">
-    	<tr>
-    		<th>Участник</th>
-    		<th>SP за месяц</th>
-    		<th>Кол-во спринтов</th>
-            <th>Период</th>
-            <th>Недель</th>
-    	</tr>
-    	<?php
+
+	<h3>Статистика пользователей за <?=sprintf('%02d', $month);?>.<?=$year;?></h3>
+
+	<table class="users-stat">
+		<tr>
+			<th>Участник</th>
+			<th>SP за месяц</th>
+			<th>Кол-во спринтов</th>
+			<th>Период</th>
+			<th>Недель</th>
+		</tr>
+		<?php
 		foreach($usersStat as $userStat):
     		$doneSp = $userStat->getSP();
 		?>
-    	<tr data-done-sp="<?=$doneSp;?>">
-    		<td><?=$userStat->user->getLinkedName();?></td>
-    		<td><?=$doneSp;?></td>
-    		<td><?=$userStat->getSnapshotsCount();?></td>
-            <td><?=$userStat->getPeriod();?></td>
-            <td><?=$userStat->getWeeksCount();?></td>
-    		<!-- TODO: список снапшотов -->
-    	</tr>
-    	<?php endforeach;?>
-    	
-    </table>
+		<tr data-done-sp="<?=$doneSp;?>">
+			<td><?=$userStat->user->getLinkedName();?></td>
+			<td><?=$doneSp;?></td>
+			<td><?=$userStat->getSnapshotsCount();?></td>
+			<td><?=$userStat->getPeriod();?></td>
+			<td><?=$userStat->getWeeksCount();?></td>
+			<!-- TODO: список снапшотов -->
+		</tr>
+		<?php endforeach;?>
+
+	</table>
 </article>

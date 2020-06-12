@@ -1,47 +1,63 @@
 <article id="workersList">
-    <h1><?lpm_print_header();?></h1>
-    <div class="dates-line">
-      <?foreach (lpm_get_date_links() as $link) {?>     
-      <?if (!$link->isCurrent()) {?><a href="<?=$link->href;?>"><?}?>
-      <?=$link->label;?>
-      <?if (!$link->isCurrent()) {?></a><?}?>&nbsp;
-      <?}?>
-    </div>
+	<h1>
+		<?lpm_print_header();?>
+	</h1>
+	<div class="dates-line">
+		<?foreach (lpm_get_date_links() as $link) {?>
+		<?if (!$link->isCurrent()) {?><a href="<?=$link->href;?>">
+			<?}?>
+			<?=$link->label;?>
+			<?if (!$link->isCurrent()) {?></a>
+		<?}?>&nbsp;
+		<?}?>
+	</div>
 	<form name="tickForm" method="post" action="">
-	<table>
-	   <? foreach (lpm_get_workers_list() as $worker) { ?>
-	  <tr>
-	    <td><?=$worker->getLinkedName();?></td>
-	    <td>    
-	      <label for="come<?=$worker->id;?>">Пришел</label>
-	      <input type="text" name="come[<?=$worker->id;?>]" id="come<?=$worker->id;?>" size="5" placeholder="ЧЧ:ММ" maxlength="5" value="<?=$worker->comingTime;?>" />
-	      <label for="leave<?=$worker->id;?>">Ушел</label>
-	      <input type="text" name="leave[<?=$worker->id;?>]" id="leave<?=$worker->id;?>" size="5" placeholder="ЧЧ:ММ" maxlength="5" value="<?=$worker->leavingTime;?>"/>       
-	      <input type="checkbox" name="lunchBreak[<?=$worker->id;?>]" id="lunchBreak<?=$worker->id;?>" value="1" <?=($worker->lunchBreak?"checked=\"checked\"":"");?>/>
-	      <label for="lunchBreak<?=$worker->id;?>">с обедом;</label>
-	      <div>
-		      <label for="away<?=$worker->id;?>">Отсутствовал (ч)</label>
-		      <input type="number" name="away[<?=$worker->id;?>]" id="away<?=$worker->id;?>" size="3" min="0" max="24" value="<?=$worker->hoursAway;?>" />
-	      </div>
-	      <div>      
-		      Опоздание: 
-		      <input type="radio" name="late[<?=$worker->id;?>]" id="no<?=$worker->id;?>" value="0" <?if ($worker->late === false) {?> checked="checked"<?}?>/><label for="no<?=$worker->id;?>">нет</label>
-		      <input type="radio" name="late[<?=$worker->id;?>]" id="yes<?=$worker->id;?>" value="1" <?if ($worker->late === true) {?> checked="checked"<?}?>/><label for="yes<?=$worker->id;?>">да</label>
-		      <input type="radio" name="late[<?=$worker->id;?>]" id="default<?=$worker->id;?>" value="-1" <?if ($worker->late == -1) {?> checked="checked"<?}?>/><label for="default<?=$worker->id;?>">по умолчанию</label>
-	      </div>         
-	    </td>
-	  </tr>
-	  <? } ?>
-	  <tr>
-	    <td colspan="2" align="right"><input name="tickWorker" type="submit" value="Сохранить" /></td>
-	  </tr>
-	</table>
+		<table>
+			<? foreach (lpm_get_workers_list() as $worker) { ?>
+			<tr>
+				<td><?=$worker->getLinkedName();?></td>
+				<td>
+					<label for="come<?=$worker->id;?>">Пришел</label>
+					<input type="text" name="come[<?=$worker->id;?>]" id="come<?=$worker->id;?>" size="5"
+						placeholder="ЧЧ:ММ" maxlength="5" value="<?=$worker->comingTime;?>" />
+					<label for="leave<?=$worker->id;?>">Ушел</label>
+					<input type="text" name="leave[<?=$worker->id;?>]" id="leave<?=$worker->id;?>" size="5"
+						placeholder="ЧЧ:ММ" maxlength="5" value="<?=$worker->leavingTime;?>" />
+					<input type="checkbox" name="lunchBreak[<?=$worker->id;?>]" id="lunchBreak<?=$worker->id;?>"
+						value="1" <?=($worker->lunchBreak?"checked=\"checked\"":"");?> />
+					<label for="lunchBreak<?=$worker->id;?>">с обедом;</label>
+					<div>
+						<label for="away<?=$worker->id;?>">Отсутствовал (ч)</label>
+						<input type="number" name="away[<?=$worker->id;?>]" id="away<?=$worker->id;?>" size="3" min="0"
+							max="24" value="<?=$worker->hoursAway;?>" />
+					</div>
+					<div>
+						Опоздание:
+						<input type="radio" name="late[<?=$worker->id;?>]" id="no<?=$worker->id;?>" value="0" <?if
+							($worker->late === false) {?> checked="checked"
+						<?}?>/><label for="no<?=$worker->id;?>">нет</label>
+						<input type="radio" name="late[<?=$worker->id;?>]" id="yes<?=$worker->id;?>" value="1" <?if
+							($worker->late === true) {?> checked="checked"
+						<?}?>/><label for="yes<?=$worker->id;?>">да</label>
+						<input type="radio" name="late[<?=$worker->id;?>]" id="default<?=$worker->id;?>" value="-1" <?if
+							($worker->late == -1) {?> checked="checked"
+						<?}?>/><label for="default<?=$worker->id;?>">по умолчанию</label>
+					</div>
+				</td>
+			</tr>
+			<? } ?>
+			<tr>
+				<td colspan="2" align="right"><input name="tickWorker" type="submit" value="Сохранить" /></td>
+			</tr>
+		</table>
 	</form>
-    <div class="dates-line">
-      <?foreach (lpm_get_date_links() as $link) {?>     
-      <?if (!$link->isCurrent()) {?><a href="<?=$link->href;?>"><?}?>
-      <?=$link->label;?>
-      <?if (!$link->isCurrent()) {?></a><?}?>&nbsp;
-      <?}?>
-    </div>
+	<div class="dates-line">
+		<?foreach (lpm_get_date_links() as $link) {?>
+		<?if (!$link->isCurrent()) {?><a href="<?=$link->href;?>">
+			<?}?>
+			<?=$link->label;?>
+			<?if (!$link->isCurrent()) {?></a>
+		<?}?>&nbsp;
+		<?}?>
+	</div>
 </article>

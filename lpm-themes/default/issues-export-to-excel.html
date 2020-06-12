@@ -2,9 +2,11 @@
 	<form id="issuesExportForm" action="." onsubmit="issuesExport2Excel.export(); return false">
 		<p>Экспортировать задачи, завершенные в период</p>
 		<label for="exportStartDate">с</label>
-		<input id="exportStartDate" name="fromDate" type="date" value="<?=date('Y-m-d', strtotime('first day of last month'));?>">
+		<input id="exportStartDate" name="fromDate" type="date"
+			value="<?=date('Y-m-d', strtotime('first day of last month'));?>">
 		<label for="exportEndDate">по</label>
-		<input id="exportEndDate" name="toDate" type="date" value="<?=date('Y-m-d', strtotime('last day of last month'));?>">
+		<input id="exportEndDate" name="toDate" type="date"
+			value="<?=date('Y-m-d', strtotime('last day of last month'));?>">
 		<div class="buttons-line">
 			<button type="submit">Экспорт</button>
 		</div>

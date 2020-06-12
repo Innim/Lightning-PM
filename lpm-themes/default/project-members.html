@@ -21,11 +21,13 @@ if (!empty($memberByDefaultId)) {
     }
 }
 ?>
-<article  id="projectMembers">
-    <h1><?lpm_print_header();?></h1>
+<article id="projectMembers">
+    <h1>
+        <?lpm_print_header();?>
+    </h1>
     <div class="info-message" style="display: none;">Сохранено</div>
     <h3>Участники проекта</h3>
-    <input type="hidden" name="projectId" value="<?=$project->getID();?>"/>
+    <input type="hidden" name="projectId" value="<?=$project->getID();?>" />
     <ul class="users-list">
         <?php foreach ($projectMembers as $member): ?>
         <li>
@@ -40,7 +42,7 @@ if (!empty($memberByDefaultId)) {
     <!-- Выбор мастера проекта // Начало -->
     <h3 class="headersProjectsMembers">Мастер проекта</h3>
     <div id="projectMaster" class="project-members-selector">
-    <?php
+        <?php
         $master = $project->getMaster();
         if (!empty($master)): 
     ?>
@@ -60,7 +62,7 @@ if (!empty($memberByDefaultId)) {
             </select>
             <button id="saveMaster" type="button">Подтвердить</button>
         </form>
-    <?php endif; ?>
+        <?php endif; ?>
     </div>
 
     <!-- Выбор мастера проекта // Конец -->
@@ -80,7 +82,7 @@ if (!empty($memberByDefaultId)) {
                 <option value="0">Исполнитель не выбран</option>
 
                 <?php foreach ($projectMembers as $member): ?>
-                <option class="user-name" value=" <?=$member->getID();?> " ><?=$member->getLinkedName();?></option>
+                <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
                 <?php endforeach; ?>
             </select>
             <button id="btnSelectMember" type="submit">Подтвердить</button>
@@ -93,9 +95,9 @@ if (!empty($memberByDefaultId)) {
     <!-- Выбор Тестировшика проекта  -->
     <h3 class="headersProjectsMembers">Тестировщик</h3>
     <div id="select-tester-option" class="project-members-selector">
-    <?php if(!empty($projectTester)): ?>
+        <?php if(!empty($projectTester)): ?>
         <ul>
-            <li id="NameTester" value="<?=$projectTester->getName();?>" >
+            <li id="NameTester" value="<?=$projectTester->getName();?>">
                 <?=$projectTester->getName();?>
                 <a href="javascript:;" id="removeTester" class="remove-link">Удалить</a>
             </li>
@@ -105,13 +107,13 @@ if (!empty($memberByDefaultId)) {
             <select id="selectTester">
                 <option value="0">Тестер не выбран</option>
 
-            <?php foreach ($projectMembers as $member): ?>
+                <?php foreach ($projectMembers as $member): ?>
                 <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
             </select>
             <button id="btnSelect" type="button">Подтвердить</button>
         </form>
-    <?php endif; ?>
+        <?php endif; ?>
     </div>
     <?lpm_print_users_chooser();?>
 
