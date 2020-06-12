@@ -74,21 +74,20 @@ class AttachmentVideoHelper
 
             // Это YouTube
             $type = 'youtube';
-            $url = "http://www.youtube.com/embed/" .  (!empty($uidParts) ? $uidParts[0] : '');
+            $url = "https://www.youtube.com/embed/" .  (!empty($uidParts) ? $uidParts[0] : '');
         } elseif (strpos($urlPrefix, 'youtu.be') === 0) {
             // Это YouTu.be
             $type = 'youtube';
-            $url = "http://www.youtube.com/embed/" . $videoUid;
+            $url = "https://www.youtube.com/embed/" . $videoUid;
         } elseif (strpos($urlPrefix, 'd.pr') === 0) {
             // Это Droplr
             // $url = "http://d.pr/v/" . $videoUid . "+";
-            $url = "http://" . $urlPrefix . $videoUid . "+";
+            $url = "https://" . $urlPrefix . $videoUid . "+";
         } else {
             // Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
             $url = "https://" . $urlPrefix . $videoUid . "/download";
             $prev = stream_context_get_options(stream_context_get_default());
             // Устаналиваем таймаут поменьше
-            // TODO: вообще желательно бы перенести на клиент
             stream_context_set_default([
                     'http' => [
                         'timeout' => 2, // seconds
