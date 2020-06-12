@@ -95,6 +95,9 @@ let srv = {
         getMRInfo: function (url, onResult) {
             this.s._('getMRInfo');
         },
+        getVideoInfo: function (url, onResult) {
+            this.s._('getVideoInfo');
+        },
     },
     issue: {
         s: new BaseService('IssueService'),
