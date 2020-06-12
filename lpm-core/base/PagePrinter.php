@@ -109,6 +109,15 @@ class PagePrinter
     }
     
     /**
+     * Распечатывает вывод видео.
+     * @param  array $video Объект с данными ссылок на видео.
+     */
+    public static function videoItem($video)
+    {
+        PageConstructor::includePattern('entity-video-item', compact('video'));
+    }
+    
+    /**
      * Распечатывает форму экспорта задач в Excel.
      */
     public static function issuesExportToExcel()

@@ -175,6 +175,14 @@ function lpm_print_video_list($videoLinks)
 }
 
 /**
+ * Распечатывает вывод конкретного видео.
+ */
+function lpm_print_video_item($video)
+{
+    return PagePrinter::videoItem($video);
+}
+
+/**
  * Распечатывает форму экспорта задач в Excel.
  */
 function lpm_print_issues_export_to_excel()
