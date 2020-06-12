@@ -458,5 +458,9 @@ let parser = {
         let baseUrl = lpmOptions.gitlabUrl;
         return url.indexOf(baseUrl) === 0 &&
             url.indexOf(parser.urlMrSubpath) !== -1;
+    },
+    isVideoUrl: function (url) {
+        let patterns = lpmOptions.videoUrlPatterns;
+        return patterns.some((pattern, i, a) => new RegExp(pattern).test(url));
     }
 };
