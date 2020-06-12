@@ -13,17 +13,17 @@ $(document).ready(
 
 
         // BEGIN -- Настройка формы 
-        
+
         $('#issueForm .note.tags-line a.tag').click(function (e) {
             var a = $(e.currentTarget);
             insertMarker(a.data('marker'));
         });
 
-        $('#issueForm input[name=hours]').focus(function(e) {
+        $('#issueForm input[name=hours]').focus(function (e) {
             let field = $(e.currentTarget);
             if (!field.val()) {
                 var sum = 0;
-                $('#issueForm input.member-sp').each(function(i) {
+                $('#issueForm input.member-sp').each(function (i) {
                     if (sum === -1)
                         return;
 
@@ -52,13 +52,13 @@ $(document).ready(
         // Настройка формы -- END
 
         // BEGIN -- Комментарии
-              
-        $(document).on('click', '.delete-comment', function() {
+
+        $(document).on('click', '.delete-comment', function () {
             let id = $(this).attr('data-comment-id');
             let el = $(this);
             let result = confirm('Удалить комментарий?');
             if (result) {
-                issuePage.deleteComment(id, function(res) {
+                issuePage.deleteComment(id, function (res) {
                     if (res) {
                         el.parent('div.comments-list-item').remove();
                         el = null;
@@ -78,13 +78,13 @@ $(document).ready(
         }
 
         $('div.tooltip').hover(
-            function() {
+            function () {
                 $(this).find('div').clearQueue().show();
             },
-            function() {
+            function () {
                 $(this).find('div')
-                    .animate({width: 'width' + 20, height: 'height' + 20}, 150)
-                    .animate({width: 'hide', height: 'hide'}, 1);
+                    .animate({ width: 'width' + 20, height: 'height' + 20 }, 150)
+                    .animate({ width: 'hide', height: 'hide' }, 1);
             }
         )
 
@@ -94,7 +94,7 @@ $(document).ready(
 );
 
 function bindFormattingHotkeys(selector) {
-    $(selector).keypress(function(e) {
+    $(selector).keypress(function (e) {
         if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
             return;
 
@@ -142,14 +142,14 @@ function setupMembersAutoComplete(selectors) {
                         let user = list[i];
                         let name = user.nick ? user.nick : user.firstName;
 
-                        members[i] = {key: name, value: name};
+                        members[i] = { key: name, value: name };
                     }
                     cb(members);
                 }
             });
         },
     });
-    
+
     for (var i = 0; i < selectors.length; i++) {
         tribute.attach($(selectors[i]).get());
     }
@@ -202,7 +202,7 @@ issuePage.onShowAddIssue = function () {
     }
 }
 
-issuePage.addIssueLabel = function() {
+issuePage.addIssueLabel = function () {
     $("#addIssueLabelFormContainer").dialog({
         resizable: false,
         width: 400,
@@ -224,7 +224,7 @@ issuePage.addIssueLabel = function() {
                             issuePage.createLabel(label, (checked ? 0 : projectId), res.id);
                             issuePage.addLabelToName(label);
                         } else {
-                            srv.err( res );
+                            srv.err(res);
                         }
                     });
                 }
@@ -238,8 +238,8 @@ issuePage.addIssueLabel = function() {
                 $("#addIssueLabelFormContainer").dialog('close');
             }
         }],
-        open: function() {
-            $("#addIssueLabelFormContainer").keypress(function(e) {
+        open: function () {
+            $("#addIssueLabelFormContainer").keypress(function (e) {
                 if (e.keyCode == $.ui.keyCode.ENTER) {
                     $(this).parent().find("button:eq(0)").trigger("click");
                     return false;
@@ -249,7 +249,7 @@ issuePage.addIssueLabel = function() {
     });
 }
 
-issuePage.removeIssueLabels = function() {
+issuePage.removeIssueLabels = function () {
     $("#removeIssuesLabelContainer").dialog({
         resizable: false,
         width: 'auto',
@@ -259,7 +259,7 @@ issuePage.removeIssueLabels = function() {
     });
 }
 
-issuePage.removeIssueLabel = function(name, id) {
+issuePage.removeIssueLabel = function (name, id) {
     if (typeof issueLabels === 'undefined')
         issueLabels = [];
 
@@ -275,7 +275,7 @@ issuePage.removeIssueLabel = function(name, id) {
             if (res.success) {
                 issuePage.clearLabel(name);
             } else {
-                srv.err( res );
+                srv.err(res);
             }
         });
     }
@@ -320,15 +320,14 @@ issuePage.clearLabel = function (labelName) {
     });
 }
 
-issuePage.addLabelToName = function(labelName) {
+issuePage.addLabelToName = function (labelName) {
     if (typeof issueLabels === 'undefined')
         issueLabels = [];
     var index = issueLabels.indexOf(labelName);
     var isAddingLabel = index == -1;
     var strPos = 0;
     var resultLabels = "";
-    for (var i = 0, len = issueLabels.length; i < len; ++i)
-    {
+    for (var i = 0, len = issueLabels.length; i < len; ++i) {
         var str = issueLabels[i];
         strPos += str.length + 2;
         if (index == i) { // на случай, если несколько одинаковых меток у задачи, ну мало ли кто накосячил.
@@ -346,10 +345,10 @@ issuePage.addLabelToName = function(labelName) {
         issueLabels.push(labelName);
     }
 
-    var name = $( "#issueForm form input[name=name]" ).val();
+    var name = $("#issueForm form input[name=name]").val();
     name = (resultLabels.length > 0 ? resultLabels + " " : "") + $.trim(name.substr(strPos));
 
-    $( "#issueForm form input[name=name]" ).val(name);
+    $("#issueForm form input[name=name]").val(name);
     issuePage.updateLabelsView();
 }
 
@@ -412,7 +411,7 @@ issuePage.issueNameChanged = function (value) {
     }
 }
 
-issuePage.addIssueMember = function(sp) {
+issuePage.addIssueMember = function (sp) {
     /**
      * @type HTMLSelectElement
      */
@@ -439,22 +438,22 @@ issuePage.addIssueMember = function(sp) {
 
     $memberLi.
         append($('<a class="remove-btn">').click(issuePage.removeIssueMember));
-    
+
     $('#issueMembers').append($memberLi);
-    
+
     selectElement.removeChild(option);
     selectElement.selectedIndex = 0;
 };
 
-issuePage.removeIssueMember = function(e) {
+issuePage.removeIssueMember = function (e) {
     issuePage.removeIssueMemberCommon(e, 'members', 'addIssueMembers');
 };
 
-issuePage.addIssueTester = function() {
+issuePage.addIssueTester = function () {
     /**
      * @type HTMLSelectElement
      */
-    var selectElement = document.getElementById( 'addIssueTesters' );
+    var selectElement = document.getElementById('addIssueTesters');
 
     var option = selectElement.options[selectElement.selectedIndex];
 
@@ -462,67 +461,67 @@ issuePage.addIssueTester = function() {
      * @type HTMLOListElement
      */
 
-    var testers = document.getElementById( 'issueTesters' );
+    var testers = document.getElementById('issueTesters');
 
     /**
      * @type HTMLOListElement
      */
-    var li = document.createElement( 'li' );
+    var li = document.createElement('li');
 
     /**
      * @type HTMLSpanElement
      */
-    var nameLabel = document.createElement( 'span' );
+    var nameLabel = document.createElement('span');
     nameLabel.innerHTML = option.innerHTML;
     nameLabel.className = 'user-name';
 
     /**
      * @type HTMLLinkElement
      */
-    var idField = document.createElement( 'input' );
-    idField.type  = 'hidden';
-    idField.name  = 'testers[]';
+    var idField = document.createElement('input');
+    idField.type = 'hidden';
+    idField.name = 'testers[]';
     idField.value = option.value;
 
     /**
      * @type HTMLButtonElement
      */
-    var removeBtn = document.createElement( 'a' );
+    var removeBtn = document.createElement('a');
     //removeBtn.innerHTML = 'Удалить';
     removeBtn.className = 'remove-btn';
-    removeBtn.onclick   = issuePage.removeIssueTester;
+    removeBtn.onclick = issuePage.removeIssueTester;
 
-    li.appendChild( nameLabel );
-    li.appendChild( idField   );
-    li.appendChild( removeBtn );
+    li.appendChild(nameLabel);
+    li.appendChild(idField);
+    li.appendChild(removeBtn);
 
-    testers.appendChild( li );
+    testers.appendChild(li);
 
-    selectElement.removeChild( option );
+    selectElement.removeChild(option);
     selectElement.selectedIndex = 0;
 };
 
-issuePage.removeIssueTester = function(e) {
+issuePage.removeIssueTester = function (e) {
     issuePage.removeIssueMemberCommon(e, 'testers', 'addIssueTesters');
 };
 
-issuePage.removeIssueMemberCommon = function(e, fieldName, selectName) {
-    var li           = $(e.currentTarget).parent('li');
-    
-    var userId       = $('input[name="' + fieldName + '[]"]', li).val();
-    var userName     = $('span.user-name', li).html();
-    
-    var option       = document.createElement('option');
-    option.value     = userId;
+issuePage.removeIssueMemberCommon = function (e, fieldName, selectName) {
+    var li = $(e.currentTarget).parent('li');
+
+    var userId = $('input[name="' + fieldName + '[]"]', li).val();
+    var userName = $('span.user-name', li).html();
+
+    var option = document.createElement('option');
+    option.value = userId;
     option.innerHTML = userName;
-    
+
     var selectElement = document.getElementById(selectName);
     for (var i = 1; i < selectElement.options.length; i++) {
         if (userName < selectElement.options[i].innerHTML) break;
     }
     selectElement.appendChild(option, i);
 
-    setTimeout(function() {
+    setTimeout(function () {
         li.remove();
     }, 0)
 };
@@ -540,33 +539,31 @@ issuePage.updatePriorityVal = function ($el, value) {
 }
 
 issuePage.setPriorityVal = function (value) {
-    var valStr = Issue.getPriorityStr( value );
+    var valStr = Issue.getPriorityStr(value);
     $('#priority').val(value);
     value++;
-    $( '#priorityVal' ).html( valStr + ' (' + value + '%)' );
-    $( '#priorityVal' ).css( 'backgroundColor', issuePage.getPriorityColor( value - 1 ) );
+    $('#priorityVal').html(valStr + ' (' + value + '%)');
+    $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(value - 1));
 };
 
-issuePage.upPriorityVal = function() {
+issuePage.upPriorityVal = function () {
     var value = $('#priority').val();
-    if (value<99)
-    {
+    if (value < 99) {
         value++;
         issuePage.setPriorityVal(value);
     };
 }
 
-issuePage.downPriorityVal = function() {
+issuePage.downPriorityVal = function () {
     var value = $('#priority').val();
-    if (value>0)
-    {
+    if (value > 0) {
         value--;
         issuePage.setPriorityVal(value);
     };
 }
 
 issuePage.getPriorityColor = function (val) {
-    var v = Math.floor( val % 25 / 25 * 255 );
+    var v = Math.floor(val % 25 / 25 * 255);
     var r = 0;
     var g = 0;
     var b = 0;
@@ -586,23 +583,20 @@ issuePage.getPriorityColor = function (val) {
     return 'rgba( ' + r + ', ' + g + ', ' + b + ', 0.8 )';
 };
 
-issuePage.updateStat = function () {    
+issuePage.updateStat = function () {
     //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
-    $( ".project-stat .issues-opened" ).text( $( "#issuesList > tbody > tr.active-issue,tr.verify-issue" ).size());
-    $( ".project-stat .issues-completed" ).text( $( "#issuesList > tbody > tr.completed-issue" ).size() );
+    $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
+    $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
 
     // Перезапрашиваем сумму часов
     srv.project.getSumOpenedIssuesHours($("#projectView").data('projectId'), function (r) {
-        if (r.success)
-        {
-            if (r.count > 0)
-            {
+        if (r.success) {
+            if (r.count > 0) {
                 $(".project-stat .project-opened-issue-hours").show();
                 $(".project-stat .issue-hours.value").text(r.count);
                 // TODO склонения лейбла?
             }
-            else 
-            {
+            else {
                 $(".project-stat .project-opened-issue-hours").hide();
             }
         }
@@ -611,26 +605,26 @@ issuePage.updateStat = function () {
 
 issuePage.validateIssueForm = function () {
     var errors = [];
-    var inputs =  $( "#issueForm input:file" );
+    var inputs = $("#issueForm input:file");
     var len = 0;
-    
-    if (!$.isEmptyObject({inputs})){
-        inputs.each(function( i ) {
+
+    if (!$.isEmptyObject({ inputs })) {
+        inputs.each(function (i) {
             len += inputs[i].files.length;
         });
     }
 
     if (len > window.lpmOptions.issueImgsCount)
-        errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений' );
+        errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений');
 
     if ($('#issueForm #issueMembers input[type=hidden][name="members[]"]').size() == 0)
-        errors.push( 'Задаче должен быть назначен хотя бы один исполнитель' );
-    
-      if (errors.length == 0 ) {
-        $('#issueForm > div.validateError' ).hide();
+        errors.push('Задаче должен быть назначен хотя бы один исполнитель');
+
+    if (errors.length == 0) {
+        $('#issueForm > div.validateError').hide();
         return true;
     } else {
-        $('#issueForm > div.validateError' ).html( errors.join( '<br/>' ) ).show();
+        $('#issueForm > div.validateError').html(errors.join('<br/>')).show();
         return false;
     }
 };
@@ -647,7 +641,7 @@ function insertFormattingMarker(input, marker, single) {
     var caretPos = 0;
     const closetag = single ? "" : marker;
     //Если в описании задачи есть текст
-    if (!$.isEmptyObject({text})) { 
+    if (!$.isEmptyObject({ text })) {
         // берем все, что до выделения
         var desc = text.value.substring(0, selectionStart) +
             marker + subtext + closetag +
@@ -667,26 +661,26 @@ function insertFormattingMarker(input, marker, single) {
         setCaretPosition(text, caretPos);
     }
 }
-    
+
 function setCaretPosition(elem, pos) {
     elem.setSelectionRange(pos, pos);
     elem.focus();
 }
 
-function completeIssue(e) {    
-    var parent   = e.currentTarget.parentElement;
-    var issueId  = $('input[name=issueId]', parent).val();
-    
+function completeIssue(e) {
+    var parent = e.currentTarget.parentElement;
+    var issueId = $('input[name=issueId]', parent).val();
+
     if (issueId > 0) {
         preloader.show();
-        srv.issue.complete( 
-            issueId, 
+        srv.issue.complete(
+            issueId,
             function (res) {
                 //btn.disabled = false;
                 preloader.hide();
-                if (res.success) {          
+                if (res.success) {
                     if ($('#issuesList').length > 0) {
-                        $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();                   
+                        $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
                         showMain();
                     } else if ($('#issueView').length > 0) {
                         setIssueInfo(new Issue(res.issue));
@@ -695,7 +689,7 @@ function completeIssue(e) {
                 } else {
                     srv.err(res);
                 }
-            }  
+            }
         );
     }
 }
@@ -712,13 +706,13 @@ issuePage.changePriority = function (e) {
                 // alert('ok: ' + res.priority);
                 var priority = res.priority;
                 var priorityStr = Issue.getPriorityStr(priority);
-                $('.priority-val', $row).attr('title', 'Приоритет: ' + priorityStr + 
-                        ' (' + priority + ')').data("value", priority);
+                $('.priority-val', $row).attr('title', 'Приоритет: ' + priorityStr +
+                    ' (' + priority + ')').data("value", priority);
                 issuePage.updatePriorityVal($('.priority-val', $row), priority);
 
                 var hintY = e.pageY - 13;
                 $("<span></span>").text(priority).addClass("priority-change-animation").
-                    appendTo($('body')).offset({top:hintY, left:e.pageX - 10}).
+                    appendTo($('body')).offset({ top: hintY, left: e.pageX - 10 }).
                     animate(
                         {
                             opacity: '0',
@@ -737,7 +731,7 @@ issuePage.changePriority = function (e) {
                         return priority - p;
                     else if ($r.data("completeDate") != date)
                         return $r.data("completeDate") - date;
-                    else 
+                    else
                         return $r.data("id") - issueId;
                 }
 
@@ -747,12 +741,10 @@ issuePage.changePriority = function (e) {
                     while ($next) {
                         var $next = $next.next();
 
-                        if (compare($next) < 0)
-                        {
+                        if (compare($next) < 0) {
                             $last = $next;
                         }
-                        else 
-                        {
+                        else {
                             if ($last)
                                 $last.after($row);
                             break;
@@ -763,12 +755,10 @@ issuePage.changePriority = function (e) {
                     var $first = null;
                     while ($prev) {
                         var $prev = $prev.prev();
-                        if (compare($prev) > 0)
-                        {
+                        if (compare($prev) > 0) {
                             $first = $prev;
                         }
-                        else 
-                        {
+                        else {
                             if ($first)
                                 $first.before($row);
                             break;
@@ -783,12 +773,12 @@ issuePage.changePriority = function (e) {
 }
 
 function restoreIssue(e) {
-    var parent   = e.currentTarget.parentElement;
-    var issueId  = $('input[name=issueId]', parent).val();
+    var parent = e.currentTarget.parentElement;
+    var issueId = $('input[name=issueId]', parent).val();
     preloader.show();
-    
-    srv.issue.restore( 
-        issueId, 
+
+    srv.issue.restore(
+        issueId,
         function (res) {
             preloader.hide();
             if (res.success) {
@@ -807,16 +797,16 @@ function restoreIssue(e) {
 };
 
 function verifyIssue(e) {
-    var parent   = e.currentTarget.parentElement;
-    
-    var issueId  = $('input[name=issueId]', parent).val();
+    var parent = e.currentTarget.parentElement;
+
+    var issueId = $('input[name=issueId]', parent).val();
     preloader.show();
-    
-    srv.issue.verify( 
-        issueId, 
+
+    srv.issue.verify(
+        issueId,
         function (res) {
             preloader.hide();
-            if (res.success) {        
+            if (res.success) {
                 if ($('#issueView').length > 0) {
                     setIssueInfo(new Issue(res.issue));
                 }
@@ -828,15 +818,15 @@ function verifyIssue(e) {
     );
 };
 
-issuePage.removeIssue = function(e) {    
-    if (confirm( 'Вы действительно хотите удалить эту задачу?' )) {    
-        var btn     = e.currentTarget;
+issuePage.removeIssue = function (e) {
+    if (confirm('Вы действительно хотите удалить эту задачу?')) {
+        var btn = e.currentTarget;
         var issueId = $('input[type=hidden][name=issueId]', btn.parentElement).val();
-        
+
         preloader.show();
-        
-        srv.issue.remove( 
-            issueId, 
+
+        srv.issue.remove(
+            issueId,
             function (res) {
                 preloader.hide();
                 if (res.success) {
@@ -869,7 +859,7 @@ issuePage.changeScrumState = function (e) {
         state = 5;
     else if ($control.hasClass('sticker-control-remove'))
         state = 0;
-    else 
+    else
         return;
 
     preloader.show();
@@ -881,10 +871,10 @@ issuePage.changeScrumState = function (e) {
             $sticker.remove();
             var colName;
             switch (state) {
-                case 1 : colName = 'todo'; break;
-                case 2 : colName = 'in_progress'; break;
-                case 3 : colName = 'testing'; break;
-                case 4 : colName = 'done'; break;
+                case 1: colName = 'todo'; break;
+                case 2: colName = 'in_progress'; break;
+                case 3: colName = 'testing'; break;
+                case 4: colName = 'done'; break;
             }
 
             if (colName) {
@@ -922,35 +912,35 @@ issuePage.takeIssue = function (e) {
     });
 };
 
-function showIssue (issueId) {
-    srv.issue.load( 
-        issueId, 
+function showIssue(issueId) {
+    srv.issue.load(
+        issueId,
         function (res) {
             if (res.success) {
                 window.location.hash = 'issue-view';
-               // if (window.location.search == '') window.location.search += '?';
+                // if (window.location.search == '') window.location.search += '?';
                 //else window.location.search += '&';
                 //window.location.search += 'iid=' + issueId;
                 states.updateView();
-                setIssueInfo( new Issue( res.issue ) );
+                setIssueInfo(new Issue(res.issue));
             } else {
-                srv.err( res );
+                srv.err(res);
             }
-        } 
+        }
     );
 };
 
 issuePage.showAddForm = function (type, parentId) {
     window.location.hash = 'add-issue';
     states.updateView();
-    
+
     if (typeof type != 'undefined') {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
-        $('form input:radio[value=1]', "#issueForm").prop('checked', true); 
+        $('form input:radio[value=1]', "#issueForm").prop('checked', true);
     } else {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
-        $('form input:radio[value=0]', "#issueForm").prop('checked', true); 
-    }    
+        $('form input:radio[value=0]', "#issueForm").prop('checked', true);
+    }
 };
 
 issuePage.showEditForm = function () {
@@ -963,23 +953,23 @@ issuePage.setEditInfo = function () {
     // заполняем всю информацию
     //$( "" ).value( $( "" ) );
     // меняем заголовок
-    $( "#issueForm > h3" ).text( "Редактирование задачи" );
+    $("#issueForm > h3").text("Редактирование задачи");
     // имя
-    var issueName = $( "#issueInfo > h3 > .issue-name" ).text();
-    $( "#issueForm form input[name=name]" ).val(issueName);
+    var issueName = $("#issueInfo > h3 > .issue-name").text();
+    $("#issueForm form input[name=name]").val(issueName);
     // внешний вид меток
     issuePage.updateLabelsView();
     // часы
-    $( "#issueForm form input[name=hours]" ).val( $( "#issueInfo > h3 .issue-hours" ).text() );
+    $("#issueForm form input[name=hours]").val($("#issueInfo > h3 .issue-hours").text());
 
     // тип
-    $('form input:radio[name=type]:checked', "#issueForm").removeAttr( 'checked' );
-    $('form input:radio[name=type][value=' + $( "#issueInfo div input[name=type]" ).val() + ']',
-       "#issueForm" ).prop('checked', true);
+    $('form input:radio[name=type]:checked', "#issueForm").removeAttr('checked');
+    $('form input:radio[name=type][value=' + $("#issueInfo div input[name=type]").val() + ']',
+        "#issueForm").prop('checked', true);
     // приоритет
-    var priorityVal = $( "#issueInfo div input[name=priority]" ).val();
-    $( "#issueForm form input[name=priority]" ).val( priorityVal );
-    issuePage.setPriorityVal( priorityVal );
+    var priorityVal = $("#issueInfo div input[name=priority]").val();
+    $("#issueForm form input[name=priority]").val(priorityVal);
+    issuePage.setPriorityVal(priorityVal);
     // дата окончания
     $("#issueForm form input[name=completeDate]").val(
         $("#issueInfo div input[name=completeDate]").val());
@@ -994,7 +984,7 @@ issuePage.setEditInfo = function () {
     }
 
     // Тестеры
-    var testerIds = $("#issueInfo div input[name=testers]").val().split( ',' );
+    var testerIds = $("#issueInfo div input[name=testers]").val().split(',');
     l = testerIds.length;
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];
@@ -1017,8 +1007,8 @@ issuePage.setEditInfo = function () {
     var imgLI = null;
     for (i = l - 1; i >= 0; i--) {
         //$('input[name=imgId]',imgs[i]).val() 
-        imgLI = imgs[i].cloneNode( true );
-        $(imgLI).append('<a href="javascript:;" class="remove-btn" onclick="removeImage(' + 
+        imgLI = imgs[i].cloneNode(true);
+        $(imgLI).append('<a href="javascript:;" class="remove-btn" onclick="removeImage(' +
             $('input[name=imgId]', imgLI).val() + ')"></a>');
         $imgInput.append(imgLI);
         //imgInput.insertBefore(imgLI, imgInput.children[0]);
@@ -1028,23 +1018,23 @@ issuePage.setEditInfo = function () {
         $("#issueForm form .images-list > li input[type=file]").hide();
         $("#issueForm form li a[name=imgbyUrl]").hide();
     }
-    
+
     // родитель
-    $( "#issueForm form input[name=parentId]" ).val( $( "#issueInfo input[name=parentId]" ).val() );
+    $("#issueForm form input[name=parentId]").val($("#issueInfo input[name=parentId]").val());
     // идентификатор задачи
-    $( "#issueForm form input[name=issueId]" ).val( $( "#issueInfo input[name=issueId]" ).val() );
+    $("#issueForm form input[name=issueId]").val($("#issueInfo input[name=issueId]").val());
     // действие меняем на редактирование
-    $( "#issueForm form input[name=actionType]" ).val( 'editIssue' );
+    $("#issueForm form input[name=actionType]").val('editIssue');
     // меняем заголовок кнопки сохранения    
-    $( "#issueForm form .save-line button[type=submit]" ).text( "Сохранить" );
-    
+    $("#issueForm form .save-line button[type=submit]").text("Сохранить");
+
 };
 
 issuePage.setIssueBy = function (value) {
     // заполняем всю информацию
     //$( "" ).value( $( "" ) );
     // меняем заголовок
-    $("#issueForm > h3").text( "Добавить задачу" );
+    $("#issueForm > h3").text("Добавить задачу");
     // имя
     $("#issueForm form input[name=name]").val(value.name);
     // часы
@@ -1069,7 +1059,7 @@ issuePage.setIssueBy = function (value) {
     }
 
     // Тестеры
-    var testerIds = value.testers/*$( "#issueInfo li input[name=testers]" ).val()*/ .split( ',' );
+    var testerIds = value.testers/*$( "#issueInfo li input[name=testers]" ).val()*/.split(',');
     l = testerIds.length;
     for (i = 0; i < l; i++) {
         var testerId = testerIds[i];
@@ -1084,11 +1074,11 @@ issuePage.setIssueBy = function (value) {
     // пришлось убрать, потому что там уже обработанное описание - с ссылками и тп
     // вообще видимо надо переделать это все
     //$( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).html() );
-    $( "#issueForm form textarea[name=desc]" ).val( value.desc );
+    $("#issueForm form textarea[name=desc]").val(value.desc);
     // изображения
     var imgs = value.images;
     var numImages = imgs.length;
-    for (i = 0; i < numImages; ++i){
+    for (i = 0; i < numImages; ++i) {
         addImagebyUrl(imgs[i].source);
     }
     /*var imgs = $("#issueInfo li > .images-line > li");
@@ -1111,14 +1101,14 @@ issuePage.setIssueBy = function (value) {
     }*/
 
     // родитель
-    $( "#issueForm form input[name=parentId]" ).val( value.parentId /*$( "#issueInfo input[name=parentId]" ).val()*/ );
+    $("#issueForm form input[name=parentId]").val(value.parentId /*$( "#issueInfo input[name=parentId]" ).val()*/);
     // идентификатор задачи
     // $( "#issueForm form input[name=issueId]" ).val( value.issueId/*$( "#issueInfo input[name=issueId]" ).val()*/ );
     // действие меняем на редактирование
-    $( "#issueForm form input[name=actionType]" ).val( 'addIssue' );
-    $( "#issueForm form input[name=baseIdInProject]" ).val(value.baseIdInProject);
+    $("#issueForm form input[name=actionType]").val('addIssue');
+    $("#issueForm form input[name=baseIdInProject]").val(value.baseIdInProject);
     // меняем заголовок кнопки сохранения
-    $( "#issueForm form .save-line button[type=submit]" ).text( "Сохранить" );
+    $("#issueForm form .save-line button[type=submit]").text("Сохранить");
 
     // выставляем галочку "Поместить на Scrum доску"
     var boardField = $("#putToBoardField");
@@ -1148,7 +1138,7 @@ function addImagebyUrl(imageUrl) {
     imgInput.append(urlLI);
     // setCaretPosition(urlLI.find("input"));
     urlLI.find("a").click(function (event) {
-        urlLI.remove();    
+        urlLI.remove();
     });
 };
 
@@ -1156,13 +1146,13 @@ function addImagebyUrl(imageUrl) {
  * 
  * @param {Issue} issue
  */
-function setIssueInfo( issue ) {        
+function setIssueInfo(issue) {
     $("#issueInfo > h3 .issue-name").text(issue.name);
     var fields = $("#issueInfo > .info-list > div > .value");
-    
+
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
-    
+
     $("#issueInfo .info-list").
         removeClass('active-issue').
         removeClass('verify-issue').
@@ -1172,7 +1162,7 @@ function setIssueInfo( issue ) {
         removeClass('active-issue').
         removeClass('verify-issue').
         removeClass('completed-issue');
-    
+
     if (issue.isCompleted()) {
         //$( "#issueInfo .buttons-bar > button.restore-btn" ).show();
         $("#issueInfo .buttons-bar").addClass('completed-issue');
@@ -1188,7 +1178,7 @@ function setIssueInfo( issue ) {
     }
 
     var testers = issue.getTesters();
-    
+
     var values = [
         issue.getStatus(),
         issue.getType(),
@@ -1201,25 +1191,25 @@ function setIssueInfo( issue ) {
         testers,
         issue.getDesc(true)
     ];
-    
+
     for (var i = 0; i < values.length; i++) {
         fields[i].innerHTML = values[i];
     }
 
     if (testers)
         $('#issueInfo .testers-row').show();
-    else 
+    else
         $('#issueInfo .testers-row').hide();
-    
+
     issuePage.updatePriorityVals();
-    
+
     $("#issueInfo > p > input[name=issueId]").val(issue.id);
 };
 
 issuePage.showCommentForm = function () {
     $('#issueView .comments form.add-comment').show();
     $('#issueView .comments .links-bar a').hide();
-    $('#issueView .comments form.add-comment textarea[name=commentText]' ).focus();
+    $('#issueView .comments form.add-comment textarea[name=commentText]').focus();
 };
 
 issuePage.hideCommentForm = function () {
@@ -1233,20 +1223,20 @@ issuePage.toogleCommentForm = function () {
     if (!comments.is(':visible')) {
         link.html('Свернуть комментарии');
     } else {
-        link.html('Показать комментарии (' + 
-            $( '#issueView .comments .comments-list .comments-list-item' ).size() + ')');
+        link.html('Показать комментарии (' +
+            $('#issueView .comments .comments-list .comments-list-item').size() + ')');
     }
 
     link.show();
     comments.slideToggle('normal');
 };
 
-issuePage.commentPassTesting = function () { 
+issuePage.commentPassTesting = function () {
     //issuePage.postCommentForCurrentIssue('Прошла тестирование');
     issuePage.passTest();
 };
 
-issuePage.commentMergeInDevelop = function () { 
+issuePage.commentMergeInDevelop = function () {
     issuePage.postCommentForCurrentIssue('`-> develop`');
 };
 
@@ -1258,42 +1248,42 @@ issuePage.postComment = function () {
 
 issuePage.postCommentForCurrentIssue = function (text) {
     var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
-    
+
     // TODO проверку на пустоту
-    if (issueId > 0 && text != '') { 
-     preloader.show();
-     srv.issue.comment( 
-        issueId, 
-        text, 
-        function (res) {
-            preloader.hide();
-            if (res.success) {
-                issuePage.addComment(res.comment);
-            } else {
-                srv.err(res);
+    if (issueId > 0 && text != '') {
+        preloader.show();
+        srv.issue.comment(
+            issueId,
+            text,
+            function (res) {
+                preloader.hide();
+                if (res.success) {
+                    issuePage.addComment(res.comment);
+                } else {
+                    srv.err(res);
+                }
             }
-        } 
-     );
+        );
     }
 }
 
 issuePage.passTest = function () {
-    var issueId = $( '#issueView .comments form.add-comment input[name=issueId]'        ).val();
-    
+    var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
+
     // TODO проверку на пустоту
-    if (issueId > 0) { 
-     preloader.show();
-     srv.issue.passTest( 
-        issueId, 
-        function (res) {
-            preloader.hide();
-            if (res.success) {
-                issuePage.addComment(res.comment);
-            } else {
-                srv.err(res);
+    if (issueId > 0) {
+        preloader.show();
+        srv.issue.passTest(
+            issueId,
+            function (res) {
+                preloader.hide();
+                if (res.success) {
+                    issuePage.addComment(res.comment);
+                } else {
+                    srv.err(res);
+                }
             }
-        } 
-     );
+        );
     }
 }
 
@@ -1304,20 +1294,20 @@ issuePage.addComment = function (comment) {
     let commentTime = comment.date;
     $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
     $('#issueView .comments .comments-list').prepend(
-           '<div class="comments-list-item">' +
-                '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="'+ userId +'"' +
-        '               data-time="'+ commentTime +'">Удалить</p>' +
-            '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
-            '<p class="author">' + comment.author.linkedName + '</p> ' +
-            '<p class="date"><a class="anchor" id="'+comment.id+
-            '"href="#comment-'+comment.id+'">'+comment.dateLabel+'</a></p>' +
-            '<article class="text formatted-desc">' + comment.text + '</p>' +
-           '</div>' 
+        '<div class="comments-list-item">' +
+        '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="' + userId + '"' +
+        '               data-time="' + commentTime + '">Удалить</p>' +
+        '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
+        '<p class="author">' + comment.author.linkedName + '</p> ' +
+        '<p class="date"><a class="anchor" id="' + comment.id +
+        '"href="#comment-' + comment.id + '">' + comment.dateLabel + '</a></p>' +
+        '<article class="text formatted-desc">' + comment.text + '</p>' +
+        '</div>'
     );
     issuePage.hideCommentForm();
-    $( '#issueView .comments .links-bar a.toggle-comments' ).show();
-    
-    if (!$( '#issueView .comments .comments-list' ).is(':visible')) 
+    $('#issueView .comments .links-bar a.toggle-comments').show();
+
+    if (!$('#issueView .comments .comments-list').is(':visible'))
         issuePage.toogleCommentForm();
 
     hideElementAfterDelay(elementId, commentTime);
@@ -1336,7 +1326,7 @@ issuePage.showLastCreated = function () {
     window.location.hash = 'last-created';
     var table = $('#issuesList');
     window.defaultIssues = table.html();
-    table.find('tr:not(:first)').sort(function(a, b) {
+    table.find('tr:not(:first)').sort(function (a, b) {
         return $(b).data('createDate') - $(a).data('createDate');
     }).appendTo(table);
     $('#showLastCreated').hide();
@@ -1354,29 +1344,29 @@ issuePage.sortDefault = function () {
 
 issuePage.showIssuesByUser = function (memberId) {
     window.location.hash = 'by-user:' + memberId;
-    issuePage.filterByMemberId( memberId );
+    issuePage.filterByMemberId(memberId);
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
     return false;
 };
 
 issuePage.filterByMemberId = function (userId) {
-    var list = document.getElementById('issuesList'); 
+    var list = document.getElementById('issuesList');
     var rows = list.tBodies[0].children;
-    var row,fields = null;
+    var row, fields = null;
     var hide = true;
-    
+
     for (var i = 0; i < rows.length; i++) {
         row = rows[i];
         hide = true;
-        
+
         //if (!row.classList.contains('verify-issue')) {
-        fields_members = row.children[3].getElementsByTagName('a');        
+        fields_members = row.children[3].getElementsByTagName('a');
         for (var j = 0; j < fields_members.length; j++) {
-           if (fields_members[j].getAttribute('data-member-id') == userId) {
-              hide = false;   
-              break;  
-           }
+            if (fields_members[j].getAttribute('data-member-id') == userId) {
+                hide = false;
+                break;
+            }
         }
         // }
 
@@ -1392,7 +1382,7 @@ issuePage.resetFilter = function ()//e)
     //$( '#issuesList > tbody > tr' ).show();
     window.location.hash = '';
     var rows = document.getElementById('issuesList').tBodies[0].children;
-    
+
     for (var i = 0; i < rows.length; i++) {
         rows[i].show();
     }
@@ -1417,7 +1407,7 @@ issuePage.scumColUpdateInfo = function () {
         $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').
             each(function (i, el) {
                 sp += parseFloat($(el).data('stickerSp'));
-        });
+            });
         var num = $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').size();
 
         var selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
@@ -1428,7 +1418,7 @@ issuePage.scumColUpdateInfo = function () {
             var spSelector = selector + ' .scrum-col-sp';
             if (sp > 0)
                 $(spSelector).show();
-            else 
+            else
                 $(spSelector).hide();
 
             var spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
@@ -1450,7 +1440,7 @@ issuePage.scumColUpdateInfo = function () {
             var totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
             $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSpScr);
         }
-        else 
+        else
             $('#scrumBoard .scrum-board-sp').hide();
     } else {
         $('#scrumBoard .scrum-board-info').hide();
@@ -1476,7 +1466,7 @@ issuePage.clearBoard = function () {
 issuePage.changeSPVisibility = function (value) {
     if (value)
         $('#scrumBoard').removeClass('hide-sp');
-    else 
+    else
         $('#scrumBoard').addClass('hide-sp');
 }
 
@@ -1499,27 +1489,27 @@ issuePage.addIssueBy = function (issueIdInProject) {
             preloader.hide();
 
             if (res.success) {
-                var issue = new Issue( res.issue );
+                var issue = new Issue(res.issue);
                 // console.log("issue-name: " + issue.name);
 
                 issuePage.setIssueBy({
                     name: issue.name,
                     hours: issue.hours,
                     desc: issue.desc,
-                    priority : issue.priority,
-                    completeDate : issue.getCompleteDateInput(),
-                    type : issue.type,
-                    members : issue.getMemberIds(),
-                    testers : issue.getTesterIds(),
-                    parentId : issue.parentId,
-                    issueId : issue.id,
-                    images : issue.images,
-                    isOnBoard : issue.isOnBoard,
-                    baseIdInProject : 0
+                    priority: issue.priority,
+                    completeDate: issue.getCompleteDateInput(),
+                    type: issue.type,
+                    members: issue.getMemberIds(),
+                    testers: issue.getTesterIds(),
+                    parentId: issue.parentId,
+                    issueId: issue.id,
+                    images: issue.images,
+                    isOnBoard: issue.isOnBoard,
+                    baseIdInProject: 0
                 });
 
             } else {
-                srv.err( res );
+                srv.err(res);
             }
         }
     );
@@ -1545,26 +1535,26 @@ issuePage.finishedIssueBy = function (issueIdInProject) {
 
             // Если создаётся задача по доделкам
             if (res.success) {
-                const issue = new Issue( res.issue );
+                const issue = new Issue(res.issue);
                 // var url = $("#projectView").data('projectUrl');
 
                 issuePage.setIssueBy({
                     name: Issue.getCompletionName(issue.name),
                     hours: issue.hours,
                     desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
-                    priority : issue.priority,
-                    completeDate : issue.getCompleteDateInput(),
-                    type : issue.type,
-                    members : issue.getMemberIds(),
-                    testers : issue.getTesterIds(),
-                    parentId : issue.parentId,
-                    issueId : issue.id,
-                    images : issue.images,
-                    isOnBoard : issue.isOnBoard,
-                    baseIdInProject : issueIdInProject
+                    priority: issue.priority,
+                    completeDate: issue.getCompleteDateInput(),
+                    type: issue.type,
+                    members: issue.getMemberIds(),
+                    testers: issue.getTesterIds(),
+                    parentId: issue.parentId,
+                    issueId: issue.id,
+                    images: issue.images,
+                    isOnBoard: issue.isOnBoard,
+                    baseIdInProject: issueIdInProject
                 });
             } else {
-                srv.err( res );
+                srv.err(res);
             }
         }
     );
@@ -1574,29 +1564,29 @@ issuePage.showExportXls = function () {
     issuesExport2Excel.openWindow(parseInt($("#projectView").data('projectId')));
 }
 
-function Issue( obj ) {
+function Issue(obj) {
     this._obj = obj;
-    
-    this.id           = obj.id;
-    this.author       = obj.author;
+
+    this.id = obj.id;
+    this.author = obj.author;
     this.completeDate = obj.completeDate;
     this.completedDate = obj.completedDate;
-    this.createDate   = obj.createDate;
-    this.desc         = obj.desc;
+    this.createDate = obj.createDate;
+    this.desc = obj.desc;
     this.formattedDesc = obj.formattedDesc;
-    this.name         = obj.name;
-    this.status       = obj.status;
-    this.type         = obj.type;
-    this.members      = obj.members;
-    this.priority     = obj.priority;
-    this.hours        = obj.hours;
-    this.testers      = obj.testers;
-    this.images       = obj.images;
-    this.isOnBoard    = obj.isOnBoard;
-    this.url          = obj.url;
-    
+    this.name = obj.name;
+    this.status = obj.status;
+    this.type = obj.type;
+    this.members = obj.members;
+    this.priority = obj.priority;
+    this.hours = obj.hours;
+    this.testers = obj.testers;
+    this.images = obj.images;
+    this.isOnBoard = obj.isOnBoard;
+    this.url = obj.url;
+
     this.getCompleteDate = function () {
-        return this.getDate( this.completeDate );
+        return this.getDate(this.completeDate);
     };
 
     this.getCompleteDateInput = function () {
@@ -1609,21 +1599,21 @@ function Issue( obj ) {
     };
 
     this.getCompletedDate = function () {
-        return this.getDate( this.completedDate );
-    };     
+        return this.getDate(this.completedDate);
+    };
 
     this.getCreateDate = function () {
-        return this.getDate( this.createDate );
+        return this.getDate(this.createDate);
     };
-    
+
     this.getAuthor = function () {
         return this.author ? this.author.linkedName : '';
     };
-    
+
     this.getPriority = function () {
-        var val = ( this.priority + 1 );
+        var val = (this.priority + 1);
         return '<span class="priority-val circle">' + this.priority + '</span>' +
-               Issue.getPriorityStr( val ) + ' (' + val + '%)';
+            Issue.getPriorityStr(val) + ' (' + val + '%)';
     };
 
     this.getMembers = function () {
@@ -1668,31 +1658,31 @@ function Issue( obj ) {
             }
         return str;
     };
-    
+
     this.getDesc = function (formatted = false) {
         return formatted ? this.formattedDesc : this.desc;
     };
-    
+
     this.getStatus = function () {
         switch (this.status) {
-            case 1  : return 'Ожидает проверки';
-            case 2  : return 'Завершена';
-            default : return 'В работе';
+            case 1: return 'Ожидает проверки';
+            case 2: return 'Завершена';
+            default: return 'В работе';
         }
     };
-    
+
     this.getType = function () {
         switch (this.type) {
-            case 1  : return 'Ошибка';
-            case 2  : return 'Поддержка';
-            default : return 'Разработка';
+            case 1: return 'Ошибка';
+            case 2: return 'Поддержка';
+            default: return 'Разработка';
         }
     };
-    
+
     this.isCompleted = function () {
         return this.status == 2;
     };
-    
+
     this.isOpened = function () {
         return this.status == 0;
     };
@@ -1700,33 +1690,33 @@ function Issue( obj ) {
     this.isVerify = function () {
         return this.status == 1;
     };
-    
+
     this.getDate = function (value) {
-        var date = new Date( ( value + 3600 ) * 1000 );
+        var date = new Date((value + 3600) * 1000);
         // TODO разобраться что за хрень - почему на час разница?
-        
+
         //return this._num2Str( date.getDate() ) + '-' + this._num2Str( date.getMonth() + 1 ) + '-' + date.getFullYear() + 
         //' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + ':' + date.getMilliseconds();
-        
-        return this._num2Str( date.getDate() ) + '-' + this._num2Str( date.getMonth() + 1 ) + '-' + date.getFullYear();
+
+        return this._num2Str(date.getDate()) + '-' + this._num2Str(date.getMonth() + 1) + '-' + date.getFullYear();
     };
-    
+
     this._num2Str = function (val, dig) {
-        if (!dig || dig < 1) dig = 1; 
+        if (!dig || dig < 1) dig = 1;
         else dig -= 1;
-        
+
         var str = '';
-        if (val < 0) str += '-';        
-        val = Math.abs( val );
-        
-        var i = dig - Math.floor( Math.log( val ) / Math.log( 10 ) );
+        if (val < 0) str += '-';
+        val = Math.abs(val);
+
+        var i = dig - Math.floor(Math.log(val) / Math.log(10));
         while (i > 0) {
             str += '0';
             i--;
         }
-        
+
         str += val;
-        
+
         return str;
     };
 };
@@ -1750,42 +1740,38 @@ Issue.getCommitMessage = function (num, title) {
 Issue.getCompletionName = function (issueName, prefix = 'Доделать задачу') {
     const lastTagIndex = issueName.lastIndexOf(']');
     return (~lastTagIndex) ?
-        `${issueName.substring(0, lastTagIndex+1)} ${prefix} ${issueName.substring(lastTagIndex+1).trim()}`
+        `${issueName.substring(0, lastTagIndex + 1)} ${prefix} ${issueName.substring(lastTagIndex + 1).trim()}`
         : `${prefix} ${issueName.trim()}`;
 }
 
 // Всплывающее окно скопировать commit сообщение
 
-jQuery(function($) {
+jQuery(function ($) {
 
- $('.issues-list > tbody > tr > td:first-of-type a').mouseenter( 
-    function() 
-    {
-        $(this).next('.issue_copy.popup-menu').slideDown(180);
-    }
- );
+    $('.issues-list > tbody > tr > td:first-of-type a').mouseenter(
+        function () {
+            $(this).next('.issue_copy.popup-menu').slideDown(180);
+        }
+    );
 
-$('.issues-list > tbody > tr > td:first-of-type').mouseleave( 
-    function() 
-    {
-        $('.issue_copy.popup-menu').slideUp(180);
-    }
-);
+    $('.issues-list > tbody > tr > td:first-of-type').mouseleave(
+        function () {
+            $('.issue_copy.popup-menu').slideUp(180);
+        }
+    );
 
- $('.issue_copy.popup-menu').hover(
-    function() 
-    {
-        $(this).show();        
-    },
-    function() 
-    {
-        $(this).slideUp(180);
-    }
-);
+    $('.issue_copy.popup-menu').hover(
+        function () {
+            $(this).show();
+        },
+        function () {
+            $(this).slideUp(180);
+        }
+    );
 
 });
 
-function pasteClipboardImage( event ){
+function pasteClipboardImage(event) {
     var clipboard = event.clipboardData;
 
     if (clipboard && clipboard.items) {
@@ -1800,15 +1786,15 @@ function pasteClipboardImage( event ){
                 // Читаем файл и вставляем его в data:uri
                 var reader = new FileReader();
 
-                reader.onload = function(event) {
-                    var img = new Image( 150 , 100 );
+                reader.onload = function (event) {
+                    var img = new Image(150, 100);
                     img.src = event.target.result;
                     $('input[type=file]').last().parent().before("<li id='current'><a></a></li>");
                     $('li#current a').append(img);
                     $('li#current').append("<a class='remove-btn' onclick='removeClipboardImage()'>");
-                    var input = document.createElement( 'input' );
-                    input.type  = 'hidden';
-                    input.name  = 'clipboardImg[]';
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'clipboardImg[]';
                     input.value = img.src;
                     $('li#current').append(input);
                     $('li#current').removeAttr("id");
@@ -1817,10 +1803,10 @@ function pasteClipboardImage( event ){
                 reader.readAsDataURL(blob);
             }
         }
-    }   
+    }
 };
 
-function removeClipboardImage(){
+function removeClipboardImage() {
     var elem = event.target.parentNode;
     elem.parentNode.removeChild(elem);
 };
@@ -1839,7 +1825,7 @@ issuePage.deleteComment = (id, callback) => {
 };
 
 function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds = 600) {
-    let delay = (Number(startTimeInSeconds) + Number(delayTimeInSeconds))  * 1000 - Date.now();
+    let delay = (Number(startTimeInSeconds) + Number(delayTimeInSeconds)) * 1000 - Date.now();
 
     if (delay >= 0) {
         const timerId = setTimeout(() => {
