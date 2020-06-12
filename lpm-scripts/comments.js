@@ -8,7 +8,6 @@ $(document).ready(function ($) {
 	};
 
 	$('.comments-list .comments-list-item .comment-text').each(function (index, val) {
-		//console.log(index + ' -> ' + $(val).text());
 		let urls = parser.findLinks($(val).text());
 		if (!urls) return;
 

@@ -37,30 +37,38 @@ class ProjectPage extends BasePage
     {
         parent::__construct(self::UID, '', true, true);
         
-        array_push($this->_js, 'project', 'issues', 'comments', 'libs/tribute');
+        array_push(
+            $this->_js,
+            'project',
+            'issues',
+            'comments',
+            'attachments',
+            'libs/tribute'
+        );
+
         $this->_pattern = 'project';
         
         $this->_baseParamsCount = 2;
         $this->_defaultPUID     = self::PUID_ISSUES;
 
         $this->addSubPage(
-            self::PUID_ISSUES ,
+            self::PUID_ISSUES,
             'Список задач',
             '',
-            array('project-issues', 'issues-export-to-excel')
+            ['project-issues', 'issues-export-to-excel']
         );
         $this->addSubPage(
-            self::PUID_COMPLETED_ISSUES ,
+            self::PUID_COMPLETED_ISSUES,
             'Завершенные',
             '',
-            array('project-completed', 'issues-export-to-excel')
+            ['project-completed', 'issues-export-to-excel']
         );
         $this->addSubPage(self::PUID_COMMENTS, 'Комментарии', 'project-comments');
         $this->addSubPage(
             self::PUID_MEMBERS,
             'Участники',
             'project-members',
-            array('users-chooser'),
+            ['users-chooser'],
             '',
             User::ROLE_MODERATOR
         );

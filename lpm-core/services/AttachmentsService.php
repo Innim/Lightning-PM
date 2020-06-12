@@ -49,7 +49,11 @@ class AttachmentsService extends LPMBaseService
     {
         $res = AttachmentVideoHelper::getInfoByUrl($url);
         if (!empty($res)) {
+            $html = $this->getHtml(function () use ($res) {
+                PagePrinter::videoItem($res);
+            });
             $this->extract2Answer($res);
+            $this->add2Answer('html', $html);
         } else {
             $this->add2Answer('type', 'none');
         }
