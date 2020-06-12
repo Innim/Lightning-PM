@@ -30,7 +30,6 @@ $(document).ready(function($) {
   				let li = $(document.createElement("li"));
   				li.append(preloader.getNewIndicatorSmall());
   				ul.append(li);
-  				srv.issue.getMRInfo(url, function (res) {
   					if (res.success) {
   						if (res.data) {
   							let mr = res.data;
@@ -42,6 +41,7 @@ $(document).ready(function($) {
   						} else {
   							li.remove();
   						}
+				srv.attachments.getMRInfo(url, function (res) {
 					} else {
 					   li.empty().text(typeof res.error != 'undefined' ?
 					   		res.error : 'Не удалось получить данные MR.');
