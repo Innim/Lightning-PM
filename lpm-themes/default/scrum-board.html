@@ -14,11 +14,11 @@
                     class="value"></span> SP</span>)
         </span></h3>
     <div class="scrum-board-actions">
-        <a href="#" onclick="return issuePage.changeSPVisibility(true);" title="Показать SP по стикерам"
+        <a href="#" onclick="return scrumBoard.changeSPVisibility(true);" title="Показать SP по стикерам"
             class="scrum-board-actions-show-sp"><i class="fa fa-eye" aria-hidden="true"></i></a>
-        <a href="#" onclick="return issuePage.changeSPVisibility(false);" title="Скрыть SP по стикерам"
+        <a href="#" onclick="return scrumBoard.changeSPVisibility(false);" title="Скрыть SP по стикерам"
             class="scrum-board-actions-hide-sp"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
-        <a href="#" onclick="return issuePage.clearBoard(event);" title="Убрать все стикеры с доски"><i
+        <a href="#" onclick="return scrumBoard.clearBoard(event);" title="Убрать все стикеры с доски"><i
                 class="fa fa-archive" aria-hidden="true"></i></a>
     </div>
 
@@ -92,19 +92,19 @@
                         <span class="sticker-issue-members"><?php 
                     foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?>
                             <?=$member->getShortName();?><?php }?></span>
-                        <a href="#" onclick="issuePage.changeScrumState(event); return false;"
+                        <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                             class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times"
                                 aria-hidden="true"></i></a>
                         <div class="control-line">
-                            <!-- <a href="#" onclick="return issuePage.changeScrumState(event);" class="sticker-control-archive" title="Архивировать"><i class="fa fa-archive" aria-hidden="true"></i></a> -->
-                            <a href="#" onclick="issuePage.takeIssue(event); return false;" class="sticker-control-take"
-                                title="Взять задачу себе"><i class="far fa-hand-paper" aria-hidden="true"></i></a>
-                            <a href="#" onclick="issuePage.changeScrumState(event); return false;"
+                            <a href="#" onclick="scrumBoard.takeIssue(event); return false;"
+                                class="sticker-control-take" title="Взять задачу себе"><i class="far fa-hand-paper"
+                                    aria-hidden="true"></i></a>
+                            <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                                 class="sticker-control-done" title="Завершить"><i class="fa fa-check"
                                     aria-hidden="true"></i></a>
-                            <a href="#" onclick="issuePage.changeScrumState(event); return false;"
+                            <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                                 class="sticker-control-prev"><i class="fa fa-caret-left" aria-hidden="true"></i></a>
-                            <a href="#" onclick="issuePage.changeScrumState(event); return false;"
+                            <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                                 class="sticker-control-next"><i class="fa fa-caret-right" aria-hidden="true"></i></a>
                         </div>
                     </div>
