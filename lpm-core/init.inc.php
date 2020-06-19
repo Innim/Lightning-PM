@@ -40,9 +40,6 @@ function init()
     $importer->enableUseAutoSearch(ROOT . CORE_DIR . 'classes.dump');
     $importer->import('PHPExcel', ROOT . LIBS_DIR . 'PHPExcel.php');
 
-    // импортируем дополнительные библиотеки
-    $importer->import('upload', ROOT . LIBS_DIR . 'class.upload.php');
-    
     GMFramework::addAutoload('ImportClasses::load');
 
     require_once ROOT . LIBS_DIR . '/vendor/autoload.php';
