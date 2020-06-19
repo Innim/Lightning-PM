@@ -27,7 +27,7 @@
   }
 
   function _slicedToArray(arr, i) {
-    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
   }
 
   function _arrayWithHoles(arr) {
@@ -35,10 +35,7 @@
   }
 
   function _iterableToArrayLimit(arr, i) {
-    if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) {
-      return;
-    }
-
+    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
     var _arr = [];
     var _n = true;
     var _d = false;
@@ -64,8 +61,25 @@
     return _arr;
   }
 
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(n);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
   function _nonIterableRest() {
-    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
   if (!Array.prototype.find) {
@@ -814,7 +828,14 @@
       value: function getLastWordInText(text) {
         text = text.replace(/\u00A0/g, ' '); // https://stackoverflow.com/questions/29850407/how-do-i-replace-unicode-character-u00a0-with-a-space-in-javascript
 
-        var wordsArray = text.split(/\s+/);
+        var wordsArray;
+
+        if (this.tribute.autocompleteSeparator) {
+          wordsArray = text.split(this.tribute.autocompleteSeparator);
+        } else {
+          wordsArray = text.split(/\s+/);
+        }
+
         var worldsCount = wordsArray.length - 1;
         return wordsArray[worldsCount].trim();
       }
@@ -1210,7 +1231,11 @@
     }, {
       key: "traverse",
       value: function traverse(string, pattern, stringIndex, patternIndex, patternCache) {
-        // if the pattern search at end
+        if (this.tribute.autocompleteSeparator) {
+          // if the pattern search at end
+          pattern = pattern.split(this.tribute.autocompleteSeparator).splice(-1)[0];
+        }
+
         if (pattern.length === patternIndex) {
           // calculate score and copy the cache containing the indices where it's found
           return {
@@ -1320,6 +1345,8 @@
 
       var _ref$values = _ref.values,
           values = _ref$values === void 0 ? null : _ref$values,
+          _ref$loadingItemTempl = _ref.loadingItemTemplate,
+          loadingItemTemplate = _ref$loadingItemTempl === void 0 ? null : _ref$loadingItemTempl,
           _ref$iframe = _ref.iframe,
           iframe = _ref$iframe === void 0 ? null : _ref$iframe,
           _ref$selectClass = _ref.selectClass,
@@ -1332,6 +1359,8 @@
           trigger = _ref$trigger === void 0 ? "@" : _ref$trigger,
           _ref$autocompleteMode = _ref.autocompleteMode,
           autocompleteMode = _ref$autocompleteMode === void 0 ? false : _ref$autocompleteMode,
+          _ref$autocompleteSepa = _ref.autocompleteSeparator,
+          autocompleteSeparator = _ref$autocompleteSepa === void 0 ? null : _ref$autocompleteSepa,
           _ref$selectTemplate = _ref.selectTemplate,
           selectTemplate = _ref$selectTemplate === void 0 ? null : _ref$selectTemplate,
           _ref$menuItemTemplate = _ref.menuItemTemplate,
@@ -1366,6 +1395,7 @@
       _classCallCheck(this, Tribute);
 
       this.autocompleteMode = autocompleteMode;
+      this.autocompleteSeparator = autocompleteSeparator;
       this.menuSelected = 0;
       this.current = {};
       this.inputEvent = false;
@@ -1400,12 +1430,17 @@
           menuItemTemplate: (menuItemTemplate || Tribute.defaultMenuItemTemplate).bind(this),
           // function called when menu is empty, disables hiding of menu.
           noMatchTemplate: function (t) {
+            if (typeof t === "string") {
+              if (t.trim() === "") return null;
+              return t;
+            }
+
             if (typeof t === "function") {
               return t.bind(_this);
             }
 
             return noMatchTemplate || function () {
-              return "";
+              return "<li>No Match Found!</li>";
             }.bind(_this);
           }(noMatchTemplate),
           // column to search against in the object
@@ -1414,6 +1449,8 @@
           fillAttr: fillAttr,
           // array of objects or a function returning an array of objects
           values: values,
+          // useful for when values is an async function
+          loadingItemTemplate: loadingItemTemplate,
           requireLeadingSpace: requireLeadingSpace,
           searchOpts: searchOpts,
           menuItemLimit: menuItemLimit,
@@ -1432,15 +1469,23 @@
             menuItemTemplate: (item.menuItemTemplate || Tribute.defaultMenuItemTemplate).bind(_this),
             // function called when menu is empty, disables hiding of menu.
             noMatchTemplate: function (t) {
+              if (typeof t === "string") {
+                if (t.trim() === "") return null;
+                return t;
+              }
+
               if (typeof t === "function") {
                 return t.bind(_this);
               }
 
-              return null;
+              return noMatchTemplate || function () {
+                return "<li>No Match Found!</li>";
+              }.bind(_this);
             }(noMatchTemplate),
             lookup: item.lookup || lookup,
             fillAttr: item.fillAttr || fillAttr,
             values: item.values,
+            loadingItemTemplate: item.loadingItemTemplate,
             requireLeadingSpace: item.requireLeadingSpace,
             searchOpts: item.searchOpts || searchOpts,
             menuItemLimit: item.menuItemLimit || menuItemLimit,
@@ -1626,6 +1671,11 @@
         };
 
         if (typeof this.current.collection.values === "function") {
+          if (this.current.collection.loadingItemTemplate) {
+            this.menu.querySelector("ul").innerHTML = this.current.collection.loadingItemTemplate;
+            this.range.positionMenuAtCaret(scrollTo);
+          }
+
           this.current.collection.values(this.current.mentionText, processValues);
         } else {
           processValues(this.current.collection.values);
@@ -1797,10 +1847,25 @@
           }
         });
       }
+    }, {
+      key: "isActive",
+      get: function get() {
+        return this._isActive;
+      },
+      set: function set(val) {
+        if (this._isActive != val) {
+          this._isActive = val;
+
+          if (this.current.element) {
+            var noMatchEvent = new CustomEvent("tribute-active-".concat(val));
+            this.current.element.dispatchEvent(noMatchEvent);
+          }
+        }
+      }
     }], [{
       key: "defaultSelectTemplate",
       value: function defaultSelectTemplate(item) {
-        if (typeof item === "undefined") return null;
+        if (typeof item === "undefined") return "".concat(this.current.collection.trigger).concat(this.current.mentionText);
 
         if (this.range.isContentEditable(this.current.element)) {
           return '<span class="tribute-mention">' + (this.current.collection.trigger + item.original[this.current.collection.fillAttr]) + "</span>";
