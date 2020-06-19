@@ -41,6 +41,7 @@ class ProjectPage extends BasePage
             $this->_js,
             'project',
             'issues',
+            'issue-form',
             'comments',
             'attachments',
             'libs/tribute'
