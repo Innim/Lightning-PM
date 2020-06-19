@@ -1126,7 +1126,7 @@ function removeImage(imageId) {
     }
 }
 
-function addImagebyUrl(imageUrl) {
+function addImagebyUrl(imageUrl, autofocus = false) {
     // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
     var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
     var imgInput = $("#issueForm ul.images-url");
@@ -1140,6 +1140,8 @@ function addImagebyUrl(imageUrl) {
     urlLI.find("a").click(function (event) {
         urlLI.remove();
     });
+
+    if (autofocus) urlLI.find('input').focus();
 };
 
 /**
