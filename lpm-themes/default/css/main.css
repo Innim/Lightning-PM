@@ -1670,7 +1670,7 @@ div.ftp
 	min-height: 100px;
 	padding: 5px;
 	padding-right: 10px;
-	padding-bottom: 15px;
+	padding-bottom: 17px;
 	margin: 5px;
     box-sizing: border-box;
 	/*float: left;*/
@@ -1704,7 +1704,11 @@ div.ftp
 	position: absolute;
 	left: 3px;
 	bottom: 2px;
-	font-size: 8px;
+	font-size: 9px;
+	background-color: #333;
+	color: #fff;
+	padding: 1px 2px;
+	border-radius: 2px;
 }
 .scrum-board-sticker .sticker-issue-members {
 	display: block;
