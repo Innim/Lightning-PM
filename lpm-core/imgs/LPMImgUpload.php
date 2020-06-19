@@ -389,7 +389,8 @@ class LPMImgUpload
             // тип => расширение
             IMAGETYPE_JPEG        	=> 'jpg',
             IMAGETYPE_PNG         	=> 'png',
-            IMAGETYPE_JPEG2000		=> 'jpeg'
+            IMAGETYPE_JPEG2000		=> 'jpeg',
+            IMG_GIF                 => 'gif',
         );
         
         // Проверяем вес файла
