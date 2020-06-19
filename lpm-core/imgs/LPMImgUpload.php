@@ -222,21 +222,24 @@ class LPMImgUpload
         $files = array();
         $names = array();
 
-        //перебираем все ссылки
+        // перебираем все ссылки
         foreach ($urls as $url) {
-            //если ссылка не пустая
+            // если ссылка не пустая
             $value = trim($url);
             if (!empty($value)) {
-                //получаем из нее картинку и сохраняем ее
+                // получаем из нее картинку и сохраняем ее
                 $srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.png';
                 
-                //проверка, если картинка из сервиса droplr (http://droplr.com/)
                 if (preg_match("/^https?:\/\/d.pr\/[a-z0-9\/]+$/i", $value)) {
-                    $value.= '+';
-                }
-                //проверка, если картинка из сервиса ownCloud (http://cloud.innim.ru/)
-                elseif (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value)) {
-                    $value.= '/download';
+                    // Если картинка из сервиса droplr (http://droplr.com/)
+                    $value .= '+';
+                } elseif (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value)) {
+                    // Если картинка из сервиса ownCloud (http://cloud.innim.ru/)
+                    $value .= '/download';
+                } elseif (preg_match("/^https?:\/\/i.imgur.com\/[a-z0-9]+\.gifv$/i", $value)) {
+                    // Если картинка с imgur (https://imgur.com/) и это gif,
+                    // то надо обрезать v в конце, чтобы ссылка вела на само изображение
+                    $value = mb_substr($value, 0, -1);
                 }
 
                 //определяем размер скачиваемой картинки
