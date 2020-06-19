@@ -1318,6 +1318,9 @@ table.issues-list tr.active-issue.tester {
 	margin-block-start: 0.5em;
 	margin-block-end: 0.5em;
 }
+.formatted-desc img {
+	max-width: 100%;
+}
 .comments-list .comments-list-item .text blockquote {
 	background-color: #e9e9e9;
 }
