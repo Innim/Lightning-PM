@@ -5,7 +5,6 @@ $(document).ready(
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
-        document.addEventListener('paste', pasteClipboardImage);
 
         $('#issuesList .member-list a').click(function (e) {
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
@@ -1059,46 +1058,6 @@ jQuery(function ($) {
     );
 
 });
-
-function pasteClipboardImage(event) {
-    var clipboard = event.clipboardData;
-
-    if (clipboard && clipboard.items) {
-        // В буфере обмена может быть только один элемент
-        var item = clipboard.items[0];
-
-        if (item && item.type.indexOf('image/') > -1) {
-            // Получаем картинку в виде блога
-            var blob = item.getAsFile();
-
-            if (blob) {
-                // Читаем файл и вставляем его в data:uri
-                var reader = new FileReader();
-
-                reader.onload = function (event) {
-                    var img = new Image(150, 100);
-                    img.src = event.target.result;
-                    $('input[type=file]').last().parent().before("<li id='current'><a></a></li>");
-                    $('li#current a').append(img);
-                    $('li#current').append("<a class='remove-btn' onclick='removeClipboardImage()'>");
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'clipboardImg[]';
-                    input.value = img.src;
-                    $('li#current').append(input);
-                    $('li#current').removeAttr("id");
-                }
-
-                reader.readAsDataURL(blob);
-            }
-        }
-    }
-};
-
-function removeClipboardImage() {
-    var elem = event.target.parentNode;
-    elem.parentNode.removeChild(elem);
-};
 
 issuePage.deleteComment = (id, callback) => {
     srv.issue.deleteComment(

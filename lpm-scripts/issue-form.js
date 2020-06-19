@@ -1,3 +1,45 @@
+$(document).ready(function ($) {
+    document.addEventListener('paste', pasteClipboardImage);
+    $('.images-list').on('click', '.pasted-img .remove-btn', function () {
+        $(this).parent('.pasted-img').remove();
+    });
+
+    function pasteClipboardImage(event) {
+        var clipboard = event.clipboardData;
+
+        if (clipboard && clipboard.items) {
+            // В буфере обмена может быть только один элемент
+            var item = clipboard.items[0];
+
+            if (item && item.type.indexOf('image/') > -1) {
+                // Получаем картинку в виде блога
+                var blob = item.getAsFile();
+
+                if (blob) {
+                    // Читаем файл и вставляем его в data:uri
+                    var reader = new FileReader();
+
+                    reader.onload = function (event) {
+                        var img = new Image(150, 100);
+                        img.src = event.target.result;
+                        $('input[type=file]').last().parent().before("<li id='current'><a></a></li>");
+                        $('li#current a').append(img);
+                        $('li#current').append("<a class='remove-btn' onclick='javascript: return false;'>");
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'clipboardImg[]';
+                        input.value = img.src;
+                        $('li#current').append(input);
+                        $('li#current').removeAttr("id").addClass('pasted-img');
+                    }
+
+                    reader.readAsDataURL(blob);
+                }
+            }
+        }
+    };
+});
+
 let issueForm = {
     setIssueBy: function (value) {
         // заполняем всю информацию
