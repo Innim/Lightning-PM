@@ -87,11 +87,7 @@ class LPMImgUpload
         $itemType = 0,
         $itemId = 0,
         $defaultLoad = true
-    )
-    {
-        /*if (!BOEngine::getInstance()->isLogin()) {
-            $this->error( 'Только авторизованные пользователи могут загружать изображения' );
-        } else {*/
+    ) {
         $engine = LightningEngine::getInstance();
         $userId = $engine->isAuth()
                    ? $engine->getAuth()->getUserId()
@@ -122,6 +118,7 @@ class LPMImgUpload
                 $this->_sizes = null;
             }
         }
+        
         // Выполняем загрузку по умолчанию
         if ($defaultLoad) {
             $this->uploadViaFiles(self::IMG_INPUT_NAME);
@@ -256,10 +253,6 @@ class LPMImgUpload
                 }
                 //берем ее параметры из url
                 elseif ($imageData = stream_get_meta_data($stream)) {
-                    //echo '<pre>';
-                    //var_dump($imageData);
-                    //закрытие потока
-                    //fclose($stream);
                     //если данные есть и имеют определенный тип
                     if (isset($imageData["wrapper_data"]) && is_array($imageData["wrapper_data"])) {
                         $size = -1;
