@@ -7,14 +7,14 @@
 ?><article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
     <h3>Добавить задачу</h3>
     <div class="validateError"><?php lpm_print_errors(); ?></div>
-    <form onsubmit="return issuePage.validateIssueForm();" method="post" enctype="multipart/form-data"
+    <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data"
         onsubmit="return removeImage(imageId);">
         <ol>
             <li>
                 <span class="edit-issue-name-container">
                     <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255"
                         value="<?lpm_print_post_var('name');?>" class="edit-issue-name"
-                        oninput="issuePage.issueNameChanged(this.value)" />
+                        oninput="issueForm.issueNameChanged(this.value)" />
                 </span>
                 <span class="issue-labels-container">
                     <?php $issueLabels = $issue ? $issue->getLabelNames() : []; ?>
@@ -25,17 +25,17 @@
                         unset($issueLabels[$index]);
                 ?>
                     <a href="javascript:void(0)" class="issue-label"
-                        onclick="issuePage.addLabelToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
+                        onclick="issueFormLabels.addToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
                     <?php endforeach; ?>
                     <?php foreach ($issueLabels as $label): ?>
                     <a href="javascript:void(0)" class="issue-label"
-                        onclick="issuePage.addLabelToName('<?=$label;?>');"><?=$label;?></a>
+                        onclick="issueFormLabels.addToName('<?=$label;?>');"><?=$label;?></a>
                     <?php endforeach; ?>
-                    <a href="javascript:void(0)" class="add-issue-label" onclick="issuePage.addIssueLabel()">
+                    <a href="javascript:void(0)" class="add-issue-label" onclick="issueFormLabels.openAdd()">
                         <i class="far fa-plus-square" aria-hidden="true"></i>
                     </a>
                     <?php if (lpm_is_moderator()):?>
-                    <a href="javascript:void(0)" class="remove-issue-labels" onclick="issuePage.removeIssueLabels()">
+                    <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueFormLabels.openRemove()">
                         <i class="far fa-minus-square" aria-hidden="true"></i>
                     </a>
                     <?php endif; ?>
@@ -98,7 +98,7 @@
                     <legend>Исполнители*</legend>
                     <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
                     <ol id="issueMembers" class="members-list"></ol>
-                    <select id="addIssueMembers" onchange="issuePage.addIssueMember();">
+                    <select id="addIssueMembers" onchange="issueForm.addIssueMember();">
                         <option>Добавить</option>
                         <?php foreach(lpm_get_project_members() as $member): ?>
                         <?php if ($member->userId === $performerId): $performerName =  $member->getName(); ?>
@@ -114,7 +114,7 @@
                 <fieldset>
                     <legend>Тестеры</legend>
                     <ol id="issueTesters" class="members-list"></ol>
-                    <select id="addIssueTesters" onchange="issuePage.addIssueTester();">
+                    <select id="addIssueTesters" onchange="issueForm.addIssueTester();">
                         <option>Добавить</option>
                         <?php foreach (lpm_get_project_members() as $tester): ?>
                         <option value="<?=$tester->userId;?>"><?=$tester->getName();?></option>
@@ -154,7 +154,8 @@
                         <a class="remove-btn" href="javascript:;"></a>
                     </li>
                 </ul>
-                <a name="imgbyUrl" href="javascript:issues:addImagebyUrl();">Добавить изображение по URL</a>
+                <a name="imgbyUrl" href="javascript:issueForm.addImagebyUrl(undefined, true);">Добавить изображение по
+                    URL</a>
             </li>
             <li>
                 <input type="hidden" name="parentId" />
@@ -236,7 +237,7 @@
                 </div>
                 <div class="table-cell">
                     <a href="javascript:void(0)"
-                        onclick="issuePage.removeIssueLabel('<?=$label['label'];?>', <?=$label['id'];?>);">
+                        onclick="issueFormLabels.remove('<?=$label['label'];?>', <?=$label['id'];?>);">
                         <i class="far fa-minus-square" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -248,7 +249,7 @@
                 <div class="table-cell">0</div>
                 <div class="table-cell"></div>
                 <div class="table-cell">
-                    <a href="javascript:void(0)" onclick="issuePage.removeIssueLabel('<?=$label;?>');">
+                    <a href="javascript:void(0)" onclick="issueFormLabels.remove('<?=$label;?>');">
                         <i class="far fa-minus-square" aria-hidden="true"></i>
                     </a>
                 </div>

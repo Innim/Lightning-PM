@@ -41,6 +41,7 @@ class ProjectPage extends BasePage
             $this->_js,
             'project',
             'issues',
+            'issue-form',
             'comments',
             'attachments',
             'libs/tribute'
@@ -94,7 +95,7 @@ class ProjectPage extends BasePage
 
         // Если это scrum проект - добавляем новый подраздел
         if ($this->_project->scrum) {
-            $this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board');
+            $this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board', ['scrum-board']);
             $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
             $this->addSubPage(
                 self::PUID_SPRINT_STAT,

@@ -9,9 +9,9 @@ $(document).ready(
         states.addState($("#projectView"), 'only-my', issuePage.showIssues4Me);
         states.addState($("#projectView"), 'last-created', issuePage.showLastCreated);
         states.addState($("#projectView"), 'by-user:#', issuePage.showIssuesByUser);
-        states.addState($("#issueForm"), 'add-issue', issuePage.onShowAddIssue);
-        states.addState($("#issueForm"), 'copy-issue:#', issuePage.addIssueBy);
-        states.addState($("#issueForm"), 'finished-issue:#', issuePage.finishedIssueBy);
+        states.addState($("#issueForm"), 'add-issue', issueForm.onShowAddIssue);
+        states.addState($("#issueForm"), 'copy-issue:#', issueForm.addIssueBy);
+        states.addState($("#issueForm"), 'finished-issue:#', issueForm.finishedIssueBy);
 
         if (window.location.hash == '#issue-view')
             window.location.hash = '';

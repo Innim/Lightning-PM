@@ -87,11 +87,7 @@ class LPMImgUpload
         $itemType = 0,
         $itemId = 0,
         $defaultLoad = true
-    )
-    {
-        /*if (!BOEngine::getInstance()->isLogin()) {
-            $this->error( 'Только авторизованные пользователи могут загружать изображения' );
-        } else {*/
+    ) {
         $engine = LightningEngine::getInstance();
         $userId = $engine->isAuth()
                    ? $engine->getAuth()->getUserId()
@@ -122,6 +118,7 @@ class LPMImgUpload
                 $this->_sizes = null;
             }
         }
+        
         // Выполняем загрузку по умолчанию
         if ($defaultLoad) {
             $this->uploadViaFiles(self::IMG_INPUT_NAME);
@@ -222,21 +219,24 @@ class LPMImgUpload
         $files = array();
         $names = array();
 
-        //перебираем все ссылки
+        // перебираем все ссылки
         foreach ($urls as $url) {
-            //если ссылка не пустая
+            // если ссылка не пустая
             $value = trim($url);
             if (!empty($value)) {
-                //получаем из нее картинку и сохраняем ее
+                // получаем из нее картинку и сохраняем ее
                 $srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.png';
                 
-                //проверка, если картинка из сервиса droplr (http://droplr.com/)
                 if (preg_match("/^https?:\/\/d.pr\/[a-z0-9\/]+$/i", $value)) {
-                    $value.= '+';
-                }
-                //проверка, если картинка из сервиса ownCloud (http://cloud.innim.ru/)
-                elseif (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value)) {
-                    $value.= '/download';
+                    // Если картинка из сервиса droplr (http://droplr.com/)
+                    $value .= '+';
+                } elseif (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value)) {
+                    // Если картинка из сервиса ownCloud (http://cloud.innim.ru/)
+                    $value .= '/download';
+                } elseif (preg_match("/^https?:\/\/i.imgur.com\/[a-z0-9]+\.gifv$/i", $value)) {
+                    // Если картинка с imgur (https://imgur.com/) и это gif,
+                    // то надо обрезать v в конце, чтобы ссылка вела на само изображение
+                    $value = mb_substr($value, 0, -1);
                 }
 
                 //определяем размер скачиваемой картинки
@@ -253,10 +253,6 @@ class LPMImgUpload
                 }
                 //берем ее параметры из url
                 elseif ($imageData = stream_get_meta_data($stream)) {
-                    //echo '<pre>';
-                    //var_dump($imageData);
-                    //закрытие потока
-                    //fclose($stream);
                     //если данные есть и имеют определенный тип
                     if (isset($imageData["wrapper_data"]) && is_array($imageData["wrapper_data"])) {
                         $size = -1;
@@ -389,7 +385,8 @@ class LPMImgUpload
             // тип => расширение
             IMAGETYPE_JPEG        	=> 'jpg',
             IMAGETYPE_PNG         	=> 'png',
-            IMAGETYPE_JPEG2000		=> 'jpeg'
+            IMAGETYPE_JPEG2000		=> 'jpeg',
+            IMG_GIF                 => 'gif',
         );
         
         // Проверяем вес файла

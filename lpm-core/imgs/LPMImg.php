@@ -72,7 +72,7 @@ class LPMImg extends LPMBaseObject
     private $_imgName;
     private $_imgExt;
     /**
-     * @var upload
+     * @var \Verot\Upload\Upload
      */
     private $_upload;
     private $_errors = array();
@@ -116,7 +116,7 @@ class LPMImg extends LPMBaseObject
             $this->_errors[] = 'Не найдено исходное изображение';
         } elseif (!file_exists($cacheImg)) {
             if (!$this->_upload) {
-                $this->_upload = new upload($this->_srcImg);
+                $this->_upload = new \Verot\Upload\Upload($this->_srcImg);
             }
             $this->_upload->file_auto_rename = false;
             $this->_upload->file_overwrite   = true;
