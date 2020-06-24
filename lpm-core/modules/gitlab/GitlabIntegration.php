@@ -135,7 +135,7 @@ class GitlabIntegration
             return null;
         }
 
-        $projectPath = mb_substr($path, 1, $mrPos - 2);
+        $projectPath = trim(mb_substr($path, 0, $mrPos), ' -/');
         $mrId = intval(mb_substr($path, $mrPos + mb_strlen(self::URL_MR_SUBPATH)));
 
         $client = $this->client();
