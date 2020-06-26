@@ -58,9 +58,9 @@ let issueForm = {
             issueId: getVal("issueId"),
             imagesInfo: imgs.toArray().map((img) => {
                 return {
-                    id: $('input[name=imgId]', img).val(),
-                    url: $('a.image-link', img).attr('href'),
-                    previewUrl: $('img.image-preview', img).attr('src'),
+                    imgId: $('input[name=imgId]', img).val(),
+                    source: $('a.image-link', img).attr('href'),
+                    preview: $('img.image-preview', img).attr('src'),
                 };
             }),
             isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
@@ -112,9 +112,9 @@ let issueForm = {
             let imgLITmpl = $('#issueFormTemplates .image-item');
             imgs.forEach((img) => {
                 let imgLI = imgLITmpl.clone();
-                $('a.image-link', imgLI).attr('href', img.url);
-                $('img.image-preview', imgLI).attr('src', img.previewUrl);
-                $('input[name=imgId]', imgLI).val(img.id);
+                $('a.image-link', imgLI).attr('href', img.preview);
+                $('img.image-preview', imgLI).attr('src', img.source);
+                $('input[name=imgId]', imgLI).val(img.imgId);
                 $('a.remove-btn', imgLI).click(issueForm.removeImage);
 
                 imgsList.append(imgLI);
