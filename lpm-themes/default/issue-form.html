@@ -13,7 +13,7 @@
             <li>
                 <span class="edit-issue-name-container">
                     <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255"
-                        class="edit-issue-name" oninput="issueForm.issueNameChanged(this.value)" />
+                        class="edit-issue-name" oninput="issueFormLabels.issueNameChanged(this.value)" />
                 </span>
                 <span class="issue-labels-container">
                     <?php $issueLabels = $issue ? $issue->getLabelNames() : []; ?>
