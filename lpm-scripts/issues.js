@@ -972,7 +972,7 @@ function Issue(obj) {
     };
 
     this.getImagesUrl = function () {
-        return images.map(img => img.source)
+        return this.images.map(img => img.source)
     };
 
     this._num2Str = function (val, dig) {
