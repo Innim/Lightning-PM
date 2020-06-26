@@ -42,19 +42,20 @@ $(document).ready(function ($) {
 
 let issueForm = {
     handleEditState: function () {
+        let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
         let imgs = $("#issueInfo div > .images-line > li");
         issueForm.setIssueBy({
             name: $("#issueInfo > h3 > .issue-name").text(),
             hours: $("#issueInfo > h3 .issue-hours").text(),
             desc: $("#issueInfo .desc .raw-desc").text(),
-            priority: $("#issueInfo div input[name=priority]").val(),
-            completeDate: $("#issueInfo div input[name=completeDate]").val(),
-            type: $("#issueInfo div input[name=type]").val(),
-            members: $("#issueInfo div input[name=members]").val(),
-            membersSp: $("#issueInfo div input[name=membersSp]").val(),
-            testers: $("#issueInfo div input[name=testers]").val(),
-            parentId: $("#issueInfo input[name=parentId]").val(),
-            issueId: $("#issueInfo input[name=issueId]").val(),
+            priority: getVal("priority"),
+            completeDate: getVal("completeDate"),
+            type: getVal("type"),
+            members: getVal("members"),
+            membersSp: getVal("membersSp"),
+            testers: getVal("testers"),
+            parentId: getVal("parentId"),
+            issueId: getVal("issueId"),
             imagesInfo: imgs.toArray().map((img) => {
                 return {
                     id: $('input[name=imgId]', img).val(),
