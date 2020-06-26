@@ -127,11 +127,12 @@ let issueForm = {
         // новые добавленные изображения
         let newImgs = value.newImagesUrls;
         if (newImgs) {
-            newImgs.forEach((img) => {
-                issueForm.addImagebyUrl(img.source);
+            newImgs.forEach((imgUrl) => {
+                if (imgUrl) {
+                    issueForm.addImagebyUrl(imgUrl);
+                    imgsCouns++;
+                }
             });
-
-            imgsCouns += newImgs.length;
         }
 
         if (imgsCouns >= window.lpmOptions.issueImgsCount) {
@@ -191,7 +192,7 @@ let issueForm = {
                         testers: issue.getTesterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
-                        newImagesUrls: issue.images,
+                        newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
                         baseIdInProject: 0
                     });
@@ -238,7 +239,7 @@ let issueForm = {
                         testers: issue.getTesterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
-                        newImagesUrls: issue.images,
+                        newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
                         baseIdInProject: issueIdInProject
                     });

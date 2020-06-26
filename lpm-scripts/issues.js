@@ -989,6 +989,10 @@ function Issue(obj) {
         return this._num2Str(date.getDate()) + '-' + this._num2Str(date.getMonth() + 1) + '-' + date.getFullYear();
     };
 
+    this.getImagesUrl = function () {
+        return images.map(img => img.source)
+    };
+
     this._num2Str = function (val, dig) {
         if (!dig || dig < 1) dig = 1;
         else dig -= 1;
