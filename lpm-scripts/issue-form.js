@@ -63,7 +63,7 @@ let issueForm = {
                 };
             }),
             isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
-        });
+        }, true);
     },
     setIssueBy: function (value, isEdit = false) {
         // заполняем всю информацию
