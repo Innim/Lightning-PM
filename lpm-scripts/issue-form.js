@@ -41,30 +41,61 @@ $(document).ready(function ($) {
 });
 
 let issueForm = {
+    inputForRestore: null,
     handleEditState: function () {
-        let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
-        let imgs = $("#issueInfo div > .images-line > li");
-        issueForm.setIssueBy({
-            name: $("#issueInfo > h3 > .issue-name").text(),
-            hours: $("#issueInfo > h3 .issue-hours").text(),
-            desc: $("#issueInfo .desc .raw-desc").text(),
-            priority: getVal("priority"),
-            completeDate: getVal("completeDate"),
-            type: getVal("type"),
-            memberIds: getVal("members").split(','),
-            membersSp: getVal("membersSp").split(','),
-            testerIds: getVal("testers").split(','),
-            parentId: getVal("parentId"),
-            issueId: getVal("issueId"),
-            imagesInfo: issueForm.getImagesFromPage(),
-            isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
-        }, true);
+        if (!issueForm.restoreInput(true)) {
+            let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
+            issueForm.setIssueBy({
+                name: $("#issueInfo > h3 > .issue-name").text(),
+                hours: $("#issueInfo > h3 .issue-hours").text(),
+                desc: $("#issueInfo .desc .raw-desc").text(),
+                priority: getVal("priority"),
+                completeDate: getVal("completeDate"),
+                type: getVal("type"),
+                memberIds: getVal("members").split(','),
+                membersSp: getVal("membersSp").split(','),
+                testerIds: getVal("testers").split(','),
+                parentId: getVal("parentId"),
+                issueId: getVal("issueId"),
+                imagesInfo: issueForm.getImagesFromPage(),
+                isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
+            }, true);
+        }
     },
     handleAddState: function () {
-        var selectedPerformer = $('#selected-performer').val();
-        if (selectedPerformer) {
-            issueForm.addIssueMember();
+        if (!issueForm.restoreInput(false)) {
+            var selectedPerformer = $('#selected-performer').val();
+            if (selectedPerformer) {
+                issueForm.addIssueMember();
+            }
         }
+    },
+    restoreInput: function (isEdit) {
+        if (!issueForm.inputForRestore) return false;
+        let input = issueForm.inputForRestore;
+        let data = input.data;
+
+        issueForm.inputForRestore = null;
+
+        // TODO: обработать удаленные изображения
+        issueForm.setIssueBy({
+            name: data.name,
+            hours: data.hours,
+            desc: data.desc,
+            priority: data.priority,
+            completeDate: data.completeDate,
+            type: data.type,
+            memberIds: data.members,
+            membersSp: data.membersSp,
+            testerIds: data.testers,
+            parentId: data.parentId,
+            issueId: isEdit ? data.issueId : '',
+            newImagesUrls: data.imgUrls,
+            imagesInfo: issueForm.getImagesFromPage(),
+            isOnBoard: data.putToBoard,
+        }, isEdit);
+
+        return true;
     },
     setIssueBy: function (value, isEdit = false) {
         // заполняем всю информацию
