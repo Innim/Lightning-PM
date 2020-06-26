@@ -33,6 +33,8 @@ class ProjectPage extends BasePage
     private $_project;
     private $_currentPage;
 
+    private $_issueInput;
+
     public function __construct()
     {
         parent::__construct(self::UID, '', true, true);
@@ -157,6 +159,10 @@ class ProjectPage extends BasePage
                 $this->saveLabel();
             }
         }
+
+        if (!empty($this->_issueInput)) {
+            $this->addTmplVar('input', $this->_issueInput);
+        }
         
         // может быть это страница просмотра задачи?
         if (!$this->_curSubpage) {
@@ -183,6 +189,7 @@ class ProjectPage extends BasePage
                 $this->addTmplVar('comments', $comments);
             }
         }
+
         if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {
             // загружаем задачи
             $openedIssues = Issue::loadListByProject(
@@ -299,6 +306,11 @@ class ProjectPage extends BasePage
     private function saveIssue($editMode = false)
     {
         $engine = $this->_engine;
+        // Сохраняем весь input, чтобы в случае ошибки восстановить форму
+        $this->_issueInput = [
+            'data' => $_POST,
+        ];
+
         // если это редактирование, то проверим идентификатор задачи
         // на соответствие её проекту и права пользователя
         if ($editMode) {
@@ -558,6 +570,9 @@ class ProjectPage extends BasePage
                     $issue->id,
                     $editMode ? 'Full edit' : ''
                 );
+
+                // Очищаем сохраненные данные
+                $this->_issueInput = null;
             
                 LightningEngine::go2URL($issueURL);
             }

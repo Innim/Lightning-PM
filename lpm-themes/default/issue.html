@@ -3,6 +3,8 @@
 Требуются: 
     $issue - текущая задача
     $comments - комментарии к задаче
+Необязательные:
+    $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
 $userId = lpm_get_user()->getID();
 $isOnBoard = $issue->isOnBoard();
@@ -174,4 +176,4 @@ $isOnBoard = $issue->isOnBoard();
 <script type="text/javascript">
     var issueLabels = <?= json_encode($issue -> getLabelNames());?>;
 </script>
-<?php lpm_print_issue_form($issue->getProject(), $issue); ?>
+<?php lpm_print_issue_form($issue->getProject(), $issue, isset($input) ? $input : null); ?>

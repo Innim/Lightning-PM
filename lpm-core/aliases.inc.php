@@ -128,9 +128,9 @@ function lpm_print_issues($list)
 /**
 * Распечатывает форму добавления/редактирования задачи для текущего проекта
 */
-function lpm_print_issue_form($project, $issue = null)
+function lpm_print_issue_form($project, $issue = null, $input = null)
 {
-    return PagePrinter::issueForm($project, $issue);
+    return PagePrinter::issueForm($project, $issue, $input);
 }
 
 /**
