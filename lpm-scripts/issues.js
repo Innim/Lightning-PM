@@ -533,16 +533,6 @@ issuePage.showEditForm = function () {
     states.updateView();
 };
 
-function removeImage(imageId) {
-    if (confirm('Вы действительно хотите удалить это изображение?')) {
-        $('#issueForm form .images-list > li').has('input[name=imgId][value=' + imageId + ']').remove();
-        var val = $('#issueForm form input[name=removedImages]').val();
-        if (val != '') val += ',';
-        val += imageId;
-        $('#issueForm form input[name=removedImages]').val(val);
-    }
-}
-
 /**
  * 
  * @param {Issue} issue
@@ -918,13 +908,11 @@ function Issue(obj) {
     };
 
     this.getMemberIds = function () {
-        var str = '';
-        if (this.members)
-            for (var i = 0; i < this.members.length; i++) {
-                if (i > 0) str += ', ';
-                str += this.members[i].userId;
-            }
-        return str;
+        return this.members.map(member => member.userId);
+    };
+
+    this.getMembersSp = function () {
+        return this.members.map(member => member.sp);
     };
 
     this.getTesters = function () {
@@ -938,13 +926,7 @@ function Issue(obj) {
     };
 
     this.getTesterIds = function () {
-        var str = '';
-        if (this.testers)
-            for (var i = 0; i < this.testers.length; i++) {
-                if (i > 0) str += ', ';
-                str += this.testers[i].userId;
-            }
-        return str;
+        return this.testers.map(tester => tester.userId);
     };
 
     this.getDesc = function (formatted = false) {
@@ -987,6 +969,10 @@ function Issue(obj) {
         //' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + ':' + date.getMilliseconds();
 
         return this._num2Str(date.getDate()) + '-' + this._num2Str(date.getMonth() + 1) + '-' + date.getFullYear();
+    };
+
+    this.getImagesUrl = function () {
+        return this.images.map(img => img.source)
     };
 
     this._num2Str = function (val, dig) {

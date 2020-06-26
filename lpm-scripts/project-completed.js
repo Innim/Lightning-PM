@@ -4,7 +4,7 @@
 $(document).ready(
     function () {
         states.addState($("#projectView"));
-        states.addState($("#issueForm"), 'add-issue', issueForm.onShowAddIssue);
+        states.addState($("#issueForm"), 'add-issue', issueForm.handleAddState);
 
         states.updateView();
         issuePage.updateStat();

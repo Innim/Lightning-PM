@@ -279,6 +279,7 @@ var states = {
             this.current = item;
         } catch (e) {
             // do something
+            console.error(e);
         }
     }
 };

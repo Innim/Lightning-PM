@@ -128,9 +128,9 @@ function lpm_print_issues($list)
 /**
 * Распечатывает форму добавления/редактирования задачи для текущего проекта
 */
-function lpm_print_issue_form($project, $issue = null)
+function lpm_print_issue_form($project, $issue = null, $input = null)
 {
-    return PagePrinter::issueForm($project, $issue);
+    return PagePrinter::issueForm($project, $issue, $input);
 }
 
 /**
@@ -147,6 +147,23 @@ function lpm_print_comment(Comment $comment)
 function lpm_print_issue_view()
 {
     return PagePrinter::issueView();
+}
+
+/**
+ * Возвращает JS строку, представляющую объект.
+ */
+function lpm_get_js_object($data)
+{
+    return PagePrinter::toJSObject($data);
+}
+
+/**
+ * Распечатывает JS скрипт с назначением объекта
+ * в указанную JS переменную.
+ */
+function lpm_print_js_object($name, $data, $addScriptTags = true, $defineLet = true)
+{
+    return PagePrinter::printJSObject($name, $data, $addScriptTags, $defineLet);
 }
 
 /**

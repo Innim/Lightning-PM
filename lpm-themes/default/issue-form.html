@@ -3,18 +3,17 @@
 Требуются: 
     $project - текущий проект
     $issue - редактируемая задача (при добавлении задачи - null)
+    $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
 ?><article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
-    <h3>Добавить задачу</h3>
+    <h3></h3>
     <div class="validateError"><?php lpm_print_errors(); ?></div>
-    <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data"
-        onsubmit="return removeImage(imageId);">
+    <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data">
         <ol>
             <li>
                 <span class="edit-issue-name-container">
                     <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255"
-                        value="<?lpm_print_post_var('name');?>" class="edit-issue-name"
-                        oninput="issueForm.issueNameChanged(this.value)" />
+                        class="edit-issue-name" oninput="issueFormLabels.issueNameChanged(this.value)" />
                 </span>
                 <span class="issue-labels-container">
                     <?php $issueLabels = $issue ? $issue->getLabelNames() : []; ?>
@@ -46,18 +45,15 @@
                     <!-- <legend>Тип</legend> -->
                     <ol>
                         <li>
-                            <input id="develop" name="type" type="radio" value="<?=Issue::TYPE_DEVELOP;?>"
-                                <?=!isset($_POST['type'])||$_POST['type']==Issue::TYPE_DEVELOP?'checked':'';?>>
+                            <input id="develop" name="type" type="radio" value="<?=Issue::TYPE_DEVELOP;?>" checked>
                             <label for="develop">Разработка</label>
                         </li>
                         <li>
-                            <input id="bug" name="type" type="radio" value="<?=Issue::TYPE_BUG;?>"
-                                <?=isset($_POST['type'])&&$_POST['type']==Issue::TYPE_BUG?'checked':'';?>>
+                            <input id="bug" name="type" type="radio" value="<?=Issue::TYPE_BUG;?>">
                             <label for="bug">Ошибка</label>
                         </li>
                         <li>
-                            <input id="support" name="type" type="radio" value="<?=Issue::TYPE_SUPPORT;?>"
-                                <?=isset($_POST['type'])&&$_POST['type']==Issue::TYPE_SUPPORT?'checked':'';?>>
+                            <input id="support" name="type" type="radio" value="<?=Issue::TYPE_SUPPORT;?>">
                             <label for="support">Поддержка</label>
                         </li>
                     </ol>
@@ -90,8 +86,7 @@
             </li>
             <li>
                 <input placeholder="Дата окончания*" type="text" class="date" name="completeDate" required="required"
-                    maxlength="255"
-                    value="<?=isset($_POST['completeDate'])?$_POST['completeDate']:lpm_get_default_date();?>" />
+                    maxlength="255" value="<?=lpm_get_default_date();?>" />
             </li>
             <li>
                 <fieldset>
@@ -123,12 +118,10 @@
                 </fieldset>
             </li>
             <li>
-                <input placeholder="Story Points" type="text" name="hours" maxlength="5"
-                    value="<?lpm_print_post_var('hours');?>" />
+                <input placeholder="Story Points" type="text" name="hours" maxlength="5" />
             </li>
             <li>
-                <textarea placeholder="Описание" class="desc" name="desc"
-                    maxlength="65535"><?php lpm_print_post_var('desc', $issue ? $issue->desc : '');?></textarea>
+                <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"></textarea>
                 <div class="note tags-line">Вы можете использовать <a
                         href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи:
                     <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*">*жирный*</a>,
@@ -162,16 +155,9 @@
                 <input type="hidden" name="issueId" value="0" />
                 <input type="hidden" name="actionType" value="addIssue" />
                 <input type="hidden" name="baseIdInProject" value="0" />
-                <?php 
-            if ($project->scrum): 
-                if (isset($_POST['putToBoard'])) {
-                    $checked = empty($_POST['putToBoard']);
-                } else {
-                    $checked = $issue && $issue->isOnBoard();
-                }
-            ?>
+                <?php if ($project->scrum): ?>
                 <div class="put-to-board-line">
-                    <input id="putToBoardField" name="putToBoard" type="checkbox" <?=$checked?'checked':'';?>>
+                    <input id="putToBoardField" name="putToBoard" type="checkbox">
                     <label for="putToBoardField">Поместить на SCRUM доску</label>
                 </div>
                 <?php endif;?>
@@ -258,4 +244,16 @@
         </div>
     </div>
     <?php endif;?>
+
+    <div id="issueFormTemplates" style="display:none">
+        <li class="image-item">
+            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview"></a>
+            <input type="hidden" name="imgId" value="">
+            <a href="javascript:;" class="remove-btn"></a>
+        </li>
+    </div>
 </article>
+<?php 
+    if (!empty($input)) 
+        lpm_print_js_object('issueForm.inputForRestore', $input, true, false); 
+?>

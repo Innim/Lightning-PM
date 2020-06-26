@@ -41,13 +41,69 @@ $(document).ready(function ($) {
 });
 
 let issueForm = {
-    setIssueBy: function (value) {
+    inputForRestore: null,
+    handleEditState: function () {
+        if (!issueForm.restoreInput(true)) {
+            let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
+            issueForm.setIssueBy({
+                name: $("#issueInfo > h3 > .issue-name").text(),
+                hours: $("#issueInfo > h3 .issue-hours").text(),
+                desc: $("#issueInfo .desc .raw-desc").text(),
+                priority: getVal("priority"),
+                completeDate: getVal("completeDate"),
+                type: getVal("type"),
+                memberIds: getVal("members").split(','),
+                membersSp: getVal("membersSp").split(','),
+                testerIds: getVal("testers").split(','),
+                parentId: getVal("parentId"),
+                issueId: getVal("issueId"),
+                imagesInfo: issueForm.getImagesFromPage(),
+                isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
+            }, true);
+        }
+    },
+    handleAddState: function () {
+        if (!issueForm.restoreInput(false)) {
+            var selectedPerformer = $('#selected-performer').val();
+            if (selectedPerformer) {
+                issueForm.addIssueMember();
+            }
+        }
+    },
+    restoreInput: function (isEdit) {
+        if (!issueForm.inputForRestore) return false;
+        let input = issueForm.inputForRestore;
+        let data = input.data;
+
+        issueForm.inputForRestore = null;
+
+        // TODO: обработать удаленные изображения
+        issueForm.setIssueBy({
+            name: data.name,
+            hours: data.hours,
+            desc: data.desc,
+            priority: data.priority,
+            completeDate: data.completeDate,
+            type: data.type,
+            memberIds: data.members,
+            membersSp: data.membersSp,
+            testerIds: data.testers,
+            parentId: data.parentId,
+            issueId: isEdit ? data.issueId : '',
+            newImagesUrls: data.imgUrls,
+            imagesInfo: issueForm.getImagesFromPage(),
+            isOnBoard: data.putToBoard,
+        }, isEdit);
+
+        return true;
+    },
+    setIssueBy: function (value, isEdit = false) {
         // заполняем всю информацию
-        //$( "" ).value( $( "" ) );
         // меняем заголовок
-        $("#issueForm > h3").text("Добавить задачу");
+        $("#issueForm > h3").text(isEdit ? "Редактирование задачи" : "Добавить задачу");
         // имя
         $("#issueForm form input[name=name]").val(value.name);
+        issueFormLabels.issueNameChanged(value.name);
         // часы
         $("#issueForm form input[name=hours]").val(value.hours);
 
@@ -55,68 +111,78 @@ let issueForm = {
         $('form input:radio[name=type]:checked', "#issueForm").removeAttr('checked');
         $('form input:radio[name=type][value=' + value.type + ']', "#issueForm").prop('checked', true);
         // приоритет
-        // var priorityVal = $( "#issueInfo li input[name=priority]" ).val();
         $("#issueForm form input[name=priority]").val(value.priority);
         issuePage.setPriorityVal(value.priority);
         // дата окончания
         $("#issueForm form input[name=completeDate]").val(value.completeDate);
         // исполнители
-        var memberIds = value.members.split(',');
-        var i, l = 0;
-        l = memberIds.length;
-        for (i = 0; i < l; i++) {
-            $("#addIssueMembers option[value=" + memberIds[i] + "]").prop('selected', true);
-            issueForm.addIssueMember();
+        let memberIds = value.memberIds;
+        if (memberIds) {
+            let membersSp = value.membersSp ? value.membersSp : [];
+            memberIds.forEach((memberId, index) => {
+                $("#addIssueMembers option[value=" + memberId + "]").prop('selected', true);
+                issueForm.addIssueMember(membersSp[index]);
+            });
         }
 
         // Тестеры
-        var testerIds = value.testers/*$( "#issueInfo li input[name=testers]" ).val()*/.split(',');
-        l = testerIds.length;
-        for (i = 0; i < l; i++) {
-            var testerId = testerIds[i];
-            if (testerId.length > 0) {
-                $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
-                issueForm.addIssueTester();
-            }
+        let testerIds = value.testerIds;
+        if (testerIds) {
+            testerIds.forEach((testerId) => {
+                if (testerId.length > 0) {
+                    $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
+                    issueForm.addIssueTester();
+                }
+            });
         }
 
-        //$( "#issueForm form" ).value( $( "" ) );
-        // описание
-        // пришлось убрать, потому что там уже обработанное описание - с ссылками и тп
-        // вообще видимо надо переделать это все
-        //$( "#issueForm form textarea[name=desc]" ).val( $( "#issueInfo li.desc .value" ).html() );
         $("#issueForm form textarea[name=desc]").val(value.desc);
-        // изображения
-        var imgs = value.images;
-        var numImages = imgs.length;
-        for (i = 0; i < numImages; ++i) {
-            issueForm.addImagebyUrl(imgs[i].source);
+
+        var imgsCouns = 0
+
+        // уже добавленные изображения
+        let imgUploadLi = $("#issueForm form .images-list > li:has(input[type=file])");
+        let imgs = value.imagesInfo;
+        let imgsList = $('#issueForm form .images-list').empty();
+        if (imgs) {
+            let imgLITmpl = $('#issueFormTemplates .image-item');
+            imgs.forEach((img) => {
+                let imgLI = imgLITmpl.clone();
+                $('a.image-link', imgLI).attr('href', img.source);
+                $('img.image-preview', imgLI).attr('src', img.preview);
+                $('input[name=imgId]', imgLI).val(img.imgId);
+                $('a.remove-btn', imgLI).click(issueForm.removeImage);
+
+                imgsList.append(imgLI);
+            });
+
+            imgsCouns += imgs.length;
         }
-        /*var imgs = $("#issueInfo li > .images-line > li");
-        l = imgs.length;
-        var $imgInputField = $('#issueForm form .images-list > li').has('input[name="images[]"]');
-        var $imgInput = $('#issueForm form .images-list').empty();
-        var imgLI = null;
-        for (i = l - 1; i >= 0; i--) {
-            //$('input[name=imgId]',imgs[i]).val()
-            imgLI = imgs[i].cloneNode( true );
-            $(imgLI).append('<a href="javascript:;" class="remove-btn" onclick="removeImage(' +
-                $('input[name=imgId]', imgLI).val() + ')"></a>');
-            $imgInput.append(imgLI);
-            //imgInput.insertBefore(imgLI, imgInput.children[0]);
-        };
-        $imgInput.append($imgInputField);
-        if (l >= window.lpmOptions.issueImgsCount) {
-            $("#issueForm form .images-list > li input[type=file]").hide();
+        imgsList.append(imgUploadLi);
+
+        // новые добавленные изображения
+        let newImgs = value.newImagesUrls;
+        if (newImgs) {
+            newImgs.forEach((imgUrl) => {
+                if (imgUrl) {
+                    issueForm.addImagebyUrl(imgUrl);
+                    imgsCouns++;
+                }
+            });
+        }
+
+        if (imgsCouns >= window.lpmOptions.issueImgsCount) {
+            imgUploadLi.hide();
             $("#issueForm form li a[name=imgbyUrl]").hide();
-        }*/
+        }
 
         // родитель
-        $("#issueForm form input[name=parentId]").val(value.parentId /*$( "#issueInfo input[name=parentId]" ).val()*/);
+        $("#issueForm form input[name=parentId]").val(value.parentId);
         // идентификатор задачи
-        // $( "#issueForm form input[name=issueId]" ).val( value.issueId/*$( "#issueInfo input[name=issueId]" ).val()*/ );
+        if (isEdit)
+            $("#issueForm form input[name=issueId]").val(value.issueId);
         // действие меняем на редактирование
-        $("#issueForm form input[name=actionType]").val('addIssue');
+        $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
         $("#issueForm form input[name=baseIdInProject]").val(value.baseIdInProject);
         // меняем заголовок кнопки сохранения
         $("#issueForm form .save-line button[type=submit]").text("Сохранить");
@@ -125,6 +191,8 @@ let issueForm = {
         var boardField = $("#putToBoardField");
         if (boardField && boardField[0])
             boardField[0].checked = value.isOnBoard;
+
+        issueFormLabels.update();
     },
     addIssueBy: function (issueIdInProject) {
         issueIdInProject = parseInt(issueIdInProject);
@@ -155,11 +223,12 @@ let issueForm = {
                         priority: issue.priority,
                         completeDate: issue.getCompleteDateInput(),
                         type: issue.type,
-                        members: issue.getMemberIds(),
-                        testers: issue.getTesterIds(),
+                        memberIds: issue.getMemberIds(),
+                        membersSp: issue.getMembersSp(),
+                        testerIds: issue.getTesterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
-                        images: issue.images,
+                        newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
                         baseIdInProject: 0
                     });
@@ -200,11 +269,13 @@ let issueForm = {
                         priority: issue.priority,
                         completeDate: issue.getCompleteDateInput(),
                         type: issue.type,
-                        members: issue.getMemberIds(),
-                        testers: issue.getTesterIds(),
+                        // надо сбросить SP по исполнителям,
+                        // поэтому не передаем их
+                        memberIds: issue.getMemberIds(),
+                        testerIds: issue.getTesterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
-                        images: issue.images,
+                        newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
                         baseIdInProject: issueIdInProject
                     });
@@ -213,56 +284,6 @@ let issueForm = {
                 }
             }
         );
-    },
-    onShowAddIssue: function () {
-        var selectedPerformer = $('#selected-performer').val();
-        if (selectedPerformer) {
-            issueForm.addIssueMember();
-        }
-    },
-    issueNameChanged: function (value) {
-        if (typeof issueLabels === 'undefined')
-            issueLabels = [];
-
-        var labelsStr = $.trim(value).match(/^\[.*]/);
-        if (labelsStr != null) {
-            // т.к. на js нет нормальной регулярки для такой задачи, то как-то так
-            var labels = labelsStr.toString().split("]");
-            var isUpdate = false;
-            var currentSymbol = 0;
-            for (var i = 0, len = labels.length; i < len; ++i) {
-                var label = $.trim(labels[i]);
-                if (label.substr(0, 1) == '[') {
-                    currentSymbol += 2;
-                    label = $.trim(label.substr(1));
-                    if (label == "") {
-                        labels.splice(i--, 1);
-                        len--;
-                    } else {
-                        labels[i] = label;
-                        if (issueLabels.indexOf(label) == -1) {
-                            issueLabels.push(label);
-                            isUpdate = true;
-                        }
-                    }
-                } else {
-                    break;
-                }
-            }
-
-            //Удаляем те, которые стерли
-            var len = issueLabels.length;
-            while (len-- > 0) {
-                var label = issueLabels[len];
-                if (labels.indexOf(label) == -1) {
-                    issueLabels.splice(len, 1);
-                    isUpdate = true;
-                }
-            }
-
-            if (isUpdate)
-                issueFormLabels.update();
-        }
     },
     addImagebyUrl: function (imageUrl, autofocus = false) {
         // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
@@ -391,6 +412,18 @@ let issueForm = {
             li.remove();
         }, 0)
     },
+    removeImage: function (e) {
+        var li = $(e.currentTarget).parent('.image-item');
+        var imageId = $('input[name=imgId]', li).val();
+
+        if (confirm('Вы действительно хотите удалить это изображение?')) {
+            li.remove();
+            var val = $('#issueForm form input[name=removedImages]').val();
+            if (val != '') val += ',';
+            val += imageId;
+            $('#issueForm form input[name=removedImages]').val(val);
+        }
+    },
     validateIssueForm: function () {
         var errors = [];
         var inputs = $("#issueForm input:file");
@@ -415,6 +448,16 @@ let issueForm = {
             $('#issueForm > div.validateError').html(errors.join('<br/>')).show();
             return false;
         }
+    },
+    getImagesFromPage: function () {
+        let imgs = $("#issueInfo div > .images-line > li");
+        return imgs.toArray().map((img) => {
+            return {
+                imgId: $('input[name=imgId]', img).val(),
+                source: $('a.image-link', img).attr('href'),
+                preview: $('img.image-preview', img).attr('src'),
+            };
+        });
     },
 };
 
@@ -562,6 +605,50 @@ let issueFormLabels = {
 
         $("#issueForm form input[name=name]").val(name);
         issueFormLabels.update();
+    },
+    issueNameChanged: function (value) {
+        if (typeof issueLabels === 'undefined')
+            issueLabels = [];
+
+        var labelsStr = $.trim(value).match(/^\[.*]/);
+        if (labelsStr != null) {
+            // т.к. на js нет нормальной регулярки для такой задачи, то как-то так
+            var labels = labelsStr.toString().split("]");
+            var isUpdate = false;
+            var currentSymbol = 0;
+            for (var i = 0, len = labels.length; i < len; ++i) {
+                var label = $.trim(labels[i]);
+                if (label.substr(0, 1) == '[') {
+                    currentSymbol += 2;
+                    label = $.trim(label.substr(1));
+                    if (label == "") {
+                        labels.splice(i--, 1);
+                        len--;
+                    } else {
+                        labels[i] = label;
+                        if (issueLabels.indexOf(label) == -1) {
+                            issueLabels.push(label);
+                            isUpdate = true;
+                        }
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            //Удаляем те, которые стерли
+            var len = issueLabels.length;
+            while (len-- > 0) {
+                var label = issueLabels[len];
+                if (labels.indexOf(label) == -1) {
+                    issueLabels.splice(len, 1);
+                    isUpdate = true;
+                }
+            }
+
+            if (isUpdate)
+                issueFormLabels.update();
+        }
     },
     update: function () {
         if (typeof issueLabels !== 'undefined') {

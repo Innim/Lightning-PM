@@ -74,9 +74,9 @@ class PagePrinter
         PageConstructor::includePattern('issues', compact('list'));
     }
     
-    public static function issueForm($project, $issue)
+    public static function issueForm($project, $issue, $input)
     {
-        PageConstructor::includePattern('issue-form', compact('project', 'issue'));
+        PageConstructor::includePattern('issue-form', compact('project', 'issue', 'input'));
     }
     
     public static function issueView()
@@ -134,6 +134,35 @@ class PagePrinter
         $scripts = PageConstructor::getUsingScripts();
         foreach ($scripts as $scriptFileName) {
             self::jsScriptLink($scriptFileName);
+        }
+    }
+
+    /**
+     * Возвращает JS строку, представляющую объект.
+     */
+    public static function toJSObject($data)
+    {
+        $str = addcslashes(json_encode($data), '"\\');
+        return 'JSON.parse("' . $str . '")';
+    }
+
+    /**
+     * Распечатывает JS скрипт с назначением объекта
+     * в указанную JS переменную.
+     */
+    public static function printJSObject($name, $data, $addScriptTags = true, $defineLet = true)
+    {
+        $right = $defineLet ? 'let ' . $name : $name;
+        $left = self::toJSObject($data);
+        if ($addScriptTags) {
+            echo '<script>';
+        }
+
+        echo <<<JS
+    $right = $left;
+JS;
+        if ($addScriptTags) {
+            echo '</script>';
         }
     }
     
