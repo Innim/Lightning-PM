@@ -66,6 +66,12 @@ let issueForm = {
             isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
         }, true);
     },
+    handleAddState: function () {
+        var selectedPerformer = $('#selected-performer').val();
+        if (selectedPerformer) {
+            issueForm.addIssueMember();
+        }
+    },
     setIssueBy: function (value, isEdit = false) {
         // заполняем всю информацию
         // меняем заголовок
@@ -252,12 +258,6 @@ let issueForm = {
                 }
             }
         );
-    },
-    onShowAddIssue: function () {
-        var selectedPerformer = $('#selected-performer').val();
-        if (selectedPerformer) {
-            issueForm.addIssueMember();
-        }
     },
     issueNameChanged: function (value) {
         if (typeof issueLabels === 'undefined')
