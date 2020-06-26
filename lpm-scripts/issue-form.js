@@ -51,9 +51,9 @@ let issueForm = {
             priority: getVal("priority"),
             completeDate: getVal("completeDate"),
             type: getVal("type"),
-            members: getVal("members"),
-            membersSp: getVal("membersSp"),
-            testers: getVal("testers"),
+            memberIds: getVal("members").split(','),
+            membersSp: getVal("membersSp").split(','),
+            testerIds: getVal("testers").split(','),
             parentId: getVal("parentId"),
             issueId: getVal("issueId"),
             imagesInfo: imgs.toArray().map((img) => {
@@ -84,21 +84,25 @@ let issueForm = {
         // дата окончания
         $("#issueForm form input[name=completeDate]").val(value.completeDate);
         // исполнители
-        let memberIds = value.members.split(',');
-        let membersSp = value.membersSp ? value.membersSp.split(',') : [];
-        memberIds.forEach((memberId, index) => {
-            $("#addIssueMembers option[value=" + memberId + "]").prop('selected', true);
-            issueForm.addIssueMember(membersSp[index]);
-        });
+        let memberIds = value.memberIds;
+        if (memberIds) {
+            let membersSp = value.membersSp ? value.membersSp : [];
+            memberIds.forEach((memberId, index) => {
+                $("#addIssueMembers option[value=" + memberId + "]").prop('selected', true);
+                issueForm.addIssueMember(membersSp[index]);
+            });
+        }
 
         // Тестеры
-        let testerIds = value.testers.split(',');
-        testerIds.forEach((testerId) => {
-            if (testerId.length > 0) {
-                $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
-                issueForm.addIssueTester();
-            }
-        });
+        let testerIds = value.testerIds;
+        if (testerIds) {
+            testerIds.forEach((testerId) => {
+                if (testerId.length > 0) {
+                    $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
+                    issueForm.addIssueTester();
+                }
+            });
+        }
 
         $("#issueForm form textarea[name=desc]").val(value.desc);
 
@@ -187,9 +191,9 @@ let issueForm = {
                         priority: issue.priority,
                         completeDate: issue.getCompleteDateInput(),
                         type: issue.type,
-                        members: issue.getMemberIds(),
-                        membersSp: issue.getMembersSpStr(),
-                        testers: issue.getTesterIds(),
+                        memberIds: issue.getMemberIds(),
+                        membersSp: issue.getMembersSp(),
+                        testerIds: issue.getTesterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
@@ -235,8 +239,8 @@ let issueForm = {
                         type: issue.type,
                         // надо сбросить SP по исполнителям,
                         // поэтому не передаем их
-                        members: issue.getMemberIds(),
-                        testers: issue.getTesterIds(),
+                        memberIds: issue.getMemberIds(),
+                        testerIds: issue.getTesterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),

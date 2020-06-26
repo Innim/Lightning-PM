@@ -908,23 +908,11 @@ function Issue(obj) {
     };
 
     this.getMemberIds = function () {
-        var str = '';
-        if (this.members)
-            for (var i = 0; i < this.members.length; i++) {
-                if (i > 0) str += ', ';
-                str += this.members[i].userId;
-            }
-        return str;
+        return this.members.map(member => member.userId);
     };
 
-    this.getMembersSpStr = function () {
-        var str = '';
-        if (this.members)
-            for (var i = 0; i < this.members.length; i++) {
-                if (i > 0) str += ', ';
-                str += this.members[i].sp;
-            }
-        return str;
+    this.getMembersSp = function () {
+        return this.members.map(member => member.sp);
     };
 
     this.getTesters = function () {
@@ -938,13 +926,7 @@ function Issue(obj) {
     };
 
     this.getTesterIds = function () {
-        var str = '';
-        if (this.testers)
-            for (var i = 0; i < this.testers.length; i++) {
-                if (i > 0) str += ', ';
-                str += this.testers[i].userId;
-            }
-        return str;
+        return this.testers.map(tester => tester.userId);
     };
 
     this.getDesc = function (formatted = false) {
