@@ -56,13 +56,7 @@ let issueForm = {
             testerIds: getVal("testers").split(','),
             parentId: getVal("parentId"),
             issueId: getVal("issueId"),
-            imagesInfo: imgs.toArray().map((img) => {
-                return {
-                    imgId: $('input[name=imgId]', img).val(),
-                    source: $('a.image-link', img).attr('href'),
-                    preview: $('img.image-preview', img).attr('src'),
-                };
-            }),
+            imagesInfo: issueForm.getImagesFromPage(),
             isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
         }, true);
     },
@@ -466,6 +460,16 @@ let issueForm = {
             $('#issueForm > div.validateError').html(errors.join('<br/>')).show();
             return false;
         }
+    },
+    getImagesFromPage: function () {
+        let imgs = $("#issueInfo div > .images-line > li");
+        return imgs.toArray().map((img) => {
+            return {
+                imgId: $('input[name=imgId]', img).val(),
+                source: $('a.image-link', img).attr('href'),
+                preview: $('img.image-preview', img).attr('src'),
+            };
+        });
     },
 };
 
