@@ -136,6 +136,35 @@ class PagePrinter
             self::jsScriptLink($scriptFileName);
         }
     }
+
+    /**
+     * Возвращает JS строку, представляющую объект.
+     */
+    public static function toJSObject($data)
+    {
+        $str = addcslashes(json_encode($data), '"\\');
+        return 'JSON.parse("' . $str . '")';
+    }
+
+    /**
+     * Распечатывает JS скрипт с назначением объекта
+     * в указанную JS переменную.
+     */
+    public static function printJSObject($name, $data, $addScriptTags = true, $defineLet = true)
+    {
+        $right = $defineLet ? 'let ' . $name : $name;
+        $left = self::toJSObject($data);
+        if ($addScriptTags) {
+            echo '<script>';
+        }
+
+        echo <<<JS
+    $right = $left;
+JS;
+        if ($addScriptTags) {
+            echo '</script>';
+        }
+    }
     
     public static function openGraphMeta()
     {

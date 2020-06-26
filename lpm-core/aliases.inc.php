@@ -150,6 +150,23 @@ function lpm_print_issue_view()
 }
 
 /**
+ * Возвращает JS строку, представляющую объект.
+ */
+function lpm_get_js_object($data)
+{
+    return PagePrinter::toJSObject($data);
+}
+
+/**
+ * Распечатывает JS скрипт с назначением объекта
+ * в указанную JS переменную.
+ */
+function lpm_print_js_object($name, $data, $addScriptTags = true, $defineLet = true)
+{
+    return PagePrinter::printJSObject($name, $data, $addScriptTags, $defineLet);
+}
+
+/**
  * Распечатывает переменную из параметров POST.
  * Если переменной нет - то пустую строку
  */
