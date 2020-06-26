@@ -105,8 +105,9 @@ let issueForm = {
         var imgsCouns = 0
 
         // уже добавленные изображения
+        let imgUpload = $("#issueForm form .images-list > li input[type=file]");
         let imgs = value.imagesInfo;
-        let imgInput = $('#issueForm form .images-list').empty();
+        let imgsList = $('#issueForm form .images-list').empty();
         if (imgs) {
             let imgLITmpl = $('#issueFormTemplates .image-item');
             imgs.forEach((img) => {
@@ -116,11 +117,12 @@ let issueForm = {
                 $('input[name=imgId]', imgLI).val(img.id);
                 $('a.remove-btn', imgLI).click(issueForm.removeImage);
 
-                imgInput.append(imgLI);
+                imgsList.append(imgLI);
             });
 
             imgsCouns += imgs.length;
         }
+        imgsList.append(imgUpload);
 
         // новые добавленные изображения
         let newImgs = value.newImagesUrls;
@@ -133,7 +135,7 @@ let issueForm = {
         }
 
         if (imgsCouns >= window.lpmOptions.issueImgsCount) {
-            $("#issueForm form .images-list > li input[type=file]").hide();
+            imgUpload.hide();
             $("#issueForm form li a[name=imgbyUrl]").hide();
         }
 
