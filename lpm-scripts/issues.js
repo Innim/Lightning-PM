@@ -533,16 +533,6 @@ issuePage.showEditForm = function () {
     states.updateView();
 };
 
-function removeImage(imageId) {
-    if (confirm('Вы действительно хотите удалить это изображение?')) {
-        $('#issueForm form .images-list > li').has('input[name=imgId][value=' + imageId + ']').remove();
-        var val = $('#issueForm form input[name=removedImages]').val();
-        if (val != '') val += ',';
-        val += imageId;
-        $('#issueForm form input[name=removedImages]').val(val);
-    }
-}
-
 /**
  * 
  * @param {Issue} issue
@@ -923,6 +913,16 @@ function Issue(obj) {
             for (var i = 0; i < this.members.length; i++) {
                 if (i > 0) str += ', ';
                 str += this.members[i].userId;
+            }
+        return str;
+    };
+
+    this.getMembersSpStr = function () {
+        var str = '';
+        if (this.members)
+            for (var i = 0; i < this.members.length; i++) {
+                if (i > 0) str += ', ';
+                str += this.members[i].sp;
             }
         return str;
     };

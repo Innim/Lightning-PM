@@ -7,8 +7,7 @@
 ?><article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
     <h3>Добавить задачу</h3>
     <div class="validateError"><?php lpm_print_errors(); ?></div>
-    <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data"
-        onsubmit="return removeImage(imageId);">
+    <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data">
         <ol>
             <li>
                 <span class="edit-issue-name-container">
@@ -258,4 +257,12 @@
         </div>
     </div>
     <?php endif;?>
+
+    <div id="issueFormTemplates" class="display:none">
+        <li class="image-item">
+            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview"></a>
+            <input type="hidden" name="imgId" value="">
+            <a href="javascript:;" class="remove-btn"></a>
+        </li>
+    </div>
 </article>
