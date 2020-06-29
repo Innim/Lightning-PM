@@ -194,7 +194,9 @@ let issueForm = {
 
         issueFormLabels.update();
     },
-    addIssueBy: function (issueIdInProject) {
+    handleAddIssueByState: function (issueIdInProject) {
+        if (issueForm.restoreInput(false)) return;
+
         issueIdInProject = parseInt(issueIdInProject);
         var projectId = parseInt($('#issueProjectID').val());
 
@@ -239,7 +241,9 @@ let issueForm = {
             }
         );
     },
-    finishedIssueBy: function (issueIdInProject) {
+    handleAddfinishedIssueByState: function (issueIdInProject) {
+        if (issueForm.restoreInput(false)) return;
+
         issueIdInProject = parseInt(issueIdInProject);
         var projectId = parseInt($('#issueProjectID').val());
 
