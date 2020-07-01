@@ -64,6 +64,7 @@ let issueForm = {
     },
     handleAddState: function () {
         if (!issueForm.restoreInput(false)) {
+            issueForm.updateHeader(false);
             var selectedPerformer = $('#selected-performer').val();
             if (selectedPerformer) {
                 issueForm.addIssueMember();
@@ -100,7 +101,7 @@ let issueForm = {
     setIssueBy: function (value, isEdit = false) {
         // заполняем всю информацию
         // меняем заголовок
-        $("#issueForm > h3").text(isEdit ? "Редактирование задачи" : "Добавить задачу");
+        issueForm.updateHeader(isEdit);
         // имя
         $("#issueForm form input[name=name]").val(value.name);
         issueFormLabels.issueNameChanged(value.name);
@@ -288,6 +289,9 @@ let issueForm = {
                 }
             }
         );
+    },
+    updateHeader: function (isEdit) {
+        $("#issueForm > h3").text(isEdit ? "Редактирование задачи" : "Добавить задачу");
     },
     addImagebyUrl: function (imageUrl, autofocus = false) {
         // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
