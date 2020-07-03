@@ -45,7 +45,7 @@ $(document).ready(
             }
         });
 
-        setupMembersAutoComplete(['#issueForm textarea[name=desc]',
+        setupAutoComplete(['#issueForm textarea[name=desc]',
             'form.add-comment textarea[name=commentText]']);
 
         // Настройка формы -- END
@@ -122,9 +122,23 @@ function bindFormattingHotkeys(selector) {
     });
 }
 
-function setupMembersAutoComplete(selectors) {
-    var members = null;
+function setupAutoComplete(selectors) {
     let tribute = new Tribute({
+        collection: [
+            createMembersAutoComplete(),
+            createIssuesAutoComplete(),
+        ]
+    });
+
+    for (var i = 0; i < selectors.length; i++) {
+        tribute.attach($(selectors[i]).get());
+    }
+}
+
+
+function createMembersAutoComplete() {
+    var members = null;
+    return {
         trigger: '@',
         values: function (text, cb) {
             if (members !== null) {
@@ -147,11 +161,52 @@ function setupMembersAutoComplete(selectors) {
                 }
             });
         },
-    });
-
-    for (var i = 0; i < selectors.length; i++) {
-        tribute.attach($(selectors[i]).get());
     }
+}
+
+function createIssuesAutoComplete() {
+    var cache = {};
+    return {
+        trigger: '#',
+        selectTemplate: function (item) {
+            let data = item.original;
+            return '[#' + data.key + '](' + data.url + ')';
+        },
+        menuItemTemplate: function (item) {
+            let data = item.original;
+            return '#' + data.key + ' ' + data.value;
+        },
+        noMatchTemplate: function () {
+            return '<li>Задач с таким ID не найдено.</li>';
+        },
+        values: function (text, cb) {
+            if (!text) return;
+
+            if (cache[text]) {
+                cb(cache[text]);
+                return;
+            }
+
+            srv.project.getIssueNamesByIdPart(issuePage.projectId, text,
+                function (res) {
+                    console.log(res)
+                    if (res.success) {
+                        let list = res.list.map((e) => {
+                            return {
+                                key: e.idInProject,
+                                value: e.name,
+                                url: e.url
+                            };
+                        });
+                        cache[text] = list;
+                        cb(list);
+                    } else {
+                        cb([]);
+                        srv.err(res);
+                    }
+                });
+        },
+    };
 }
 
 function DropDown(el) {

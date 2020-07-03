@@ -18,7 +18,7 @@ class Issue extends MembersInstance
      * @return array<Issue> Массив загруженных задач.
      */
 
-    protected static function loadList($where, $extraSelect = '', $extraTables = null)
+    protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
     {
         //return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
         $sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
@@ -57,10 +57,14 @@ SQL;
         if ($where != '') {
             $sql  .= " AND " . $where;
         }
-        $sql .= " AND `i`.`authorId` = `u`.`userId` ".
-                "ORDER BY FIELD(`i`.`status`, " . Issue::STATUS_WAIT . "," .
+
+        if (empty($orderBy)) {
+            $orderBy = "FIELD(`i`.`status`, " . Issue::STATUS_WAIT . "," .
                 Issue::STATUS_IN_WORK . "," . Issue::STATUS_COMPLETED . "), " .
                 "`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC, `id` ASC";
+        }
+
+        $sql .= " AND `i`.`authorId` = `u`.`userId` ORDER BY " . $orderBy;
 
         array_unshift($args, $sql);
 
@@ -110,8 +114,7 @@ SQL;
         $issueStatus,
         $fromCompletedDate = null,
         $toCompletedDate = null
-    )
-    {
+    ) {
         //if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
         $where = "`i`.`projectId` = '" . $projectId . "'";
             
@@ -142,6 +145,27 @@ SQL;
         } else {
             $where = "`i`.`id` IN (" . implode(',', $issueIds) . ")";
             return self::loadList($where);
+        }
+    }
+
+    /**
+     * Загружает список задач по части идентификатора в проекте.
+     * @param  array<int> $issueIds Идентификаторы задач
+     * @return array<Issue>
+     */
+    public static function loadListByIdInProjectPart($projectId, $part, $startsWith = true)
+    {
+        if (empty($part)) {
+            return self::loadListByProject($projectId);
+        } else {
+            $val = $part . '%%';
+            if (!$startsWith) {
+                $val = '%%' . $val;
+            }
+            $where = <<<WHERE
+(`i`.`projectId` = $projectId AND `i`.`idInProject` LIKE '$val')
+WHERE;
+            return self::loadList($where, '', '', '`i`.`idInProject` DESC');
         }
     }
     

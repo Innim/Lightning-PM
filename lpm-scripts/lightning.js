@@ -190,7 +190,10 @@ let srv = {
         },
         setProjectSettings: function (projectId, scrum, slackNotifyChannel, onResult) {
             this.s._('setProjectSettings');
-        }
+        },
+        getIssueNamesByIdPart: function (projectId, idInProjectPart, onResult) {
+            this.s._('getIssueNamesByIdPart');
+        },
     },
     projects: {
         s: new BaseService('ProjectsService'),
