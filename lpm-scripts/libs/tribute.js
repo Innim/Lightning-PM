@@ -1481,7 +1481,7 @@
               return noMatchTemplate || function () {
                 return "<li>No Match Found!</li>";
               }.bind(_this);
-            }(noMatchTemplate),
+            }(item.noMatchTemplate),
             lookup: item.lookup || lookup,
             fillAttr: item.fillAttr || fillAttr,
             values: item.values,
