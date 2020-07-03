@@ -392,7 +392,7 @@ class ProjectPage extends BasePage
 
             if (!empty($labels)) {
                 $allLabels = Issue::getLabels();
-                $countedLabels = array();
+                $countedLabels = [];
                 foreach ($allLabels as $value) {
                     $index = array_search($value['label'], $labels);
                     if ($index !== false) {
@@ -485,7 +485,7 @@ class ProjectPage extends BasePage
                 if (!empty($_POST["removedImages"])) {
                     $delImg = $_POST["removedImages"];
                     $delImg = explode(',', $delImg);
-                    $imgIds = array();
+                    $imgIds = [];
                     foreach ($delImg as $imgIt) {
                         $imgIt = (int)$imgIt;
                         if ($imgIt > 0) {
@@ -725,7 +725,7 @@ class ProjectPage extends BasePage
             }
             return $engine->addError('Ошибка при сохранении участников');
         } else {
-            $saved = array();
+            $saved = [];
             foreach ($userIds as $memberId) {
                 $memberId = (float)$memberId;
                 if (!in_array($memberId, $saved)) {
