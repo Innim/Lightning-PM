@@ -21,9 +21,9 @@ class ProjectPage extends BasePage
     const PUID_COMPLETED_ISSUES = 'completed';
     const PUID_COMMENTS  = 'comments';
     const PUID_ISSUE = 'issue';
-    const PUID_SCRUM_BOARD = 'scrum_board';
-    const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
-    const PUID_SPRINT_STAT = 'sprint_stat';
+    const PUID_SCRUM_BOARD = 'scrum-board';
+    const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum-board-snapshot';
+    const PUID_SPRINT_STAT = 'sprint-stat';
     const PUID_SETTINGS = 'project-settings';
 
     /**
