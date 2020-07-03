@@ -266,6 +266,11 @@ class ProjectPage extends BasePage
             $sidInProject = (int) $this->getParam(3);
             $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
 
+            if (empty($snapshot)) {
+                LightningEngine::go2URL($this->getBaseUrl(self::PUID_SCRUM_BOARD_SNAPSHOT));
+                return false;
+            }
+
             $this->addTmplVar('project', $this->_project);
             $this->addTmplVar('snapshot', $snapshot);
         }
