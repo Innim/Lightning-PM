@@ -15,10 +15,10 @@ class BasePage extends LPMBaseObject
     protected $_header   = '';
     protected $_label    = '';
     
-    protected $_subPages = array();
+    protected $_subPages = [];
 
     protected $_pattern = '';
-    protected $_js = array();
+    protected $_js = [];
     
     /**
      * Количество параметров, которое является базовым
@@ -74,7 +74,7 @@ class BasePage extends LPMBaseObject
     
     public function getSubMenu()
     {
-        $subMenu = array();
+        $subMenu = [];
         foreach ($this->_subPages as /*@var $subpage SubPage */ $subpage) {
             if ($subpage->showInMenu) {
                 $subMenu[] = $subpage->link;
@@ -183,21 +183,21 @@ class BasePage extends LPMBaseObject
             array_unshift($arr, $this->_curSubpage->uid);
         }
         
-        return call_user_func_array(array( $this, 'getBaseUrl' ), $arr);
+        return call_user_func_array([$this, 'getBaseUrl'], $arr);
     }
     
     public function getBaseUrl($_args = '')
     {
         $arr = func_get_args();
         
-        $args = array( $this->uid );
+        $args = [$this->uid];
         for ($i = 1; $i < $this->_baseParamsCount; $i++) {
-            array_push($args, LightningEngine::getInstance()->getParams()->getArg($i));
+            $args[] = LightningEngine::getInstance()->getParams()->getArg($i);
         }
         
         $args = array_merge($args, $arr);
         
-        return call_user_func_array(array( 'Link', 'getUrlByUid' ), $args);
+        return call_user_func_array(['Link', 'getUrlByUid'], $args);
     }
     
     public function checkUserRole()
@@ -290,15 +290,15 @@ class BasePage extends LPMBaseObject
     
     protected function addSubPage($uid, $label, $pattern = '', $js = null, $title = '', $reqRole = -1, $showInMenu = true)
     {
-        $args = array( $this->uid );
+        $args = [$this->uid];
         for ($i = 1; $i < $this->_baseParamsCount; $i++) {
-            array_push($args, LightningEngine::getInstance()->getParams()->getArg($i));
+            $args[] = LightningEngine::getInstance()->getParams()->getArg($i);
         }
-        array_push($args, $uid);
+        $args[] = $uid;
         
         $link = new Link(
             $label,
-            call_user_func_array(array( 'Link', 'getUrlByUid' ), $args),
+            call_user_func_array(['Link', 'getUrlByUid'], $args),
                     //Link::getUrlByUid( $this->uid, $uid ),
                     $reqRole
         );
@@ -331,7 +331,7 @@ class BasePage extends LPMBaseObject
     protected function addTmplVar($name, $value)
     {
         if (null === $this->_tmplVars) {
-            $this->_tmplVars = array();
+            $this->_tmplVars = [];
         }
         $this->_tmplVars[$name] = $value;
     }

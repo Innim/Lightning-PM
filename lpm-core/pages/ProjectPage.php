@@ -21,9 +21,9 @@ class ProjectPage extends BasePage
     const PUID_COMPLETED_ISSUES = 'completed';
     const PUID_COMMENTS  = 'comments';
     const PUID_ISSUE = 'issue';
-    const PUID_SCRUM_BOARD = 'scrum_board';
-    const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum_board_snapshot';
-    const PUID_SPRINT_STAT = 'sprint_stat';
+    const PUID_SCRUM_BOARD = 'scrum-board';
+    const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum-board-snapshot';
+    const PUID_SPRINT_STAT = 'sprint-stat';
     const PUID_SETTINGS = 'project-settings';
 
     /**
@@ -266,6 +266,11 @@ class ProjectPage extends BasePage
             $sidInProject = (int) $this->getParam(3);
             $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
 
+            if (empty($snapshot)) {
+                LightningEngine::go2URL($this->getBaseUrl(self::PUID_SCRUM_BOARD_SNAPSHOT));
+                return false;
+            }
+
             $this->addTmplVar('project', $this->_project);
             $this->addTmplVar('snapshot', $snapshot);
         }
@@ -387,7 +392,7 @@ class ProjectPage extends BasePage
 
             if (!empty($labels)) {
                 $allLabels = Issue::getLabels();
-                $countedLabels = array();
+                $countedLabels = [];
                 foreach ($allLabels as $value) {
                     $index = array_search($value['label'], $labels);
                     if ($index !== false) {
@@ -480,7 +485,7 @@ class ProjectPage extends BasePage
                 if (!empty($_POST["removedImages"])) {
                     $delImg = $_POST["removedImages"];
                     $delImg = explode(',', $delImg);
-                    $imgIds = array();
+                    $imgIds = [];
                     foreach ($delImg as $imgIt) {
                         $imgIt = (int)$imgIt;
                         if ($imgIt > 0) {
@@ -720,7 +725,7 @@ class ProjectPage extends BasePage
             }
             return $engine->addError('Ошибка при сохранении участников');
         } else {
-            $saved = array();
+            $saved = [];
             foreach ($userIds as $memberId) {
                 $memberId = (float)$memberId;
                 if (!in_array($memberId, $saved)) {

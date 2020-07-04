@@ -298,4 +298,41 @@ class ProjectService extends LPMBaseService
 
         return $this->answer();
     }
+
+    /**
+     * Получает базовую информацию о задаче (название, url и id в проекте),
+     * по части id в проекте.
+     *
+     * @param $idInProjectPart Начало идентификатора.
+     */
+    public function getIssueNamesByIdPart($projectId, $idInProjectPart)
+    {
+        $projectId = (int)$projectId;
+        $idInProjectPart = (int)$idInProjectPart;
+
+        if (!$user = $this->getUser()) {
+            return $this->error('Ошибка при загрузке пользователя');
+        }
+        
+        if (!$project = Project::loadById($projectId)) {
+            return $this->error('Нет такого проекта');
+        }
+        
+        if (!$project->hasReadPermission($user)) {
+            return $this->error('Недостаточно прав доступа');
+        }
+
+        $list = Issue::loadListByIdInProjectPart($projectId, (string)$idInProjectPart);
+        $res = [];
+        foreach ($list as $issue) {
+            $res[] = [
+                'idInProject' => $issue->idInProject,
+                'name' => $issue->name,
+                'url' => $issue->getConstURL(),
+            ];
+        }
+
+        $this->add2Answer('list', $res);
+        return $this->answer();
+    }
 }
