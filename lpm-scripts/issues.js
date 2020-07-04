@@ -14,8 +14,20 @@ $(document).ready(
         // BEGIN -- Настройка формы 
 
         $('#issueForm .note.tags-line a.tag').click(function (e) {
-            var a = $(e.currentTarget);
-            insertMarker(a.data('marker'));
+            let a = $(e.currentTarget);
+            let input = $('#issueForm textarea[name=desc]');
+            let type = a.data('type');
+
+            if (type) {
+                switch (type) {
+                    case 'link':
+                        insertFormattingLink(input);
+                        break;
+                }
+            } else {
+                let marker = a.data('marker')
+                if (marker) insertFormattingMarker(input, marker);
+            }
         });
 
         $('#issueForm input[name=hours]').focus(function (e) {
@@ -111,6 +123,9 @@ function bindFormattingHotkeys(selector) {
                     break;
                 case 'KeyG':
                     insertFormattingMarker(this, '> ', true);
+                    break;
+                case 'KeyK':
+                    insertFormattingLink(this);
                     break;
                 default:
                     return;
@@ -326,37 +341,47 @@ issuePage.updateStat = function () {
     });
 };
 
-function insertMarker(marker) {
-    insertFormattingMarker($('#issueForm textarea[name=desc]'), marker);
+function insertFormattingLink(input) {
+    insertFormatting(input, '[](', ')', 1);
 }
 
 function insertFormattingMarker(input, marker, single) {
-    var $input = $(input);
-    var text = $input[0];
-    var selectionStart = text.selectionStart;
-    var subtext = text.value.substring(selectionStart, text.selectionEnd);
-    var caretPos = 0;
-    const closetag = single ? "" : marker;
-    //Если в описании задачи есть текст
-    if (!$.isEmptyObject({ text })) {
-        // берем все, что до выделения
-        var desc = text.value.substring(0, selectionStart) +
-            marker + subtext + closetag +
-            text.value.substring(text.selectionEnd, text.value.length);
-        //определяем позицию курсора(перед закрывающим тэгом)
-        //если есть выделенный текст
+    insertFormatting(input, marker, single ? "" : marker)
+}
+
+function insertFormatting(input, before, after, cursorShift) {
+    let $input = $(input);
+    let text = $input[0];
+    let selectionStart = text.selectionStart;
+    let subtext = text.value.substring(selectionStart, text.selectionEnd);
+
+    let res = text.value.substring(0, selectionStart) +
+        before + subtext + after +
+        text.value.substring(text.selectionEnd, text.value.length);
+
+    var caretPos = selectionStart;
+    let fullLength = before.length + subtext.length + after.length;
+    if (cursorShift) {
+        // если отрицательный, то считаем с конца
+        // -1 соответствует концу выражения
+        if (cursorShift >= 0)
+            caretPos += cursorShift;
+        else
+            caretPos += fullLength + cursorShift + 1;
+    } else {
+        // если нет выделенного текста, то ставим курсор внутри,
+        // чтобы написали текст, а если есть - то за закрывающим тегом,
+        // чтобы продолжали писать
         if (subtext == "")
-            //определяем фокус перед '/' тэгом
-            caretPos = selectionStart + marker.length;
-        else //после тэга       
-            caretPos = selectionStart + subtext.length + marker.length * 2;
-
-        //добавляем итог в описание задачи
-        $input.val(desc);
-
-        //устанавливаем курсор на полученную позицию
-        setCaretPosition(text, caretPos);
+            caretPos += before.length;
+        else
+            caretPos += fullLength;
     }
+
+    $input.val(res);
+
+    //устанавливаем курсор на полученную позицию
+    setCaretPosition(text, caretPos);
 }
 
 function setCaretPosition(elem, pos) {

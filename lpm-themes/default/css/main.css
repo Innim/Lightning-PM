@@ -1383,6 +1383,7 @@ blockquote > p {
 #issueForm .note a.tag {
 	display: inline-block;
 	margin: 0 .2em;
+	text-decoration: none;
 }
 
 #issueForm .note .tag.quote {
