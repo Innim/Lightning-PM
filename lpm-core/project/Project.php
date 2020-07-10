@@ -31,6 +31,25 @@ class Project extends MembersInstance
     }
 
     /**
+     * Создает новый проект.
+     */
+    public static function addProject($uid, $name, $desc)
+    {
+        $db = self::getDB();
+        $hash = [
+            'INSERT' => [
+                'uid'  => $uid,
+                'name' => $name,
+                'desc' => $desc,
+                'date' => DateTimeUtils::mysqlDate(),
+            ],
+            'INTO'   => LPMTables::PROJECTS
+        ];
+
+        return $db->queryb($hash);
+    }
+
+    /**
      * Загружает список scrum проектов.
      * @param  boolean $includeArchive `true` если надо загружать также и заархивированные проекты,
      * @return array<Project>
@@ -64,7 +83,7 @@ class Project extends MembersInstance
             ]
         ];
 
-        return  $db->queryb($hash);
+        return $db->queryb($hash);
     }
 
     public static function updateIssueMemberDefault($projectId, $memberByDefaultId)

@@ -94,21 +94,13 @@ class ProjectsPage extends BasePage
                 'Введён недопустимый идентификатор - используйте латинские буквы, цифры и тире'
             );
         }
+
+        if (Project::load($uid)) {
+            return $this->error('Проект с таким идентификатором уже создан');
+        }
         
-        $hash = [
-            'INSERT' => [
-                'uid'  => $uid,
-                'name' => $name,
-                'desc' => $desc,
-                'date' => DateTimeUtils::mysqlDate(),
-            ],
-            'INTO'   => LPMTables::PROJECTS
-        ];
-        if (!$this->_db->queryb($hash)) {
-            $errmsg = $this->_db->errno == 1062
-                ? 'Проект с таким идентификатором уже создан'
-                : 'Ошибка записи в базу';
-            $engine->addError($errmsg);
+        if (!Project::addProject($uid, $name, $desc)) {
+            $engine->addError('Не удалось создать проект');
         } else {
             // переход на страницу проекта
             LightningEngine::go2URL($this->getUrl());
