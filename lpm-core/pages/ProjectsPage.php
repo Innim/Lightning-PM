@@ -110,7 +110,7 @@ class ProjectsPage extends BasePage
 
     private function validateProjectUid($value)
     {
-        return Validation::checkStr($value, 255, 1, false, false, true);
+        return \GMFramework\Validation::checkStr($value, 255, 1, false, false, true);
     }
 
     private function statByProjects()
