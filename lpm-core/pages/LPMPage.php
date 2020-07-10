@@ -1,17 +1,27 @@
 <?php
 /**
- * Базовая страница.
- * Не забываем, что страницу надо добавлять в PagesManager,
- * чтобы она начала работать
- * @author GreyMag
+ * Базовый класс страницы.
  *
- * @deprecated Используйте LPMPage в качестве базовой
+ * При создании новой надо обязатально добавлять её в PagesManager,
+ * чтобы она начала работать.
  */
-class BasePage extends LPMBaseObject
+abstract class LPMPage
 {
+    /**
+     * Уникальный идентификатор страницы.
+     */
     public $uid;
+
+    /**
+     * Если true, то страница требует авторизации.
+     */
     public $needAuth  = true;
+
+    /**
+     * Если true, то страница не отображается в меню.
+     */
     public $notInMenu = false;
+
     protected $_title;
     protected $_header   = '';
     protected $_label    = '';
@@ -32,10 +42,9 @@ class BasePage extends LPMBaseObject
     
     protected $_error = '';
     
-    //protected $_curPUID      = '';
     protected $_defaultPUID  = '';
+
     /**
-     *
      *
      * @var SubPage
      */
@@ -56,12 +65,9 @@ class BasePage extends LPMBaseObject
     private $_isCurrent = false;
 
     private $_tmplVars;
-    
 
     public function __construct($uid, $title, $needAuth = true, $notInMenu = false, $pattern ='', $label = '', $reqRole = -1)
     {
-        parent::__construct();
-        
         $this->uid       = $uid;
         $this->_title    = $title;
         $this->_label    = empty($label) ? $title : $label;
@@ -71,27 +77,6 @@ class BasePage extends LPMBaseObject
         $this->_reqRole  = ($reqRole == -1) ? User::ROLE_USER : $reqRole;
         
         $this->_engine   = LightningEngine::getInstance();
-    }
-    
-    public function getSubMenu()
-    {
-        $subMenu = [];
-        foreach ($this->_subPages as /*@var $subpage SubPage */ $subpage) {
-            if ($subpage->showInMenu) {
-                $subMenu[] = $subpage->link;
-            }
-        }
-        return $subMenu;
-    }
-    
-    /**
-     * Проверяет, может ли пользователь просматривать эту страницу
-     */
-    public function check()
-    {
-        return (!$this->needAuth ||
-                LightningEngine::getInstance()->isAuth() && $this->checkUserRole())
-               && (!$this->_curSubpage || $this->_curSubpage->link->checkRole());
     }
     
     /**
@@ -106,17 +91,38 @@ class BasePage extends LPMBaseObject
             return false;
         }
     }
+
+    /**
+     * Проверяет, может ли пользователь просматривать эту страницу
+     */
+    public function check()
+    {
+        return (!$this->needAuth ||
+                LightningEngine::getInstance()->isAuth() && $this->checkUserRole())
+               && (!$this->_curSubpage || $this->_curSubpage->link->checkRole());
+    }
+    
+    public function getSubMenu()
+    {
+        $subMenu = [];
+        foreach ($this->_subPages as $subpage) {
+            if ($subpage->showInMenu) {
+                $subMenu[] = $subpage->link;
+            }
+        }
+        return $subMenu;
+    }
+
+    public function isCurrentPage()
+    {
+        return $this->_isCurrent;
+    }
     
     public function printContent()
     {
         if ($this->_pattern != '') {
             PageConstructor::includePattern($this->_pattern, $this->_tmplVars);
         }
-    }
-    
-    public function isCurrentPage()
-    {
-        return $this->_isCurrent;
     }
     
     public function getTitle()
@@ -163,7 +169,7 @@ class BasePage extends LPMBaseObject
     {
         return $this->_js;
     }
-    
+
     /**
      * @return Link
      */
@@ -186,7 +192,7 @@ class BasePage extends LPMBaseObject
         
         return call_user_func_array([$this, 'getBaseUrl'], $arr);
     }
-    
+
     public function getBaseUrl($_args = '')
     {
         $arr = func_get_args();
@@ -212,7 +218,7 @@ class BasePage extends LPMBaseObject
         
         return $user->checkRole($this->_reqRole);
     }
-    
+
     protected function setCurrent()
     {
         $this->_isCurrent = true;
@@ -242,7 +248,7 @@ class BasePage extends LPMBaseObject
     {
         return $this->_engine->getParams()->getArg($num);
     }
-    
+
     protected function getParamIndex($val)
     {
         return $this->_engine->getParams()->getArgIndex($val);
@@ -258,18 +264,15 @@ class BasePage extends LPMBaseObject
     {
         return $this->getParam($this->_baseParamsCount + 1 + $num);
     }
-    
+
     protected function initSubPage()
     {
-        //$this->_defaultPUID = $defaultPUID;
         $curPUID = $this->getPUID();
-        //var_dump( 'curPUID: ', $curPUID );
-        //do {
         if (empty($curPUID)) {
             $curPUID = $this->_defaultPUID;
         }
             
-        foreach ($this->_subPages as /*@var $subpage SubPage */ $subpage) {
+        foreach ($this->_subPages as $subpage) {
             if ($subpage->uid == $curPUID) {
                 $this->_curSubpage = $subpage;
                 if ($subpage->pattern != '') {
@@ -279,8 +282,6 @@ class BasePage extends LPMBaseObject
                 $this->_js = array_merge($this->_js, $subpage->js);
             }
         }
-        //$curPUID = '';
-        //} while (!$this->_curSubpage);
     }
     
     protected function error($value = '')
@@ -336,7 +337,7 @@ class BasePage extends LPMBaseObject
         }
         $this->_tmplVars[$name] = $value;
     }
-    
+
     protected function addJS($_)
     {
         $arr = func_get_args();
@@ -344,12 +345,8 @@ class BasePage extends LPMBaseObject
             array_merge($this->_js, $arr);
         }
     }
-    /*
-    protected function getUser() {
-        return
-    }*/
 
-    protected function SetOpenGraph($title, $url = null, $image = null, $type = "website")
+    protected function setOpenGraph($title, $url = null, $image = null, $type = "website")
     {
         if ($url == null) {
             $url = LightningEngine::getURL(LightningEngine::getInstance()->getCurrentUrlPath());

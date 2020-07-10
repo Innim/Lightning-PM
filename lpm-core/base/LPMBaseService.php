@@ -144,6 +144,7 @@ class LPMBaseService extends SecureService
             return false;
         }
 
+        // TODO: что за хрень, выпилить
         setcookie('Delete', 'Удалить', time()+600, "/");
 
         $comment = Comment::add($instanceType, $instanceId, $user->userId, $text);

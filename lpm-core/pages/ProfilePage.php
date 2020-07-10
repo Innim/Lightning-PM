@@ -1,5 +1,8 @@
 <?php
-class ProfilePage extends BasePage
+/**
+ * Страница профиля зарегистрированного полтзователя.
+ */
+class ProfilePage extends LPMPage
 {
     const UID = 'profile';
     

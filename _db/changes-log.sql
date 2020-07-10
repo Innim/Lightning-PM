@@ -233,3 +233,25 @@ CREATE TABLE `lpm_issue_mr` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='GitLab MR от исполнителей по задачам.';
 
 -- 0.9.7
+
+ALTER TABLE `lpm_comments`
+CHANGE `text` `text` text COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'текст' AFTER `date`;
+
+ALTER TABLE `lpm_issues`
+CHANGE `name` `name` varchar(255) COLLATE 'utf8mb4_general_ci' NOT NULL AFTER `parentId`,
+CHANGE `desc` `desc` text COLLATE 'utf8mb4_general_ci' NOT NULL AFTER `hours`;
+
+ALTER TABLE `lpm_issue_labels`
+CHANGE `label` `label` varchar(255) COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Текст метки' AFTER `projectId`;
+
+ALTER TABLE `lpm_options`
+CHANGE `value` `value` text COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'её значение' AFTER `option`;
+
+ALTER TABLE `lpm_projects`
+CHANGE `name` `name` varchar(255) COLLATE 'utf8mb4_general_ci' NOT NULL AFTER `uid`,
+CHANGE `desc` `desc` text COLLATE 'utf8mb4_general_ci' NOT NULL AFTER `name`;
+
+ALTER TABLE `lpm_scrum_snapshot`
+CHANGE `issue_name` `issue_name` varchar(255) COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Название задачи' AFTER `issue_pid`;
+
+-- 0.9.17

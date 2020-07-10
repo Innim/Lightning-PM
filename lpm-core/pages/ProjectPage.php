@@ -13,7 +13,7 @@
  * - статистка спринтов
  * - настройки проекта
  */
-class ProjectPage extends BasePage
+class ProjectPage extends LPMPage
 {
     const UID = 'project';
     const PUID_MEMBERS = 'members';
@@ -294,23 +294,14 @@ class ProjectPage extends BasePage
      */
     private function getLastIssueId()
     {
-        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
-               "WHERE `projectId` = '" . $this->_project->id . "'";
-        if (!$query = $this->_db->queryt($sql, LPMTables::ISSUES)) {
-            return $engine->addError('Ошибка доступа к базе');
-        }
-        
-        if ($query->num_rows == 0) {
-            return 1;
-        } else {
-            $result = $query->fetch_assoc();
-            return $result['maxID'] + 1;
-        }
+        return Issue::getLastIssueId($this->_project->id);
     }
     
     private function saveIssue($editMode = false)
     {
         $engine = $this->_engine;
+        // TODO: вынеси отсюда все сохрание и выделить работу с БД
+        $db = LPMGlobals::getInstance()->getDBConnect();
         // Сохраняем весь input, чтобы в случае ошибки восстановить форму
         $this->_issueInput = [
             'data' => $_POST,
@@ -324,7 +315,7 @@ class ProjectPage extends BasePage
             // проверяем что такая задача есть и она принадлежит текущему проекту
             $sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
                                            "AND `projectId` = '" . $this->_project->id . "'";
-            if (!$query = $this->_db->queryt($sql, LPMTables::ISSUES)) {
+            if (!$query = $db->queryt($sql, LPMTables::ISSUES)) {
                 return $engine->addError('Ошибка записи в базу');
             }
             
@@ -365,7 +356,7 @@ class ProjectPage extends BasePage
 
             foreach ($_POST as $key => $value) {
                 if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers' && $key != 'membersSp') {
-                    $_POST[$key] = $this->_db->real_escape_string($value);
+                    $_POST[$key] = $db->real_escape_string($value);
                 }
             }
 
@@ -446,11 +437,12 @@ class ProjectPage extends BasePage
                                     "`type` = VALUES( `type` ), " .
                                     "`completeDate` = VALUES( `completeDate` ), " .
                                     "`priority` = VALUES( `priority` )";
-            if (!$this->_db->queryt($sql, LPMTables::ISSUES)) {
+
+            if (!$db->queryt($sql, LPMTables::ISSUES)) {
                 $engine->addError('Ошибка записи в базу');
             } else {
                 if (!$editMode) {
-                    $issueId = $this->_db->insert_id;
+                    $issueId = $db->insert_id;
 
                     $baseId = (int)$_POST['baseIdInProject'];
                     if ($baseId > 0) {
@@ -471,13 +463,13 @@ class ProjectPage extends BasePage
                 // Валидируем заданное количество SP по участникам
 
                 // Сохраняем участников
-                if (!$this->saveMembers($issueId, $_POST['members'], $editMode, $membersSp)) {
+                if (!$this->saveMembers($db, $issueId, $_POST['members'], $editMode, $membersSp)) {
                     return;
                 }
 
                 // Сохраняем тестеров
                 $testers = isset($_POST['testers']) ? $_POST['testers'] : [];
-                if (!$this->saveTesters($issueId, $testers, $editMode)) {
+                if (!$this->saveTesters($db, $issueId, $testers, $editMode)) {
                     return;
                 }
 
@@ -499,7 +491,7 @@ class ProjectPage extends BasePage
                                      "AND `deleted` = '0' ".
                                      "AND `itemId`='".$issueId."' ".
                                      "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
-                        $this->_db->queryt($sql, LPMTables::IMAGES);
+                        $db->queryt($sql, LPMTables::IMAGES);
                     }
                 }
 
@@ -512,7 +504,7 @@ class ProjectPage extends BasePage
                         "AND `itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
                         "AND `deleted` = '0'";
                     
-                    if ($query = $this->_db->queryt($sql, LPMTables::IMAGES)) {
+                    if ($query = $db->queryt($sql, LPMTables::IMAGES)) {
                         $row = $query->fetch_assoc();
                         $loadedImgs = (int)$row['cnt'];
                     } else {
@@ -617,11 +609,12 @@ class ProjectPage extends BasePage
         return $uploader;
     }
 
-    private function saveMembers($issueId, $memberIds, $editMode, $spByMembers = null)
+    private function saveMembers($db, $issueId, $memberIds, $editMode, $spByMembers = null)
     {
         $engine = $this->_engine;
         $users4Delete = [];
         if (!$this->saveMembersByInstanceType(
+            $db,
             $issueId,
             $memberIds,
             $editMode,
@@ -646,7 +639,7 @@ class ProjectPage extends BasePage
 
             // Записываем информацию об участниках
             $sql = "REPLACE INTO `%s` (`userId`, `instanceId`, `sp`) VALUES (?, '" . $issueId . "', ?)";
-            if (!$prepare = $this->_db->preparet($sql, LPMTables::ISSUE_MEMBER_INFO)) {
+            if (!$prepare = $db->preparet($sql, LPMTables::ISSUE_MEMBER_INFO)) {
                 return $engine->addError('Ошибка при сохранении информации об участниках');
             }
 
@@ -664,9 +657,10 @@ class ProjectPage extends BasePage
         return true;
     }
 
-    private function saveTesters($issueId, $testerIds, $editMode)
+    private function saveTesters($db, $issueId, $testerIds, $editMode)
     {
         return $this->saveMembersByInstanceType(
+            $db,
             $issueId,
             $testerIds,
             $editMode,
@@ -674,7 +668,7 @@ class ProjectPage extends BasePage
         );
     }
 
-    private function saveMembersByInstanceType($issueId, $userIds, $editMode, $instanceType, &$users4Delete = null)
+    private function saveMembersByInstanceType($db, $issueId, $userIds, $editMode, $instanceType, &$users4Delete = null)
     {
         $engine = $this->_engine;
         if (empty($userIds)) {
@@ -685,7 +679,7 @@ class ProjectPage extends BasePage
             $sql = "SELECT `userId` FROM `%s` " .
                     "WHERE `instanceType` = '" . $instanceType . "' " .
                       "AND `instanceId` = '" . $issueId . "'";
-            if (!$query = $this->_db->queryt($sql, LPMTables::MEMBERS)) {
+            if (!$query = $db->queryt($sql, LPMTables::MEMBERS)) {
                 return $engine->addError('Ошибка загрузки участников');
             }
             
@@ -719,9 +713,9 @@ class ProjectPage extends BasePage
         $sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
                          "VALUES ( ?, '" . $instanceType . "', '" . $issueId . "' )";
             
-        if (!$prepare = $this->_db->preparet($sql, LPMTables::MEMBERS)) {
+        if (!$prepare = $db->preparet($sql, LPMTables::MEMBERS)) {
             if (!$editMode) {
-                $this->_db->queryt("DELETE FROM `%s` WHERE `id` = '" . $issueId . "'", LPMTables::ISSUES);
+                $db->queryt("DELETE FROM `%s` WHERE `id` = '" . $issueId . "'", LPMTables::ISSUES);
             }
             return $engine->addError('Ошибка при сохранении участников');
         } else {

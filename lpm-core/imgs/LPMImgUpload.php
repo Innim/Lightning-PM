@@ -227,17 +227,7 @@ class LPMImgUpload
                 // получаем из нее картинку и сохраняем ее
                 $srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.png';
                 
-                if (preg_match("/^https?:\/\/d.pr\/[a-z0-9\/]+$/i", $value)) {
-                    // Если картинка из сервиса droplr (http://droplr.com/)
-                    $value .= '+';
-                } elseif (preg_match("/^https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+$/i", $value)) {
-                    // Если картинка из сервиса ownCloud (http://cloud.innim.ru/)
-                    $value .= '/download';
-                } elseif (preg_match("/^https?:\/\/i.imgur.com\/[a-z0-9]+\.gifv$/i", $value)) {
-                    // Если картинка с imgur (https://imgur.com/) и это gif,
-                    // то надо обрезать v в конце, чтобы ссылка вела на само изображение
-                    $value = mb_substr($value, 0, -1);
-                }
+                $value = AttachmentImageHelper::getDirectUrl($value);
 
                 //определяем размер скачиваемой картинки
                 $context = stream_context_create(array(
