@@ -254,3 +254,4 @@ CHANGE `desc` `desc` text COLLATE 'utf8mb4_general_ci' NOT NULL AFTER `name`;
 ALTER TABLE `lpm_scrum_snapshot`
 CHANGE `issue_name` `issue_name` varchar(255) COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Название задачи' AFTER `issue_pid`;
 
+-- 0.9.17
