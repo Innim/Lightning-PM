@@ -85,20 +85,13 @@ class AttachmentVideoHelper
             $url = "https://" . $urlPrefix . $videoUid . "+";
         } else {
             // Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
-            $url = "https://" . $urlPrefix . $videoUid . "/download";
-            $prev = stream_context_get_options(stream_context_get_default());
-            // Устаналиваем таймаут поменьше
-            stream_context_set_default([
-                    'http' => [
-                        'timeout' => 2, // seconds
-                    ]
-                ]);
-            $header = @get_headers($url, 1);
-            stream_context_set_default($prev);
+            $original = "https://" . $urlPrefix . $videoUid;
+            $type = OwncloudHelper::getSharedFileType($original);
 
-            if (empty($header) || !isset($header['Content-Type']) ||
-                    strpos($header['Content-Type'], 'video/') !== 0) {
+            if (empty($type) || strpos($type, 'video/') !== 0) {
                 $url = null;
+            } else {
+                $url = $original . "/download";
             }
         }
 
