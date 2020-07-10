@@ -1,5 +1,5 @@
 <?php
-class UsersPage extends BasePage
+class UsersPage extends LPMPage
 {
     const UID = 'users';
     const PUID_STAT = 'stat';

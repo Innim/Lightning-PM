@@ -2,7 +2,7 @@
 /**
  * Страница просмотра и редактирования информации о пользователе.
  */
-class UserPage extends BasePage
+class UserPage extends LPMPage
 {
     const UID = 'user';
     
