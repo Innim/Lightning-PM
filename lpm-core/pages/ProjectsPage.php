@@ -2,7 +2,7 @@
 /**
  * Раздел проектов.
  */
-class ProjectsPage extends BasePage
+class ProjectsPage extends LPMPage
 {
     const UID = 'projects';
     const PUID_DEVL = 'develop';
