@@ -254,6 +254,26 @@ WHERE;
             'idInProject' => $idInProject
         ]);
     }
+    /**
+     * Номер (idInProject) последней задачи в проекте
+     * @return int
+     */
+    private function getLastIssueId($projectId)
+    {
+        $db = self::getDB();
+        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
+               "WHERE `projectId` = '" . $projectId . "'";
+        if (!$query = $db->queryt($sql, LPMTables::ISSUES)) {
+            throw new Exception('Ошибка доступа к базе', \GMFramework\ErrorCode::LOAD_DATA);
+        }
+        
+        if ($query->num_rows == 0) {
+            return 1;
+        } else {
+            $result = $query->fetch_assoc();
+            return $result['maxID'] + 1;
+        }
+    }
     
     public static function updateCommentsCounter($issueId)
     {

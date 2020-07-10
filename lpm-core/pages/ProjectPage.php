@@ -294,18 +294,7 @@ class ProjectPage extends BasePage
      */
     private function getLastIssueId()
     {
-        $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
-               "WHERE `projectId` = '" . $this->_project->id . "'";
-        if (!$query = $this->_db->queryt($sql, LPMTables::ISSUES)) {
-            return $engine->addError('Ошибка доступа к базе');
-        }
-        
-        if ($query->num_rows == 0) {
-            return 1;
-        } else {
-            $result = $query->fetch_assoc();
-            return $result['maxID'] + 1;
-        }
+        return Issue::getLastIssueId($this->_project->id);
     }
     
     private function saveIssue($editMode = false)
