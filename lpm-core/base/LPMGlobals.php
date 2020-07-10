@@ -74,4 +74,11 @@ class LPMGlobals extends Globals
     //     }
     //     return $this->_db;
     // }
+
+    protected function createDBConnect()
+    {
+        $db = parent::createDBConnect();
+        $db->set_charset('utf8mb4');
+        return $db;
+    }
 }
