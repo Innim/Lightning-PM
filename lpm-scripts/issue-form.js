@@ -38,10 +38,28 @@ $(document).ready(function ($) {
             }
         }
     };
+
+    function getMembers(selector) {
+        let members = [];
+        $(selector).each(function () {
+            let userId = $(this).val();
+            if (userId > 0) {
+                members.push({ userId: userId, name: $(this).text() });
+            }
+        });
+        return members;
+    }
+
+    issueForm.members = getMembers("#addIssueMembers option");
+    issueForm.testers = getMembers("#addIssueTesters option");
+    issueForm.defaultMemberId = $('#addIssueMembers').data('defaultMemberId');
 });
 
 let issueForm = {
     inputForRestore: null,
+    members: null,
+    defaultMemberId: null,
+    testers: null,
     handleEditState: function () {
         if (!issueForm.restoreInput(true)) {
             let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
@@ -65,8 +83,9 @@ let issueForm = {
     handleAddState: function () {
         if (!issueForm.restoreInput(false)) {
             issueForm.updateHeader(false);
-            var selectedPerformer = $('#selected-performer').val();
-            if (selectedPerformer) {
+
+            if (issueForm.defaultMemberId) {
+                $("#addIssueMembers option[value=" + issueForm.defaultMemberId + "]").prop('selected', true);
                 issueForm.addIssueMember();
             }
         }
@@ -117,6 +136,7 @@ let issueForm = {
         // дата окончания
         $("#issueForm form input[name=completeDate]").val(value.completeDate);
         // исполнители
+        issueForm.resetUsers('issueMembers', 'addIssueMembers');
         let memberIds = value.memberIds;
         if (memberIds) {
             let membersSp = value.membersSp ? value.membersSp : [];
@@ -124,9 +144,13 @@ let issueForm = {
                 $("#addIssueMembers option[value=" + memberId + "]").prop('selected', true);
                 issueForm.addIssueMember(membersSp[index]);
             });
+        } else if (!isEdit && issueForm.defaultMemberId) {
+            $("#addIssueMembers option[value=" + issueForm.defaultMemberId + "]").prop('selected', true);
+            issueForm.addIssueMember();
         }
 
         // Тестеры
+        issueForm.resetUsers('issueTesters', 'addIssueTesters');
         let testerIds = value.testerIds;
         if (testerIds) {
             testerIds.forEach((testerId) => {
@@ -309,6 +333,14 @@ let issueForm = {
         });
 
         if (autofocus) urlLI.find('input').focus();
+    },
+    resetUsers: function (listId, selectId) {
+        $('#' + selectId + ' option').not('option[value=-1]').remove();
+        issueForm.members.forEach((member) => {
+            $('#' + selectId).append(
+                '<option value="' + member.userId + '">' + member.name + '</option>');
+        })
+        $('#' + listId + ' li').remove();
     },
     addIssueMember: function (sp) {
         /**
