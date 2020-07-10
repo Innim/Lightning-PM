@@ -33,7 +33,7 @@ $(document).ready(function ($) {
 
         srv.attachments.getVideoInfo(url, function (res) {
             if (res.success) {
-                if (res.type != 'none') {
+                if (res.html) {
                     li.html(res.html);
                 } else {
                     li.remove();

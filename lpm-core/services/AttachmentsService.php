@@ -41,8 +41,7 @@ class AttachmentsService extends LPMBaseService
      * Поддерживаются ссылки на YouTube,
      * Innim Cloud и Droplr.
      * @return [
-     *  type: String = none|youtube|video // тип вставки
-     *  url: String // используемый адрес
+     *  html: String // HTML код для вывода видео или null, если не видео не распознано
      * ]
      */
     public function getVideoInfo($url)
@@ -54,8 +53,6 @@ class AttachmentsService extends LPMBaseService
             });
             $this->extract2Answer($res);
             $this->add2Answer('html', $html);
-        } else {
-            $this->add2Answer('type', 'none');
         }
         
         return $this->answer();
