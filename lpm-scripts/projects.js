@@ -34,19 +34,24 @@ function showProjectsList() {
 };
 
 function validateAddProj() {
-	var errors = [];
+	let errors = [];
+	let form = $('#addProjectForm');
 
-	if ((/^([0-9]){4}\-([0-9]){2}\-([0-9]){2}$/i).test(('input[name=completeDate]', "#addIssueForm").val())) {
-		errors.push('Недопустимый формат даты. Требуется формат ГГГГ-ММ-ДД');
-	}
+	if ($('textarea[name=desc]', form).val() === '')
+		errors.push('Нужно дать описание проекта');
 
-	$('#addIssueForm > div.validateError').html(errors.join('<br/>'));
+	let uid = $('input[name=uid]', form).val();
+	if (!(/^(([a-zA-Z0-9]){1}([a-zA-Z0-9\-]){0,254})$/u).test(uid))
+		errors.push('В идентификаторе допустимы строчные буквы (a-z), цифры и дефис');
+
+	let errorDisplay = $('div.validateError', form);
+	errorDisplay.html(errors.join('<br/>'));
 
 	if (errors.length == 0) {
-		$('#addIssueForm > div.validateError').hide();
+		errorDisplay.hide();
 		return true;
 	} else {
-		$('#addIssueForm > div.validateError').show();
+		errorDisplay.show();
 		return false;
 	}
 };
