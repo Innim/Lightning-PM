@@ -195,7 +195,7 @@ function createIssuesAutoComplete() {
             return '<li>Задач с таким ID не найдено.</li>';
         },
         values: function (text, cb) {
-            if (!text) return;
+            if (!text || isNaN(text)) return;
 
             if (cache[text]) {
                 cb(cache[text]);
