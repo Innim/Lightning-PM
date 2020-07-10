@@ -11,4 +11,5 @@ window.lpmOptions = {
 	issueImgsCount: <?=Issue::MAX_IMAGES_COUNT;?>,
 	gitlabUrl: '<?=defined('GITLAB_URL') ? GITLAB_URL : '';?>',
 	videoUrlPatterns: <?=json_encode(AttachmentVideoHelper::URL_PATTERNS);?>,
+	imageUrlPatterns: <?=json_encode(AttachmentImageHelper::URL_PATTERNS);?>,
 };

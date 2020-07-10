@@ -98,6 +98,9 @@ let srv = {
         getVideoInfo: function (url, onResult) {
             this.s._('getVideoInfo');
         },
+        getImageInfo: function (url, onResult) {
+            this.s._('getImageInfo');
+        },
     },
     issue: {
         s: new BaseService('IssueService'),
@@ -466,5 +469,9 @@ let parser = {
     isVideoUrl: function (url) {
         let patterns = lpmOptions.videoUrlPatterns;
         return patterns.some((pattern, i, a) => new RegExp(pattern).test(url));
+    },
+    isImageUrl: function (url) {
+        let patterns = lpmOptions.imageUrlPatterns;
+        return patterns.some((pattern, i, a) => new RegExp(pattern, 'i').test(url));
     }
 };

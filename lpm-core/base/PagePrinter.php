@@ -118,6 +118,25 @@ class PagePrinter
     }
     
     /**
+     * Распечатывает список прикрепленных изобаржений.
+     * @param  array $videoLinks Список объектов с данными ссылок на видео.
+     */
+    public static function imageList($imageLinks)
+    {
+        PageConstructor::includePattern('entity-image-list', compact('imageLinks'));
+    }
+    
+    /**
+     * Распечатывает вывод конкретного прикрепленного изображения.
+     * @param  array $image Объект с данными ссылки изображения.
+     */
+    public static function imageItem($image)
+    {
+        PageConstructor::includePattern('entity-image-item', compact('image'));
+    }
+    
+    
+    /**
      * Распечатывает форму экспорта задач в Excel.
      */
     public static function issuesExportToExcel()

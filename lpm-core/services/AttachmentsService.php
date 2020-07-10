@@ -57,4 +57,27 @@ class AttachmentsService extends LPMBaseService
         
         return $this->answer();
     }
+
+    /**
+     * Возвращает информацию об изображении по ссылке.
+     * @param String $url URL, по которому расшарено изобаржение.
+     * Поддерживаются ссылки на
+     * Innim Cloud, Droplr и GIF с imgur.
+     * @return [
+     *  html: String // HTML код для вывода видео или null, если не изображение не распознано
+     * ]
+     */
+    public function getImageInfo($url)
+    {
+        $res = AttachmentImageHelper::getInfoByUrl($url);
+        if (!empty($res)) {
+            $html = $this->getHtml(function () use ($res) {
+                PagePrinter::imageItem($res);
+            });
+            $this->extract2Answer($res);
+            $this->add2Answer('html', $html);
+        }
+        
+        return $this->answer();
+    }
 }

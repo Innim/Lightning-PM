@@ -1,0 +1,14 @@
+<?php
+/* 
+Требуются: 
+    $imageLinks - список объектов ({'url'})
+*/
+if (!empty($imageLinks)):
+?>
+<ul class="image-line">
+    <?php foreach ($imageLinks as $item): ?>
+    <li><?php lpm_print_image_item($item); ?></li>
+    <?php endforeach; ?>
+</ul>
+<?php
+endif;

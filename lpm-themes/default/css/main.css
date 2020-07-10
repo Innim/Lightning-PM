@@ -729,7 +729,7 @@ ul.video-line > li > .lds-spinner{
 	padding: 20px;
 	border-radius: 10px;
 }
-/* линия изображения */
+/* линия изображений в задаче */
 ul.images-line {
 	list-style: none;
 	padding: 0;
@@ -740,6 +740,21 @@ ul.images-line > li {
 	display: inline-block;
 	padding: 0;
 	margin: 0;
+}
+/* линия прикрепленных изображений (в комментах) */
+ul.image-line {
+	list-style: none;
+	padding: 0;
+	margin: 10px auto;
+	text-align: center;
+}
+ul.image-line > li {
+	display: inline-block;
+	padding: 0;
+	margin: 0;
+}
+ul.image-line > li > img {
+	max-height: 500px;
 }
 /* список изображений */
 ul.images-list {

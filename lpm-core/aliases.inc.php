@@ -200,6 +200,22 @@ function lpm_print_video_item($video)
 }
 
 /**
+ * Распечатывает список прикрепленных изобаржений.
+ */
+function lpm_print_image_list($imageLinks)
+{
+    return PagePrinter::imageList($imageLinks);
+}
+
+/**
+ * Распечатывает вывод конкретного прикрепленного изображения.
+ */
+function lpm_print_image_item($image)
+{
+    return PagePrinter::imageItem($image);
+}
+
+/**
  * Распечатывает форму экспорта задач в Excel.
  */
 function lpm_print_issues_export_to_excel()
