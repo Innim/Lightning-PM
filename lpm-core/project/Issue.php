@@ -258,7 +258,7 @@ WHERE;
      * Номер (idInProject) последней задачи в проекте
      * @return int
      */
-    private function getLastIssueId($projectId)
+    public function getLastIssueId($projectId)
     {
         $db = self::getDB();
         $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
