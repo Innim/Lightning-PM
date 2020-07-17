@@ -570,7 +570,7 @@ issuePage.putStickerOnBoard = function (issueId) {
         preloader.hide();
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
-            $('#putToBoardField').prop('checked', true);
+            $('#issueInfo').data('isOnBoard', true);
             issuePage.scumColUpdateInfo();
         }
     });
