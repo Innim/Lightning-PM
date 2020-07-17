@@ -766,6 +766,10 @@ issuePage.addComment = function (comment, html) {
         '<div class="comments-list-item">' + html + '</div>'
     );
 
+    let newItem = $('#issueView .comments .comments-list .comments-list-item').first()
+    comments.updateAttachments($('.comment-text', newItem));
+    attachments.update($('.block-with-attachments', newItem));
+
     issuePage.hideCommentForm();
     $('#issueView .comments .links-bar a.toggle-comments').show();
 
