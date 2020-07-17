@@ -5,7 +5,6 @@ $(document).ready(function ($) {
 
         let urls = parser.findLinks($(textEl).text());
         if (!urls) return;
-        console.log(urls);
 
         let video = [];
         let images = [];
