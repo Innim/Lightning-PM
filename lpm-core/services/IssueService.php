@@ -191,7 +191,7 @@ class IssueService extends LPMBaseService
 
             Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
-            $this->add2Answer('comment', $comment->getClientObject());
+            $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -222,7 +222,7 @@ class IssueService extends LPMBaseService
             $slack = SlackIntegration::getInstance();
             $slack->notifyIssuePassTest($issue);
 
-            $this->add2Answer('comment', $comment->getClientObject());
+            $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -658,6 +658,7 @@ class IssueService extends LPMBaseService
         if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text)) {
             throw new Exception("Не удалось добавить комментарий");
         }
+        $comment->issue = $issue;
 
         // отправка оповещений
         $memberIds = $issue->getMemberIds();
@@ -693,5 +694,15 @@ class IssueService extends LPMBaseService
         Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
         return $comment;
+    }
+
+    private function setupCommentAnswer(Comment $comment)
+    {
+        $html = $this->getHtml(function () use ($comment) {
+            PagePrinter::comment($comment);
+        });
+        
+        $this->add2Answer('comment', $comment->getClientObject());
+        $this->add2Answer('html', $html);
     }
 }
