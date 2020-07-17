@@ -49,8 +49,9 @@ if ('undefined' == typeof Element.prototype.hide) {
  * @param {F2PInvoker} invoker класс для отсылки запросов
  * @param {String} service название сервиса
  */
-function BaseService(service) {
+function BaseService(service, f2p) {
     this._service = service;
+    this._f2p = f2p;
 
     /**
      * Вызов метода
@@ -59,6 +60,7 @@ function BaseService(service) {
      * @param {Function} onResult функция-обработчик ответа
      */
     this.call = function (method, params, onResult) {
+        let f2p = this._f2p ?? srv.f2p;
         params.unshift(this._service, method, function (obj) {
             if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED) {
                 window.location.reload();
@@ -71,7 +73,7 @@ function BaseService(service) {
                 }
             }
         });
-        srv.f2p.request.apply(null, params);
+        f2p.request.apply(null, params);
     };
 
     this._ = function (name) {
@@ -88,10 +90,35 @@ function BaseService(service) {
     };
 };
 
+function ParallelService(service) {
+    this._service = service;
+    this._cache = [];
+
+    this._ = function (name) {
+        let cache = this._cache;
+        let impl = cache.pop() ?? new BaseService(service, new ru.vbinc.net.F2PInvoker(srv.gateway));
+
+        let func = arguments.callee.caller;
+        let args = [];
+        for (var i = 0; i < func.arguments.length; i++) {
+            args.push(func.arguments[i]);
+        }
+
+        let onResult = args.pop();
+
+        impl.call(name, args, (r) => {
+            cache.push(impl);
+            onResult(r);
+        });
+    }
+}
+
+let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
 let srv = {
-    f2p: new ru.vbinc.net.F2PInvoker(window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php'),
+    gateway: gateway,
+    f2p: new ru.vbinc.net.F2PInvoker(gateway),
     attachments: {
-        s: new BaseService('AttachmentsService'),
+        s: new ParallelService('AttachmentsService'),
         getMRInfo: function (url, onResult) {
             this.s._('getMRInfo');
         },
