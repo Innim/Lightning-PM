@@ -570,7 +570,7 @@ issuePage.putStickerOnBoard = function (issueId) {
         preloader.hide();
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
-            $('#putToBoardField').prop('checked', true);
+            $('#issueInfo').data('isOnBoard', true);
             issuePage.scumColUpdateInfo();
         }
     });
@@ -729,7 +729,7 @@ issuePage.postCommentForCurrentIssue = function (text) {
             function (res) {
                 preloader.hide();
                 if (res.success) {
-                    issuePage.addComment(res.comment);
+                    issuePage.addComment(res.comment, res.html);
                 } else {
                     srv.err(res);
                 }
@@ -749,7 +749,7 @@ issuePage.passTest = function () {
             function (res) {
                 preloader.hide();
                 if (res.success) {
-                    issuePage.addComment(res.comment);
+                    issuePage.addComment(res.comment, res.html);
                 } else {
                     srv.err(res);
                 }
@@ -758,23 +758,18 @@ issuePage.passTest = function () {
     }
 }
 
-issuePage.addComment = function (comment) {
-    // TODO: выпилить отсюда шаблон - сложно поддерживать и не отображает видео и MR
-    let userId = $('#user-id-hidden').val();
+issuePage.addComment = function (comment, html) {
     let elementId = 'comment_' + comment.id;
     let commentTime = comment.date;
     $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
     $('#issueView .comments .comments-list').prepend(
-        '<div class="comments-list-item">' +
-        '<p class="delete-comment" id="' + elementId + '" data-comment-id="' + comment.id + '" data-user-id="' + userId + '"' +
-        '               data-time="' + commentTime + '">Удалить</p>' +
-        '<img src="' + comment.author.avatarUrl + '" class="user-avatar small"/>' +
-        '<p class="author">' + comment.author.linkedName + '</p> ' +
-        '<p class="date"><a class="anchor" id="' + comment.id +
-        '"href="#comment-' + comment.id + '">' + comment.dateLabel + '</a></p>' +
-        '<article class="text formatted-desc">' + comment.text + '</p>' +
-        '</div>'
+        '<div class="comments-list-item">' + html + '</div>'
     );
+
+    let newItem = $('#issueView .comments .comments-list .comments-list-item').first()
+    comments.updateAttachments($('.comment-text', newItem));
+    attachments.update($('.block-with-attachments', newItem));
+
     issuePage.hideCommentForm();
     $('#issueView .comments .links-bar a.toggle-comments').show();
 
