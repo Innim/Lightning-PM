@@ -910,6 +910,10 @@ ul.images-url > li > input {
 	border-radius: 5px;
 }
 
+.comments .comments-list .comments-list-item ul.merge-requests li .state-icon {
+	margin-right: 5px;
+}
+
 .comments .comments-list .comments-list-item ul.merge-requests li.opened {
 	background-color: #ffffbc;
 }
