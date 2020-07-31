@@ -2,8 +2,6 @@ $(document).ready(function ($) {
     $('.block-with-attachments').each(function (index, el) {
         attachments.update($(el));
     });
-
-
 });
 
 let attachments = {
@@ -21,7 +19,9 @@ let attachments = {
             let url = urls[i];
             if (parser.isVideoUrl(url)) {
                 video.push(url);
-            } else if (parser.isImageUrl(url)) {
+            }
+
+            if (parser.isImageUrl(url)) {
                 images.push(url);
             }
         }
@@ -31,16 +31,7 @@ let attachments = {
     },
     addVideo: function (el, ul, url) {
         attachments.add(ul, url,
-            (url, onResult) => {
-                srv.attachments.getVideoInfo(url, (r) => {
-                    onResult(r);
-
-                    if (r.success && !r.html) {
-                        if (parser.isImageUrl(url))
-                            attachments.appendAll(el, 'image-line', [url], attachments.addImage);
-                    }
-                });
-            },
+            (url, onResult) => srv.attachments.getVideoInfo(url, onResult),
             'Не удалось получить данные видео.');
     },
     addImage: function (el, ul, url) {
