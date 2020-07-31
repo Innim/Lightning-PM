@@ -5,7 +5,7 @@
 class AttachmentImageHelper
 {
     // Droplr
-    const PATTERN_DROPLR = "https?:\/\/d.pr\/[a-z0-9\/]+";
+    const PATTERN_DROPLR = "https?:\/\/d.pr\/i\/[a-z0-9]+";
     // Innim owncloud
     const PATTERN_OWNCLOUD = "https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+";
     // imgur gif
