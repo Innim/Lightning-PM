@@ -751,7 +751,7 @@ ul.image-line {
 ul.image-line > li {
 	display: inline-block;
 	padding: 0;
-	margin: 0;
+	margin: 5px;
 }
 ul.image-line > li > img {
 	max-height: 500px;
@@ -908,6 +908,10 @@ ul.images-url > li > input {
 .comments .comments-list .comments-list-item ul.merge-requests li {
 	padding: 5px;
 	border-radius: 5px;
+}
+
+.comments .comments-list .comments-list-item ul.merge-requests li .state-icon {
+	margin-right: 5px;
 }
 
 .comments .comments-list .comments-list-item ul.merge-requests li.opened {
