@@ -33,6 +33,12 @@ function showProjectsList() {
 	window.location.hash = '';
 };
 
+function fixedProject(e) {
+	const parent = e.target;
+	const projectId = $('input[name=projectId]', parent).val();
+	console.log(projectId);
+};
+
 function validateAddProj() {
 	let errors = [];
 	let form = $('#addProjectForm');
