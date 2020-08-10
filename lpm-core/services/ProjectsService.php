@@ -25,4 +25,22 @@ class ProjectsService extends LPMBaseService
         
         return $this->answer();
     }
+
+    public function setIsFixed($projectId, $value)
+    {
+        $projectId = (int)$projectId;
+        $instanceType = LPMInstanceTypes::PROJECT;
+        $userId = $this->getUserId();
+
+        if ($projectId > 0 AND $userId) {
+            $sql = "INSERT INTO `%s` (`userId`, `instanceType`, `instanceId`, `isFixed`)" .
+                "VALUES (". $userId . ", '" . $instanceType . "', '" . $projectId . "', '" . $value . "' ) "; 
+
+            if (!$this->_db->queryt($sql, LPMTables::IS_FIXED)) {
+                return $this->error('Ошибка записи в БД');
+            }
+        }
+
+        return $this->answer();
+    }
 }

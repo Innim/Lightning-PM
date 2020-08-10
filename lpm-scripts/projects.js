@@ -34,9 +34,15 @@ function showProjectsList() {
 };
 
 function fixedProject(e) {
-	const parent = e.target;
+	const parent = e.currentTarget.parentElement;
 	const projectId = $('input[name=projectId]', parent).val();
 	console.log(projectId);
+
+	const value = ($("button", parent).hasClass('no-active')) ? true : false;
+	console.log(value);
+	srv.projects.setIsFixed(projectId, value, reload = function () {
+		location.reload();
+	});
 };
 
 function validateAddProj() {

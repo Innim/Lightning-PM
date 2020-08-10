@@ -106,4 +106,8 @@ class LPMTables
      * Стандартные метки для задач.
      */
     const ISSUE_LABELS = 'issue_labels';
+    /**
+     * Стандартные метки для задач.
+     */
+    const IS_FIXED = 'fixed_instance';
 }

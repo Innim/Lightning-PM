@@ -229,6 +229,9 @@ let srv = {
         s: new BaseService('ProjectsService'),
         setIsArchive: function ($projectId, $value, onResult) {
             this.s._('setIsArchive');
+        },
+        setIsFixed: function ($projectId, $value, onResult) {
+            this.s._('setIsFixed');
         }
     },
     profile: {

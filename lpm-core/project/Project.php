@@ -128,7 +128,7 @@ class Project extends MembersInstance
                                            "where `%1\$s`.`isArchive` = '0' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
                                              "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
                                              "and `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT   . "' " .
-                    "ORDER BY `%1\$s`.`lastUpdate` DESC, `%2\$s`.`isFixed` ASC";
+                    "ORDER BY `%1\$s`.`lastUpdate` DESC";
 
                     $sqlArchive = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
                                            "where `%1\$s`.`isArchive` = '1' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
