@@ -32,8 +32,17 @@ class PageConstructor
     }
     
     public static function getProjectsList($bool)
-    {
-        return Project::getAvailList($bool);
+    {   
+        $fixedList = Project::getFixedList();
+        $projectList = Project::getAvailList($bool);
+        foreach($projectList as $project) {
+            if($fixedList) {
+
+            }
+        }
+        var_dump($fixedList);
+        return $resultList;
+        //return Project::getAvailList($bool);
     }
 
     public static function switchIsArchive()

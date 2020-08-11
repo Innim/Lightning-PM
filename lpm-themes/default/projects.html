@@ -12,7 +12,7 @@
 		<?php foreach (lpm_get_projects_list( false ) as $project): ?>
 		<li>
 			<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
-			<button class="project-fix no-active" onclick="fixedProject(event)">Закрепить задачу</button>
+			<button class="project-fix no-active" onclick="fixedProject(event)" data-id-project="<?=$project->id;?>">Закрепить задачу</button>
 			<?php if (($countImportaint=$project->getImportantIssuesCount())>0): ?>
 			<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportaint;?>
 			</div>

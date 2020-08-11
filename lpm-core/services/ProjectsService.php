@@ -28,16 +28,25 @@ class ProjectsService extends LPMBaseService
 
     public function setIsFixed($projectId, $value)
     {
-        $projectId = (int)$projectId;
+        $projectId = $projectId;
         $instanceType = LPMInstanceTypes::PROJECT;
         $userId = $this->getUserId();
 
-        if ($projectId > 0 AND $userId) {
-            $sql = "INSERT INTO `%s` (`userId`, `instanceType`, `instanceId`, `isFixed`)" .
-                "VALUES (". $userId . ", '" . $instanceType . "', '" . $projectId . "', '" . $value . "' ) "; 
+        if ($value === true) {
+            $sql = "INSERT INTO `%s` (`userId`, `instanceType`, `instanceId`)" .
+                "VALUES (". $userId . ", '" . $instanceType . "', '" . $projectId . "' ) ";
 
             if (!$this->_db->queryt($sql, LPMTables::IS_FIXED)) {
-                return $this->error('Ошибка записи в БД');
+                return $this->error('Проект не зафиксирован. Ошибка записи в БД.');
+            }
+        } else {
+            $sql = "DELETE FROM `%s` " .
+            "WHERE `userId` = " . "'" . $userId . "' " .
+            "AND `instanceType` = " . "'" . $instanceType . "' " .
+            "AND `instanceId` = " . "'" . $projectId . "'";
+
+            if (!$this->_db->queryt($sql, LPMTables::IS_FIXED)) {
+                return $this->error('Фиксация проекта не снята. Ошибка записи в БД');
             }
         }
 

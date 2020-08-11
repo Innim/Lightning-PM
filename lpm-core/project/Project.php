@@ -441,4 +441,18 @@ class Project extends MembersInstance
     // 			"WHERE `id` = '" . $projectId . "'";
     // 	return $db->queryt( $sql, LPMTables::PROJECTS );
     // }
+
+    public static function getFixedList()
+    {
+        if (LightningEngine::getInstance()->isAuth()) {
+            $user = LightningEngine::getInstance()->getUser();
+            $db = LPMGlobals::getInstance()->getDBConnect();
+
+            $sqlDevelop = "SELECT `userId` FROM `%1\$s` " . "WHERE `userId` = '" . $user->userId . "' " . "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "'";
+            $fixitList = $db->queryt( $sqlDevelop, LPMTables::IS_FIXED );
+        } else {
+            $fixitList = array();
+        }
+        return $fixitList;
+    }
 }
