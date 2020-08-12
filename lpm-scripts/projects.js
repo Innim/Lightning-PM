@@ -38,7 +38,7 @@ function fixedProject(e) {
 	const projectId = $(elementId).data('id-project');
 	console.log(projectId);
 
-	const value = ($(elementId).hasClass('no-active')) ? false : true;
+	const value = ($(elementId).hasClass('no-active')) ? true : false;
 	console.log(value);
 	srv.projects.setIsFixed(projectId, value, reload = function () {
 		location.reload();

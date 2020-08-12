@@ -35,14 +35,25 @@ class PageConstructor
     {   
         $fixedList = Project::getFixedList();
         $projectList = Project::getAvailList($bool);
-        foreach($projectList as $project) {
-            if($fixedList) {
 
+        foreach ($projectList as $project) {
+            $project->isFixed = false;
+            if (in_array($project->id, $fixedList)) {
+                $project->isFixed = true;
             }
         }
-        var_dump($fixedList);
-        return $resultList;
-        //return Project::getAvailList($bool);
+
+        usort($projectList, function ($item1, $item2) {
+            if ($item1->isFixed === $item2->isFixed) {
+                return 0;
+            }
+            if ($item1->isFixed !== $item2->isFixed AND $item1->isFixed === true) {
+                return -1;
+            }
+            return 1;
+        });
+
+        return $projectList;
     }
 
     public static function switchIsArchive()

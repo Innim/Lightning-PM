@@ -448,11 +448,20 @@ class Project extends MembersInstance
             $user = LightningEngine::getInstance()->getUser();
             $db = LPMGlobals::getInstance()->getDBConnect();
 
-            $sqlDevelop = "SELECT `userId` FROM `%1\$s` " . "WHERE `userId` = '" . $user->userId . "' " . "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "'";
-            $fixitList = $db->queryt( $sqlDevelop, LPMTables::IS_FIXED );
+            $sqlDevelop = "SELECT `%1\$s`.`instanceId` FROM `%1\$s` " .
+                          "WHERE `userId` = '" . $user->userId . "' " .
+                          "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "'";
+            $fixedList = $db->queryt( $sqlDevelop, LPMTables::IS_FIXED );
         } else {
-            $fixitList = array();
+            $fixedList = array();
         }
-        return $fixitList;
+
+        $rows = $fixedList->num_rows;
+     
+        for ($i = 0 ; $i < $rows ; $i++) {
+            $result[] = (int)(mysqli_fetch_row($fixedList))[0];
+        }
+
+        return $result;
     }
 }
