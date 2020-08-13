@@ -1109,9 +1109,14 @@ ul.projects-list .btn.develop
 	min-width: 20px;
 	min-height: 20px;
 	border: none;
+	font-size: 14px;
 	line-height: 14px;
 	text-align: center;
 	background: transparent;
+}
+.projects-list .rotate-icon {
+	transform: rotate(45deg);
+	color: #999999;
 }
 .projects-list .project-desc {
 	font-size: 0.9em;

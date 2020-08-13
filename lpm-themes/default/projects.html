@@ -12,11 +12,11 @@
 		<?php foreach (lpm_get_projects_list( false ) as $project): ?>
 		<li>
 			<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
-			<button class="project-fix" onclick="fixedProject(event)" data-id-project="<?=$project->id;?>" data-fixed="<?=$project->isFixed;?>">
+			<button class="project-fix" data-id-project="<?=$project->id;?>" value="<?=$project->isFixed;?>">
 				<?php if ($project->isFixed === true): ?>
-				<i class="fa fa-lock" aria-hidden="true"></i>
+				<i class="fa fa-thumbtack" aria-hidden="true"></i>
 				<?php else: ?>
-				<i class="fa fa-unlock"aria-hidden="true"></i>
+				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
 				<?php endif ?>	
 			</button>
 			<?php if (($countImportaint=$project->getImportantIssuesCount())>0): ?>

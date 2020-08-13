@@ -49,13 +49,7 @@ class PageConstructor
         }
 
         usort($projectList, function ($item1, $item2) {
-            if ($item1->isFixed === $item2->isFixed) {
-                return 0;
-            }
-            if ($item1->isFixed !== $item2->isFixed AND $item1->isFixed === true) {
-                return -1;
-            }
-            return 1;
+            return $item2->isFixed - $item1->isFixed;
         });
 
         return $projectList;

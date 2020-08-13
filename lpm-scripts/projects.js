@@ -6,6 +6,7 @@
 $(document).ready(
 	function () {
 		//$("#registrationForm").hide();
+		let isSending = false;
 
 		if ((/#add-project/i).test(window.location)) {
 			$("#projectsList").hide();
@@ -16,6 +17,22 @@ $(document).ready(
 			$("#addProjectForm").hide();
 			$('#addProjectForm > div.validateError').html('');
 		}
+
+
+		//Фиксация проекта в списке проектов.
+		$('.project-fix').click(function () {
+			const self = $(this);
+			const projectId = self.data('id-project');
+
+			if (isSending) {
+				return;
+			}
+			
+			isSending = true;						
+			srv.projects.setIsFixed(projectId, Boolean(!self.val()), function () {
+				location.reload();
+			});
+		});
 	}
 );
 
@@ -31,21 +48,6 @@ function showProjectsList() {
 	$("#addProjectForm").hide();
 	$("#projectsList").show();
 	window.location.hash = '';
-};
-
-/**
-* Фиксация проекта в списке проектов.
-* 
-*/
-function fixedProject(e) {
-	const elementId = e.currentTarget;
-	const projectId = $(elementId).data('id-project');
-	const value = $(elementId).data('fixed') ? false : true;
-	
-	$('.projects-list').find('button').attr('disabled', true);
-	srv.projects.setIsFixed(projectId, value, reload = function () {
-		location.reload();
-	});
 };
 
 function validateAddProj() {
