@@ -33,13 +33,16 @@ function showProjectsList() {
 	window.location.hash = '';
 };
 
+/**
+* Фиксация проекта в списке проектов.
+* 
+*/
 function fixedProject(e) {
 	const elementId = e.currentTarget;
 	const projectId = $(elementId).data('id-project');
-	console.log(projectId);
-
-	const value = ($(elementId).hasClass('no-active')) ? true : false;
-	console.log(value);
+	const value = $(elementId).data('fixed') ? false : true;
+	
+	$('.projects-list').find('button').attr('disabled', true);
 	srv.projects.setIsFixed(projectId, value, reload = function () {
 		location.reload();
 	});

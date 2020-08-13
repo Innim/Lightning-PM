@@ -22,10 +22,20 @@ class ProjectsService extends LPMBaseService
                 return $this->error('Ошибка записи в БД');
             }
         }
+
+        //Функционал для задачи №243
+        // if ($isArchive) {
+        //     $this->setIsFixed($projectId, false);
+        // }
         
         return $this->answer();
     }
 
+    /**
+     * Запись флага в БД фиксации проекта при показе списка проектов.
+     * @param  int $projectId
+     * @param  boolean $value
+     */
     public function setIsFixed($projectId, $value)
     {
         $projectId = $projectId;

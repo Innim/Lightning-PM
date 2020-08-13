@@ -31,6 +31,11 @@ class PageConstructor
         return LightningEngine::getInstance()->getCurrentPage()->getBaseUrl();
     }
     
+    /**
+     * Получает все проекты пользователя.
+     * Сортировка проектов по фиксации и передача флага фиксации.
+     * @param  boolean $bool флаг архивного проекта.
+     */
     public static function getProjectsList($bool)
     {   
         $fixedList = Project::getFixedList();

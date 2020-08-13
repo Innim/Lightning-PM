@@ -442,6 +442,10 @@ class Project extends MembersInstance
     // 	return $db->queryt( $sql, LPMTables::PROJECTS );
     // }
 
+    /**
+     * Получает все фиксированные проекты для данного пользователя.
+     * @return array $result массив instanceId
+     */
     public static function getFixedList()
     {
         if (LightningEngine::getInstance()->isAuth()) {
