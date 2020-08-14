@@ -47,11 +47,12 @@ class PageConstructor
                 $project->isFixed = true;
             }
         }
-
-        usort($projectList, function ($item1, $item2) {
-            return $item2->isFixed - $item1->isFixed;
-        });
-
+//
+//        usort($projectList, function ($item1, $item2) {
+//            return $item2->isFixed - $item1->isFixed;
+//        });
+        var_dump($fixedList);
+        var_dump($projectList);
         return $projectList;
     }
 

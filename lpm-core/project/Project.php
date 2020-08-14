@@ -124,10 +124,13 @@ class Project extends MembersInstance
             if (LightningEngine::getInstance()->isAuth()) {
                 $user = LightningEngine::getInstance()->getUser();
                 if (!$user->isModerator()) {
-                    $sqlDevelop = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
-                                           "where `%1\$s`.`isArchive` = '0' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
-                                             "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
-                                             "and `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT   . "' " .
+                    $sqlDevelop = "SELECT `%1\$s`.* FROM `%1\$s`, `%2\$s` " .
+                                        "LEFT JOIN `%3\$s` ON `%3\$s`.`instanceId` = `%1\$s`.`id` " .
+                                            "WHERE `%1\$s`.`isArchive` = '0' AND `%2\$s`.`userId` = '" . $user->userId . "' " .
+                                            "AND `%2\$s`.`instanceId` = `%1\$s`.`id` " .
+                                            "AND `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+                                            "AND `%3\$s`.`userId` = '" . $user->userId . "' " .
+                                            "AND `%3\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                     "ORDER BY `%1\$s`.`lastUpdate` DESC";
 
                     $sqlArchive = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
@@ -136,10 +139,29 @@ class Project extends MembersInstance
                                              "and `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT   . "' " .
                     "ORDER BY `%1\$s`.`lastUpdate` DESC";
                     
-                    self::$_availList['develop'] = StreamObject::loadObjList(self::getDB(), array( $sqlDevelop, LPMTables::PROJECTS, LPMTables::MEMBERS ), __CLASS__);
+                    self::$_availList['develop'] = StreamObject::loadObjList(self::getDB(), array( $sqlDevelop, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
                     self::$_availList['archive'] = StreamObject::loadObjList(self::getDB(), array( $sqlArchive, LPMTables::PROJECTS, LPMTables::MEMBERS ), __CLASS__);
                 } else {
-                    self::$_availList['develop'] = self::loadList("`isArchive`=0 ORDER BY `%1\$s`.`lastUpdate` DESC");
+//                    $sqlDevelop = "SELECT `%1\$s`.* FROM `%1\$s` " .
+//                                            "LEFT JOIN `%2\$s` ON `%2\$s`.`instanceId` = `%1\$s`.`id` " .
+//                                            "AND `%2\$s`.`userId` = '" . $user->userId  . "' " .
+//                                            "AND `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+//                                            "WHERE `%1\$s`.`isArchive` = '0' " .
+//                        "ORDER BY `%1\$s`.`lastUpdate` DESC";
+                    $sqlDevelop = "SELECT `%1\$s`.* FROM `%1\$s` " .
+                                            "INNER JOIN `%2\$s` ON `%2\$s`.`instanceId` = `%1\$s`.`id` " .
+                                            "AND `%2\$s`.`userId` = '" . $user->userId  . "' " .
+                                            "AND `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+                                            "WHERE `%1\$s`.`isArchive` = '0' " .
+                                            "UNION " .
+                                    "SELECT `%1\$s`.* FROM `%1\$s` " .
+                                            "LEFT JOIN `%2\$s` ON `%2\$s`.`instanceId` = `%1\$s`.`id` " .
+                                            "AND `%2\$s`.`userId` = '" . $user->userId  . "' " .
+                                            "AND `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+                                            "WHERE `%1\$s`.`isArchive` = '0' " .
+                                            "AND `%2\$s`.`instanceId` IS NULL ";
+                    self::$_availList['develop'] = StreamObject::loadObjList(self::getDB(), array( $sqlDevelop, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
+                    //self::$_availList['develop'] = self::loadList("`isArchive`=0 ORDER BY `%1\$s`.`lastUpdate` DESC");
                     self::$_availList['archive'] = self::loadList("`isArchive`=1 ORDER BY `%1\$s`.`lastUpdate` DESC");
                 }
             } else {
