@@ -124,24 +124,6 @@ class Project extends MembersInstance
             if (LightningEngine::getInstance()->isAuth()) {
                 $user = LightningEngine::getInstance()->getUser();
                 if (!$user->isModerator()) {
-//                    $sqlDevelop = "SELECT * FROM `%1\$s` AS `t1`" .
-//                                        "INNER JOIN `%2\$s` AS `t2` ON `t2`.`instanceId` = `t1`.`id` " .
-//                                        "INNER JOIN `%3\$s` AS `t3` ON `t3`.`instanceId` = `t1`.`id` " .
-//                                        "WHERE `t1`.`isArchive` = '0' " .
-//                                        "AND `t2`.`userId` = '" . $user->userId . "' " .
-//                                        "AND `t2`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-//                                        "AND `t3`.`userId` = '" . $user->userId . "' " .
-//                                        "AND `t3`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-//                                        "UNION " .
-//                                    "SELECT * FROM (SELECT * FROM `%1\$s`, `%2\$s`  ORDER BY `%1\$s`.`lastUpdate` DESC) AS `t1` " .
-//                                        "INNER JOIN `%2\$s` AS `t2` ON `t2`.`instanceId` = `t1`.`id` " .
-//                                        "LEFT JOIN `%3\$s` AS `t3` ON `t3`.`instanceId` = `t1`.`id` " .
-//                                        "WHERE `t1`.`isArchive` = '0' " .
-//                                        "AND `t2`.`userId` = '" . $user->userId . "' " .
-//                                        "AND `t2`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-//                                        "AND `t3`.`userId` = '" . $user->userId . "' " .
-//                                        "AND `t3`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-//                                        "AND `t3`.`instanceId` IS NULL";
                     $sqlDevelop = "SELECT projects.*, members.userId, fixed.instanceId AS fixedInstance FROM `%1\$s` AS projects " .
                                         "INNER JOIN (SELECT `%2\$s`.* FROM `%2\$s` " .
                                                     "WHERE `%2\$s`.`userId` = '" . $user->userId . "' " .
@@ -150,35 +132,23 @@ class Project extends MembersInstance
                                                     "WHERE `%3\$s`.`userId` = '" . $user->userId . "' " .
                                                     "AND `%3\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "') AS fixed ON fixed.instanceId = projects.id " .
                                         "WHERE projects.isArchive = '0' " .
-                                    "ORDER BY projects.lastUpdate DESC, fixedInstance ASC";
+                                    "ORDER BY fixedInstance DESC";
 
                     $sqlArchive = "select `%1\$s`.* from `%1\$s`, `%2\$s` " .
-                                           "where `%1\$s`.`isArchive` = '1' and `%2\$s`.`userId` = '" . $user->userId   . "' " .
+                                           "where `%1\$s`.`isArchive` = '1' and `%2\$s`.`userId` = '" . $user->userId . "' " .
                                              "and `%2\$s`.`instanceId`   = `%1\$s`.`id` " .
-                                             "and `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT   . "' " .
+                                             "and `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                     "ORDER BY `%1\$s`.`lastUpdate` DESC";
                     
                     self::$_availList['develop'] = StreamObject::loadObjList(self::getDB(), array( $sqlDevelop, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
                     self::$_availList['archive'] = StreamObject::loadObjList(self::getDB(), array( $sqlArchive, LPMTables::PROJECTS, LPMTables::MEMBERS ), __CLASS__);
                 } else {
-//                    $sqlDevelop = "SELECT `%1\$s`.* FROM `%1\$s` " .
-//                                            "INNER JOIN `%2\$s` ON `%2\$s`.`instanceId` = `%1\$s`.`id` " .
-//                                            "AND `%2\$s`.`userId` = '" . $user->userId  . "' " .
-//                                            "AND `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-//                                            "WHERE `%1\$s`.`isArchive` = '0' " .
-//                                            "UNION " .
-//                                    "SELECT `t1`.* FROM (SELECT * FROM `%1\$s` ORDER BY `%1\$s`.`lastUpdate` DESC) AS `t1` " .
-//                                            "LEFT JOIN `%2\$s` AS `t2` ON `t2`.`instanceId` = `t1`.`id` " .
-//                                            "AND `t2`.`userId` = '" . $user->userId  . "' " .
-//                                            "AND `t2`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-//                                            "WHERE `t1`.`isArchive` = '0' " .
-//                                            "AND `t2`.`instanceId` IS NULL ";
                     $sqlDevelop = "SELECT projects.*, fixed.instanceId  AS `fixedInstance` FROM `%1\$s` AS projects " .
                                     "LEFT JOIN (SELECT `%2\$s`.* FROM `%2\$s` " .
                                         "WHERE `%2\$s`.`userId` = '" . $user->userId . "' " .
                                         "AND `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "') AS fixed ON fixed.instanceId = projects.id " .
-                                    "WHERE projects.isArchive = 0 " .
-                                    "ORDER BY projects.lastUpdate DESC, fixedInstance DESC";
+                                    "WHERE projects.isArchive = '0' " .
+                                    "ORDER BY fixedInstance DESC";
 
                     self::$_availList['develop'] = StreamObject::loadObjList(self::getDB(), array( $sqlDevelop, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
                     self::$_availList['archive'] = self::loadList("`isArchive`=1 ORDER BY `%1\$s`.`lastUpdate` DESC");

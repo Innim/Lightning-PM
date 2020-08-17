@@ -48,8 +48,6 @@ class PageConstructor
             }
         }
 
-        var_dump($fixedList);
-        var_dump($projectList);
         return $projectList;
     }
 
