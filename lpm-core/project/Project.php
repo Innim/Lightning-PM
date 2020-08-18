@@ -147,11 +147,20 @@ class Project extends MembersInstance
 
             $projectList = StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
         } else {
+//            $sql = "SELECT projects.*, fixed.instanceId  AS `fixedInstance` FROM `%1\$s` AS projects " .
+//                        "LEFT JOIN (SELECT `%2\$s`.* FROM `%2\$s` " .
+//                        "WHERE `%2\$s`.`userId` = '" . $user->userId . "' " .
+//                        "AND `%2\$s`.`instanceType` = '" . $instanceType . "') AS fixed ON fixed.instanceId = projects.id " .
+//                        "WHERE projects.isArchive = '" . (int)$isArchive . "' ".
+//                    "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
+
             $sql = "SELECT projects.*, fixed.instanceId  AS `fixedInstance` FROM `%1\$s` AS projects " .
-                        "LEFT JOIN (SELECT `%2\$s`.* FROM `%2\$s` " .
+                        "LEFT JOIN `%2\$s` " .
                         "WHERE `%2\$s`.`userId` = '" . $user->userId . "' " .
-                        "AND `%2\$s`.`instanceType` = '" . $instanceType . "') AS fixed ON fixed.instanceId = projects.id " .
-                        "WHERE projects.isArchive = '" . (int)$isArchive . "' ".
+                        "AS fixed ON fixed.instanceId = projects.id " .
+                        "WHERE projects.isArchive = '" . (int)$isArchive . "' " .
+                        "AND `%2\$s`.`userId` = '" . $user->userId . "' " .
+                        "AND `%2\$s`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                     "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
 
             $projectList = StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
