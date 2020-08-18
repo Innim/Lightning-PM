@@ -132,7 +132,7 @@ class Project extends MembersInstance
         return self::$_availList;
     }
 
-    public function getInstanceList($user, $isArchive, $instanceType)
+    public static function getInstanceList($user, $isArchive, $instanceType)
     {
         if (!$user->isModerator()) {
             $sql = "SELECT projects.*, members.userId, fixed.instanceId AS fixedInstance FROM `%1\$s` AS projects " .
