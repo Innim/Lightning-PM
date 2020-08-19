@@ -120,20 +120,16 @@ class Project extends MembersInstance
 
     public static function getAvailList($isArchive)
     {
-        if (empty(self::$_availList)) {
-            if (LightningEngine::getInstance()->isAuth()) {
-                $user = LightningEngine::getInstance()->getUser();
-                try {
-                    self::$_availList = self::getInstanceList($user, $isArchive);
-                } catch (Exception $e) {
-                    exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
-                }
-            } else {
-                return self::$_availList = null;
+        if (empty(self::$_availList) && (LightningEngine::getInstance()->isAuth())) {
+            $user = LightningEngine::getInstance()->getUser();
+            try {
+                return self::$_availList = self::getInstanceList($user, $isArchive);
+            } catch (Exception $e) {
+                exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
             }
         }
 
-        return self::$_availList;
+        return self::$_availList = null;
     }
 
     private static function getInstanceList($user, $isArchive)
@@ -149,19 +145,16 @@ class Project extends MembersInstance
                         "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' ".
                     "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
 
-            $projectList = StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
-        } else {
-            $sql = "SELECT projects.*, fixed.instanceId  AS `fixedInstance` FROM `%1\$s` AS projects " .
-                        "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
-                        "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-                        "AND `fixed`.`userId` = '" . $user->userId . "' " .
-                        "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' " .
-                    "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
-
-            $projectList = StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
+            return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
         }
+        $sql = "SELECT projects.*, fixed.instanceId  AS `fixedInstance` FROM `%1\$s` AS projects " .
+                    "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
+                    "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+                    "AND `fixed`.`userId` = '" . $user->userId . "' " .
+                    "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' " .
+                "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
 
-        return $projectList;
+        return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
     }
 
     public static function updateIssuesCount($projectId)
