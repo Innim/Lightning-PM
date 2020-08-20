@@ -246,7 +246,10 @@ class ProjectPage extends LPMPage
             }
         } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) {
             $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
+//            $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
+//          #######Для задачи 184########
+            $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($user->userId)); //
+
         } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
             $this->addTmplVar('project', $this->_project);
             $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);

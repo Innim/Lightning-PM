@@ -58,6 +58,7 @@
         $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
 
         //for ($i = 0; $i < $count; ++$i):
+
         ?>
             <tr>
                 <?php foreach ($columns as $j => $state):?>
@@ -87,6 +88,10 @@
                         class="scrum-board-sticker <?=$color;?> <?=$userRole;?>" data-issue-id="<?=$sticker->issueId;?>"
                         data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                         <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
+
+<!--                        #######Для задачи 184########-->
+                        <span class="sticker-issue-id"><?=$sticker->getIssue()->projectName;?></span>
+
                         <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span
                                 class="sticker-issue-sp"> (<?=$spStr;?> SP)</span></a>
                         <span class="sticker-issue-members"><?php 
