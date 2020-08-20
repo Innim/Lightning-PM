@@ -120,16 +120,17 @@ class Project extends MembersInstance
 
     public static function getAvailList($isArchive)
     {
-        if (empty(self::$_availList) && (LightningEngine::getInstance()->isAuth())) {
-            $user = LightningEngine::getInstance()->getUser();
-            try {
-                return self::$_availList = self::getInstanceList($user, $isArchive);
-            } catch (Exception $e) {
-                exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
-            }
+        if (!empty(self::$_availList) || !LightningEngine::getInstance()->isAuth()) {
+            return self::$_availList;
         }
 
-        return self::$_availList = null;
+        $user = LightningEngine::getInstance()->getUser();
+        try {
+            self::$_availList = self::getInstanceList($user, $isArchive);
+            return self::$_availList;
+        } catch (Exception $e) {
+            exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
+        }
     }
 
     private static function getInstanceList($user, $isArchive)
