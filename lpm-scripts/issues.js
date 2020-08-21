@@ -717,15 +717,14 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.postCommentForCurrentIssue = function (text) {
+issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall) {
     var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
 
     // TODO проверку на пустоту
-    if (issueId > 0 && text != '') {
+    if (issueId > 0) {
         preloader.show();
-        srv.issue.comment(
+        srvCall(
             issueId,
-            text,
             function (res) {
                 preloader.hide();
                 if (res.success) {
@@ -738,24 +737,16 @@ issuePage.postCommentForCurrentIssue = function (text) {
     }
 }
 
-issuePage.passTest = function () {
-    var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
+issuePage.postCommentForCurrentIssue = function (text) {
+    if (text == '') return;
 
-    // TODO проверку на пустоту
-    if (issueId > 0) {
-        preloader.show();
-        srv.issue.passTest(
-            issueId,
-            function (res) {
-                preloader.hide();
-                if (res.success) {
-                    issuePage.addComment(res.comment, res.html);
-                } else {
-                    srv.err(res);
-                }
-            }
-        );
-    }
+    issuePage.doSomethingAndPostCommentForCurrentIssue(
+        (issueId, handler) => srv.issue.comment(issueId, text, handler));
+}
+
+issuePage.passTest = function () {
+    issuePage.doSomethingAndPostCommentForCurrentIssue(
+        (issueId, handler) => srv.issue.passTest(issueId, handler));
 }
 
 issuePage.addComment = function (comment, html) {
