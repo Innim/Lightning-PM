@@ -92,13 +92,24 @@ class GitlabExternalApi extends ExternalApi
                 $slack = SlackIntegration::getInstance();
                 foreach ($issueIds as $issueId) {
                     $issue = Issue::load($issueId);
-                    if (empty($issueId) || $issue->status != Issue::STATUS_WAIT) {
+                    if (empty($issueId)) {
                         continue;
                     }
 
-                    $testers = $issue->getTesters();
-                    if (!empty($testers)) {
-                        $slack->notifyMRMergedToTester($issue, $mr);
+                    if ($issue->status == Issue::STATUS_WAIT) {
+                        // Если задача в тесте - оповещаем тестера что MR влит
+                        // (это MR c правками)
+                        $testers = $issue->getTesters();
+                        if (!empty($testers)) {
+                            $slack->notifyMRMergedToTester($issue, $mr);
+                        }
+                    } elseif ($issue->status == Issue::STATUS_IN_WORK) {
+                        // Если задача в работе, то вполне возможно надо перевесить ее в тест,
+                        // TODO: но предварительно надо убедиться, что все MR задачи влиты
+
+                        // Перевешиваем задачу в тест
+                        // TODO: может перевешивать только то, что сейчас на доске в работе?
+                        Issue::setStatus($issue, Issue::STATUS_WAIT, null);
                     }
                 }
             }
