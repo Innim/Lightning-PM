@@ -200,6 +200,34 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Отмечает что задача влита в develop.
+     * @param  int $issueId Идентификатор задачи
+     * @return {
+     *     string comment Добавленный комментарий.
+     * }
+     */
+    public function merged($issueId)
+    {
+        $issueId = (int)$issueId;
+
+        try {
+            $issue = Issue::load($issueId);
+            if (!$issue) {
+                return $this->error('Нет такой задачи');
+            }
+
+            $comment = $this->postComment($issue, '`-> develop`', true);
+
+
+            $this->setupCommentAnswer($comment);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Отмечает что задача прошла тестирование.
      * @param  int $issueId Идентификатор задачи
      * @return {

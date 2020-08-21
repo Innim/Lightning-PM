@@ -703,12 +703,11 @@ issuePage.toogleCommentForm = function () {
 };
 
 issuePage.commentPassTesting = function () {
-    //issuePage.postCommentForCurrentIssue('Прошла тестирование');
     issuePage.passTest();
 };
 
 issuePage.commentMergeInDevelop = function () {
-    issuePage.postCommentForCurrentIssue('`-> develop`');
+    issuePage.merged();
 };
 
 issuePage.postComment = function () {
@@ -742,6 +741,11 @@ issuePage.postCommentForCurrentIssue = function (text) {
 
     issuePage.doSomethingAndPostCommentForCurrentIssue(
         (issueId, handler) => srv.issue.comment(issueId, text, handler));
+}
+
+issuePage.merged = function () {
+    issuePage.doSomethingAndPostCommentForCurrentIssue(
+        (issueId, handler) => srv.issue.merged(issueId, handler));
 }
 
 issuePage.passTest = function () {
