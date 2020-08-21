@@ -9,8 +9,8 @@
 		<?php else: foreach ($list as $project):?>
 		<li>
 			<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
-			<button class="project-fix" data-id-project="<?=$project->id;?>" value="<?=$project->isFixed;?>">
-				<?php if ($project->isFixed === true): ?>
+			<button class="project-fix" data-id-project="<?=$project->id;?>" value="<?=$project->fixedInstance;?>">
+				<?php if ((bool)($project->fixedInstance)): ?>
 				<i class="fa fa-thumbtack" aria-hidden="true"></i>
 				<?php else: ?>
 				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>

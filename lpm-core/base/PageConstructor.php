@@ -33,22 +33,11 @@ class PageConstructor
     
     /**
      * Получает все проекты пользователя.
-     * Сортировка проектов по фиксации и передача флага фиксации.
      * @param  boolean $bool флаг архивного проекта.
      */
     public static function getProjectsList($bool)
-    {   
-        $fixedList = Project::getFixedList();
-        $projectList = Project::getAvailList($bool);
-
-        foreach ($projectList as $project) {
-            $project->isFixed = false;
-            if (in_array($project->id, $fixedList)) {
-                $project->isFixed = true;
-            }
-        }
-
-        return $projectList;
+    {
+        return Project::getAvailList($bool);
     }
 
     public static function switchIsArchive()
