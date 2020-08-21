@@ -105,11 +105,12 @@ class GitlabExternalApi extends ExternalApi
                         }
                     } elseif ($issue->status == Issue::STATUS_IN_WORK) {
                         // Если задача в работе, то вполне возможно надо перевесить ее в тест,
-                        // TODO: но предварительно надо убедиться, что все MR задачи влиты
-
-                        // Перевешиваем задачу в тест
-                        // TODO: может перевешивать только то, что сейчас на доске в работе?
-                        Issue::setStatus($issue, Issue::STATUS_WAIT, null);
+                        // но предварительно надо убедиться, что все MR задачи влиты
+                        if (!IssueMR::existOpenedMrForIssue($issueId, $mr->id)) {
+                            // Перевешиваем задачу в тест
+                            // TODO: может перевешивать только то, что сейчас на доске в работе?
+                            Issue::setStatus($issue, Issue::STATUS_WAIT, null);
+                        }
                     }
                 }
             }
