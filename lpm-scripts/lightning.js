@@ -152,7 +152,7 @@ let srv = {
         comment: function (issueId, text, onResult) {
             this.s._('comment');
         },
-        merged: function (issueId, onResult) {
+        merged: function (issueId, complete, onResult) {
             this.s._('merged');
         },
         passTest: function (issueId, onResult) {

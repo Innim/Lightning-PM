@@ -716,7 +716,7 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall) {
+issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSuccess) {
     var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
 
     // TODO проверку на пустоту
@@ -728,6 +728,7 @@ issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall) {
                 preloader.hide();
                 if (res.success) {
                     issuePage.addComment(res.comment, res.html);
+                    if (onSuccess) onSuccess(res);
                 } else {
                     srv.err(res);
                 }
@@ -744,8 +745,13 @@ issuePage.postCommentForCurrentIssue = function (text) {
 }
 
 issuePage.merged = function () {
+    let complete = confirm('Добавляется отметка о влитии в develop. Хотите также завершить задачу?');
     issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.merged(issueId, handler));
+        (issueId, handler) => srv.issue.merged(issueId, complete, handler),
+        res => {
+            setIssueInfo(new Issue(res.issue));
+            issuePage.updateStat();
+        });
 }
 
 issuePage.passTest = function () {
