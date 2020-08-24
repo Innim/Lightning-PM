@@ -25,7 +25,6 @@ class ProjectPage extends LPMPage
     const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum-board-snapshot';
     const PUID_SPRINT_STAT = 'sprint-stat';
     const PUID_SETTINGS = 'project-settings';
-    const PUID_MY_SCRUM_BOARD = 'scrum-board-common';
 
     /**
      *
@@ -83,12 +82,6 @@ class ProjectPage extends LPMPage
             ['project-settings'],
             '',
             User::ROLE_MODERATOR
-        );
-        $this->addSubPage(
-            self::PUID_MY_SCRUM_BOARD,
-            'Моя Scrum доска',
-            'scrum-board-common',
-            ['scrum-board']
         );
     }
     
@@ -254,9 +247,6 @@ class ProjectPage extends LPMPage
         } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) {
             $this->addTmplVar('project', $this->_project);
             $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
-        } elseif ($this->_curSubpage->uid == self::PUID_MY_SCRUM_BOARD) {
-            $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($user->userId));
         } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
             $this->addTmplVar('project', $this->_project);
             $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);

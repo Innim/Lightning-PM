@@ -1,11 +1,10 @@
 <?php
 /* 
-Требуются: 
-    $project - проект
+Требуются:
     $stickers - список стикеров
 */
 ?>
-<article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
+<article id="scrumBoard" class="hide-sp">
     <h1>Моя SCRUM доска</h1>
     <table class="scrum-board-table">
         <thead>
@@ -41,10 +40,7 @@
         $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS, 
             ScrumStickerState::TESTING, ScrumStickerState::DONE];
         $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
-
-        //for ($i = 0; $i < $count; ++$i):
-
-        ?>
+            ?>
             <tr>
                 <?php foreach ($columns as $j => $state):?>
                 <td class="scrum-board-col <?=$colStyles[$j];?>">
@@ -74,8 +70,8 @@
                         data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                         <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                         <span class="name-project"><?=$sticker->getIssue()->projectName;?></span>
-                        <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span
-                                class="sticker-issue-sp"> (<?=$spStr;?> SP)</span></a>
+                        <a href="<?=$sticker->getIssue()->getConstURLBy($sticker->getIssue()->projectUID, $sticker->getIssue()->idInProject);?>">
+                            <?=$sticker->getName();?><span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span></a>
                         <span class="sticker-issue-members"><?php 
                     foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?>
                             <?=$member->getShortName();?><?php }?></span>
