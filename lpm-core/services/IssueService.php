@@ -18,24 +18,12 @@ class IssueService extends LPMBaseService
         if (!$issue) {
             return $this->error('Нет такой задачи');
         }
-        
-        if (!$issue->checkEditPermit($this->_auth->getUserId())) {
-            return $this->error('У Вас нет прав на редактирование этой задачи');
-        }
 
         try {
-            Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_COMPLETED);
+            $this->completeIssue($issue);
         } catch (Exception $e) {
             return $this->exception($e);
         }
-
-        // Менять состояние стикера может любой пользователь
-        if ($issue->isOnBoard() &&
-                !ScrumSticker::updateStickerState($issue->id, ScrumStickerState::DONE)) {
-            return $this->errorDBSave();
-        }
-        
-        $this->add2Answer('issue', $this->getIssue4Client($issue));
         
         return $this->answer();
     }
@@ -58,17 +46,11 @@ class IssueService extends LPMBaseService
         }
 
         try {
-            Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_IN_WORK);
+            Issue::setStatus($issue, Issue::STATUS_IN_WORK, $this->getUser());
         } catch (Exception $e) {
             return $this->exception($e);
         }
 
-        // Менять состояние стикера может любой пользователь
-        if ($issue->isOnBoard() &&
-                !ScrumSticker::updateStickerState($issue->id, ScrumStickerState::IN_PROGRESS)) {
-            return $this->errorDBSave();
-        }
-        
         $this->add2Answer('issue', $this->getIssue4Client($issue));
     
         return $this->answer();
@@ -91,15 +73,9 @@ class IssueService extends LPMBaseService
         }
 
         try {
-            Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
+            Issue::setStatus($issue, Issue::STATUS_WAIT, $this->getUser());
         } catch (Exception $e) {
             return $this->exception($e);
-        }
-
-        // Менять состояние стикера может любой пользователь
-        if ($issue->isOnBoard() &&
-                !ScrumSticker::updateStickerState($issue->id, ScrumStickerState::TESTING)) {
-            return $this->errorDBSave();
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
@@ -200,6 +176,43 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Отмечает что задача влита в develop.
+     * @param  int $issueId Идентификатор задачи.
+     * @param  bool $complete true если надо также завершить задачу.
+     * @return {
+     *     string comment Добавленный комментарий.
+     * }
+     */
+    public function merged($issueId, $complete = false)
+    {
+        $issueId = (int)$issueId;
+        $complete = (bool)$complete;
+
+        try {
+            $issue = Issue::load($issueId);
+            if (!$issue) {
+                return $this->error('Нет такой задачи');
+            }
+
+            $comment = $this->postComment($issue, '`-> develop`', true);
+
+            if ($complete) {
+                try {
+                    $this->completeIssue($issue);
+                } catch (Exception $e) {
+                    return $this->exception($e);
+                }
+            }
+
+            $this->setupCommentAnswer($comment);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Отмечает что задача прошла тестирование.
      * @param  int $issueId Идентификатор задачи
      * @return {
@@ -286,17 +299,21 @@ class IssueService extends LPMBaseService
             }
 
             $issue = $sticker->getIssue();
+            $newState = null;
             if ($state === ScrumStickerState::TESTING) {
-
                 // Если состояние "Тестируется" - ставим задачу на проверку
-                Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_WAIT);
+                $newState = Issue::STATUS_WAIT;
             } elseif ($state === ScrumStickerState::DONE) {
                 // Если "Готово" - закрываем задачу
-                Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_COMPLETED);
+                $newState = Issue::STATUS_COMPLETED;
             } elseif ($issue->status == Issue::STATUS_WAIT &&
                     ($state === ScrumStickerState::TODO || $state === ScrumStickerState::IN_PROGRESS)) {
                 // Если она в режиме ожидания - переоткрываем задачу
-                Issue::updateStatus($this->getUser(), $issue, Issue::STATUS_IN_WORK);
+                $newState = Issue::STATUS_IN_WORK;
+            }
+
+            if ($newState != null) {
+                Issue::setStatus($issue, $newState, $this->getUser(), true, false);
             }
         } catch (\Exception $e) {
             return $this->exception($e);
@@ -704,5 +721,16 @@ class IssueService extends LPMBaseService
         
         $this->add2Answer('comment', $comment->getClientObject());
         $this->add2Answer('html', $html);
+    }
+
+    private function completeIssue(Issue $issue)
+    {
+        if (!$issue->checkEditPermit($this->_auth->getUserId())) {
+            throw new Exception('У Вас нет прав на редактирование этой задачи');
+        }
+
+        Issue::setStatus($issue, Issue::STATUS_COMPLETED, $this->getUser());
+        
+        $this->add2Answer('issue', $this->getIssue4Client($issue));
     }
 }
