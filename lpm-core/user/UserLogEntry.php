@@ -26,6 +26,12 @@ class UserLogEntry extends LPMBaseObject
     }
 
     public $id;
+
+    /**
+     * Идентификатор пользователя.
+     *
+     * Если 0 - значит действие автоматическое.
+     */
     public $userId;
     public $date;
 

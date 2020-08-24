@@ -512,7 +512,53 @@ WHERE;
         );
     }
 
-    public static function updateStatus(User $user, Issue $issue, $status, $sendNotify = true)
+    /**
+     * Устанавливает статус задачи.
+     *
+     * Также меняет статус стикера на доске и отправляет оповещения.
+     *
+     * @param User $user Пользователь, который совершает действие.
+     * Если действие автоматическое - передайте null.
+     */
+    public static function setStatus(Issue $issue, $status, $user, $sendNotify = true, $updateStickerState = true)
+    {
+        self::updateStatus($issue, $status);
+        Project::updateIssuesCount($issue->projectId);
+
+        // Записываем лог
+        UserLogEntry::issueEdit(
+            empty($user) ? 0 : $user->userId,
+            $issue->id,
+            'Update status to ' . $status
+        );
+
+        // Обновляем состояние стикера
+        if ($updateStickerState && $issue->isOnBoard()) {
+            $stickerState = null;
+            switch ($status) {
+                case Issue::STATUS_IN_WORK:
+                    $stickerState = ScrumStickerState::IN_PROGRESS;
+                    break;
+                case Issue::STATUS_WAIT:
+                    $stickerState = ScrumStickerState::TESTING;
+                    break;
+                case Issue::STATUS_COMPLETED:
+                    $stickerState = ScrumStickerState::DONE;
+                    break;
+            }
+
+            if ($stickerState != null &&
+                    !ScrumSticker::updateStickerState($issue->id, $stickerState)) {
+                throw new Exception('Status save failed', \GMFramework\ErrorCode::SAVE_DATA);
+            }
+        }
+
+        if ($sendNotify) {
+            self::sendStatusChangeNotify($issue, $user);
+        }
+    }
+
+    private static function updateStatus(Issue $issue, $status)
     {
         $issue->status = $status;
         $hash = [
@@ -537,63 +583,59 @@ WHERE;
             IssueService::checkTester($issue);
         }
 
-
         $db = self::getDB();
         if (!$db->queryb($hash)) {
             throw new Exception('Status save failed', \GMFramework\ErrorCode::SAVE_DATA);
         }
+    }
 
-        Project::updateIssuesCount($issue->projectId);
+    private static function sendStatusChangeNotify(Issue $issue, $user)
+    {
+        // Slack
+        $slack = SlackIntegration::getInstance();
 
-        // Записываем лог
-        UserLogEntry::issueEdit($user->userId, $issue->id, 'Update status to ' . $status);
+        $subject = '';
+        $text = '';
+        switch ($issue->status) {
+            case Issue::STATUS_COMPLETED:
+                $subject = 'Завершена задача "' . $issue->name . '"';
+                $text = empty($user) ?
+                    'Задача "' . $issue->name . '" завершена' :
+                    $user->getName() . ' отметил задачу "' . $issue->name . '" как завершённую';
 
-        if ($sendNotify) {
-            // Отправка оповещений
-            
-            // Slack
-            $slack = SlackIntegration::getInstance();
+                $slack->notifyIssueCompleted($issue);
+                break;
+            case Issue::STATUS_IN_WORK:
+                $subject = 'Открыта задача "' . $issue->name . '"';
+                $text =  empty($user) ?
+                    'Задача "' . $issue->name . '" снова открыта' :
+                    $user->getName() . ' заново открыл задачу "' . $issue->name . '"';
+                
+                // TODO: оповестить в slaсk если вернули в работу
+                break;
+            case Issue::STATUS_WAIT:
+                $subject = 'Задача "' . $issue->name . '"ожидает проверки';
+                $text = empty($user) ?
+                    'Задача "' . $issue->name . '" отправлена на проверку' :
+                    $user->getName() . ' поставил задачу "' . $issue->name . '"'.  '" на проверку';
 
-            $subject = '';
-            $text = '';
-            switch ($issue->status) {
-                case Issue::STATUS_COMPLETED:
-                    $subject = 'Завершена задача "' . $issue->name . '"';
-                    $text = $user->getName() . ' отметил задачу "' .
-                        $issue->name . '" как завершённую';
+                $slack->notifyIssueForTest($issue);
+                break;
+        }
 
-                    $slack->notifyIssueCompleted($issue);
-                    break;
-                case Issue::STATUS_IN_WORK:
-                    $subject = 'Открыта задача "' . $issue->name . '"';
-                    $text = $user->getName() . ' заново открыл задачу "' .
-                        $issue->name . '"';
-                    
-                    // TODO: оповестить в slaсk если вернули в работу
-                    break;
-                case Issue::STATUS_WAIT:
-                    $subject = 'Задача "' . $issue->name . '"ожидает проверки';
-                    $text = $user->getName() . ' поставил задачу "' .
-                        $issue->name . '"'.  '" на проверку';
+        // Почта
+        if (!empty($subject) && !empty($text)) {
+            $members = $issue->getMemberIds();
+            $members[] = $issue->authorId;
 
-                    $slack->notifyIssueForTest($issue);
-                    break;
-            }
+            $text .= "\n" . 'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL();
 
-            // Почта
-            if (!empty($subject) && !empty($text)) {
-                $members = $issue->getMemberIds();
-                $members[] = $issue->authorId;
-
-                $text .= "\n" . 'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL();
-
-                EmailNotifier::getInstance()->sendMail2Allowed(
-                    $subject,
-                    $text,
-                    $members,
-                    EmailNotifier::PREF_ISSUE_STATE
-                );
-            }
+            EmailNotifier::getInstance()->sendMail2Allowed(
+                $subject,
+                $text,
+                $members,
+                EmailNotifier::PREF_ISSUE_STATE
+            );
         }
     }
 

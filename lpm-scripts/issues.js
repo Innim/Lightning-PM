@@ -703,12 +703,11 @@ issuePage.toogleCommentForm = function () {
 };
 
 issuePage.commentPassTesting = function () {
-    //issuePage.postCommentForCurrentIssue('Прошла тестирование');
     issuePage.passTest();
 };
 
 issuePage.commentMergeInDevelop = function () {
-    issuePage.postCommentForCurrentIssue('`-> develop`');
+    issuePage.merged();
 };
 
 issuePage.postComment = function () {
@@ -717,19 +716,19 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.postCommentForCurrentIssue = function (text) {
+issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSuccess) {
     var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
 
     // TODO проверку на пустоту
-    if (issueId > 0 && text != '') {
+    if (issueId > 0) {
         preloader.show();
-        srv.issue.comment(
+        srvCall(
             issueId,
-            text,
             function (res) {
                 preloader.hide();
                 if (res.success) {
                     issuePage.addComment(res.comment, res.html);
+                    if (onSuccess) onSuccess(res);
                 } else {
                     srv.err(res);
                 }
@@ -738,24 +737,26 @@ issuePage.postCommentForCurrentIssue = function (text) {
     }
 }
 
-issuePage.passTest = function () {
-    var issueId = $('#issueView .comments form.add-comment input[name=issueId]').val();
+issuePage.postCommentForCurrentIssue = function (text) {
+    if (text == '') return;
 
-    // TODO проверку на пустоту
-    if (issueId > 0) {
-        preloader.show();
-        srv.issue.passTest(
-            issueId,
-            function (res) {
-                preloader.hide();
-                if (res.success) {
-                    issuePage.addComment(res.comment, res.html);
-                } else {
-                    srv.err(res);
-                }
-            }
-        );
-    }
+    issuePage.doSomethingAndPostCommentForCurrentIssue(
+        (issueId, handler) => srv.issue.comment(issueId, text, handler));
+}
+
+issuePage.merged = function () {
+    let complete = confirm('Добавляется отметка о влитии в develop. Хотите также завершить задачу?');
+    issuePage.doSomethingAndPostCommentForCurrentIssue(
+        (issueId, handler) => srv.issue.merged(issueId, complete, handler),
+        res => {
+            setIssueInfo(new Issue(res.issue));
+            issuePage.updateStat();
+        });
+}
+
+issuePage.passTest = function () {
+    issuePage.doSomethingAndPostCommentForCurrentIssue(
+        (issueId, handler) => srv.issue.passTest(issueId, handler));
 }
 
 issuePage.addComment = function (comment, html) {
