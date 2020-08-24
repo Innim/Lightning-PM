@@ -33,6 +33,39 @@ class IssueMR extends LPMBaseObject
     }
 
     /**
+     * Определяет, есть ли открытые MR для указанной задачи.
+     *
+     * @param $issueId Идентификатор задачи.
+     * @param $exceptMrId Если не null, то этот MR будет игнорироваться в проверке.
+     */
+    public static function existOpenedMrForIssue($issueId, $exceptMrId = null)
+    {
+        $db = self::getDB();
+
+        $where = [
+            '`issueId` = ' . $issueId,
+            "`state` = '" . GitlabMergeRequest::STATE_OPENED . "'",
+        ];
+
+        if ($exceptMrId != null) {
+            $where[] = '`mrId` <> ' . $exceptMrId;
+        }
+
+        $res = $db->queryb([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::ISSUE_MR,
+            'WHERE'  => $where,
+            'LIMIT'  => 1,
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        return $res->num_rows > 0;
+    }
+
+    /**
      * Обновляет статус Merge Request с указанным ID.
      * @param  int    $mrId  Идентификатор MR.
      * @param  string $state Новый статус.
