@@ -39,14 +39,15 @@ SQL;
 
         $sql = <<<SQL
 		SELECT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`, 
-			   'with_issue', `i`.*, `p`.`name` `projectName` 
+			   'with_issue', `i`.*, `p`.`name` `projectName`, `p`.`uid` `projectUID` 
 		  FROM `%1\$s` `s` 
     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
     INNER JOIN `%3\$s` `m` ON `s`.`issueId` = `m`.`instanceId`
     INNER JOIN `%4\$s` `p` ON `i`.`projectId` = `p`.`id`
      	 WHERE `i`.`deleted` = 0 
      	   AND `s`.`state` IN (${states})
-     	   AND `m`.`userId` = ${userId} 
+     	   AND `m`.`userId` = ${userId}
+     	   AND `p`.`isArchive` = 0
  	  ORDER BY `i`.`priority` DESC
 SQL;
 
