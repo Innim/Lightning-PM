@@ -119,8 +119,9 @@ class Project extends MembersInstance
     }
 
     /**
-     * Проверка закешированного массива проектов.
-     * Если массив пуст, то получаем данные из БД.
+     * Получает массив проектов доступные пользователю.
+     * @param boolean $isArchive
+     * @return array|null
      */
     public static function getAvailList($isArchive)
     {
@@ -138,8 +139,10 @@ class Project extends MembersInstance
     }
 
     /**
-     * Получение из БД всех проектов, доступные пользователю.
-     *
+     * Получает из БД все проекты, доступные пользователю.
+     * @param $user
+     * @param boolean $isArchive
+     * @return array
      */
     private static function getInstanceList($user, $isArchive)
     {
