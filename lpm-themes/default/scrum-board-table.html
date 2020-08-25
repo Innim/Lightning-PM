@@ -1,3 +1,11 @@
+<?php
+/*
+Требуются:
+    $stickers - список стикеров
+    $addProjectName = false - определяет, нужно ли выводить имя проекта в стикере
+*/
+if (!isset($addProjectName)) $addProjectName = false;
+?>
 <table class="scrum-board-table">
     <thead>
     <tr>
@@ -23,46 +31,50 @@
        $count = 0;
        foreach ($stickers as $sticker)
        {
-           if (!isset($stickersByState[$sticker->state]))
-    $stickersByState[$sticker->state] = [];
-    $stickersByState[$sticker->state][] = $sticker;
-    $count = max(count($stickersByState[$sticker->state]), $count);
-    }
-    $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
-    ScrumStickerState::TESTING, ScrumStickerState::DONE];
-    $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
-    //for ($i = 0; $i < $count; ++$i):
+            if (!isset($stickersByState[$sticker->state]))
+            $stickersByState[$sticker->state] = [];
+            $stickersByState[$sticker->state][] = $sticker;
+            $count = max(count($stickersByState[$sticker->state]), $count);
+       }
+        $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
+        ScrumStickerState::TESTING, ScrumStickerState::DONE];
+        $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     ?>
     <tr>
         <?php foreach ($columns as $j => $state):?>
-        <td class="scrum-board-col <?=$colStyles[$j];?>">
+            <td class="scrum-board-col <?=$colStyles[$j];?>">
             <?php for ($i = 0; $i < $count; ++$i):?>
             <?php
-               $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
-                   $stickersByState[$state][$i] : null;
-               if ($sticker):
-               $sp = $sticker->getIssue()->hours;
-            if ($sp < 1)
-            $color = 'white';
-            else if ($sp <= 3)
-            $color = 'green';
-            else if ($sp <= 5)
-            $color = 'yellow';
-            else if ($sp <= 8)
-            $color = 'orange';
-            else
-            $color = 'red';
-            $spStr = $sp == .5 ? "1/2" : $sp;
+                $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
+                    $stickersByState[$state][$i] : null;
+                if ($sticker):
+                    $sp = $sticker->getIssue()->hours;
+                    if ($sp < 1)
+                        $color = 'white';
+                    else if ($sp <= 3)
+                        $color = 'green';
+                    else if ($sp <= 5)
+                        $color = 'yellow';
+                    else if ($sp <= 8)
+                        $color = 'orange';
+                    else
+                        $color = 'red';
+                        $spStr = $sp == .5 ? "1/2" : $sp;
 
-            $issue = $sticker->getIssue();
-            $userRole = $issue->isTester($user->userId) ? 'tester' : ($issue->isMember($user->userId) ? 'mine' : '');
+                    $issue = $sticker->getIssue();
+                    $userRole = $issue->isTester($user->userId) ? 'tester' : ($issue->isMember($user->userId) ? 'mine' : '');
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=$color;?> <?=$userRole;?>" data-issue-id="<?=$sticker->issueId;?>"
                  data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                 <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
-                <a href="<?=$sticker->getIssue()->getURL4View();?>"><?=$sticker->getName();?><span
-                        class="sticker-issue-sp"> (<?=$spStr;?> SP)</span></a>
+                <?php if ($addProjectName): ?>
+                    <span class="name-project"><?=$sticker->getIssue()->projectName;?></span>
+                <?php endif; ?>
+                <a href="<?=$sticker->getIssue()->getConstURLBy($sticker->getIssue()->projectUID, $sticker->getIssue()->idInProject);?>">
+                    <?=$sticker->getName();?>
+                    <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
+                </a>
                 <span class="sticker-issue-members"><?php
                    foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?>
                     <?=$member->getShortName();?><?php }?></span>

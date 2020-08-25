@@ -226,11 +226,10 @@ function lpm_print_issues_export_to_excel()
 /**
  * Распечатывает вывод таблици Scrum доски.
  */
-function lpm_print_table_scrum_board($stickers)
+function lpm_print_table_scrum_board($stickers, $addProjectName = false)
 {
-    return PagePrinter::tableScrumBoard($stickers);
+    return PagePrinter::tableScrumBoard($stickers, $addProjectName);
 }
-
 
 /**
 *   Возвращает текущую страницу

@@ -146,10 +146,11 @@ class PagePrinter
     /**
      * Распечатывает таблицу Scrum доски.
      * @param $stickers
+     * @param $addProjectName
      */
-    public static function tableScrumBoard($stickers)
+    public static function tableScrumBoard($stickers, $addProjectName = false)
     {
-        PageConstructor::includePattern('table-scrum-board', $stickers);
+        PageConstructor::includePattern('scrum-board-table', compact('stickers', 'addProjectName'));
     }
 
     /*public static function mainCSSLink() {
