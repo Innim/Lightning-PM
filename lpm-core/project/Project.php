@@ -125,17 +125,19 @@ class Project extends MembersInstance
      */
     public static function getAvailList($isArchive)
     {
-        if (!empty(self::$_availList) || !LightningEngine::getInstance()->isAuth()) {
-            return self::$_availList;
+        if (LightningEngine::getInstance()->isAuth()) {
+            if (self::$_availList === null) {
+                $user = LightningEngine::getInstance()->getUser();
+                $typeProjects = $isArchive ? 'archive' : 'develop';
+                try {
+                    return self::$_availList[$typeProjects] = self::getInstanceList($user, $isArchive);
+                } catch (Exception $e) {
+                    exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
+                }
+            }
+            return $isArchive ? self::$_availList['archive'] : self::$_availList['develop'];
         }
-
-        $user = LightningEngine::getInstance()->getUser();
-        try {
-            self::$_availList = self::getInstanceList($user, $isArchive);
-            return self::$_availList;
-        } catch (Exception $e) {
-            exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
-        }
+        return;
     }
 
     /**
@@ -156,7 +158,6 @@ class Project extends MembersInstance
                         "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                         "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' ".
                     "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
-
             return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
         }
         $sql = "SELECT projects.*, fixed.instanceId AS `fixedInstance` FROM `%1\$s` AS projects " .
@@ -165,7 +166,6 @@ class Project extends MembersInstance
                     "AND `fixed`.`userId` = '" . $user->userId . "' " .
                     "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' " .
                 "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
-
         return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
     }
 
@@ -285,9 +285,9 @@ class Project extends MembersInstance
 
     /**
      * Проект зафиксирован в таблице проектов
-     *
+     * @var string|null
      */
-    public $fixedInstance = false;
+    public $fixedInstance = null;
 
     private $_importantIssuesCount = -1;
 
