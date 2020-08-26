@@ -37,7 +37,6 @@ class PageConstructor
      */
     public static function getProjectsList($isArchive)
     {
-        var_dump(Project::getAvailList($isArchive));
         return Project::getAvailList($isArchive);
     }
 
