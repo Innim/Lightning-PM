@@ -71,7 +71,7 @@ if (!isset($addProjectName)) $addProjectName = false;
                 <?php if ($addProjectName): ?>
                     <span class="name-project"><?=$sticker->getIssue()->projectName;?></span>
                 <?php endif; ?>
-                <a href="<?=$sticker->getIssue()->getConstURLBy($sticker->getIssue()->projectUID, $sticker->getIssue()->idInProject);?>">
+                <a href="<?=$sticker->getIssue()->getConstURL();?>">
                     <?=$sticker->getName();?>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
