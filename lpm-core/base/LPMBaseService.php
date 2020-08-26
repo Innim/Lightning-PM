@@ -12,10 +12,17 @@ class LPMBaseService extends SecureService
     protected $_user;
 
     private $_dbError;
+
+    /**
+     * Преобразователь типов
+     * @var TypeConverter
+     */
+    protected $_typeConverter;
     
     public function __construct()
     {
         parent::__construct();
+        $this->_typeConverter = new TypeConverter( $this );
     }
     
     public function beforeFilter($calledFunc)

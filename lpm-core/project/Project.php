@@ -151,7 +151,7 @@ class Project extends MembersInstance
     private static function getInstanceList($user, $isArchive)
     {
         if (!$user->isModerator()) {
-            $sql = "SELECT projects.*, members.userId, fixed.instanceId AS `fixedInstance` FROM `%1\$s` AS projects " .
+            $sql = "SELECT projects.*, members.userId, fixed.instanceId AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects " .
                         "INNER JOIN `%2\$s` AS members ON members.instanceId = projects.id " .
                         "AND `members`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                         "AND `members`.`userId` = '" . $user->userId . "' " .
@@ -159,15 +159,15 @@ class Project extends MembersInstance
                         "AND `fixed`.`userId` = '" . $user->userId . "' " .
                         "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                         "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' ".
-                    "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
+                    "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
             return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
         }
-        $sql = "SELECT projects.*, fixed.instanceId AS `fixedInstance` FROM `%1\$s` AS projects " .
+        $sql = "SELECT projects.*, fixed.instanceId AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects " .
                     "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
                     "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                     "AND `fixed`.`userId` = '" . $user->userId . "' " .
                     "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' " .
-                "ORDER BY fixedInstance DESC, projects.lastUpdate DESC";
+                "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
         return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
     }
 
@@ -287,9 +287,9 @@ class Project extends MembersInstance
 
     /**
      * Проект зафиксирован в таблице проектов
-     * @var string|null
+     * @var Boolean|null
      */
-    public $fixedInstance = null;
+    public $fixedInstance;
 
     private $_importantIssuesCount = -1;
 
@@ -307,7 +307,7 @@ class Project extends MembersInstance
     {
         parent::__construct();
         $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId');
-        $this->_typeConverter->addBoolVars('scrum');
+        $this->_typeConverter->addBoolVars('scrum', 'fixedInstance');
     }
 
     public function getID()

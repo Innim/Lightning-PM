@@ -18,20 +18,17 @@ $(document).ready(
 			$('#addProjectForm > div.validateError').html('');
 		}
 
-
 		//Фиксация проекта в списке проектов.
 		$('.project-fix').click(function () {
-			const self = $(this);
-			const projectId = self.data('id-project');
-
-			if (isSending) {
-				return;
+			if (!isSending) {
+				const self = $(this);
+				const projectId = self.data('id-project');
+				isSending = true;
+				srv.projects.setIsFixed(projectId, Boolean(!self.val()), function () {
+					location.reload();
+				});
 			}
-			
-			isSending = true;						
-			srv.projects.setIsFixed(projectId, Boolean(!self.val()), function () {
-				location.reload();
-			});
+			return;
 		});
 	}
 );

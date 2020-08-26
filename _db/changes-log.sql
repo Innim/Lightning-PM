@@ -258,9 +258,11 @@ CHANGE `issue_name` `issue_name` varchar(255) COLLATE 'utf8mb4_general_ci' NOT N
 
 --NEXT
 
+DROP TABLE IF EXISTS `lpm_fixed_instance`;
 CREATE TABLE `lpm_fixed_instance` (
   `userId` int(10) unsigned NOT NULL COMMENT 'Идентификатор пользователя',
   `instanceType` tinyint(3) unsigned NOT NULL COMMENT 'Тип инстанции',
   `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
-  PRIMARY KEY (`userId`,`instanceType`,`instanceId`)
+  `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
+  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';
