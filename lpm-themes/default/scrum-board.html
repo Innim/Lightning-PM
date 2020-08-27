@@ -12,16 +12,9 @@
             <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSpintNum();?></span>
             (<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp">, <span
                     class="value"></span> SP</span>)
-        </span></h3>
-    <div class="scrum-board-actions">
-        <a href="#" onclick="return scrumBoard.changeSPVisibility(true);" title="Показать SP по стикерам"
-            class="scrum-board-actions-show-sp"><i class="fa fa-eye" aria-hidden="true"></i></a>
-        <a href="#" onclick="return scrumBoard.changeSPVisibility(false);" title="Скрыть SP по стикерам"
-            class="scrum-board-actions-hide-sp"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
-        <a href="#" onclick="return scrumBoard.clearBoard(event);" title="Убрать все стикеры с доски"><i
-                class="fa fa-archive" aria-hidden="true"></i></a>
-    </div>
+        </span>
+    </h3>
     <?php
-        lpm_print_table_scrum_board($stickers);
+        lpm_print_table_scrum_board($stickers, false, true);
     ?>
 </article>

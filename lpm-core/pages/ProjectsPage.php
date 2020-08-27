@@ -30,7 +30,7 @@ class ProjectsPage extends LPMPage
             self::PUID_MY_SCRUM_BOARD,
             'Моя Scrum доска',
             'scrum-board-common',
-            ['scrum-board']
+            ['scrum-board', 'issues', 'libs/tribute']
         );
         $this->addSubPage(
             self::PUID_STAT,

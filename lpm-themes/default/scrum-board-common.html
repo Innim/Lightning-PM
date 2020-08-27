@@ -6,7 +6,13 @@
 ?>
 <article id="scrumBoard" class="hide-sp">
     <h1>Моя SCRUM доска</h1>
+    <h3>Всего задач:
+        <span class="scrum-board-info">
+            <span class="scrum-board-count"><span class="value"></span> шт</span>
+            <span class="scrum-board-sp">, <span class="value"></span> SP</span>
+        </span>
+    </h3>
     <?php
-        lpm_print_table_scrum_board($stickers, true);
+        lpm_print_table_scrum_board($stickers, true, false);
     ?>
 </article>
