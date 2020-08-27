@@ -10,7 +10,7 @@ class Project extends MembersInstance
      */
     public static $currentProject;
     
-    private static $_availList = null;
+    private static $_availList = [];
 
     private static $_isArchive = false;
 
@@ -117,58 +117,57 @@ class Project extends MembersInstance
             'WHERE' => ['id' => $projectId]
         ]);
     }
-
+    
     /**
      * Получает список доступных проектов пользователю.
      * Метод кэширует полученные данные, поэтому загрузка
      * будет производится только при первом обращении.
      * @param boolean $isArchive
-     * @return array|null
+     * @return array
      */
     public static function getAvailList($isArchive)
     {
-        if (self::$_availList === null) {
+        $cacheKey = $isArchive ? 'archive' :'develop';
+        if (!isset(self::$_availList[$cacheKey])) {
             if (LightningEngine::getInstance()->isAuth()) {
                 $user = LightningEngine::getInstance()->getUser();
-                $typeProjects = $isArchive ? 'archive' : 'develop';
-                try {
-                    return self::$_availList[$typeProjects] = self::getInstanceList($user, $isArchive);
-                } catch (Exception $e) {
-                    exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
-                }
+                self::$_availList[$cacheKey] = self::getInstanceList($user, $isArchive);
+            } else {
+                self::$_availList[$cacheKey] = [];
             }
-            return $isArchive ? self::$_availList['archive'] : self::$_availList['develop'];
         }
-        return;
+        
+        return self::$_availList[$cacheKey];
     }
 
     /**
      * Получает из БД все проекты, доступные пользователю.
-     * @param $user
-     * @param boolean $isArchive
+     * @param object $user
+     * @param bool $isArchive
      * @return array
      */
     private static function getInstanceList($user, $isArchive)
     {
-        if (!$user->isModerator()) {
-            $sql = "SELECT projects.*, members.userId, fixed.instanceId AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects " .
-                        "INNER JOIN `%2\$s` AS members ON members.instanceId = projects.id " .
-                        "AND `members`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-                        "AND `members`.`userId` = '" . $user->userId . "' " .
-                        "LEFT JOIN `%3\$s` AS fixed ON fixed.instanceId = projects.id " .
-                        "AND `fixed`.`userId` = '" . $user->userId . "' " .
-                        "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-                        "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' ".
-                    "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
-            return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::FIXED_INSTANCE ), __CLASS__);
+        $isModerator = $user->isModerator();
+        $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE];
+        
+        $sql = "SELECT projects.*, IF (fixed.instanceId IS NULL, 0, 1) AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects ";
+        
+        if (!$isModerator) {
+            $sql .= "INNER JOIN `%3\$s` AS members ON members.instanceId = projects.id " .
+                "AND `members`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+                "AND `members`.`userId` = '" . $user->userId . "' ";
+            $tables[] = LPMTables::MEMBERS;
         }
-        $sql = "SELECT projects.*, fixed.instanceId AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects " .
-                    "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
-                    "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-                    "AND `fixed`.`userId` = '" . $user->userId . "' " .
-                    "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' " .
-                "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
-        return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE ), __CLASS__);
+    
+        $sql .=
+            "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
+            "AND `fixed`.`userId` = '" . $user->userId . "' " .
+            "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
+            "WHERE `projects`.`isArchive`= " . ($isArchive ? 1 : 0) . " ".
+            "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
+    
+        return StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
     }
 
     public static function updateIssuesCount($projectId)
