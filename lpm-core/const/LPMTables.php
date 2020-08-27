@@ -109,5 +109,5 @@ class LPMTables
     /**
      * Таблица зафиксированных проектов.
      */
-    const IS_FIXED = 'fixed_instance';
+    const FIXED_INSTANCE = 'fixed_instance';
 }

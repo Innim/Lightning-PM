@@ -265,4 +265,4 @@ CREATE TABLE `lpm_fixed_instance` (
   `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
   `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
   PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';

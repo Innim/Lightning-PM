@@ -127,8 +127,8 @@ class Project extends MembersInstance
      */
     public static function getAvailList($isArchive)
     {
-        if (LightningEngine::getInstance()->isAuth()) {
-            if (self::$_availList === null) {
+        if (self::$_availList === null) {
+            if (LightningEngine::getInstance()->isAuth()) {
                 $user = LightningEngine::getInstance()->getUser();
                 $typeProjects = $isArchive ? 'archive' : 'develop';
                 try {
@@ -160,7 +160,7 @@ class Project extends MembersInstance
                         "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
                         "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' ".
                     "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
-            return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::IS_FIXED ), __CLASS__);
+            return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::MEMBERS, LPMTables::FIXED_INSTANCE ), __CLASS__);
         }
         $sql = "SELECT projects.*, fixed.instanceId AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects " .
                     "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
@@ -168,7 +168,7 @@ class Project extends MembersInstance
                     "AND `fixed`.`userId` = '" . $user->userId . "' " .
                     "WHERE `projects`.`isArchive` = '" . (int)$isArchive . "' " .
                 "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
-        return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::IS_FIXED ), __CLASS__);
+        return StreamObject::loadObjList(self::getDB(), array( $sql, LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE ), __CLASS__);
     }
 
     public static function updateIssuesCount($projectId)
@@ -180,7 +180,7 @@ class Project extends MembersInstance
                                           "AND  `%2\$s`.`status` IN (0,1) ".
                                           "AND  `%2\$s`.`deleted` = 0) ".
                 "WHERE  `%1\$s`.`id` = '" . $projectId . "'";
-
+                
         return $db->queryt($sql, LPMTables::PROJECTS, LPMTables::ISSUES);
     }
 
@@ -196,7 +196,7 @@ class Project extends MembersInstance
         }
         return (float)$row['sum'];
     }
-
+    
     /**
      *
      * @param string $projectUID
@@ -206,7 +206,7 @@ class Project extends MembersInstance
     {
         return StreamObject::singleLoad($projectUID, __CLASS__, '', 'uid');
     }
-
+    
     /**
      * Загружает данные проекта.
      * Если проект уже был загружен - вернется сохраненный объект
@@ -227,7 +227,7 @@ class Project extends MembersInstance
 
         return $project;
     }
-
+    
     /**
      * Возвращает URL страницы проекта.
      * @param  string $projectUID Строковый идентификатор проекта.
@@ -256,7 +256,7 @@ class Project extends MembersInstance
 
         return $tester[0];
     }
-
+    
     /**
      *
      * @var int
@@ -302,30 +302,30 @@ class Project extends MembersInstance
      * @var User
      */
     private $_master;
-
+    
     public function __construct()
     {
         parent::__construct();
         $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId');
         $this->_typeConverter->addBoolVars('scrum', 'fixedInstance');
     }
-
+    
     public function getID()
     {
         return $this->id;
     }
-
+    
     public function getShortDesc()
     {
         parent::getShort($this->desc, 200);
     }
-
+    
     public function getUrl()
     {
         //return Link::getUrlByUid( ProjectPage::UID, $this->uid );
         return self::getURLByProjectUID($this->uid);
     }
-
+    
     public function getDesc()
     {
         $text = nl2br($this->desc);
@@ -384,13 +384,13 @@ class Project extends MembersInstance
             if ($this->_currentSprintNum === -1) {
                 $this->_currentSprintNum = ScrumStickerSnapshot::getLastSnapshotId($this->id) + 1;
             }
-
+            
             return $this->_currentSprintNum;
         } else {
             return 0;
         }
     }
-
+    
     /**
      * Возвращает лейбл для параметра hours в задаче из проекта (без значения)
      * @param  int $value
@@ -438,7 +438,7 @@ class Project extends MembersInstance
             return $query->num_rows > 0;
         }
     }
-
+    
     /**
      * Возвращает пользователя, назначенного мастером проекта.
      * Если пользователь не выставлен, он будет загружен.
@@ -452,7 +452,7 @@ class Project extends MembersInstance
 
         return $this->_master;
     }
-
+    
     protected function loadMembers()
     {
         if (!$this->_members = Member::loadListByProject($this->id)) {
@@ -468,5 +468,4 @@ class Project extends MembersInstance
     // 			"WHERE `id` = '" . $projectId . "'";
     // 	return $db->queryt( $sql, LPMTables::PROJECTS );
     // }
-
 }
