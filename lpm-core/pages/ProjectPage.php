@@ -190,92 +190,146 @@ class ProjectPage extends LPMPage
             }
         }
 
-        if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {
-            // загружаем задачи
-            $openedIssues = Issue::loadListByProject(
-                $this->_project->id,
-                [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
-            );
-            $this->addTmplVar('issues', $openedIssues);
-        } elseif ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) {
-            // загружаем  завершенные задачи
-            $completedIssues = Issue::loadListByProject(
-                $this->_project->id,
-                [Issue::STATUS_COMPLETED]
-            );
-            $this->addTmplVar('issues', $completedIssues);
-        } elseif ($this->_curSubpage->uid == self::PUID_COMMENTS) {
-            $page = $this->getProjectedCommentsPage();
-            $commentsPerPage = 100;
-
-            $this->_currentPage = $page;
-
-            $comments = Comment::getIssuesListByProject(
-                $this->_project->id,
-                ($page - 1) * $commentsPerPage,
-                $commentsPerPage
-            );
-            $issueIds = [];
-            $commentsByIssueId = [];
-            foreach ($comments as $comment) {
-                if (!isset($commentsByIssueId[$comment->instanceId])) {
-                    $commentsByIssueId[$comment->instanceId] = [];
-                    $issueIds[] = $comment->instanceId;
-                }
-                $commentsByIssueId[$comment->instanceId][] = $comment;
+        $subPageUid = $this->_curSubpage ? $this->_curSubpage->uid : null;
+        switch ($subPageUid) {
+            case self::PUID_ISSUES:
+            case null: {
+                $this->initIssues();
+                break;
             }
-
-            $issues = Issue::loadListByIds($issueIds);
-            foreach ($issues as $issue) {
-                if (isset($commentsByIssueId[$issue->id])) {
-                    foreach ($commentsByIssueId[$issue->id] as $comment) {
-                        $comment->issue = $issue;
-                    }
-                }
+            case self::PUID_COMPLETED_ISSUES: {
+                $this->initCompletedIssues();
+                break;
             }
-
-            $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('comments', $comments);
-            $this->addTmplVar('page', $page);
-            if ($page > 1) {
-                $this->addTmplVar('prevPageUrl', $this->getUrl('page', $page - 1));
+            case self::PUID_COMMENTS: {
+                $this->initComments();
+                break;
             }
-            // Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело
-            if (count($comments) === $commentsPerPage) {
-                $this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
+            case self::PUID_SCRUM_BOARD: {
+                $this->initScrumBoard();
+                break;
             }
-        } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) {
-            $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
-        } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
-            $this->addTmplVar('project', $this->_project);
-            $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
-            $this->addTmplVar('snapshots', $snapshots);
-
-            $sidInProject = (int) $this->getParam(3);
-
-            if ($sidInProject > 0) {
-                foreach ($snapshots as $snapshot) {
-                    if ($snapshot->idInProject == $sidInProject) {
-                        $this->addTmplVar('snapshot', $snapshot);
-                        break;
-                    }
-                }
+            case self::PUID_SCRUM_BOARD_SNAPSHOT: {
+                $this->initScrumBoardSnapshot();
+                break;
             }
-        } elseif ($this->_curSubpage->uid == self::PUID_SPRINT_STAT) {
-            $sidInProject = (int) $this->getParam(3);
-            $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
-
-            if (empty($snapshot)) {
-                LightningEngine::go2URL($this->getBaseUrl(self::PUID_SCRUM_BOARD_SNAPSHOT));
-                return false;
+            case self::PUID_SPRINT_STAT: {
+                $this->initSprintStat();
+                break;
             }
-
-            $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('snapshot', $snapshot);
+            case self::PUID_SETTINGS: {
+                $this->initSettings();
+                break;
+            }
         }
         
         return $this;
+    }
+
+    private function initIssues()
+    {
+        // загружаем задачи
+        $openedIssues = Issue::loadListByProject(
+            $this->_project->id,
+            [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
+        );
+        $this->addTmplVar('issues', $openedIssues);
+    }
+
+    private function initCompletedIssues()
+    {
+        // загружаем  завершенные задачи
+        $completedIssues = Issue::loadListByProject(
+            $this->_project->id,
+            [Issue::STATUS_COMPLETED]
+        );
+        $this->addTmplVar('issues', $completedIssues);
+    }
+
+    private function initComments()
+    {
+        $page = $this->getProjectedCommentsPage();
+        $commentsPerPage = 100;
+
+        $this->_currentPage = $page;
+
+        $comments = Comment::getIssuesListByProject(
+            $this->_project->id,
+            ($page - 1) * $commentsPerPage,
+            $commentsPerPage
+        );
+        $issueIds = [];
+        $commentsByIssueId = [];
+        foreach ($comments as $comment) {
+            if (!isset($commentsByIssueId[$comment->instanceId])) {
+                $commentsByIssueId[$comment->instanceId] = [];
+                $issueIds[] = $comment->instanceId;
+            }
+            $commentsByIssueId[$comment->instanceId][] = $comment;
+        }
+
+        $issues = Issue::loadListByIds($issueIds);
+        foreach ($issues as $issue) {
+            if (isset($commentsByIssueId[$issue->id])) {
+                foreach ($commentsByIssueId[$issue->id] as $comment) {
+                    $comment->issue = $issue;
+                }
+            }
+        }
+
+        $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('comments', $comments);
+        $this->addTmplVar('page', $page);
+        if ($page > 1) {
+            $this->addTmplVar('prevPageUrl', $this->getUrl('page', $page - 1));
+        }
+        // Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело
+        if (count($comments) === $commentsPerPage) {
+            $this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
+        }
+    }
+
+    private function initScrumBoard()
+    {
+        $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
+    }
+
+    private function initScrumBoardSnapshot()
+    {
+        $this->addTmplVar('project', $this->_project);
+        $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
+        $this->addTmplVar('snapshots', $snapshots);
+
+        $sidInProject = (int) $this->getParam(3);
+
+        if ($sidInProject > 0) {
+            foreach ($snapshots as $snapshot) {
+                if ($snapshot->idInProject == $sidInProject) {
+                    $this->addTmplVar('snapshot', $snapshot);
+                    break;
+                }
+            }
+        }
+    }
+
+    private function initSprintStat()
+    {
+        $sidInProject = (int) $this->getParam(3);
+        $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
+
+        if (empty($snapshot)) {
+            LightningEngine::go2URL($this->getBaseUrl(self::PUID_SCRUM_BOARD_SNAPSHOT));
+            return false;
+        }
+
+        $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('snapshot', $snapshot);
+    }
+
+    private function initSettings()
+    {
+        $this->addTmplVar('project', $this->_project);
     }
     
     /**
