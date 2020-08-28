@@ -134,6 +134,16 @@ class LPMBaseService extends SecureService
     {
         return PageConstructor::getHtml($printHtml);
     }
+
+    protected function getGitlabIfAvailable()
+    {
+        $client = LightningEngine::getInstance()->gitlab();
+        if ($client->isAvailableForUser()) {
+            return $client;
+        } else {
+            return null;
+        }
+    }
     
     // TODO: выпилить из base сервиса
     protected function addComment($instanceType, $instanceId, $text)

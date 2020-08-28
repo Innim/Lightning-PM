@@ -18,8 +18,7 @@ class AttachmentsService extends LPMBaseService
     public function getMRInfo($url)
     {
         $data = null;
-        $client = LightningEngine::getInstance()->gitlab();
-        if ($client->isAvailableForUser()) {
+        if ($client = $this->getGitlabIfAvailable()) {
             try {
                 $data = $client->getMR($url);
             } catch (Gitlab\Exception\RuntimeException $e) {
