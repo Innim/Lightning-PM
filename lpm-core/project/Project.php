@@ -322,6 +322,11 @@ class Project extends MembersInstance
     {
         return $this->id;
     }
+
+    public function isIntegratedWithGitlab()
+    {
+        return !empty($this->gitlabGroupId);
+    }
     
     public function getShortDesc()
     {

@@ -151,6 +151,27 @@ class GitlabIntegration
         }
     }
 
+    /// Возвращает список проектов по идентификатору группы.
+    public function getProjects($groupId)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $list = $client->groups()->projects($groupId);
+            $res = [];
+            foreach ($list as $data) {
+                $res[] = new GitlabProject($data);
+            }
+            return $res;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return null;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {

@@ -329,6 +329,24 @@ class ProjectService extends LPMBaseService
             return $this->exception($e);
         }
 
+        return $this->answer();
+    }
+
+    /**
+     * Загружает список репозиториев для проекта.
+     */
+    public function getRepositories($projectId)
+    {
+        $projectId = (int)$projectId;
+
+        try {
+            $project = $this->getProjectRequireReadPermission($projectId);
+            if ($project->isIntegratedWithGitlab() && $client = $this->getGitlabIfAvailable()) {
+                $list = $client->getProjects($project->gitlabGroupId);
+                $this->add2Answer('list', $list);
+            }
+        } catch (\Exception $e) {
+            return $this->exception($e);
         }
 
         return $this->answer();
