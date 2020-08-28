@@ -934,7 +934,7 @@ WHERE;
      */
     public function getProjectScrumUrl($hash = '')
     {
-        return Project::getURLByProjectUID($this->projectUID, $hash) . '/scrum-board';
+        return Project::getURLByProjectUIDScrum($this->projectUID, $hash);
     }
     
     /**
