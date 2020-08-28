@@ -24,7 +24,7 @@ $(document).ready(
 				const self = $(this);
 				const projectId = self.data('id-project');
 				isSending = true;
-				srv.projects.setIsFixed(projectId, Boolean(!self.val()), function () {
+				srv.projects.setIsFixed(projectId, !self.val(), function () {
 					location.reload();
 				});
 			}

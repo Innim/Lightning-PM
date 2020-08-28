@@ -34,32 +34,37 @@ class ProjectsService extends LPMBaseService
     public function setIsFixed($instanceId, $value)
     {
         $projectId = (int) $instanceId;
-        $project = Project::loadById($projectId);
-        $user = $this->getUser();
-        if (!$project->hasReadPermission($user)) {
-            return $this->error("Нет прав на фиксацию проекта");
-        }
-
-        $instanceType = LPMInstanceTypes::PROJECT;
-        $userId = $this->getUserId();
         $isFixed = (bool) $value;
-
-        if ($isFixed) {
-            $sql = "REPLACE `%s` (`userId`, `instanceType`, `instanceId`, `dateFixed`) " .
-                "VALUES ('" . $userId . "', '" . $instanceType . "', '" . $projectId . "', '" . DateTimeUtils::mysqlDate() . "')";
-            if (!$this->_db->queryt($sql, LPMTables::FIXED_INSTANCE)) {
-                return $this->error('Проект не зафиксирован. Ошибка записи в БД.');
+    
+        try {
+            $project = Project::loadById($projectId);
+            $user = $this->getUser();
+            if (!$project || !$project->hasReadPermission($user)) {
+                return $this->error("Проект не существует или недостаточно прав");
             }
-        } else {
-            $sql = "DELETE FROM `%s` " .
-                "WHERE `userId` = " . "'" . $userId . "' " .
-                "AND `instanceType` = " . "'" . $instanceType . "' " .
-                "AND `instanceId` = " . "'" . $projectId . "'";
-            if (!$this->_db->queryt($sql, LPMTables::FIXED_INSTANCE)) {
-                return $this->error('Фиксация проекта не снята. Ошибка записи в БД');
+            
+            $instanceType = LPMInstanceTypes::PROJECT;
+            $userId = $user->userId;
+    
+            if ($isFixed) {
+                $sql = "REPLACE `%s` (`userId`, `instanceType`, `instanceId`, `dateFixed`) " .
+                    "VALUES ('" . $userId . "', '" . $instanceType . "', '" . $projectId . "', '" . DateTimeUtils::mysqlDate() . "')";
+                if (!$this->_db->queryt($sql, LPMTables::FIXED_INSTANCE)) {
+                    return $this->error('Проект не зафиксирован. Ошибка записи в БД.');
+                }
+            } else {
+                $sql = "DELETE FROM `%s` " .
+                    "WHERE `userId` = " . "'" . $userId . "' " .
+                    "AND `instanceType` = " . "'" . $instanceType . "' " .
+                    "AND `instanceId` = " . "'" . $projectId . "'";
+                if (!$this->_db->queryt($sql, LPMTables::FIXED_INSTANCE)) {
+                    return $this->error('Фиксация проекта не снята. Ошибка записи в БД');
+                }
             }
+        } catch (Exception $e) {
+            return $this->exception($e);
         }
-
+        
         return $this->answer();
     }
 }
