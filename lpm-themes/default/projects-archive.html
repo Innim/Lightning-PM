@@ -9,6 +9,13 @@
 		<?php else: foreach ($list as $project):?>
 		<li>
 			<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
+			<button class="project-fix" data-id-project="<?=$project->id;?>" value="<?=$project->fixedInstance;?>">
+				<?php if ($project->fixedInstance): ?>
+				<i class="fa fa-thumbtack" aria-hidden="true"></i>
+				<?php else: ?>
+				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
+				<?php endif ?>
+			</button>
 			<p class="project-desc"><?=$project->getDesc();?></p>
 			<? if (lpm_is_moderator()): ?>
 			<input type="hidden" name="projectId" value="<?=$project->id;?>" />

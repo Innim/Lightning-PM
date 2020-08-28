@@ -116,7 +116,12 @@ class LPMBaseService extends SecureService
         }
         return $this->_user;
     }
-    
+
+    protected function getUserId()
+    {
+        return $this->_auth->getUserId();
+    }
+
     protected function checkRole($reqRole)
     {
         if (!$user = $this->getUser()) {
