@@ -7,6 +7,12 @@
 ?>
 <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
     <h1><?php lpm_print_header();?></h1>
+    <div class="scrum-board-target">
+        <a href="#" onclick="scrumBoard.showAddTarget(); return false;">
+            <h3>Цель спринта:</h3>
+        </a>
+        <p>тест тест</p>
+    </div>
     <h3>SCRUM доска.
         <span class="scrum-board-info">
             <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSpintNum();?></span>
