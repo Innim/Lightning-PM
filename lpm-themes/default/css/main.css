@@ -202,6 +202,23 @@ code.nohighlight {
 	-o-tab-size: 4;
 	-webkit-tab-size: 4
 }
+.flip-vertical {
+	-moz-transform: scale(1,-1);
+	-webkit-transform: scale(1, -1);
+	-o-transform: scale(1, -1);
+	transform: scale(1, -1);
+	filter: FlipV;
+	-ms-filter: "FlipV"; 
+}
+
+.flip-horizontal{
+	-moz-transform: scale(-1, 1);
+	-webkit-transform: scale(-1, 1);
+	-o-transform: scale(-1, 1);
+	transform: scale(-1, 1);
+	filter: FlipH;
+	-ms-filter: "FlipH"; 
+}
 .copyright {
 	font-size: 7pt;
 }
@@ -818,10 +835,11 @@ ul.images-url > li > input {
 .comments .links-bar {
 	/*text-align: right;*/
 	height: 20px;
-	margin: 0;
+	margin: 0 0 5px;
 }
 .comments .links-bar a {
 	font-size: smaller;
+	margin: 0 5px;
 }
 .comments .links-bar .scrum-comments-shortcut {
 	float: left;
