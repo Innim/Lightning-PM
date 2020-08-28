@@ -266,3 +266,7 @@ CREATE TABLE `lpm_fixed_instance` (
   `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
   PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';
+
+
+ALTER TABLE `lpm_projects`
+ADD `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab';

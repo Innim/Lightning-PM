@@ -1912,12 +1912,11 @@ div.ftp
 	padding: 0px;
 }
 
-#slackСhannel {
+#projectSettings form input[type=text] {
 	height: 24px;
 	width: 170px;
 	margin: 0;
 	margin-left: 210px;
-
 }
 ul#ulProjectSettings {
 	padding: 10px;

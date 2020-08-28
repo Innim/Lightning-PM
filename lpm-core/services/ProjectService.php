@@ -265,12 +265,13 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel)
+    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
     {
         $projectId = (int)$projectId;
         $slackNotifyChannel = (string)$slackNotifyChannel;
+        $gitlabGroupId = (int)$gitlabGroupId;
 
-        if ($scrum !== 0 and $scrum !== 1) {
+        if ($scrum !== 0 && $scrum !== 1) {
             return $this->error('Неверные входные параметры');
         }
 
@@ -286,7 +287,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Проект не найден');
         }
 
-        $result = Project::updateProjectSettings($projectId, $scrum, $slackNotifyChannel);
+        $result = Project::updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId);
 
         if (!$result) {
             return $this->error('Ошибка обновления таблицы');
@@ -295,6 +296,7 @@ class ProjectService extends LPMBaseService
         $this->add2Answer('projectId', $projectId);
         $this->add2Answer('scrum', $scrum);
         $this->add2Answer('slackNotifyChannel', $slackNotifyChannel);
+        $this->add2Answer('gitlabGroupId', $gitlabGroupId);
 
         return $this->answer();
     }

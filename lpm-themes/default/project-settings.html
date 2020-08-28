@@ -6,12 +6,20 @@
     <form method="post" action="" onsubmit="return false;">
         <div class="info-message"></div>
         <?php
-       	$scrum = (int)lpm_get_project()->scrum;
-        $slackNotifyChannel = lpm_get_project()->slackNotifyChannel;
+        $project = lpm_get_project();
+       	$scrum = (int)$project->scrum;
+        $slackNotifyChannel = $project->slackNotifyChannel;
      ?>
         <input type="hidden" id="projectId" value="<?=lpm_get_project()->getID();?>" />
 
         <ul id="ulProjectSettings">
+            <li class="con">
+                <label id="gitlabGroupIdLabel" for="gitlabGroupId"
+                    title="Перейдите на страницу группы в интерфейсе GitLab, там под именем группы будет указан 'Group ID'">ID
+                    группы в GitLab</label>
+                <input id="gitlabGroupId" type="text"
+                    value="<?=empty($project->gitlabGroupId) ? '': $project->gitlabGroupId;?>">
+            </li>
             <li class="con">
                 <label id="slackСhannelLabel" for="slackСhannel">Канал оповещения в Slack</label>
                 <input id="slackСhannel" type="text" value="<?=$slackNotifyChannel ?>">
