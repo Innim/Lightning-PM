@@ -81,7 +81,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                  data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                 <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                 <?php if ($addProjectName): ?>
-                    <span class="name-project"><?=$sticker->getIssue()->projectName;?></span>
+                    <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
                 <?php endif; ?>
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
                     <?=$sticker->getName();?>
