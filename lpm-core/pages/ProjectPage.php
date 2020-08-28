@@ -164,36 +164,16 @@ class ProjectPage extends LPMPage
             $this->addTmplVar('input', $this->_issueInput);
         }
         
-        // может быть это страница просмотра задачи?
-        if (!$this->_curSubpage) {
-            if ($this->getPUID() == self::PUID_ISSUE) {
-                $issueId = $this->getCurentIssueId((float)$this->getAddParam());
-                if ($issueId <= 0 || !$issue = Issue::load((float)$issueId)) {
-                    LightningEngine::go2URL($this->getUrl());
-                }
-                
-                $issue->getMembers();
-                $issue->getTesters();
-                
-                $comments = Comment::getListByInstance(LPMInstanceTypes::ISSUE, $issue->id);
-                foreach ($comments as $comment) {
-                    $comment->issue = $issue;
-                }
-
-                $this->_title = $this->getTitleByIssue($issue);
-                $this->_pattern = 'issue';
-                ArrayUtils::remove($this->_js, 'project');
-                array_push($this->_js, 'issue');
-
-                $this->addTmplVar('issue', $issue);
-                $this->addTmplVar('comments', $comments);
-            }
-        }
-
         $subPageUid = $this->_curSubpage ? $this->_curSubpage->uid : null;
         switch ($subPageUid) {
-            case self::PUID_ISSUES:
             case null: {
+                // может быть это страница просмотра задачи?
+                if ($this->getPUID() == self::PUID_ISSUE) {
+                    $this->initIssue();
+                    break;
+                }
+            }
+            case self::PUID_ISSUES:{
                 $this->initIssues();
                 break;
             }
@@ -234,6 +214,30 @@ class ProjectPage extends LPMPage
             [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
         );
         $this->addTmplVar('issues', $openedIssues);
+    }
+
+    private function initIssue()
+    {
+        $issueId = $this->getCurentIssueId((float)$this->getAddParam());
+        if ($issueId <= 0 || !$issue = Issue::load((float)$issueId)) {
+            LightningEngine::go2URL($this->getUrl());
+        }
+        
+        $issue->getMembers();
+        $issue->getTesters();
+        
+        $comments = Comment::getListByInstance(LPMInstanceTypes::ISSUE, $issue->id);
+        foreach ($comments as $comment) {
+            $comment->issue = $issue;
+        }
+
+        $this->_title = $this->getTitleByIssue($issue);
+        $this->_pattern = 'issue';
+        ArrayUtils::remove($this->_js, 'project');
+        array_push($this->_js, 'issue');
+
+        $this->addTmplVar('issue', $issue);
+        $this->addTmplVar('comments', $comments);
     }
 
     private function initCompletedIssues()
