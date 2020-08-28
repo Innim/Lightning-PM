@@ -8,6 +8,8 @@
 */
 $userId = lpm_get_user()->getID();
 $isOnBoard = $issue->isOnBoard();
+
+$project = $issue->getProject();
 ?>
 <article id="issueView">
     <h1><a href="<?=lpm_get_base_page_url();?>">
@@ -22,7 +24,7 @@ $isOnBoard = $issue->isOnBoard();
             <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
                 class="issues-hours-box">(<span
                     class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
-            <?php if ($issue->getProject()->scrum && !$isOnBoard):?>
+            <?php if ($project->scrum && !$isOnBoard):?>
             <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску"
                 class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
             <?php endif;?>
@@ -119,7 +121,7 @@ $isOnBoard = $issue->isOnBoard();
             <input type="hidden" name="parentId" value="<?=$issue->parentId;?>" />
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
-            <?php if ($issue->isMember($userId) || $issue->getProject()->masterId == $userId): ?>
+            <?php if ($issue->isMember($userId) || $project->masterId == $userId): ?>
             <button class="verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
             <?php endif ?>
             <button class="complete-btn" onclick="completeIssue(event);">Завершить</button>
@@ -138,7 +140,7 @@ $isOnBoard = $issue->isOnBoard();
     </article>
     <article class="comments">
         <div class="links-bar">
-            <?php if ($issue->getProject()->scrum):?>
+            <?php if ($project->scrum):?>
             <div class="scrum-comments-shortcut">
                 <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i
                         class="far fa-check-square" aria-hidden="true"></i></a>
@@ -176,4 +178,4 @@ $isOnBoard = $issue->isOnBoard();
 <script type="text/javascript">
     var issueLabels = <?= json_encode($issue -> getLabelNames());?>;
 </script>
-<?php lpm_print_issue_form($issue->getProject(), $issue, isset($input) ? $input : null); ?>
+<?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
