@@ -144,6 +144,31 @@ class LPMBaseService extends SecureService
             return null;
         }
     }
+
+    /**
+     * Получает проект и требует чтобы у текущего пользователя
+     * быи права на чтение.
+     *
+     * Если нет такого проекта или нет прав на чтение -
+     * будет порождено искключение.
+     * @return Project
+     */
+    protected function getProjectRequireReadPermission($projectId)
+    {
+        if (!$user = $this->getUser()) {
+            throw new Exception('Ошибка при загрузке пользователя');
+        }
+        
+        if (!$project = Project::loadById($projectId)) {
+            throw new Exception('Нет такого проекта');
+        }
+        
+        if (!$project->hasReadPermission($user)) {
+            throw new Exception('Недостаточно прав доступа');
+        }
+
+        return $project;
+    }
     
     // TODO: выпилить из base сервиса
     protected function addComment($instanceType, $instanceId, $text)

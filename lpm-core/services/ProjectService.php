@@ -312,29 +312,25 @@ class ProjectService extends LPMBaseService
         $projectId = (int)$projectId;
         $idInProjectPart = (int)$idInProjectPart;
 
-        if (!$user = $this->getUser()) {
-            return $this->error('Ошибка при загрузке пользователя');
-        }
-        
-        if (!$project = Project::loadById($projectId)) {
-            return $this->error('Нет такого проекта');
-        }
-        
-        if (!$project->hasReadPermission($user)) {
-            return $this->error('Недостаточно прав доступа');
+        try {
+            $project = $this->getProjectRequireReadPermission($projectId);
+            $list = Issue::loadListByIdInProjectPart($projectId, (string)$idInProjectPart);
+            $res = [];
+            foreach ($list as $issue) {
+                $res[] = [
+                    'idInProject' => $issue->idInProject,
+                    'name' => $issue->name,
+                    'url' => $issue->getConstURL(),
+                ];
+            }
+
+            $this->add2Answer('list', $res);
+        } catch (\Exception $e) {
+            return $this->exception($e);
         }
 
-        $list = Issue::loadListByIdInProjectPart($projectId, (string)$idInProjectPart);
-        $res = [];
-        foreach ($list as $issue) {
-            $res[] = [
-                'idInProject' => $issue->idInProject,
-                'name' => $issue->name,
-                'url' => $issue->getConstURL(),
-            ];
         }
 
-        $this->add2Answer('list', $res);
         return $this->answer();
     }
 }
