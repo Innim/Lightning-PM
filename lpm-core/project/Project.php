@@ -141,7 +141,7 @@ class Project extends MembersInstance
     }
 
     /**
-     * Получает из БД все проекты, доступные пользователю.
+     * Получает из БД список всех проектов, доступные пользователю.
      * @param object $user
      * @param bool $isArchive
      * @return array

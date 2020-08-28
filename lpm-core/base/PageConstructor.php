@@ -34,6 +34,7 @@ class PageConstructor
     /**
      * Получает все проекты пользователя.
      * @param  boolean $isArchive флаг архивного проекта.
+     *
      */
     public static function getProjectsList($isArchive)
     {
