@@ -749,7 +749,8 @@ issuePage.merged = function () {
     issuePage.doSomethingAndPostCommentForCurrentIssue(
         (issueId, handler) => srv.issue.merged(issueId, complete, handler),
         res => {
-            setIssueInfo(new Issue(res.issue));
+            if (res.issue)
+                setIssueInfo(new Issue(res.issue));
             issuePage.updateStat();
         });
 }
