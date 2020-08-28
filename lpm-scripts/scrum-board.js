@@ -77,16 +77,7 @@ let scrumBoard = {
             });
         }
     },
-    showAddTarget: function (type, parentId) {
-    window.location.hash = 'add-issue';
-    states.updateView();
-
-    if (typeof type != 'undefined') {
-        $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
-        $('form input:radio[value=1]', "#issueForm").prop('checked', true);
-    } else {
-        $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
-        $('form input:radio[value=0]', "#issueForm").prop('checked', true);
-    }
+    showAddTarget: function () {
+    
     },
 };
