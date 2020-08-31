@@ -439,3 +439,12 @@ function lpm_check_delete_comment($author, $cookie)
 {
     return PageConstructor::checkDeleteComment($author, $cookie);
 }
+
+/**
+ * Распечатывает форму добавления/редактирования цели спринта для текущего проекта
+ */
+function lpm_print_target_sprint_form()
+{
+    return PagePrinter::targetSprintForm();
+}
+

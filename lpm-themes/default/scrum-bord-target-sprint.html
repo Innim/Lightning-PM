@@ -1,0 +1,257 @@
+<?php
+/* 
+Требуются: 
+
+*/
+?><article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
+    <h3></h3>
+    <div class="validateError"><?php lpm_print_errors(); ?></div>
+    <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data">
+        <ol>
+            <li>
+                <span class="edit-issue-name-container">
+                    <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255"
+                        class="edit-issue-name" oninput="issueFormLabels.issueNameChanged(this.value)" />
+                </span>
+                <span class="issue-labels-container">
+                    <?php $issueLabels = $issue ? $issue->getLabelNames() : []; ?>
+                    <?php foreach (lpm_get_issue_labels() as $label): ?>
+                    <?php
+                    $index = array_search($label['label'], $issueLabels);
+                    if ($index !== false)
+                        unset($issueLabels[$index]);
+                ?>
+                    <a href="javascript:void(0)" class="issue-label"
+                        onclick="issueFormLabels.addToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
+                    <?php endforeach; ?>
+                    <?php foreach ($issueLabels as $label): ?>
+                    <a href="javascript:void(0)" class="issue-label"
+                        onclick="issueFormLabels.addToName('<?=$label;?>');"><?=$label;?></a>
+                    <?php endforeach; ?>
+                    <a href="javascript:void(0)" class="add-issue-label" onclick="issueFormLabels.openAdd()">
+                        <i class="far fa-plus-square" aria-hidden="true"></i>
+                    </a>
+                    <?php if (lpm_is_moderator()):?>
+                    <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueFormLabels.openRemove()">
+                        <i class="far fa-minus-square" aria-hidden="true"></i>
+                    </a>
+                    <?php endif; ?>
+                </span>
+            </li>
+            <li>
+                <fieldset class="radio-group">
+                    <!-- <legend>Тип</legend> -->
+                    <ol>
+                        <li>
+                            <input id="develop" name="type" type="radio" value="<?=Issue::TYPE_DEVELOP;?>" checked>
+                            <label for="develop">Разработка</label>
+                        </li>
+                        <li>
+                            <input id="bug" name="type" type="radio" value="<?=Issue::TYPE_BUG;?>">
+                            <label for="bug">Ошибка</label>
+                        </li>
+                        <li>
+                            <input id="support" name="type" type="radio" value="<?=Issue::TYPE_SUPPORT;?>">
+                            <label for="support">Поддержка</label>
+                        </li>
+                    </ol>
+                </fieldset>
+            </li>
+            <li>
+                <label for="priopiry">Приоритет задачи</label>
+                <input type="range" id="priority" name="priority" min="0" max="99" value="49" step="1"
+                    onchange="issuePage.setPriorityVal(this.value);" />
+                <div id="dropdown">
+                    <span id="priorityVal" class="priority-val"></span>
+                    <ul id="priority-values">
+                        <li style="background-color: rgba(255, 215, 0, 0.8);">
+                            <span>высокий (80%)</span>
+                        </li>
+                        <li style="background-color: rgba(0, 255, 11, 0.8);">
+                            <span>нормальный (50%)</span>
+                        </li>
+                        <li style="background-color: rgba(0, 255, 215, 0.8);">
+                            <span>низкий (30%)</span>
+                        </li>
+                    </ul>
+                </div>
+                <div id="priority-button-block">
+                    <button id="upPriority" class="priorityButton" type="button"
+                        onclick="issuePage.upPriorityVal();">&#9650;</button>
+                    <button id="downPriority" class="priorityButton" type="button"
+                        onclick="issuePage.downPriorityVal();">&#9660;</button>
+                </div>
+            </li>
+            <li>
+                <input placeholder="Дата окончания*" type="text" class="date" name="completeDate" required="required"
+                    maxlength="255" value="<?=lpm_get_default_date();?>" />
+            </li>
+            <li>
+                <fieldset>
+                    <legend>Исполнители*</legend>
+                    <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
+                    <ol id="issueMembers" class="members-list"></ol>
+                    <select id="addIssueMembers" onchange="issueForm.addIssueMember();"
+                        data-default-member-id="<?=$performerId;?>">
+                        <option value="-1">Добавить</option>
+                        <?php foreach(lpm_get_project_members() as $member): ?>
+                        <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </fieldset>
+            </li>
+            <li>
+                <fieldset>
+                    <legend>Тестеры</legend>
+                    <ol id="issueTesters" class="members-list"></ol>
+                    <select id="addIssueTesters" onchange="issueForm.addIssueTester();">
+                        <option value="-1">Добавить</option>
+                        <?php foreach (lpm_get_project_members() as $tester): ?>
+                        <option value="<?=$tester->userId;?>"><?=$tester->getName();?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </fieldset>
+            </li>
+            <li>
+                <input placeholder="Story Points" type="text" name="hours" maxlength="5" />
+            </li>
+            <li>
+                <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"></textarea>
+                <div class="note tags-line">Вы можете использовать <a
+                        href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи:
+                    <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*"
+                        title="Ctrl + B">*жирный*</a>,
+                    <a class="tag" href="javascript:void(0)" style="font-style: italic;" data-marker="_"
+                        title="Ctrl + I">_курсив_</a>,
+                    <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-marker="__"
+                        title="Ctrl + U">__подчеркнутый__</a>, <a class="tag" href="javascript:void(0)"
+                        style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>, <span class="tag quote"
+                        title="Ctrl + G">&gt; цитата</span>, <a class="tag" href="javascript:void(0)"
+                        style="text-decoration:underline;" data-type="link" title="Ctrl + K">[ссылка](url)</a>. </div>
+                <div class="note tags-line">Также используйте <code>`</code> для строчного кода и <code>```</code> для
+                    многострочного (можно указать язык: as, js, php и тд, добавляется сразу после открывающих кавычек,
+                    требуется перенос строки)</div>
+            </li>
+            <li>
+                <label>Изображения</label>
+                <input type="hidden" name="removedImages" value="">
+                <ul class="images-list">
+                    <li><input type="file" name="images[]" accept="image/*"
+                            onchange="imgUpload.onSelect(event,window.lpmOptions.issueImgsCount);" multiple /></li>
+                </ul>
+                <ul class="images-url">
+                    <li class="imgUrlTempl" style="display:none">
+                        <input name="imgUrls[]" placeholder="Введите URL изображения" type="text" value="" />
+                        <a class="remove-btn" href="javascript:;"></a>
+                    </li>
+                </ul>
+                <a name="imgbyUrl" href="javascript:issueForm.addImagebyUrl(undefined, true);">Добавить изображение по
+                    URL</a>
+            </li>
+            <li>
+                <input type="hidden" name="parentId" />
+                <input type="hidden" name="issueId" value="0" />
+                <input type="hidden" name="actionType" value="addIssue" />
+                <input type="hidden" name="baseIdInProject" value="0" />
+                <?php if ($project->scrum): ?>
+                <div class="put-to-board-line">
+                    <input id="putToBoardField" name="putToBoard" type="checkbox">
+                    <label for="putToBoardField">Поместить на SCRUM доску</label>
+                </div>
+                <?php endif;?>
+                <p class="save-line">
+                    <button type="submit">Сохранить</button>
+                    <button type="reset" onclick="showMain();">Отмена</button>
+                </p>
+            </li>
+        </ol>
+        <input type="hidden" value="<?=$project->getID();?>" id="issueProjectID">
+    </form>
+    <div id="addIssueLabelFormContainer" style="display: none;">
+        <form id="addIssueLabelForm">
+            <div>
+                <label for="issueLabelText">Метка: </label>
+                <input name="labelText" id="issueLabelText" />
+            </div>
+            <?php if (lpm_is_moderator()):?>
+            <div class="align-right">
+                <input type="checkbox" name="isAllProjects" id="isAllProjectsCheckbox" />
+                <label for="isAllProjectsCheckbox">для всех проектов</label>
+            </div>
+            <?php endif;?>
+        </form>
+    </div>
+    <?php if (lpm_is_moderator()):?>
+    <div id="removeIssuesLabelContainer" style="display: none;">
+        <div class="table">
+            <div class="table-header">
+                <div class="table-cell">
+                    Метка
+                </div>
+                <div class="table-cell">
+                    Использования
+                </div>
+                <div class="table-cell">
+                    Общая
+                </div>
+                <div class="table-cell">
+                </div>
+            </div>
+            <?php
+                $allLabels = lpm_get_issue_labels();
+                $issueLabels = $issue ? $issue->getLabelNames() : array();
+            ?>
+            <?php foreach( $allLabels as $label): ?>
+            <?php
+                    $index = array_search($label['label'], $issueLabels);
+                    if ($index !== false)
+                        unset($issueLabels[$index]);
+                ?>
+            <div class="table-row">
+                <div class="table-cell label-name">
+                    <?=$label['label'];?>
+                </div>
+                <div class="table-cell">
+                    <?=$label['countUses'];?>
+                </div>
+                <div class="table-cell">
+                    <?php if($label['projectId'] == 0): ?>
+                    <i class="far fa-check-square" aria-hidden="true"></i>
+                    <?php endif;?>
+                </div>
+                <div class="table-cell">
+                    <a href="javascript:void(0)"
+                        onclick="issueFormLabels.remove('<?=$label['label'];?>', <?=$label['id'];?>);">
+                        <i class="far fa-minus-square" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            <?php foreach ($issueLabels as $label): ?>
+            <div class="table-row">
+                <div class="table-cell label-name"><?=$label?></div>
+                <div class="table-cell">0</div>
+                <div class="table-cell"></div>
+                <div class="table-cell">
+                    <a href="javascript:void(0)" onclick="issueFormLabels.remove('<?=$label;?>');">
+                        <i class="far fa-minus-square" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif;?>
+
+    <div id="issueFormTemplates" style="display:none">
+        <li class="image-item">
+            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview"></a>
+            <input type="hidden" name="imgId" value="">
+            <a href="javascript:;" class="remove-btn"></a>
+        </li>
+    </div>
+</article>
+<?php 
+    if (!empty($input)) 
+        lpm_print_js_object('issueForm.inputForRestore', $input, true, false); 
+?>
