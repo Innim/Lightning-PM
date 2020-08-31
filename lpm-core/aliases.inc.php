@@ -235,6 +235,14 @@ function lpm_print_table_scrum_board($stickers, $addProjectName = false, $addCle
 }
 
 /**
+ * Распечатывает форму добавления/редактирования цели спринта для текущего проекта
+ */
+function lpm_print_target_sprint_form()
+{
+    return PagePrinter::targetSprintForm();
+}
+
+/**
 *   Возвращает текущую страницу
 */
 function lpm_get_current_page()
@@ -449,13 +457,5 @@ function lpm_get_errors()
 function lpm_check_delete_comment($author, $cookie)
 {
     return PageConstructor::checkDeleteComment($author, $cookie);
-}
-
-/**
- * Распечатывает форму добавления/редактирования цели спринта для текущего проекта
- */
-function lpm_print_target_sprint_form()
-{
-    return PagePrinter::targetSprintForm();
 }
 

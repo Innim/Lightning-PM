@@ -153,7 +153,15 @@ class PagePrinter
     {
         PageConstructor::includePattern('scrum-board-table', compact('stickers', 'addProjectName', 'addClearBoard'));
     }
-
+    
+    /**
+     * Распечатывает таблицу Scrum доски.
+     */
+    public static function targetSprintForm()
+    {
+        PageConstructor::includePattern('scrum-board-target-sprint');
+    }
+    
     /*public static function mainCSSLink() {
         self::cssLink( 'main' );
     }*/

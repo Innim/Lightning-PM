@@ -5,6 +5,7 @@ $(document).ready(
                 e.setAttribute('title', e.textContent)
             }
         });
+        addTarget.init();
     }
 );
 
@@ -87,7 +88,36 @@ let scrumBoard = {
             });
         }
     },
-    showAddTarget: function () {
-    
-    },
 };
+
+const addTarget = {
+    init: function () {
+        $("#addTarget").dialog(
+            {
+                autoOpen: true,
+                modal: true,
+                resizable: false,
+                buttons: [
+                    {
+                        text: "Сохранить",
+                        click: function () {
+                            addTarget.save();
+                        }
+                    },
+                    {
+                        text: "Отмена",
+                        click: function () {
+                            addTarget.close();
+                        }
+                    }
+                ]
+            }
+        );
+    },
+    open: function () {
+        $("#addTarget").dialog("open");
+    },
+    close: function () {
+        $("#addTarget").dialog("close");
+    }
+}
