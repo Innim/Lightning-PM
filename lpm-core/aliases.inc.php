@@ -235,11 +235,12 @@ function lpm_print_table_scrum_board($stickers, $addProjectName = false, $addCle
 }
 
 /**
- * Распечатывает форму добавления/редактирования цели спринта для текущего проекта
+ * Распечатывает форму добавления/редактирования цели спринта для текущего проекта.
+ * @param $project
  */
-function lpm_print_target_sprint_form()
+function lpm_print_target_sprint_form($project)
 {
-    return PagePrinter::targetSprintForm();
+    return PagePrinter::targetSprintForm($project);
 }
 
 /**

@@ -157,9 +157,9 @@ class PagePrinter
     /**
      * Распечатывает таблицу Scrum доски.
      */
-    public static function targetSprintForm()
+    public static function targetSprintForm($project)
     {
-        PageConstructor::includePattern('scrum-board-target-sprint');
+        PageConstructor::includePattern('scrum-board-target-sprint', compact('project'));
     }
     
     /*public static function mainCSSLink() {

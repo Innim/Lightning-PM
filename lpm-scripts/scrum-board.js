@@ -5,7 +5,11 @@ $(document).ready(
                 e.setAttribute('title', e.textContent)
             }
         });
+
         addTarget.init();
+        $('.targetButton').click(function () {
+            addTarget.open();
+        });
     }
 );
 
@@ -92,20 +96,22 @@ let scrumBoard = {
 
 const addTarget = {
     init: function () {
-        $("#addTarget").dialog(
+        $('#addTarget').dialog(
             {
-                autoOpen: true,
+                autoOpen: false,
                 modal: true,
+                width: 540,
                 resizable: false,
                 buttons: [
                     {
-                        text: "Сохранить",
+                        text: 'Сохранить',
                         click: function () {
                             addTarget.save();
+                            addTarget.close();
                         }
                     },
                     {
-                        text: "Отмена",
+                        text: 'Отмена',
                         click: function () {
                             addTarget.close();
                         }
@@ -115,9 +121,13 @@ const addTarget = {
         );
     },
     open: function () {
-        $("#addTarget").dialog("open");
+        $('#addTarget').dialog('open');
     },
     close: function () {
-        $("#addTarget").dialog("close");
+        $('#addTarget').dialog('close');
+    },
+    save: function () {
+        const textTarget = $('.input-target').val();
+        console.log('сохранение данных', textTarget);
     }
 }
