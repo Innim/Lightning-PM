@@ -256,8 +256,6 @@ CHANGE `issue_name` `issue_name` varchar(255) COLLATE 'utf8mb4_general_ci' NOT N
 
 -- 0.9.17
 
---NEXT
-
 DROP TABLE IF EXISTS `lpm_fixed_instance`;
 CREATE TABLE `lpm_fixed_instance` (
   `userId` int(10) unsigned NOT NULL COMMENT 'Идентификатор пользователя',
@@ -266,3 +264,7 @@ CREATE TABLE `lpm_fixed_instance` (
   `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
   PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';
+
+-- v0.9.21
+
+--NEXT

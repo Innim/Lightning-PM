@@ -9,6 +9,7 @@ class ProjectsPage extends LPMPage
     const PUID_ARCH = 'projects-archive';
     const PUID_USER_ISSUES = 'user-issues';
     const PUID_STAT = 'stat';
+    const PUID_MY_SCRUM_BOARD = 'scrum-board-common';
 
     // Количество важных задач, открытых для меня по всем проектам
     private $_myIssuesCount = -1;
@@ -25,6 +26,12 @@ class ProjectsPage extends LPMPage
         $this->addSubPage(self::PUID_DEVL, 'В разработке');
         $this->addSubPage(self::PUID_ARCH, 'Архив', 'projects-archive');
         $this->addSubPage(self::PUID_USER_ISSUES, 'Мои задачи', 'user-issues', ['issues']);
+        $this->addSubPage(
+            self::PUID_MY_SCRUM_BOARD,
+            'Моя Scrum доска',
+            'scrum-board-common',
+            ['scrum-board', 'issues', 'libs/tribute']
+        );
         $this->addSubPage(
             self::PUID_STAT,
             'Статистика',
@@ -52,7 +59,11 @@ class ProjectsPage extends LPMPage
                     break;
             }
         }
-        
+
+        if ($this->_curSubpage->uid == self::PUID_MY_SCRUM_BOARD) {
+            $userId = LightningEngine::getInstance()->getUserId();
+            $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($userId));
+        }
 
         return $this;
     }
