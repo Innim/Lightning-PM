@@ -97,6 +97,15 @@ CREATE TABLE `lpm_issue_mr` (
   KEY `mrId` (`mrId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='GitLab MR от исполнителей по задачам.';
 
+DROP TABLE IF EXISTS `lpm_fixed_instance`;
+CREATE TABLE `lpm_fixed_instance` (
+  `userId` int(10) unsigned NOT NULL COMMENT 'Идентификатор пользователя',
+  `instanceType` tinyint(3) unsigned NOT NULL COMMENT 'Тип инстанции',
+  `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
+  `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
+  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';
+
 DROP TABLE IF EXISTS `lpm_members`;
 CREATE TABLE `lpm_members` (
   `userId` bigint(10) NOT NULL,
