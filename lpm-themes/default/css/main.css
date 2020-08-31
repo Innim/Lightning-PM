@@ -1103,6 +1103,21 @@ ul.projects-list .btn.develop
 .projects-list ,project-name {
 	font-size: 1.1em;
 }
+.projects-list .project-fix {
+	margin: 0 0 0 16px;
+	padding: 0;
+	min-width: 20px;
+	min-height: 20px;
+	border: none;
+	font-size: 14px;
+	line-height: 14px;
+	text-align: center;
+	background: transparent;
+}
+.projects-list .rotate-icon {
+	transform: rotate(45deg);
+	color: #999999;
+}
 .projects-list .project-desc {
 	font-size: 0.9em;
 	border: 1px dotted #666666;
@@ -1701,6 +1716,22 @@ div.ftp
     word-wrap: break-word;
 	background-color: #FE3678;
 }
+
+.scrum-board-sticker .name-project {
+	display: block;
+	margin: 2px 4px 4px 0;
+	padding: 1px 2px;
+	font-size: 13px;
+	line-height: 1;
+	color: #fff;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	cursor: pointer;
+	background-color: #333;
+	border-radius: 2px;
+}
+
 .scrum-board-sticker.orange {
 	background-color: #FEB93C;
 }

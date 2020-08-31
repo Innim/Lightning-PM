@@ -6,6 +6,7 @@
 $(document).ready(
 	function () {
 		//$("#registrationForm").hide();
+		let isSending = false;
 
 		if ((/#add-project/i).test(window.location)) {
 			$("#projectsList").hide();
@@ -16,6 +17,18 @@ $(document).ready(
 			$("#addProjectForm").hide();
 			$('#addProjectForm > div.validateError').html('');
 		}
+
+		//Фиксация проекта в списке проектов.
+		$('.project-fix').click(function () {
+			if (!isSending) {
+				const self = $(this);
+				const projectId = self.data('id-project');
+				isSending = true;
+				srv.projects.setIsFixed(projectId, !self.val(), function () {
+					location.reload();
+				});
+			}
+		});
 	}
 );
 
