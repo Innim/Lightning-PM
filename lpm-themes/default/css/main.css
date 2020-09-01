@@ -1853,7 +1853,44 @@ div.ftp
 	margin-top: 10px;
 }
 
+.scrum-board-target {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 12px;
+}
+
+.text-target {
+    max-width: 50%;
+    margin: 0 8px 0 0;
+    border-bottom: 1px solid #666666;
+}
+
+.text-target p {
+    margin: 0;
+}
+
+.targetButton {
+    margin: 0 0 -2px 0;
+    padding: 0;
+    min-width: 20px;
+    min-height: 22px;
+    border: none;
+    font-size: 18px;
+    line-height: 18px;
+    text-align: center;
+    background: transparent;
+}
+
 /* Модальное окно цели спринта */
+.no-close .ui-dialog-titlebar-close {
+    display: none;
+}
+
+.input-target {
+    width: 500px;
+    height: 165px;
+    resize: none;
+}
 
 .issue-labels-container {
 	font-size: 0.9em;

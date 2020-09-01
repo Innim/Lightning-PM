@@ -98,16 +98,18 @@ const addTarget = {
     init: function () {
         $('#addTarget').dialog(
             {
+                dialogClass: "no-close",
                 autoOpen: false,
                 modal: true,
                 width: 540,
+                height: 332,
+                closeText: 'Закрыть',
                 resizable: false,
                 buttons: [
                     {
                         text: 'Сохранить',
                         click: function () {
                             addTarget.save();
-                            addTarget.close();
                         }
                     },
                     {
@@ -125,9 +127,18 @@ const addTarget = {
     },
     close: function () {
         $('#addTarget').dialog('close');
+        addTarget.clear();
     },
     save: function () {
         const textTarget = $('.input-target').val();
-        console.log('сохранение данных', textTarget);
+        const projectId = $('#scrumBoard').data('project-id');
+        console.log('--сохранение данных--', textTarget, projectId);
+        srv.project.setTargetSprint(projectId, textTarget, function () {
+            location.reload();
+        });
+        addTarget.close();
+    },
+    clear: function () {
+        $('.form-target').trigger('reset');
     }
 }

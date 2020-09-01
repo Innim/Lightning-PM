@@ -268,6 +268,21 @@ class Project extends MembersInstance
     }
     
     /**
+     * Обновляет в БД цели спринта текущего scrum проекта.
+     * @param int $projectId
+     * @param string $targetText
+     */
+    public static function updateTargetSprint($projectId, $targetText)
+    {
+        $db = self::getDB();
+        return $db->queryb([
+            'UPDATE' => LPMTables::PROJECTS,
+            'SET' => ['targetSprint' => $targetText],
+            'WHERE' => ['id' => $projectId]
+        ]);
+    }
+    
+    /**
      *
      * @var int
      */
@@ -300,6 +315,12 @@ class Project extends MembersInstance
      * @var Boolean|null
      */
     public $fixedInstance;
+    
+    /**
+     * Цели спринта проекта.
+     * @var string|null
+     */
+    public $targetSprint;
 
     private $_importantIssuesCount = -1;
 
@@ -312,6 +333,12 @@ class Project extends MembersInstance
      * @var User
      */
     private $_master;
+    
+    /**
+     * Форматированный текст.
+     * @var string|null
+     */
+    private $_htmlText = null;
     
     public function __construct()
     {
@@ -461,6 +488,24 @@ class Project extends MembersInstance
         }
 
         return $this->_master;
+    }
+    
+    /**
+     * Возвращает форматированый текст для вставки в HTML код.
+     * @return string
+     */
+    public function getHTMLText()
+    {
+        if (empty($this->_htmlText)) {
+            $text = $this->targetSprint;
+            
+            $text = HTMLHelper::codeIt($text);
+            $text = HTMLHelper::formatIt($text);
+            
+            $this->_htmlText = $text;
+        }
+        
+        return $this->_htmlText;
     }
     
     protected function loadMembers()

@@ -227,6 +227,9 @@ let srv = {
         getIssueNamesByIdPart: function (projectId, idInProjectPart, onResult) {
             this.s._('getIssueNamesByIdPart');
         },
+        setTargetSprint: function (projectId, textTarget, onResult) {
+            this.s._('addTargetSprint');
+        }
     },
     projects: {
         s: new BaseService('ProjectsService'),

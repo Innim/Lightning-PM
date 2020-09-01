@@ -8,8 +8,16 @@
 <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
     <h1><?php lpm_print_header();?></h1>
     <div class="scrum-board-target">
-        <button class="targetButton">Цель спринта</button>
-        <p>Не указаны цели спринта!</p>
+        <?php if ($project->targetSprint): ?>
+            <div class="text-target"><?=$project->getHTMLText();?></div>
+        <?php endif ?>
+        <button class="targetButton">
+            <?php if ($project->targetSprint): ?>
+                <i class="far fa-edit" title="Редактировать цели спринта #<?=$project->getCurrentSpintNum();?>"></i>
+            <?php else: ?>
+                <i class="far fa-clipboard" title="Цели спринта #<?=$project->getCurrentSpintNum();?>"></i>
+            <?php endif ?>
+        </button>
     </div>
     <h3>SCRUM доска.
         <span class="scrum-board-info">

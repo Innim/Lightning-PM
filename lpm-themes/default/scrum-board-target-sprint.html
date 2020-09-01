@@ -4,7 +4,7 @@
     $project - проект
 */
 ?><article id="addTarget" title="Цели спринта #<?=$project->getCurrentSpintNum();?>">
-    <form class="target-form" method="post" enctype="multipart/form-data">
-        <textarea class="input-target" placeholder="Укажите цели спринта" name="text-target"></textarea>
+    <form class="form-target" method="post" enctype="multipart/form-data">
+        <textarea class="input-target" placeholder="Укажите цели спринта" required><?=$project->targetSprint;?></textarea>
     </form>
 </article>

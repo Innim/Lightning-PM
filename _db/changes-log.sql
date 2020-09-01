@@ -268,3 +268,6 @@ CREATE TABLE `lpm_fixed_instance` (
 -- v0.9.21
 
 --NEXT
+
+ALTER TABLE `lpm_projects`
+ADD `targetSprint` text COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Цели спринта Scrum проекта' AFTER `scrum`;
