@@ -7,9 +7,22 @@ $(document).ready(
         });
 
         addTarget.init();
-        $('.targetButton').click(function () {
+        $('.target-btn').click(function () {
             addTarget.open();
         });
+
+        const hiddenElement = document.querySelector('.text-target');
+        if (hiddenElement) {
+            if (hiddenElement.scrollHeight > hiddenElement.offsetHeight) {
+                $('.more-text-btn').click(function () {
+                    $('.text-target').toggleClass('little-hidden');
+                    $('.icon-btn').toggleClass('fa-chevron-up fa-chevron-down');
+                });
+            } else {
+                $('.more-text-btn').remove();
+                $('.text-target').removeClass('little-hidden');
+            }
+        }
     }
 );
 
@@ -132,7 +145,6 @@ const addTarget = {
     save: function () {
         const textTarget = $('.input-target').val();
         const projectId = $('#scrumBoard').data('project-id');
-        console.log('--сохранение данных--', textTarget, projectId);
         srv.project.setTargetSprint(projectId, textTarget, function () {
             location.reload();
         });

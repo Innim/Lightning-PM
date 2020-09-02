@@ -9,9 +9,12 @@
     <h1><?php lpm_print_header();?></h1>
     <div class="scrum-board-target">
         <?php if ($project->targetSprint): ?>
-            <div class="text-target"><?=$project->getHTMLText();?></div>
+            <div class="text-target little-hidden"><?=$project->getHTMLText();?></div>
+            <button class="more-text-btn">
+                <i class="fas fa-chevron-down icon-btn"></i>
+            </button>
         <?php endif ?>
-        <button class="targetButton">
+        <button class="target-btn">
             <?php if ($project->targetSprint): ?>
                 <i class="far fa-edit" title="Редактировать цели спринта #<?=$project->getCurrentSpintNum();?>"></i>
             <?php else: ?>

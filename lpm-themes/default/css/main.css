@@ -1863,14 +1863,42 @@ div.ftp
     max-width: 50%;
     margin: 0 8px 0 0;
     border-bottom: 1px solid #666666;
+    overflow: hidden;
+    position: relative;
+}
+.text-target.little-hidden {
+    height: 38px;
+}
+
+.text-target.little-hidden:after{
+    content: "";
+    display: block;
+    height: 14px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 75%)
 }
 
 .text-target p {
     margin: 0;
 }
 
-.targetButton {
-    margin: 0 0 -2px 0;
+.more-text-btn {
+    margin: 0 3px 0 0;
+    padding: 0;
+    min-width: 20px;
+    min-height: 22px;
+    border: none;
+    font-size: 18px;
+    line-height: 18px;
+    text-align: center;
+    background: transparent;
+}
+
+.target-btn {
+    margin: 0;
     padding: 0;
     min-width: 20px;
     min-height: 22px;
