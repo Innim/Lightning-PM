@@ -111,11 +111,11 @@ const addTarget = {
     init: function () {
         $('#addTarget').dialog(
             {
-                dialogClass: "no-close",
+                dialogClass: 'modal-target-sprint',
                 autoOpen: false,
                 modal: true,
                 width: 540,
-                height: 332,
+                height: 440,
                 closeText: 'Закрыть',
                 resizable: false,
                 buttons: [

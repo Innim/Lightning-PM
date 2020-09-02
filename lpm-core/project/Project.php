@@ -269,8 +269,8 @@ class Project extends MembersInstance
     
     /**
      * Обновляет в БД цели спринта текущего scrum проекта.
-     * @param int $projectId
-     * @param string $targetText
+     * @param int $projectId индентификатор проекта.
+     * @param string $targetText текст цели спринта.
      */
     public static function updateTargetSprint($projectId, $targetText)
     {
@@ -278,6 +278,20 @@ class Project extends MembersInstance
         return $db->queryb([
             'UPDATE' => LPMTables::PROJECTS,
             'SET' => ['targetSprint' => $targetText],
+            'WHERE' => ['id' => $projectId]
+        ]);
+    }
+    
+    /**
+     * Загружаем из БД цели текущего спринта scrum проекта.
+     * @param int $projectId индентификатор проекта.
+     */
+    public static function loadTargetSprint($projectId)
+    {
+        $db = self::getDB();
+        return $db->queryb([
+            'SELECT' => 'targetSprint',
+            'FROM'   => LPMTables::PROJECTS,
             'WHERE' => ['id' => $projectId]
         ]);
     }

@@ -32,6 +32,7 @@
     <a href="<?=$snapshot->getUrl()?>">
         <h3><u>SCRUM архив:</u></h3>
     </a>
+    <div class="text-target little-hidden"><?=$snapshot->targetSprint;?></div>
     <div class="scrum-snapshot-stat">
         <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->idInProject?></i> создан пользователем
         `<i><?=$snapshot->getCreatorShortName()?>`</i>

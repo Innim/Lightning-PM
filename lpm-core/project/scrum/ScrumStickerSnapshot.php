@@ -127,6 +127,7 @@ SQL;
         $created = DateTimeUtils::mysqlDate();
         $started = empty($startedUnixtime) ? $created : DateTimeUtils::mysqlDate($startedUnixtime);
         $creatorId = $userId;
+        $targetSprint = Project::loadTargetSprint($projectId);
         $db = self::getDB();
 
         try {
@@ -138,8 +139,8 @@ SQL;
 
             // запись о новом снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `created`)
-                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${created}')
+                INSERT INTO `%s` (`idInProject`, `pid`, `targetSprint`, `creatorId`, `started`, `created`)
+                VALUES ('${idInProject}', '${pid}', '${targetSprint}', '${creatorId}', '${started}', '${created}')
 SQL;
 
             // если что-то пошло не так
@@ -148,7 +149,11 @@ SQL;
             }
 
             $sid = $db->insert_id;
-
+            
+            // очищаем в БД поле цели спринта текукщего проекта
+            $emptyString = '';
+            Project::updateTargetSprint($projectId, $emptyString);
+            
             // добавляем всю необходимую информацию по снепшоте
             $sql = <<<SQL
                 INSERT INTO `%s` (`sid`, `added`, `issue_uid`, `issue_pid`, `issue_name`,
@@ -288,7 +293,12 @@ SQL;
      * @var
      */
     public $creatorId;
-
+    /**
+     * Цели спринта.
+     * @var
+     */
+    public $targetSprint;
+    
     private $_creator;
     private $_stickers;
     private $_members;
