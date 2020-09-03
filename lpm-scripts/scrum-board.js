@@ -11,18 +11,18 @@ $(document).ready(
             addTarget.open();
         });
 
-        const hiddenElement = document.querySelector('.text-target');
-        if (hiddenElement) {
-            if (hiddenElement.scrollHeight > hiddenElement.offsetHeight) {
-                $('.more-text-btn').click(function () {
-                    $('.text-target').toggleClass('little-hidden');
-                    $('.icon-btn').toggleClass('fa-chevron-up fa-chevron-down');
-                });
-            } else {
-                $('.more-text-btn').remove();
-                $('.text-target').removeClass('little-hidden');
-            }
-        }
+        // const hiddenElement = document.querySelector('.text-target');
+        // if (hiddenElement) {
+        //     if (hiddenElement.scrollHeight > hiddenElement.offsetHeight) {
+        //         $('.more-text-btn').click(function () {
+        //             $('.text-target').toggleClass('little-hidden');
+        //             $('.icon-btn').toggleClass('fa-chevron-up fa-chevron-down');
+        //         });
+        //     } else {
+        //         $('.more-text-btn').remove();
+        //         $('.text-target').removeClass('little-hidden');
+        //     }
+        // }
     }
 );
 
@@ -97,10 +97,9 @@ let scrumBoard = {
             srv.issue.removeStickersFromBoard(projectId, function (res) {
                 preloader.hide();
                 if (res.success) {
-                    //$('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
-                    //$('.scrum-board-target').remove();
-                    //issuePage.scumColUpdateInfo();
-                    location.reload();
+                    $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
+                    $('.scrum-board-target').remove();
+                    issuePage.scumColUpdateInfo();
                 } else {
                     srv.err(res);
                 }
@@ -138,6 +137,7 @@ const addTarget = {
         );
     },
     open: function () {
+        $('.input-target').val($('.text-target').text());
         $('#addTarget').dialog('open');
     },
     close: function () {
@@ -147,8 +147,11 @@ const addTarget = {
     save: function () {
         const textTarget = $('.input-target').val();
         const projectId = $('#scrumBoard').data('project-id');
-        srv.project.setTargetSprint(projectId, textTarget, function () {
-            location.reload();
+        srv.project.setTargetSprint(projectId, textTarget, function (res) {
+            if (res) {
+                $('.text-target').html(res.target);
+                console.log(res.target);
+            }
         });
         addTarget.close();
     },

@@ -361,6 +361,10 @@ class ProjectService extends LPMBaseService
             return $this->exception($e);
         }
         
+        $text = HTMLHelper::codeIt($targetText);
+        $text = HTMLHelper::formatIt($text);
+        
+        $this->add2Answer('target', $text);
         return $this->answer();
     }
 }

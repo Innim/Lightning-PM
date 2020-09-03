@@ -7,12 +7,10 @@
 ?>
 <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
     <h1><?php lpm_print_header();?></h1>
+
     <div class="scrum-board-target">
         <?php if ($project->targetSprint): ?>
-            <div class="text-target little-hidden"><?=$project->getHTMLText();?></div>
-            <button class="more-text-btn">
-                <i class="fas fa-chevron-down icon-btn" title="развернуть/свернуть"></i>
-            </button>
+            <div class="text-target"><?=$project->getHTMLText();?></div>
         <?php endif ?>
         <button class="target-btn">
             <?php if ($project->targetSprint): ?>
@@ -22,6 +20,7 @@
             <?php endif ?>
         </button>
     </div>
+
     <h3>SCRUM доска.
         <span class="scrum-board-info">
             <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSpintNum();?></span>
