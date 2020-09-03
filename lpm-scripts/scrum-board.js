@@ -97,8 +97,10 @@ let scrumBoard = {
             srv.issue.removeStickersFromBoard(projectId, function (res) {
                 preloader.hide();
                 if (res.success) {
-                    $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
-                    issuePage.scumColUpdateInfo();
+                    //$('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
+                    //$('.scrum-board-target').remove();
+                    //issuePage.scumColUpdateInfo();
+                    location.reload();
                 } else {
                     srv.err(res);
                 }

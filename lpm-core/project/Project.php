@@ -285,15 +285,20 @@ class Project extends MembersInstance
     /**
      * Загружаем из БД цели текущего спринта scrum проекта.
      * @param int $projectId индентификатор проекта.
+     * @return string|boolean текст целей спринта или false.
      */
-    public static function loadTargetSprint($projectId)
+    public static function loadTextTargetSprint($projectId)
     {
         $db = self::getDB();
-        return $db->queryb([
+        $query =  $db->queryb([
             'SELECT' => 'targetSprint',
             'FROM'   => LPMTables::PROJECTS,
             'WHERE' => ['id' => $projectId]
         ]);
+        if (!$query || !($row = $query->fetch_assoc())) {
+            return false;
+        }
+        return $row['targetSprint'];
     }
     
     /**

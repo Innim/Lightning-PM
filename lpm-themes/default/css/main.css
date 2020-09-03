@@ -1826,9 +1826,18 @@ div.ftp
 	display: none;
 }
 
+#scrumBoard .link-title-snapshot {
+    display: block;
+    margin-bottom: 12px;
+    color: #666666;
+}
+
+#scrumBoard .text-title-snapshot{
+    float: none;
+}
+
 #scrumBoard .scrum-snapshot-stat {
 	clear: both;
-	margin-top: 50px;
 	margin-left: 5px;
 	margin-bottom: 10px;
 }

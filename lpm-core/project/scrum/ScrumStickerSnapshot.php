@@ -127,7 +127,7 @@ SQL;
         $created = DateTimeUtils::mysqlDate();
         $started = empty($startedUnixtime) ? $created : DateTimeUtils::mysqlDate($startedUnixtime);
         $creatorId = $userId;
-        $targetSprint = Project::loadTargetSprint($projectId);
+        $targetSprint = Project::loadTextTargetSprint($projectId);
         $db = self::getDB();
 
         try {
@@ -302,6 +302,11 @@ SQL;
     private $_creator;
     private $_stickers;
     private $_members;
+    /**
+     * Форматированный текст.
+     * @var string|null
+     */
+    private $_htmlText = null;
 
     public function __construct($id = 0)
     {
@@ -449,6 +454,24 @@ SQL;
             return ($sticker->issue_state == ScrumStickerState::TESTING ||
                     $sticker->issue_state == ScrumStickerState::DONE);
         });
+    }
+    
+    /**
+     * Возвращает форматированый текст для вставки в HTML код.
+     * @return string
+     */
+    public function getHTMLText()
+    {
+        if (empty($this->_htmlText)) {
+            $text = $this->targetSprint;
+            
+            $text = HTMLHelper::codeIt($text);
+            $text = HTMLHelper::formatIt($text);
+            
+            $this->_htmlText = $text;
+        }
+        
+        return $this->_htmlText;
     }
 
     private function countSp($filterCallback = null, $getSpCallback = null)

@@ -98,7 +98,7 @@ class ProjectPage extends LPMPage
         // Если это scrum проект - добавляем новый подраздел
         if ($this->_project->scrum) {
             $this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board', ['scrum-board']);
-            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
+            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot', ['scrum-board']);
             $this->addSubPage(
                 self::PUID_SPRINT_STAT,
                 'Статистика спринта',
