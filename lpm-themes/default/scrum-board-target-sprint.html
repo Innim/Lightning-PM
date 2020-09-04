@@ -5,26 +5,10 @@
 */
 ?>
 <article id="addTarget" title="Цели спринта #<?=$project->getCurrentSpintNum();?>">
-    <form class="form-target" method="post" enctype="multipart/form-data">
-        <textarea class="input-target" placeholder="Укажите цели спринта" required><?=$project->targetSprint;?></textarea>
+    <form class="form-target">
+        <textarea class="input-target" placeholder="Укажите цели спринта"><?=$project->targetSprint;?></textarea>
     </form>
-    <div class="note tags-line">Вы можете использовать
-        <a href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a>
-        и Slack разметку в описании задачи:
-        <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*"
-           title="Ctrl + B">*жирный*</a>,
-        <a class="tag" href="javascript:void(0)" style="font-style: italic;" data-marker="_"
-           title="Ctrl + I">_курсив_</a>,
-        <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-marker="__"
-           title="Ctrl + U">__подчеркнутый__</a>,
-        <a class="tag" href="javascript:void(0)" style="text-decoration:line-through;" data-marker="~"
-        >~зачеркнутый~</a>, <span class="tag quote" title="Ctrl + G">&gt; цитата</span>,
-        <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-type="link"
-           title="Ctrl + K">[ссылка](url)</a>.
-    </div>
-    <div class="note tags-line">
-        Также используйте <code>`</code> для строчного кода и <code>```</code> для
-        многострочного (можно указать язык: as, js, php и тд, добавляется сразу
-        после открывающих кавычек, требуется перенос строки).
-    </div>
+    <p class="target-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
+        <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
+    </p>
 </article>

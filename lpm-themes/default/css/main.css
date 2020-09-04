@@ -1862,16 +1862,16 @@ div.ftp
 	margin-top: 10px;
 }
 
+/*Цели спринта*/
+
 .scrum-board-target {
-    display: flex;
-    align-items: flex-end;
+    max-width: 48%;
     margin-bottom: 12px;
 }
 
-.text-target {
-    max-width: 48%;
-    margin: 0 8px 0 0;
-    border-bottom: 1px solid #666666;
+.title-target {
+    margin: 8px 0 8px 0;
+    font-weight: 700;
 }
 
 .text-target p {
@@ -1881,17 +1881,19 @@ div.ftp
 .target-btn {
     margin: 0;
     padding: 0;
-    min-width: 20px;
-    min-height: 22px;
-    border: none;
-    font-size: 18px;
-    line-height: 18px;
-    text-align: center;
+    min-width: auto;
+    min-height: auto;
+    display: block;
+    font-size: 12px;
+    line-height: 12px;
+    text-decoration: underline;
     color: #666666;
+    border: none;
     background: transparent;
 }
 
 /* Модальное окно цели спринта */
+
 .modal-target-sprint .ui-dialog-titlebar {
     color: #666666;
 }
@@ -1900,14 +1902,15 @@ div.ftp
     display: none;
 }
 
-#addTarget .note {
-    width: 95%;
-}
-
 .input-target {
     width: 500px;
-    height: 165px;
+    height: 176px;
     resize: none;
+}
+
+.target-note {
+    font-size: 11px;
+    color: #999999;
 }
 
 .issue-labels-container {

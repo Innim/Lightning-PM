@@ -11,18 +11,9 @@ $(document).ready(
             addTarget.open();
         });
 
-        // const hiddenElement = document.querySelector('.text-target');
-        // if (hiddenElement) {
-        //     if (hiddenElement.scrollHeight > hiddenElement.offsetHeight) {
-        //         $('.more-text-btn').click(function () {
-        //             $('.text-target').toggleClass('little-hidden');
-        //             $('.icon-btn').toggleClass('fa-chevron-up fa-chevron-down');
-        //         });
-        //     } else {
-        //         $('.more-text-btn').remove();
-        //         $('.text-target').removeClass('little-hidden');
-        //     }
-        // }
+        if ($('.text-target').text()) {
+            $('.title-target').removeClass('hidden');
+        }
     }
 );
 
@@ -98,7 +89,10 @@ let scrumBoard = {
                 preloader.hide();
                 if (res.success) {
                     $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
-                    $('.scrum-board-target').remove();
+                    $('.title-target').addClass('hidden');
+                    $('.text-target').children().remove();;
+                    $('.input-target').val('');
+                    addTarget.incNumSprint($('.ui-dialog-title'));
                     issuePage.scumColUpdateInfo();
                 } else {
                     srv.err(res);
@@ -116,7 +110,7 @@ const addTarget = {
                 autoOpen: false,
                 modal: true,
                 width: 540,
-                height: 440,
+                height: 394,
                 closeText: 'Закрыть',
                 resizable: false,
                 buttons: [
@@ -137,25 +131,31 @@ const addTarget = {
         );
     },
     open: function () {
-        $('.input-target').val($('.text-target').text());
         $('#addTarget').dialog('open');
     },
     close: function () {
         $('#addTarget').dialog('close');
-        addTarget.clear();
     },
     save: function () {
         const textTarget = $('.input-target').val();
         const projectId = $('#scrumBoard').data('project-id');
+
         srv.project.setTargetSprint(projectId, textTarget, function (res) {
             if (res) {
-                $('.text-target').html(res.target);
-                console.log(res.target);
+                $('.text-target').html(res.targetHTML);
+                $('.input-target').val(res.targetText);
+
+                if (!res.targetText) {
+                    $('.title-target').addClass('hidden');
+                } else {
+                    $('.title-target').removeClass('hidden');
+                }
             }
         });
         addTarget.close();
     },
-    clear: function () {
-        $('.form-target').trigger('reset');
+    incNumSprint: function (element) {
+        let numSprint = element.text().replace(/\D/g,'');
+        element.text(`Цели спринта #${++numSprint}`);
     }
 }

@@ -274,12 +274,18 @@ class Project extends MembersInstance
      */
     public static function updateTargetSprint($projectId, $targetText)
     {
-        $db = self::getDB();
-        return $db->queryb([
-            'UPDATE' => LPMTables::PROJECTS,
-            'SET' => ['targetSprint' => $targetText],
-            'WHERE' => ['id' => $projectId]
-        ]);
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        
+        $text = $db->real_escape_string($targetText);
+        $text = str_replace('%', '%%', $text);
+        
+        $sql = "UPDATE `%s` SET `targetSprint` =  '" . $text . "' " .
+            "WHERE `id` = '" . $projectId . "' ";
+        
+        if (!$result = $db->queryt($sql, LPMTables::PROJECTS)) {
+            return false;
+        }
+        return $result;
     }
     
     /**
