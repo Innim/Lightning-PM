@@ -227,6 +227,12 @@ let srv = {
         getIssueNamesByIdPart: function (projectId, idInProjectPart, onResult) {
             this.s._('getIssueNamesByIdPart');
         },
+        getRepositories: function (projectId, onResult) {
+            this.s._('getRepositories');
+        },
+        getBranches: function (projectId, gitlabProjectId, onResult) {
+            this.s._('getBranches');
+        },
     },
     projects: {
         s: new BaseService('ProjectsService'),

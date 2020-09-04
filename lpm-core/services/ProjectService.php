@@ -351,4 +351,25 @@ class ProjectService extends LPMBaseService
 
         return $this->answer();
     }
+
+    /**
+     * Загружает список веток для репозитория.
+     */
+    public function getBranches($projectId, $gitlabProjectId)
+    {
+        $projectId = (int)$projectId;
+        $gitlabProjectId = (int)$gitlabProjectId;
+
+        try {
+            $project = $this->getProjectRequireReadPermission($projectId);
+            if ($project->isIntegratedWithGitlab() && $client = $this->getGitlabIfAvailable()) {
+                $list = $client->getBranches($gitlabProjectId);
+                $this->add2Answer('list', $list);
+            }
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
 }

@@ -172,6 +172,27 @@ class GitlabIntegration
         }
     }
 
+    /// Возвращает список веток репозитория проекта.
+    public function getBranches($projectId)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $list = $client->repositories()->branches($projectId);
+            $res = [];
+            foreach ($list as $data) {
+                $res[] = new GitlabBranch($data);
+            }
+            return $res;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return null;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {
