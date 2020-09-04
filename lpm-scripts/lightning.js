@@ -158,6 +158,9 @@ let srv = {
         passTest: function (issueId, onResult) {
             this.s._('passTest');
         },
+        createBranch: function (issueId, branchName, gitlabProjectId, parentBranch, onResult) {
+            this.s._('createBranch');
+        },
         changePriority: function (issueId, delta, onResult) {
             this.s._('changePriority');
         },

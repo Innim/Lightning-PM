@@ -37,6 +37,11 @@ class LPMBaseService extends SecureService
         }
     }
     
+    protected function errorValidation($argName)
+    {
+        return $this->error('Argument ' . $argName . ' is not valid');
+    }
+    
     protected function errorDBSave()
     {
         return $this->error('Error DB save');
