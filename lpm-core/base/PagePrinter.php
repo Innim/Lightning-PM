@@ -134,8 +134,7 @@ class PagePrinter
     {
         PageConstructor::includePattern('entity-image-item', compact('image'));
     }
-    
-    
+
     /**
      * Распечатывает форму экспорта задач в Excel.
      */
@@ -143,7 +142,18 @@ class PagePrinter
     {
         PageConstructor::includePattern('issues-export-to-excel');
     }
-    
+
+    /**
+     * Распечатывает таблицу Scrum доски.
+     * @param $stickers
+     * @param bool $addProjectName
+     * @param bool $addClearBoard
+     */
+    public static function tableScrumBoard($stickers, $addProjectName = false, $addClearBoard = false)
+    {
+        PageConstructor::includePattern('scrum-board-table', compact('stickers', 'addProjectName', 'addClearBoard'));
+    }
+
     /*public static function mainCSSLink() {
         self::cssLink( 'main' );
     }*/

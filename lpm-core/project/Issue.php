@@ -928,6 +928,16 @@ WHERE;
     }
     
     /**
+     * Возвращает URL страницы Scrum доски проекта, к которому относится задача,
+     * @param  string $hash Хэш параметр.
+     * @return string URL страницы проекта.
+     */
+    public function getProjectScrumUrl($hash = '')
+    {
+        return Project::getURLByProjectUIDScrum($this->projectUID, $hash);
+    }
+    
+    /**
      * Чтобы этот метод корректно работал, необходимо,
      * чтобы был загружен uid проекта
      */

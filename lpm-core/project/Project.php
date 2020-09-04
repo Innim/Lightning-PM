@@ -238,7 +238,18 @@ class Project extends MembersInstance
     {
         return Link::getUrl(ProjectPage::UID, [$projectUID], $hash);
     }
-
+    
+    /**
+     * Возвращает URL страницы Scrum доски проекта.
+     * @param  string $projectUID Строковый идентификатор проекта.
+     * @param  string $hash       Хэш параметр.
+     * @return URL страницы проекта.
+     */
+    public static function getURLByProjectUIDScrum($projectUID, $hash = '')
+    {
+        return Link::getUrl(ProjectPage::UID, [$projectUID, ProjectPage::PUID_SCRUM_BOARD], $hash);
+    }
+    
     public static function checkDeleteComment($author, $cookie)
     {
         $user = LightningEngine::getInstance()->getUser();

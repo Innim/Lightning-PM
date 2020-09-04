@@ -1,3 +1,13 @@
+$(document).ready(
+    function () {
+        document.querySelectorAll('.name-project').forEach(function (e) {
+            if (e.scrollWidth > e.offsetWidth) {
+                e.setAttribute('title', e.textContent)
+            }
+        });
+    }
+);
+
 let scrumBoard = {
     changeScrumState: function (e) {
         var $control = $(e.currentTarget);
