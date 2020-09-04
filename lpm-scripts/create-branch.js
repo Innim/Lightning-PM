@@ -45,24 +45,7 @@ const createBranch = {
         // TODO: грузить только 1 раз?
         srv.project.getRepositories(projectId, (res) => {
             if (res.success) {
-                const $selectRepo = $('#repository', $el);
-
-                // Перебираем теги, и если какой-то тег совпадает со словом в имени репозитория
-                // то предлагаем его
-                const labels = issuePage.labels;
-                var repoId;
-                res.list.forEach(item => {
-                    if (repoId == null || item.name.split(' ').some(e => labels.includes(e))) {
-                        repoId = item.id;
-                    }
-
-                    $selectRepo.append($("<option></option>")
-                        .attr("value", item.id).text(item.name));
-                });
-
-                $selectRepo.val(repoId);
-                createBranch.onSelectRepository(repoId);
-
+                createBranch.setRepositories(res.list);
                 $("#branchName", $el).val(issueIdInProject + '.');
             } else {
                 createBranch.close();
@@ -92,6 +75,44 @@ const createBranch = {
                 if (res.success)
                     createBranch.close();
             });
+    },
+    setRepositories: function (list) {
+        const $el = $("#createBranch");
+        const $selectRepo = $('#repository', $el);
+        $selectRepo.empty();
+
+        if (list.length == 0) return;
+
+        // Перебираем теги, и если какой-то тег совпадает со словом в имени репозитория
+        // то предлагаем его
+        const labels = issuePage.labels;
+        var repoId;
+        const lastActivity = list.reduce((val, item) => !val || val < item.lastActivity ? item.lastActivity : val, 0);
+
+        // Ставим выше активные
+        const outdatedSec = 30 * 24 * 3600;
+        list.sort((a, b) => {
+            const aOutdated = lastActivity - a.lastActivity > outdatedSec;
+            const bOutdated = lastActivity - b.lastActivity > outdatedSec;
+
+            if (aOutdated != bOutdated) return bOutdated ? -1 : 1;
+
+            return b.name.localeCompare(a.name);
+        });
+
+        list.forEach(item => {
+            if (repoId === undefined && item.name.split(' ').some(e => labels.includes(e))) {
+                repoId = item.id;
+            }
+
+            $selectRepo.append($("<option></option>")
+                .attr("value", item.id).text(item.name));
+        });
+
+        if (repoId === undefined) repoId = list[0].id;
+
+        $selectRepo.val(repoId);
+        createBranch.onSelectRepository(repoId);
     },
     onSelectRepository: function (repoId) {
         const projectId = createBranch.currentProjectId;

@@ -28,6 +28,18 @@ class GitlabProject extends \GMFramework\StreamObject
      */
     public $url;
 
+    /**
+     * Дата создания репозитория.
+     * @var \GMFramework\Date
+     */
+    public $created;
+
+    /**
+     * Дата последней активности.
+     * @var \GMFramework\Date
+     */
+    public $lastActivity;
+
     private $_data;
 
     public function __construct($data)
@@ -44,7 +56,11 @@ class GitlabProject extends \GMFramework\StreamObject
         parent::initTypes();
 
         $this->_int('id');
+        $this->created = new \GMFramework\Date();
+        $this->lastActivity = new \GMFramework\Date();
 
         $this->addAlias('web_url', 'url');
+        $this->addAlias('created_at', 'created');
+        $this->addAlias('last_activity_at', 'lastActivity');
     }
 }
