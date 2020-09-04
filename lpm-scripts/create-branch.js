@@ -46,13 +46,20 @@ const createBranch = {
         srv.project.getRepositories(projectId, (res) => {
             if (res.success) {
                 const $selectRepo = $('#repository', $el);
+
+                // Перебираем теги, и если какой-то тег совпадает со словом в имени репозитория
+                // то предлагаем его
+                const labels = issuePage.labels;
+                var repoId;
                 res.list.forEach(item => {
+                    if (repoId == null || item.name.split(' ').some(e => labels.includes(e))) {
+                        repoId = item.id;
+                    }
+
                     $selectRepo.append($("<option></option>")
                         .attr("value", item.id).text(item.name));
                 });
 
-                // TODO: надо как-то умно подобрать какой предложить
-                const repoId = res.list[0].id;
                 $selectRepo.val(repoId);
                 createBranch.onSelectRepository(repoId);
 

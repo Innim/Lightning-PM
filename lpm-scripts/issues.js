@@ -3,6 +3,7 @@ $(document).ready(
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.projectId = parseInt($('#issueProjectID').val());
         issuePage.idInProject = $('#issueInfo').data('idInProject');
+        issuePage.labels = $('#issueInfo').data('labels').split(',');
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
@@ -247,6 +248,7 @@ DropDown.prototype = {
 const issuePage = {
     projectId: null,
     idInProject: null,
+    labels: null,
     members: null
 };
 

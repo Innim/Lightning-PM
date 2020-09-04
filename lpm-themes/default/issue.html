@@ -19,7 +19,7 @@ $project = $issue->getProject();
     </div>
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
     <article id="issueInfo" class="container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
-        data-id-in-project="<?=$issue->getIdInProject();?>">
+        data-id-in-project="<?=$issue->getIdInProject();?>" data-labels="<?=implode(',', $issue->getLabelNames());?>">
         <h3>
             <span class="issue-id"><?=$issue->getIdInProject();?></span>.
             <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
