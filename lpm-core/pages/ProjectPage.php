@@ -234,7 +234,7 @@ class ProjectPage extends LPMPage
         $this->_title = $this->getTitleByIssue($issue);
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
-        array_push($this->_js, 'issue');
+        array_push($this->_js, 'issue', 'create-branch');
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);

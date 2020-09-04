@@ -180,3 +180,17 @@ $project = $issue->getProject();
     var issueLabels = <?= json_encode($issue -> getLabelNames());?>;
 </script>
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
+
+<article id="createBranch" title="Создать ветку задачи">
+    <form>
+        <ul>
+            <li>
+                <label for="repository">Репозиторий</label><select id="repository" name="repository"></select>
+            </li>
+            <li>
+                <label for="parentBranch">Из</label><select id="parentBranch" name="parentBranch"></select>
+            </li>
+            <li><label for="branchName">Название</label><input id="branchName" type="text" name="branchName"></li>
+        </ul>
+    </form>
+</article>
