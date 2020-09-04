@@ -143,6 +143,13 @@ $project = $issue->getProject();
         <div class="links-bar">
             <?php if ($project->scrum):?>
             <div class="scrum-comments-shortcut">
+                <?php if ($project->isIntegratedWithGitlab()): ?>
+                <a href="#" class="create-branch-icon" onclick="issuePage.createBranch(); return false;"
+                    title="Создать ветку для задачи">
+                    <i class="fas fa-code-branch branch-icon" aria-hidden="true"></i><i
+                        class="fas fa-plus-circle plus-icon"></i>
+                </a>
+                <?php endif; ?>
                 <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i
                         class="far fa-check-square" aria-hidden="true"></i></a>
                 <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i

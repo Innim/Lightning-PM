@@ -706,6 +706,10 @@ issuePage.toogleCommentForm = function () {
     comments.slideToggle('normal');
 };
 
+issuePage.createBranch = function () {
+    createBranch.show(issuePage.projectId, issuePage.getIssueId(), issuePage.idInProject);
+}
+
 issuePage.commentPassTesting = function () {
     issuePage.passTest();
 };

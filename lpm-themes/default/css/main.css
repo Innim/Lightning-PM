@@ -844,6 +844,20 @@ ul.images-url > li > input {
 .comments .links-bar .scrum-comments-shortcut {
 	float: left;
 }
+a.create-branch-icon {
+	position: relative;
+	text-decoration: none;
+}
+a.create-branch-icon .branch-icon {
+	padding: 0 2px;
+}
+a.create-branch-icon .plus-icon {
+	position: absolute;
+	right:0;
+	bottom:0;
+	font-size: 0.5em;
+}
+
 .comments .links-bar .comments-controls {
 	float: right;
 }
