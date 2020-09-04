@@ -1,29 +1,42 @@
+<?php
+/* 
+Требуются: 
+	$project - Проект
+*/
+?>
 <h1>
-    <?lpm_print_header();?>
+    <?php lpm_print_header();?>
 </h1>
 <article id="projectSettings" class="container">
-    <h3> Настройки проекта </h3>
+    <h3>Настройки проекта</h3>
     <form method="post" action="" onsubmit="return false;">
         <div class="info-message"></div>
-        <?php
-       	$scrum = (int)lpm_get_project()->scrum;
-        $slackNotifyChannel = lpm_get_project()->slackNotifyChannel;
-     ?>
-        <input type="hidden" id="projectId" value="<?=lpm_get_project()->getID();?>" />
+        <input type="hidden" id="projectId" value="<?=$project->getID();?>" />
 
-        <ul id="ulProjectSettings">
-            <li class="con">
-                <label id="slackСhannelLabel" for="slackСhannel">Канал оповещения в Slack</label>
-                <input id="slackСhannel" type="text" value="<?=$slackNotifyChannel ?>">
+        <ul class="form-items">
+            <li>
+                <label id="gitlabGroupIdLabel" for="gitlabGroupId"
+                    title="Перейдите на страницу группы в интерфейсе GitLab, там под именем группы будет указан 'Group ID'">ID
+                    группы в GitLab</label>
+                <input id="gitlabGroupId" type="text"
+                    value="<?=empty($project->gitlabGroupId) ? '': $project->gitlabGroupId;?>">
             </li>
-            <li id="project-scrum-item">
-                <label for="scrumCheckbox"> Проект использует Scrum</label>
-                <input id="scrumCheckbox" type="checkbox" <?=$scrum===1 ? "checked" : ""?>>
+            <li>
+                <label id="slackСhannelLabel" for="slackСhannel"
+                    title="Для получения кликните правой клавишей мыши по имени канала и выберите 'Copy link'. Последняя часть в скопированном URL и есть искомый ID канала.">ID
+                    канала
+                    оповещений в Slack</label>
+                <input id="slackСhannel" type="text" value="<?=$project->slackNotifyChannel;?>">
+            </li>
+            <li>
+                <label for="scrumCheckbox">Проект использует Scrum</label>
+                <input id="scrumCheckbox" type="checkbox" <?=$project->scrum ? "checked" : ""?>>
             </li>
         </ul>
 
         <div class="save-line">
-            <button id="setProjectSettings" type="submit"> Сохранить </button>
-            <button type="reset">Отмена</button> </div>
+            <button id="setProjectSettings" type="submit">Сохранить</button>
+            <button type="reset">Отмена</button>
+        </div>
     </form>
 </article>

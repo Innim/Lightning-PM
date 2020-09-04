@@ -68,7 +68,7 @@ class Project extends MembersInstance
      * Обновляет настройки проекта
      *
      */
-    public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel)
+    public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
     {
         $db = self::getDB();
 
@@ -76,7 +76,8 @@ class Project extends MembersInstance
             'UPDATE' => LPMTables::PROJECTS,
             'SET' => [
                 'scrum' => $scrum,
-                'slackNotifyChannel' => $slackNotifyChannel
+                'slackNotifyChannel' => $slackNotifyChannel,
+                'gitlabGroupId' => $gitlabGroupId,
             ],
             'WHERE' => [
                 'id' => $projectId
@@ -295,6 +296,14 @@ class Project extends MembersInstance
      */
     public $masterId;
 
+
+    /**
+     * Идентификатор группы проектов на GitLab,
+     * соответствующей текущему проекту в таске.
+     * @var int
+     */
+    public $gitlabGroupId;
+
     /**
      * Проект зафиксирован в таблице проектов
      * @var Boolean|null
@@ -316,13 +325,18 @@ class Project extends MembersInstance
     public function __construct()
     {
         parent::__construct();
-        $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId');
+        $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId', 'gitlabGroupId');
         $this->_typeConverter->addBoolVars('scrum', 'fixedInstance');
     }
     
     public function getID()
     {
         return $this->id;
+    }
+
+    public function isIntegratedWithGitlab()
+    {
+        return !empty($this->gitlabGroupId);
     }
     
     public function getShortDesc()

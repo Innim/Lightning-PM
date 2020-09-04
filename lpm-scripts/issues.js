@@ -2,6 +2,8 @@ $(document).ready(
     function () {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.projectId = parseInt($('#issueProjectID').val());
+        issuePage.idInProject = $('#issueInfo').data('idInProject');
+        issuePage.labels = $('#issueInfo').data('labels').split(',');
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
@@ -243,10 +245,14 @@ DropDown.prototype = {
     }
 }
 
-var issuePage = {
+const issuePage = {
     projectId: null,
+    idInProject: null,
+    labels: null,
     members: null
 };
+
+issuePage.getIssueId = () => $('#issueView input[name=issueId]').val();
 
 issuePage.loadMembers = function (handler) {
     if (issuePage.members != null) {
@@ -701,6 +707,10 @@ issuePage.toogleCommentForm = function () {
     link.show();
     comments.slideToggle('normal');
 };
+
+issuePage.createBranch = function () {
+    createBranch.show(issuePage.projectId, issuePage.getIssueId(), issuePage.idInProject);
+}
 
 issuePage.commentPassTesting = function () {
     issuePage.passTest();
