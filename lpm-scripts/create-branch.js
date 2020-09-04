@@ -13,7 +13,7 @@ const createBranch = {
                 resizable: false,
                 buttons: [
                     {
-                        text: "OK",
+                        text: "Создать",
                         click: function () {
                             createBranch.save();
                         }
