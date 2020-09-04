@@ -639,17 +639,6 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
     
-    /**
-     * Загружает html информации о задаче
-     * @param float $issueId
-     */
-    /*public function loadHTML( $issueId ) {
-        if (!$issue = Issue::load( (float)$issueId )) return $this->error( 'Нет такой задачи' );
-
-        $this->add2Answer( 'issue', $issue );
-        return $this->answer();
-    }*/
-    
     protected function getIssue4Client(Issue $issue, $loadMembers = true)
     {
         $obj = $issue->getClientObject();

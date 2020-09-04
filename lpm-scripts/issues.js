@@ -2,6 +2,7 @@ $(document).ready(
     function () {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.projectId = parseInt($('#issueProjectID').val());
+        issuePage.idInProject = $('#issueInfo').data('idInProject');
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
@@ -243,10 +244,13 @@ DropDown.prototype = {
     }
 }
 
-var issuePage = {
+const issuePage = {
     projectId: null,
+    idInProject: null,
     members: null
 };
+
+issuePage.getIssueId = () => $('#issueView input[name=issueId]').val();
 
 issuePage.loadMembers = function (handler) {
     if (issuePage.members != null) {

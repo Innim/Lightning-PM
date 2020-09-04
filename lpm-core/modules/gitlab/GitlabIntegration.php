@@ -151,7 +151,9 @@ class GitlabIntegration
         }
     }
 
-    /// Возвращает список проектов по идентификатору группы.
+    /**
+     * Возвращает список проектов по идентификатору группы.
+     */
     public function getProjects($groupId)
     {
         $client = $this->client();
@@ -172,7 +174,9 @@ class GitlabIntegration
         }
     }
 
-    /// Возвращает список веток репозитория проекта.
+    /**
+     * Возвращает список веток репозитория проекта.
+     */
     public function getBranches($projectId)
     {
         $client = $this->client();
