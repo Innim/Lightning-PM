@@ -28,7 +28,8 @@ input, textarea, select {
     -webkit-box-shadow : inset 0 2px 4px rgba(0,0,0,0.7);*/
 }
 input {
-	height       : 20px;
+	height       : 30px;
+	box-sizing   : border-box;
 }
 input[type="search"] {
 	box-sizing   : content-box;
@@ -2074,4 +2075,30 @@ div.ftp
 .stat-summary .stat-summary-label {}
 .stat-summary .stat-summary-value {
 	font-weight: bold;
+}
+
+/* Форма создания ветки */
+
+form.create-branch {
+	padding: 10px;
+}
+
+form.create-branch ul.create-branch-items {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+form.create-branch ul.create-branch-items > li {
+	padding: 5px 0;
+}
+
+form.create-branch ul.create-branch-items label {
+	margin-bottom: 3px;
+	display: block;
+}
+
+form.create-branch ul.create-branch-items select,
+form.create-branch ul.create-branch-items input {
+	width: 100%;
 }

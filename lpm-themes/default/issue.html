@@ -189,8 +189,8 @@ $project = $issue->getProject();
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
 
 <article id="createBranch" title="Создать ветку задачи">
-    <form>
-        <ul>
+    <form class="create-branch">
+        <ul class="create-branch-items">
             <li>
                 <label for="repository">Репозиторий</label><select id="repository" name="repository"></select>
             </li>
