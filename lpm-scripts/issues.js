@@ -2,8 +2,10 @@ $(document).ready(
     function () {
         //$( '#issueView .comments form.add-comment' ).hide();
         issuePage.projectId = parseInt($('#issueProjectID').val());
-        issuePage.idInProject = $('#issueInfo').data('idInProject');
-        issuePage.labels = $('#issueInfo').data('labels').split(',');
+        if ($('#issueInfo').length) {
+            issuePage.idInProject = $('#issueInfo').data('idInProject');
+            issuePage.labels = $('#issueInfo').data('labels').split(',');
+        }
         issuePage.updatePriorityVals();
         issuePage.scumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
