@@ -6,11 +6,7 @@ $(document).ready(
             }
         });
 
-        addTarget.init();
-        $('.target-btn').click(function () {
-            addTarget.open();
-        });
-
+        targetSprint.init();
         if ($('.text-target').text()) {
             $('.title-target').removeClass('hidden');
         }
@@ -92,7 +88,7 @@ let scrumBoard = {
                     $('.title-target').addClass('hidden');
                     $('.text-target').children().remove();;
                     $('.input-target').val('');
-                    addTarget.incNumSprint($('.ui-dialog-title'));
+                    targetSprint.incNumSprint($('.ui-dialog-title'));
                     issuePage.scumColUpdateInfo();
                 } else {
                     srv.err(res);
@@ -102,33 +98,12 @@ let scrumBoard = {
     },
 };
 
-const addTarget = {
-    init: function () {
-        $('#addTarget').dialog(
-            {
-                dialogClass: 'modal-target-sprint',
-                autoOpen: false,
-                modal: true,
-                width: 540,
-                height: 394,
-                closeText: 'Закрыть',
-                resizable: false,
-                buttons: [
-                    {
-                        text: 'Сохранить',
-                        click: function () {
-                            addTarget.save();
-                        }
-                    },
-                    {
-                        text: 'Отмена',
-                        click: function () {
-                            addTarget.close();
-                        }
-                    }
-                ]
-            }
-        );
+const targetSprint = {
+    init: function (modalParam) {
+        $('#addTarget').dialog({...targetSprint.defaultParam, ...modalParam});
+        $('.target-btn').click(function () {
+            targetSprint.open();
+        });
     },
     open: function () {
         $('#addTarget').dialog('open');
@@ -152,10 +127,33 @@ const addTarget = {
                 }
             }
         });
-        addTarget.close();
+        targetSprint.close();
     },
     incNumSprint: function (element) {
         let numSprint = element.text().replace(/\D/g,'');
         element.text(`Цели спринта #${++numSprint}`);
+    },
+    defaultParam: {
+        dialogClass: 'modal-target-sprint',
+        autoOpen: false,
+        modal: true,
+        width: 540,
+        height: 394,
+        closeText: 'Закрыть',
+        resizable: false,
+        buttons: [
+            {
+                text: 'Сохранить',
+                click: function () {
+                    targetSprint.save();
+                }
+            },
+            {
+                text: 'Отмена',
+                click: function () {
+                    targetSprint.close();
+                }
+            }
+        ]
     }
 }

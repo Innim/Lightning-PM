@@ -357,10 +357,9 @@ class ProjectService extends LPMBaseService
                 return $this->error('Цели проекта не добавлены. Ошибка записи в БД.');
             }
     
-            $text = HTMLHelper::codeIt($targetText);
-            $text = HTMLHelper::formatIt($text);
-    
-            $this->add2Answer('targetHTML', $text);
+            $markdownText = HTMLHelper::getMarkdownText($targetText);
+            
+            $this->add2Answer('targetHTML', $markdownText);
             $this->add2Answer('targetText', $targetText);
         } catch ( Exception $e) {
             return $this->exception($e);

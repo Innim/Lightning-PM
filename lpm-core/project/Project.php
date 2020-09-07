@@ -281,10 +281,12 @@ class Project extends MembersInstance
         
         $sql = "UPDATE `%s` SET `targetSprint` =  '" . $text . "' " .
             "WHERE `id` = '" . $projectId . "' ";
-        
-        if (!$result = $db->queryt($sql, LPMTables::PROJECTS)) {
+    
+        $result = $db->queryt($sql, LPMTables::PROJECTS);
+        if (!$result) {
             return false;
         }
+        
         return $result;
     }
     
@@ -301,7 +303,9 @@ class Project extends MembersInstance
             'FROM'   => LPMTables::PROJECTS,
             'WHERE' => ['id' => $projectId]
         ]);
-        if (!$query || !($row = $query->fetch_assoc())) {
+        
+        $row = $query->fetch_assoc();
+        if (!$query || !$row) {
             return false;
         }
         return $row['targetSprint'];
@@ -522,12 +526,7 @@ class Project extends MembersInstance
     public function getHTMLText()
     {
         if (empty($this->_htmlText)) {
-            $text = $this->targetSprint;
-            
-            $text = HTMLHelper::codeIt($text);
-            $text = HTMLHelper::formatIt($text);
-            
-            $this->_htmlText = $text;
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->targetSprint);
         }
         
         return $this->_htmlText;

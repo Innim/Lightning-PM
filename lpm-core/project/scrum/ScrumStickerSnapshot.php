@@ -463,12 +463,7 @@ SQL;
     public function getHTMLText()
     {
         if (empty($this->_htmlText)) {
-            $text = $this->targetSprint;
-            
-            $text = HTMLHelper::codeIt($text);
-            $text = HTMLHelper::formatIt($text);
-            
-            $this->_htmlText = $text;
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->targetSprint);
         }
         
         return $this->_htmlText;
