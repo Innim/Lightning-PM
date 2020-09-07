@@ -244,6 +244,68 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Создает ветку задачи на репозитории и добавляет комментарий с именем ветки.
+     *
+     * @param  int $issueId Идентификатор задачи.
+     * @param  string $branchName Имя ветки.
+     * @param  int $gitlabProjectId Идентификатор проекта на GitLab.
+     * @param  string $parentBranch Имя родительской ветки.
+     * @return {
+     *     Comment comment Добавленный комментарий.
+     *     String  html    HTML код комментария.
+     * }
+     */
+    public function createBranch($issueId, $branchName, $gitlabProjectId, $parentBranch)
+    {
+        $issueId = (int)$issueId;
+        $gitlabProjectId = (int)$gitlabProjectId;
+        if (!$this->validateBranchName($branchName)) {
+            return $this->errorValidation('branchName');
+        }
+        if (!$this->validateBranchName($parentBranch)) {
+            return $this->errorValidation('parentBranch');
+        }
+
+        try {
+            $issue = Issue::load($issueId);
+            if (!$issue) {
+                return $this->error('Нет такой задачи');
+            }
+
+            $project = $issue->getProject();
+            if (!$project->isIntegratedWithGitlab()) {
+                return $this->error('Проект не интегрирован с GitLab');
+            }
+
+            if (!($client = $this->getGitlabIfAvailable())) {
+                return $this->error('GitLab интеграция недоступна');
+            }
+
+            $finalBranchName = 'feature/' . $branchName;
+
+            // Создаем ветку на репозитории
+            if (!($branch = $client->createBranch($gitlabProjectId, $parentBranch, $finalBranchName))) {
+                return $this->error('Не удалось создать ветку ' . $finalBranchName);
+            }
+
+            // Добавляем коммент
+            $commentText = $branch->name;
+            if ($parentBranch != 'develop') {
+                $commentText = $parentBranch . ' -> ' . $commentText;
+            }
+            $commentText = '`' . $commentText . '`';
+
+            $comment = $this->postComment($issue, $commentText, true);
+
+            $this->setupCommentAnswer($comment);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Меняет приоритет задачи.
      * @param  int $issueId Идентификатор задачи
      * @param  int $delta Изменение приоритета.
@@ -577,17 +639,6 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
     
-    /**
-     * Загружает html информации о задаче
-     * @param float $issueId
-     */
-    /*public function loadHTML( $issueId ) {
-        if (!$issue = Issue::load( (float)$issueId )) return $this->error( 'Нет такой задачи' );
-
-        $this->add2Answer( 'issue', $issue );
-        return $this->answer();
-    }*/
-    
     protected function getIssue4Client(Issue $issue, $loadMembers = true)
     {
         $obj = $issue->getClientObject();
@@ -732,5 +783,10 @@ class IssueService extends LPMBaseService
         Issue::setStatus($issue, Issue::STATUS_COMPLETED, $this->getUser());
         
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+    }
+
+    private function validateBranchName($value)
+    {
+        return \GMFramework\Validation::checkStr($value, 255, 1, false, false, true, '\/\._');
     }
 }

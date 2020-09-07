@@ -28,7 +28,8 @@ input, textarea, select {
     -webkit-box-shadow : inset 0 2px 4px rgba(0,0,0,0.7);*/
 }
 input {
-	height       : 20px;
+	height       : 30px;
+	box-sizing   : border-box;
 }
 input[type="search"] {
 	box-sizing   : content-box;
@@ -201,6 +202,23 @@ code.nohighlight {
 	-moz-tab-size: 4;
 	-o-tab-size: 4;
 	-webkit-tab-size: 4
+}
+.flip-vertical {
+	-moz-transform: scale(1,-1);
+	-webkit-transform: scale(1, -1);
+	-o-transform: scale(1, -1);
+	transform: scale(1, -1);
+	filter: FlipV;
+	-ms-filter: "FlipV"; 
+}
+
+.flip-horizontal{
+	-moz-transform: scale(-1, 1);
+	-webkit-transform: scale(-1, 1);
+	-o-transform: scale(-1, 1);
+	transform: scale(-1, 1);
+	filter: FlipH;
+	-ms-filter: "FlipH"; 
 }
 .copyright {
 	font-size: 7pt;
@@ -818,14 +836,29 @@ ul.images-url > li > input {
 .comments .links-bar {
 	/*text-align: right;*/
 	height: 20px;
-	margin: 0;
+	margin: 0 0 5px;
 }
 .comments .links-bar a {
 	font-size: smaller;
+	margin: 0 5px;
 }
 .comments .links-bar .scrum-comments-shortcut {
 	float: left;
 }
+a.create-branch-icon {
+	position: relative;
+	text-decoration: none;
+}
+a.create-branch-icon .branch-icon {
+	padding: 0 2px;
+}
+a.create-branch-icon .plus-icon {
+	position: absolute;
+	right:0;
+	bottom:0;
+	font-size: 0.5em;
+}
+
 .comments .links-bar .comments-controls {
 	float: right;
 }
@@ -1928,33 +1961,30 @@ div.ftp
 	padding: 0px;
 }
 
-#slackСhannel {
-	height: 24px;
-	width: 170px;
-	margin: 0;
-	margin-left: 210px;
-
-}
-ul#ulProjectSettings {
+#projectSettings form ul.form-items {
 	padding: 10px;
 	list-style-type: none;
 }
-.con {
-	width: 100%;
-	height: 30px;
-	padding: 10px;
-	margin-bottom: 20px;
-}
-.con label {
-	margin-top: 5px;
-	float: left;
-}
-#scrumCheckbox {
-	margin-left: 4%;
+
+#projectSettings form ul.form-items > li {
+	padding: 5px;
+	text-align: left;
 }
 
-#project-scrum-item {
-	margin-left: 10px;
+#projectSettings form label {
+	float: left;
+	margin-top: 5px;
+	min-width: 250px;
+}
+
+#projectSettings form input {
+	/* margin: 0 0 0 220px ; */
+	margin: 0;
+}
+
+#projectSettings form input[type=text] {
+	height: 24px;
+	width: 170px;
 }
 .tooltip div {
 	display: none;
@@ -2061,4 +2091,30 @@ ul#ulProjectSettings {
 .stat-summary .stat-summary-label {}
 .stat-summary .stat-summary-value {
 	font-weight: bold;
+}
+
+/* Форма создания ветки */
+
+form.create-branch {
+	padding: 10px;
+}
+
+form.create-branch ul.create-branch-items {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+form.create-branch ul.create-branch-items > li {
+	padding: 5px 0;
+}
+
+form.create-branch ul.create-branch-items label {
+	margin-bottom: 3px;
+	display: block;
+}
+
+form.create-branch ul.create-branch-items select,
+form.create-branch ul.create-branch-items input {
+	width: 100%;
 }

@@ -10,7 +10,7 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
     const STATE_LOCKED = 'locked';
 
     /**
-     * Идентификатор запроса,
+     * Идентификатор запроса.
      * @var int
      */
     public $id;
