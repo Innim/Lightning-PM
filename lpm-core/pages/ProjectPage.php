@@ -39,15 +39,7 @@ class ProjectPage extends LPMPage
     {
         parent::__construct(self::UID, '', true, true);
         
-        array_push(
-            $this->_js,
-            'project',
-            'issues',
-            'issue-form',
-            'comments',
-            'attachments',
-            'libs/tribute'
-        );
+        $this->_js[] = 'project';
 
         $this->_pattern = 'project';
         
@@ -58,15 +50,20 @@ class ProjectPage extends LPMPage
             self::PUID_ISSUES,
             'Список задач',
             '',
-            ['project-issues', 'issues-export-to-excel']
+            array_merge(['project-issues', 'issues-export-to-excel'], $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMPLETED_ISSUES,
             'Завершенные',
             '',
-            ['project-completed', 'issues-export-to-excel']
+            array_merge(['project-completed', 'issues-export-to-excel'], $this->getIssueJs())
         );
-        $this->addSubPage(self::PUID_COMMENTS, 'Комментарии', 'project-comments');
+        $this->addSubPage(
+            self::PUID_COMMENTS,
+            'Комментарии',
+            'project-comments',
+            $this->getCommentJs()
+        );
         $this->addSubPage(
             self::PUID_MEMBERS,
             'Участники',
@@ -97,7 +94,12 @@ class ProjectPage extends LPMPage
 
         // Если это scrum проект - добавляем новый подраздел
         if ($this->_project->scrum) {
-            $this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board', ['scrum-board']);
+            $this->addSubPage(
+                self::PUID_SCRUM_BOARD,
+                'Scrum доска',
+                'scrum-board',
+                array_merge(['scrum-board'], $this->getIssueJs())
+            );
             $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
             $this->addSubPage(
                 self::PUID_SPRINT_STAT,
@@ -234,7 +236,7 @@ class ProjectPage extends LPMPage
         $this->_title = $this->getTitleByIssue($issue);
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
-        array_push($this->_js, 'issue', 'create-branch');
+        $this->_js = array_merge(['issue', 'create-branch'], $this->getIssueJs(), $this->getCommentJs());
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
@@ -334,6 +336,23 @@ class ProjectPage extends LPMPage
     private function initSettings()
     {
         $this->addTmplVar('project', $this->_project);
+    }
+
+    private function getIssueJs()
+    {
+        return [
+            'issues',
+            'issue-form',
+            'libs/tribute'
+        ];
+    }
+
+    private function getCommentJs()
+    {
+        return [
+            'comments',
+            'attachments',
+        ];
     }
     
     /**
