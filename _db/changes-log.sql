@@ -271,4 +271,11 @@ ALTER TABLE `lpm_projects`
 ADD `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab';
 
 -- v0.9.22
+
 --NEXT
+
+ALTER TABLE `lpm_projects`
+ADD `targetSprint` text COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Цели спринта Scrum проекта' AFTER `scrum`;
+
+ALTER TABLE `lpm_scrum_snapshot_list`
+ADD `targetSprint` text COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Цели спринта' AFTER `creatorId`;
