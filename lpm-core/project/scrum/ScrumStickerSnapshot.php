@@ -15,15 +15,19 @@ class ScrumStickerSnapshot extends LPMBaseObject
     {
         $db = self::getDB();
         $projectId = (int) $projectId;
+        $tables = [LPMTables::SCRUM_SNAPSHOT_LIST, LPMTables::TARGET_INSTANCE];
 
         // TODO: нужно ли ограничить как-то?
         // Выбираем (пока все) записи по переданному проекту
         $sql = <<<SQL
-        SELECT * FROM `%1\$s` WHERE `%1\$s`.`pid` = '${projectId}'
-        ORDER BY `%1\$s`.`created` DESC
+        SELECT snapshot.*, target.targetText AS `targetSprint`
+        FROM `%1\$s` AS snapshot
+        LEFT JOIN `%2\$s` AS target ON target.instanceId = snapshot.pid
+        WHERE `snapshot`.`pid` = '${projectId}'
+        ORDER BY `snapshot`.`created` DESC
 SQL;
 
-        return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
+        return StreamObject::loadObjList($db, array_merge((array)$sql, $tables), __CLASS__);
     }
 
     /**
@@ -127,7 +131,6 @@ SQL;
         $created = DateTimeUtils::mysqlDate();
         $started = empty($startedUnixtime) ? $created : DateTimeUtils::mysqlDate($startedUnixtime);
         $creatorId = $userId;
-        $targetSprint = Project::loadTextTargetSprint($projectId);
         $db = self::getDB();
 
         try {
@@ -139,8 +142,8 @@ SQL;
 
             // запись о новом снепшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`idInProject`, `pid`, `targetSprint`, `creatorId`, `started`, `created`)
-                VALUES ('${idInProject}', '${pid}', '${targetSprint}', '${creatorId}', '${started}', '${created}')
+                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `created`)
+                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${created}')
 SQL;
 
             // если что-то пошло не так
@@ -150,9 +153,11 @@ SQL;
 
             $sid = $db->insert_id;
             
-            // очищаем в БД поле цели спринта текукщего проекта
-            $emptyString = '';
-            Project::updateTargetSprint($projectId, $emptyString);
+            // сохраняем в БД id Snapshot в таблице целий
+            $result = self::setIdSnapshotForTarget($projectId, $idInProject);
+            if (!$result) {
+                throw new DBException($db, "Ошибка при сохранении целий снепшота");
+            }
             
             // добавляем всю необходимую информацию по снепшоте
             $sql = <<<SQL
@@ -262,7 +267,23 @@ SQL;
             return (int) $result['maxID'];
         }
     }
-
+    
+    /**
+     * Сохраняет id cнепшота в таблице целей БД.
+     * @param int $projectId идентификатор проекта, для которого создается снепшот.
+     * @param int $idSnapshot идентификатор снепшота в проекте.
+     */
+    public static function setIdSnapshotForTarget($projectId, $idSnapshot) {
+        $instanceType = LPMInstanceTypes::PROJECT;
+        $db = self::getDB();
+        return $db->queryb([
+            'UPDATE' => LPMTables::TARGET_INSTANCE,
+            'SET'    => ['idSnapshotProject' => $idSnapshot],
+            'WHERE'  => ['instanceId' => $projectId,
+                        'instanceType' => $instanceType],
+        ]);
+    }
+    
     /**
      * Идентификатор snapshot-а.
      * @var int
