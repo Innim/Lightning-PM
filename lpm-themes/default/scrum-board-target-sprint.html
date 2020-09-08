@@ -1,0 +1,14 @@
+<?php
+/* 
+Требуются: 
+    $project - проект
+*/
+?>
+<article id="addTarget" title="Цели спринта #<?=$project->getCurrentSpintNum();?>">
+    <form class="form-target">
+        <textarea class="input-target" placeholder="Укажите цели спринта"><?=$project->targetSprint;?></textarea>
+    </form>
+    <p class="target-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
+        <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
+    </p>
+</article>

@@ -272,3 +272,12 @@ ADD `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор гру�
 
 -- v0.9.22
 --NEXT
+
+DROP TABLE IF EXISTS `lpm_fixed_instance`;
+CREATE TABLE `lpm_fixed_instance` (
+  `userId` int(10) unsigned NOT NULL COMMENT 'Идентификатор пользователя',
+  `instanceType` tinyint(3) unsigned NOT NULL COMMENT 'Тип инстанции',
+  `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
+  `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
+  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';

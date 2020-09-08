@@ -269,6 +269,50 @@ class Project extends MembersInstance
     }
     
     /**
+     * Обновляет в БД цели спринта текущего scrum проекта.
+     * @param int $projectId индентификатор проекта.
+     * @param string $targetText текст цели спринта.
+     */
+    public static function updateTargetSprint($projectId, $targetText)
+    {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        
+        $text = $db->real_escape_string($targetText);
+        $text = str_replace('%', '%%', $text);
+        
+        $sql = "UPDATE `%s` SET `targetSprint` =  '" . $text . "' " .
+            "WHERE `id` = '" . $projectId . "' ";
+    
+        $result = $db->queryt($sql, LPMTables::PROJECTS);
+        if (!$result) {
+            return false;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Загружаем из БД цели текущего спринта scrum проекта.
+     * @param int $projectId индентификатор проекта.
+     * @return string|boolean текст целей спринта или false.
+     */
+    public static function loadTextTargetSprint($projectId)
+    {
+        $db = self::getDB();
+        $query =  $db->queryb([
+            'SELECT' => 'targetSprint',
+            'FROM'   => LPMTables::PROJECTS,
+            'WHERE' => ['id' => $projectId]
+        ]);
+        
+        $row = $query->fetch_assoc();
+        if (!$query || !$row) {
+            return false;
+        }
+        return $row['targetSprint'];
+    }
+    
+    /**
      *
      * @var int
      */
@@ -309,6 +353,12 @@ class Project extends MembersInstance
      * @var Boolean|null
      */
     public $fixedInstance;
+    
+    /**
+     * Цели спринта проекта.
+     * @var string|null
+     */
+    public $targetSprint;
 
     private $_importantIssuesCount = -1;
 
@@ -321,6 +371,12 @@ class Project extends MembersInstance
      * @var User
      */
     private $_master;
+    
+    /**
+     * Форматированный текст.
+     * @var string|null
+     */
+    private $_htmlText = null;
     
     public function __construct()
     {
@@ -475,6 +531,19 @@ class Project extends MembersInstance
         }
 
         return $this->_master;
+    }
+    
+    /**
+     * Возвращает форматированый текст для вставки в HTML код.
+     * @return string
+     */
+    public function getHTMLText()
+    {
+        if (empty($this->_htmlText)) {
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->targetSprint);
+        }
+        
+        return $this->_htmlText;
     }
     
     protected function loadMembers()

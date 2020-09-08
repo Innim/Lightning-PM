@@ -5,6 +5,11 @@ $(document).ready(
                 e.setAttribute('title', e.textContent)
             }
         });
+
+        targetSprint.init();
+        if ($('.text-target').text()) {
+            $('.title-target').removeClass('hidden');
+        }
     }
 );
 
@@ -80,6 +85,10 @@ let scrumBoard = {
                 preloader.hide();
                 if (res.success) {
                     $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
+                    $('.title-target').addClass('hidden');
+                    $('.text-target').children().remove();;
+                    $('.input-target').val('');
+                    $('.ui-dialog-title').text(`Цели спринта #${res.numSprint}`);
                     issuePage.scumColUpdateInfo();
                 } else {
                     srv.err(res);
@@ -88,3 +97,59 @@ let scrumBoard = {
         }
     },
 };
+
+const targetSprint = {
+    init: function (modalParam) {
+        $('#addTarget').dialog({...targetSprint.defaultParam, ...modalParam});
+        $('.target-btn').click(function () {
+            targetSprint.open();
+        });
+    },
+    open: function () {
+        $('#addTarget').dialog('open');
+    },
+    close: function () {
+        $('#addTarget').dialog('close');
+    },
+    save: function () {
+        const textTarget = $('.input-target').val();
+        const projectId = $('#scrumBoard').data('project-id');
+
+        srv.project.setTargetSprint(projectId, textTarget, function (res) {
+            if (res) {
+                $('.text-target').html(res.targetHTML);
+                $('.input-target').val(res.targetText);
+
+                if (!res.targetText) {
+                    $('.title-target').addClass('hidden');
+                } else {
+                    $('.title-target').removeClass('hidden');
+                }
+            }
+        });
+        targetSprint.close();
+    },
+    defaultParam: {
+        dialogClass: 'modal-target-sprint',
+        autoOpen: false,
+        modal: true,
+        width: 540,
+        height: 394,
+        closeText: 'Закрыть',
+        resizable: false,
+        buttons: [
+            {
+                text: 'Сохранить',
+                click: function () {
+                    targetSprint.save();
+                }
+            },
+            {
+                text: 'Отмена',
+                click: function () {
+                    targetSprint.close();
+                }
+            }
+        ]
+    }
+}

@@ -103,4 +103,17 @@ class HTMLHelper
             $text
         );
     }
+    
+    /**
+     * Возвращает форматированый текст в разметке Markdown.
+     * @param string $textContent
+     * @return string
+     */
+    public static function getMarkdownText($textContent)
+    {
+        $markdownText = self::codeIt($textContent);
+        $markdownText = self::formatIt($markdownText);
+        
+        return $markdownText;
+    }
 }

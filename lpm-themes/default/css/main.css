@@ -1416,44 +1416,44 @@ blockquote > p {
 #issueForm form > ol > li .put-to-board-line label {
 	margin: 0 5px;
 }
-#issueForm .note
-{
+
+.note {
 	width: 90%;
 	margin: 5px auto 0;
 	padding: 0 5px;
 	font-size: .9em;
 	color: #cccccc;
 }
-#issueForm .note:hover 
-{
+
+.note:hover {
 	color: #999999;
 }
-#issueForm .note code 
-{
+
+.note code {
 	color: #C5C5C5;
 	padding: 0px 2px;
 	border: none;
 }
-#issueForm .note:hover code 
-{
+
+.note:hover code {
 	color: #999999;
 }
 
-#issueForm .note a {
+.note a {
 	color: #999999;
 }
 
-#issueForm .note a:hover {
+.note a:hover {
 	color: #333333;
 }
 
-#issueForm .note a.tag {
+.note a.tag {
 	display: inline-block;
 	margin: 0 .2em;
 	text-decoration: none;
 }
 
-#issueForm .note .tag.quote {
+.note .tag.quote {
 	display: inline-block;
 	margin: 0 .2em;
 	border-left: solid 2px #cdcdcd;
@@ -1859,9 +1859,18 @@ div.ftp
 	display: none;
 }
 
+#scrumBoard .link-title-snapshot {
+    display: block;
+    margin-bottom: 12px;
+    color: #666666;
+}
+
+#scrumBoard .text-title-snapshot{
+    float: none;
+}
+
 #scrumBoard .scrum-snapshot-stat {
 	clear: both;
-	margin-top: 50px;
 	margin-left: 5px;
 	margin-bottom: 10px;
 }
@@ -1884,6 +1893,57 @@ div.ftp
 
 #sprint-stat .sprint-members-stat {
 	margin-top: 10px;
+}
+
+/*Цели спринта*/
+
+.scrum-board-target {
+    max-width: 48%;
+    margin-bottom: 12px;
+}
+
+.title-target {
+    margin: 8px 0 8px 0;
+    font-weight: 700;
+}
+
+.text-target p {
+    margin: 0;
+}
+
+.target-btn {
+    margin: 0;
+    padding: 0;
+    min-width: auto;
+    min-height: auto;
+    display: block;
+    font-size: 12px;
+    line-height: 12px;
+    text-decoration: underline;
+    color: #666666;
+    border: none;
+    background: transparent;
+}
+
+/* Модальное окно цели спринта */
+
+.modal-target-sprint .ui-dialog-titlebar {
+    color: #666666;
+}
+
+.modal-target-sprint .ui-dialog-titlebar-close {
+    display: none;
+}
+
+.input-target {
+    width: 500px;
+    height: 176px;
+    resize: none;
+}
+
+.target-note {
+    font-size: 11px;
+    color: #999999;
 }
 
 .issue-labels-container {
