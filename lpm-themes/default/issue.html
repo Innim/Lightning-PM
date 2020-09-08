@@ -8,6 +8,8 @@
 */
 $userId = lpm_get_user()->getID();
 $isOnBoard = $issue->isOnBoard();
+
+$project = $issue->getProject();
 ?>
 <article id="issueView">
     <h1><a href="<?=lpm_get_base_page_url();?>">
@@ -16,13 +18,14 @@ $isOnBoard = $issue->isOnBoard();
         <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
     </div>
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-    <article id="issueInfo" class="container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>">
+    <article id="issueInfo" class="container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
+        data-id-in-project="<?=$issue->getIdInProject();?>" data-labels="<?=implode(',', $issue->getLabelNames());?>">
         <h3>
             <span class="issue-id"><?=$issue->getIdInProject();?></span>.
             <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
                 class="issues-hours-box">(<span
                     class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
-            <?php if ($issue->getProject()->scrum && !$isOnBoard):?>
+            <?php if ($project->scrum && !$isOnBoard):?>
             <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску"
                 class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
             <?php endif;?>
@@ -119,7 +122,7 @@ $isOnBoard = $issue->isOnBoard();
             <input type="hidden" name="parentId" value="<?=$issue->parentId;?>" />
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
-            <?php if ($issue->isMember($userId) || $issue->getProject()->masterId == $userId): ?>
+            <?php if ($issue->isMember($userId) || $project->masterId == $userId): ?>
             <button class="verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
             <?php endif ?>
             <button class="complete-btn" onclick="completeIssue(event);">Завершить</button>
@@ -138,12 +141,19 @@ $isOnBoard = $issue->isOnBoard();
     </article>
     <article class="comments">
         <div class="links-bar">
-            <?php if ($issue->getProject()->scrum):?>
+            <?php if ($project->scrum):?>
             <div class="scrum-comments-shortcut">
+                <?php if ($project->isIntegratedWithGitlab()): ?>
+                <a href="#" class="create-branch-icon" onclick="issuePage.createBranch(); return false;"
+                    title="Создать ветку для задачи">
+                    <i class="fas fa-code-branch branch-icon" aria-hidden="true"></i><i
+                        class="fas fa-plus-circle plus-icon"></i>
+                </a>
+                <?php endif; ?>
                 <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i
                         class="far fa-check-square" aria-hidden="true"></i></a>
                 <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i
-                        class="fas fa-code-branch" aria-hidden="true"></i></a>
+                        class="fas fa-code-branch flip-vertical" aria-hidden="true"></i></a>
             </div>
             <?php endif;?>
             <div class="comments-controls">
@@ -176,4 +186,18 @@ $isOnBoard = $issue->isOnBoard();
 <script type="text/javascript">
     var issueLabels = <?= json_encode($issue -> getLabelNames());?>;
 </script>
-<?php lpm_print_issue_form($issue->getProject(), $issue, isset($input) ? $input : null); ?>
+<?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
+
+<article id="createBranch" title="Создать ветку задачи">
+    <form class="create-branch">
+        <ul class="create-branch-items">
+            <li>
+                <label for="repository">Репозиторий</label><select id="repository" name="repository"></select>
+            </li>
+            <li>
+                <label for="parentBranch">Из</label><select id="parentBranch" name="parentBranch"></select>
+            </li>
+            <li><label for="branchName">Название</label><input id="branchName" type="text" name="branchName"></li>
+        </ul>
+    </form>
+</article>

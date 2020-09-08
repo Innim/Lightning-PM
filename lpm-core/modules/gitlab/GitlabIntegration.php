@@ -151,6 +151,75 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * Возвращает список проектов по идентификатору группы.
+     */
+    public function getProjects($groupId)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $list = $client->groups()->projects($groupId);
+            $res = [];
+            foreach ($list as $data) {
+                $res[] = new GitlabProject($data);
+            }
+            return $res;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return null;
+        }
+    }
+
+    /**
+     * Возвращает список веток репозитория проекта.
+     */
+    public function getBranches($projectId)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $list = $client->repositories()->branches($projectId);
+            $res = [];
+            foreach ($list as $data) {
+                $res[] = new GitlabBranch($data);
+            }
+            return $res;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return null;
+        }
+    }
+
+    /**
+     * Создает ветку на репозитории.
+     * @param $projectId Идентификатор проекта на GitLab.
+     * @param $parent Имя родительской ветки.
+     * @param $name Имя создаваемой ветки.
+     * @return GitlabBranch|false
+     */
+    public function createBranch($projectId, $parent, $name)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return false;
+        }
+
+        try {
+            $res = $client->repositories()->createBranch($projectId, $name, $parent);
+            return new GitlabBranch($res);
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return false;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {

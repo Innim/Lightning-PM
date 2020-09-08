@@ -39,15 +39,7 @@ class ProjectPage extends LPMPage
     {
         parent::__construct(self::UID, '', true, true);
         
-        array_push(
-            $this->_js,
-            'project',
-            'issues',
-            'issue-form',
-            'comments',
-            'attachments',
-            'libs/tribute'
-        );
+        $this->_js[] = 'project';
 
         $this->_pattern = 'project';
         
@@ -58,15 +50,20 @@ class ProjectPage extends LPMPage
             self::PUID_ISSUES,
             'Список задач',
             '',
-            ['project-issues', 'issues-export-to-excel']
+            array_merge(['project-issues', 'issues-export-to-excel'], $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMPLETED_ISSUES,
             'Завершенные',
             '',
-            ['project-completed', 'issues-export-to-excel']
+            array_merge(['project-completed', 'issues-export-to-excel'], $this->getIssueJs())
         );
-        $this->addSubPage(self::PUID_COMMENTS, 'Комментарии', 'project-comments');
+        $this->addSubPage(
+            self::PUID_COMMENTS,
+            'Комментарии',
+            'project-comments',
+            $this->getCommentJs()
+        );
         $this->addSubPage(
             self::PUID_MEMBERS,
             'Участники',
@@ -97,8 +94,13 @@ class ProjectPage extends LPMPage
 
         // Если это scrum проект - добавляем новый подраздел
         if ($this->_project->scrum) {
-            $this->addSubPage(self::PUID_SCRUM_BOARD, 'Scrum доска', 'scrum-board', ['scrum-board']);
-            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot', ['scrum-board']);
+            $this->addSubPage(
+                self::PUID_SCRUM_BOARD,
+                'Scrum доска',
+                'scrum-board',
+                array_merge(['scrum-board'], $this->getIssueJs())
+            );
+            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
             $this->addSubPage(
                 self::PUID_SPRINT_STAT,
                 'Статистика спринта',
@@ -164,118 +166,193 @@ class ProjectPage extends LPMPage
             $this->addTmplVar('input', $this->_issueInput);
         }
         
-        // может быть это страница просмотра задачи?
-        if (!$this->_curSubpage) {
-            if ($this->getPUID() == self::PUID_ISSUE) {
-                $issueId = $this->getCurentIssueId((float)$this->getAddParam());
-                if ($issueId <= 0 || !$issue = Issue::load((float)$issueId)) {
-                    LightningEngine::go2URL($this->getUrl());
-                }
-                
-                $issue->getMembers();
-                $issue->getTesters();
-                
-                $comments = Comment::getListByInstance(LPMInstanceTypes::ISSUE, $issue->id);
-                foreach ($comments as $comment) {
-                    $comment->issue = $issue;
-                }
-
-                $this->_title = $this->getTitleByIssue($issue);
-                $this->_pattern = 'issue';
-                ArrayUtils::remove($this->_js, 'project');
-                array_push($this->_js, 'issue');
-
-                $this->addTmplVar('issue', $issue);
-                $this->addTmplVar('comments', $comments);
-            }
-        }
-
-        if (!$this->_curSubpage || $this->_curSubpage->uid == self::PUID_ISSUES) {
-            // загружаем задачи
-            $openedIssues = Issue::loadListByProject(
-                $this->_project->id,
-                [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
-            );
-            $this->addTmplVar('issues', $openedIssues);
-        } elseif ($this->_curSubpage->uid == self::PUID_COMPLETED_ISSUES) {
-            // загружаем  завершенные задачи
-            $completedIssues = Issue::loadListByProject(
-                $this->_project->id,
-                [Issue::STATUS_COMPLETED]
-            );
-            $this->addTmplVar('issues', $completedIssues);
-        } elseif ($this->_curSubpage->uid == self::PUID_COMMENTS) {
-            $page = $this->getProjectedCommentsPage();
-            $commentsPerPage = 100;
-
-            $this->_currentPage = $page;
-
-            $comments = Comment::getIssuesListByProject(
-                $this->_project->id,
-                ($page - 1) * $commentsPerPage,
-                $commentsPerPage
-            );
-            $issueIds = [];
-            $commentsByIssueId = [];
-            foreach ($comments as $comment) {
-                if (!isset($commentsByIssueId[$comment->instanceId])) {
-                    $commentsByIssueId[$comment->instanceId] = [];
-                    $issueIds[] = $comment->instanceId;
-                }
-                $commentsByIssueId[$comment->instanceId][] = $comment;
-            }
-
-            $issues = Issue::loadListByIds($issueIds);
-            foreach ($issues as $issue) {
-                if (isset($commentsByIssueId[$issue->id])) {
-                    foreach ($commentsByIssueId[$issue->id] as $comment) {
-                        $comment->issue = $issue;
-                    }
+        $subPageUid = $this->_curSubpage ? $this->_curSubpage->uid : null;
+        switch ($subPageUid) {
+            case null: {
+                // может быть это страница просмотра задачи?
+                if ($this->getPUID() == self::PUID_ISSUE) {
+                    $this->initIssue();
+                    break;
                 }
             }
-
-            $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('comments', $comments);
-            $this->addTmplVar('page', $page);
-            if ($page > 1) {
-                $this->addTmplVar('prevPageUrl', $this->getUrl('page', $page - 1));
+            case self::PUID_ISSUES:{
+                $this->initIssues();
+                break;
             }
-            // Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело
-            if (count($comments) === $commentsPerPage) {
-                $this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
+            case self::PUID_COMPLETED_ISSUES: {
+                $this->initCompletedIssues();
+                break;
             }
-        } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD) {
-            $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
-        } elseif ($this->_curSubpage->uid == self::PUID_SCRUM_BOARD_SNAPSHOT) {
-            $this->addTmplVar('project', $this->_project);
-            $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
-            $this->addTmplVar('snapshots', $snapshots);
-
-            $sidInProject = (int) $this->getParam(3);
-
-            if ($sidInProject > 0) {
-                foreach ($snapshots as $snapshot) {
-                    if ($snapshot->idInProject == $sidInProject) {
-                        $this->addTmplVar('snapshot', $snapshot);
-                        break;
-                    }
-                }
+            case self::PUID_COMMENTS: {
+                $this->initComments();
+                break;
             }
-        } elseif ($this->_curSubpage->uid == self::PUID_SPRINT_STAT) {
-            $sidInProject = (int) $this->getParam(3);
-            $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
-
-            if (empty($snapshot)) {
-                LightningEngine::go2URL($this->getBaseUrl(self::PUID_SCRUM_BOARD_SNAPSHOT));
-                return false;
+            case self::PUID_SCRUM_BOARD: {
+                $this->initScrumBoard();
+                break;
             }
-
-            $this->addTmplVar('project', $this->_project);
-            $this->addTmplVar('snapshot', $snapshot);
+            case self::PUID_SCRUM_BOARD_SNAPSHOT: {
+                $this->initScrumBoardSnapshot();
+                break;
+            }
+            case self::PUID_SPRINT_STAT: {
+                $this->initSprintStat();
+                break;
+            }
+            case self::PUID_SETTINGS: {
+                $this->initSettings();
+                break;
+            }
         }
         
         return $this;
+    }
+
+    private function initIssues()
+    {
+        // загружаем задачи
+        $openedIssues = Issue::loadListByProject(
+            $this->_project->id,
+            [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
+        );
+        $this->addTmplVar('issues', $openedIssues);
+    }
+
+    private function initIssue()
+    {
+        $issueId = $this->getCurentIssueId((float)$this->getAddParam());
+        if ($issueId <= 0 || !$issue = Issue::load((float)$issueId)) {
+            LightningEngine::go2URL($this->getUrl());
+        }
+        
+        $issue->getMembers();
+        $issue->getTesters();
+        
+        $comments = Comment::getListByInstance(LPMInstanceTypes::ISSUE, $issue->id);
+        foreach ($comments as $comment) {
+            $comment->issue = $issue;
+        }
+
+        $this->_title = $this->getTitleByIssue($issue);
+        $this->_pattern = 'issue';
+        ArrayUtils::remove($this->_js, 'project');
+        $this->_js = array_merge(['issue', 'create-branch'], $this->getIssueJs(), $this->getCommentJs());
+
+        $this->addTmplVar('issue', $issue);
+        $this->addTmplVar('comments', $comments);
+    }
+
+    private function initCompletedIssues()
+    {
+        // загружаем  завершенные задачи
+        $completedIssues = Issue::loadListByProject(
+            $this->_project->id,
+            [Issue::STATUS_COMPLETED]
+        );
+        $this->addTmplVar('issues', $completedIssues);
+    }
+
+    private function initComments()
+    {
+        $page = $this->getProjectedCommentsPage();
+        $commentsPerPage = 100;
+
+        $this->_currentPage = $page;
+
+        $comments = Comment::getIssuesListByProject(
+            $this->_project->id,
+            ($page - 1) * $commentsPerPage,
+            $commentsPerPage
+        );
+        $issueIds = [];
+        $commentsByIssueId = [];
+        foreach ($comments as $comment) {
+            if (!isset($commentsByIssueId[$comment->instanceId])) {
+                $commentsByIssueId[$comment->instanceId] = [];
+                $issueIds[] = $comment->instanceId;
+            }
+            $commentsByIssueId[$comment->instanceId][] = $comment;
+        }
+
+        $issues = Issue::loadListByIds($issueIds);
+        foreach ($issues as $issue) {
+            if (isset($commentsByIssueId[$issue->id])) {
+                foreach ($commentsByIssueId[$issue->id] as $comment) {
+                    $comment->issue = $issue;
+                }
+            }
+        }
+
+        $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('comments', $comments);
+        $this->addTmplVar('page', $page);
+        if ($page > 1) {
+            $this->addTmplVar('prevPageUrl', $this->getUrl('page', $page - 1));
+        }
+        // Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело
+        if (count($comments) === $commentsPerPage) {
+            $this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
+        }
+    }
+
+    private function initScrumBoard()
+    {
+        $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
+    }
+
+    private function initScrumBoardSnapshot()
+    {
+        $this->addTmplVar('project', $this->_project);
+        $snapshots = ScrumStickerSnapshot::loadList($this->_project->id);
+        $this->addTmplVar('snapshots', $snapshots);
+
+        $sidInProject = (int) $this->getParam(3);
+
+        if ($sidInProject > 0) {
+            foreach ($snapshots as $snapshot) {
+                if ($snapshot->idInProject == $sidInProject) {
+                    $this->addTmplVar('snapshot', $snapshot);
+                    break;
+                }
+            }
+        }
+    }
+
+    private function initSprintStat()
+    {
+        $sidInProject = (int) $this->getParam(3);
+        $snapshot = ScrumStickerSnapshot::loadSnapshot($this->_project->id, $sidInProject);
+
+        if (empty($snapshot)) {
+            LightningEngine::go2URL($this->getBaseUrl(self::PUID_SCRUM_BOARD_SNAPSHOT));
+            return false;
+        }
+
+        $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('snapshot', $snapshot);
+    }
+
+    private function initSettings()
+    {
+        $this->addTmplVar('project', $this->_project);
+    }
+
+    private function getIssueJs()
+    {
+        return [
+            'issues',
+            'issue-form',
+            'libs/tribute'
+        ];
+    }
+
+    private function getCommentJs()
+    {
+        return [
+            'comments',
+            'attachments',
+        ];
     }
     
     /**

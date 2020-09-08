@@ -267,10 +267,8 @@ CREATE TABLE `lpm_fixed_instance` (
 
 -- v0.9.21
 
---NEXT
-
 ALTER TABLE `lpm_projects`
-ADD `targetSprint` text COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Цели спринта Scrum проекта' AFTER `scrum`;
+ADD `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab';
 
-ALTER TABLE `lpm_scrum_snapshot_list`
-ADD `targetSprint` text COLLATE 'utf8mb4_general_ci' NOT NULL COMMENT 'Цели спринта' AFTER `creatorId`;
+-- v0.9.22
+--NEXT

@@ -24,7 +24,6 @@ let comments = {
 		closed: 'fa-times-circle',
 	},
 	updateAttachments: function ($item) {
-		console.log($item);
 		let urls = parser.findLinks($item.text());
 		if (!urls) return;
 

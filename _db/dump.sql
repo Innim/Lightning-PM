@@ -5,6 +5,8 @@ SET time_zone = '+00:00';
 SET foreign_key_checks = 0;
 SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
+SET NAMES utf8mb4;
+
 DROP TABLE IF EXISTS `lpm_comments`;
 CREATE TABLE `lpm_comments` (
   `id` bigint(19) NOT NULL AUTO_INCREMENT COMMENT 'идентификатор комментария',
@@ -12,11 +14,21 @@ CREATE TABLE `lpm_comments` (
   `instanceId` bigint(19) NOT NULL COMMENT 'идентификатор инстанции, к которой оставляется коммент',
   `authorId` bigint(19) NOT NULL COMMENT 'идентификатор автора комментария',
   `date` datetime NOT NULL COMMENT 'дата',
-  `text` text NOT NULL COMMENT 'текст',
+  `text` text CHARACTER SET utf8mb4 NOT NULL COMMENT 'текст',
   `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'клмментарий удалён',
   PRIMARY KEY (`id`),
   KEY `instanceType` (`instanceType`,`instanceId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='таблица комментариев';
+
+
+DROP TABLE IF EXISTS `lpm_fixed_instance`;
+CREATE TABLE `lpm_fixed_instance` (
+  `userId` int(10) unsigned NOT NULL COMMENT 'Идентификатор пользователя',
+  `instanceType` tinyint(3) unsigned NOT NULL COMMENT 'Тип инстанции',
+  `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
+  `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
+  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';
 
 
 DROP TABLE IF EXISTS `lpm_images`;
@@ -41,9 +53,9 @@ CREATE TABLE `lpm_issues` (
   `projectId` int(11) NOT NULL,
   `idInProject` int(11) NOT NULL,
   `parentId` int(11) NOT NULL DEFAULT '0' COMMENT 'идентификатор родительской задачи',
-  `name` varchar(255) NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
   `hours` decimal(10,1) NOT NULL,
-  `desc` text NOT NULL,
+  `desc` text CHARACTER SET utf8mb4 NOT NULL,
   `type` tinyint(1) NOT NULL DEFAULT '0',
   `authorId` bigint(19) NOT NULL,
   `createDate` datetime NOT NULL,
@@ -70,7 +82,7 @@ DROP TABLE IF EXISTS `lpm_issue_labels`;
 CREATE TABLE `lpm_issue_labels` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор',
   `projectId` int(11) NOT NULL DEFAULT '0' COMMENT 'Проект (0 если метка общая)',
-  `label` varchar(255) NOT NULL COMMENT 'Текст метки',
+  `label` varchar(255) CHARACTER SET utf8mb4 NOT NULL COMMENT 'Текст метки',
   `countUses` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Количество использований',
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
@@ -86,6 +98,7 @@ CREATE TABLE `lpm_issue_member_info` (
   PRIMARY KEY (`instanceId`,`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='информация об участнике задачи';
 
+
 DROP TABLE IF EXISTS `lpm_issue_mr`;
 CREATE TABLE `lpm_issue_mr` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID записи',
@@ -97,14 +110,6 @@ CREATE TABLE `lpm_issue_mr` (
   KEY `mrId` (`mrId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='GitLab MR от исполнителей по задачам.';
 
-DROP TABLE IF EXISTS `lpm_fixed_instance`;
-CREATE TABLE `lpm_fixed_instance` (
-  `userId` int(10) unsigned NOT NULL COMMENT 'Идентификатор пользователя',
-  `instanceType` tinyint(3) unsigned NOT NULL COMMENT 'Тип инстанции',
-  `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
-  `dateFixed` datetime NOT NULL COMMENT 'Дата фиксации инстанции',
-  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`dateFixed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица фиксации инстанции';
 
 DROP TABLE IF EXISTS `lpm_members`;
 CREATE TABLE `lpm_members` (
@@ -118,7 +123,7 @@ CREATE TABLE `lpm_members` (
 DROP TABLE IF EXISTS `lpm_options`;
 CREATE TABLE `lpm_options` (
   `option` varchar(20) NOT NULL COMMENT 'опция',
-  `value` text NOT NULL COMMENT 'её значение',
+  `value` text CHARACTER SET utf8mb4 NOT NULL COMMENT 'её значение',
   PRIMARY KEY (`option`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='таблица настроек';
 
@@ -136,8 +141,8 @@ DROP TABLE IF EXISTS `lpm_projects`;
 CREATE TABLE `lpm_projects` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `uid` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `desc` text NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+  `desc` text CHARACTER SET utf8mb4 NOT NULL,
   `date` datetime NOT NULL,
   `lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'время последнего обновления проекта',
   `issuesCount` int(9) NOT NULL DEFAULT '0' COMMENT 'количество созданных задач',
@@ -146,6 +151,7 @@ CREATE TABLE `lpm_projects` (
   `slackNotifyChannel` varchar(255) NOT NULL COMMENT 'имя канала для оповещений в Slack',
   `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте',
   `defaultIssueMemberId` int(11) NOT NULL COMMENT 'Исполнитель умолчанию',
+  `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -169,7 +175,7 @@ CREATE TABLE `lpm_scrum_snapshot` (
   `added` datetime NOT NULL COMMENT 'Дата добавления стикера на доску',
   `issue_uid` int(11) NOT NULL COMMENT 'Глобавльный идентификатор задачи',
   `issue_pid` int(11) NOT NULL COMMENT 'Идентификатор задачи в проекте',
-  `issue_name` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT 'Название задачи',
+  `issue_name` varchar(255) CHARACTER SET utf8mb4 NOT NULL COMMENT 'Название задачи',
   `issue_state` tinyint(2) NOT NULL COMMENT 'Состояние задачи',
   `issue_sp` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT 'Количество SP',
   `issue_members_sp` text CHARACTER SET utf8 NOT NULL COMMENT 'Количество SP по участникам',
@@ -284,4 +290,4 @@ CREATE TABLE `lpm_work_study` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
--- 2020-03-13 17:05:39
+-- 2020-09-04 15:11:13

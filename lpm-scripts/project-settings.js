@@ -10,6 +10,7 @@ $(document).ready(
                 $('input#projectId').val(),
                 scrum,
                 $('#slackСhannel').val(),
+                $('#gitlabGroupId').val(),
                 function (res) {
                     if (res.success) {
                         messages.info('Сохранено');
