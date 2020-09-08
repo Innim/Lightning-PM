@@ -88,7 +88,7 @@ let scrumBoard = {
                     $('.title-target').addClass('hidden');
                     $('.text-target').children().remove();;
                     $('.input-target').val('');
-                    targetSprint.incNumSprint($('.ui-dialog-title'));
+                    $('.ui-dialog-title').text(`Цели спринта #${res.numSprint}`);
                     issuePage.scumColUpdateInfo();
                 } else {
                     srv.err(res);
@@ -128,10 +128,6 @@ const targetSprint = {
             }
         });
         targetSprint.close();
-    },
-    incNumSprint: function (element) {
-        let numSprint = element.text().replace(/\D/g,'');
-        element.text(`Цели спринта #${++numSprint}`);
     },
     defaultParam: {
         dialogClass: 'modal-target-sprint',
