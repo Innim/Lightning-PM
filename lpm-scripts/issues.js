@@ -254,6 +254,10 @@ const issuePage = {
     members: null
 };
 
+issuePage.getStatus = () => $('#issueInfo').data('status');
+
+issuePage.isCompleted = () => issuePage.getStatus() == 2;
+
 issuePage.getIssueId = () => $('#issueView input[name=issueId]').val();
 
 issuePage.loadMembers = function (handler) {
@@ -683,6 +687,7 @@ function setIssueInfo(issue) {
     issuePage.updatePriorityVals();
 
     $("#issueInfo > p > input[name=issueId]").val(issue.id);
+    $('#issueInfo').data('status', issue.status);
 };
 
 issuePage.showCommentForm = function () {
@@ -757,7 +762,7 @@ issuePage.postCommentForCurrentIssue = function (text) {
 }
 
 issuePage.merged = function () {
-    let complete = confirm('Добавляется отметка о влитии в develop. Хотите также завершить задачу?');
+    let complete = !issuePage.isCompleted() && confirm('Добавляется отметка о влитии в develop. Хотите также завершить задачу?');
     issuePage.doSomethingAndPostCommentForCurrentIssue(
         (issueId, handler) => srv.issue.merged(issueId, complete, handler),
         res => {
