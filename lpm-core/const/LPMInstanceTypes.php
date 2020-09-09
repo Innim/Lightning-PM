@@ -41,4 +41,9 @@ class LPMInstanceTypes
      * Instance тестер для проекта
      */
     const TESTER_FOR_PROJECT = 6;
+    
+    /**
+     * Instance snapshot
+     */
+    const SNAPSHOT = 7;
 }

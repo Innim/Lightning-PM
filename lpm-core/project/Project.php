@@ -22,16 +22,17 @@ class Project extends MembersInstance
     
     public static function loadList($where = null)
     {
-        $tables = [LPMTables::PROJECTS, LPMTables::TARGET_INSTANCE];
-    
-        $sql = "SELECT projects.*, target.targetText AS `targetSprint` FROM `%1\$s` AS projects " .
-            "LEFT JOIN `%2\$s` AS target ON target.instanceId = projects.id " .
+        $tables = [LPMTables::PROJECTS, LPMTables::INSTANCE_TARGETS];
+
+        $sql = "SELECT `projects`.*, `target`.`content` AS `targetSprint` FROM `%1\$s` AS projects " .
+            "LEFT JOIN `%2\$s` AS target ON `target`.`instanceId` = `projects`.`id` " .
             "AND `target`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' ";
-            
-        if ($where) {
-            $sql .= "WHERE `projects`." . $where;
-        }
     
+        if (is_array($where)) {
+            $where = implode( ' AND `projects`.', $where );
+        }
+        $sql .= "WHERE `projects`." . $where;
+        
         return StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
     }
 
@@ -286,36 +287,15 @@ class Project extends MembersInstance
         $text = str_replace('%', '%%', $text);
         $instanceType = LPMInstanceTypes::PROJECT;
         
-        $sql = "REPLACE `%s` (`instanceType`, `instanceId`, `targetText`) " .
+        $sql = "REPLACE `%s` (`instanceType`, `instanceId`, `content`) " .
             "VALUES ('" . $instanceType . "', '" . $projectId . "', '" . $text . "')";
     
-        $result = $db->queryt($sql, LPMTables::TARGET_INSTANCE);
+        $result = $db->queryt($sql, LPMTables::INSTANCE_TARGETS);
         if (!$result) {
             return false;
         }
         
         return $result;
-    }
-    
-    /**
-     * Загружаем из БД цели текущего спринта scrum проекта.
-     * @param int $projectId индентификатор проекта.
-     * @return string|boolean текст целей спринта или false.
-     */
-    public static function loadTextTargetSprint($projectId)
-    {
-        $db = self::getDB();
-        $query =  $db->queryb([
-            'SELECT' => 'targetSprint',
-            'FROM'   => LPMTables::PROJECTS,
-            'WHERE' => ['id' => $projectId]
-        ]);
-        
-        $row = $query->fetch_assoc();
-        if (!$query || !$row) {
-            return false;
-        }
-        return $row['targetSprint'];
     }
     
     /**

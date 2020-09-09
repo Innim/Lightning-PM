@@ -111,7 +111,7 @@ class LPMTables
      */
     const FIXED_INSTANCE = 'fixed_instance';
     /**
-     * Таблица зафиксированных проектов.
+     * Таблица целей.
      */
-    const TARGET_INSTANCE = 'target_instance';
+    const INSTANCE_TARGETS = 'instance_targets';
 }

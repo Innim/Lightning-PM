@@ -273,11 +273,10 @@ ADD `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор гру�
 -- v0.9.22
 --NEXT
 
-DROP TABLE IF EXISTS `lpm_target_instance`;
-CREATE TABLE `lpm_target_instance` (
+DROP TABLE IF EXISTS `lpm_instance_targets`;
+CREATE TABLE `lpm_instance_targets` (
   `instanceType` tinyint(3) unsigned NOT NULL COMMENT 'Тип инстанции',
   `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
-  `idSnapshotProject` int(10) unsigned COMMENT 'Идентификатор snapshot в проекте',
-  `targetText` text NOT NULL COMMENT 'Цели спринта',
-  PRIMARY KEY (`instanceId`)
+  `content` text NOT NULL COMMENT 'Цели инстанции',
+  PRIMARY KEY (`instanceType`, `instanceId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица целей инстанции';
