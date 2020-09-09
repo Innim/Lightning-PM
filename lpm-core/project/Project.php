@@ -279,7 +279,7 @@ class Project extends MembersInstance
      * @param int $projectId индентификатор проекта.
      * @param string $targetText текст цели спринта.
      */
-    public static function updateTargetSprint($projectId, $targetText)
+    public static function updateSprintTarget($projectId, $targetText)
     {
         $db = LPMGlobals::getInstance()->getDBConnect();
         
@@ -289,11 +289,7 @@ class Project extends MembersInstance
         
         $sql = "REPLACE `%s` (`instanceType`, `instanceId`, `content`) " .
             "VALUES ('" . $instanceType . "', '" . $projectId . "', '" . $text . "')";
-    
         $result = $db->queryt($sql, LPMTables::INSTANCE_TARGETS);
-        if (!$result) {
-            return false;
-        }
         
         return $result;
     }

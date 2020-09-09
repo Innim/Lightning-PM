@@ -389,7 +389,7 @@ class ProjectService extends LPMBaseService
                 return $this->error("Проект не существует или недостаточно прав");
             }
             
-            $result = Project::updateTargetSprint($projectId, $targetText);
+            $result = Project::updateSprintTarget($projectId, $targetText);
             if (!$result) {
                 return $this->error('Цели проекта не добавлены. Ошибка записи в БД.');
             }

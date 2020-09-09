@@ -232,7 +232,7 @@ SQL;
             }
     
             // получаем id Snapshot, которого только что сохоранили в БД
-            $snapshotId = self::getSnapshotId();
+            $snapshotId = self::getOwnSnapshotId();
             // сохраняем в БД id Snapshot в таблице целий
             $result = self::setIdSnapshotForTarget($projectId, $snapshotId);
             if (!$result) {
@@ -248,7 +248,8 @@ SQL;
 
     /**
      * Возвращает номер последнего снепшота в архиве.
-     * @return int Номер последнего снепшота в проекте.
+     * @param int $projectId идентификатор проекта, для которого создается снепшот.
+     * @return int Номер последнего снепшота в проекте или 0 - если еще не было снимков.
      * @throws Exception В случае, если произошла ошибка при запросе к БД.
      */
     public static function getLastSnapshotId($projectId)
@@ -269,11 +270,11 @@ SQL;
     }
     
     /**
-     * Возвращает id последнего снепшота в БД из таблицы снепшотов.
+     * Возвращает собственный id последнего снепшота в БД из таблицы снепшотов.
      * @return int id снепшота.
      * @throws Exception В случае, если произошла ошибка при запросе к БД.
      */
-    public static function getSnapshotId()
+    public static function getOwnSnapshotId()
     {
         $db = self::getDB();
         $sql = "SELECT MAX(`id`) AS id FROM `%s` ";
