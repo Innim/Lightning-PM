@@ -24,7 +24,7 @@ class Project extends MembersInstance
     {
         $tables = [LPMTables::PROJECTS, LPMTables::INSTANCE_TARGETS];
 
-        $sql = "SELECT `projects`.*, `target`.`content` AS `targetSprint` FROM `%1\$s` AS projects " .
+        $sql = "SELECT `projects`.*, `target`.`content` AS `sprintTarget` FROM `%1\$s` AS projects " .
             "LEFT JOIN `%2\$s` AS target ON `target`.`instanceId` = `projects`.`id` " .
             "AND `target`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' ";
     
@@ -340,7 +340,7 @@ class Project extends MembersInstance
      * Цели спринта проекта.
      * @var string|null
      */
-    public $targetSprint;
+    public $sprintTarget;
 
     private $_importantIssuesCount = -1;
 
@@ -522,7 +522,7 @@ class Project extends MembersInstance
     public function getHTMLText()
     {
         if (empty($this->_htmlText)) {
-            $this->_htmlText = HTMLHelper::getMarkdownText($this->targetSprint);
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->sprintTarget);
         }
         
         return $this->_htmlText;

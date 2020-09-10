@@ -6,7 +6,7 @@ $(document).ready(
             }
         });
 
-        targetSprint.init();
+        sprintTarget.init();
         if ($('.text-target').text()) {
             $('.title-target').removeClass('hidden');
         }
@@ -98,11 +98,11 @@ let scrumBoard = {
     },
 };
 
-const targetSprint = {
+const sprintTarget = {
     init: function (modalParam) {
-        $('#addTarget').dialog({...targetSprint.defaultParam, ...modalParam});
+        $('#addTarget').dialog({...sprintTarget.defaultParam, ...modalParam});
         $('.target-btn').click(function () {
-            targetSprint.open();
+            sprintTarget.open();
         });
     },
     open: function () {
@@ -112,10 +112,10 @@ const targetSprint = {
         $('#addTarget').dialog('close');
     },
     save: function () {
-        const textTarget = $('.input-target').val();
+        const targetText = $('.input-target').val();
         const projectId = $('#scrumBoard').data('project-id');
 
-        srv.project.setTargetSprint(projectId, textTarget, function (res) {
+        srv.project.setSprintTarget(projectId, targetText, function (res) {
             if (res) {
                 $('.text-target').html(res.targetHTML);
                 $('.input-target').val(res.targetText);
@@ -127,7 +127,7 @@ const targetSprint = {
                 }
             }
         });
-        targetSprint.close();
+        sprintTarget.close();
     },
     defaultParam: {
         dialogClass: 'modal-target-sprint',
@@ -141,13 +141,13 @@ const targetSprint = {
             {
                 text: 'Сохранить',
                 click: function () {
-                    targetSprint.save();
+                    sprintTarget.save();
                 }
             },
             {
                 text: 'Отмена',
                 click: function () {
-                    targetSprint.close();
+                    sprintTarget.close();
                 }
             }
         ]

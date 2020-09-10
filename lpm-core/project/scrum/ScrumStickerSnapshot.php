@@ -20,7 +20,7 @@ class ScrumStickerSnapshot extends LPMBaseObject
         // TODO: нужно ли ограничить как-то?
         // Выбираем (пока все) записи по переданному проекту
         $sql = <<<SQL
-        SELECT snapshot.*, `target`.`content` AS `targetSprint` FROM `%1\$s` AS snapshot
+        SELECT snapshot.*, `target`.`content` AS `sprintTarget` FROM `%1\$s` AS snapshot
         LEFT JOIN `%2\$s` AS target ON `target`.`instanceId` = `snapshot`.`id`
         WHERE `snapshot`.`pid` = '${projectId}'
         ORDER BY `snapshot`.`created` DESC
@@ -341,7 +341,7 @@ SQL;
      * Цели спринта.
      * @var
      */
-    public $targetSprint;
+    public $sprintTarget;
     
     private $_creator;
     private $_stickers;
@@ -507,7 +507,7 @@ SQL;
     public function getHTMLText()
     {
         if (empty($this->_htmlText)) {
-            $this->_htmlText = HTMLHelper::getMarkdownText($this->targetSprint);
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->sprintTarget);
         }
         
         return $this->_htmlText;

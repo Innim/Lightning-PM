@@ -236,8 +236,8 @@ let srv = {
         getBranches: function (projectId, gitlabProjectId, onResult) {
             this.s._('getBranches');
         },
-        setTargetSprint: function (projectId, textTarget, onResult) {
-            this.s._('addTargetSprint');
+        setSprintTarget: function (projectId, textTarget, onResult) {
+            this.s._('addSprintTarget');
         }
     },
     projects: {

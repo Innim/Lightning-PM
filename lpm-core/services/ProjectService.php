@@ -378,7 +378,7 @@ class ProjectService extends LPMBaseService
      * @param int $instanceId id проекта.
      * @param array $target массив целий спринта.
      */
-    public function addTargetSprint($instanceId, $target) {
+    public function addSprintTarget($instanceId, $target) {
         $projectId = (int) $instanceId;
         $targetText = (string) $target;
     
