@@ -1,5 +1,7 @@
 $(document).ready(
     function () {
+        // TODO: убрать данную реализацию, а для вывода tooltip использовать jquery,
+        //  пример для реализации Мои задачи-> столбец Тип. "Имя проекта: ..." и выводить tooltip всегда.
         document.querySelectorAll('.name-project').forEach(function (e) {
             if (e.scrollWidth > e.offsetWidth) {
                 e.setAttribute('title', e.textContent)
@@ -7,9 +9,6 @@ $(document).ready(
         });
 
         sprintTarget.init();
-        if ($('.text-target').text()) {
-            $('.title-target').removeClass('hidden');
-        }
     }
 );
 
@@ -104,6 +103,9 @@ const sprintTarget = {
         $('.target-btn').click(function () {
             sprintTarget.open();
         });
+        if ($('.text-target').text()) {
+            $('.title-target').removeClass('hidden');
+        }
     },
     open: function () {
         $('#addTarget').dialog('open');

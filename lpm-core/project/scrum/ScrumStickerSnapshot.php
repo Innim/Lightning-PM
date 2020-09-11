@@ -231,10 +231,10 @@ SQL;
                 $db->rollback();
             }
     
-            // получаем id Snapshot, которого только что сохоранили в БД
-            $snapshotId = self::getOwnSnapshotId();
+            // получаем id Snapshot, которого только что сохранили в БД
+            $snapshotId = self::getLastOwnSnapshotId();
             // сохраняем в БД id Snapshot в таблице целий
-            $result = self::setIdSnapshotForTarget($projectId, $snapshotId);
+            $result = self::setSnapshotIdForTarget($projectId, $snapshotId);
             if (!$result) {
                 throw new DBException($db, "Ошибка при сохранении целий снепшота");
             }
@@ -274,7 +274,7 @@ SQL;
      * @return int id снепшота.
      * @throws Exception В случае, если произошла ошибка при запросе к БД.
      */
-    public static function getOwnSnapshotId()
+    public static function getLastOwnSnapshotId()
     {
         $db = self::getDB();
         $sql = "SELECT MAX(`id`) AS id FROM `%s` ";
@@ -293,7 +293,7 @@ SQL;
      * @param int $projectId идентификатор проекта, для которого создается снепшот.
      * @param int $snapshotId идентификатор снепшота без привязки к проекту.
      */
-    public static function setIdSnapshotForTarget($projectId, $snapshotId) {
+    public static function setSnapshotIdForTarget($projectId, $snapshotId) {
         $snapshotType = LPMInstanceTypes::SNAPSHOT;
         $projectType = LPMInstanceTypes::PROJECT;
         
