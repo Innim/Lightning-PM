@@ -100,7 +100,12 @@ class ProjectPage extends LPMPage
                 'scrum-board',
                 array_merge(['scrum-board'], $this->getIssueJs())
             );
-            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
+            $this->addSubPage(
+                self::PUID_SCRUM_BOARD_SNAPSHOT,
+                'Scrum архив',
+                'scrum-board-snapshot',
+                $this->getIssueJs()
+            );
             $this->addSubPage(
                 self::PUID_SPRINT_STAT,
                 'Статистика спринта',
