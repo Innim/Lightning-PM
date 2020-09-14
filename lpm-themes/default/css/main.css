@@ -34,6 +34,12 @@ input {
 input[type="search"] {
 	box-sizing   : content-box;
 }
+input[type="checkbox"] {
+	height: 20px;
+}
+input[type="file"] {
+	height: auto;
+}
 select {
 	height       : 30px;
 }
