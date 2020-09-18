@@ -2134,3 +2134,21 @@ form.create-branch ul.create-branch-items select,
 form.create-branch ul.create-branch-items input {
 	width: 100%;
 }
+
+/* Форма отправки сообщения о том, что тест пройден */
+form.pass-test ul.pass-test-items {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+form.pass-test ul.pass-test-items label {
+	display: block;
+}
+
+form.pass-test #passTestComment {
+	width: 100%;
+	height: 300px;
+	box-sizing: border-box;
+	margin: 10px auto;
+}

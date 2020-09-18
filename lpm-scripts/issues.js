@@ -748,8 +748,7 @@ issuePage.merged = function () {
 }
 
 issuePage.passTest = function () {
-    issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.passTest(issueId, handler));
+    passTest.show(issuePage.getIssueId());
 }
 
 issuePage.addComment = function (comment, html) {
