@@ -15,6 +15,7 @@ $(document).ready(function ($) {
 	}
 
 	highlightComment();
+	comments.init();
 });
 
 let comments = {
@@ -22,6 +23,41 @@ let comments = {
 		merged: 'fa-check-circle',
 		opened: 'fa-clock',
 		closed: 'fa-times-circle',
+	},
+	init: function () {
+		comments.invalidateLinks();
+	},
+	showCommentForm: function () {
+		$('#comments form.add-comment').show();
+		$('#comments .links-bar a').hide();
+		$('#comments form.add-comment textarea[name=commentText]').focus();
+	},
+	hideCommentForm: function (clear = true) {
+		$('#comments form.add-comment').hide();
+		$('#comments .links-bar a').show();
+
+		comments.invalidateLinks();
+	},
+	toogleCommentForm: function () {
+		const $comments = $('#comments .comments-list');
+		comments.invalidateLinks(!$comments.is(':visible'));
+		$comments.slideToggle('normal');
+	},
+	invalidateLinks: function (isCommentsVisible) {
+		const $link = $('#comments .links-bar a.toggle-comments');
+		const $comments = $('#comments .comments-list');
+		const commentsCount = $('.comments-list-item', $comments).size();
+		if (isCommentsVisible === undefined) isCommentsVisible = $comments.is(':visible');
+		if (commentsCount == 0) {
+			$link.hide();
+		} else {
+			if (isCommentsVisible) {
+				$link.html('Свернуть комментарии');
+			} else {
+				$link.html('Показать комментарии (' + commentsCount + ')');
+			}
+			$link.show();
+		}
 	},
 	updateAttachments: function ($item) {
 		let urls = parser.findLinks($item.text());

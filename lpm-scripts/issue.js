@@ -11,9 +11,6 @@ $(document).ready(
                 'backgroundColor', 
                 issuePage.getPriorityColor( $( "#issueInfo li input[name=priority]" ).val() ) 
         );*/
-
-        if ($('#issueView .comments .comments-list .comments-list-item').size() == 0)
-            $('#issueView .comments .links-bar a.toggle-comments').hide();
     }
 );
 

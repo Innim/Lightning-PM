@@ -140,7 +140,7 @@ $project = $issue->getProject();
             <i class="fa fa-plus-square" aria-hidden="true" title="Добавить задачу по доделкам"></i>
         </a>
     </article>
-    <article class="comments">
+    <article id="comments" class="comments">
         <div class="links-bar">
             <?php if ($project->scrum):?>
             <div class="scrum-comments-shortcut">
@@ -158,19 +158,19 @@ $project = $issue->getProject();
             </div>
             <?php endif;?>
             <div class="comments-controls">
-                <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть
+                <a href="#" class="toggle-comments" onclick="comments.toogleCommentForm(); return false;">Свернуть
                     комментарии</a>
-                <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
+                <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
             </div>
         </div>
         <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
-            <textarea name="commentText"></textarea>
+            <textarea id="commentTextField" name="commentText"></textarea>
             <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
                 <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <p class="buttons-bar">
                 <button type="submit">Отправить</button>
-                <button type="reset" onclick="issuePage.hideCommentForm();">Отмена</button>
+                <button type="reset" onclick="comments.hideCommentForm();">Отмена</button>
             </p>
         </form>
         <section class="comments-list">

@@ -690,31 +690,6 @@ function setIssueInfo(issue) {
     $('#issueInfo').data('status', issue.status);
 };
 
-issuePage.showCommentForm = function () {
-    $('#issueView .comments form.add-comment').show();
-    $('#issueView .comments .links-bar a').hide();
-    $('#issueView .comments form.add-comment textarea[name=commentText]').focus();
-};
-
-issuePage.hideCommentForm = function () {
-    $('#issueView .comments form.add-comment').hide();
-    $('#issueView .comments .links-bar a').show();
-};
-
-issuePage.toogleCommentForm = function () {
-    var link = $('#issueView .comments .links-bar a.toggle-comments');
-    var comments = $('#issueView .comments .comments-list');
-    if (!comments.is(':visible')) {
-        link.html('Свернуть комментарии');
-    } else {
-        link.html('Показать комментарии (' +
-            $('#issueView .comments .comments-list .comments-list-item').size() + ')');
-    }
-
-    link.show();
-    comments.slideToggle('normal');
-};
-
 issuePage.createBranch = function () {
     createBranch.show(issuePage.projectId, issuePage.getIssueId(), issuePage.idInProject);
 }
@@ -789,11 +764,7 @@ issuePage.addComment = function (comment, html) {
     comments.updateAttachments($('.comment-text', newItem));
     attachments.update($('.block-with-attachments', newItem));
 
-    issuePage.hideCommentForm();
-    $('#issueView .comments .links-bar a.toggle-comments').show();
-
-    if (!$('#issueView .comments .comments-list').is(':visible'))
-        issuePage.toogleCommentForm();
+    comments.hideCommentForm();
 
     hideElementAfterDelay(elementId, commentTime);
 };
