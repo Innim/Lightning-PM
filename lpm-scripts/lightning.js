@@ -517,3 +517,14 @@ let parser = {
         return patterns.some((pattern, i, a) => new RegExp(pattern, 'i').test(url));
     }
 };
+
+$(document).ready(() => {
+    $(window).load(() => {
+        states.updateView();
+        if ($('#issueForm > div.validateError').html() != '') {
+            $('#issueForm > div.validateError').show();
+        }
+
+        issuePage.updateStat();
+    });
+});
