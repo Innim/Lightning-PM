@@ -362,14 +362,14 @@ var preloader = {
     show: function () {
         this._showed++;
         if (this._showed == 1) {
-            $('preloader').show();
+            $('#preloader').show();
         }
     },
     hide: function () {
         if (this._showed == 0) return;
         this._showed--;
         if (this._showed == 0) {
-            $('preloader').hide();
+            $('#preloader').hide();
         }
     },
     getNewIndicator: function (size) {

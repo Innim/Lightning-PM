@@ -285,7 +285,14 @@ p.header-back-link a.back-link {
 	right           : 0px;
 	bottom          : 0px;
 	display         : none;
-	background-color: rgba( 255, 255, 255, 0.1);  
+	z-index			: 10000;
+	background-color: rgba( 255, 255, 255, 0.3);  
+}
+#preloader .indicator {
+	position: fixed;
+	margin: -40px -40px 0 0;
+	left: 50%;
+	top: 50%;
 }
 #noway {
 	display: none;
@@ -547,6 +554,9 @@ form ol.form-fields > li:last-child {
   height: 18px;
   border-radius: 20%;
   background: #fff;
+}
+.lds-spinner.dark div:after {
+  background: #333;
 }
 .lds-spinner.medium {
   width: 40px;
