@@ -109,7 +109,7 @@ $(document).ready(
 );
 
 function bindFormattingHotkeys(selector) {
-    $(selector).keypress(function (e) {
+    $(selector).keydown(function (e) {
         if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
             return;
 
