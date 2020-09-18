@@ -19,13 +19,35 @@ $(document).ready(function ($) {
 });
 
 let comments = {
+	storeKey: null,
 	mrStateIcons: {
 		merged: 'fa-check-circle',
 		opened: 'fa-clock',
 		closed: 'fa-times-circle',
 	},
 	init: function () {
+		comments.storeKey = issuePage ? 'comment-' + issuePage.getIssueId() : 'comment';
 		comments.invalidateLinks();
+		comments.initAddForm();
+	},
+	initAddForm: function () {
+		if ($('#commentTextField').length == 0) return;
+
+		const storeKey = comments.storeKey;
+		const savedText = window.localStorage.getItem(storeKey);
+		if (savedText) {
+			$('#commentTextField').val(savedText);
+			comments.showCommentForm();
+		}
+
+		$('#commentTextField').on('input', (e) => {
+			let text = e.target.value;
+			window.localStorage.setItem(storeKey, text);
+		});
+	},
+	clearForm: function () {
+		$('#commentTextField').val('');
+		window.localStorage.removeItem(comments.storeKey);
 	},
 	showCommentForm: function () {
 		$('#comments form.add-comment').show();
@@ -33,6 +55,7 @@ let comments = {
 		$('#comments form.add-comment textarea[name=commentText]').focus();
 	},
 	hideCommentForm: function (clear = true) {
+		if (clear) comments.clearForm();
 		$('#comments form.add-comment').hide();
 		$('#comments .links-bar a').show();
 
