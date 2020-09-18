@@ -16,11 +16,13 @@ $(document).ready(
         if (window.location.hash == '#issue-view')
             window.location.hash = '';
 
-        states.updateView();
-        if ($('#issueForm > div.validateError').html() != '') {
-            $('#issueForm > div.validateError').show();
-        }
+        $(window).load(() => {
+            states.updateView();
+            if ($('#issueForm > div.validateError').html() != '') {
+                $('#issueForm > div.validateError').show();
+            }
 
-        issuePage.updateStat();
+            issuePage.updateStat();
+        });
     }
 );
