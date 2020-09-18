@@ -392,7 +392,7 @@ function insertFormatting(input, before, after, cursorShift) {
             caretPos += fullLength;
     }
 
-    $input.val(res);
+    $input.val(res).trigger('input');
 
     //устанавливаем курсор на полученную позицию
     setCaretPosition(text, caretPos);
