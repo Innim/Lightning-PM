@@ -62,7 +62,8 @@ $(document).ready(
         });
 
         setupAutoComplete(['#issueForm textarea[name=desc]',
-            'form.add-comment textarea[name=commentText]']);
+            'form.add-comment textarea[name=commentText]',
+            'form.pass-test textarea#passTestComment']);
 
         // Настройка формы -- END
 
@@ -105,6 +106,7 @@ $(document).ready(
 
         bindFormattingHotkeys('#issueForm form textarea[name=desc]');
         bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
+        bindFormattingHotkeys('form.pass-test textarea#passTestComment');
     }
 );
 
