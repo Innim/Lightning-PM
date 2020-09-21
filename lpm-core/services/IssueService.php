@@ -214,12 +214,13 @@ class IssueService extends LPMBaseService
 
     /**
      * Отмечает что задача прошла тестирование.
-     * @param  int $issueId Идентификатор задачи
+     * @param   int     $issueId Идентификатор задачи
+     * @param   String  $text Текст комментария
      * @return {
      *     string comment Добавленный комментарий.
      * }
      */
-    public function passTest($issueId)
+    public function passTest($issueId, $text)
     {
         $issueId = (int)$issueId;
 
@@ -229,7 +230,11 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            $comment = $this->postComment($issue, 'Прошла тестирование', true);
+            if (empty($text)) {
+                $text = 'Прошла тестирование';
+            }
+
+            $comment = $this->postComment($issue, $text, true);
 
             // Отправляем оповещенив в slack
             $slack = SlackIntegration::getInstance();

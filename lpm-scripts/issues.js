@@ -62,7 +62,8 @@ $(document).ready(
         });
 
         setupAutoComplete(['#issueForm textarea[name=desc]',
-            'form.add-comment textarea[name=commentText]']);
+            'form.add-comment textarea[name=commentText]',
+            'form.pass-test textarea#passTestComment']);
 
         // Настройка формы -- END
 
@@ -105,11 +106,12 @@ $(document).ready(
 
         bindFormattingHotkeys('#issueForm form textarea[name=desc]');
         bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
+        bindFormattingHotkeys('form.pass-test textarea#passTestComment');
     }
 );
 
 function bindFormattingHotkeys(selector) {
-    $(selector).keypress(function (e) {
+    $(selector).keydown(function (e) {
         if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
             return;
 
@@ -390,7 +392,7 @@ function insertFormatting(input, before, after, cursorShift) {
             caretPos += fullLength;
     }
 
-    $input.val(res);
+    $input.val(res).trigger('input');
 
     //устанавливаем курсор на полученную позицию
     setCaretPosition(text, caretPos);
@@ -690,31 +692,6 @@ function setIssueInfo(issue) {
     $('#issueInfo').data('status', issue.status);
 };
 
-issuePage.showCommentForm = function () {
-    $('#issueView .comments form.add-comment').show();
-    $('#issueView .comments .links-bar a').hide();
-    $('#issueView .comments form.add-comment textarea[name=commentText]').focus();
-};
-
-issuePage.hideCommentForm = function () {
-    $('#issueView .comments form.add-comment').hide();
-    $('#issueView .comments .links-bar a').show();
-};
-
-issuePage.toogleCommentForm = function () {
-    var link = $('#issueView .comments .links-bar a.toggle-comments');
-    var comments = $('#issueView .comments .comments-list');
-    if (!comments.is(':visible')) {
-        link.html('Свернуть комментарии');
-    } else {
-        link.html('Показать комментарии (' +
-            $('#issueView .comments .comments-list .comments-list-item').size() + ')');
-    }
-
-    link.show();
-    comments.slideToggle('normal');
-};
-
 issuePage.createBranch = function () {
     createBranch.show(issuePage.projectId, issuePage.getIssueId(), issuePage.idInProject);
 }
@@ -773,8 +750,7 @@ issuePage.merged = function () {
 }
 
 issuePage.passTest = function () {
-    issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.passTest(issueId, handler));
+    passTest.show(issuePage.getIssueId());
 }
 
 issuePage.addComment = function (comment, html) {
@@ -789,11 +765,7 @@ issuePage.addComment = function (comment, html) {
     comments.updateAttachments($('.comment-text', newItem));
     attachments.update($('.block-with-attachments', newItem));
 
-    issuePage.hideCommentForm();
-    $('#issueView .comments .links-bar a.toggle-comments').show();
-
-    if (!$('#issueView .comments .comments-list').is(':visible'))
-        issuePage.toogleCommentForm();
+    comments.hideCommentForm();
 
     hideElementAfterDelay(elementId, commentTime);
 };
