@@ -37,6 +37,11 @@ class LPMTables
      */
     const ISSUE_MR = 'issue_mr';
     /**
+     * GitLab ветка для задачи.
+     * @var string
+     */
+    const ISSUE_BRANCH = 'issue_branch';
+    /**
      * Стикеры для Scrum доски
      * @var string
      */

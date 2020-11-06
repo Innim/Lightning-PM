@@ -271,4 +271,13 @@ ALTER TABLE `lpm_projects`
 ADD `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab';
 
 -- v0.9.22
+
+CREATE TABLE `lpm_issue_branch` (
+  `issueId` bigint(20) NOT NULL COMMENT 'ID задачи',
+  `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Название ветки',
+  PRIMARY KEY (`issueId`, `repositoryId`, `name`),
+  KEY `repositoryId_name` (`repositoryId`,`name`),
+  KEY `issueId` (`issueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
 --NEXT
