@@ -1118,19 +1118,6 @@ table.users-list tr.active-user td button#unlocked-btn {
 
 
 /* список проектов и добавление проекта*/
-/*#projectsList table {
-
-}
-#projectsList table thead th {
-
-}
-#projectsList table th,
-#projectsList table td {
-
-}*/
-.projects-list {
-
-}
 ul.projects-list {
 	list-style: circle;
 }
@@ -1166,6 +1153,12 @@ ul.projects-list .btn.develop
 .projects-list .rotate-icon {
 	transform: rotate(45deg);
 	color: #999999;
+}
+.projects-list-item-submenu {
+	padding: 0 2px;
+}
+.projects-list-item-submenu > a {
+	font-size: 0.7em;
 }
 .projects-list .project-desc {
 	font-size: 0.9em;
