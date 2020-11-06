@@ -282,4 +282,6 @@ CREATE TABLE `lpm_issue_branch` (
   KEY `issueId` (`issueId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
 
+-- v0.9.28
+
 --NEXT
