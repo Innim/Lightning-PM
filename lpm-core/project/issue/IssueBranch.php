@@ -16,8 +16,9 @@ class IssueBranch extends LPMBaseObject
     public static function create($issueId, $repositoryId, $name)
     {
         $db = self::getDB();
+        $date = DateTimeUtils::mysqlDate();
         return $db->queryb([
-            'REPLACE' => compact('issueId', 'repositoryId', 'name'),
+            'REPLACE' => compact('issueId', 'repositoryId', 'name', 'date'),
             'INTO'   => LPMTables::ISSUE_BRANCH
         ]);
     }
@@ -42,10 +43,16 @@ class IssueBranch extends LPMBaseObject
      */
     public $name;
 
+    /**
+     * Дата записи.
+     */
+    public $date;
+
     public function __construct()
     {
         parent::__construct();
 
         $this->_typeConverter->addIntVars('id', 'repositoryId', 'issueId');
+        $this->addDateTimeFields('date');
     }
 }
