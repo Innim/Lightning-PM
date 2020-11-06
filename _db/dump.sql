@@ -69,6 +69,18 @@ CREATE TABLE `lpm_issues` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
+DROP TABLE IF EXISTS `lpm_issue_branch`;
+CREATE TABLE `lpm_issue_branch` (
+  `issueId` bigint(20) NOT NULL COMMENT 'ID задачи',
+  `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Название ветки',
+  `date` datetime NOT NULL COMMENT 'Дата записи',
+  PRIMARY KEY (`issueId`,`repositoryId`,`name`),
+  KEY `repositoryId_name` (`repositoryId`,`name`),
+  KEY `issueId` (`issueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
+
+
 DROP TABLE IF EXISTS `lpm_issue_counters`;
 CREATE TABLE `lpm_issue_counters` (
   `issueId` bigint(20) NOT NULL COMMENT 'идентификатор задачи',
@@ -290,4 +302,4 @@ CREATE TABLE `lpm_work_study` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
--- 2020-09-04 15:11:13
+-- 2020-11-06 15:49:26

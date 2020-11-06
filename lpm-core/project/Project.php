@@ -346,8 +346,12 @@ class Project extends MembersInstance
     
     public function getUrl()
     {
-        //return Link::getUrlByUid( ProjectPage::UID, $this->uid );
         return self::getURLByProjectUID($this->uid);
+    }
+
+    public function getScrumBoardUrl()
+    {
+        return self::getURLByProjectUIDScrum($this->uid);
     }
     
     public function getDesc()

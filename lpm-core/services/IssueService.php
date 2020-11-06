@@ -302,6 +302,9 @@ class IssueService extends LPMBaseService
 
             $comment = $this->postComment($issue, $commentText, true);
 
+            // Записываем данные о том, что ветка привязана к задаче
+            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName);
+
             $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);

@@ -739,14 +739,42 @@ issuePage.postCommentForCurrentIssue = function (text) {
 }
 
 issuePage.merged = function () {
-    let complete = !issuePage.isCompleted() && confirm('Добавляется отметка о влитии в develop. Хотите также завершить задачу?');
-    issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.merged(issueId, complete, handler),
-        res => {
-            if (res.issue)
-                setIssueInfo(new Issue(res.issue));
-            issuePage.updateStat();
+    let doMerge = function (complete) {
+        issuePage.doSomethingAndPostCommentForCurrentIssue(
+            (issueId, handler) => srv.issue.merged(issueId, complete, handler),
+            res => {
+                if (res.issue)
+                    setIssueInfo(new Issue(res.issue));
+                issuePage.updateStat();
+            });
+    }
+
+    if (issuePage.isCompleted()) {
+        doMerge(false);
+    } else {
+        $("#completeOnMergeConfirm").dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                Cancel: function () {
+                    $(this).dialog("close");
+                },
+                No: function () {
+                    doMerge(false);
+                    $(this).dialog("close");
+                },
+                Yes: function () {
+                    doMerge(true);
+                    $(this).dialog("close");
+                },
+            },
+            open: function () {
+                $(this).parent().find('.ui-dialog-buttonpane button:nth-child(3)').focus();
+            }
         });
+    }
 }
 
 issuePage.passTest = function () {
