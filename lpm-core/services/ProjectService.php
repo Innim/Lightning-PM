@@ -343,7 +343,13 @@ class ProjectService extends LPMBaseService
             $project = $this->getProjectRequireReadPermission($projectId);
             if ($project->isIntegratedWithGitlab() && $client = $this->getGitlabIfAvailable()) {
                 $list = $client->getProjects($project->gitlabGroupId);
+
+                // Загрузим информацию о самом используемом репозитории в этом проекте
+                // из последних 5
+                $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
+
                 $this->add2Answer('list', $list);
+                $this->add2Answer('popularRepositoryId', $popularRepositoryId);
             }
         } catch (\Exception $e) {
             return $this->exception($e);

@@ -45,7 +45,7 @@ const createBranch = {
         // TODO: грузить только 1 раз?
         srv.project.getRepositories(projectId, (res) => {
             if (res.success) {
-                createBranch.setRepositories(res.list);
+                createBranch.setRepositories(res.list, res.popularRepositoryId);
                 $("#branchName", $el).val(issueIdInProject + '.');
             } else {
                 createBranch.close();
@@ -78,7 +78,7 @@ const createBranch = {
                     createBranch.close();
             });
     },
-    setRepositories: function (list) {
+    setRepositories: function (list, popularRepositoryId) {
         const $el = $("#createBranch");
         const $selectRepo = $('#repository', $el);
         $selectRepo.empty();
@@ -111,7 +111,9 @@ const createBranch = {
                 .attr("value", item.id).text(item.name));
         });
 
-        if (repoId === undefined) repoId = list[0].id;
+        if (repoId === undefined) {
+            repoId = list.some(r => r.id == popularRepositoryId) ? popularRepositoryId : list[0].id;
+        }
 
         $selectRepo.val(repoId);
         createBranch.onSelectRepository(repoId);
