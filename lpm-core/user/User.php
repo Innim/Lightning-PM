@@ -20,13 +20,33 @@ class User extends LPMBaseObject
     }
     
     /**
-     * @param unknown_type $userId
+     * @param int $userId
      * @return User
      */
     public static function load($userId)
     {
         //return StreamObject::loadListDefault( $where, LPMTables::USERS, __CLASS__ );
         return StreamObject::singleLoad($userId, __CLASS__, '', '%1$s`.`userId');
+    }
+    
+    /**
+     * @param String $email
+     * @return User
+     */
+    public static function loadByEmail($email)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::USERS,
+            'WHERE'  => [
+                'email' => $email,
+            ],
+            'LIMIT' => 1,
+        ]);
+        
+        $list = StreamObject::parseListResult($res, __CLASS__);
+        return empty($list) ? null : $list[0];
     }
     
     /**

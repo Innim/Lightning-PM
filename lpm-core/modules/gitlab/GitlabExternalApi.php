@@ -16,6 +16,7 @@ class GitlabExternalApi extends ExternalApi
 
     const FIELD_OBJECT_KIND = 'object_kind';
     const FIELD_OBJECT_ATTRIBUTES = 'object_attributes';
+    const FIELD_USER = 'user';
     const EVENT_TYPE_MR = 'merge_request';
 
     private $_token;
@@ -118,5 +119,19 @@ class GitlabExternalApi extends ExternalApi
 
         // Обновляем статус MR
         IssueMR::updateState($mr->id, $mr->state);
+    }
+
+    private function getUser($data)
+    {
+        $userData = $data[self::FIELD_USER];
+        if (!empty($userData) && !empty($userData['email'])) {
+            $user = User::loadByEmail($userData['email']);
+
+            if ($user != null && !empty($user->gitlabToken)) {
+                return $user;
+            }
+        }
+
+        return null;
     }
 }
