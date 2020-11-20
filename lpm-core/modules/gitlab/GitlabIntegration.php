@@ -220,6 +220,28 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * Создает комментарий к MR.
+     * @param $projectId Идентификатор проекта на GitLab.
+     * @param $mrId Внутренний идентификатор MR на GitLab.
+     * @param $text Текст комментария.
+     */
+    public function createMRNote($projectId, $mrInternalId, $text)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return false;
+        }
+
+        try {
+            $res = $client->mergeRequests()->addNote($projectId, $mrInternalId, $text);
+            return $res;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return false;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {

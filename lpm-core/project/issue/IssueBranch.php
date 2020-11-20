@@ -19,8 +19,36 @@ class IssueBranch extends LPMBaseObject
         $date = DateTimeUtils::mysqlDate();
         return $db->queryb([
             'REPLACE' => compact('issueId', 'repositoryId', 'name', 'date'),
-            'INTO'   => LPMTables::ISSUE_BRANCH
+            'INTO'    => LPMTables::ISSUE_BRANCH
         ]);
+    }
+
+    /**
+     * Загружает список идентификаторов задач для указанной ветки.
+     *
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     * @return array<int>
+     */
+    public static function loadIssueIdsForBranch($repositoryId, $name)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => 'issueId',
+            'FROM'   => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => compact(['repositoryId', 'name'])
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        $list = [];
+        foreach ($res as $raw) {
+            $list[] = (int)$raw['issueId'];
+        }
+
+        return $list;
     }
 
     /**

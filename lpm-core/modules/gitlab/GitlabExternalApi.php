@@ -16,13 +16,14 @@ class GitlabExternalApi extends ExternalApi
 
     const FIELD_OBJECT_KIND = 'object_kind';
     const FIELD_OBJECT_ATTRIBUTES = 'object_attributes';
+    const FIELD_USER = 'user';
     const EVENT_TYPE_MR = 'merge_request';
 
     private $_token;
 
-    public function __construct($token)
+    public function __construct(LightningEngine $engine, $token)
     {
-        parent::__construct(self::UID);
+        parent::__construct($engine, self::UID);
 
         $this->_token = $token;
     }
@@ -82,6 +83,9 @@ class GitlabExternalApi extends ExternalApi
             throw new Exception("Invalid object kind: " . $data[self::FIELD_OBJECT_KIND]);
         }
 
+        // $this->log(json_encode($data));
+
+        $objectAttributes = $data[self::FIELD_OBJECT_ATTRIBUTES];
         $mr = new GitlabMergeRequest($data[self::FIELD_OBJECT_ATTRIBUTES]);
 
         // Если MR был влит, то возможно надо оповестить тестировщика
@@ -92,7 +96,7 @@ class GitlabExternalApi extends ExternalApi
                 $slack = SlackIntegration::getInstance();
                 foreach ($issueIds as $issueId) {
                     $issue = Issue::load($issueId);
-                    if (empty($issueId)) {
+                    if (empty($issue)) {
                         continue;
                     }
 
@@ -114,9 +118,89 @@ class GitlabExternalApi extends ExternalApi
                     }
                 }
             }
+        } else {
+            $user = $this->getUser($data);
+            if (!empty($user)) {
+                if ($objectAttributes['action'] == 'open') {
+                    $this->onMROpen($user, $mr);
+                }
+            }
         }
 
         // Обновляем статус MR
         IssueMR::updateState($mr->id, $mr->state);
+    }
+
+    private function onMROpen(User $user, GitlabMergeRequest $mr)
+    {
+        // Открыли новый MR - попробуем найти задачи, которые привязаны
+        $issueIds = IssueBranch::loadIssueIdsForBranch($mr->sourceProjectId, $mr->sourceBranch);
+
+        if (!empty($issueIds)) {
+            $engine = $this->engine();
+            $mrComment = '';
+
+            $exceptIssueIds = IssueMR::loadIssueIdsForOpenedMr($mr->id);
+
+            foreach ($issueIds as $issueId) {
+                // Проверим, возможно этот MR уже добавлен
+                if (in_array($issueId, $exceptIssueIds)) {
+                    continue;
+                }
+
+                $issue = Issue::load($issueId);
+                if (empty($issue)) {
+                    continue;
+                }
+
+                // Обрабатываем только задачи в работе или в тесте
+                if ($issue->status == Issue::STATUS_IN_WORK || $issue->status == Issue::STATUS_WAIT) {
+                    
+                    // Связываем
+                    IssueMR::create($mr->id, $issueId, $mr->state);
+
+                    // Добавляем коммент со ссылкой на MR в задачу
+                    $commentText = $mr->url;
+
+                    if (!empty($mr->description)) {
+                        $commentText = $mr->description . '\n\n' . $commentText;
+                    }
+
+                    $engine->comments()->postComment($user, $issue, $commentText, false, true);
+
+                    // Добавляем коммент со ссылкой на задачу в MR
+                    if (!empty($mrComment)) {
+                        $mrComment .= '\n';
+                    }
+                    $mrComment .= $issue->getConstURL();
+                }
+            }
+
+            if (!empty($mrComment)) {
+                $gitlab = GitlabIntegration::getInstance($user);
+                $gitlab->createMRNote($mr->targetProjectId, $mr->internalId, $mrComment);
+            }
+        }
+    }
+
+    private function getUser($data)
+    {
+        $userData = $data[self::FIELD_USER];
+        if (!empty($userData) && !empty($userData['email'])) {
+            $user = User::loadByEmail($userData['email']);
+
+            if ($user != null && !empty($user->gitlabToken)) {
+                return $user;
+            }
+        }
+
+        return null;
+    }
+
+    private function log($message)
+    {
+        $fileName = DateTimeUtils::mysqlDate(null, false) . '-' .
+            DateTimeUtils::date('H-i-s') . '.log';
+        file_put_contents(LOGS_PATH . '/api/gitlab/' . $fileName, $message);
     }
 }
