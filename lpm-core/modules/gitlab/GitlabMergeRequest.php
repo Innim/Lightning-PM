@@ -35,6 +35,36 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
      */
     public $url;
 
+    /**
+     * Название исходной ветки.
+     * @var String
+     */
+    public $sourceBranch;
+
+    /**
+     * Название целевой ветки.
+     * @var String
+     */
+    public $targetBranch;
+
+    /**
+     * ID проекта исходной ветки.
+     * @var int
+     */
+    public $sourceProjectId;
+
+    /**
+     * ID проекта целевой ветки.
+     * @var int
+     */
+    public $targetProjectId;
+
+    /**
+     * Описание MR.
+     * @var String
+     */
+    public $description;
+
     private $_data;
 
     public function __construct($data)
@@ -54,6 +84,10 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
 
         $this->addAlias('web_url', 'url');
         $this->addAlias('iid', 'internalId');
+        $this->addAlias('source_branch', 'sourceBranch');
+        $this->addAlias('target_branch', 'targetBranch');
+        $this->addAlias('source_project_id', 'sourceProjectId');
+        $this->addAlias('target_project_id', 'targetProjectId');
     }
 
     public function isOpened()
