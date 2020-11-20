@@ -83,6 +83,7 @@ class GitlabExternalApi extends ExternalApi
             throw new Exception("Invalid object kind: " . $data[self::FIELD_OBJECT_KIND]);
         }
 
+        // $this->log(json_encode($data));
         $mr = new GitlabMergeRequest($data[self::FIELD_OBJECT_ATTRIBUTES]);
 
         // Если MR был влит, то возможно надо оповестить тестировщика
@@ -133,5 +134,12 @@ class GitlabExternalApi extends ExternalApi
         }
 
         return null;
+    }
+
+    private function log($message)
+    {
+        $fileName = DateTimeUtils::mysqlDate(null, false) . '-' .
+            DateTimeUtils::date('H-i-s') . '.log';
+        file_put_contents(LOGS_PATH . '/api/gitlab/' . $fileName, $message);
     }
 }
