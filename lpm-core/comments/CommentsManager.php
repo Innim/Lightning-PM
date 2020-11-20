@@ -6,11 +6,11 @@
 class CommentsManager
 {
     const SECONDS_ON_COMMENT_DELETE = 600;
-    
+
     /**
-     * Публикая комментария к задаче.
+     * Публикация комментария к задаче.
      */
-    public function postComment(User $user, Issue $issue, $text, $ignoreSlackNotification = false)
+    public function postComment(User $user, Issue $issue, $text, $ignoreSlackNotification = false, $ignoreMr = false)
     {
         $issueId = $issue->id;
         if (!$comment = $this->addComment($user, LPMInstanceTypes::ISSUE, $issueId, $text)) {
@@ -22,7 +22,7 @@ class CommentsManager
         $memberIds = $issue->getMemberIds();
         $recipients = array_unique(array_merge($memberIds, [$issue->authorId]));
 
-        if (in_array($comment->authorId, $memberIds)) {
+        if (!$ignoreMr && in_array($comment->authorId, $memberIds)) {
             // Если коммент оставил исполнитель, то будем искать MR в нем и запишем их в БД
             $mrList = $comment->getMergeRequests();
             if (!empty($mrList)) {
