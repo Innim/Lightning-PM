@@ -174,36 +174,4 @@ class LPMBaseService extends SecureService
 
         return $project;
     }
-    
-    // TODO: выпилить из base сервиса
-    protected function addComment($instanceType, $instanceId, $text)
-    {
-        if (!$user = $this->getUser()) {
-            return false;
-        }
-        
-        // TODO: перенести в Comment
-        $text = trim($text);
-        if ($text == '') {
-            $this->error('Недопустимый текст');
-            return false;
-        }
-
-        // TODO: что за хрень, выпилить
-        setcookie('Delete', 'Удалить', time()+600, "/");
-
-        $comment = Comment::add($instanceType, $instanceId, $user->userId, $text);
-        if ($comment) {
-            $comment->author = $user;
-            // Записываем лог
-            UserLogEntry::create(
-                $user->userId,
-                DateTimeUtils::$currentDate,
-                UserLogEntryType::ADD_COMMENT,
-                $comment->id
-            );
-        }
-
-        return $comment;
-    }
 }

@@ -4,7 +4,6 @@ use \GMFramework\DateTimeUtils as DTU;
 
 class IssueService extends LPMBaseService
 {
-    const SECONDS_ON_COMMENT_DELETE = 600;
 
     /**
      * Завершаем задачу
@@ -164,8 +163,6 @@ class IssueService extends LPMBaseService
             }
 
             $comment = $this->postComment($issue, $text);
-
-            Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
             $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
@@ -711,65 +708,9 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
 
-    private function slackNotificationCommentTesterOrMembers(Issue $issue, Comment $comment)
-    {
-        if ($issue->status == Issue::STATUS_WAIT) {
-            $testerIssue = $issue->getTesterIds();
-            $membersIssue = $issue->getMemberIds();
-            $userSendMessage = $comment->author->getID();
-            $slack = SlackIntegration::getInstance();
-
-            if (in_array($userSendMessage, $testerIssue)) {
-                $slack->notifyCommentTesterToMember($issue, $comment);
-            } elseif (in_array($userSendMessage, $membersIssue)) {
-                $slack->notifyCommentMemberToTester($issue, $comment);
-            }
-        }
-    }
-
-    // TODO: вынести из сервиса
     private function postComment(Issue $issue, $text, $ignoreSlackNotification = false)
     {
-        $issueId = $issue->id;
-        if (!$comment = $this->addComment(LPMInstanceTypes::ISSUE, $issueId, $text)) {
-            throw new Exception("Не удалось добавить комментарий");
-        }
-        $comment->issue = $issue;
-
-        // отправка оповещений
-        $memberIds = $issue->getMemberIds();
-        $recipients = array_unique(array_merge($memberIds, [$issue->authorId]));
-
-        if (in_array($comment->authorId, $memberIds)) {
-            // Если коммент оставил исполнитель, то будет искать MR в нем и запишем их в БД
-            $mrList = $comment->getMergeRequests();
-            if (!empty($mrList)) {
-                foreach ($mrList as $mr) {
-                    IssueMR::create($mr->id, $issue->id, $mr->state);
-                }
-            }
-        }
-        
-        if (!$ignoreSlackNotification) {
-            $this->slackNotificationCommentTesterOrMembers($issue, $comment);
-        }
-
-        EmailNotifier::getInstance()->sendMail2Allowed(
-            'Новый комментарий к задаче "' . $issue->name . '"',
-            $this->getUser()->getName() . ' оставил комментарий к задаче "' .
-            $issue->name .  '":' . "\n" .
-            $comment->getCleanText() . "\n\n" .
-            'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
-            $recipients,
-            EmailNotifier::PREF_ISSUE_COMMENT
-        );
-
-        // обновляем счетчик коментариев для задачи
-        Issue::updateCommentsCounter($issueId);
-
-        Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
-
-        return $comment;
+        return $this->_engine->comments()->postComment($this->getUser(), $issue, $text, $ignoreSlackNotification);
     }
 
     private function setupCommentAnswer(Comment $comment)

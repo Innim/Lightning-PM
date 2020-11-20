@@ -70,6 +70,10 @@ class LightningEngine
      */
     private $_pagesManager;
     /**
+     * @var CommentsManager
+     */
+    private $_commentsManager;
+    /**
      * @var LPMParams
      */
     private $_params;
@@ -223,6 +227,19 @@ class LightningEngine
     public function gitlab()
     {
         return GitlabIntegration::getInstance($this->getUser());
+    }
+
+    /**
+     * Возвращает инстанцию менеджера для работы с комментариями.
+     * @return CommentsManager
+     */
+    public function comments()
+    {
+        if (empty($this->_commentsManager)) {
+            $this->_commentsManager = new CommentsManager();
+        }
+
+        return $this->_commentsManager;
     }
     
     /**
