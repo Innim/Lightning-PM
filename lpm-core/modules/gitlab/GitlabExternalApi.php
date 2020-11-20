@@ -20,9 +20,9 @@ class GitlabExternalApi extends ExternalApi
 
     private $_token;
 
-    public function __construct($token)
+    public function __construct(LightningEngine $engine, $token)
     {
-        parent::__construct(self::UID);
+        parent::__construct($engine, self::UID);
 
         $this->_token = $token;
     }
