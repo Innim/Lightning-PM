@@ -163,7 +163,7 @@ class GitlabExternalApi extends ExternalApi
                     $commentText = $mr->url;
 
                     if (!empty($mr->description)) {
-                        $commentText = $mr->description . '\n\n' . $commentText;
+                        $commentText = $mr->description . "\n\n" . $commentText;
                     }
 
                     $engine->comments()->postComment($user, $issue, $commentText, false, true);
