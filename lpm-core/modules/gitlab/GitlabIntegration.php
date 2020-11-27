@@ -102,7 +102,7 @@ class GitlabIntegration
             );
 
             $user->gitlabToken = $res['token'];
-            $user->gitlabId = $res['id'];
+            $user->gitlabId = $gitlabUser['id'];
             User::updateGitlabToken($user->userId, $user->gitlabToken, $user->gitlabId);
 
             return $user->gitlabToken;
