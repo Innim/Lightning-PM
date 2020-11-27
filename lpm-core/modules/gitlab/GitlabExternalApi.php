@@ -220,6 +220,63 @@ class GitlabExternalApi extends ExternalApi
 
     private function onDevelopPush(User $user, $repositoryId, $data)
     {
+        $commitIds = [];
+        foreach ($data['commits'] as $commitData) {
+            $commitIds[] = $commitData['id'];
+        }
+
+        // Загружаем список IssueBranch по последним коммитам
+        $issueBranches = IssueBranch::loadByLastCommits($repositoryId, $commitIds, true);
+
+        if (!empty($issueBranches)) {
+            $engine = $this->engine();
+            $comments = $engine->comments();
+
+            // Все ветки, что вошли сюда - теперь влиты в develop
+            $branchesByIssueId = [];
+            foreach ($issueBranches as $issueBranch) {
+                $issueId = $issueBranch->issueId;
+                if (isset($branchesByIssueId[$issueId])) {
+                    $branchesByIssueId[$issueId][] = $issueBranch;
+                } else {
+                    $branchesByIssueId[$issueId] = [$issueBranch];
+                }
+
+                // Отмечаем что ветка влита
+                IssueBranch::mergedInDevelop(
+                    $issueId,
+                    $issueBranch->repositoryId,
+                    $issueBranch->name
+                );
+            }
+
+            $issueIds = array_keys($branchesByIssueId);
+            $issues = Issue::loadListByIds($issueIds);
+
+            foreach ($issues as $issue) {
+                $branches = $branchesByIssueId[$issue->id];
+
+                // Оставляем коммент что влиты в develop
+                $commentTextArr = [];
+                foreach ($branches as $issueBranch) {
+                    $commentTextArr[] = '`' . $issueBranch->name . ' -> ' . self::DEVELOP_BRANCH . '`';
+                }
+
+                $commentText = implode("\n", $commentTextArr);
+                $comments->postComment($user, $issue, $commentText, true, true);
+
+                // Проверяем права
+                if ($issue->checkEditPermit($user->userId)) {
+                    // Проверяем что все ветки этой задачи влиты
+                    $isAllMerged = !IssueBranch::existNotMergedInDevelopForIssue($issue->id);
+
+                    // Если да - то завершаем задачу
+                    if ($isAllMerged) {
+                        Issue::setStatus($issue, Issue::STATUS_COMPLETED, $user);
+                    }
+                }
+            }
+        }
     }
 
     private function updateLastCommit(User $user, $repositoryId, $ref, $data)
