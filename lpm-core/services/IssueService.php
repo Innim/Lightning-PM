@@ -286,7 +286,8 @@ class IssueService extends LPMBaseService
             $finalBranchName = 'feature/' . $branchName;
 
             // Создаем ветку на репозитории
-            if (!($branch = $client->createBranch($gitlabProjectId, $parentBranch, $finalBranchName))) {
+            $branch = $client->createBranch($gitlabProjectId, $parentBranch, $finalBranchName);
+            if (!$branch) {
                 return $this->error('Не удалось создать ветку ' . $finalBranchName);
             }
 
@@ -300,7 +301,8 @@ class IssueService extends LPMBaseService
             $comment = $this->postComment($issue, $commentText, true);
 
             // Записываем данные о том, что ветка привязана к задаче
-            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName);
+            $commint = $branch->commit;
+            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $commint->id);
 
             $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {

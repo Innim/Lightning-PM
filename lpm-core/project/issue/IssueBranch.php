@@ -13,12 +13,21 @@ class IssueBranch extends LPMBaseObject
      * @param  int    $repositoryId Идентификатор репозитория.
      * @param  string $name         Имя ветки.
      */
-    public static function create($issueId, $repositoryId, $name)
+    public static function create($issueId, $repositoryId, $name, $lastCommit, $mergedInDevelop = null)
     {
         $db = self::getDB();
         $date = DateTimeUtils::mysqlDate();
+
+        $fields4Update = ['lastCommit'];
+        if ($mergedInDevelop === null) {
+            $mergedInDevelop = false;
+        } else {
+            $fields4Update[] = 'mergedInDevelop';
+        }
+
         return $db->queryb([
-            'REPLACE' => compact('issueId', 'repositoryId', 'name', 'date'),
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastCommit', 'mergedInDevelop'),
+            'ON DUPLICATE KEY UPDATE' => $fields4Update,
             'INTO'    => LPMTables::ISSUE_BRANCH
         ]);
     }
@@ -84,6 +93,23 @@ SQL;
     }
 
     /**
+     * Отмечает что ветка влита в develop.
+     *
+     * @param  int    $issueId      Идентификатор задачи.
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     */
+    public static function mergedInDevelop($issueId, $repositoryId, $name)
+    {
+        $db = self::getDB();
+        return $db->queryb([
+            'UPDATE'  => LPMTables::ISSUE_BRANCH,
+            'SET' => ['mergedInDevelop' => 1],
+            'WHERE' => compact('issueId', 'repositoryId', 'name'),
+        ]);
+    }
+
+    /**
      * Issue::$id
      * @var int
      */
@@ -108,11 +134,22 @@ SQL;
      */
     public $date;
 
+    /**
+     * ID последнего коммита.
+     */
+    public $lastСommit;
+
+    /**
+     * Отметка о влитии в develop.
+     */
+    public $mergedInDevelop;
+
     public function __construct()
     {
         parent::__construct();
 
         $this->_typeConverter->addIntVars('id', 'repositoryId', 'issueId');
+        $this->_typeConverter->addBoolVars('mergedInDevelop');
         $this->addDateTimeFields('date');
     }
 }

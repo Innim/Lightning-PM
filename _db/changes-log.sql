@@ -284,4 +284,13 @@ CREATE TABLE `lpm_issue_branch` (
 
 -- v0.9.28
 
+ALTER TABLE `lpm_issue_branch`
+ADD `lastСommit` varchar(255) NOT NULL COMMENT 'ID последнего коммита',
+ADD `mergedInDevelop` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Отметка о влитии в develop' AFTER `last_commit`;
+
+ALTER TABLE `lpm_issue_branch`
+ADD INDEX `issueId_mergedInDevelop` (`issueId`, `mergedInDevelop`);
+
+ALTER TABLE `lpm_issue_branch`
+ADD INDEX `repositoryId_lastСommit` (`repositoryId`, `lastСommit`);
 --NEXT
