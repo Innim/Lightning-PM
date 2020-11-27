@@ -13,25 +13,38 @@ class IssueBranch extends LPMBaseObject
      * @param  int    $repositoryId Идентификатор репозитория.
      * @param  string $name         Имя ветки.
      */
-    public static function create($issueId, $repositoryId, $name, $lastCommit, $mergedInDevelop = null)
+    public static function create($issueId, $repositoryId, $name, $lastСommit = null, $mergedInDevelop = null)
     {
-        $db = self::getDB();
         $date = DateTimeUtils::mysqlDate();
 
-        $fields4Update = ['lastCommit'];
+        $fields4Update = [];
+
         if ($mergedInDevelop === null) {
             $mergedInDevelop = false;
         } else {
             $fields4Update[] = 'mergedInDevelop';
         }
 
-        return $db->queryb([
-            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastCommit', 'mergedInDevelop'),
-            'ON DUPLICATE KEY UPDATE' => $fields4Update,
-            'INTO'    => LPMTables::ISSUE_BRANCH
-        ]);
-    }
+        if ($lastСommit === null) {
+            $lastСommit = '';
+        } else {
+            $fields4Update[] = 'lastСommit';
+        }
 
+        $hash = [
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastСommit', 'mergedInDevelop'),
+            'INTO'    => LPMTables::ISSUE_BRANCH
+        ];
+
+        if (empty($fields4Update)) {
+            $hash['IGNORE'] = '';
+        } else {
+            $hash['ON DUPLICATE KEY UPDATE'] = $fields4Update;
+        }
+
+        LPMBaseObject::buildAndSaveToDb($hash);
+    }
+    
     /**
      * Загружает список идентификаторов задач для указанной ветки.
      *
@@ -136,6 +149,10 @@ SQL;
 
     /**
      * ID последнего коммита.
+     *
+     * Здесь подразумевается именно коммит, принадлежащей этой ветке,
+     * т.е. это должен быть коммит, которого нет в develop
+     * (пока ветка не влита).
      */
     public $lastСommit;
 
