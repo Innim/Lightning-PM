@@ -9,6 +9,19 @@ class LPMBaseObject extends StreamObject
         return LPMGlobals::getInstance()->getDBConnect();
     }
 
+    protected static function loadAndParse($hash, $class)
+    {
+        $res = self::loadFromDb($hash);
+        $list = StreamObject::parseListResult($res, $class);
+        return $list;
+    }
+
+    protected static function loadAndParseSingle($hash, $class)
+    {
+        $list = self::loadAndParse($hash, $class);
+        return empty($list) ? null : $list[0];
+    }
+
     protected static function loadFromDb($hash, $tables = null)
     {
         $res = self::getDB()->queryb($hash, $tables);
