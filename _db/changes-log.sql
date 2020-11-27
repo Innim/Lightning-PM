@@ -293,4 +293,14 @@ ADD INDEX `issueId_mergedInDevelop` (`issueId`, `mergedInDevelop`);
 
 ALTER TABLE `lpm_issue_branch`
 ADD INDEX `repositoryId_lastСommit` (`repositoryId`, `lastСommit`);
+
+ALTER TABLE `lpm_users`
+ADD `gitlabId` bigint(20) NOT NULL COMMENT 'идентификатор на GitLab';
+
+ALTER TABLE `lpm_users`
+ADD INDEX `gitlabId` (`gitlabId`);
+
+-- надо сбросить токены, чтобы записались заново, уже с gitlabId
+UPDATE `lpm_users` SET `gitlabToken` = '';
+
 --NEXT
