@@ -2,11 +2,13 @@
 /**
  * Внешнее API для обработки hook событий от GitLab.
  *
- * Для подключения надо вручную добавить нужный хук в Admin Area > System Hooks.
+ * Для подключения надо вручную добавить нужные хуки в Admin Area > System Hooks.
  *
  * URL: https://task_url/api/gitlab/
  * Secret Token: То, что передается в конструктор этого класса присоздании.
- * Trigger: Merge request events.
+ * Trigger:
+ * - Merge request events.
+ * - Push events.
  *
  * // TODO: сделать автоматическое создание хука
  */
@@ -20,6 +22,8 @@ class GitlabExternalApi extends ExternalApi
     const FIELD_USER_ID = 'user_id';
     
     const EVENT_TYPE_MR = 'merge_request';
+    
+    const EVENT_NAME_PUSH = 'push';
 
     private $_token;
 
@@ -42,16 +46,19 @@ class GitlabExternalApi extends ExternalApi
                 throw new Exception("Can't parse input");
             }
 
-            if (empty($data['event_type'])) {
-                throw new Exception("Can't find event_type field");
+            if (empty($data['event_type']) && empty($data['event_name'])) {
+                throw new Exception("Can't find event_type or event_name field");
             }
 
-            $event = $data['event_type'];
-            switch ($event) {
-                case self::EVENT_TYPE_MR:
-                    return $this->onMREvent($data);
-                default:
-                    throw new Exception("Unhandled event " . $event);
+            $eventType = isset($data['event_type']) ? $data['event_type'] : null;
+            $eventName = isset($data['event_name']) ? $data['event_name'] : null;
+
+            if ($eventType == self::EVENT_TYPE_MR) {
+                return $this->onMREvent($data);
+            } elseif ($eventName == self::EVENT_NAME_PUSH) {
+                return $this->onPushEvent($data);
+            } else {
+                throw new Exception("Unhandled event " . $eventType . ", " . $eventName);
             }
         } catch (Exception $e) {
             return $this->onException($e);
@@ -133,6 +140,29 @@ class GitlabExternalApi extends ExternalApi
         IssueMR::updateState($mr->id, $mr->state);
     }
 
+    private function onPushEvent($data)
+    {
+        if (!isset($data[self::FIELD_OBJECT_KIND])) {
+            throw new Exception("Invalid data: there is no object data");
+        }
+
+        if ($data[self::FIELD_OBJECT_KIND] != 'push') {
+            throw new Exception("Invalid object kind: " . $data[self::FIELD_OBJECT_KIND]);
+        }
+
+        $ref = $data['ref'];
+        $repositoryId = $data['project']['id'];
+
+        $user = $this->getUserById($data);
+        if ($user) {
+            if ($ref == 'refs/heads/develop') {
+                $this->onDevelopPush($user, $repositoryId, $data);
+            } elseif (!empty($data['commits'])) {
+                $this->updateLastCommit($user, $repositoryId, $ref, $data);
+            }
+        }
+    }
+
     private function onMROpen(User $user, GitlabMergeRequest $mr)
     {
         // Открыли новый MR - попробуем найти задачи, которые привязаны
@@ -183,6 +213,22 @@ class GitlabExternalApi extends ExternalApi
                 $gitlab->createMRNote($mr->targetProjectId, $mr->internalId, $mrComment);
             }
         }
+    }
+
+    private function onDevelopPush(User $user, $repositoryId, $data)
+    {
+    }
+
+    private function updateLastCommit(User $user, $repositoryId, $ref, $data)
+    {
+        $commitData = end($data['commits']);
+
+        // TODO: Не надо обновлять, если ветка в том же состоянии, что develop
+        // (вроде можно сделать с помощью merge_base)
+        // Обновляем последний коммит
+        $branchName = str_replace('refs/heads/', '', $ref);
+        $lastCommit = $commitData['id'];
+        IssueBranch::updateLastCommit($repositoryId, $branchName, $lastCommit);
     }
 
     private function getUser($data)
