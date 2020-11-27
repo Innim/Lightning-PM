@@ -44,7 +44,29 @@ class IssueBranch extends LPMBaseObject
 
         self::buildAndSaveToDb($hash);
     }
-    
+
+    /**
+     * Загружает список веток по указанным последним коммитам.
+     *
+     * @param  int           $repositoryId Идентификатор репозитория.
+     * @param  array<string> $lastCommits  Список последних коммитов.
+     * @param  bool          $onlyNotMergedInDevelop  Будут загружены только те, что еще не были влиты в develop.
+     */
+    public static function loadByLastCommits($repositoryId, $lastCommits, $onlyNotMergedInDevelop = false)
+    {
+        $lastCommitsVal = "'" . implode("', '", $lastCommits) . "'";
+        $where = '`repositoryId` = ' . $repositoryId . ' AND `lastСommit` IN (' . $lastCommitsVal . ')';
+        if ($onlyNotMergedInDevelop) {
+            $where .= ' AND `mergedInDevelop` = 0';
+        }
+
+        return self::loadAndParse([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => $where,
+        ], __CLASS__);
+    }
+
     /**
      * Загружает список идентификаторов задач для указанной ветки.
      *
@@ -103,6 +125,33 @@ SQL;
 
         $row = $res->fetch_assoc();
         return $row ? (int)$row['repositoryId'] : null;
+    }
+
+    /**
+     * Проверят, существует ли хотя бы одна ветка для указанной задачи,
+     * которая еще не влита в develop.
+     *
+     * @param  int    $issueId Идентификатор задачи.
+     * @return bool
+     */
+    public static function existNotMergedInDevelopForIssue($issueId)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => [
+                'issueId' => $issueId,
+                'mergedInDevelop' => 0,
+            ],
+            'LIMIT'  => 1,
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        return $res->num_rows > 0;
     }
 
     /**
