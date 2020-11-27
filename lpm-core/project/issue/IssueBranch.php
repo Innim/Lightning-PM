@@ -123,6 +123,22 @@ SQL;
     }
 
     /**
+     * Обновляет ID последнего коммита.
+     *
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     * @param  string $lastCommit   ID последнего коммита.
+     */
+    public static function updateLastCommit($repositoryId, $name, $lastСommit)
+    {
+        self::buildAndSaveToDb([
+            'UPDATE'  => LPMTables::ISSUE_BRANCH,
+            'SET' => compact('lastСommit'),
+            'WHERE' => compact('repositoryId', 'name'),
+        ]);
+    }
+
+    /**
      * Issue::$id
      * @var int
      */
