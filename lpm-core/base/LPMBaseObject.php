@@ -35,6 +35,16 @@ class LPMBaseObject extends StreamObject
         return intval(self::loadValFromDb($table, $field, $where));
     }
 
+    protected static function buildAndSaveToDb($sqlHash)
+    {
+        $db = self::getDB();
+        $res = $db->queryb($sqlHash);
+
+        if (!$res) {
+            throw new \GMFramework\ProviderSaveException();
+        }
+    }
+
     protected static function getDateStr($date)
     {
         if ($date == 0) {
