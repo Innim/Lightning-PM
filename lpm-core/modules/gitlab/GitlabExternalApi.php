@@ -17,6 +17,8 @@ class GitlabExternalApi extends ExternalApi
     const FIELD_OBJECT_KIND = 'object_kind';
     const FIELD_OBJECT_ATTRIBUTES = 'object_attributes';
     const FIELD_USER = 'user';
+    const FIELD_USER_ID = 'user_id';
+    
     const EVENT_TYPE_MR = 'merge_request';
 
     private $_token;
@@ -192,6 +194,16 @@ class GitlabExternalApi extends ExternalApi
             if ($user != null && !empty($user->gitlabToken)) {
                 return $user;
             }
+        }
+
+        return null;
+    }
+
+    private function getUserById($data)
+    {
+        $gitlabUserId = $data[self::FIELD_USER_ID];
+        if (!empty($gitlabUserId)) {
+            return User::loadByGitlabId($gitlabUserId);
         }
 
         return null;
