@@ -16,11 +16,19 @@ class GitlabBranch extends \GMFramework\StreamObject
      */
     public $url;
 
+    /**
+     * Текущий коммит.
+     * @var GitlabCommit
+     */
+    public $commit;
+
     private $_data;
 
     public function __construct($data)
     {
         parent::__construct();
+        
+        $this->commit = new GitlabCommit();
 
         $this->_data = $data;
 
