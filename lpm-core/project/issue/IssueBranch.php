@@ -42,7 +42,7 @@ class IssueBranch extends LPMBaseObject
             $hash['ON DUPLICATE KEY UPDATE'] = $fields4Update;
         }
 
-        LPMBaseObject::buildAndSaveToDb($hash);
+        self::buildAndSaveToDb($hash);
     }
     
     /**
@@ -114,8 +114,7 @@ SQL;
      */
     public static function mergedInDevelop($issueId, $repositoryId, $name)
     {
-        $db = self::getDB();
-        return $db->queryb([
+        self::buildAndSaveToDb([
             'UPDATE'  => LPMTables::ISSUE_BRANCH,
             'SET' => ['mergedInDevelop' => 1],
             'WHERE' => compact('issueId', 'repositoryId', 'name'),
