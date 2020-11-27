@@ -25,6 +25,9 @@ class GitlabExternalApi extends ExternalApi
     
     const EVENT_NAME_PUSH = 'push';
 
+    const REPO_BRANCH_PREFIX = 'refs/heads/';
+    const DEVELOP_BRANCH = 'develop';
+
     private $_token;
 
     public function __construct(LightningEngine $engine, $token)
@@ -155,7 +158,7 @@ class GitlabExternalApi extends ExternalApi
 
         $user = $this->getUserById($data);
         if ($user) {
-            if ($ref == 'refs/heads/develop') {
+            if ($ref == self::REPO_BRANCH_PREFIX . self::DEVELOP_BRANCH) {
                 $this->onDevelopPush($user, $repositoryId, $data);
             } elseif (!empty($data['commits'])) {
                 $this->updateLastCommit($user, $repositoryId, $ref, $data);
@@ -226,7 +229,7 @@ class GitlabExternalApi extends ExternalApi
         // TODO: Не надо обновлять, если ветка в том же состоянии, что develop
         // (вроде можно сделать с помощью merge_base)
         // Обновляем последний коммит
-        $branchName = str_replace('refs/heads/', '', $ref);
+        $branchName = str_replace(self::REPO_BRANCH_PREFIX, '', $ref);
         $lastCommit = $commitData['id'];
         IssueBranch::updateLastCommit($repositoryId, $branchName, $lastCommit);
     }
