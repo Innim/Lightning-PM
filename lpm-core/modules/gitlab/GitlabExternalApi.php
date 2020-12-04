@@ -281,14 +281,21 @@ class GitlabExternalApi extends ExternalApi
 
     private function updateLastCommit(User $user, $repositoryId, $ref, $data)
     {
-        $commitData = end($data['commits']);
-
-        // TODO: Не надо обновлять, если ветка в том же состоянии, что develop
-        // (вроде можно сделать с помощью merge_base)
-        // Обновляем последний коммит
         $branchName = str_replace(self::REPO_BRANCH_PREFIX, '', $ref);
-        $lastCommit = $commitData['id'];
-        IssueBranch::updateLastCommit($repositoryId, $branchName, $lastCommit);
+
+        // Надо сначала проверить, есть ли такая ветка на таске вообще
+        if (IssueBranch::existIssuesWithBranch($repositoryId, $branchName)) {
+            // Не надо обновлять, если ветка в том же состоянии, что develop
+            $gitlab = GitlabIntegration::getInstance($user);
+            $commit = $gitlab->compareBranchesAndGetCommit($repositoryId, self::DEVELOP_BRANCH, $branchName);
+        
+            if ($commit) {
+                // В ветке есть отличия от develop -
+                // обновляем последний коммит
+                $lastCommit = $commit->id;
+                IssueBranch::updateLastCommit($repositoryId, $branchName, $lastCommit);
+            }
+        }
     }
 
     private function getUser($data)
