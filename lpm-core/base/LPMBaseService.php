@@ -67,7 +67,7 @@ class LPMBaseService extends SecureService
                 if (empty($message)) {
                     $message = 'DB error';
                 }
-                $message .= ' (' . $_dbError . ')';
+                $message .= ' (' . $dbError . ')';
             }
         }
 
