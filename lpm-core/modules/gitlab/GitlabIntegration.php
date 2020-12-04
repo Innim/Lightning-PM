@@ -222,6 +222,32 @@ class GitlabIntegration
     }
 
     /**
+     * Сравнивает два коммита/ветки/тега и возвращает
+     * актуальный коммит в ветку $toShaOrBranch.
+     * @param $projectId Идентификатор проекта на GitLab.
+     * @param $fromShaOrBranch SHA коммита или имя ветки/тега.
+     * @param $toShaOrBranch SHA коммита или имя ветки/тега.
+     * @return GitlabBranch|null|false Если в ветке $toShaOrBranch
+     * нет изменений, которые не присутствуют в ветке $fromShaOrBranch,
+     * то вернется null. В случае ошибки вернется false.
+     */
+    public function compareBranchesAndGetCommit($projectId, $fromShaOrBranch, $toShaOrBranch)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return false;
+        }
+
+        try {
+            $res = $client->repositories()->compare($projectId, $fromShaOrBranch, $toShaOrBranch);
+            return $res ? new GitlabCommit($res['commit']) : false;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return false;
+        }
+    }
+
+    /**
      * Создает комментарий к MR.
      * @param $projectId Идентификатор проекта на GitLab.
      * @param $mrId Внутренний идентификатор MR на GitLab.
