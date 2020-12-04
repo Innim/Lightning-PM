@@ -128,7 +128,7 @@ SQL;
     }
 
     /**
-     * Проверят, существует ли хотя бы одна ветка для указанной задачи,
+     * Проверяет, существует ли хотя бы одна ветка для указанной задачи,
      * которая еще не влита в develop.
      *
      * @param  int    $issueId Идентификатор задачи.
@@ -144,6 +144,31 @@ SQL;
                 'issueId' => $issueId,
                 'mergedInDevelop' => 0,
             ],
+            'LIMIT'  => 1,
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        return $res->num_rows > 0;
+    }
+
+    /**
+     * Проверяет, существует ли запись для указанной ветки.
+     *
+     *
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     * @return bool
+     */
+    public static function existIssuesWithBranch($repositoryId, $name)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => compact(['repositoryId', 'name']),
             'LIMIT'  => 1,
         ]);
 
