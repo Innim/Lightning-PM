@@ -286,7 +286,8 @@ class IssueService extends LPMBaseService
             $finalBranchName = 'feature/' . $branchName;
 
             // Создаем ветку на репозитории
-            if (!($branch = $client->createBranch($gitlabProjectId, $parentBranch, $finalBranchName))) {
+            $branch = $client->createBranch($gitlabProjectId, $parentBranch, $finalBranchName);
+            if (!$branch) {
                 return $this->error('Не удалось создать ветку ' . $finalBranchName);
             }
 

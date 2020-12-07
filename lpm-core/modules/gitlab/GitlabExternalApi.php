@@ -2,11 +2,13 @@
 /**
  * Внешнее API для обработки hook событий от GitLab.
  *
- * Для подключения надо вручную добавить нужный хук в Admin Area > System Hooks.
+ * Для подключения надо вручную добавить нужные хуки в Admin Area > System Hooks.
  *
  * URL: https://task_url/api/gitlab/
  * Secret Token: То, что передается в конструктор этого класса присоздании.
- * Trigger: Merge request events.
+ * Trigger:
+ * - Merge request events.
+ * - Push events.
  *
  * // TODO: сделать автоматическое создание хука
  */
@@ -17,7 +19,14 @@ class GitlabExternalApi extends ExternalApi
     const FIELD_OBJECT_KIND = 'object_kind';
     const FIELD_OBJECT_ATTRIBUTES = 'object_attributes';
     const FIELD_USER = 'user';
+    const FIELD_USER_ID = 'user_id';
+    
     const EVENT_TYPE_MR = 'merge_request';
+    
+    const EVENT_NAME_PUSH = 'push';
+
+    const REPO_BRANCH_PREFIX = 'refs/heads/';
+    const DEVELOP_BRANCH = 'develop';
 
     private $_token;
 
@@ -40,16 +49,19 @@ class GitlabExternalApi extends ExternalApi
                 throw new Exception("Can't parse input");
             }
 
-            if (empty($data['event_type'])) {
-                throw new Exception("Can't find event_type field");
+            if (empty($data['event_type']) && empty($data['event_name'])) {
+                throw new Exception("Can't find event_type or event_name field");
             }
 
-            $event = $data['event_type'];
-            switch ($event) {
-                case self::EVENT_TYPE_MR:
-                    return $this->onMREvent($data);
-                default:
-                    throw new Exception("Unhandled event " . $event);
+            $eventType = isset($data['event_type']) ? $data['event_type'] : null;
+            $eventName = isset($data['event_name']) ? $data['event_name'] : null;
+
+            if ($eventType == self::EVENT_TYPE_MR) {
+                return $this->onMREvent($data);
+            } elseif ($eventName == self::EVENT_NAME_PUSH) {
+                return $this->onPushEvent($data);
+            } else {
+                throw new Exception("Unhandled event " . $eventType . ", " . $eventName);
             }
         } catch (Exception $e) {
             return $this->onException($e);
@@ -131,6 +143,29 @@ class GitlabExternalApi extends ExternalApi
         IssueMR::updateState($mr->id, $mr->state);
     }
 
+    private function onPushEvent($data)
+    {
+        if (!isset($data[self::FIELD_OBJECT_KIND])) {
+            throw new Exception("Invalid data: there is no object data");
+        }
+
+        if ($data[self::FIELD_OBJECT_KIND] != 'push') {
+            throw new Exception("Invalid object kind: " . $data[self::FIELD_OBJECT_KIND]);
+        }
+
+        $ref = $data['ref'];
+        $repositoryId = $data['project']['id'];
+
+        $user = $this->getUserById($data);
+        if ($user) {
+            if ($ref == self::REPO_BRANCH_PREFIX . self::DEVELOP_BRANCH) {
+                $this->onDevelopPush($user, $repositoryId, $data);
+            } elseif (!empty($data['commits'])) {
+                $this->updateLastCommit($user, $repositoryId, $ref, $data);
+            }
+        }
+    }
+
     private function onMROpen(User $user, GitlabMergeRequest $mr)
     {
         // Открыли новый MR - попробуем найти задачи, которые привязаны
@@ -183,6 +218,86 @@ class GitlabExternalApi extends ExternalApi
         }
     }
 
+    private function onDevelopPush(User $user, $repositoryId, $data)
+    {
+        $commitIds = [];
+        foreach ($data['commits'] as $commitData) {
+            $commitIds[] = $commitData['id'];
+        }
+
+        // Загружаем список IssueBranch по последним коммитам
+        $issueBranches = IssueBranch::loadByLastCommits($repositoryId, $commitIds, true);
+
+        if (!empty($issueBranches)) {
+            $engine = $this->engine();
+            $comments = $engine->comments();
+
+            // Все ветки, что вошли сюда - теперь влиты в develop
+            $branchesByIssueId = [];
+            foreach ($issueBranches as $issueBranch) {
+                $issueId = $issueBranch->issueId;
+                if (isset($branchesByIssueId[$issueId])) {
+                    $branchesByIssueId[$issueId][] = $issueBranch;
+                } else {
+                    $branchesByIssueId[$issueId] = [$issueBranch];
+                }
+
+                // Отмечаем что ветка влита
+                IssueBranch::mergedInDevelop(
+                    $issueId,
+                    $issueBranch->repositoryId,
+                    $issueBranch->name
+                );
+            }
+
+            $issueIds = array_keys($branchesByIssueId);
+            $issues = Issue::loadListByIds($issueIds);
+
+            foreach ($issues as $issue) {
+                $branches = $branchesByIssueId[$issue->id];
+
+                // Оставляем коммент что влиты в develop
+                $commentTextArr = [];
+                foreach ($branches as $issueBranch) {
+                    $commentTextArr[] = '`' . $issueBranch->name . ' -> ' . self::DEVELOP_BRANCH . '`';
+                }
+
+                $commentText = implode("\n", $commentTextArr);
+                $comments->postComment($user, $issue, $commentText, true, true);
+
+                // Проверяем права
+                if ($issue->checkEditPermit($user->userId)) {
+                    // Проверяем что все ветки этой задачи влиты
+                    $isAllMerged = !IssueBranch::existNotMergedInDevelopForIssue($issue->id);
+
+                    // Если да - то завершаем задачу
+                    if ($isAllMerged) {
+                        Issue::setStatus($issue, Issue::STATUS_COMPLETED, $user);
+                    }
+                }
+            }
+        }
+    }
+
+    private function updateLastCommit(User $user, $repositoryId, $ref, $data)
+    {
+        $branchName = str_replace(self::REPO_BRANCH_PREFIX, '', $ref);
+
+        // Надо сначала проверить, есть ли такая ветка на таске вообще
+        if (IssueBranch::existIssuesWithBranch($repositoryId, $branchName)) {
+            // Не надо обновлять, если ветка в том же состоянии, что develop
+            $gitlab = GitlabIntegration::getInstance($user);
+            $commit = $gitlab->compareBranchesAndGetCommit($repositoryId, self::DEVELOP_BRANCH, $branchName);
+        
+            if ($commit) {
+                // В ветке есть отличия от develop -
+                // обновляем последний коммит
+                $lastCommit = $commit->id;
+                IssueBranch::updateLastCommit($repositoryId, $branchName, $lastCommit);
+            }
+        }
+    }
+
     private function getUser($data)
     {
         $userData = $data[self::FIELD_USER];
@@ -192,6 +307,16 @@ class GitlabExternalApi extends ExternalApi
             if ($user != null && !empty($user->gitlabToken)) {
                 return $user;
             }
+        }
+
+        return null;
+    }
+
+    private function getUserById($data)
+    {
+        $gitlabUserId = $data[self::FIELD_USER_ID];
+        if (!empty($gitlabUserId)) {
+            return User::loadByGitlabId($gitlabUserId);
         }
 
         return null;

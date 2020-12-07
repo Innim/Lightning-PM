@@ -50,6 +50,26 @@ class User extends LPMBaseObject
     }
     
     /**
+     * @param int $gitlabId
+     * @return User
+     */
+    public static function loadByGitlabId($gitlabId)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::USERS,
+            'WHERE'  => [
+                'gitlabId' => $gitlabId,
+            ],
+            'LIMIT' => 1,
+        ]);
+        
+        $list = StreamObject::parseListResult($res, __CLASS__);
+        return empty($list) ? null : $list[0];
+    }
+    
+    /**
      * Обновляет поле блокировки пользователя.
      * @param int $userId
      * @param bool $isLocked
@@ -73,23 +93,34 @@ class User extends LPMBaseObject
      * Обновляет поле с токеном GitLab для пользователя.
      * @param int $userId
      * @param string $gitlabToken
+     * @param int $gitlabId
      */
-    public static function updateGitlabToken($userId, $gitlabToken)
+    public static function updateGitlabToken($userId, $gitlabToken, $gitlabId)
     {
-        return self::updateField($userId, 'gitlabToken', $gitlabToken);
+        return self::updateFields($userId, compact('gitlabToken', 'gitlabId'));
     }
     
     /**
-     * Обновляет поле блокировки пользователя.
+     * Обновляет указанное поле пользователя.
      * @param int $userId
      * @param bool $isLocked
      */
     private static function updateField($userId, $fieldName, $value)
     {
+        return self::updateFields($userId, [$fieldName => $value]);
+    }
+    
+    /**
+     * Обновляет поля пользователя.
+     * @param int $userId
+     * @param bool $isLocked
+     */
+    private static function updateFields($userId, $keyValues)
+    {
         $db = self::getDB();
         return $db->queryb([
             'UPDATE' => LPMTables::USERS,
-            'SET' => [$fieldName => $value],
+            'SET' => $keyValues,
             'WHERE' => ['userId' => $userId]
         ]);
     }
@@ -148,6 +179,7 @@ class User extends LPMBaseObject
     public $lastName  = '';
     public $slackName = '';
     public $gitlabToken = '';
+    public $gitlabId;
     public $lastVisit = 0;
     public $regDate   = 0;
     public $role      = 0;
@@ -163,7 +195,7 @@ class User extends LPMBaseObject
         
         $this->pref = new UserPref();
         
-        $this->_typeConverter->addIntVars('userId');
+        $this->_typeConverter->addIntVars('userId', 'gitlabId');
         $this->_typeConverter->addBoolVars('secret', 'locked');
         $this->addDateTimeFields('lastVisit', 'regDate');
         

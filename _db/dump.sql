@@ -75,9 +75,13 @@ CREATE TABLE `lpm_issue_branch` (
   `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
   `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Название ветки',
   `date` datetime NOT NULL COMMENT 'Дата записи',
+  `lastСommit` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'ID последнего коммита',
+  `mergedInDevelop` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Отметка о влитии в develop',
   PRIMARY KEY (`issueId`,`repositoryId`,`name`),
   KEY `repositoryId_name` (`repositoryId`,`name`),
-  KEY `issueId` (`issueId`)
+  KEY `issueId` (`issueId`),
+  KEY `issueId_mergedInDevelop` (`issueId`,`mergedInDevelop`),
+  KEY `repositoryId_lastСommit` (`repositoryId`,`lastСommit`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
 
 
@@ -232,8 +236,10 @@ CREATE TABLE `lpm_users` (
   `secret` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'скрытый пользователь',
   `slackName` varchar(255) NOT NULL COMMENT 'имя в Slack',
   `gitlabToken` varchar(255) NOT NULL COMMENT 'Gitlab токен',
+  `gitlabId` bigint(20) NOT NULL COMMENT 'идентификатор на GitLab',
   PRIMARY KEY (`userId`),
-  UNIQUE KEY `email` (`email`)
+  UNIQUE KEY `email` (`email`),
+  KEY `gitlabId` (`gitlabId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
@@ -302,4 +308,4 @@ CREATE TABLE `lpm_work_study` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
--- 2020-11-06 15:49:26
+-- 2020-12-07 08:34:11

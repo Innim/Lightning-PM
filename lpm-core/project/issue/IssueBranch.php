@@ -13,14 +13,58 @@ class IssueBranch extends LPMBaseObject
      * @param  int    $repositoryId Идентификатор репозитория.
      * @param  string $name         Имя ветки.
      */
-    public static function create($issueId, $repositoryId, $name)
+    public static function create($issueId, $repositoryId, $name, $lastСommit = null, $mergedInDevelop = null)
     {
-        $db = self::getDB();
         $date = DateTimeUtils::mysqlDate();
-        return $db->queryb([
-            'REPLACE' => compact('issueId', 'repositoryId', 'name', 'date'),
+
+        $fields4Update = [];
+
+        if ($mergedInDevelop === null) {
+            $mergedInDevelop = false;
+        } else {
+            $fields4Update[] = 'mergedInDevelop';
+        }
+
+        if ($lastСommit === null) {
+            $lastСommit = '';
+        } else {
+            $fields4Update[] = 'lastСommit';
+        }
+
+        $hash = [
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastСommit', 'mergedInDevelop'),
             'INTO'    => LPMTables::ISSUE_BRANCH
-        ]);
+        ];
+
+        if (empty($fields4Update)) {
+            $hash['IGNORE'] = '';
+        } else {
+            $hash['ON DUPLICATE KEY UPDATE'] = $fields4Update;
+        }
+
+        self::buildAndSaveToDb($hash);
+    }
+
+    /**
+     * Загружает список веток по указанным последним коммитам.
+     *
+     * @param  int           $repositoryId Идентификатор репозитория.
+     * @param  array<string> $lastCommits  Список последних коммитов.
+     * @param  bool          $onlyNotMergedInDevelop  Будут загружены только те, что еще не были влиты в develop.
+     */
+    public static function loadByLastCommits($repositoryId, $lastCommits, $onlyNotMergedInDevelop = false)
+    {
+        $lastCommitsVal = "'" . implode("', '", $lastCommits) . "'";
+        $where = '`repositoryId` = ' . $repositoryId . ' AND `lastСommit` IN (' . $lastCommitsVal . ')';
+        if ($onlyNotMergedInDevelop) {
+            $where .= ' AND `mergedInDevelop` = 0';
+        }
+
+        return self::loadAndParse([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => $where,
+        ], __CLASS__);
     }
 
     /**
@@ -84,6 +128,90 @@ SQL;
     }
 
     /**
+     * Проверяет, существует ли хотя бы одна ветка для указанной задачи,
+     * которая еще не влита в develop.
+     *
+     * @param  int    $issueId Идентификатор задачи.
+     * @return bool
+     */
+    public static function existNotMergedInDevelopForIssue($issueId)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => [
+                'issueId' => $issueId,
+                'mergedInDevelop' => 0,
+            ],
+            'LIMIT'  => 1,
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        return $res->num_rows > 0;
+    }
+
+    /**
+     * Проверяет, существует ли запись для указанной ветки.
+     *
+     *
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     * @return bool
+     */
+    public static function existIssuesWithBranch($repositoryId, $name)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => compact(['repositoryId', 'name']),
+            'LIMIT'  => 1,
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        return $res->num_rows > 0;
+    }
+
+    /**
+     * Отмечает что ветка влита в develop.
+     *
+     * @param  int    $issueId      Идентификатор задачи.
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     */
+    public static function mergedInDevelop($issueId, $repositoryId, $name)
+    {
+        self::buildAndSaveToDb([
+            'UPDATE'  => LPMTables::ISSUE_BRANCH,
+            'SET' => ['mergedInDevelop' => 1],
+            'WHERE' => compact('issueId', 'repositoryId', 'name'),
+        ]);
+    }
+
+    /**
+     * Обновляет ID последнего коммита.
+     *
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     * @param  string $lastCommit   ID последнего коммита.
+     */
+    public static function updateLastCommit($repositoryId, $name, $lastСommit)
+    {
+        self::buildAndSaveToDb([
+            'UPDATE'  => LPMTables::ISSUE_BRANCH,
+            'SET' => compact('lastСommit'),
+            'WHERE' => compact('repositoryId', 'name'),
+        ]);
+    }
+
+    /**
      * Issue::$id
      * @var int
      */
@@ -108,11 +236,26 @@ SQL;
      */
     public $date;
 
+    /**
+     * ID последнего коммита.
+     *
+     * Здесь подразумевается именно коммит, принадлежащей этой ветке,
+     * т.е. это должен быть коммит, которого нет в develop
+     * (пока ветка не влита).
+     */
+    public $lastСommit;
+
+    /**
+     * Отметка о влитии в develop.
+     */
+    public $mergedInDevelop;
+
     public function __construct()
     {
         parent::__construct();
 
         $this->_typeConverter->addIntVars('id', 'repositoryId', 'issueId');
+        $this->_typeConverter->addBoolVars('mergedInDevelop');
         $this->addDateTimeFields('date');
     }
 }
