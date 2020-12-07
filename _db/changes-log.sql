@@ -303,4 +303,6 @@ ADD INDEX `gitlabId` (`gitlabId`);
 -- надо сбросить токены, чтобы записались заново, уже с gitlabId
 UPDATE `lpm_users` SET `gitlabToken` = '';
 
+-- v0.9.30
+
 --NEXT
