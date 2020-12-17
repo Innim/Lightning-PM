@@ -80,7 +80,7 @@ class GitlabExternalApi extends ExternalApi
 
     private function onException(Exception $e)
     {
-        // TODO: лог
+        $this->log($e->getMessage(), 'error-');
         // TODO: формат ошибки
         return $e->getMessage();
     }
@@ -322,10 +322,10 @@ class GitlabExternalApi extends ExternalApi
         return null;
     }
 
-    private function log($message)
+    private function log($message, $suffix = '')
     {
         $fileName = DateTimeUtils::mysqlDate(null, false) . '-' .
             DateTimeUtils::date('H-i-s') . '.log';
-        file_put_contents(LOGS_PATH . '/api/gitlab/' . $fileName, $message);
+        file_put_contents(LOGS_PATH . '/api/gitlab' . $suffix . '/' . $fileName, $message);
     }
 }
