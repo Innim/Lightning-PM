@@ -444,8 +444,21 @@ issuePage.changePriority = function (e) {
                 let priority = res.priority;
                 let priorityStr = Issue.getPriorityStr(priority);
                 let priorityVal = Issue.getPriorityDisplayVal(priority);
-                $('.priority-title-owner').attr('title', 'Приоритет: ' + priorityStr +
-                    ' (' + priorityVal + '%)');
+                let tooltipHost = $('.priority-title-owner', $row);
+                tooltipHost.attr('title', 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)');
+                let tooltips = $(document).tooltip('instance').tooltips;
+                for (var prop in tooltips) {
+                    let item = tooltips[prop];
+                    let element = item.element;
+                    if (element[0] == tooltipHost[0]) {
+                        let tooltip = item.tooltip;
+                        // TODO: кривой способ, ломает следующее открытие
+                        // но так и не получилось адекватно закрыть тултипы
+                        // надо еще разбираться
+                        tooltip.remove();
+                    }
+                }
+
                 $('.priority-val', $row).data("value", priority);
                 issuePage.updatePriorityVal($('.priority-val', $row), priority);
 
