@@ -186,11 +186,24 @@ class GitlabIntegration
         }
 
         try {
-            $list = $client->repositories()->branches($projectId);
+            $page = 0;
+            $perPage = 100;
             $res = [];
-            foreach ($list as $data) {
-                $res[] = new GitlabBranch($data);
-            }
+
+            do {
+                $page++;
+                $list = $client->repositories()->branches(
+                    $projectId,
+                    [
+                        'per_page' => $perPage,
+                        'page' => $page,
+                    ]
+                );
+            
+                foreach ($list as $data) {
+                    $res[] = new GitlabBranch($data);
+                }
+            } while (count($list) == $perPage);
             return $res;
         } catch (Exception $e) {
             GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
@@ -280,6 +293,9 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * @return \Gitlab\Client
+     */
     private function client()
     {
         if (!$this->isAvailable()) {
