@@ -917,6 +917,11 @@ WHERE;
             return 'высокий';
         }
     }
+    
+    public function getPriorityDisplayValue()
+    {
+        return $this->priority + 1;
+    }
 
     /**
      * Возвращает URL страницы проекта, к которому относится задача,
