@@ -430,6 +430,8 @@ class ProjectPage extends LPMPage
             $engine->addError('Необходимо указать хотя бы одного исполнителя проекта');
         } elseif ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
             $engine->addError('Недопустимое значение приоритета');
+        } elseif (mb_strlen($_POST['desc']) > Issue::DESC_MAX_LEN) {
+            $engine->addError('Слишком длинное описание. Максимальная длина: ' . Issue::DESC_MAX_LEN . ' символов');
         } else {
             // TODO наверное нужен "белый список" тегов
             $_POST['desc'] = str_replace('%', '%%', $_POST['desc']);
