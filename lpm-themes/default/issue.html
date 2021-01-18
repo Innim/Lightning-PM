@@ -53,8 +53,8 @@ $project = $issue->getProject();
             <div class="info-list-item">
                 <span class="label">Приоритет</span>
                 <span class="value">
-                    <span class="priority-val circle"><?=$issue->priority;?></span>
-                    <?=$issue->getPriorityStr();?> (<?=($issue->priority+1);?>%)
+                    <span class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span>
+                    <?=$issue->getPriorityStr();?> (<?=($issue->getPriorityDisplayValue());?>%)
                 </span>
                 <input type="hidden" name="priority" value="<?=$issue->priority;?>" />
             </div>

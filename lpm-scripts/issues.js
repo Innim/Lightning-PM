@@ -291,11 +291,13 @@ issuePage.updatePriorityVal = function ($el, value) {
 }
 
 issuePage.setPriorityVal = function (value) {
-    var valStr = Issue.getPriorityStr(value);
-    $('#priority').val(value);
-    value++;
-    $('#priorityVal').html(valStr + ' (' + value + '%)');
-    $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(value - 1));
+    let valueInt = parseInt(value);
+    let title = Issue.getPriorityStr(valueInt);
+    let displayVal = Issue.getPriorityDisplayVal(valueInt);
+    $('#priority').val(valueInt);
+
+    $('#priorityVal').html(title + ' (' + displayVal + '%)');
+    $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(valueInt));
 };
 
 issuePage.upPriorityVal = function () {
@@ -439,15 +441,29 @@ issuePage.changePriority = function (e) {
     if (issueId > 0) {
         srv.issue.changePriority(issueId, delta, function (res) {
             if (res.success) {
-                // alert('ok: ' + res.priority);
-                var priority = res.priority;
-                var priorityStr = Issue.getPriorityStr(priority);
-                $('.priority-val', $row).attr('title', 'Приоритет: ' + priorityStr +
-                    ' (' + priority + ')').data("value", priority);
+                let priority = res.priority;
+                let priorityStr = Issue.getPriorityStr(priority);
+                let priorityVal = Issue.getPriorityDisplayVal(priority);
+                let tooltipHost = $('.priority-title-owner', $row);
+                tooltipHost.attr('title', 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)');
+                let tooltips = $(document).tooltip('instance').tooltips;
+                for (var prop in tooltips) {
+                    let item = tooltips[prop];
+                    let element = item.element;
+                    if (element[0] == tooltipHost[0]) {
+                        let tooltip = item.tooltip;
+                        // TODO: кривой способ, ломает следующее открытие
+                        // но так и не получилось адекватно закрыть тултипы
+                        // надо еще разбираться
+                        tooltip.remove();
+                    }
+                }
+
+                $('.priority-val', $row).data("value", priority);
                 issuePage.updatePriorityVal($('.priority-val', $row), priority);
 
                 var hintY = e.pageY - 13;
-                $("<span></span>").text(priority).addClass("priority-change-animation").
+                $("<span></span>").text(priorityVal).addClass("priority-change-animation").
                     appendTo($('body')).offset({ top: hintY, left: e.pageX - 10 }).
                     animate(
                         {
@@ -983,7 +999,7 @@ function Issue(obj) {
     };
 
     this.getPriority = function () {
-        var val = (this.priority + 1);
+        var val = Issue.getPriorityDisplayVal(this.priority);
         return '<span class="priority-val circle">' + this.priority + '</span>' +
             Issue.getPriorityStr(val) + ' (' + val + '%)';
     };
@@ -1090,12 +1106,19 @@ function Issue(obj) {
 };
 
 /**
- * @param {Number} priority = 1..100
+ * @param {Number} priority = 0..99
  */
 Issue.getPriorityStr = function (priority) {
     if (priority < 33) return 'низкий';
     else if (priority < 66) return 'нормальный';
     else return 'высокий';
+};
+
+/**
+ * @param {Number} priority = 0..99
+ */
+Issue.getPriorityDisplayVal = function (priority) {
+    return priority + 1;
 };
 
 Issue.getCommitMessage = function (num, title) {

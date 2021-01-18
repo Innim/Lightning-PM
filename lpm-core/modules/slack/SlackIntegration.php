@@ -94,6 +94,9 @@ class SlackIntegration
         $this->postMessageForIssue($issue, $text);
     }
 
+    /**
+     * @return \Slack\ApiClient
+     */
     private function getClient()
     {
         if ($this->_client == null) {
@@ -133,7 +136,7 @@ class SlackIntegration
         // Ищем сообщение, которое будет как базовое для ветки
         $prefix = $this->getIssuePrefix($issue);
         $client = $this->getClient();
-        $client->apiCall('groups.history', ['channel' => $channel, 'count' => 50])->then(function (\Slack\Payload $res) use ($client, $channel, $text, $attachments, $prefix) {
+        $client->apiCall('conversations.history', ['channel' => $channel, 'count' => 50])->then(function (\Slack\Payload $res) use ($client, $channel, $text, $attachments, $prefix) {
             $data = $res->getData();
             // echo '<pre>groups.history: '; var_dump($data); echo '</pre>';
             $threadTs = null;

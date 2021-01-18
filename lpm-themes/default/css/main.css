@@ -703,10 +703,12 @@ form ol.form-fields > li:last-child {
 
 .priority-val.circle {
 	display: inline-block;
-	width: 5px;
-	height: 5px;
-	vertical-align: middle;
-	margin-right: 5px;
+    width: 6px;
+    height: 6px;
+    vertical-align: middle;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-left: -1px;
 }
 button.remove-btn,
 a.remove-btn {
@@ -1425,6 +1427,14 @@ blockquote > p {
 #issueForm form > ol > li .put-to-board-line label {
 	margin: 0 5px;
 }
+#issueForm .text-warning {
+	color: #ccc;
+	text-align: right;
+	width: 90%;
+    margin: 5px auto 0;
+	padding: 0 5px;
+}
+
 #issueForm .note
 {
 	width: 90%;

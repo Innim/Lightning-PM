@@ -700,6 +700,7 @@ WHERE;
     const STATUS_COMPLETED 	= 2;
 
     const MAX_IMAGES_COUNT	= 10;
+    const DESC_MAX_LEN = 60000;
     
     public $id            =  0;
     public $parentId      =  0;
@@ -915,6 +916,11 @@ WHERE;
         } else {
             return 'высокий';
         }
+    }
+    
+    public function getPriorityDisplayValue()
+    {
+        return $this->priority + 1;
     }
 
     /**
