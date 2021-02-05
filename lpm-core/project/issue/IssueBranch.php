@@ -129,6 +129,36 @@ SQL;
 
     /**
      * Проверяет, существует ли хотя бы одна ветка для указанной задачи,
+     * для которой либо нет MR, либо есть MR, но он не влит.
+     *
+     * @param  int    $issueId Идентификатор задачи.
+     * @return bool
+     */
+    public static function existBranchesWithoutMergedMRForIssue($issueId)
+    {
+        $mergedState = GitlabMergeRequest::STATE_MERGED;
+        $db = self::getDB();
+
+        $sql = <<<SQL
+    SELECT 1 FROM `%1\$s` `b`
+ LEFT JOIN `%2\$s` `mr` 
+        ON `b`.`issueId` = `mr`.`issueId`
+       AND `b`.`repositoryId` = `mr`.`repositoryId`
+       AND `b`.`name` = `mr`.`branch`
+     WHERE `b`.`issueId` = $issueId 
+       AND (`mr`.`state` <> '$mergedState' OR `mr`.`state` IS NULL)
+SQL;
+        
+        $res = $db->queryt($sql, LPMTables::ISSUE_BRANCH, LPMTables::ISSUE_MR);
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        return $res->num_rows > 0;
+    }
+
+    /**
+     * Проверяет, существует ли хотя бы одна ветка для указанной задачи,
      * которая еще не влита в develop.
      *
      * @param  int    $issueId Идентификатор задачи.
