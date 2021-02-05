@@ -309,4 +309,6 @@ ALTER TABLE `lpm_issue_mr`
 ADD `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
 ADD `branch` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'Название ветки' AFTER `repositoryId`;
 
+-- v0.9.33
+
 --NEXT
