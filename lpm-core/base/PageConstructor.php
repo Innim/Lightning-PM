@@ -166,9 +166,9 @@ class PageConstructor
         return LightningEngine::getInstance()->getUser();
     }
 
-    public static function checkDeleteComment($author, $cookie)
+    public static function checkDeleteComment($authorId, $commentId)
     {
-        return Project::checkDeleteComment($author, $cookie);
+        return Project::checkDeleteComment($authorId, $commentId);
     }
 
     public static function getProjectTester()
