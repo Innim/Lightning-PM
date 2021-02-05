@@ -379,8 +379,8 @@ class IssueService extends LPMBaseService
                 // Если она в режиме ожидания - переоткрываем задачу
                 $newState = Issue::STATUS_IN_WORK;
             }
-
-            if ($newState != null) {
+            
+            if ($newState !== null) {
                 Issue::setStatus($issue, $newState, $this->getUser(), true, false);
             }
         } catch (\Exception $e) {
