@@ -446,7 +446,7 @@ function lpm_get_errors()
 /**
  * Проверяет кто удаляет комментарий.
  */
-function lpm_check_delete_comment($author, $cookie)
+function lpm_check_delete_comment($authorId, $commentId)
 {
-    return PageConstructor::checkDeleteComment($author, $cookie);
+    return PageConstructor::checkDeleteComment($authorId, $commentId);
 }

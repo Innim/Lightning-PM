@@ -121,6 +121,8 @@ CREATE TABLE `lpm_issue_mr` (
   `mrId` int(20) NOT NULL COMMENT 'ID MR',
   `issueId` bigint(20) NOT NULL COMMENT 'ID задачи',
   `state` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Состояние MR',
+  `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
+  `branch` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Название ветки',
   PRIMARY KEY (`id`),
   KEY `mrId_state` (`mrId`,`state`),
   KEY `mrId` (`mrId`)

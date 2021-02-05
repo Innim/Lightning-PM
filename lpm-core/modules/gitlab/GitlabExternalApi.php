@@ -121,8 +121,11 @@ class GitlabExternalApi extends ExternalApi
                         }
                     } elseif ($issue->status == Issue::STATUS_IN_WORK) {
                         // Если задача в работе, то вполне возможно надо перевесить ее в тест,
-                        // но предварительно надо убедиться, что все MR задачи влиты
-                        if (!IssueMR::existOpenedMrForIssue($issueId, $mr->id)) {
+                        // но предварительно надо убедиться, что все MR задачи влиты.
+                        // А даже если все MR по задаче влиты, но возможно есть привязанные задачи,
+                        // для которых еще нет MR, тогда отправлять в тест не надо
+                        if (!IssueMR::existOpenedMrForIssue($issueId, $mr->id) &&
+                                !IssueBranch::existBranchesWithoutMergedMRForIssue($issueId)) {
                             // Перевешиваем задачу в тест
                             // TODO: может перевешивать только то, что сейчас на доске в работе?
                             Issue::setStatus($issue, Issue::STATUS_WAIT, null);
@@ -192,7 +195,7 @@ class GitlabExternalApi extends ExternalApi
                 if ($issue->status == Issue::STATUS_IN_WORK || $issue->status == Issue::STATUS_WAIT) {
                     
                     // Связываем
-                    IssueMR::create($mr->id, $issueId, $mr->state);
+                    IssueMR::createByMr($issueId, $mr);
 
                     // Добавляем коммент со ссылкой на MR в задачу
                     $commentText = $mr->url;

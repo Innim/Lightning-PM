@@ -6,7 +6,8 @@ const createBranch = {
     currentProjectId: null,
     currentIssueId: null,
     init: function () {
-        $("#createBranch").dialog(
+        const $el = $("#createBranch");
+        $el.dialog(
             {
                 autoOpen: false,
                 modal: true,
@@ -28,10 +29,15 @@ const createBranch = {
             }
         );
 
-        const $selectRepo = $('#createBranch #repository');
+        const $selectRepo = $('#repository', $el);
         $selectRepo.change(() => {
             const repoId = $selectRepo.val();
             createBranch.onSelectRepository(repoId);
+        });
+
+        const $selectBranch = $('#parentBranch', $el);
+        $selectBranch.change(() => {
+            $("#branchName", $el).focus();
         });
     },
     show: function (projectId, issueId, issueIdInProject) {
@@ -46,7 +52,7 @@ const createBranch = {
         srv.project.getRepositories(projectId, (res) => {
             if (res.success) {
                 createBranch.setRepositories(res.list, res.popularRepositoryId);
-                $("#branchName", $el).val(issueIdInProject + '.');
+                $("#branchName", $el).val(issueIdInProject + '.').focus();
             } else {
                 createBranch.close();
             }
@@ -126,7 +132,8 @@ const createBranch = {
         // TODO: грузить только 1 раз?
         srv.project.getBranches(projectId, repoId, (res) => {
             if (res.success) {
-                const $selectParent = $('#createBranch #parentBranch');
+                const $el = $("#createBranch");
+                const $selectParent = $('#parentBranch', $el);
                 $selectParent.empty();
                 // Первой предлагаем develop - выбор по умолчанию
                 // потом все остальные рутовые ветки
@@ -147,6 +154,8 @@ const createBranch = {
                     $selectParent.append($("<option></option>")
                         .attr("value", item.name).text(item.name));
                 });
+
+                $("#branchName", $el).focus();
             } else {
                 createBranch.close();
             }
