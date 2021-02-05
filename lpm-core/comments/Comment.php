@@ -104,7 +104,11 @@ SQL;
 
     public static function setTimeToDeleteComment($comment, $time)
     {
-        setcookie('comment' . $comment->id, $comment->id, time()+$time, '/');
+        $name = 'comment' . $comment->id;
+        $value = $comment->id . '';
+
+        $_COOKIE[$name] = $value;
+        setcookie($name, $value, time() + $time, '/');
     }
 
     public static function checkDeleteCommentById($id)
