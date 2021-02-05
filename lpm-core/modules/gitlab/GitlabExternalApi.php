@@ -192,7 +192,7 @@ class GitlabExternalApi extends ExternalApi
                 if ($issue->status == Issue::STATUS_IN_WORK || $issue->status == Issue::STATUS_WAIT) {
                     
                     // Связываем
-                    IssueMR::create($mr->id, $issueId, $mr->state);
+                    IssueMR::createByMr($issueId, $mr);
 
                     // Добавляем коммент со ссылкой на MR в задачу
                     $commentText = $mr->url;

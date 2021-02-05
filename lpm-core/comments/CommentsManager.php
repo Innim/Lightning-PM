@@ -27,7 +27,7 @@ class CommentsManager
             $mrList = $comment->getMergeRequests();
             if (!empty($mrList)) {
                 foreach ($mrList as $mr) {
-                    IssueMR::create($mr->id, $issue->id, $mr->state);
+                    IssueMR::createByMr($issue->id, $mr);
                 }
             }
         }

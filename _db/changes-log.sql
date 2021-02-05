@@ -305,4 +305,8 @@ UPDATE `lpm_users` SET `gitlabToken` = '';
 
 -- v0.9.30
 
+ALTER TABLE `lpm_issue_mr`
+ADD `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
+ADD `branch` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'Название ветки' AFTER `repositoryId`;
+
 --NEXT
