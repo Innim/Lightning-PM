@@ -131,13 +131,19 @@ SQL;
      * Проверяет, существует ли хотя бы одна ветка для указанной задачи,
      * для которой либо нет MR, либо есть MR, но он не влит.
      *
-     * @param  int    $issueId Идентификатор задачи.
+     * @param  int      $issueId Идентификатор задачи.
+     * @param  int|null $exceptMrId Если не null, то этот MR будет игнорироваться в проверке.
      * @return bool
      */
-    public static function existBranchesWithoutMergedMRForIssue($issueId)
+    public static function existBranchesWithoutMergedMRForIssue($issueId, $exceptMrId = null)
     {
         $mergedState = GitlabMergeRequest::STATE_MERGED;
         $db = self::getDB();
+
+        $mrWhere = "`mr`.`state` <> '$mergedState'";
+        if ($exceptMrId != null) {
+            $mrWhere .= ' AND `mrId` <> ' . $exceptMrId;
+        }
 
         $sql = <<<SQL
     SELECT 1 FROM `%1\$s` `b`
@@ -146,7 +152,7 @@ SQL;
        AND `b`.`repositoryId` = `mr`.`repositoryId`
        AND `b`.`name` = `mr`.`branch`
      WHERE `b`.`issueId` = $issueId 
-       AND (`mr`.`state` <> '$mergedState' OR `mr`.`state` IS NULL)
+       AND ($mrWhere OR `mr`.`state` IS NULL)
 SQL;
         
         $res = $db->queryt($sql, LPMTables::ISSUE_BRANCH, LPMTables::ISSUE_MR);
