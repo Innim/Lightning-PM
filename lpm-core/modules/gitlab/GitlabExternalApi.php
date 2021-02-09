@@ -125,7 +125,7 @@ class GitlabExternalApi extends ExternalApi
                         // А даже если все MR по задаче влиты, но возможно есть привязанные задачи,
                         // для которых еще нет MR, тогда отправлять в тест не надо
                         if (!IssueMR::existOpenedMrForIssue($issueId, $mr->id) &&
-                                !IssueBranch::existBranchesWithoutMergedMRForIssue($issueId)) {
+                                !IssueBranch::existBranchesWithoutMergedMRForIssue($issueId, $mr->id)) {
                             // Перевешиваем задачу в тест
                             // TODO: может перевешивать только то, что сейчас на доске в работе?
                             Issue::setStatus($issue, Issue::STATUS_WAIT, null);
