@@ -709,6 +709,9 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
 
+    /**
+     * @return Comment
+     */
     private function postComment(Issue $issue, $text, $ignoreSlackNotification = false)
     {
         return $this->_engine->comments()->postComment($this->getUser(), $issue, $text, $ignoreSlackNotification);

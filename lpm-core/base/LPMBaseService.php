@@ -111,6 +111,9 @@ class LPMBaseService extends SecureService
         return $newArr;
     }
     
+    /**
+     * @return User
+     */
     protected function getUser()
     {
         if (!$this->_auth->isLogin()) {
@@ -140,6 +143,9 @@ class LPMBaseService extends SecureService
         return PageConstructor::getHtml($printHtml);
     }
 
+    /**
+     * @return GitlabIntegration
+     */
     protected function getGitlabIfAvailable()
     {
         $client = LightningEngine::getInstance()->gitlab();
