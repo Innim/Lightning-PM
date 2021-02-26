@@ -72,7 +72,10 @@ SQL;
 
         return $list;
     }
-
+    
+    /**
+     * @return Comment
+     */
     public static function add($instanceType, $instanceId, $userId, $text)
     {
         $db = LPMGlobals::getInstance()->getDBConnect();

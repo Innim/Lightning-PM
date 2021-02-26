@@ -9,6 +9,7 @@ class CommentsManager
 
     /**
      * Публикация комментария к задаче.
+     * @return Comment
      */
     public function postComment(User $user, Issue $issue, $text, $ignoreSlackNotification = false, $ignoreMr = false)
     {
@@ -54,7 +55,9 @@ class CommentsManager
         return $comment;
     }
     
-    // TODO: выпилить из base сервиса
+    /**
+     * @return Comment
+     */
     protected function addComment(User $user, $instanceType, $instanceId, $text)
     {
         // TODO: перенести в Comment
