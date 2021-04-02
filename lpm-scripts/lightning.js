@@ -152,6 +152,9 @@ let srv = {
         comment: function (issueId, text, onResult) {
             this.s._('comment');
         },
+        previewComment: function (text, onResult) {
+            this.s._('previewComment');
+        },
         merged: function (issueId, complete, onResult) {
             this.s._('merged');
         },

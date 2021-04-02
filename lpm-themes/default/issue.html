@@ -164,9 +164,21 @@ $project = $issue->getProject();
             </div>
         </div>
         <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
-            <textarea id="commentTextField" name="commentText"></textarea>
-            <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
-                <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>
+            <div id="addCommentTabs">
+                <ul>
+                  <li><a href="#commentEditTab">Редактор</a></li>
+                  <li><a href="#commentPreviewTab">Предпросмотр</a></li>
+                </ul>
+                <div id="commentEditTab">
+                    <textarea id="commentTextField" name="commentText"></textarea>
+                    <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
+                        <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>        
+                </div>
+                <div id="commentPreviewTab">
+                    <div id="previewComment" class="preview-comment comments-list-item"></div>
+                </div>
+            </div>
+
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <p class="buttons-bar">
                 <button type="submit">Отправить</button>
