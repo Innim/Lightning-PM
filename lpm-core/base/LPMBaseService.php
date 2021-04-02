@@ -180,4 +180,26 @@ class LPMBaseService extends SecureService
 
         return $project;
     }
+
+    /**
+     * Требует интеграцию таска, проекта и пользователя с GitLab
+     * и возвращает экземпляр интеграции.
+     *
+     * Если интеграцию не удалось получить - порождает Exception.
+     *
+     * @return GitlabIntegration
+     */
+    protected function requireGitlabIntegration(Project $project)
+    {
+        if (!$project->isIntegratedWithGitlab()) {
+            throw new Exception('Проект не интегрирован с GitLab');
+        }
+
+        $client = $this->getGitlabIfAvailable();
+        if (!$client) {
+            throw new Exception('Не удалось настроить интеграцию c GitLab для пользователя.');
+        }
+
+        return $client;
+    }
 }

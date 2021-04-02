@@ -275,13 +275,7 @@ class IssueService extends LPMBaseService
             }
 
             $project = $issue->getProject();
-            if (!$project->isIntegratedWithGitlab()) {
-                return $this->error('Проект не интегрирован с GitLab');
-            }
-
-            if (!($client = $this->getGitlabIfAvailable())) {
-                return $this->error('GitLab интеграция недоступна');
-            }
+            $client = $this->requireGitlabIntegration($project);
 
             $finalBranchName = 'feature/' . $branchName;
 

@@ -341,16 +341,16 @@ class ProjectService extends LPMBaseService
 
         try {
             $project = $this->getProjectRequireReadPermission($projectId);
-            if ($project->isIntegratedWithGitlab() && $client = $this->getGitlabIfAvailable()) {
-                $list = $client->getProjects($project->gitlabGroupId);
+            $client = $this->requireGitlabIntegration($project);
+            
+            $list = $client->getProjects($project->gitlabGroupId);
 
-                // Загрузим информацию о самом используемом репозитории в этом проекте
-                // из последних 5
-                $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
+            // Загрузим информацию о самом используемом репозитории в этом проекте
+            // из последних 5
+            $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
 
-                $this->add2Answer('list', $list);
-                $this->add2Answer('popularRepositoryId', $popularRepositoryId);
-            }
+            $this->add2Answer('list', $list);
+            $this->add2Answer('popularRepositoryId', $popularRepositoryId);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -368,10 +368,11 @@ class ProjectService extends LPMBaseService
 
         try {
             $project = $this->getProjectRequireReadPermission($projectId);
-            if ($project->isIntegratedWithGitlab() && $client = $this->getGitlabIfAvailable()) {
-                $list = $client->getBranches($gitlabProjectId);
-                $this->add2Answer('list', $list);
-            }
+            $client = $this->requireGitlabIntegration($project);
+           
+            $list = $client->getBranches($gitlabProjectId);
+            
+            $this->add2Answer('list', $list);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
