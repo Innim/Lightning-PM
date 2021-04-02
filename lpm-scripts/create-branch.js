@@ -46,15 +46,17 @@ const createBranch = {
         createBranch.currentProjectId = projectId;
         createBranch.currentIssueId = issueId;
 
-        $el.dialog('open');
-        // TODO: повесить прелоадер
+        preloader.show();
         // TODO: грузить только 1 раз?
         srv.project.getRepositories(projectId, (res) => {
+            preloader.hide();
             if (res.success) {
+                $el.dialog('open');
                 createBranch.setRepositories(res.list, res.popularRepositoryId);
                 $("#branchName", $el).val(issueIdInProject + '.').focus();
             } else {
                 createBranch.close();
+                showError(res.error ?? 'Не удалось получить список репозиториев');
             }
         });
     },
@@ -128,9 +130,10 @@ const createBranch = {
         const projectId = createBranch.currentProjectId;
         if (projectId == null) return;
 
-        // TODO: повесить прелоадер
         // TODO: грузить только 1 раз?
+        preloader.show();
         srv.project.getBranches(projectId, repoId, (res) => {
+            preloader.hide();
             if (res.success) {
                 const $el = $("#createBranch");
                 const $selectParent = $('#parentBranch', $el);
@@ -158,6 +161,7 @@ const createBranch = {
                 $("#branchName", $el).focus();
             } else {
                 createBranch.close();
+                showError(res.error ?? 'Не удалось получить список репозиториев');
             }
         });
     },

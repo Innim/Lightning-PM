@@ -173,6 +173,26 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Возвращает текст комментария для предпросмотра.
+     *
+     * Комментарий не сохраняется в БД.
+     */
+    public function previewComment($text)
+    {
+        try {
+            $html = $this->getHtml(function () use ($text) {
+                PagePrinter::commentText(HTMLHelper::htmlTextForComment($text));
+            });
+            
+            $this->add2Answer('html', $html);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Отмечает что задача влита в develop.
      * @param  int $issueId Идентификатор задачи.
      * @param  bool $complete true если надо также завершить задачу.
@@ -275,15 +295,14 @@ class IssueService extends LPMBaseService
             }
 
             $project = $issue->getProject();
-            if (!$project->isIntegratedWithGitlab()) {
-                return $this->error('Проект не интегрирован с GitLab');
-            }
-
-            if (!($client = $this->getGitlabIfAvailable())) {
-                return $this->error('GitLab интеграция недоступна');
-            }
+            $client = $this->requireGitlabIntegration($project);
 
             $finalBranchName = 'feature/' . $branchName;
+
+            $gitlabProject = $client->getProject($gitlabProjectId);
+            if (!$gitlabProject) {
+                return $this->error('Не удалось получить данные проекта с GitLab');
+            }
 
             // Создаем ветку на репозитории
             $branch = $client->createBranch($gitlabProjectId, $parentBranch, $finalBranchName);
@@ -296,7 +315,8 @@ class IssueService extends LPMBaseService
             if ($parentBranch != 'develop') {
                 $commentText = $parentBranch . ' -> ' . $commentText;
             }
-            $commentText = '`' . $commentText . '`';
+
+            $commentText = '*' . $gitlabProject->name . '*: `' . $commentText . '`';
 
             $comment = $this->postComment($issue, $commentText, true);
 

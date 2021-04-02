@@ -14,6 +14,13 @@ $(document).ready(
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
 
+        $("#addCommentTabs").tabs({
+            activate: function (_, ui) {
+                if (ui.newPanel.attr('id') == 'commentPreviewTab') {
+                    issuePage.previewComment();
+                }
+            },
+        });
 
         // BEGIN -- Настройка формы 
 
@@ -593,7 +600,6 @@ issuePage.removeIssue = function (e) {
     }
 };
 
-
 issuePage.putStickerOnBoard = function (issueId) {
     preloader.show();
     srv.issue.putStickerOnBoard(issueId, function (res) {
@@ -724,6 +730,24 @@ issuePage.postComment = function () {
     var text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
     issuePage.postCommentForCurrentIssue(text);
     return false;
+};
+
+issuePage.previewComment = function () {
+    let text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
+
+    $('#previewComment').empty().append(preloader.getNewIndicatorMedium());
+
+    srv.issue.previewComment(text, (res) => {
+        if (res.success) {
+            let previewItem = $('#previewComment')
+            previewItem.html(res.html);
+
+            comments.updateAttachments($('.comment-text', previewItem));
+            attachments.update($('.block-with-attachments', previewItem));
+        } else {
+            srv.err(res);
+        }
+    });
 };
 
 issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSuccess) {

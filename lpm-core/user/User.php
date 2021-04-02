@@ -6,14 +6,23 @@
  */
 class User extends LPMBaseObject
 {
-    public static function loadList($where)
+    public static function loadList($where, $onlyNotLocked = false)
     {
-        if ($where != '') {
-            $where = ' AND (' . $where . ')';
+        $whereArr = ['`%1$s`.`userId` = `%2$s`.`userId`'];
+
+        if (!empty($where)) {
+            $whereArr[] = $where;
         }
+
+        if ($onlyNotLocked) {
+            $whereArr[] = '`locked` = 0';
+        }
+
+        $whereStr = implode(' AND ', $whereArr);
+
         return StreamObject::loadListDefault(
             self::getDB(),
-            '`%1$s`.`userId` = `%2$s`.`userId`' . $where . ' ORDER BY `locked`',
+            $whereStr . ' ORDER BY `locked`',
             array( LPMTables::USERS, LPMTables::USERS_PREF ),
             __CLASS__
         );

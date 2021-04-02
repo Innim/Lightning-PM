@@ -142,6 +142,15 @@ function lpm_print_comment(Comment $comment)
 }
 
 /**
+ * Распечатывает текст комментария.
+ * @param string $htmlText Форматированный текст для отображения.
+ */
+function lpm_print_comment_text($htmlText)
+{
+    return PagePrinter::commentText($htmlText);
+}
+
+/**
 * Распечатывает задачу
 */
 function lpm_print_issue_view()

@@ -269,7 +269,7 @@ class GitlabExternalApi extends ExternalApi
                 $comments->postComment($user, $issue, $commentText, true, true);
 
                 // Проверяем права
-                if ($issue->checkEditPermit($user->userId)) {
+                if ($issue->checkEditPermit($user->userId) && !$issue->isCompleted()) {
                     // Проверяем что все ветки этой задачи влиты
                     $isAllMerged = !IssueBranch::existNotMergedInDevelopForIssue($issue->id);
 

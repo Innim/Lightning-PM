@@ -884,9 +884,6 @@ a.create-branch-icon .plus-icon {
 	display: inline-block;
 	margin-right: 5px;
 }
-.comments form.add-comment {
-	text-align: center;
-}
 .comments form.add-comment textarea {
 	width     : 100%;
 	height    : 100px;
@@ -901,6 +898,15 @@ a.create-branch-icon .plus-icon {
 }
 .comments form.add-comment .buttons-bar {
 	text-align: right;
+}
+.comments form.add-comment .ui-tabs .ui-tabs-panel {
+	padding: 0;
+}
+.comments form.add-comment .preview-comment .lds-spinner div:after {
+	background: #333;
+}
+.comments form.add-comment .preview-comment.comments-list-item .text {
+	margin: 0;
 }
 .comments .comments-list {
 	list-style: none;
@@ -918,72 +924,72 @@ a.create-branch-icon .plus-icon {
     margin-top: -15px;
     font-size: 12px;
 }
-.comments .comments-list .comments-list-item img.user-avatar {
+.comments-list-item img.user-avatar {
     float : left;
     margin: 5px;
     margin-top: 10px;
 }
-.comments .comments-list .comments-list-item .author {
+.comments-list-item .author {
 	margin-bottom: 0px;
 	font-size    : smaller;
 }
-.comments .comments-list .comments-list-item .date {
+.comments-list-item .date {
     margin-top   : 0px;
     font-size    : x-small;
 }
-.comments .comments-list .comments-list-item .date a
+.comments-list-item .date a
 {
 	outline: none;
 	color: inherit;
 }
-.comments .comments-list .comments-list-item .text {
+.comments-list-item .text {
     background-color: #eeeeee;
     padding         : 10px;
     clear           : both;
 }
-.comments .comments-list .comments-list-item .text > p {
+.comments-list-item .text > p {
     margin: 0;
     padding: 0;
 }
-.comments .comments-list .comments-list-item ul.merge-requests {
+.comments-list-item ul.merge-requests {
 	margin: 10px 0 0;
 	padding: 10px;
 	list-style: none;
 	background-color: #dddddd;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests:empty {
+.comments-list-item ul.merge-requests:empty {
    display: none;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li {
+.comments-list-item ul.merge-requests li {
 	padding: 5px;
 	border-radius: 5px;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li .state-icon {
+.comments-list-item ul.merge-requests li .state-icon {
 	margin-right: 5px;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.opened {
+.comments-list-item ul.merge-requests li.opened {
 	background-color: #ffffbc;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.opened .state-icon {
+.comments-list-item ul.merge-requests li.opened .state-icon {
 	color: #838982;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.closed {
+.comments-list-item ul.merge-requests li.closed {
 	background-color: #fdcabe;
 }
-.comments .comments-list .comments-list-item ul.merge-requests li.closed .state-icon {
+.comments-list-item ul.merge-requests li.closed .state-icon {
 	color: #e50000;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.merged {
+.comments-list-item ul.merge-requests li.merged {
 	background-color: #e2ffd9;
 }
-.comments .comments-list .comments-list-item ul.merge-requests li.merged .state-icon {
+.comments-list-item ul.merge-requests li.merged .state-icon {
 	color: #2bbd00;
 }
 

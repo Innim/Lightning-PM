@@ -153,6 +153,27 @@ class GitlabIntegration
     }
 
     /**
+     * Возвращает данные проекта по идентификатору проекта.
+     *
+     * @return GitlabProject
+     */
+    public function getProject($projectId)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $res = $client->projects()->show($projectId);
+            return new GitlabProject($res);
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return null;
+        }
+    }
+
+    /**
      * Возвращает список проектов по идентификатору группы.
      */
     public function getProjects($groupId)

@@ -58,6 +58,10 @@ let comments = {
 		if (clear) comments.clearForm();
 		$('#comments form.add-comment').hide();
 		$('#comments .links-bar a').show();
+		$('#addCommentTabs').tabs({
+			active: 0
+		});
+		$('#previewComment').empty();
 
 		comments.invalidateLinks();
 	},

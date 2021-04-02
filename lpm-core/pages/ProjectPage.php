@@ -414,18 +414,21 @@ class ProjectPage extends LPMPage
             $idInProject = (int)$this->getLastIssueId();
             $issueName = null;
         }
-        
-        if (empty($_POST['name']) || !isset($_POST['members'])
-                || !isset($_POST['type']) || empty($_POST['completeDate'])
-                || !isset($_POST['priority'])) {
+
+        if (!$this->checkRequiredFields($_POST)) {
             $engine->addError('Заполнены не все обязательные поля');
-        } elseif (preg_match(
+            return;
+        }
+
+        $type = (int)$_POST['type'];
+        
+        if (preg_match(
             "/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
             $_POST['completeDate'],
             $completeDateArr
         ) == 0) {
             $engine->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
-        } elseif ($_POST['type'] != Issue::TYPE_BUG && $_POST['type'] != Issue::TYPE_DEVELOP) {
+        } elseif (!in_array($type, [Issue::TYPE_BUG, Issue::TYPE_DEVELOP, Issue::TYPE_SUPPORT])) {
             $engine->addError('Недопустимый тип');
         } elseif (!is_array($_POST['members']) || empty($_POST['members'])) {
             $engine->addError('Необходимо указать хотя бы одного исполнителя проекта');
@@ -445,8 +448,6 @@ class ProjectPage extends LPMPage
                 }
             }
 
-            $_POST['type'] = (int)$_POST['type'];
-            
             $completeDate = $completeDateArr[3] . '-' .
                             $completeDateArr[2] . '-' .
                             $completeDateArr[1] . ' ' .
@@ -511,7 +512,7 @@ class ProjectPage extends LPMPage
                                       "`authorId`, `createDate`, `completeDate`, `priority` ) " .
                                 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
                                          "'" . $_POST['name'] . "', '" . $hours . "', '" . $_POST['desc'] . "', " .
-                                         "'" . (int)$_POST['type'] . "', " .
+                                         "'" . $type . "', " .
                                          "'" . $userId . "', " .
                                       "'" . DateTimeUtils::mysqlDate() . "', " .
                                       "'" . $completeDate . "', " .
@@ -659,6 +660,26 @@ class ProjectPage extends LPMPage
                 LightningEngine::go2URL($issueURL);
             }
         }
+    }
+
+    private function checkRequiredFields()
+    {
+        $required = ['members', 'type', 'priority'];
+        $notEmpty = ['name', 'completeDate'];
+
+        foreach ($required as $field) {
+            if (!isset($_POST[$field])) {
+                return false;
+            }
+        }
+
+        foreach ($notEmpty as $field) {
+            if (empty($_POST[$field])) {
+                return false;
+            }
+        }
+     
+        return true;
     }
 
     private function getProjectedCommentsPage()
