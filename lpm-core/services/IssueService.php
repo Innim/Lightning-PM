@@ -279,6 +279,11 @@ class IssueService extends LPMBaseService
 
             $finalBranchName = 'feature/' . $branchName;
 
+            $gitlabProject = $client->getProject($gitlabProjectId);
+            if (!$gitlabProject) {
+                return $this->error('Не удалось получить данные проекта с GitLab');
+            }
+
             // Создаем ветку на репозитории
             $branch = $client->createBranch($gitlabProjectId, $parentBranch, $finalBranchName);
             if (!$branch) {
@@ -290,7 +295,8 @@ class IssueService extends LPMBaseService
             if ($parentBranch != 'develop') {
                 $commentText = $parentBranch . ' -> ' . $commentText;
             }
-            $commentText = '`' . $commentText . '`';
+
+            $commentText = '*' . $gitlabProject->name . '*: `' . $commentText . '`';
 
             $comment = $this->postComment($issue, $commentText, true);
 
