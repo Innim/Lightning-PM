@@ -14,10 +14,10 @@ $(document).ready(
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
 
-        $("#addCommentTabs").tabs({
+        $(".comment-input-text-tabs").tabs({
             activate: function (_, ui) {
-                if (ui.newPanel.attr('id') == 'commentPreviewTab') {
-                    issuePage.previewComment();
+                if (ui.newPanel.hasClass('preview-tab')) {
+                    issuePage.previewComment(ui.newPanel.parent('.comment-input-text-tabs'));
                 }
             },
         });
@@ -70,7 +70,7 @@ $(document).ready(
 
         setupAutoComplete(['#issueForm textarea[name=desc]',
             'form.add-comment textarea[name=commentText]',
-            'form.pass-test textarea#passTestComment']);
+            'form.pass-test #passTestComment textarea.comment-text-field']);
 
         // Настройка формы -- END
 
@@ -113,7 +113,7 @@ $(document).ready(
 
         bindFormattingHotkeys('#issueForm form textarea[name=desc]');
         bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
-        bindFormattingHotkeys('form.pass-test textarea#passTestComment');
+        bindFormattingHotkeys('form.pass-test #passTestComment textarea.comment-text-field');
     }
 );
 
@@ -732,14 +732,14 @@ issuePage.postComment = function () {
     return false;
 };
 
-issuePage.previewComment = function () {
-    let text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
+issuePage.previewComment = function (tabs) {
+    let text = $('textarea[name=commentText]', tabs).val();
 
-    $('#previewComment').empty().append(preloader.getNewIndicatorMedium());
+    let previewItem = $('.preview-comment', tabs);
+    previewItem.empty().append(preloader.getNewIndicatorMedium());
 
     srv.issue.previewComment(text, (res) => {
         if (res.success) {
-            let previewItem = $('#previewComment')
             previewItem.html(res.html);
 
             comments.updateAttachments($('.comment-text', previewItem));

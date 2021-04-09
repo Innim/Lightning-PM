@@ -151,6 +151,15 @@ function lpm_print_comment_text($htmlText)
 }
 
 /**
+ * Распечатывает поле ввода текста комментария.
+ * @param string $id Идентификатор html элемента.
+ */
+function lpm_print_comment_input_text($id)
+{
+    return PagePrinter::commentInputText($id);
+}
+
+/**
 * Распечатывает задачу
 */
 function lpm_print_issue_view()
