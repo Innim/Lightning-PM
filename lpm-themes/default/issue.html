@@ -163,21 +163,8 @@ $project = $issue->getProject();
                 <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
             </div>
         </div>
-        <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
-            <div id="addCommentTabs">
-                <ul>
-                  <li><a href="#commentEditTab">Редактор</a></li>
-                  <li><a href="#commentPreviewTab">Предпросмотр</a></li>
-                </ul>
-                <div id="commentEditTab">
-                    <textarea id="commentTextField" name="commentText"></textarea>
-                    <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
-                        <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>        
-                </div>
-                <div id="commentPreviewTab">
-                    <div id="previewComment" class="preview-comment comments-list-item"></div>
-                </div>
-            </div>
+        <form id="addCommentForm" class="add-comment" onsubmit="issuePage.postComment(); return false;">
+            <?php lpm_print_comment_input_text('addCommentTabs');?>
 
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <p class="buttons-bar">
@@ -219,8 +206,8 @@ $project = $issue->getProject();
     <form class="pass-test">
         <ul class="pass-test-items">
             <li>
-                <label for="passTestComment">Введите дополнительную информацию, если нужно</label>
-                <textarea id="passTestComment"></textarea>
+                <label>Введите дополнительную информацию, если нужно</label>
+                <?php lpm_print_comment_input_text('passTestComment');?>
             </li>
         </ul>
     </form>

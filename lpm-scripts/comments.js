@@ -31,22 +31,23 @@ let comments = {
 		comments.initAddForm();
 	},
 	initAddForm: function () {
-		if ($('#commentTextField').length == 0) return;
+		let commentTextField = $('#addCommentForm .comment-text-field');
+		if (commentTextField.length == 0) return;
 
 		const storeKey = comments.storeKey;
 		const savedText = window.localStorage.getItem(storeKey);
 		if (savedText) {
-			$('#commentTextField').val(savedText);
+			commentTextField.val(savedText);
 			comments.showCommentForm();
 		}
 
-		$('#commentTextField').on('input', (e) => {
+		commentTextField.on('input', (e) => {
 			let text = e.target.value;
 			window.localStorage.setItem(storeKey, text);
 		});
 	},
 	clearForm: function () {
-		$('#commentTextField').val('');
+		$('#addCommentForm .comment-text-field').val('');
 		window.localStorage.removeItem(comments.storeKey);
 	},
 	showCommentForm: function () {
@@ -61,7 +62,7 @@ let comments = {
 		$('#addCommentTabs').tabs({
 			active: 0
 		});
-		$('#previewComment').empty();
+		$('#addCommentForm .preview-comment').empty();
 
 		comments.invalidateLinks();
 	},

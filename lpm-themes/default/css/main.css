@@ -2155,7 +2155,7 @@ form.pass-test ul.pass-test-items label {
 	display: block;
 }
 
-form.pass-test #passTestComment {
+form.pass-test #passTestComment textarea.comment-text-field {
 	width: 100%;
 	height: 300px;
 	box-sizing: border-box;
