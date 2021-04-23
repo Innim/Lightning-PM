@@ -63,6 +63,11 @@ let issueForm = {
     handleEditState: function () {
         if (!issueForm.restoreInput(true)) {
             let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
+            let getArrVal = (fieldName) => {
+                let val = getVal(fieldName);
+                return val.length > 0 ? val.split(',') : [];
+            }
+
             issueForm.setIssueBy({
                 name: $("#issueInfo > h3 > .issue-name").text(),
                 hours: $("#issueInfo > h3 .issue-hours").text(),
@@ -70,9 +75,9 @@ let issueForm = {
                 priority: getVal("priority"),
                 completeDate: getVal("completeDate"),
                 type: getVal("type"),
-                memberIds: getVal("members").split(','),
-                membersSp: getVal("membersSp").split(','),
-                testerIds: getVal("testers").split(','),
+                memberIds: getArrVal("members"),
+                membersSp: getArrVal("membersSp"),
+                testerIds: getArrVal("testers"),
                 parentId: getVal("parentId"),
                 issueId: getVal("issueId"),
                 imagesInfo: issueForm.getImagesFromPage(),
@@ -144,9 +149,6 @@ let issueForm = {
                 $("#addIssueMembers option[value=" + memberId + "]").prop('selected', true);
                 issueForm.addIssueMember(membersSp[index]);
             });
-        } else if (!isEdit && issueForm.defaultMemberId) {
-            $("#addIssueMembers option[value=" + issueForm.defaultMemberId + "]").prop('selected', true);
-            issueForm.addIssueMember();
         }
 
         // Тестеры
@@ -477,9 +479,6 @@ let issueForm = {
 
         if (len > window.lpmOptions.issueImgsCount)
             errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений');
-
-        if ($('#issueForm #issueMembers input[type=hidden][name="members[]"]').size() == 0)
-            errors.push('Задаче должен быть назначен хотя бы один исполнитель');
 
         if (errors.length == 0) {
             $('#issueForm > div.validateError').hide();

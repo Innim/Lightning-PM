@@ -47,6 +47,14 @@ abstract class MembersInstance extends LPMBaseObject
     {
         return implode(',', $this->getMemberIds());
     }
+
+    /**
+     * Определяет, есть ли хотя бы один участник.
+     */
+    public function hasMembers()
+    {
+        return !empty($this->getMembers());
+    }
     
     abstract protected function loadMembers();
 }
