@@ -430,8 +430,6 @@ class ProjectPage extends LPMPage
             $engine->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
         } elseif (!in_array($type, [Issue::TYPE_BUG, Issue::TYPE_DEVELOP, Issue::TYPE_SUPPORT])) {
             $engine->addError('Недопустимый тип');
-        } elseif (!is_array($_POST['members']) || empty($_POST['members'])) {
-            $engine->addError('Необходимо указать хотя бы одного исполнителя проекта');
         } elseif ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
             $engine->addError('Недопустимое значение приоритета');
         } elseif (mb_strlen($_POST['desc']) > Issue::DESC_MAX_LEN) {
@@ -549,7 +547,8 @@ class ProjectPage extends LPMPage
                 // Валидируем заданное количество SP по участникам
 
                 // Сохраняем участников
-                if (!$this->saveMembers($db, $issueId, $_POST['members'], $editMode, $membersSp)) {
+                $memberIds = empty($_POST['members']) || !is_array($_POST['members']) ? [] : $_POST['members'];
+                if (!$this->saveMembers($db, $issueId, $memberIds, $editMode, $membersSp)) {
                     return;
                 }
 
@@ -664,7 +663,7 @@ class ProjectPage extends LPMPage
 
     private function checkRequiredFields()
     {
-        $required = ['members', 'type', 'priority'];
+        $required = ['type', 'priority'];
         $notEmpty = ['name', 'completeDate'];
 
         foreach ($required as $field) {
@@ -736,10 +735,11 @@ class ProjectPage extends LPMPage
         }
 
         if ($this->_project->scrum) {
-            if ($spByMembers == null || !is_array($spByMembers)) {
+            $membersCount = count($memberIds);
+            if ($membersCount > 0 && ($spByMembers == null || !is_array($spByMembers))) {
                 return $engine->addError('Требуется количество SP по участникам');
             }
-            if (count($spByMembers) != count($memberIds)) {
+            if (count($spByMembers) != $membersCount) {
                 return $engine->addError('Количество SP по участникам не соответствует количеству участников');
             }
 

@@ -68,10 +68,12 @@
 				<?php endif; ?>
 			</td>
 			<td class="member-list">
+				<?php if ($issue->hasMembers()): ?>
 				<?php foreach ($issue->getMembers() as $i => $member): ?>
 				<?=$i>0?', ':''?><a href="javascript:;"
 					data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
 				<?php endforeach; ?>
+				<?php endif; ?>
 			</td>
 			<td>
 				<p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p>

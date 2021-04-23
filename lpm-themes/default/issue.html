@@ -78,11 +78,15 @@ $project = $issue->getProject();
             <div class="info-list-item">
                 <span class="label">Исполнители</span>
                 <span class="value">
+                    <?php if ($issue->hasMembers()):?>
                     <?php foreach ($issue->getMembers() as $i => $member):
                 ?><?=$i>0?',':''
                 ?> <?=$member->getLinkedName();?><?php if ($member->sp > 0):
                 ?> (<?=$member->sp;?> SP)<?php endif;?><?php
                 endforeach;?>
+                    <?php else: ?>
+                    Не назначены
+                    <?php endif; ?>
                 </span>
                 <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>" />
                 <input type="hidden" name="membersSp" value="<?=$issue->getMembersSpStr();?>" />
