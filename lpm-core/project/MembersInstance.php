@@ -35,7 +35,7 @@ abstract class MembersInstance extends LPMBaseObject
     
     public function getMemberIds($onlyNotLocked = false)
     {
-        $members = $this->getMembers();
+        $members = $this->getMembers($onlyNotLocked);
         $arr = array();
         foreach ($members as $member) {
             $arr[] = $member->userId;
@@ -54,6 +54,23 @@ abstract class MembersInstance extends LPMBaseObject
     public function hasMembers()
     {
         return !empty($this->getMembers());
+    }
+
+    /**
+     * Добавляет участника в список.
+     *
+     * Не записывает в БД.
+     *
+     * Если список членов не определен, то он будет загружен.
+     * @param Member $member
+     */
+    public function addMember(Member $member)
+    {
+        if ($this->_members != null || !$this->loadMembers()) {
+            $this->_members[] = $member;
+        } else {
+            throw new Exception('Не удалось добавить члена');
+        }
     }
     
     abstract protected function loadMembers();

@@ -60,14 +60,13 @@ CREATE TABLE `lpm_issues` (
   `authorId` bigint(19) NOT NULL,
   `createDate` datetime NOT NULL,
   `startDate` datetime NOT NULL,
-  `completeDate` datetime NOT NULL,
+  `completeDate` datetime DEFAULT NULL,
   `completedDate` datetime DEFAULT NULL COMMENT 'дата реального завершения',
   `priority` tinyint(2) NOT NULL DEFAULT '49' COMMENT 'приоритет задачи',
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `status` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 
 DROP TABLE IF EXISTS `lpm_issue_branch`;
 CREATE TABLE `lpm_issue_branch` (

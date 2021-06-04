@@ -45,6 +45,9 @@ class ProjectService extends LPMBaseService
 
     /**
      * Возвращает участников проекта.
+     *
+     * Будут возвращены только незаблокированные участники.
+     *
      * @param int $projectId Идентификатор проекта.
      * @return [
      *    list: User[]
@@ -66,7 +69,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Недостаточно прав доступа');
         }
         
-        if (!$members = $project->getMembers()) {
+        if (!$members = $project->getMembers(true)) {
             return $this->error('Ошибка при загрузке участников');
         }
         

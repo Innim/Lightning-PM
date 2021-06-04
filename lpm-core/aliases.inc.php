@@ -390,13 +390,6 @@ function lpm_get_add_worker_list()
     return PageConstructor::getAddWorkerList();
 }
 /**
-* Возвращает текущую дату для полей с календарём
-*/
-function lpm_get_default_date()
-{
-    return PageConstructor::getDefaultDate();
-}
-/**
 * Возвращает массив ссылок-дат
 */
 function lpm_get_date_links()

@@ -17,7 +17,6 @@ class Issue extends MembersInstance
      *                             [алиас => таблица].
      * @return array<Issue> Массив загруженных задач.
      */
-
     protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
     {
         //return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
@@ -1068,11 +1067,15 @@ WHERE;
         return self::getDateStr($this->completeDate);
     }
     
+    public function hasCompleteDate()
+    {
+        return !empty($this->completeDate);
+    }
+    
     public function getCompletedDate()
     {
         return self::getDateStr($this->completedDate);
     }
-    
     
     public function getCompleteDate4Input()
     {

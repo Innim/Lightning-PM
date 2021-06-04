@@ -217,7 +217,6 @@ function createIssuesAutoComplete() {
 
             srv.project.getIssueNamesByIdPart(issuePage.projectId, text,
                 function (res) {
-                    console.log(res)
                     if (res.success) {
                         let list = res.list.map((e) => {
                             return {
@@ -655,7 +654,7 @@ issuePage.showEditForm = function () {
  */
 function setIssueInfo(issue) {
     $("#issueInfo > h3 .issue-name").text(issue.name);
-    var fields = $("#issueInfo > .info-list > div > .value");
+    const fields = $("#issueInfo > .info-list > div > .value");
 
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
@@ -684,9 +683,9 @@ function setIssueInfo(issue) {
         $("#issueInfo .info-list").addClass('verify-issue');
     }
 
-    var testers = issue.getTesters();
+    const testers = issue.getTesters();
 
-    var values = [
+    const values = [
         issue.getStatus(),
         issue.getType(),
         issue.getPriority(),
@@ -702,6 +701,12 @@ function setIssueInfo(issue) {
     for (var i = 0; i < values.length; i++) {
         fields[i].innerHTML = values[i];
     }
+
+    const $completedDate = $('#issueInfo .issue-complete-date-row');
+    if (issue.hasCompleteDate())
+        $completedDate.show();
+    else 
+        $completedDate.hide();
 
     if (testers)
         $('#issueInfo .testers-row').show();
@@ -1001,6 +1006,10 @@ function Issue(obj) {
         return this.getDate(this.completeDate);
     };
 
+    this.hasCompleteDate = function () {
+        return this.completeDate != 0;
+    };
+
     this.getCompleteDateInput = function () {
         var d = this.getCompleteDate();
 
@@ -1096,7 +1105,9 @@ function Issue(obj) {
     };
 
     this.getDate = function (value) {
-        var date = new Date((value + 3600) * 1000);
+        if (!value) return '';
+
+        const date = new Date((value + 3600) * 1000);
         // TODO разобраться что за хрень - почему на час разница?
 
         //return this._num2Str( date.getDate() ) + '-' + this._num2Str( date.getMonth() + 1 ) + '-' + date.getFullYear() + 

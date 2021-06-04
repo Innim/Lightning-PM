@@ -323,6 +323,34 @@ class IssueService extends LPMBaseService
             // Записываем данные о том, что ветка привязана к задаче
             IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName);
 
+            if ($issue->status == Issue::STATUS_IN_WORK) {
+                // Если пользователя нет в исполнителях - добавим его автоматически
+                $user = $this->getUser();
+                $userId = $user->userId;
+                if (!$issue->isMember($userId)) {
+                    if (!Member::saveIssueMembers($issue->id, [$userId])) {
+                        return $this->errorDBSave();
+                    }
+                    
+                    $member = Member::loadByIssue($issue->id, $userId);
+                    $issue->addMember($member);
+
+                    // Записываем лог
+                    UserLogEntry::issueEdit($userId, $issue->id, 'Add member by create branch');
+
+                    // Добавляем в ответ
+                    $this->add2Answer('issue', $this->getIssue4Client($issue));
+                }
+
+                // Если это стикер на доске и он еще не в работе - перевешиваем в работу
+                $sticker = ScrumSticker::load($issue->id);
+                if ($sticker !== null && $sticker->state == ScrumStickerState::TODO) {
+                    if (!ScrumSticker::updateStickerState($issue->id, ScrumStickerState::IN_PROGRESS)) {
+                        return $this->errorDBSave();
+                    }
+                }
+            }
+
             $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);

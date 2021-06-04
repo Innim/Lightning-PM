@@ -10,10 +10,12 @@ $(document).ready(
 
 let scrumBoard = {
     changeScrumState: function (e) {
-        var $control = $(e.currentTarget);
-        var $sticker = $control.parents('.scrum-board-sticker');
-        var issueId = $sticker.data('issueId');
-        var curState = $sticker.data('stickerState');
+        const $control = $(e.currentTarget);
+        const $sticker = $control.parents('.scrum-board-sticker');
+        const issueId = $sticker.data('issueId');
+        const curState = $sticker.data('stickerState');
+
+        const memberIds = $('.sticker-issue-member', $sticker).map((_, e) => $(e).data('memberId')).get();
 
         // Определяем следующий стейт
         var state;
@@ -39,23 +41,32 @@ let scrumBoard = {
                 $sticker.remove();
                 var colName;
                 switch (state) {
-                    case 1: colName = 'todo'; break;
-                    case 2: colName = 'in_progress'; break;
-                    case 3: colName = 'testing'; break;
-                    case 4: colName = 'done'; break;
+                    case ScrumStickerState.todo: colName = 'todo'; break;
+                    case ScrumStickerState.inProgress: colName = 'in_progress'; break;
+                    case ScrumStickerState.testing: colName = 'testing'; break;
+                    case ScrumStickerState.done: colName = 'done'; break;
                 }
 
                 if (colName) {
                     $('.scrum-board-col.col-' + colName).append($sticker);
                 }
+
                 issuePage.scumColUpdateInfo();
+
+                if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
+                    scrumBoard.takeIssueBy($sticker);
+                }
             }
         });
     },
     takeIssue: function (e) {
-        var $control = $(e.currentTarget);
-        var $sticker = $control.parents('.scrum-board-sticker');
-        var issueId = $sticker.data('issueId');
+        const $control = $(e.currentTarget);
+        const $sticker = $control.parents('.scrum-board-sticker');
+        
+        scrumBoard.takeIssueBy($sticker);
+    },
+    takeIssueBy: function ($sticker) {
+        const issueId = $sticker.data('issueId');
         preloader.show();
         srv.issue.takeIssue(issueId, function (res) {
             preloader.hide();
@@ -88,3 +99,13 @@ let scrumBoard = {
         }
     },
 };
+
+const ScrumStickerState = Object.freeze({
+    backlog: 0,
+    todo: 1,
+    inProgress: 2,
+    testing: 3,
+    done: 4,
+    archived: 5,
+    deleted: 6,
+});

@@ -77,13 +77,13 @@ const createBranch = {
         const repoId = $("#repository", $el).val();
         const parentBranch = $("#parentBranch", $el).val();
 
-        preloader.show();
         issuePage.doSomethingAndPostCommentForCurrentIssue(
             (issueId, handler) => srv.issue.createBranch(issueId, branchName, repoId, parentBranch, handler),
             res => {
-                preloader.hide();
-                if (res.success)
-                    createBranch.close();
+                createBranch.close();
+                if (res.issue) {
+                    setIssueInfo(new Issue(res.issue));
+                }
             });
     },
     setRepositories: function (list, popularRepositoryId) {

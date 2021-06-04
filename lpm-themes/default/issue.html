@@ -62,7 +62,7 @@ $project = $issue->getProject();
                 <span class="label">Дата создания</span>
                 <span class="value"><?=$issue->getCreateDate();?></span>
             </div>
-            <div class="info-list-item">
+            <div class="issue-complete-date-row info-list-item" style="<?=$issue->hasCompleteDate() ? '' : 'display: none;';?>">
                 <span class="label">Дата завершения</span>
                 <span class="value"><?=$issue->getCompleteDate();?></span>
                 <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>" />

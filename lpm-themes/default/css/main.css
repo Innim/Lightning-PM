@@ -1,4 +1,5 @@
-@CHARSET "UTF-8";
+@charset "UTF-8";
+
 body {
 	font-family: Arial;
 	font-size  : 11pt;
@@ -442,7 +443,6 @@ ol#profileInfo.info-list {
 }
 fieldset.radio-group legend {
 	float  : left;
-	display: inline-block;
 }
 fieldset.radio-group ol {
 	padding: 0px;
@@ -733,9 +733,6 @@ a.remove-btn {
 }
 div.list-box {
 	overflow: scroll;
-}
-img.user-avatar {
-	
 }
 img.user-avatar.small {
     width : 32px;
@@ -1197,37 +1194,16 @@ table tr.verify-issue {
 	color           : #999999;
 }
 
-/*table.projects-list td:first-child {
-	min-width: 200px;
-	width    : 30%;
-}*/
-
 /* просмотр проекта */
 #projectView .filters-line {
 	float: left;
 	width: 70%;
 	font-size : smaller;
 }
-#projectView .operations-line {
-	
-}
 
 /* список задач и добавление/редактироание задачи */
-table.issues-list {
-	
-}
 table.issues-list td {
 	position: relative;
-}
-/* num */
-table.issues-list td:nth-child(1)
-{
-	/*width: 50px;*/
-}
-/* type */
-table.issues-list td:nth-child(2)
-{
-	/*width: 110px;*/
 }
 /* title */
 table.issues-list td:nth-child(3)
@@ -1251,10 +1227,6 @@ table.issues-list td:nth-child(6)
 	max-width: 150px;
 }
 /* buttons */
-table.issues-list td:last-child
-{
-	/*width: 175px;*/
-}
 table.issues-list tr.completed-issue td button.complete-btn {
     display: none;
 }
@@ -1569,7 +1541,6 @@ blockquote > p {
 	margin-top: -7px;
 	font-size: 16px;
 }
-p.no-items {}
 
 /* доступы */
 .access-list
@@ -1705,12 +1676,6 @@ div.ftp
 	box-shadow:
 		0px 1px 3px rgba(000,000,000,0.5),
 		inset 0px 0px 1px rgba(255,255,255,1);
-}
-.issue_copy{
-
-}
-
-.issue_copy a{	
 }
 .issue_copy a:hover, .issue_copy a.hover{
     color: #999;
@@ -2113,7 +2078,6 @@ div.ftp
 	margin: 5px 0;
 	text-align: right;
 }
-.stat-summary .stat-summary-label {}
 .stat-summary .stat-summary-value {
 	font-weight: bold;
 }

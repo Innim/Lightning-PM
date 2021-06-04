@@ -421,10 +421,11 @@ class ProjectPage extends LPMPage
         }
 
         $type = (int)$_POST['type'];
-        
-        if (preg_match(
+        $inputCompleteDate = $_POST['completeDate'];
+
+        if (!empty($inputCompleteDate) && preg_match(
             "/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
-            $_POST['completeDate'],
+            $inputCompleteDate,
             $completeDateArr
         ) == 0) {
             $engine->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
@@ -446,7 +447,7 @@ class ProjectPage extends LPMPage
                 }
             }
 
-            $completeDate = $completeDateArr[3] . '-' .
+            $completeDate = empty($completeDateArr) ? null : $completeDateArr[3] . '-' .
                             $completeDateArr[2] . '-' .
                             $completeDateArr[1] . ' ' .
                             '00:00:00';
@@ -513,7 +514,7 @@ class ProjectPage extends LPMPage
                                          "'" . $type . "', " .
                                          "'" . $userId . "', " .
                                       "'" . DateTimeUtils::mysqlDate() . "', " .
-                                      "'" . $completeDate . "', " .
+                                      "" . (empty($completeDate) ? 'NULL' :  "'" . $completeDate  . "'") . ", " .
                                       "'" . $priority . "' ) " .
             "ON DUPLICATE KEY UPDATE `name` = VALUES( `name` ), " .
                                     "`hours` = VALUES( `hours` ), " .
@@ -664,7 +665,7 @@ class ProjectPage extends LPMPage
     private function checkRequiredFields()
     {
         $required = ['type', 'priority'];
-        $notEmpty = ['name', 'completeDate'];
+        $notEmpty = ['name'];
 
         foreach ($required as $field) {
             if (!isset($_POST[$field])) {
