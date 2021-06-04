@@ -225,7 +225,7 @@ let issueForm = {
         if (issueForm.restoreInput(false)) return;
 
         issueIdInProject = parseInt(issueIdInProject);
-        var projectId = parseInt($('#issueProjectID').val());
+        const projectId = parseInt($('#issueProjectID').val());
 
         if (issueIdInProject <= 0 || projectId <= 0)
             return;
@@ -242,9 +242,7 @@ let issueForm = {
                 preloader.hide();
 
                 if (res.success) {
-                    var issue = new Issue(res.issue);
-                    // console.log("issue-name: " + issue.name);
-
+                    const issue = new Issue(res.issue);
                     issueForm.setIssueBy({
                         name: issue.name,
                         hours: issue.hours,
@@ -268,7 +266,7 @@ let issueForm = {
             }
         );
     },
-    handleAddfinishedIssueByState: function (issueIdInProject) {
+    handleAddFinishedIssueByState: function (issueIdInProject) {
         if (issueForm.restoreInput(false)) return;
 
         issueIdInProject = parseInt(issueIdInProject);

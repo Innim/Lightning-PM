@@ -311,4 +311,7 @@ ADD `branch` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'Назва
 
 -- v0.9.33
 
+ALTER TABLE `lpm_issues`
+CHANGE `completeDate` `completeDate` datetime NULL AFTER `startDate`;
+
 --NEXT

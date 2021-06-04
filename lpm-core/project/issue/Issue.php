@@ -1067,11 +1067,15 @@ WHERE;
         return self::getDateStr($this->completeDate);
     }
     
+    public function hasCompleteDate()
+    {
+        return !empty($this->completeDate);
+    }
+    
     public function getCompletedDate()
     {
         return self::getDateStr($this->completedDate);
     }
-    
     
     public function getCompleteDate4Input()
     {
