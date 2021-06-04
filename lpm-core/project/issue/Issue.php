@@ -17,7 +17,6 @@ class Issue extends MembersInstance
      *                             [алиас => таблица].
      * @return array<Issue> Массив загруженных задач.
      */
-
     protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
     {
         //return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
