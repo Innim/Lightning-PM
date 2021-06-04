@@ -15,6 +15,8 @@ let scrumBoard = {
         const issueId = $sticker.data('issueId');
         const curState = $sticker.data('stickerState');
 
+        const memberIds = $('.sticker-issue-member', $sticker).map((_, e) => $(e).data('memberId')).get();
+
         // Определяем следующий стейт
         var state;
         if ($control.hasClass('sticker-control-done'))
@@ -50,12 +52,20 @@ let scrumBoard = {
                 }
 
                 issuePage.scumColUpdateInfo();
+
+                if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
+                    scrumBoard.takeIssueBy($sticker);
+                }
             }
         });
     },
     takeIssue: function (e) {
         const $control = $(e.currentTarget);
         const $sticker = $control.parents('.scrum-board-sticker');
+        
+        scrumBoard.takeIssueBy($sticker);
+    },
+    takeIssueBy: function ($sticker) {
         const issueId = $sticker.data('issueId');
         preloader.show();
         srv.issue.takeIssue(issueId, function (res) {
