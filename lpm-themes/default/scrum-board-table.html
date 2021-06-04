@@ -74,11 +74,14 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                         $spStr = $sp == .5 ? "1/2" : $sp;
 
                     $issue = $sticker->getIssue();
-                    $userRole = $issue->isTester($user->userId) ? 'tester' : ($issue->isMember($user->userId) ? 'mine' : '');
                     $members = $issue->getMembers();
+
+                    $cssClasses = [$color];
+                    if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
+                    if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
-                 class="scrum-board-sticker <?=$color;?> <?=$userRole;?>" data-issue-id="<?=$sticker->issueId;?>"
+                 class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
                  data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                 <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                 <?php if ($addProjectName): ?>
