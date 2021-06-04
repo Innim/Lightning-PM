@@ -30,7 +30,7 @@ class Member extends User
     
     public static function loadListByProject($projectId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::PROJECT, $projectId);
+        return self::loadListByInstance(LPMInstanceTypes::PROJECT, $projectId, $onlyNotLocked);
     }
     
     public static function loadListByIssue($issueId, $onlyNotLocked = false)
@@ -38,7 +38,7 @@ class Member extends User
         return self::loadListByInstance(
             LPMInstanceTypes::ISSUE,
             $issueId,
-            false,
+            $onlyNotLocked,
             LPMTables::ISSUE_MEMBER_INFO,
             'IssueMember'
         );

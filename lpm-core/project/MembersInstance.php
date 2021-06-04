@@ -35,7 +35,7 @@ abstract class MembersInstance extends LPMBaseObject
     
     public function getMemberIds($onlyNotLocked = false)
     {
-        $members = $this->getMembers();
+        $members = $this->getMembers($onlyNotLocked);
         $arr = array();
         foreach ($members as $member) {
             $arr[] = $member->userId;
