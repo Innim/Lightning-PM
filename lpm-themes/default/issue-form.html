@@ -19,17 +19,14 @@ $descMaxLen = Issue::DESC_MAX_LEN;
                         class="edit-issue-name" oninput="issueFormLabels.issueNameChanged(this.value)" />
                 </span>
                 <span class="issue-labels-container">
-                    <?php $issueLabels = $issue ? $issue->getLabelNames() : []; ?>
-                    <?php foreach (lpm_get_issue_labels() as $label): ?>
-                    <?php
-                    $index = array_search($label['label'], $issueLabels);
-                    if ($index !== false)
-                        unset($issueLabels[$index]);
-                ?>
-                    <a href="javascript:void(0)" class="issue-label"
-                        onclick="issueFormLabels.addToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
-                    <?php endforeach; ?>
-                    <?php foreach ($issueLabels as $label): ?>
+                    <?php 
+                        $issueLabels = $issue ? $issue->getLabelNames() : [];
+                        $projectLabels = array_map(function ($item) {
+                            return $item['label'];
+                        }, lpm_get_issue_labels());
+                        $labels = array_unique(array_merge($projectLabels, $issueLabels));
+                    ?>    
+                    <?php foreach ($labels as $label): ?>
                     <a href="javascript:void(0)" class="issue-label"
                         onclick="issueFormLabels.addToName('<?=$label;?>');"><?=$label;?></a>
                     <?php endforeach; ?>
