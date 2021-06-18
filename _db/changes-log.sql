@@ -316,4 +316,11 @@ CHANGE `completeDate` `completeDate` datetime NULL AFTER `startDate`;
 
 -- v0.10.3
 
+CREATE TABLE `issue_linked` (
+  `issueId` int(11) NOT NULL COMMENT 'ID основной задачи',
+  `linkedIssueId` int(11) NOT NULL COMMENT 'ID связанной задачи',
+  `created` datetime NOT NULL COMMENT 'Дата создания связи',
+  PRIMARY KEY (`issueId`,`linkedIssueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Связанные задачи';
+
 --NEXT
