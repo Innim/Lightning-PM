@@ -22,21 +22,20 @@
 			<?php if (($countImportaint=$project->getImportantIssuesCount())>0): ?>
 			<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportaint;?>
 			</div>
-			<?php endif ?>
-			<!--</td>
-				<td>-->
+			<?php endif; ?>
+			<?php if ($project->scrum): ?>
+			<div class="projects-list-item-submenu">
+				<a href="<?=$project->getScrumBoardUrl();?>">SCRUM доска</a>
+			</div>
+			<?php endif; ?>
 			<p class="project-desc"><?=$project->getDesc();?></p>
-			<? if (lpm_is_moderator()): ?>
+			<?php if (lpm_is_moderator()): ?>
 			<input type="hidden" name="projectId" value="<?=$project->id;?>" />
 			<a href="javascript:;" class="archive btn" onclick="setIsArchive(event);">В архив</a>
-			<? endif; ?>
+			<?php endif; ?>
 		</li>
-		<!--</td>
-			</tr>-->
 		<?php endforeach; ?>
 	</ul>
-	<!--	</tbody>
-	</table>-->
 	<?php if (lpm_can_create_project()): ?>
 	<p class="operations-line">
 		<a href="#" onclick="showAddProjectForm(); return false;">Добавить проект</a>

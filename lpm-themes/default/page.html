@@ -74,7 +74,22 @@
 			<?php lpm_print_product_name(); ?> v.
 			<?php lpm_print_version(); ?></span>
 	</footer>
-	<div id="preloader"></div>
+	<div id="preloader">
+		<div class="indicator lds-spinner dark">
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+			<div></div>
+		</div>
+	</div>
 	<?php
 			$errors = lpm_get_errors();
 			if (!empty($errors)):

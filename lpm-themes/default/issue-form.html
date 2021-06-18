@@ -5,7 +5,10 @@
     $issue - редактируемая задача (при добавлении задачи - null)
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
-?><article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
+
+$descMaxLen = Issue::DESC_MAX_LEN;
+?>
+<article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
     <h3></h3>
     <div class="validateError"><?php lpm_print_errors(); ?></div>
     <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data">
@@ -85,12 +88,11 @@
                 </div>
             </li>
             <li>
-                <input placeholder="Дата окончания*" type="text" class="date" name="completeDate" required="required"
-                    maxlength="255" value="<?=lpm_get_default_date();?>" />
+                <input placeholder="Дата окончания" type="text" class="date" name="completeDate" maxlength="255" />
             </li>
             <li>
                 <fieldset>
-                    <legend>Исполнители*</legend>
+                    <legend>Исполнители</legend>
                     <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
                     <ol id="issueMembers" class="members-list"></ol>
                     <select id="addIssueMembers" onchange="issueForm.addIssueMember();"
@@ -118,7 +120,9 @@
                 <input placeholder="Story Points" type="text" name="hours" maxlength="5" />
             </li>
             <li>
-                <textarea placeholder="Описание" class="desc" name="desc" maxlength="65535"></textarea>
+                <textarea id="descField" placeholder="Описание" class="desc count-chars" name="desc"
+                    maxlength="<?=$descMaxLen;?>" data-chars-max="<?=$descMaxLen;?>"
+                    data-msg-color="warning"></textarea>
                 <div class="note tags-line">Вы можете использовать <a
                         href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи:
                     <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*"

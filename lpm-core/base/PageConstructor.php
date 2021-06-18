@@ -124,17 +124,6 @@ class PageConstructor
         return LightningEngine::getInstance()->getErrors();
     }
     
-    public static function getDefaultDate()
-    {
-        /* return DateTimeUtils::date(
-             DateTimeFormat::DAY_OF_MONTH_2 . '/' .
-             DateTimeFormat::MONTH_NUMBER_2_DIGITS . '/' .
-             DateTimeFormat::YEAR_NUMBER_4_DIGITS
-        );	 */
-
-        return LPMBaseObject::getDate4Input(DateTimeUtils::$currentDate);
-    }
-    
     public static function canCreateProject()
     {
         if (!$user = LightningEngine::getInstance()->getUser()) {
@@ -166,9 +155,9 @@ class PageConstructor
         return LightningEngine::getInstance()->getUser();
     }
 
-    public static function checkDeleteComment($author, $cookie)
+    public static function checkDeleteComment($authorId, $commentId)
     {
-        return Project::checkDeleteComment($author, $cookie);
+        return Project::checkDeleteComment($authorId, $commentId);
     }
 
     public static function getProjectTester()

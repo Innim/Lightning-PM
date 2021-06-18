@@ -100,6 +100,24 @@ class PagePrinter
     }
     
     /**
+     * Распечатывает текст комментария.
+     * @param string $htmlText Форматированный текст для отображения.
+     */
+    public static function commentText($htmlText)
+    {
+        PageConstructor::includePattern('comment-text', compact('htmlText'));
+    }
+    
+    /**
+     * Распечатывает поле ввода текста комментария.
+     * @param string $id Идентификатор html элемента.
+     */
+    public static function commentInputText($id)
+    {
+        PageConstructor::includePattern('comment-input-text', compact('id'));
+    }
+    
+    /**
      * Распечатывает список видео.
      * @param  array $videoLinks Список объектов с данными ссылок на видео.
      */
@@ -153,7 +171,15 @@ class PagePrinter
     {
         PageConstructor::includePattern('scrum-board-table', compact('stickers', 'addProjectName', 'addClearBoard'));
     }
-
+    
+    /**
+     * Распечатывает таблицу Scrum доски.
+     */
+    public static function targetSprintForm($project)
+    {
+        PageConstructor::includePattern('scrum-board-target-sprint', compact('project'));
+    }
+    
     /*public static function mainCSSLink() {
         self::cssLink( 'main' );
     }*/

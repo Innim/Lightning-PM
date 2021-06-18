@@ -17,7 +17,6 @@ class Issue extends MembersInstance
      *                             [алиас => таблица].
      * @return array<Issue> Массив загруженных задач.
      */
-
     protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
     {
         //return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
@@ -258,7 +257,7 @@ WHERE;
      * Номер (idInProject) последней задачи в проекте
      * @return int
      */
-    public function getLastIssueId($projectId)
+    public static function getLastIssueId($projectId)
     {
         $db = self::getDB();
         $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
@@ -700,6 +699,7 @@ WHERE;
     const STATUS_COMPLETED 	= 2;
 
     const MAX_IMAGES_COUNT	= 10;
+    const DESC_MAX_LEN = 60000;
     
     public $id            =  0;
     public $parentId      =  0;
@@ -916,6 +916,11 @@ WHERE;
             return 'высокий';
         }
     }
+    
+    public function getPriorityDisplayValue()
+    {
+        return $this->priority + 1;
+    }
 
     /**
      * Возвращает URL страницы проекта, к которому относится задача,
@@ -1062,11 +1067,15 @@ WHERE;
         return self::getDateStr($this->completeDate);
     }
     
+    public function hasCompleteDate()
+    {
+        return !empty($this->completeDate);
+    }
+    
     public function getCompletedDate()
     {
         return self::getDateStr($this->completedDate);
     }
-    
     
     public function getCompleteDate4Input()
     {

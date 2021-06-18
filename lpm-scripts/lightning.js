@@ -152,6 +152,9 @@ let srv = {
         comment: function (issueId, text, onResult) {
             this.s._('comment');
         },
+        previewComment: function (text, onResult) {
+            this.s._('previewComment');
+        },
         merged: function (issueId, complete, onResult) {
             this.s._('merged');
         },
@@ -362,14 +365,14 @@ var preloader = {
     show: function () {
         this._showed++;
         if (this._showed == 1) {
-            $('preloader').show();
+            $('#preloader').show();
         }
     },
     hide: function () {
         if (this._showed == 0) return;
         this._showed--;
         if (this._showed == 0) {
-            $('preloader').hide();
+            $('#preloader').hide();
         }
     },
     getNewIndicator: function (size) {
@@ -517,3 +520,14 @@ let parser = {
         return patterns.some((pattern, i, a) => new RegExp(pattern, 'i').test(url));
     }
 };
+
+$(document).ready(() => {
+    $(window).load(() => {
+        states.updateView();
+        if ($('#issueForm > div.validateError').html() != '') {
+            $('#issueForm > div.validateError').show();
+        }
+
+        issuePage.updateStat();
+    });
+});

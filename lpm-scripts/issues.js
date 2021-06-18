@@ -14,6 +14,13 @@ $(document).ready(
             issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
         });
 
+        $(".comment-input-text-tabs").tabs({
+            activate: function (_, ui) {
+                if (ui.newPanel.hasClass('preview-tab')) {
+                    issuePage.previewComment(ui.newPanel.parent('.comment-input-text-tabs'));
+                }
+            },
+        });
 
         // BEGIN -- Настройка формы 
 
@@ -62,7 +69,8 @@ $(document).ready(
         });
 
         setupAutoComplete(['#issueForm textarea[name=desc]',
-            'form.add-comment textarea[name=commentText]']);
+            'form.add-comment textarea[name=commentText]',
+            'form.pass-test #passTestComment textarea.comment-text-field']);
 
         // Настройка формы -- END
 
@@ -105,11 +113,12 @@ $(document).ready(
 
         bindFormattingHotkeys('#issueForm form textarea[name=desc]');
         bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
+        bindFormattingHotkeys('form.pass-test #passTestComment textarea.comment-text-field');
     }
 );
 
 function bindFormattingHotkeys(selector) {
-    $(selector).keypress(function (e) {
+    $(selector).keydown(function (e) {
         if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
             return;
 
@@ -208,7 +217,6 @@ function createIssuesAutoComplete() {
 
             srv.project.getIssueNamesByIdPart(issuePage.projectId, text,
                 function (res) {
-                    console.log(res)
                     if (res.success) {
                         let list = res.list.map((e) => {
                             return {
@@ -289,11 +297,13 @@ issuePage.updatePriorityVal = function ($el, value) {
 }
 
 issuePage.setPriorityVal = function (value) {
-    var valStr = Issue.getPriorityStr(value);
-    $('#priority').val(value);
-    value++;
-    $('#priorityVal').html(valStr + ' (' + value + '%)');
-    $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(value - 1));
+    let valueInt = parseInt(value);
+    let title = Issue.getPriorityStr(valueInt);
+    let displayVal = Issue.getPriorityDisplayVal(valueInt);
+    $('#priority').val(valueInt);
+
+    $('#priorityVal').html(title + ' (' + displayVal + '%)');
+    $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(valueInt));
 };
 
 issuePage.upPriorityVal = function () {
@@ -390,7 +400,7 @@ function insertFormatting(input, before, after, cursorShift) {
             caretPos += fullLength;
     }
 
-    $input.val(res);
+    $input.val(res).trigger('input');
 
     //устанавливаем курсор на полученную позицию
     setCaretPosition(text, caretPos);
@@ -437,15 +447,29 @@ issuePage.changePriority = function (e) {
     if (issueId > 0) {
         srv.issue.changePriority(issueId, delta, function (res) {
             if (res.success) {
-                // alert('ok: ' + res.priority);
-                var priority = res.priority;
-                var priorityStr = Issue.getPriorityStr(priority);
-                $('.priority-val', $row).attr('title', 'Приоритет: ' + priorityStr +
-                    ' (' + priority + ')').data("value", priority);
+                let priority = res.priority;
+                let priorityStr = Issue.getPriorityStr(priority);
+                let priorityVal = Issue.getPriorityDisplayVal(priority);
+                let tooltipHost = $('.priority-title-owner', $row);
+                tooltipHost.attr('title', 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)');
+                let tooltips = $(document).tooltip('instance').tooltips;
+                for (var prop in tooltips) {
+                    let item = tooltips[prop];
+                    let element = item.element;
+                    if (element[0] == tooltipHost[0]) {
+                        let tooltip = item.tooltip;
+                        // TODO: кривой способ, ломает следующее открытие
+                        // но так и не получилось адекватно закрыть тултипы
+                        // надо еще разбираться
+                        tooltip.remove();
+                    }
+                }
+
+                $('.priority-val', $row).data("value", priority);
                 issuePage.updatePriorityVal($('.priority-val', $row), priority);
 
                 var hintY = e.pageY - 13;
-                $("<span></span>").text(priority).addClass("priority-change-animation").
+                $("<span></span>").text(priorityVal).addClass("priority-change-animation").
                     appendTo($('body')).offset({ top: hintY, left: e.pageX - 10 }).
                     animate(
                         {
@@ -575,7 +599,6 @@ issuePage.removeIssue = function (e) {
     }
 };
 
-
 issuePage.putStickerOnBoard = function (issueId) {
     preloader.show();
     srv.issue.putStickerOnBoard(issueId, function (res) {
@@ -631,7 +654,7 @@ issuePage.showEditForm = function () {
  */
 function setIssueInfo(issue) {
     $("#issueInfo > h3 .issue-name").text(issue.name);
-    var fields = $("#issueInfo > .info-list > div > .value");
+    const fields = $("#issueInfo > .info-list > div > .value");
 
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
@@ -660,9 +683,9 @@ function setIssueInfo(issue) {
         $("#issueInfo .info-list").addClass('verify-issue');
     }
 
-    var testers = issue.getTesters();
+    const testers = issue.getTesters();
 
-    var values = [
+    const values = [
         issue.getStatus(),
         issue.getType(),
         issue.getPriority(),
@@ -679,6 +702,12 @@ function setIssueInfo(issue) {
         fields[i].innerHTML = values[i];
     }
 
+    const $completedDate = $('#issueInfo .issue-complete-date-row');
+    if (issue.hasCompleteDate())
+        $completedDate.show();
+    else 
+        $completedDate.hide();
+
     if (testers)
         $('#issueInfo .testers-row').show();
     else
@@ -688,31 +717,6 @@ function setIssueInfo(issue) {
 
     $("#issueInfo > p > input[name=issueId]").val(issue.id);
     $('#issueInfo').data('status', issue.status);
-};
-
-issuePage.showCommentForm = function () {
-    $('#issueView .comments form.add-comment').show();
-    $('#issueView .comments .links-bar a').hide();
-    $('#issueView .comments form.add-comment textarea[name=commentText]').focus();
-};
-
-issuePage.hideCommentForm = function () {
-    $('#issueView .comments form.add-comment').hide();
-    $('#issueView .comments .links-bar a').show();
-};
-
-issuePage.toogleCommentForm = function () {
-    var link = $('#issueView .comments .links-bar a.toggle-comments');
-    var comments = $('#issueView .comments .comments-list');
-    if (!comments.is(':visible')) {
-        link.html('Свернуть комментарии');
-    } else {
-        link.html('Показать комментарии (' +
-            $('#issueView .comments .comments-list .comments-list-item').size() + ')');
-    }
-
-    link.show();
-    comments.slideToggle('normal');
 };
 
 issuePage.createBranch = function () {
@@ -731,6 +735,24 @@ issuePage.postComment = function () {
     var text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
     issuePage.postCommentForCurrentIssue(text);
     return false;
+};
+
+issuePage.previewComment = function (tabs) {
+    let text = $('textarea[name=commentText]', tabs).val();
+
+    let previewItem = $('.preview-comment', tabs);
+    previewItem.empty().append(preloader.getNewIndicatorMedium());
+
+    srv.issue.previewComment(text, (res) => {
+        if (res.success) {
+            previewItem.html(res.html);
+
+            comments.updateAttachments($('.comment-text', previewItem));
+            attachments.update($('.block-with-attachments', previewItem));
+        } else {
+            srv.err(res);
+        }
+    });
 };
 
 issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSuccess) {
@@ -762,19 +784,46 @@ issuePage.postCommentForCurrentIssue = function (text) {
 }
 
 issuePage.merged = function () {
-    let complete = !issuePage.isCompleted() && confirm('Добавляется отметка о влитии в develop. Хотите также завершить задачу?');
-    issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.merged(issueId, complete, handler),
-        res => {
-            if (res.issue)
-                setIssueInfo(new Issue(res.issue));
-            issuePage.updateStat();
+    let doMerge = function (complete) {
+        issuePage.doSomethingAndPostCommentForCurrentIssue(
+            (issueId, handler) => srv.issue.merged(issueId, complete, handler),
+            res => {
+                if (res.issue)
+                    setIssueInfo(new Issue(res.issue));
+                issuePage.updateStat();
+            });
+    }
+
+    if (issuePage.isCompleted()) {
+        doMerge(false);
+    } else {
+        $("#completeOnMergeConfirm").dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                Cancel: function () {
+                    $(this).dialog("close");
+                },
+                No: function () {
+                    doMerge(false);
+                    $(this).dialog("close");
+                },
+                Yes: function () {
+                    doMerge(true);
+                    $(this).dialog("close");
+                },
+            },
+            open: function () {
+                $(this).parent().find('.ui-dialog-buttonpane button:nth-child(3)').focus();
+            }
         });
+    }
 }
 
 issuePage.passTest = function () {
-    issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.passTest(issueId, handler));
+    passTest.show(issuePage.getIssueId());
 }
 
 issuePage.addComment = function (comment, html) {
@@ -789,11 +838,7 @@ issuePage.addComment = function (comment, html) {
     comments.updateAttachments($('.comment-text', newItem));
     attachments.update($('.block-with-attachments', newItem));
 
-    issuePage.hideCommentForm();
-    $('#issueView .comments .links-bar a.toggle-comments').show();
-
-    if (!$('#issueView .comments .comments-list').is(':visible'))
-        issuePage.toogleCommentForm();
+    comments.hideCommentForm();
 
     hideElementAfterDelay(elementId, commentTime);
 };
@@ -961,6 +1006,10 @@ function Issue(obj) {
         return this.getDate(this.completeDate);
     };
 
+    this.hasCompleteDate = function () {
+        return this.completeDate != 0;
+    };
+
     this.getCompleteDateInput = function () {
         var d = this.getCompleteDate();
 
@@ -983,7 +1032,7 @@ function Issue(obj) {
     };
 
     this.getPriority = function () {
-        var val = (this.priority + 1);
+        var val = Issue.getPriorityDisplayVal(this.priority);
         return '<span class="priority-val circle">' + this.priority + '</span>' +
             Issue.getPriorityStr(val) + ' (' + val + '%)';
     };
@@ -1056,7 +1105,9 @@ function Issue(obj) {
     };
 
     this.getDate = function (value) {
-        var date = new Date((value + 3600) * 1000);
+        if (!value) return '';
+
+        const date = new Date((value + 3600) * 1000);
         // TODO разобраться что за хрень - почему на час разница?
 
         //return this._num2Str( date.getDate() ) + '-' + this._num2Str( date.getMonth() + 1 ) + '-' + date.getFullYear() + 
@@ -1090,12 +1141,19 @@ function Issue(obj) {
 };
 
 /**
- * @param {Number} priority = 1..100
+ * @param {Number} priority = 0..99
  */
 Issue.getPriorityStr = function (priority) {
     if (priority < 33) return 'низкий';
     else if (priority < 66) return 'нормальный';
     else return 'высокий';
+};
+
+/**
+ * @param {Number} priority = 0..99
+ */
+Issue.getPriorityDisplayVal = function (priority) {
+    return priority + 1;
 };
 
 Issue.getCommitMessage = function (num, title) {

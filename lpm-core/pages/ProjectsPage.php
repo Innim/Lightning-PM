@@ -57,12 +57,10 @@ class ProjectsPage extends LPMPage
                 case self::PUID_STAT:
                     $this->statByProjects();
                     break;
+                case self::PUID_MY_SCRUM_BOARD:
+                    $this->myScrumBoard();
+                    break;
             }
-        }
-
-        if ($this->_curSubpage->uid == self::PUID_MY_SCRUM_BOARD) {
-            $userId = LightningEngine::getInstance()->getUserId();
-            $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($userId));
         }
 
         return $this;
@@ -167,6 +165,12 @@ class ProjectsPage extends LPMPage
         if (StatHelper::isAvailable($nextMonth, $nextYear)) {
             $this->addTmplVar('nextLink', $this->getMonthLink($nextMonth, $nextYear));
         }
+    }
+
+    private function myScrumBoard()
+    {
+        $userId = LightningEngine::getInstance()->getUserId();
+        $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($userId));
     }
 
     private function getMonthLink($month, $year)

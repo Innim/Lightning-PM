@@ -1,6 +1,8 @@
 <?php
 class HTMLHelper
 {
+    public static $bbTags = ['b', 'i', 'u', 'code'];
+
     /**
      * Автоматически заменяет url'ы в тексте на HTML ссылки
      * @param  string $text
@@ -95,6 +97,24 @@ class HTMLHelper
         );
     }
 
+    /**
+     * Возвращает обработанный форматированный текст комментария,
+     * который можно выводить на html странице.
+     * @return string
+     */
+    public static function htmlTextForComment($text)
+    {
+        $value = htmlspecialchars($text);
+        // Для совместимости, чтобы старые комменты не поплыли
+        $value = self::proceedBBCode($value);
+
+        $value = HTMLHelper::codeIt($value, false);
+        $value = HTMLHelper::formatIt($value, false);
+
+        return $value;
+    }
+
+
     private static function processCode($text, $func)
     {
         return preg_replace_callback(
@@ -102,5 +122,12 @@ class HTMLHelper
             $func,
             $text
         );
+    }
+
+    private static function proceedBBCode($value)
+    {
+        $tags = implode('|', self::$bbTags);
+        $value = preg_replace("/\[(" . $tags . ")\](.*?)\[\/\\1\]/", "<$1>$2</$1>", $value);
+        return $value;
     }
 }

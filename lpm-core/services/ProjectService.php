@@ -45,6 +45,9 @@ class ProjectService extends LPMBaseService
 
     /**
      * Возвращает участников проекта.
+     *
+     * Будут возвращены только незаблокированные участники.
+     *
      * @param int $projectId Идентификатор проекта.
      * @return [
      *    list: User[]
@@ -66,7 +69,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Недостаточно прав доступа');
         }
         
-        if (!$members = $project->getMembers()) {
+        if (!$members = $project->getMembers(true)) {
             return $this->error('Ошибка при загрузке участников');
         }
         
@@ -341,10 +344,16 @@ class ProjectService extends LPMBaseService
 
         try {
             $project = $this->getProjectRequireReadPermission($projectId);
-            if ($project->isIntegratedWithGitlab() && $client = $this->getGitlabIfAvailable()) {
-                $list = $client->getProjects($project->gitlabGroupId);
-                $this->add2Answer('list', $list);
-            }
+            $client = $this->requireGitlabIntegration($project);
+            
+            $list = $client->getProjects($project->gitlabGroupId);
+
+            // Загрузим информацию о самом используемом репозитории в этом проекте
+            // из последних 5
+            $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
+
+            $this->add2Answer('list', $list);
+            $this->add2Answer('popularRepositoryId', $popularRepositoryId);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -362,14 +371,47 @@ class ProjectService extends LPMBaseService
 
         try {
             $project = $this->getProjectRequireReadPermission($projectId);
-            if ($project->isIntegratedWithGitlab() && $client = $this->getGitlabIfAvailable()) {
-                $list = $client->getBranches($gitlabProjectId);
-                $this->add2Answer('list', $list);
-            }
+            $client = $this->requireGitlabIntegration($project);
+           
+            $list = $client->getBranches($gitlabProjectId);
+            
+            $this->add2Answer('list', $list);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
 
+        return $this->answer();
+    }
+    
+    /**
+     * Добавляет цели спринта для текущего проекта.
+     * @param int $instanceId id проекта.
+     * @param array $target массив целий спринта.
+     */
+    public function addTargetSprint($instanceId, $target) {
+        $projectId = (int) $instanceId;
+        $targetText = (string) $target;
+    
+        try {
+            $project = Project::loadById($projectId);
+            $user = $this->getUser();
+            if (!$project || !$project->hasReadPermission($user)) {
+                return $this->error("Проект не существует или недостаточно прав");
+            }
+            
+            $result = Project::updateTargetSprint($projectId, $targetText);
+            if (!$result) {
+                return $this->error('Цели проекта не добавлены. Ошибка записи в БД.');
+            }
+    
+            $markdownText = HTMLHelper::getMarkdownText($targetText);
+            
+            $this->add2Answer('targetHTML', $markdownText);
+            $this->add2Answer('targetText', $targetText);
+        } catch ( Exception $e) {
+            return $this->exception($e);
+        }
+        
         return $this->answer();
     }
 }

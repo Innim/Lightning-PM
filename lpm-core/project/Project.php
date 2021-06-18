@@ -250,11 +250,11 @@ class Project extends MembersInstance
         return Link::getUrl(ProjectPage::UID, [$projectUID, ProjectPage::PUID_SCRUM_BOARD], $hash);
     }
     
-    public static function checkDeleteComment($author, $cookie)
+    public static function checkDeleteComment($authorId, $commentId)
     {
         $user = LightningEngine::getInstance()->getUser();
 
-        return  $user->isAdmin() || $user->getID() == $author && Comment::checkDeleteCommentById($cookie);
+        return $user->isAdmin() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
     }
 
     public static function getProjectTester()
@@ -266,6 +266,50 @@ class Project extends MembersInstance
         }
 
         return $tester[0];
+    }
+    
+    /**
+     * Обновляет в БД цели спринта текущего scrum проекта.
+     * @param int $projectId индентификатор проекта.
+     * @param string $targetText текст цели спринта.
+     */
+    public static function updateTargetSprint($projectId, $targetText)
+    {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        
+        $text = $db->real_escape_string($targetText);
+        $text = str_replace('%', '%%', $text);
+        
+        $sql = "UPDATE `%s` SET `targetSprint` =  '" . $text . "' " .
+            "WHERE `id` = '" . $projectId . "' ";
+    
+        $result = $db->queryt($sql, LPMTables::PROJECTS);
+        if (!$result) {
+            return false;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Загружаем из БД цели текущего спринта scrum проекта.
+     * @param int $projectId индентификатор проекта.
+     * @return string|boolean текст целей спринта или false.
+     */
+    public static function loadTextTargetSprint($projectId)
+    {
+        $db = self::getDB();
+        $query =  $db->queryb([
+            'SELECT' => 'targetSprint',
+            'FROM'   => LPMTables::PROJECTS,
+            'WHERE' => ['id' => $projectId]
+        ]);
+        
+        $row = $query->fetch_assoc();
+        if (!$query || !$row) {
+            return false;
+        }
+        return $row['targetSprint'];
     }
     
     /**
@@ -309,6 +353,12 @@ class Project extends MembersInstance
      * @var Boolean|null
      */
     public $fixedInstance;
+    
+    /**
+     * Цели спринта проекта.
+     * @var string|null
+     */
+    public $targetSprint;
 
     private $_importantIssuesCount = -1;
 
@@ -321,6 +371,12 @@ class Project extends MembersInstance
      * @var User
      */
     private $_master;
+    
+    /**
+     * Форматированный текст.
+     * @var string|null
+     */
+    private $_htmlText = null;
     
     public function __construct()
     {
@@ -346,8 +402,12 @@ class Project extends MembersInstance
     
     public function getUrl()
     {
-        //return Link::getUrlByUid( ProjectPage::UID, $this->uid );
         return self::getURLByProjectUID($this->uid);
+    }
+
+    public function getScrumBoardUrl()
+    {
+        return self::getURLByProjectUIDScrum($this->uid);
     }
     
     public function getDesc()
@@ -475,6 +535,19 @@ class Project extends MembersInstance
         }
 
         return $this->_master;
+    }
+    
+    /**
+     * Возвращает форматированый текст для вставки в HTML код.
+     * @return string
+     */
+    public function getHTMLText()
+    {
+        if (empty($this->_htmlText)) {
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->targetSprint);
+        }
+        
+        return $this->_htmlText;
     }
     
     protected function loadMembers()

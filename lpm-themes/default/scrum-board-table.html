@@ -74,10 +74,14 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                         $spStr = $sp == .5 ? "1/2" : $sp;
 
                     $issue = $sticker->getIssue();
-                    $userRole = $issue->isTester($user->userId) ? 'tester' : ($issue->isMember($user->userId) ? 'mine' : '');
+                    $members = $issue->getMembers();
+
+                    $cssClasses = [$color];
+                    if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
+                    if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
-                 class="scrum-board-sticker <?=$color;?> <?=$userRole;?>" data-issue-id="<?=$sticker->issueId;?>"
+                 class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
                  data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
                 <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                 <?php if ($addProjectName): ?>
@@ -88,8 +92,12 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
                 <span class="sticker-issue-members"><?php
-                   foreach ($sticker->getIssue()->getMembers() as $j => $member) {?><?=$j>0?', ':''?>
-                    <?=$member->getShortName();?><?php }?></span>
+                   foreach ($members as $j => $member):
+                ?><?=$j > 0 ? ', ' : '' ?>
+                    <span class="sticker-issue-member" data-member-id="<?=$member->userId;?>"><?=$member->getShortName();?></span>
+                <?php 
+                    endforeach; 
+                ?></span>
                 <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                    class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
                 <div class="control-line">

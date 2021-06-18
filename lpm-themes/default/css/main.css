@@ -1,4 +1,5 @@
-@CHARSET "UTF-8";
+@charset "UTF-8";
+
 body {
 	font-family: Arial;
 	font-size  : 11pt;
@@ -33,6 +34,12 @@ input {
 }
 input[type="search"] {
 	box-sizing   : content-box;
+}
+input[type="checkbox"] {
+	height: 20px;
+}
+input[type="file"] {
+	height: auto;
 }
 select {
 	height       : 30px;
@@ -279,7 +286,14 @@ p.header-back-link a.back-link {
 	right           : 0px;
 	bottom          : 0px;
 	display         : none;
-	background-color: rgba( 255, 255, 255, 0.1);  
+	z-index			: 10000;
+	background-color: rgba( 255, 255, 255, 0.3);  
+}
+#preloader .indicator {
+	position: fixed;
+	margin: -40px -40px 0 0;
+	left: 50%;
+	top: 50%;
 }
 #noway {
 	display: none;
@@ -429,7 +443,6 @@ ol#profileInfo.info-list {
 }
 fieldset.radio-group legend {
 	float  : left;
-	display: inline-block;
 }
 fieldset.radio-group ol {
 	padding: 0px;
@@ -541,6 +554,9 @@ form ol.form-fields > li:last-child {
   height: 18px;
   border-radius: 20%;
   background: #fff;
+}
+.lds-spinner.dark div:after {
+  background: #333;
 }
 .lds-spinner.medium {
   width: 40px;
@@ -687,10 +703,12 @@ form ol.form-fields > li:last-child {
 
 .priority-val.circle {
 	display: inline-block;
-	width: 5px;
-	height: 5px;
-	vertical-align: middle;
-	margin-right: 5px;
+    width: 6px;
+    height: 6px;
+    vertical-align: middle;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-left: -1px;
 }
 button.remove-btn,
 a.remove-btn {
@@ -715,9 +733,6 @@ a.remove-btn {
 }
 div.list-box {
 	overflow: scroll;
-}
-img.user-avatar {
-	
 }
 img.user-avatar.small {
     width : 32px;
@@ -866,9 +881,6 @@ a.create-branch-icon .plus-icon {
 	display: inline-block;
 	margin-right: 5px;
 }
-.comments form.add-comment {
-	text-align: center;
-}
 .comments form.add-comment textarea {
 	width     : 100%;
 	height    : 100px;
@@ -883,6 +895,15 @@ a.create-branch-icon .plus-icon {
 }
 .comments form.add-comment .buttons-bar {
 	text-align: right;
+}
+.comments form.add-comment .ui-tabs .ui-tabs-panel {
+	padding: 0;
+}
+.comments form.add-comment .preview-comment .lds-spinner div:after {
+	background: #333;
+}
+.comments form.add-comment .preview-comment.comments-list-item .text {
+	margin: 0;
 }
 .comments .comments-list {
 	list-style: none;
@@ -900,72 +921,72 @@ a.create-branch-icon .plus-icon {
     margin-top: -15px;
     font-size: 12px;
 }
-.comments .comments-list .comments-list-item img.user-avatar {
+.comments-list-item img.user-avatar {
     float : left;
     margin: 5px;
     margin-top: 10px;
 }
-.comments .comments-list .comments-list-item .author {
+.comments-list-item .author {
 	margin-bottom: 0px;
 	font-size    : smaller;
 }
-.comments .comments-list .comments-list-item .date {
+.comments-list-item .date {
     margin-top   : 0px;
     font-size    : x-small;
 }
-.comments .comments-list .comments-list-item .date a
+.comments-list-item .date a
 {
 	outline: none;
 	color: inherit;
 }
-.comments .comments-list .comments-list-item .text {
+.comments-list-item .text {
     background-color: #eeeeee;
     padding         : 10px;
     clear           : both;
 }
-.comments .comments-list .comments-list-item .text > p {
+.comments-list-item .text > p {
     margin: 0;
     padding: 0;
 }
-.comments .comments-list .comments-list-item ul.merge-requests {
+.comments-list-item ul.merge-requests {
 	margin: 10px 0 0;
 	padding: 10px;
 	list-style: none;
 	background-color: #dddddd;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests:empty {
+.comments-list-item ul.merge-requests:empty {
    display: none;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li {
+.comments-list-item ul.merge-requests li {
 	padding: 5px;
 	border-radius: 5px;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li .state-icon {
+.comments-list-item ul.merge-requests li .state-icon {
 	margin-right: 5px;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.opened {
+.comments-list-item ul.merge-requests li.opened {
 	background-color: #ffffbc;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.opened .state-icon {
+.comments-list-item ul.merge-requests li.opened .state-icon {
 	color: #838982;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.closed {
+.comments-list-item ul.merge-requests li.closed {
 	background-color: #fdcabe;
 }
-.comments .comments-list .comments-list-item ul.merge-requests li.closed .state-icon {
+.comments-list-item ul.merge-requests li.closed .state-icon {
 	color: #e50000;
 }
 
-.comments .comments-list .comments-list-item ul.merge-requests li.merged {
+.comments-list-item ul.merge-requests li.merged {
 	background-color: #e2ffd9;
 }
-.comments .comments-list .comments-list-item ul.merge-requests li.merged .state-icon {
+.comments-list-item ul.merge-requests li.merged .state-icon {
 	color: #2bbd00;
 }
 
@@ -1102,19 +1123,6 @@ table.users-list tr.active-user td button#unlocked-btn {
 
 
 /* список проектов и добавление проекта*/
-/*#projectsList table {
-
-}
-#projectsList table thead th {
-
-}
-#projectsList table th,
-#projectsList table td {
-
-}*/
-.projects-list {
-
-}
 ul.projects-list {
 	list-style: circle;
 }
@@ -1151,6 +1159,12 @@ ul.projects-list .btn.develop
 	transform: rotate(45deg);
 	color: #999999;
 }
+.projects-list-item-submenu {
+	padding: 0 2px;
+}
+.projects-list-item-submenu > a {
+	font-size: 0.7em;
+}
 .projects-list .project-desc {
 	font-size: 0.9em;
 	border: 1px dotted #666666;
@@ -1180,37 +1194,16 @@ table tr.verify-issue {
 	color           : #999999;
 }
 
-/*table.projects-list td:first-child {
-	min-width: 200px;
-	width    : 30%;
-}*/
-
 /* просмотр проекта */
 #projectView .filters-line {
 	float: left;
 	width: 70%;
 	font-size : smaller;
 }
-#projectView .operations-line {
-	
-}
 
 /* список задач и добавление/редактироание задачи */
-table.issues-list {
-	
-}
 table.issues-list td {
 	position: relative;
-}
-/* num */
-table.issues-list td:nth-child(1)
-{
-	/*width: 50px;*/
-}
-/* type */
-table.issues-list td:nth-child(2)
-{
-	/*width: 110px;*/
 }
 /* title */
 table.issues-list td:nth-child(3)
@@ -1234,10 +1227,6 @@ table.issues-list td:nth-child(6)
 	max-width: 150px;
 }
 /* buttons */
-table.issues-list td:last-child
-{
-	/*width: 175px;*/
-}
 table.issues-list tr.completed-issue td button.complete-btn {
     display: none;
 }
@@ -1416,6 +1405,14 @@ blockquote > p {
 #issueForm form > ol > li .put-to-board-line label {
 	margin: 0 5px;
 }
+#issueForm .text-warning {
+	color: #ccc;
+	text-align: right;
+	width: 90%;
+    margin: 5px auto 0;
+	padding: 0 5px;
+}
+
 #issueForm .note
 {
 	width: 90%;
@@ -1544,7 +1541,6 @@ blockquote > p {
 	margin-top: -7px;
 	font-size: 16px;
 }
-p.no-items {}
 
 /* доступы */
 .access-list
@@ -1680,12 +1676,6 @@ div.ftp
 	box-shadow:
 		0px 1px 3px rgba(000,000,000,0.5),
 		inset 0px 0px 1px rgba(255,255,255,1);
-}
-.issue_copy{
-
-}
-
-.issue_copy a{	
 }
 .issue_copy a:hover, .issue_copy a.hover{
     color: #999;
@@ -2088,7 +2078,6 @@ div.ftp
 	margin: 5px 0;
 	text-align: right;
 }
-.stat-summary .stat-summary-label {}
 .stat-summary .stat-summary-value {
 	font-weight: bold;
 }
@@ -2117,4 +2106,22 @@ form.create-branch ul.create-branch-items label {
 form.create-branch ul.create-branch-items select,
 form.create-branch ul.create-branch-items input {
 	width: 100%;
+}
+
+/* Форма отправки сообщения о том, что тест пройден */
+form.pass-test ul.pass-test-items {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+form.pass-test ul.pass-test-items label {
+	display: block;
+}
+
+form.pass-test #passTestComment textarea.comment-text-field {
+	width: 100%;
+	height: 300px;
+	box-sizing: border-box;
+	margin: 10px auto;
 }

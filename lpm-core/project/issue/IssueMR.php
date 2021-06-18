@@ -85,14 +85,26 @@ class IssueMR extends LPMBaseObject
      * @param  int    $mrId    Идентификатор MR.
      * @param  int    $issueId Идентификатор задачи.
      * @param  string $state Новый статус.
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $branch Имя ветки.
      */
-    public static function create($mrId, $issueId, $state)
+    public static function create($mrId, $issueId, $state, $repositoryId, $branch)
     {
         $db = self::getDB();
         return $db->queryb([
-            'INSERT' => compact('mrId', 'issueId', 'state'),
+            'INSERT' => compact('mrId', 'issueId', 'state', 'repositoryId', 'branch'),
             'INTO'   => LPMTables::ISSUE_MR
         ]);
+    }
+
+    /**
+     * Создает запись по данным MR.
+     * @param  int                $issueId Идентификатор задачи.
+     * @param  GitlabMergeRequest $mr Данные merge request'а.
+     */
+    public static function createByMr($issueId, GitlabMergeRequest $mr)
+    {
+        return self::create($mr->id, $issueId, $mr->state, $mr->targetProjectId, $mr->sourceBranch);
     }
 
     /**
@@ -119,10 +131,24 @@ class IssueMR extends LPMBaseObject
      */
     public $state;
 
+    /**
+     * Идентификатор репозитория.
+     * GitlabProject::$id
+     * @var int
+     */
+    public $repositoryId;
+
+    /**
+     * Имя ветки.
+     * GitlabBranch::$name
+     * @var string
+     */
+    public $branch;
+
     public function __construct()
     {
         parent::__construct();
 
-        $this->_typeConverter->addIntVars('id', 'mrId', 'issueId');
+        $this->_typeConverter->addIntVars('id', 'mrId', 'issueId', 'repositoryId');
     }
 }

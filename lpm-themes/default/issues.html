@@ -43,10 +43,10 @@
 				</div>
 			</td>
 			<td>
-				<div title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->priority;?>%)">
+				<div class="priority-title-owner" title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->getPriorityDisplayValue();?>%)">
 					<nobr>
 						<span href="#" class="priority-val circle" data-value="<?=$issue->priority;?>">
-							<?=$issue->priority;?></span><?=$issue->getType();?>
+							<?=$issue->getPriorityDisplayValue();?></span><?=$issue->getType();?>
 					</nobr>
 					<?php if (!$issue->isCompleted()): ?>
 					<span class="priority-change-bar" class="display:block;"><i
@@ -68,10 +68,12 @@
 				<?php endif; ?>
 			</td>
 			<td class="member-list">
+				<?php if ($issue->hasMembers()): ?>
 				<?php foreach ($issue->getMembers() as $i => $member): ?>
 				<?=$i>0?', ':''?><a href="javascript:;"
 					data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
 				<?php endforeach; ?>
+				<?php endif; ?>
 			</td>
 			<td>
 				<p class="issue-list-item-desc"><?=$issue->getShortDesc();?></p>
