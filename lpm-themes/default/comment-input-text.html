@@ -1,0 +1,24 @@
+<?php
+/* 
+Требуются: 
+    $id - идентификатор элемента
+*/
+if (empty($id)) die();
+
+$editorTabId = $id . 'EditTab';
+$previewTabId = $id . 'PreviewTab';
+?>
+<div id="<?=$id;?>" class="comment-input-text-tabs">
+    <ul>
+      <li><a href="#<?=$editorTabId;?>">Редактор</a></li>
+      <li><a href="#<?=$previewTabId;?>">Предпросмотр</a></li>
+    </ul>
+    <div id="<?=$editorTabId;?>" class="editor-tab">
+        <textarea name="commentText" class="comment-text-field"></textarea>
+        <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
+            <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>        
+    </div>
+    <div id="<?=$previewTabId;?>" class="preview-tab">
+        <div class="preview-comment comments-list-item"></div>
+    </div>
+</div>

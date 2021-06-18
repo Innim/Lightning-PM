@@ -6,9 +6,9 @@ class Member extends User
         $instanceId,
         $onlyNotLocked = false,
         $leftJoinTable = null,
-        $class = null
-    )
-    {
+        $class = null,
+        $userId = null
+    ) {
         $sql = "select * from `%2\$s`, `%1\$s` ";
         if ($leftJoinTable) {
             $sql .= "LEFT JOIN `%3\$s` USING (`userId`, `instanceId`) ";
@@ -16,6 +16,9 @@ class Member extends User
         $sql .= "where `%1\$s`.`instanceId`   = '" . $instanceId   . "' " .
                          "and `%1\$s`.`instanceType` = '" . $instanceType . "' " .
                          "and `%1\$s`.`userId`       = `%2\$s`.`userId`";
+        if ($userId != null) {
+            $sql .= " and `%1\$s`.`userId` = " . $userId;
+        }
         if ($onlyNotLocked) {
             $sql .= " and `%2\$s`.`locked` = 0";
         }
@@ -30,18 +33,24 @@ class Member extends User
     
     public static function loadListByProject($projectId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::PROJECT, $projectId);
+        return self::loadListByInstance(LPMInstanceTypes::PROJECT, $projectId, $onlyNotLocked);
     }
     
     public static function loadListByIssue($issueId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(
-            LPMInstanceTypes::ISSUE,
-            $issueId,
-            false,
-            LPMTables::ISSUE_MEMBER_INFO,
-            'IssueMember'
-        );
+        return self::loadListByIssueInstance($issueId, $onlyNotLocked);
+    }
+    
+    /**
+     * Загружает конкретного участника по ID задачи.
+     * @param int $issueId
+     * @param int $userId
+     * @return IssueMember Данные участника или null, если участник не найден.
+     */
+    public static function loadByIssue($issueId, $userId)
+    {
+        $list = self::loadListByIssueInstance($issueId, false, $userId);
+        return empty($list) ? null : $list[0];
     }
 
     public static function loadListByIssueForTest($issueId, $onlyNotLocked = false)
@@ -135,5 +144,20 @@ class Member extends User
             'VALUES' => $values
         ];
         return self::getDB()->queryb($hash);
+    }
+
+    private static function loadListByIssueInstance(
+        $issueId,
+        $onlyNotLocked = false,
+        $userId = null
+    ) {
+        return self::loadListByInstance(
+            LPMInstanceTypes::ISSUE,
+            $issueId,
+            $onlyNotLocked,
+            LPMTables::ISSUE_MEMBER_INFO,
+            'IssueMember',
+            $userId
+        );
     }
 }

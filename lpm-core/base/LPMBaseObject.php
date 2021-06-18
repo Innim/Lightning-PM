@@ -9,6 +9,19 @@ class LPMBaseObject extends StreamObject
         return LPMGlobals::getInstance()->getDBConnect();
     }
 
+    protected static function loadAndParse($hash, $class)
+    {
+        $res = self::loadFromDb($hash);
+        $list = StreamObject::parseListResult($res, $class);
+        return $list;
+    }
+
+    protected static function loadAndParseSingle($hash, $class)
+    {
+        $list = self::loadAndParse($hash, $class);
+        return empty($list) ? null : $list[0];
+    }
+
     protected static function loadFromDb($hash, $tables = null)
     {
         $res = self::getDB()->queryb($hash, $tables);
@@ -33,6 +46,16 @@ class LPMBaseObject extends StreamObject
     protected static function loadIntValFromDb($table, $field, $where)
     {
         return intval(self::loadValFromDb($table, $field, $where));
+    }
+
+    protected static function buildAndSaveToDb($sqlHash)
+    {
+        $db = self::getDB();
+        $res = $db->queryb($sqlHash);
+
+        if (!$res) {
+            throw new \GMFramework\ProviderSaveException();
+        }
     }
 
     protected static function getDateStr($date)

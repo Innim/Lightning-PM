@@ -35,20 +35,17 @@ class EmailNotifier extends LPMBaseObject
     }
     
     /**
+     * Возвращает список пользователей, имеющих указанные идентификаторы,
+     * которым можно отправить email.
+     *
+     * Возможность отправки определяется по настройках пользователя,
+     * а также по текущему состоянию (заблокированным пользователям не отправляется).
      *
      * @param array $userIds
      * @param int $pref одна из констант <code>EmailNotifier::PREF_*</code>
      */
     public function getUsers4Send($userIds, $pref, $exceptMe = true)
     {
-        /*$sql = "SELECT `userId` FROM `%s` " .
-                "WHERE `userId` IN (" . implode( ',', $userIds ) . ") " .
-                  "AND " . $this->getPrefField( $pref ) . " = 1";
-        if (!$query = $this->_db->queryt( $sql, LPMTables::USERS_PREF )) return false;
-        $list = array();
-        while ($row = $query->fetch_assoc()) {
-            array_push( $list, (float)$row['userId'] );
-        }*/
         $userIds = array_unique($userIds);
         
         $prefField = $this->getPrefField($pref);
@@ -58,10 +55,11 @@ class EmailNotifier extends LPMBaseObject
         }
         
         return empty($userIds)
-                ? array()
+                ? []
                 : User::loadList(
                     "`%1\$s`.`userId` IN (" . implode(',', $userIds) . ") " .
-                     ($prefField !== 1 ? "AND `%2\$s`.`" . $prefField . "` = 1" : "")
+                     ($prefField !== 1 ? "AND `%2\$s`.`" . $prefField . "` = 1" : ""),
+                    true
                 );
     }
     

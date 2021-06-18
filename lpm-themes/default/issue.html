@@ -19,7 +19,8 @@ $project = $issue->getProject();
     </div>
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
     <article id="issueInfo" class="container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
-        data-id-in-project="<?=$issue->getIdInProject();?>" data-labels="<?=implode(',', $issue->getLabelNames());?>">
+        data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
+        data-labels="<?=implode(',', $issue->getLabelNames());?>">
         <h3>
             <span class="issue-id"><?=$issue->getIdInProject();?></span>.
             <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
@@ -52,8 +53,8 @@ $project = $issue->getProject();
             <div class="info-list-item">
                 <span class="label">Приоритет</span>
                 <span class="value">
-                    <span class="priority-val circle"><?=$issue->priority;?></span>
-                    <?=$issue->getPriorityStr();?> (<?=($issue->priority+1);?>%)
+                    <span class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span>
+                    <?=$issue->getPriorityStr();?> (<?=($issue->getPriorityDisplayValue());?>%)
                 </span>
                 <input type="hidden" name="priority" value="<?=$issue->priority;?>" />
             </div>
@@ -61,7 +62,7 @@ $project = $issue->getProject();
                 <span class="label">Дата создания</span>
                 <span class="value"><?=$issue->getCreateDate();?></span>
             </div>
-            <div class="info-list-item">
+            <div class="issue-complete-date-row info-list-item" style="<?=$issue->hasCompleteDate() ? '' : 'display: none;';?>">
                 <span class="label">Дата завершения</span>
                 <span class="value"><?=$issue->getCompleteDate();?></span>
                 <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>" />
@@ -77,11 +78,15 @@ $project = $issue->getProject();
             <div class="info-list-item">
                 <span class="label">Исполнители</span>
                 <span class="value">
+                    <?php if ($issue->hasMembers()):?>
                     <?php foreach ($issue->getMembers() as $i => $member):
                 ?><?=$i>0?',':''
                 ?> <?=$member->getLinkedName();?><?php if ($member->sp > 0):
                 ?> (<?=$member->sp;?> SP)<?php endif;?><?php
                 endforeach;?>
+                    <?php else: ?>
+                    Не назначены
+                    <?php endif; ?>
                 </span>
                 <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>" />
                 <input type="hidden" name="membersSp" value="<?=$issue->getMembersSpStr();?>" />
@@ -139,7 +144,7 @@ $project = $issue->getProject();
             <i class="fa fa-plus-square" aria-hidden="true" title="Добавить задачу по доделкам"></i>
         </a>
     </article>
-    <article class="comments">
+    <article id="comments" class="comments">
         <div class="links-bar">
             <?php if ($project->scrum):?>
             <div class="scrum-comments-shortcut">
@@ -157,19 +162,18 @@ $project = $issue->getProject();
             </div>
             <?php endif;?>
             <div class="comments-controls">
-                <a href="#" class="toggle-comments" onclick="issuePage.toogleCommentForm(); return false;">Свернуть
+                <a href="#" class="toggle-comments" onclick="comments.toogleCommentForm(); return false;">Свернуть
                     комментарии</a>
-                <a href="#" onclick="issuePage.showCommentForm(); return false;">Добавить комментарий</a>
+                <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
             </div>
         </div>
-        <form class="add-comment" onsubmit="issuePage.postComment(); return false;">
-            <textarea name="commentText"></textarea>
-            <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
-                <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>
+        <form id="addCommentForm" class="add-comment" onsubmit="issuePage.postComment(); return false;">
+            <?php lpm_print_comment_input_text('addCommentTabs');?>
+
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <p class="buttons-bar">
                 <button type="submit">Отправить</button>
-                <button type="reset" onclick="issuePage.hideCommentForm();">Отмена</button>
+                <button type="reset" onclick="comments.hideCommentForm();">Отмена</button>
             </p>
         </form>
         <section class="comments-list">
@@ -189,7 +193,7 @@ $project = $issue->getProject();
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
 
 <article id="createBranch" title="Создать ветку задачи">
-    <form class="create-branch">
+    <form class="create-branch" onsubmit="createBranch.save(); return false;">
         <ul class="create-branch-items">
             <li>
                 <label for="repository">Репозиторий</label><select id="repository" name="repository"></select>
@@ -200,4 +204,22 @@ $project = $issue->getProject();
             <li><label for="branchName">Название</label><input id="branchName" type="text" name="branchName"></li>
         </ul>
     </form>
+</article>
+
+<article id="passTestDialog" title="Прошла тестирование">
+    <form class="pass-test">
+        <ul class="pass-test-items">
+            <li>
+                <label>Введите дополнительную информацию, если нужно</label>
+                <?php lpm_print_comment_input_text('passTestComment');?>
+            </li>
+        </ul>
+    </form>
+</article>
+
+<article id="completeOnMergeConfirm" title="Завершить задачу?" style="display: none;">
+    <p>
+        <span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>
+        Добавляется отметка о влитии в develop. Хотите также завершить задачу?
+    </p>
 </article>

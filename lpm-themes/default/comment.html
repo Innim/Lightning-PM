@@ -3,6 +3,9 @@
 Требуются: 
     $comment - коммент
 */
+
+$issue = $comment->issue;
+$url = $issue ? $comment->getIssueCommentUrl($issue) : null;
 ?>
 <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
 <p id="<?='comment_' . $comment->id?>" class="delete-comment" data-comment-id="<?=$comment->id?>"
@@ -10,12 +13,6 @@
 <?php endif; ?>
 <img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small" />
 <p class="author"><?=$comment->getAuthorLinkedName();?></p>
-<p class="date"><a id="<?='comment-' . $comment->id?>" class="anchor"
-        href="<?=$comment->getIssueCommentUrl($comment->issue);?>"><?=$comment->getDate();?></a></p>
-<article class="text formatted-desc block-with-attachments">
-    <div class="comment-text text-with-attachments"><?=$comment->getText();?></div>
-    <!-- Заполняется JS -->
-    <div class="attachments">
-        <ul class="merge-requests"></ul>
-    </div>
-</article>
+<p class="date"><?php if ($url):?><a id="<?='comment-' . $comment->id?>" class="anchor"
+        href="<?=$url;?>"><?php endif;?><?=$comment->getDate();?><?php if ($url):?></a><?php endif;?></p>
+<?php lpm_print_comment_text($comment->getText());?>
