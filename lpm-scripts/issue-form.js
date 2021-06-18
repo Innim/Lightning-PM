@@ -1,4 +1,4 @@
-$(document).ready(function ($) {
+$(function ($) {
     document.addEventListener('paste', pasteClipboardImage);
     $('.images-list').on('click', '.pasted-img .remove-btn', function () {
         $(this).parent('.pasted-img').remove();
@@ -90,8 +90,7 @@ let issueForm = {
             issueForm.updateHeader(false);
 
             if (issueForm.defaultMemberId) {
-                $("#addIssueMembers option[value=" + issueForm.defaultMemberId + "]").prop('selected', true);
-                issueForm.addIssueMember();
+                issueForm.addIssueMemberById(issueForm.defaultMemberId);
             }
         }
     },
@@ -146,8 +145,7 @@ let issueForm = {
         if (memberIds) {
             let membersSp = value.membersSp ? value.membersSp : [];
             memberIds.forEach((memberId, index) => {
-                $("#addIssueMembers option[value=" + memberId + "]").prop('selected', true);
-                issueForm.addIssueMember(membersSp[index]);
+                issueForm.addIssueMemberById(memberId, membersSp[index]);
             });
         }
 
@@ -157,8 +155,7 @@ let issueForm = {
         if (testerIds) {
             testerIds.forEach((testerId) => {
                 if (testerId.length > 0) {
-                    $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
-                    issueForm.addIssueTester();
+                    issueForm.addIssueTesterById(testerId);
                 }
             });
         }
@@ -342,6 +339,13 @@ let issueForm = {
         })
         $('#' + listId + ' li').remove();
     },
+    addMeAsMember: function () {
+        issueForm.addIssueMemberById(lpInfo.userId);
+    },
+    addIssueMemberById: function (userId, sp) {
+        $("#addIssueMembers option[value=" + userId + "]").prop('selected', true);
+        issueForm.addIssueMember(sp);
+    },
     addIssueMember: function (sp) {
         /**
          * @type HTMLSelectElement
@@ -355,10 +359,11 @@ let issueForm = {
         var option = selectElement.options[index];
         var $memberLi = $('<li>');
 
+        const userId = option.value;
 
         $memberLi.
             append($('<span class="user-name">').html(option.innerHTML)).
-            append($('<input type="hidden" name="members[]">').val(option.value));
+            append($('<input type="hidden" name="members[]">').val(userId));
 
         // проверка что это скрам проект
         if (scrum)
@@ -374,6 +379,16 @@ let issueForm = {
 
         selectElement.removeChild(option);
         selectElement.selectedIndex = 0;
+
+        const isMe = userId == lpInfo.userId;
+        if (isMe) $('#issueForm .members-row .add-me-link').hide();
+    },
+    addMeAsTester: function () {
+        issueForm.addIssueTesterById(lpInfo.userId);
+    },
+    addIssueTesterById: function (userId) {
+        $("#addIssueTesters option[value=" + userId + "]").prop('selected', true);
+        issueForm.addIssueTester();
     },
     addIssueTester: function () {
         /**
@@ -382,6 +397,7 @@ let issueForm = {
         var selectElement = document.getElementById('addIssueTesters');
 
         var option = selectElement.options[selectElement.selectedIndex];
+        const userId = option.value;
 
         /**
          * @type HTMLOListElement
@@ -407,7 +423,7 @@ let issueForm = {
         var idField = document.createElement('input');
         idField.type = 'hidden';
         idField.name = 'testers[]';
-        idField.value = option.value;
+        idField.value = userId;
 
         /**
          * @type HTMLButtonElement
@@ -425,6 +441,9 @@ let issueForm = {
 
         selectElement.removeChild(option);
         selectElement.selectedIndex = 0;
+
+        const isMe = userId == lpInfo.userId;
+        if (isMe) $('#issueForm .testers-row .add-me-link').hide();
     },
     removeIssueMember: function (e) {
         issueForm.removeIssueMemberCommon(e, 'members', 'addIssueMembers');
@@ -435,7 +454,7 @@ let issueForm = {
     removeIssueMemberCommon: function (e, fieldName, selectName) {
         var li = $(e.currentTarget).parent('li');
 
-        var userId = $('input[name="' + fieldName + '[]"]', li).val();
+        const userId = $('input[name="' + fieldName + '[]"]', li).val();
         var userName = $('span.user-name', li).html();
 
         var option = document.createElement('option');
@@ -447,6 +466,9 @@ let issueForm = {
             if (userName < selectElement.options[i].innerHTML) break;
         }
         selectElement.appendChild(option, i);
+
+        const isMe = userId == lpInfo.userId;
+        if (isMe) $('#issueForm .' + fieldName + '-row .add-me-link').show();
 
         setTimeout(function () {
             li.remove();
