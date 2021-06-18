@@ -90,9 +90,9 @@ $descMaxLen = Issue::DESC_MAX_LEN;
             <li>
                 <input placeholder="Дата окончания" type="text" class="date" name="completeDate" maxlength="255" />
             </li>
-            <li>
+            <li class="members-row">
                 <fieldset>
-                    <legend>Исполнители</legend>
+                    <legend>Исполнители <a href="javascript:void(0)" onclick="issueForm.addMeAsMember()" class="add-me-link">Добавить себя</a></legend>
                     <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
                     <ol id="issueMembers" class="members-list"></ol>
                     <select id="addIssueMembers" onchange="issueForm.addIssueMember();"
@@ -104,9 +104,9 @@ $descMaxLen = Issue::DESC_MAX_LEN;
                     </select>
                 </fieldset>
             </li>
-            <li>
+            <li class="testers-row">
                 <fieldset>
-                    <legend>Тестеры</legend>
+                    <legend>Тестеры <a href="javascript:void(0)" onclick="issueForm.addMeAsTester()" class="add-me-link">Добавить себя</a></legend>
                     <ol id="issueTesters" class="members-list"></ol>
                     <select id="addIssueTesters" onchange="issueForm.addIssueTester();">
                         <option value="-1">Добавить</option>

@@ -454,6 +454,10 @@ fieldset.radio-group ol li {
     margin-left: 10px;    
     list-style : none;    
 }
+.add-me-link {
+	font-size: x-small;
+	font-weight: normal;
+}
 ol.members-list {
 	margin-bottom: 10px;
 	position : relative;
