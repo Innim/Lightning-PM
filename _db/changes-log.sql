@@ -271,12 +271,49 @@ ALTER TABLE `lpm_projects`
 ADD `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab';
 
 -- v0.9.22
---NEXT
 
-DROP TABLE IF EXISTS `lpm_instance_targets`;
-CREATE TABLE `lpm_instance_targets` (
-  `instanceType` tinyint(3) unsigned NOT NULL COMMENT 'Тип инстанции',
-  `instanceId` int(10) unsigned NOT NULL COMMENT 'Идентификатор инстанции',
-  `content` text NOT NULL COMMENT 'Цели инстанции',
-  PRIMARY KEY (`instanceType`, `instanceId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Таблица целей инстанции';
+CREATE TABLE `lpm_issue_branch` (
+  `issueId` bigint(20) NOT NULL COMMENT 'ID задачи',
+  `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Название ветки',
+  `date` datetime NOT NULL COMMENT 'Дата записи',
+  PRIMARY KEY (`issueId`, `repositoryId`, `name`),
+  KEY `repositoryId_name` (`repositoryId`,`name`),
+  KEY `issueId` (`issueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
+
+-- v0.9.28
+
+ALTER TABLE `lpm_issue_branch`
+ADD `lastСommit` varchar(255) NOT NULL COMMENT 'ID последнего коммита',
+ADD `mergedInDevelop` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Отметка о влитии в develop' AFTER `lastСommit`;
+
+ALTER TABLE `lpm_issue_branch`
+ADD INDEX `issueId_mergedInDevelop` (`issueId`, `mergedInDevelop`);
+
+ALTER TABLE `lpm_issue_branch`
+ADD INDEX `repositoryId_lastСommit` (`repositoryId`, `lastСommit`);
+
+ALTER TABLE `lpm_users`
+ADD `gitlabId` bigint(20) NOT NULL COMMENT 'идентификатор на GitLab';
+
+ALTER TABLE `lpm_users`
+ADD INDEX `gitlabId` (`gitlabId`);
+
+-- надо сбросить токены, чтобы записались заново, уже с gitlabId
+UPDATE `lpm_users` SET `gitlabToken` = '';
+
+-- v0.9.30
+
+ALTER TABLE `lpm_issue_mr`
+ADD `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
+ADD `branch` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'Название ветки' AFTER `repositoryId`;
+
+-- v0.9.33
+
+ALTER TABLE `lpm_issues`
+CHANGE `completeDate` `completeDate` datetime NULL AFTER `startDate`;
+
+-- v0.10.3
+
+--NEXT

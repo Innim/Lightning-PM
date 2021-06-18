@@ -19,7 +19,7 @@ class ExternalApiManager
         $this->_engine = $engine;
 
         $this->register(
-            new GitlabExternalApi(defined('GITLAB_HOOK_TOKEN') ? GITLAB_HOOK_TOKEN : null)
+            new GitlabExternalApi($engine, defined('GITLAB_HOOK_TOKEN') ? GITLAB_HOOK_TOKEN : null)
         );
     }
 

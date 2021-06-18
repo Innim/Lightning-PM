@@ -256,11 +256,11 @@ class Project extends MembersInstance
         return Link::getUrl(ProjectPage::UID, [$projectUID, ProjectPage::PUID_SCRUM_BOARD], $hash);
     }
     
-    public static function checkDeleteComment($author, $cookie)
+    public static function checkDeleteComment($authorId, $commentId)
     {
         $user = LightningEngine::getInstance()->getUser();
 
-        return  $user->isAdmin() || $user->getID() == $author && Comment::checkDeleteCommentById($cookie);
+        return $user->isAdmin() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
     }
 
     public static function getProjectTester()
@@ -384,8 +384,12 @@ class Project extends MembersInstance
     
     public function getUrl()
     {
-        //return Link::getUrlByUid( ProjectPage::UID, $this->uid );
         return self::getURLByProjectUID($this->uid);
+    }
+
+    public function getScrumBoardUrl()
+    {
+        return self::getURLByProjectUIDScrum($this->uid);
     }
     
     public function getDesc()

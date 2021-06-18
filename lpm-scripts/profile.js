@@ -6,11 +6,7 @@ $(document).ready(
         states.addState($("#changePass"), 'changepass', profilePage.onChangePass);
         //states.addState( $("#" ), 'edit', profilePage. );
         states.addState($("#userSettings"), 'settings', profilePage.onShowSettings);
-
-        states.updateView();
     }
-
-
 );
 
 var profilePage = {};

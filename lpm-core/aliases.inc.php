@@ -142,6 +142,24 @@ function lpm_print_comment(Comment $comment)
 }
 
 /**
+ * Распечатывает текст комментария.
+ * @param string $htmlText Форматированный текст для отображения.
+ */
+function lpm_print_comment_text($htmlText)
+{
+    return PagePrinter::commentText($htmlText);
+}
+
+/**
+ * Распечатывает поле ввода текста комментария.
+ * @param string $id Идентификатор html элемента.
+ */
+function lpm_print_comment_input_text($id)
+{
+    return PagePrinter::commentInputText($id);
+}
+
+/**
 * Распечатывает задачу
 */
 function lpm_print_issue_view()
@@ -381,13 +399,6 @@ function lpm_get_add_worker_list()
     return PageConstructor::getAddWorkerList();
 }
 /**
-* Возвращает текущую дату для полей с календарём
-*/
-function lpm_get_default_date()
-{
-    return PageConstructor::getDefaultDate();
-}
-/**
 * Возвращает массив ссылок-дат
 */
 function lpm_get_date_links()
@@ -455,8 +466,8 @@ function lpm_get_errors()
 /**
  * Проверяет кто удаляет комментарий.
  */
-function lpm_check_delete_comment($author, $cookie)
+function lpm_check_delete_comment($authorId, $commentId)
 {
-    return PageConstructor::checkDeleteComment($author, $cookie);
+    return PageConstructor::checkDeleteComment($authorId, $commentId);
 }
 

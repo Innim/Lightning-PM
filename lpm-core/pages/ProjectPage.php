@@ -100,7 +100,12 @@ class ProjectPage extends LPMPage
                 'scrum-board',
                 array_merge(['scrum-board'], $this->getIssueJs())
             );
-            $this->addSubPage(self::PUID_SCRUM_BOARD_SNAPSHOT, 'Scrum архив', 'scrum-board-snapshot');
+            $this->addSubPage(
+                self::PUID_SCRUM_BOARD_SNAPSHOT,
+                'Scrum архив',
+                'scrum-board-snapshot',
+                $this->getIssueJs()
+            );
             $this->addSubPage(
                 self::PUID_SPRINT_STAT,
                 'Статистика спринта',
@@ -236,7 +241,7 @@ class ProjectPage extends LPMPage
         $this->_title = $this->getTitleByIssue($issue);
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
-        $this->_js = array_merge(['issue', 'create-branch'], $this->getIssueJs(), $this->getCommentJs());
+        $this->_js = array_merge(['issue', 'create-branch', 'pass-test'], $this->getIssueJs(), $this->getCommentJs());
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
@@ -343,7 +348,8 @@ class ProjectPage extends LPMPage
         return [
             'issues',
             'issue-form',
-            'libs/tribute'
+            'libs/tribute',
+            'libs/character-counter'
         ];
     }
 
@@ -408,23 +414,27 @@ class ProjectPage extends LPMPage
             $idInProject = (int)$this->getLastIssueId();
             $issueName = null;
         }
-        
-        if (empty($_POST['name']) || !isset($_POST['members'])
-                || !isset($_POST['type']) || empty($_POST['completeDate'])
-                || !isset($_POST['priority'])) {
+
+        if (!$this->checkRequiredFields($_POST)) {
             $engine->addError('Заполнены не все обязательные поля');
-        } elseif (preg_match(
+            return;
+        }
+
+        $type = (int)$_POST['type'];
+        $inputCompleteDate = $_POST['completeDate'];
+
+        if (!empty($inputCompleteDate) && preg_match(
             "/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
-            $_POST['completeDate'],
+            $inputCompleteDate,
             $completeDateArr
         ) == 0) {
             $engine->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
-        } elseif ($_POST['type'] != Issue::TYPE_BUG && $_POST['type'] != Issue::TYPE_DEVELOP) {
+        } elseif (!in_array($type, [Issue::TYPE_BUG, Issue::TYPE_DEVELOP, Issue::TYPE_SUPPORT])) {
             $engine->addError('Недопустимый тип');
-        } elseif (!is_array($_POST['members']) || empty($_POST['members'])) {
-            $engine->addError('Необходимо указать хотя бы одного исполнителя проекта');
         } elseif ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
             $engine->addError('Недопустимое значение приоритета');
+        } elseif (mb_strlen($_POST['desc']) > Issue::DESC_MAX_LEN) {
+            $engine->addError('Слишком длинное описание. Максимальная длина: ' . Issue::DESC_MAX_LEN . ' символов');
         } else {
             // TODO наверное нужен "белый список" тегов
             $_POST['desc'] = str_replace('%', '%%', $_POST['desc']);
@@ -437,9 +447,7 @@ class ProjectPage extends LPMPage
                 }
             }
 
-            $_POST['type'] = (int)$_POST['type'];
-            
-            $completeDate = $completeDateArr[3] . '-' .
+            $completeDate = empty($completeDateArr) ? null : $completeDateArr[3] . '-' .
                             $completeDateArr[2] . '-' .
                             $completeDateArr[1] . ' ' .
                             '00:00:00';
@@ -503,10 +511,10 @@ class ProjectPage extends LPMPage
                                       "`authorId`, `createDate`, `completeDate`, `priority` ) " .
                                 "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
                                          "'" . $_POST['name'] . "', '" . $hours . "', '" . $_POST['desc'] . "', " .
-                                         "'" . (int)$_POST['type'] . "', " .
+                                         "'" . $type . "', " .
                                          "'" . $userId . "', " .
                                       "'" . DateTimeUtils::mysqlDate() . "', " .
-                                      "'" . $completeDate . "', " .
+                                      "" . (empty($completeDate) ? 'NULL' :  "'" . $completeDate  . "'") . ", " .
                                       "'" . $priority . "' ) " .
             "ON DUPLICATE KEY UPDATE `name` = VALUES( `name` ), " .
                                     "`hours` = VALUES( `hours` ), " .
@@ -540,7 +548,8 @@ class ProjectPage extends LPMPage
                 // Валидируем заданное количество SP по участникам
 
                 // Сохраняем участников
-                if (!$this->saveMembers($db, $issueId, $_POST['members'], $editMode, $membersSp)) {
+                $memberIds = empty($_POST['members']) || !is_array($_POST['members']) ? [] : $_POST['members'];
+                if (!$this->saveMembers($db, $issueId, $memberIds, $editMode, $membersSp)) {
                     return;
                 }
 
@@ -653,6 +662,26 @@ class ProjectPage extends LPMPage
         }
     }
 
+    private function checkRequiredFields()
+    {
+        $required = ['type', 'priority'];
+        $notEmpty = ['name'];
+
+        foreach ($required as $field) {
+            if (!isset($_POST[$field])) {
+                return false;
+            }
+        }
+
+        foreach ($notEmpty as $field) {
+            if (empty($_POST[$field])) {
+                return false;
+            }
+        }
+     
+        return true;
+    }
+
     private function getProjectedCommentsPage()
     {
         // $page = $this->getParam($this->_baseParamsCount + 1);
@@ -707,10 +736,11 @@ class ProjectPage extends LPMPage
         }
 
         if ($this->_project->scrum) {
-            if ($spByMembers == null || !is_array($spByMembers)) {
+            $membersCount = count($memberIds);
+            if ($membersCount > 0 && ($spByMembers == null || !is_array($spByMembers))) {
                 return $engine->addError('Требуется количество SP по участникам');
             }
-            if (count($spByMembers) != count($memberIds)) {
+            if (count($spByMembers) != $membersCount) {
                 return $engine->addError('Количество SP по участникам не соответствует количеству участников');
             }
 

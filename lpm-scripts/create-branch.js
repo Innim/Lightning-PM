@@ -6,7 +6,8 @@ const createBranch = {
     currentProjectId: null,
     currentIssueId: null,
     init: function () {
-        $("#createBranch").dialog(
+        const $el = $("#createBranch");
+        $el.dialog(
             {
                 autoOpen: false,
                 modal: true,
@@ -28,10 +29,15 @@ const createBranch = {
             }
         );
 
-        const $selectRepo = $('#createBranch #repository');
+        const $selectRepo = $('#repository', $el);
         $selectRepo.change(() => {
             const repoId = $selectRepo.val();
             createBranch.onSelectRepository(repoId);
+        });
+
+        const $selectBranch = $('#parentBranch', $el);
+        $selectBranch.change(() => {
+            $("#branchName", $el).focus();
         });
     },
     show: function (projectId, issueId, issueIdInProject) {
@@ -40,15 +46,17 @@ const createBranch = {
         createBranch.currentProjectId = projectId;
         createBranch.currentIssueId = issueId;
 
-        $el.dialog('open');
-        // TODO: повесить прелоадер
+        preloader.show();
         // TODO: грузить только 1 раз?
         srv.project.getRepositories(projectId, (res) => {
+            preloader.hide();
             if (res.success) {
-                createBranch.setRepositories(res.list);
-                $("#branchName", $el).val(issueIdInProject + '.');
+                $el.dialog('open');
+                createBranch.setRepositories(res.list, res.popularRepositoryId);
+                $("#branchName", $el).val(issueIdInProject + '.').focus();
             } else {
                 createBranch.close();
+                showError(res.error ?? 'Не удалось получить список репозиториев');
             }
         });
     },
@@ -72,11 +80,13 @@ const createBranch = {
         issuePage.doSomethingAndPostCommentForCurrentIssue(
             (issueId, handler) => srv.issue.createBranch(issueId, branchName, repoId, parentBranch, handler),
             res => {
-                if (res.success)
-                    createBranch.close();
+                createBranch.close();
+                if (res.issue) {
+                    setIssueInfo(new Issue(res.issue));
+                }
             });
     },
-    setRepositories: function (list) {
+    setRepositories: function (list, popularRepositoryId) {
         const $el = $("#createBranch");
         const $selectRepo = $('#repository', $el);
         $selectRepo.empty();
@@ -109,7 +119,9 @@ const createBranch = {
                 .attr("value", item.id).text(item.name));
         });
 
-        if (repoId === undefined) repoId = list[0].id;
+        if (repoId === undefined) {
+            repoId = list.some(r => r.id == popularRepositoryId) ? popularRepositoryId : list[0].id;
+        }
 
         $selectRepo.val(repoId);
         createBranch.onSelectRepository(repoId);
@@ -118,11 +130,13 @@ const createBranch = {
         const projectId = createBranch.currentProjectId;
         if (projectId == null) return;
 
-        // TODO: повесить прелоадер
         // TODO: грузить только 1 раз?
+        preloader.show();
         srv.project.getBranches(projectId, repoId, (res) => {
+            preloader.hide();
             if (res.success) {
-                const $selectParent = $('#createBranch #parentBranch');
+                const $el = $("#createBranch");
+                const $selectParent = $('#parentBranch', $el);
                 $selectParent.empty();
                 // Первой предлагаем develop - выбор по умолчанию
                 // потом все остальные рутовые ветки
@@ -143,8 +157,11 @@ const createBranch = {
                     $selectParent.append($("<option></option>")
                         .attr("value", item.name).text(item.name));
                 });
+
+                $("#branchName", $el).focus();
             } else {
                 createBranch.close();
+                showError(res.error ?? 'Не удалось получить список репозиториев');
             }
         });
     },

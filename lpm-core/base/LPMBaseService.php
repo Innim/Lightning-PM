@@ -67,7 +67,7 @@ class LPMBaseService extends SecureService
                 if (empty($message)) {
                     $message = 'DB error';
                 }
-                $message .= ' (' . $_dbError . ')';
+                $message .= ' (' . $dbError . ')';
             }
         }
 
@@ -111,6 +111,9 @@ class LPMBaseService extends SecureService
         return $newArr;
     }
     
+    /**
+     * @return User
+     */
     protected function getUser()
     {
         if (!$this->_auth->isLogin()) {
@@ -140,6 +143,9 @@ class LPMBaseService extends SecureService
         return PageConstructor::getHtml($printHtml);
     }
 
+    /**
+     * @return GitlabIntegration
+     */
     protected function getGitlabIfAvailable()
     {
         $client = LightningEngine::getInstance()->gitlab();
@@ -174,36 +180,26 @@ class LPMBaseService extends SecureService
 
         return $project;
     }
-    
-    // TODO: выпилить из base сервиса
-    protected function addComment($instanceType, $instanceId, $text)
+
+    /**
+     * Требует интеграцию таска, проекта и пользователя с GitLab
+     * и возвращает экземпляр интеграции.
+     *
+     * Если интеграцию не удалось получить - порождает Exception.
+     *
+     * @return GitlabIntegration
+     */
+    protected function requireGitlabIntegration(Project $project)
     {
-        if (!$user = $this->getUser()) {
-            return false;
-        }
-        
-        // TODO: перенести в Comment
-        $text = trim($text);
-        if ($text == '') {
-            $this->error('Недопустимый текст');
-            return false;
+        if (!$project->isIntegratedWithGitlab()) {
+            throw new Exception('Проект не интегрирован с GitLab');
         }
 
-        // TODO: что за хрень, выпилить
-        setcookie('Delete', 'Удалить', time()+600, "/");
-
-        $comment = Comment::add($instanceType, $instanceId, $user->userId, $text);
-        if ($comment) {
-            $comment->author = $user;
-            // Записываем лог
-            UserLogEntry::create(
-                $user->userId,
-                DateTimeUtils::$currentDate,
-                UserLogEntryType::ADD_COMMENT,
-                $comment->id
-            );
+        $client = $this->getGitlabIfAvailable();
+        if (!$client) {
+            throw new Exception('Не удалось настроить интеграцию c GitLab для пользователя.');
         }
 
-        return $comment;
+        return $client;
     }
 }

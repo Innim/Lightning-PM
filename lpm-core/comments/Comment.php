@@ -4,8 +4,6 @@
  */
 class Comment extends LPMBaseObject
 {
-    private static $_tags = ['b', 'i', 'u', 'code'];
-
     private static $_listByInstance = array();
     
     protected static function loadList($where)
@@ -72,7 +70,10 @@ SQL;
 
         return $list;
     }
-
+    
+    /**
+     * @return Comment
+     */
     public static function add($instanceType, $instanceId, $userId, $text)
     {
         $db = LPMGlobals::getInstance()->getDBConnect();
@@ -104,7 +105,11 @@ SQL;
 
     public static function setTimeToDeleteComment($comment, $time)
     {
-        setcookie('comment' . $comment->id, $comment->id, time()+$time, '/');
+        $name = 'comment' . $comment->id;
+        $value = $comment->id . '';
+
+        $_COOKIE[$name] = $value;
+        setcookie($name, $value, time() + $time, '/');
     }
 
     public static function checkDeleteCommentById($id)
@@ -186,14 +191,7 @@ SQL;
     public function getText()
     {
         if (empty($this->_htmlText)) {
-            $value = htmlspecialchars($this->text);
-            // Для совместимости, чтобы старые комменты не поплыли
-            $value = $this->proceedBBCode($this->text);
-
-            $value = HTMLHelper::codeIt($value, false);
-            $value = HTMLHelper::formatIt($value, false);
-
-            $this->_htmlText = $value;
+            $this->_htmlText = HTMLHelper::htmlTextForComment($this->text);
         }
 
         return $this->_htmlText;
@@ -229,7 +227,7 @@ SQL;
         $value = $this->text;
 
         $replaceTags = [];
-        foreach (self::$_tags as $tag) {
+        foreach (HTMLHelper::$bbTags as $tag) {
             $replaceTags[] = '[' . $tag . ']';
             $replaceTags[] = '[/' . $tag . ']';
         }
@@ -277,12 +275,5 @@ SQL;
     {
         $obj->text = $this->getText();
         return $obj;
-    }
-
-    private function proceedBBCode($value)
-    {
-        $tags = implode('|', self::$_tags);
-        $value = preg_replace("/\[(" . $tags . ")\](.*?)\[\/\\1\]/", "<$1>$2</$1>", $value);
-        return $value;
     }
 }

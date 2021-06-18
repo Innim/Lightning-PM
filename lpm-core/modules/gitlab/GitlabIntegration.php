@@ -102,7 +102,8 @@ class GitlabIntegration
             );
 
             $user->gitlabToken = $res['token'];
-            User::updateGitlabToken($user->userId, $user->gitlabToken);
+            $user->gitlabId = $gitlabUser['id'];
+            User::updateGitlabToken($user->userId, $user->gitlabToken, $user->gitlabId);
 
             return $user->gitlabToken;
         } catch (Exception $e) {
@@ -152,6 +153,27 @@ class GitlabIntegration
     }
 
     /**
+     * Возвращает данные проекта по идентификатору проекта.
+     *
+     * @return GitlabProject
+     */
+    public function getProject($projectId)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $res = $client->projects()->show($projectId);
+            return new GitlabProject($res);
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return null;
+        }
+    }
+
+    /**
      * Возвращает список проектов по идентификатору группы.
      */
     public function getProjects($groupId)
@@ -185,11 +207,24 @@ class GitlabIntegration
         }
 
         try {
-            $list = $client->repositories()->branches($projectId);
+            $page = 0;
+            $perPage = 100;
             $res = [];
-            foreach ($list as $data) {
-                $res[] = new GitlabBranch($data);
-            }
+
+            do {
+                $page++;
+                $list = $client->repositories()->branches(
+                    $projectId,
+                    [
+                        'per_page' => $perPage,
+                        'page' => $page,
+                    ]
+                );
+            
+                foreach ($list as $data) {
+                    $res[] = new GitlabBranch($data);
+                }
+            } while (count($list) == $perPage);
             return $res;
         } catch (Exception $e) {
             GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
@@ -220,6 +255,54 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * Сравнивает два коммита/ветки/тега и возвращает
+     * актуальный коммит в ветку $toShaOrBranch.
+     * @param $projectId Идентификатор проекта на GitLab.
+     * @param $fromShaOrBranch SHA коммита или имя ветки/тега.
+     * @param $toShaOrBranch SHA коммита или имя ветки/тега.
+     * @return GitlabBranch|null|false Если в ветке $toShaOrBranch
+     * нет изменений, которые не присутствуют в ветке $fromShaOrBranch,
+     * то вернется null. В случае ошибки вернется false.
+     */
+    public function compareBranchesAndGetCommit($projectId, $fromShaOrBranch, $toShaOrBranch)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return false;
+        }
+
+        try {
+            $res = $client->repositories()->compare($projectId, $fromShaOrBranch, $toShaOrBranch);
+            return $res ? new GitlabCommit($res['commit']) : false;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return false;
+        }
+    }
+
+    /**
+     * Создает комментарий к MR.
+     * @param $projectId Идентификатор проекта на GitLab.
+     * @param $mrId Внутренний идентификатор MR на GitLab.
+     * @param $text Текст комментария.
+     */
+    public function createMRNote($projectId, $mrInternalId, $text)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return false;
+        }
+
+        try {
+            $res = $client->mergeRequests()->addNote($projectId, $mrInternalId, $text);
+            return $res;
+        } catch (Exception $e) {
+            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            return false;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {
@@ -231,6 +314,9 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * @return \Gitlab\Client
+     */
     private function client()
     {
         if (!$this->isAvailable()) {

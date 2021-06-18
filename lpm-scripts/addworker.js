@@ -4,7 +4,6 @@ $(document).ready(
         states.addState($("#addWorkerForm"), 'add-worker');
 
         if (window.location.hash == '#add-worker') window.location.hash = '';
-        states.updateView();
         if ($('#addWorkerForm > div.validateError').html() != '') {
             $('#addWorkerForm > div.validateError').show();
         }

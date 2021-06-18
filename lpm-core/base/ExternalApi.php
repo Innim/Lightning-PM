@@ -4,10 +4,12 @@
  */
 abstract class ExternalApi
 {
+    private $_engine;
     private $_uid;
 
-    public function __construct($uid)
+    public function __construct(LightningEngine $engine, $uid)
     {
+        $this->_engine = $engine;
         $this->_uid = $uid;
     }
 
@@ -37,4 +39,9 @@ abstract class ExternalApi
      * @return string Строка ответа, которая будет распечатана.
      */
     abstract public function run($input);
+
+    protected function engine()
+    {
+        return $this->_engine;
+    }
 }
