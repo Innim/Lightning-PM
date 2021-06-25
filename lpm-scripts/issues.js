@@ -364,11 +364,22 @@ issuePage.updateStat = function () {
 };
 
 function insertFormattingLink(input) {
-    insertFormatting(input, '[](', ')', 1);
+    const text = getSelectedText(input);
+    if (parser.findLinks(text)) {
+        insertFormatting(input, '[](', ')', 1);
+    }
+    else {
+        insertFormatting(input, '[', ']()', -2);
+    }
 }
 
 function insertFormattingMarker(input, marker, single) {
     insertFormatting(input, marker, single ? "" : marker)
+}
+
+function getSelectedText(input) {
+    const text = $(input)[0];
+    return text.value.substring(text.selectionStart, text.selectionEnd);
 }
 
 function insertFormatting(input, before, after, cursorShift) {

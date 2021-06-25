@@ -501,10 +501,13 @@ function showError(error) {
 }
 
 let parser = {
+    urlRegex: /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig,
     urlMrSubpath: 'merge_requests/',
+    isUrl: function (text) {
+        return text.test(parser.urlRegex);
+    },
     findLinks: function (text) {
-        let urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-        return text.match(urlRegex);
+        return text.match(parser.urlRegex);
     },
     isMRUrl: function (url) {
         let baseUrl = lpmOptions.gitlabUrl;
