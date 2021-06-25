@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(function () {
     createBranch.init();
 });
 
@@ -30,14 +30,14 @@ const createBranch = {
         );
 
         const $selectRepo = $('#repository', $el);
-        $selectRepo.change(() => {
+        $selectRepo.on('change', () => {
             const repoId = $selectRepo.val();
             createBranch.onSelectRepository(repoId);
         });
 
         const $selectBranch = $('#parentBranch', $el);
-        $selectBranch.change(() => {
-            $("#branchName", $el).focus();
+        $selectBranch.on('change', () => {
+            $("#branchName", $el).trigger('focus');
         });
     },
     show: function (projectId, issueId, issueIdInProject) {
@@ -158,7 +158,7 @@ const createBranch = {
                         .attr("value", item.name).text(item.name));
                 });
 
-                $("#branchName", $el).focus();
+                $("#branchName", $el).trigger('focus');
             } else {
                 createBranch.close();
                 showError(res.error ?? 'Не удалось получить список репозиториев');
