@@ -13,7 +13,7 @@ class IssueBranch extends LPMBaseObject
      * @param  int    $repositoryId Идентификатор репозитория.
      * @param  string $name         Имя ветки.
      */
-    public static function create($issueId, $repositoryId, $name, $lastСommit = null, $mergedInDevelop = null)
+    public static function create($issueId, $repositoryId, $name, $userId, $lastСommit = null, $mergedInDevelop = null)
     {
         $date = DateTimeUtils::mysqlDate();
 
@@ -32,7 +32,7 @@ class IssueBranch extends LPMBaseObject
         }
 
         $hash = [
-            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastСommit', 'mergedInDevelop'),
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastСommit', 'mergedInDevelop', 'userId'),
             'INTO'    => LPMTables::ISSUE_BRANCH
         ];
 
@@ -286,11 +286,16 @@ SQL;
      */
     public $mergedInDevelop;
 
+    /**
+     * Идентификатор пользователя.
+     */
+    public $userId;
+
     public function __construct()
     {
         parent::__construct();
 
-        $this->_typeConverter->addIntVars('id', 'repositoryId', 'issueId');
+        $this->_typeConverter->addIntVars('repositoryId', 'issueId', 'userId');
         $this->_typeConverter->addBoolVars('mergedInDevelop');
         $this->addDateTimeFields('date');
     }
