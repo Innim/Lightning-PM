@@ -60,6 +60,7 @@ let issueForm = {
     members: null,
     defaultMemberId: null,
     testers: null,
+    getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
     handleEditState: function () {
         if (!issueForm.restoreInput(true)) {
             let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
@@ -313,6 +314,25 @@ let issueForm = {
     },
     updateHeader: function (isEdit) {
         $("#issueForm > h3").text(isEdit ? "Редактирование задачи" : "Добавить задачу");
+    },
+    addSprintNumToName: function () {
+        $nameInput = $("#issueForm form input[name=name]");
+        var name = $nameInput.val();
+
+        const spintNum = issueForm.getSprintNum();
+        const sprintStr = ' #' + spintNum;
+
+        const matches = name.match(/ #\d+/ig);
+
+        if (matches) {
+            const current = matches[0];
+            name = name.replace(current, current == sprintStr ? '' : sprintStr);
+        } else {
+            name = name + sprintStr;
+        }
+
+        $nameInput.val(name);
+        issueFormLabels.update();
     },
     addImagebyUrl: function (imageUrl, autofocus = false) {
         // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
