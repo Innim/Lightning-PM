@@ -320,13 +320,14 @@ class IssueService extends LPMBaseService
 
             $comment = $this->postComment($issue, $commentText, true);
 
+            $user = $this->getUser();
+            $userId = $user->userId;
+
             // Записываем данные о том, что ветка привязана к задаче
-            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName);
+            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId);
 
             if ($issue->status == Issue::STATUS_IN_WORK) {
                 // Если пользователя нет в исполнителях - добавим его автоматически
-                $user = $this->getUser();
-                $userId = $user->userId;
                 if (!$issue->isMember($userId)) {
                     if (!Member::saveIssueMembers($issue->id, [$userId])) {
                         return $this->errorDBSave();
