@@ -319,4 +319,6 @@ CHANGE `completeDate` `completeDate` datetime NULL AFTER `startDate`;
 ALTER TABLE `lpm_issue_branch`
 ADD `userId` bigint(19) NOT NULL COMMENT 'Идентификатор пользователя';
 
+-- v0.10.5
+
 --NEXT
