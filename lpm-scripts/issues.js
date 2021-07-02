@@ -364,11 +364,22 @@ issuePage.updateStat = function () {
 };
 
 function insertFormattingLink(input) {
-    insertFormatting(input, '[](', ')', 1);
+    const text = getSelectedText(input);
+    if (parser.findLinks(text)) {
+        insertFormatting(input, '[](', ')', 1);
+    }
+    else {
+        insertFormatting(input, '[', ']()', -2);
+    }
 }
 
 function insertFormattingMarker(input, marker, single) {
     insertFormatting(input, marker, single ? "" : marker)
+}
+
+function getSelectedText(input) {
+    const text = $(input)[0];
+    return text.value.substring(text.selectionStart, text.selectionEnd);
 }
 
 function insertFormatting(input, before, after, cursorShift) {
@@ -636,9 +647,38 @@ issuePage.showAddForm = function (type, parentId) {
     if (typeof type != 'undefined') {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
         $('form input:radio[value=1]', "#issueForm").prop('checked', true);
+
+        const bugTemplate = `### Описание
+
+📝 Описание проблемы
+
+### Предусловие
+
+📝 Начальные условия, при которых воспроизводится проблема
+
+### Шаги воспроизведения
+
+1. 📝  Шаги для воспроизведения
+2. 
+
+*ФР*: 📝  Фактический полученный результат
+
+*ОР*: 📝  Ожидаемый результат
+
+### Окружение
+
+📝 Укажите устройство, ОС, окружение и тп
+
+### Видео
+
+🎥 Приложите ссылку на видео, где показана проблема
+        `;
+        
+        $('form textarea[name=desc]', '#issueForm').html(bugTemplate).css('height', '500px');
     } else {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
         $('form input:radio[value=0]', "#issueForm").prop('checked', true);
+        $('form textarea[name=desc]', '#issueForm').html('').css('height', '');
     }
 };
 

@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(function () {
     createBranch.init();
 });
 
@@ -30,14 +30,14 @@ const createBranch = {
         );
 
         const $selectRepo = $('#repository', $el);
-        $selectRepo.change(() => {
+        $selectRepo.on('change', () => {
             const repoId = $selectRepo.val();
             createBranch.onSelectRepository(repoId);
         });
 
         const $selectBranch = $('#parentBranch', $el);
-        $selectBranch.change(() => {
-            $("#branchName", $el).focus();
+        $selectBranch.on('change', () => {
+            $("#branchName", $el).trigger('focus');
         });
     },
     show: function (projectId, issueId, issueIdInProject) {
@@ -52,7 +52,7 @@ const createBranch = {
             preloader.hide();
             if (res.success) {
                 $el.dialog('open');
-                createBranch.setRepositories(res.list, res.popularRepositoryId);
+                createBranch.setRepositories(res.list, res.popularRepositoryId, res.myPopularRepositoryIds);
                 $("#branchName", $el).val(issueIdInProject + '.').focus();
             } else {
                 createBranch.close();
@@ -86,7 +86,7 @@ const createBranch = {
                 }
             });
     },
-    setRepositories: function (list, popularRepositoryId) {
+    setRepositories: function (list, popularRepositoryId, myPopularRepositoryIds) {
         const $el = $("#createBranch");
         const $selectRepo = $('#repository', $el);
         $selectRepo.empty();
@@ -109,17 +109,23 @@ const createBranch = {
 
             return b.name.localeCompare(a.name);
         });
-
+        
+        const appropriateRepos = [];
         list.forEach(item => {
-            if (repoId === undefined && item.name.split(' ').some(e => labels.includes(e))) {
-                repoId = item.id;
+            if (item.name.split(' ').some(e => labels.includes(e))) {
+                appropriateRepos.push(item.id);
             }
 
             $selectRepo.append($("<option></option>")
                 .attr("value", item.id).text(item.name));
         });
 
-        if (repoId === undefined) {
+        if (appropriateRepos.length == 1 || !myPopularRepositoryIds) {
+            repoId = appropriateRepos[0];
+        } else if (appropriateRepos.length > 1) {
+            repoId = myPopularRepositoryIds.find(id => appropriateRepos.indexOf(id));
+            if (repoId === undefined) repoId = appropriateRepos[0];
+        } else {
             repoId = list.some(r => r.id == popularRepositoryId) ? popularRepositoryId : list[0].id;
         }
 
@@ -158,7 +164,7 @@ const createBranch = {
                         .attr("value", item.name).text(item.name));
                 });
 
-                $("#branchName", $el).focus();
+                $("#branchName", $el).trigger('focus');
             } else {
                 createBranch.close();
                 showError(res.error ?? 'Не удалось получить список репозиториев');

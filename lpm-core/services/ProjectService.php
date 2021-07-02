@@ -351,9 +351,12 @@ class ProjectService extends LPMBaseService
             // Загрузим информацию о самом используемом репозитории в этом проекте
             // из последних 5
             $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
+            // А также загружаем топ репозиторие для текущего пользователя
+            $myPopularRepositoryIds = IssueBranch::loadPopularRepositories($project->id, $this->getUserId(), 10);
 
             $this->add2Answer('list', $list);
             $this->add2Answer('popularRepositoryId', $popularRepositoryId);
+            $this->add2Answer('myPopularRepositoryIds', $myPopularRepositoryIds);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
