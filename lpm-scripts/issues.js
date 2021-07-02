@@ -259,14 +259,11 @@ const issuePage = {
     projectId: null,
     idInProject: null,
     labels: null,
-    members: null
+    members: null,
+    getStatus: () => $('#issueInfo').data('status'),
+    isCompleted: () => issuePage.getStatus() == 2,
+    getIssueId: () => $('#issueView input[name=issueId]').val(),
 };
-
-issuePage.getStatus = () => $('#issueInfo').data('status');
-
-issuePage.isCompleted = () => issuePage.getStatus() == 2;
-
-issuePage.getIssueId = () => $('#issueView input[name=issueId]').val();
 
 issuePage.loadMembers = function (handler) {
     if (issuePage.members != null) {
