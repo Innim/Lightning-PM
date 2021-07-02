@@ -124,7 +124,6 @@ $project = $issue->getProject();
     <?case 1: ?>verify-issue<?break;?> 
     <?case 2: ?>completed-issue<?break;?>
     <?endswitch;?>">
-            <input type="hidden" name="parentId" value="<?=$issue->parentId;?>" />
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
             <?php if ($issue->isMember($userId) || $project->masterId == $userId): ?>

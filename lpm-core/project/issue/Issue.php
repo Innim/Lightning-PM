@@ -702,7 +702,6 @@ WHERE;
     const DESC_MAX_LEN = 60000;
     
     public $id            =  0;
-    public $parentId      =  0;
     public $projectId     =  0;
     public $projectName  = ''; /*для загрузки задач по неск-им проектам*/
     public $idInProject   =  0;
@@ -755,7 +754,6 @@ WHERE;
         
         $this->_typeConverter->addFloatVars(
             'id',
-            'parentId',
             'authorId',
             'type',
             'status',
@@ -768,7 +766,6 @@ WHERE;
         
         $this->addClientFields(
             'id',
-            'parentId',
             'idInProject',
             'name',
             'desc',

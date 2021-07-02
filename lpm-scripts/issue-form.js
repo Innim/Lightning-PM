@@ -79,7 +79,6 @@ let issueForm = {
                 memberIds: getArrVal("members"),
                 membersSp: getArrVal("membersSp"),
                 testerIds: getArrVal("testers"),
-                parentId: getVal("parentId"),
                 issueId: getVal("issueId"),
                 imagesInfo: issueForm.getImagesFromPage(),
                 isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
@@ -113,7 +112,6 @@ let issueForm = {
             memberIds: data.members,
             membersSp: data.membersSp,
             testerIds: data.testers,
-            parentId: data.parentId,
             issueId: isEdit ? data.issueId : '',
             newImagesUrls: data.imgUrls,
             imagesInfo: issueForm.getImagesFromPage(),
@@ -201,8 +199,6 @@ let issueForm = {
             $("#issueForm form li a[name=imgbyUrl]").hide();
         }
 
-        // родитель
-        $("#issueForm form input[name=parentId]").val(value.parentId);
         // идентификатор задачи
         if (isEdit)
             $("#issueForm form input[name=issueId]").val(value.issueId);
@@ -251,7 +247,6 @@ let issueForm = {
                         memberIds: issue.getMemberIds(),
                         membersSp: issue.getMembersSp(),
                         testerIds: issue.getTesterIds(),
-                        parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
@@ -300,7 +295,6 @@ let issueForm = {
                         // поэтому не передаем их
                         memberIds: issue.getMemberIds(),
                         testerIds: issue.getTesterIds(),
-                        parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,

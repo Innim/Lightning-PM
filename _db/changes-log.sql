@@ -328,4 +328,6 @@ CREATE TABLE `issue_linked` (
   PRIMARY KEY (`issueId`,`linkedIssueId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Связанные задачи';
 
+ALTER TABLE `lpm_issues` DROP `parentId`;
+
 --NEXT

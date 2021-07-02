@@ -52,7 +52,6 @@ CREATE TABLE `lpm_issues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `projectId` int(11) NOT NULL,
   `idInProject` int(11) NOT NULL,
-  `parentId` int(11) NOT NULL DEFAULT '0' COMMENT 'идентификатор родительской задачи',
   `name` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
   `hours` decimal(10,1) NOT NULL,
   `desc` text CHARACTER SET utf8mb4 NOT NULL,
