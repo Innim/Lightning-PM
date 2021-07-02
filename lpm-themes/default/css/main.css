@@ -454,6 +454,10 @@ fieldset.radio-group ol li {
     margin-left: 10px;    
     list-style : none;    
 }
+.add-me-link {
+	font-size: x-small;
+	font-weight: normal;
+}
 ol.members-list {
 	margin-bottom: 10px;
 	position : relative;
@@ -1876,6 +1880,33 @@ div.ftp
 	margin-top: 10px;
 }
 
+.edit-issue-name-container {
+	width: 90%;
+	margin: 0 auto;
+}
+
+input.edit-issue-name {
+    width: 95%;
+    margin: 0;
+}
+
+.issue-name-quick-actions {
+	font-size: 0.7em;
+	display: block;
+	float: right;
+	clear: both;
+	margin: auto;
+	padding-top: 9px;
+	padding-right: 5px;
+	text-align: right;
+}
+
+.issue-name-quick-actions a {
+	padding: 2px;	
+	border-radius: 2px;
+	background-color: #1E90FF;
+	color: #fff;
+}
 .issue-labels-container {
 	font-size: 0.9em;
 	display: block;

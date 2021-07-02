@@ -252,6 +252,18 @@ function lpm_print_table_scrum_board($stickers, $addProjectName = false, $addCle
     return PagePrinter::tableScrumBoard($stickers, $addProjectName, $addClearBoard);
 }
 
+
+/**
+ * Распечатывает элемент исполнителя задачи в стикере на Scrum доске.
+ * @param $member
+ */
+function lpm_print_table_scrum_board_issue_member(User $member)
+{
+    return PagePrinter::tableScrumBoardIssueMember($member);
+}
+
+
+
 /**
 *   Возвращает текущую страницу
 */

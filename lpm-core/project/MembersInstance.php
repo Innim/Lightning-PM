@@ -66,7 +66,7 @@ abstract class MembersInstance extends LPMBaseObject
      */
     public function addMember(Member $member)
     {
-        if ($this->_members != null || !$this->loadMembers()) {
+        if ($this->_members != null || $this->loadMembers()) {
             $this->_members[] = $member;
         } else {
             throw new Exception('Не удалось добавить члена');

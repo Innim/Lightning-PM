@@ -320,13 +320,14 @@ class IssueService extends LPMBaseService
 
             $comment = $this->postComment($issue, $commentText, true);
 
+            $user = $this->getUser();
+            $userId = $user->userId;
+
             // Записываем данные о том, что ветка привязана к задаче
-            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName);
+            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId);
 
             if ($issue->status == Issue::STATUS_IN_WORK) {
                 // Если пользователя нет в исполнителях - добавим его автоматически
-                $user = $this->getUser();
-                $userId = $user->userId;
                 if (!$issue->isMember($userId)) {
                     if (!Member::saveIssueMembers($issue->id, [$userId])) {
                         return $this->errorDBSave();
@@ -508,13 +509,17 @@ class IssueService extends LPMBaseService
     }
 
     /**
-     * Забрать задачу себе. Удаляет других исполнителей,
-     * оставляя только текущего
+     * Взять задачу.
+     *
      * @param  int $issueId
+     * @param bool $replace Если true, то удаляет других исполнителей,
+     * оставляя только текущего. Иначе - добавляет исполнителя.
      */
-    public function takeIssue($issueId)
+    public function takeIssue($issueId, $replace = true)
     {
         $issueId = (int)$issueId;
+        $replace = (bool)$replace;
+
 
         try {
             $issue = Issue::load($issueId);
@@ -522,7 +527,7 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            if (!Member::deleteIssueMembers($issueId)) {
+            if ($replace && !Member::deleteIssueMembers($issueId)) {
                 return $this->errorDBSave();
             }
 
@@ -535,7 +540,12 @@ class IssueService extends LPMBaseService
             // Записываем лог
             UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
 
+            $html = $this->getHtml(function () use ($user) {
+                PagePrinter::tableScrumBoardIssueMember($user);
+            });
+
             $this->add2Answer('memberName', $user->getShortName());
+            $this->add2Answer('memberHtml', $html);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
