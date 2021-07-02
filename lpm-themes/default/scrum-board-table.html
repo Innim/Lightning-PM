@@ -92,10 +92,9 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
                 <span class="sticker-issue-members"><?php
-                   foreach ($members as $j => $member):
-                ?><?=$j > 0 ? ', ' : '' ?>
-                    <span class="sticker-issue-member" data-member-id="<?=$member->userId;?>"><?=$member->getShortName();?></span>
-                <?php 
+                    foreach ($members as $j => $member):
+                        echo $j > 0 ? ', ' : '';
+                        echo lpm_print_table_scrum_board_issue_member($member);
                     endforeach; 
                 ?></span>
                 <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
