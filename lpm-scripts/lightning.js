@@ -176,7 +176,7 @@ let srv = {
         removeStickersFromBoard: function (projectId, onResult) {
             this.s._('removeStickersFromBoard');
         },
-        takeIssue: function (issueId, onResult) {
+        takeIssue: function (issueId, replace, onResult) {
             this.s._('takeIssue');
         },
         addLabel: function (label, isForAllProjects, projectId, onResult) {
