@@ -509,13 +509,17 @@ class IssueService extends LPMBaseService
     }
 
     /**
-     * Забрать задачу себе. Удаляет других исполнителей,
-     * оставляя только текущего
+     * Взять задачу.
+     *
      * @param  int $issueId
+     * @param bool $replace Если true, то удаляет других исполнителей,
+     * оставляя только текущего. Иначе - добавляет исполнителя.
      */
-    public function takeIssue($issueId)
+    public function takeIssue($issueId, $replace = true)
     {
         $issueId = (int)$issueId;
+        $replace = (bool)$replace;
+
 
         try {
             $issue = Issue::load($issueId);
@@ -523,7 +527,7 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            if (!Member::deleteIssueMembers($issueId)) {
+            if ($replace && !Member::deleteIssueMembers($issueId)) {
                 return $this->errorDBSave();
             }
 
@@ -536,7 +540,12 @@ class IssueService extends LPMBaseService
             // Записываем лог
             UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
 
+            $html = $this->getHtml(function () use ($user) {
+                PagePrinter::tableScrumBoardIssueMember($user);
+            });
+
             $this->add2Answer('memberName', $user->getShortName());
+            $this->add2Answer('memberHtml', $html);
         } catch (\Exception $e) {
             return $this->exception($e);
         }

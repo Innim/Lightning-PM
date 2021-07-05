@@ -268,8 +268,8 @@ class GitlabExternalApi extends ExternalApi
                 $commentText = implode("\n", $commentTextArr);
                 $comments->postComment($user, $issue, $commentText, true, true);
 
-                // Проверяем права
-                if ($issue->checkEditPermit($user->userId) && !$issue->isCompleted()) {
+                // Проверяем права и вливаем только задачи, которые уже в тесте
+                if ($issue->checkEditPermit($user->userId) && $issue->status == Issue::STATUS_WAIT) {
                     // Проверяем что все ветки этой задачи влиты
                     $isAllMerged = !IssueBranch::existNotMergedInDevelopForIssue($issue->id);
 
