@@ -721,6 +721,7 @@ function setIssueInfo(issue) {
     }
 
     const testers = issue.getTesters();
+    const masters = issue.getMasters();
 
     const values = [
         issue.getStatus(),
@@ -732,6 +733,7 @@ function setIssueInfo(issue) {
         issue.getAuthor(),
         issue.getMembers(),
         testers,
+        masters,
         issue.getDesc(true)
     ];
 
@@ -1035,9 +1037,20 @@ function Issue(obj) {
     this.priority = obj.priority;
     this.hours = obj.hours;
     this.testers = obj.testers;
+    this.masters = obj.masters;
     this.images = obj.images;
     this.isOnBoard = obj.isOnBoard;
     this.url = obj.url;
+
+    const getUsersStr = (list) => {
+        var str = '';
+        if (list)
+            for (var i = 0; i < list.length; i++) {
+                if (i > 0) str += ', ';
+                str += list[i].linkedName;
+            }
+        return str;
+    };
 
     this.getCompleteDate = function () {
         return this.getDate(this.completeDate);
@@ -1095,18 +1108,16 @@ function Issue(obj) {
         return this.members.map(member => member.sp);
     };
 
-    this.getTesters = function () {
-        var str = '';
-        if (this.testers)
-            for (var i = 0; i < this.testers.length; i++) {
-                if (i > 0) str += ', ';
-                str += this.testers[i].linkedName;
-            }
-        return str;
-    };
+    this.getTesters = () => getUsersStr(this.testers);
 
     this.getTesterIds = function () {
         return this.testers.map(tester => tester.userId);
+    };
+
+    this.getMasters = () => getUsersStr(this.masters);
+
+    this.getMasterIds = function () {
+        return this.masters.map(master => master.userId);
     };
 
     this.getDesc = function (formatted = false) {

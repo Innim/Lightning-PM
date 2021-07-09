@@ -52,6 +52,7 @@ $(function ($) {
 
     issueForm.members = getMembers("#addIssueMembers option");
     issueForm.testers = getMembers("#addIssueTesters option");
+    issueForm.masters = getMembers("#addIssueMasters option");
     issueForm.defaultMemberId = $('#addIssueMembers').data('defaultMemberId');
 });
 
@@ -60,6 +61,7 @@ let issueForm = {
     members: null,
     defaultMemberId: null,
     testers: null,
+    masters: null,
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
     handleEditState: function () {
         if (!issueForm.restoreInput(true)) {
@@ -79,6 +81,7 @@ let issueForm = {
                 memberIds: getArrVal("members"),
                 membersSp: getArrVal("membersSp"),
                 testerIds: getArrVal("testers"),
+                masterIds: getArrVal("masters"),
                 parentId: getVal("parentId"),
                 issueId: getVal("issueId"),
                 imagesInfo: issueForm.getImagesFromPage(),
@@ -113,6 +116,7 @@ let issueForm = {
             memberIds: data.members,
             membersSp: data.membersSp,
             testerIds: data.testers,
+            masterIds: data.masters,
             parentId: data.parentId,
             issueId: isEdit ? data.issueId : '',
             newImagesUrls: data.imgUrls,
@@ -142,7 +146,7 @@ let issueForm = {
         $("#issueForm form input[name=completeDate]").val(value.completeDate);
         // исполнители
         issueForm.resetUsers('issueMembers', 'addIssueMembers');
-        let memberIds = value.memberIds;
+        const memberIds = value.memberIds;
         if (memberIds) {
             let membersSp = value.membersSp ? value.membersSp : [];
             memberIds.forEach((memberId, index) => {
@@ -152,11 +156,22 @@ let issueForm = {
 
         // Тестеры
         issueForm.resetUsers('issueTesters', 'addIssueTesters');
-        let testerIds = value.testerIds;
+        const testerIds = value.testerIds;
         if (testerIds) {
             testerIds.forEach((testerId) => {
                 if (testerId.length > 0) {
                     issueForm.addIssueTesterById(testerId);
+                }
+            });
+        }
+
+        // Мастеры
+        issueForm.resetUsers('issueMasters', 'addIssueMasters');
+        const masterIds = value.masterIds;
+        if (masterIds) {
+            masterIds.forEach((masterId) => {
+                if (masterId.length > 0) {
+                    issueForm.addIssueMasterById(masterId);
                 }
             });
         }
@@ -251,6 +266,7 @@ let issueForm = {
                         memberIds: issue.getMemberIds(),
                         membersSp: issue.getMembersSp(),
                         testerIds: issue.getTesterIds(),
+                        masterIds: issue.getMasterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
@@ -300,6 +316,7 @@ let issueForm = {
                         // поэтому не передаем их
                         memberIds: issue.getMemberIds(),
                         testerIds: issue.getTesterIds(),
+                        masterIds: issue.getMasterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
@@ -439,8 +456,15 @@ let issueForm = {
         issueForm.addIssueTester();
     },
     addIssueTester: () => issueForm.addIssueMemberCommon('testers', issueForm.removeIssueTester),
+    addMeAsMaster: () => issueForm.addIssueMasterById(lpInfo.userId),
+    addIssueMasterById: function (userId) {
+        $("#addIssueMasters option[value=" + userId + "]").prop('selected', true);
+        issueForm.addIssueMaster();
+    },
+    addIssueMaster: () => issueForm.addIssueMemberCommon('masters', issueForm.removeIssueMaster),
     removeIssueMember: (e) => issueForm.removeIssueMemberCommon(e, 'members'),
     removeIssueTester: (e) => issueForm.removeIssueMemberCommon(e, 'testers'),
+    removeIssueMaster: (e) => issueForm.removeIssueMemberCommon(e, 'masters'),
     removeIssueMemberCommon: function (e, fieldName) {
         const fieldNameFirstUpper = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
         const selectName = 'addIssue' + fieldNameFirstUpper;

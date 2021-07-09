@@ -708,18 +708,24 @@ class IssueService extends LPMBaseService
         $obj = $issue->getClientObject();
         $members = $issue->getMembers();
         $testers = $issue->getTesters();
+        $masters = $issue->getMasters();
         $images = $issue->getImages();
-        $obj->members = array();
-        $obj->testers = array();
-        $obj->images = array();
+        $obj->members = [];
+        $obj->testers = [];
+        $obj->masters = [];
+        $obj->images = [];
         $obj->isOnBoard = $issue->isOnBoard();
 
         foreach ($members as $member) {
-            array_push($obj->members, $member->getClientObject());
+            $obj->members[] = $member->getClientObject();
         }
 
         foreach ($testers as $tester) {
-            array_push($obj->testers, $tester->getClientObject());
+            $obj->testers[] = $tester->getClientObject();
+        }
+
+        foreach ($masters as $master) {
+            $obj->masters[] = $tester->getClientObject();
         }
 
         foreach ($images as $image) {

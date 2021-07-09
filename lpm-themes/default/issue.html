@@ -100,6 +100,15 @@ $project = $issue->getProject();
                 </span>
                 <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>" />
             </div>
+            <?php $masters = $issue->getMasters(); ?>
+            <div class="masters-row info-list-item" <?php if (empty($masters)): ?>style="display: none;" <?php endif;?>>
+                <span class="label">Мастеры</span>
+                <span class="value">
+                    <?php foreach ($masters as $i => $master) {?><?=$i>0?', ':''?>
+                    <?=$master->getLinkedName();?><?php }?>
+                </span>
+                <input type="hidden" name="masters" value="<?=$issue->getMasterIdsStr();?>" />
+            </div>
             <div class="desc info-list-item">
                 <div class="value formatted-desc text-with-attachments"><?=$issue->getDesc();?></div>
                 <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>
@@ -127,7 +136,7 @@ $project = $issue->getProject();
             <input type="hidden" name="parentId" value="<?=$issue->parentId;?>" />
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
-            <?php if ($issue->isMember($userId) || $project->masterId == $userId): ?>
+            <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true)): ?>
             <button class="verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
             <?php endif ?>
             <button class="complete-btn" onclick="completeIssue(event);">Завершить</button>
