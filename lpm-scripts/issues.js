@@ -341,6 +341,8 @@ issuePage.getPriorityColor = function (val) {
 };
 
 issuePage.updateStat = function () {
+    if ($("#projectView").length == 0) return;
+
     //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
     $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
