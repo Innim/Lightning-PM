@@ -1069,6 +1069,28 @@ WHERE;
         return !empty($this->completeDate);
     }
     
+    /**
+     * Возвращает количество дней до даты завершения задачи.
+     *
+     * Если дата завершения не задана - вернется 0.
+     * Если дата завершение уже прошло - будет отрицательное число.
+     *
+     * @return float Количество дней.
+     */
+    public function daysTillComplete()
+    {
+        if (!$this->hasCompleteDate()) {
+            return 0;
+        }
+
+        // Берем не текущую дату, а начало дня,
+        // чтобы сегодняшние задачи не считались просроченными
+        $today = DateTimeUtils::dayStart();
+
+        $diff = $this->completeDate - $today;
+        return $diff / 86400;
+    }
+    
     public function getCompletedDate()
     {
         return self::getDateStr($this->completedDate);

@@ -1198,6 +1198,41 @@ table tr.verify-issue {
 	color           : #999999;
 }
 
+table tr td .icon-deadline {
+	display: none;
+}
+
+.icon-deadline.icon-deadline-outdated,
+table tr.deadline-outdated-issue a.issue-name {
+	color: #720000;
+}
+
+.icon-deadline.icon-deadline-urgent,
+table tr.deadline-urgent-issue a.issue-name  {
+	color: #e03400;
+}
+
+.icon-deadline.icon-deadline-medium  {
+	color: #d3cf00;
+}
+
+table tr.deadline-outdated-issue a.issue-name,
+table tr.deadline-urgent-issue a.issue-name,  
+table tr.deadline-medium-issue a.issue-name {
+	font-weight: bolder;
+}
+
+.icon-deadline.icon-deadline-low {
+	color: #00b100;
+}
+
+table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
+table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
+table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
+table tr.deadline-low-issue td .icon-deadline.icon-deadline-low {
+	display: inline-block;
+}
+
 /* просмотр проекта */
 #projectView .filters-line {
 	float: left;
