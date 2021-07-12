@@ -791,7 +791,7 @@ class ProjectPage extends LPMPage
             $issueId,
             $masterIds,
             $editMode,
-            LPMInstanceTypes::ISSUE_TO_MASTER,
+            LPMInstanceTypes::ISSUE_TO_MASTER
         );
     }
 
