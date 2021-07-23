@@ -1,4 +1,4 @@
-$(document).ready(function ($) {
+$(function ($) {
     document.addEventListener('paste', pasteClipboardImage);
     $('.images-list').on('click', '.pasted-img .remove-btn', function () {
         $(this).parent('.pasted-img').remove();
@@ -52,6 +52,7 @@ $(document).ready(function ($) {
 
     issueForm.members = getMembers("#addIssueMembers option");
     issueForm.testers = getMembers("#addIssueTesters option");
+    issueForm.masters = getMembers("#addIssueMasters option");
     issueForm.defaultMemberId = $('#addIssueMembers').data('defaultMemberId');
 });
 
@@ -60,6 +61,8 @@ let issueForm = {
     members: null,
     defaultMemberId: null,
     testers: null,
+    masters: null,
+    getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
     handleEditState: function () {
         if (!issueForm.restoreInput(true)) {
             let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
@@ -78,6 +81,7 @@ let issueForm = {
                 memberIds: getArrVal("members"),
                 membersSp: getArrVal("membersSp"),
                 testerIds: getArrVal("testers"),
+                masterIds: getArrVal("masters"),
                 parentId: getVal("parentId"),
                 issueId: getVal("issueId"),
                 imagesInfo: issueForm.getImagesFromPage(),
@@ -90,8 +94,7 @@ let issueForm = {
             issueForm.updateHeader(false);
 
             if (issueForm.defaultMemberId) {
-                $("#addIssueMembers option[value=" + issueForm.defaultMemberId + "]").prop('selected', true);
-                issueForm.addIssueMember();
+                issueForm.addIssueMemberById(issueForm.defaultMemberId);
             }
         }
     },
@@ -113,6 +116,7 @@ let issueForm = {
             memberIds: data.members,
             membersSp: data.membersSp,
             testerIds: data.testers,
+            masterIds: data.masters,
             parentId: data.parentId,
             issueId: isEdit ? data.issueId : '',
             newImagesUrls: data.imgUrls,
@@ -142,23 +146,32 @@ let issueForm = {
         $("#issueForm form input[name=completeDate]").val(value.completeDate);
         // исполнители
         issueForm.resetUsers('issueMembers', 'addIssueMembers');
-        let memberIds = value.memberIds;
+        const memberIds = value.memberIds;
         if (memberIds) {
             let membersSp = value.membersSp ? value.membersSp : [];
             memberIds.forEach((memberId, index) => {
-                $("#addIssueMembers option[value=" + memberId + "]").prop('selected', true);
-                issueForm.addIssueMember(membersSp[index]);
+                issueForm.addIssueMemberById(memberId, membersSp[index]);
             });
         }
 
         // Тестеры
         issueForm.resetUsers('issueTesters', 'addIssueTesters');
-        let testerIds = value.testerIds;
+        const testerIds = value.testerIds;
         if (testerIds) {
             testerIds.forEach((testerId) => {
                 if (testerId.length > 0) {
-                    $("#addIssueTesters option[value=" + testerId + "]").prop('selected', true);
-                    issueForm.addIssueTester();
+                    issueForm.addIssueTesterById(testerId);
+                }
+            });
+        }
+
+        // Мастеры
+        issueForm.resetUsers('issueMasters', 'addIssueMasters');
+        const masterIds = value.masterIds;
+        if (masterIds) {
+            masterIds.forEach((masterId) => {
+                if (masterId.length > 0) {
+                    issueForm.addIssueMasterById(masterId);
                 }
             });
         }
@@ -253,6 +266,7 @@ let issueForm = {
                         memberIds: issue.getMemberIds(),
                         membersSp: issue.getMembersSp(),
                         testerIds: issue.getTesterIds(),
+                        masterIds: issue.getMasterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
@@ -302,6 +316,7 @@ let issueForm = {
                         // поэтому не передаем их
                         memberIds: issue.getMemberIds(),
                         testerIds: issue.getTesterIds(),
+                        masterIds: issue.getMasterIds(),
                         parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
@@ -316,6 +331,25 @@ let issueForm = {
     },
     updateHeader: function (isEdit) {
         $("#issueForm > h3").text(isEdit ? "Редактирование задачи" : "Добавить задачу");
+    },
+    addSprintNumToName: function () {
+        $nameInput = $("#issueForm form input[name=name]");
+        var name = $nameInput.val();
+
+        const spintNum = issueForm.getSprintNum();
+        const sprintStr = ' #' + spintNum;
+
+        const matches = name.match(/ #\d+/ig);
+
+        if (matches) {
+            const current = matches[0];
+            name = name.replace(current, current == sprintStr ? '' : sprintStr);
+        } else {
+            name = name + sprintStr;
+        }
+
+        $nameInput.val(name);
+        issueFormLabels.update();
     },
     addImagebyUrl: function (imageUrl, autofocus = false) {
         // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
@@ -342,100 +376,102 @@ let issueForm = {
         })
         $('#' + listId + ' li').remove();
     },
-    addIssueMember: function (sp) {
+    addIssueMemberCommon: function (fieldName, onRemoveClick, processItem) {
+        const fieldNameFirstUpper = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+
         /**
          * @type HTMLSelectElement
          */
-        var selectElement = document.getElementById('addIssueMembers');
-        var index = selectElement.selectedIndex;
-        if (index == 0)
-            return;
+        const selectElement = document.getElementById('addIssue' + fieldNameFirstUpper);
+        const index = selectElement.selectedIndex;
+        if (index == 0) return;
 
-        var scrum = $('#issueForm').data('projectScrum') == 1;
-        var option = selectElement.options[index];
-        var $memberLi = $('<li>');
-
-
-        $memberLi.
-            append($('<span class="user-name">').html(option.innerHTML)).
-            append($('<input type="hidden" name="members[]">').val(option.value));
-
-        // проверка что это скрам проект
-        if (scrum)
-            $memberLi.
-                append($('<input type="text" name="membersSp[]" class="member-sp">').val(sp > 0 ? sp : "")).
-                append($('<span class="member-sp-label">').html("SP"));
-
-
-        $memberLi.
-            append($('<a class="remove-btn">').click(issueForm.removeIssueMember));
-
-        $('#issueMembers').append($memberLi);
-
-        selectElement.removeChild(option);
-        selectElement.selectedIndex = 0;
-    },
-    addIssueTester: function () {
-        /**
-         * @type HTMLSelectElement
-         */
-        var selectElement = document.getElementById('addIssueTesters');
-
-        var option = selectElement.options[selectElement.selectedIndex];
+        const option = selectElement.options[index];
+        const userId = option.value;
 
         /**
          * @type HTMLOListElement
          */
-
-        var testers = document.getElementById('issueTesters');
+        const ol = document.getElementById('issue' + fieldNameFirstUpper);
 
         /**
          * @type HTMLOListElement
          */
-        var li = document.createElement('li');
+        const li = document.createElement('li');
 
         /**
          * @type HTMLSpanElement
          */
-        var nameLabel = document.createElement('span');
+        const nameLabel = document.createElement('span');
         nameLabel.innerHTML = option.innerHTML;
         nameLabel.className = 'user-name';
 
         /**
          * @type HTMLLinkElement
          */
-        var idField = document.createElement('input');
+        const idField = document.createElement('input');
         idField.type = 'hidden';
-        idField.name = 'testers[]';
-        idField.value = option.value;
+        idField.name = fieldName + '[]';
+        idField.value = userId;
 
         /**
          * @type HTMLButtonElement
          */
-        var removeBtn = document.createElement('a');
-        //removeBtn.innerHTML = 'Удалить';
+        const removeBtn = document.createElement('a');
         removeBtn.className = 'remove-btn';
-        removeBtn.onclick = issueForm.removeIssueTester;
+        removeBtn.onclick = onRemoveClick;
 
         li.appendChild(nameLabel);
         li.appendChild(idField);
         li.appendChild(removeBtn);
 
-        testers.appendChild(li);
+        if (processItem) processItem(li);
+
+        ol.appendChild(li);
 
         selectElement.removeChild(option);
         selectElement.selectedIndex = 0;
+
+        const isMe = userId == lpInfo.userId;
+        if (isMe) $('#issueForm .' + fieldName + '-row .add-me-link').hide();
     },
-    removeIssueMember: function (e) {
-        issueForm.removeIssueMemberCommon(e, 'members', 'addIssueMembers');
+    addMeAsMember: () => issueForm.addIssueMemberById(lpInfo.userId),
+    addIssueMemberById: function (userId, sp) {
+        $("#addIssueMembers option[value=" + userId + "]").prop('selected', true);
+        issueForm.addIssueMember(sp);
     },
-    removeIssueTester: function (e) {
-        issueForm.removeIssueMemberCommon(e, 'testers', 'addIssueTesters');
+    addIssueMember: function (sp) {
+        issueForm.addIssueMemberCommon('members', issueForm.removeIssueMember, (li) => {
+            const scrum = $('#issueForm').data('projectScrum') == 1;
+            if (scrum) {
+                $('a.remove-btn', li).
+                    before($('<input type="text" name="membersSp[]" class="member-sp">').val(sp > 0 ? sp : "")).
+                    before($('<span class="member-sp-label">').html("SP"));
+            }
+        });
     },
-    removeIssueMemberCommon: function (e, fieldName, selectName) {
+    addMeAsTester: () => issueForm.addIssueTesterById(lpInfo.userId),
+    addIssueTesterById: function (userId) {
+        $("#addIssueTesters option[value=" + userId + "]").prop('selected', true);
+        issueForm.addIssueTester();
+    },
+    addIssueTester: () => issueForm.addIssueMemberCommon('testers', issueForm.removeIssueTester),
+    addMeAsMaster: () => issueForm.addIssueMasterById(lpInfo.userId),
+    addIssueMasterById: function (userId) {
+        $("#addIssueMasters option[value=" + userId + "]").prop('selected', true);
+        issueForm.addIssueMaster();
+    },
+    addIssueMaster: () => issueForm.addIssueMemberCommon('masters', issueForm.removeIssueMaster),
+    removeIssueMember: (e) => issueForm.removeIssueMemberCommon(e, 'members'),
+    removeIssueTester: (e) => issueForm.removeIssueMemberCommon(e, 'testers'),
+    removeIssueMaster: (e) => issueForm.removeIssueMemberCommon(e, 'masters'),
+    removeIssueMemberCommon: function (e, fieldName) {
+        const fieldNameFirstUpper = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        const selectName = 'addIssue' + fieldNameFirstUpper;
+
         var li = $(e.currentTarget).parent('li');
 
-        var userId = $('input[name="' + fieldName + '[]"]', li).val();
+        const userId = $('input[name="' + fieldName + '[]"]', li).val();
         var userName = $('span.user-name', li).html();
 
         var option = document.createElement('option');
@@ -447,6 +483,9 @@ let issueForm = {
             if (userName < selectElement.options[i].innerHTML) break;
         }
         selectElement.appendChild(option, i);
+
+        const isMe = userId == lpInfo.userId;
+        if (isMe) $('#issueForm .' + fieldName + '-row .add-me-link').show();
 
         setTimeout(function () {
             li.remove();

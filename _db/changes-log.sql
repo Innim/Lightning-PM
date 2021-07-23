@@ -316,4 +316,14 @@ CHANGE `completeDate` `completeDate` datetime NULL AFTER `startDate`;
 
 -- v0.10.3
 
+ALTER TABLE `lpm_issue_branch`
+ADD `userId` bigint(19) NOT NULL COMMENT 'Идентификатор пользователя';
+
+-- v0.10.5
+
+ALTER TABLE `lpm_members`
+CHANGE `instanceType` `instanceType` smallint(2) NOT NULL AFTER `userId`;
+
+-- v0.10.7
+
 --NEXT

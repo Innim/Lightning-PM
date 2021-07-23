@@ -180,6 +180,16 @@ class PagePrinter
         PageConstructor::includePattern('scrum-board-target-sprint', compact('project'));
     }
     
+
+    /**
+     * Распечатывает элемент исполнителя задачи в стикере на Scrum доске.
+     * @param $member
+     */
+    public static function tableScrumBoardIssueMember(User $member)
+    {
+        PageConstructor::includePattern('scrum-board-table-issue-member', compact('member'));
+    }
+
     /*public static function mainCSSLink() {
         self::cssLink( 'main' );
     }*/

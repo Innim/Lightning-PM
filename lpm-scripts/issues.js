@@ -259,14 +259,11 @@ const issuePage = {
     projectId: null,
     idInProject: null,
     labels: null,
-    members: null
+    members: null,
+    getStatus: () => $('#issueInfo').data('status'),
+    isCompleted: () => issuePage.getStatus() == 2,
+    getIssueId: () => $('#issueView input[name=issueId]').val(),
 };
-
-issuePage.getStatus = () => $('#issueInfo').data('status');
-
-issuePage.isCompleted = () => issuePage.getStatus() == 2;
-
-issuePage.getIssueId = () => $('#issueView input[name=issueId]').val();
 
 issuePage.loadMembers = function (handler) {
     if (issuePage.members != null) {
@@ -344,6 +341,8 @@ issuePage.getPriorityColor = function (val) {
 };
 
 issuePage.updateStat = function () {
+    if ($("#projectView").length == 0) return;
+
     //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
     $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
@@ -364,11 +363,22 @@ issuePage.updateStat = function () {
 };
 
 function insertFormattingLink(input) {
-    insertFormatting(input, '[](', ')', 1);
+    const text = getSelectedText(input);
+    if (parser.findLinks(text)) {
+        insertFormatting(input, '[](', ')', 1);
+    }
+    else {
+        insertFormatting(input, '[', ']()', -2);
+    }
 }
 
 function insertFormattingMarker(input, marker, single) {
     insertFormatting(input, marker, single ? "" : marker)
+}
+
+function getSelectedText(input) {
+    const text = $(input)[0];
+    return text.value.substring(text.selectionStart, text.selectionEnd);
 }
 
 function insertFormatting(input, before, after, cursorShift) {
@@ -636,9 +646,38 @@ issuePage.showAddForm = function (type, parentId) {
     if (typeof type != 'undefined') {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
         $('form input:radio[value=1]', "#issueForm").prop('checked', true);
+
+        const bugTemplate = `### Описание
+
+📝 Описание проблемы
+
+### Предусловие
+
+📝 Начальные условия, при которых воспроизводится проблема
+
+### Шаги воспроизведения
+
+1. 📝  Шаги для воспроизведения
+2. 
+
+*ФР*: 📝  Фактический полученный результат
+
+*ОР*: 📝  Ожидаемый результат
+
+### Окружение
+
+📝 Укажите устройство, ОС, окружение и тп
+
+### Видео
+
+🎥 Приложите ссылку на видео, где показана проблема
+        `;
+        
+        $('form textarea[name=desc]', '#issueForm').html(bugTemplate).css('height', '500px');
     } else {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
         $('form input:radio[value=0]', "#issueForm").prop('checked', true);
+        $('form textarea[name=desc]', '#issueForm').html('').css('height', '');
     }
 };
 
@@ -684,6 +723,7 @@ function setIssueInfo(issue) {
     }
 
     const testers = issue.getTesters();
+    const masters = issue.getMasters();
 
     const values = [
         issue.getStatus(),
@@ -695,6 +735,7 @@ function setIssueInfo(issue) {
         issue.getAuthor(),
         issue.getMembers(),
         testers,
+        masters,
         issue.getDesc(true)
     ];
 
@@ -998,9 +1039,20 @@ function Issue(obj) {
     this.priority = obj.priority;
     this.hours = obj.hours;
     this.testers = obj.testers;
+    this.masters = obj.masters;
     this.images = obj.images;
     this.isOnBoard = obj.isOnBoard;
     this.url = obj.url;
+
+    const getUsersStr = (list) => {
+        var str = '';
+        if (list)
+            for (var i = 0; i < list.length; i++) {
+                if (i > 0) str += ', ';
+                str += list[i].linkedName;
+            }
+        return str;
+    };
 
     this.getCompleteDate = function () {
         return this.getDate(this.completeDate);
@@ -1058,18 +1110,16 @@ function Issue(obj) {
         return this.members.map(member => member.sp);
     };
 
-    this.getTesters = function () {
-        var str = '';
-        if (this.testers)
-            for (var i = 0; i < this.testers.length; i++) {
-                if (i > 0) str += ', ';
-                str += this.testers[i].linkedName;
-            }
-        return str;
-    };
+    this.getTesters = () => getUsersStr(this.testers);
 
     this.getTesterIds = function () {
         return this.testers.map(tester => tester.userId);
+    };
+
+    this.getMasters = () => getUsersStr(this.masters);
+
+    this.getMasterIds = function () {
+        return this.masters.map(master => master.userId);
     };
 
     this.getDesc = function (formatted = false) {

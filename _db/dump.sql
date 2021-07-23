@@ -76,6 +76,7 @@ CREATE TABLE `lpm_issue_branch` (
   `date` datetime NOT NULL COMMENT 'Дата записи',
   `lastСommit` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'ID последнего коммита',
   `mergedInDevelop` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Отметка о влитии в develop',
+  `userId` bigint(19) NOT NULL COMMENT 'Идентификатор пользователя',
   PRIMARY KEY (`issueId`,`repositoryId`,`name`),
   KEY `repositoryId_name` (`repositoryId`,`name`),
   KEY `issueId` (`issueId`),
@@ -131,7 +132,7 @@ CREATE TABLE `lpm_issue_mr` (
 DROP TABLE IF EXISTS `lpm_members`;
 CREATE TABLE `lpm_members` (
   `userId` bigint(10) NOT NULL,
-  `instanceType` tinyint(1) NOT NULL,
+  `instanceType` smallint(2) NOT NULL,
   `instanceId` bigint(19) NOT NULL,
   PRIMARY KEY (`userId`,`instanceType`,`instanceId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

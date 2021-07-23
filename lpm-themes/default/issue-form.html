@@ -8,28 +8,33 @@
 
 $descMaxLen = Issue::DESC_MAX_LEN;
 ?>
-<article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>">
+<article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSpintNum();?>">
     <h3></h3>
     <div class="validateError"><?php lpm_print_errors(); ?></div>
     <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data">
         <ol>
             <li>
-                <span class="edit-issue-name-container">
+                <div class="edit-issue-name-container">
+                    <span class="issue-name-quick-actions" >
+                        <?php if ($project->scrum): ?>
+                        <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueForm.addSprintNumToName()" title="Добавить номер спринта">
+                            <i class="fas fa-hashtag"></i>
+                        </a>
+                        <?php endif;?>
+                    </span>
                     <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255"
-                        class="edit-issue-name" oninput="issueFormLabels.issueNameChanged(this.value)" />
-                </span>
+                        class="edit-issue-name" oninput="issueFormLabels.issueNameChanged(this.value)" />                        
+                    
+                </div>
                 <span class="issue-labels-container">
-                    <?php $issueLabels = $issue ? $issue->getLabelNames() : []; ?>
-                    <?php foreach (lpm_get_issue_labels() as $label): ?>
-                    <?php
-                    $index = array_search($label['label'], $issueLabels);
-                    if ($index !== false)
-                        unset($issueLabels[$index]);
-                ?>
-                    <a href="javascript:void(0)" class="issue-label"
-                        onclick="issueFormLabels.addToName('<?=$label['label'];?>');"><?=$label['label'];?></a>
-                    <?php endforeach; ?>
-                    <?php foreach ($issueLabels as $label): ?>
+                    <?php 
+                        $issueLabels = $issue ? $issue->getLabelNames() : [];
+                        $projectLabels = array_map(function ($item) {
+                            return $item['label'];
+                        }, lpm_get_issue_labels());
+                        $labels = array_unique(array_merge($projectLabels, $issueLabels));
+                    ?>    
+                    <?php foreach ($labels as $label): ?>
                     <a href="javascript:void(0)" class="issue-label"
                         onclick="issueFormLabels.addToName('<?=$label;?>');"><?=$label;?></a>
                     <?php endforeach; ?>
@@ -90,9 +95,9 @@ $descMaxLen = Issue::DESC_MAX_LEN;
             <li>
                 <input placeholder="Дата окончания" type="text" class="date" name="completeDate" maxlength="255" />
             </li>
-            <li>
+            <li class="members-row">
                 <fieldset>
-                    <legend>Исполнители</legend>
+                    <legend>Исполнители <a href="javascript:void(0)" onclick="issueForm.addMeAsMember()" class="add-me-link">Добавить себя</a></legend>
                     <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
                     <ol id="issueMembers" class="members-list"></ol>
                     <select id="addIssueMembers" onchange="issueForm.addIssueMember();"
@@ -104,14 +109,26 @@ $descMaxLen = Issue::DESC_MAX_LEN;
                     </select>
                 </fieldset>
             </li>
-            <li>
+            <li class="testers-row">
                 <fieldset>
-                    <legend>Тестеры</legend>
+                    <legend>Тестеры <a href="javascript:void(0)" onclick="issueForm.addMeAsTester()" class="add-me-link">Добавить себя</a></legend>
                     <ol id="issueTesters" class="members-list"></ol>
                     <select id="addIssueTesters" onchange="issueForm.addIssueTester();">
                         <option value="-1">Добавить</option>
                         <?php foreach (lpm_get_project_members() as $tester): ?>
                         <option value="<?=$tester->userId;?>"><?=$tester->getName();?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </fieldset>
+            </li>
+            <li class="masters-row">
+                <fieldset>
+                    <legend>Мастеры <a href="javascript:void(0)" onclick="issueForm.addMeAsMaster()" class="add-me-link">Добавить себя</a></legend>
+                    <ol id="issueMasters" class="members-list"></ol>
+                    <select id="addIssueMasters" onchange="issueForm.addIssueMaster();">
+                        <option value="-1">Добавить</option>
+                        <?php foreach (lpm_get_project_members() as $master): ?>
+                        <option value="<?=$master->userId;?>"><?=$master->getName();?></option>
                         <?php endforeach; ?>
                     </select>
                 </fieldset>

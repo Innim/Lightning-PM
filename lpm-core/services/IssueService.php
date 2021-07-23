@@ -320,13 +320,14 @@ class IssueService extends LPMBaseService
 
             $comment = $this->postComment($issue, $commentText, true);
 
+            $user = $this->getUser();
+            $userId = $user->userId;
+
             // Записываем данные о том, что ветка привязана к задаче
-            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName);
+            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId);
 
             if ($issue->status == Issue::STATUS_IN_WORK) {
                 // Если пользователя нет в исполнителях - добавим его автоматически
-                $user = $this->getUser();
-                $userId = $user->userId;
                 if (!$issue->isMember($userId)) {
                     if (!Member::saveIssueMembers($issue->id, [$userId])) {
                         return $this->errorDBSave();
@@ -517,13 +518,17 @@ class IssueService extends LPMBaseService
     }
 
     /**
-     * Забрать задачу себе. Удаляет других исполнителей,
-     * оставляя только текущего
+     * Взять задачу.
+     *
      * @param  int $issueId
+     * @param bool $replace Если true, то удаляет других исполнителей,
+     * оставляя только текущего. Иначе - добавляет исполнителя.
      */
-    public function takeIssue($issueId)
+    public function takeIssue($issueId, $replace = true)
     {
         $issueId = (int)$issueId;
+        $replace = (bool)$replace;
+
 
         try {
             $issue = Issue::load($issueId);
@@ -531,7 +536,7 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            if (!Member::deleteIssueMembers($issueId)) {
+            if ($replace && !Member::deleteIssueMembers($issueId)) {
                 return $this->errorDBSave();
             }
 
@@ -544,7 +549,12 @@ class IssueService extends LPMBaseService
             // Записываем лог
             UserLogEntry::issueEdit($userId, $issue->id, 'Take issue');
 
+            $html = $this->getHtml(function () use ($user) {
+                PagePrinter::tableScrumBoardIssueMember($user);
+            });
+
             $this->add2Answer('memberName', $user->getShortName());
+            $this->add2Answer('memberHtml', $html);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -707,18 +717,24 @@ class IssueService extends LPMBaseService
         $obj = $issue->getClientObject();
         $members = $issue->getMembers();
         $testers = $issue->getTesters();
+        $masters = $issue->getMasters();
         $images = $issue->getImages();
-        $obj->members = array();
-        $obj->testers = array();
-        $obj->images = array();
+        $obj->members = [];
+        $obj->testers = [];
+        $obj->masters = [];
+        $obj->images = [];
         $obj->isOnBoard = $issue->isOnBoard();
 
         foreach ($members as $member) {
-            array_push($obj->members, $member->getClientObject());
+            $obj->members[] = $member->getClientObject();
         }
 
         foreach ($testers as $tester) {
-            array_push($obj->testers, $tester->getClientObject());
+            $obj->testers[] = $tester->getClientObject();
+        }
+
+        foreach ($masters as $master) {
+            $obj->masters[] = $tester->getClientObject();
         }
 
         foreach ($images as $image) {

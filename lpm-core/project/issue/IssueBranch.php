@@ -13,7 +13,7 @@ class IssueBranch extends LPMBaseObject
      * @param  int    $repositoryId Идентификатор репозитория.
      * @param  string $name         Имя ветки.
      */
-    public static function create($issueId, $repositoryId, $name, $lastСommit = null, $mergedInDevelop = null)
+    public static function create($issueId, $repositoryId, $name, $userId, $lastСommit = null, $mergedInDevelop = null)
     {
         $date = DateTimeUtils::mysqlDate();
 
@@ -32,7 +32,7 @@ class IssueBranch extends LPMBaseObject
         }
 
         $hash = [
-            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastСommit', 'mergedInDevelop'),
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastСommit', 'mergedInDevelop', 'userId'),
             'INTO'    => LPMTables::ISSUE_BRANCH
         ];
 
@@ -105,26 +105,48 @@ class IssueBranch extends LPMBaseObject
      */
     public static function loadPopularRepository($projectId, $inLast = null)
     {
+        $ids = self::loadPopularRepositories($projectId, null, $inLast, 1);
+        return empty($ids) ? null : $ids[0];
+    }
+
+    /**
+     * Возвращает наиболее популярный репозиторий для проекта.
+     *
+     * @param int $projectId    Идентификатор проекта.
+     * @param int $userId       Идентификатор пользователя. Если указан - то будут загружены
+     *                          только данные для укаказанного пользователя.
+     * @param int $inLast       Передайте число элементов, если надо делать выборку
+     *                          не по всем, а только из указанного количества последних.
+     * @return array<int> Идентификаторы репозиториев по порядку.
+     */
+    public static function loadPopularRepositories($projectId, $userId = null, $inLast = null, $limit = null)
+    {
         $db = self::getDB();
-        $limitSql = empty($limit) ? '' : 'LIMIT ' . $inLast;
+        $limitSql = empty($limit) ? '' : 'LIMIT ' . $limit;
+
+        $selectLimitSql = empty($inLast) ? '' : 'LIMIT ' . $inLast;
 
         $sql = <<<SQL
     SELECT `repositoryId`, COUNT(`repositoryId`) as `count` FROM (
         SELECT `repositoryId` FROM `%1\$s` `b`, `%2\$s` `i`
          WHERE `b`.`issueId` = `i`.`id` AND `i`.`projectId` = $projectId
       ORDER BY `date` DESC 
-        $limitSql
+        $selectLimitSql
     ) AS `last_entiries` 
     GROUP BY `repositoryId`
-    ORDER BY `count` DESC LIMIT 1
+    ORDER BY `count` DESC $limitSql
 SQL;
         $res = $db->queryt($sql, LPMTables::ISSUE_BRANCH, LPMTables::ISSUES);
         if ($res === false) {
             throw new \GMFramework\ProviderLoadException();
         }
 
-        $row = $res->fetch_assoc();
-        return $row ? (int)$row['repositoryId'] : null;
+        $arr = [];
+        while ($row = $res->fetch_assoc()) {
+            $arr[] = (int)$row['repositoryId'];
+        }
+
+        return $arr;
     }
 
     /**
@@ -286,11 +308,16 @@ SQL;
      */
     public $mergedInDevelop;
 
+    /**
+     * Идентификатор пользователя.
+     */
+    public $userId;
+
     public function __construct()
     {
         parent::__construct();
 
-        $this->_typeConverter->addIntVars('id', 'repositoryId', 'issueId');
+        $this->_typeConverter->addIntVars('repositoryId', 'issueId', 'userId');
         $this->_typeConverter->addBoolVars('mergedInDevelop');
         $this->addDateTimeFields('date');
     }

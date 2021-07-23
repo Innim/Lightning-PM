@@ -454,6 +454,10 @@ fieldset.radio-group ol li {
     margin-left: 10px;    
     list-style : none;    
 }
+.add-me-link {
+	font-size: x-small;
+	font-weight: normal;
+}
 ol.members-list {
 	margin-bottom: 10px;
 	position : relative;
@@ -1194,6 +1198,41 @@ table tr.verify-issue {
 	color           : #999999;
 }
 
+table tr td .icon-deadline {
+	display: none;
+}
+
+.icon-deadline.icon-deadline-outdated,
+table tr.deadline-outdated-issue a.issue-name {
+	color: #720000;
+}
+
+.icon-deadline.icon-deadline-urgent,
+table tr.deadline-urgent-issue a.issue-name  {
+	color: #e03400;
+}
+
+.icon-deadline.icon-deadline-medium  {
+	color: #d3cf00;
+}
+
+table tr.deadline-outdated-issue a.issue-name,
+table tr.deadline-urgent-issue a.issue-name,  
+table tr.deadline-medium-issue a.issue-name {
+	font-weight: bolder;
+}
+
+.icon-deadline.icon-deadline-low {
+	color: #00b100;
+}
+
+table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
+table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
+table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
+table tr.deadline-low-issue td .icon-deadline.icon-deadline-low {
+	display: inline-block;
+}
+
 /* просмотр проекта */
 #projectView .filters-line {
 	float: left;
@@ -1876,6 +1915,33 @@ div.ftp
 	margin-top: 10px;
 }
 
+.edit-issue-name-container {
+	width: 90%;
+	margin: 0 auto;
+}
+
+input.edit-issue-name {
+    width: 95%;
+    margin: 0;
+}
+
+.issue-name-quick-actions {
+	font-size: 0.7em;
+	display: block;
+	float: right;
+	clear: both;
+	margin: auto;
+	padding-top: 9px;
+	padding-right: 5px;
+	text-align: right;
+}
+
+.issue-name-quick-actions a {
+	padding: 2px;	
+	border-radius: 2px;
+	background-color: #1E90FF;
+	color: #fff;
+}
 .issue-labels-container {
 	font-size: 0.9em;
 	display: block;
