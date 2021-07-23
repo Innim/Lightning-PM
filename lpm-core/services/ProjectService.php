@@ -391,7 +391,7 @@ class ProjectService extends LPMBaseService
      * @param int $instanceId id проекта.
      * @param array $target массив целий спринта.
      */
-    public function addTargetSprint($instanceId, $target) {
+    public function addSprintTarget($instanceId, $target) {
         $projectId = (int) $instanceId;
         $targetText = (string) $target;
     
@@ -402,7 +402,7 @@ class ProjectService extends LPMBaseService
                 return $this->error("Проект не существует или недостаточно прав");
             }
             
-            $result = Project::updateTargetSprint($projectId, $targetText);
+            $result = Project::updateSprintTarget($projectId, $targetText);
             if (!$result) {
                 return $this->error('Цели проекта не добавлены. Ошибка записи в БД.');
             }

@@ -268,9 +268,9 @@ function lpm_print_table_scrum_board_issue_member(User $member)
  * Распечатывает форму добавления/редактирования цели спринта для текущего проекта.
  * @param $project
  */
-function lpm_print_target_sprint_form($project)
+function lpm_print_sprint_target_form($project)
 {
-    return PagePrinter::targetSprintForm($project);
+    return PagePrinter::sprintTargetForm($project);
 }
 
 /**
