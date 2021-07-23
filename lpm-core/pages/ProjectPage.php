@@ -442,7 +442,7 @@ class ProjectPage extends LPMPage
             $_POST['name'] = trim(str_replace('%', '%%', $_POST['name']));
 
             foreach ($_POST as $key => $value) {
-                if ($key != 'members' && $key != 'clipboardImg' && $key != 'imgUrls' && $key != 'testers' && $key != 'membersSp') {
+                if (!in_array($key, ['members', 'clipboardImg', 'imgUrls', 'testers', 'membersSp', 'masters'])) {
                     $_POST[$key] = $db->real_escape_string($value);
                 }
             }
@@ -556,6 +556,12 @@ class ProjectPage extends LPMPage
                 // Сохраняем тестеров
                 $testers = isset($_POST['testers']) ? $_POST['testers'] : [];
                 if (!$this->saveTesters($db, $issueId, $testers, $editMode)) {
+                    return;
+                }
+
+                // Сохраняем мастеров
+                $masters = isset($_POST['masters']) ? $_POST['masters'] : [];
+                if (!$this->saveMasters($db, $issueId, $masters, $editMode)) {
                     return;
                 }
 
@@ -737,11 +743,14 @@ class ProjectPage extends LPMPage
 
         if ($this->_project->scrum) {
             $membersCount = count($memberIds);
-            if ($membersCount > 0 && ($spByMembers == null || !is_array($spByMembers))) {
-                return $engine->addError('Требуется количество SP по участникам');
-            }
-            if (count($spByMembers) != $membersCount) {
-                return $engine->addError('Количество SP по участникам не соответствует количеству участников');
+            if ($membersCount > 0) {
+                if ($spByMembers == null || !is_array($spByMembers)) {
+                    return $engine->addError('Требуется количество SP по участникам');
+                }
+
+                if (count($spByMembers) != $membersCount) {
+                    return $engine->addError('Количество SP по участникам не соответствует количеству участников');
+                }
             }
 
             // Записываем информацию об участниках
@@ -772,6 +781,17 @@ class ProjectPage extends LPMPage
             $testerIds,
             $editMode,
             LPMInstanceTypes::ISSUE_FOR_TEST
+        );
+    }
+
+    private function saveMasters($db, $issueId, $masterIds, $editMode)
+    {
+        return $this->saveMembersByInstanceType(
+            $db,
+            $issueId,
+            $masterIds,
+            $editMode,
+            LPMInstanceTypes::ISSUE_TO_MASTER
         );
     }
 
@@ -819,7 +839,6 @@ class ProjectPage extends LPMPage
         // сохраняем исполнителей задачи
         $sql = "INSERT INTO `%s` ( `userId`, `instanceType`, `instanceId` ) " .
                          "VALUES ( ?, '" . $instanceType . "', '" . $issueId . "' )";
-            
         if (!$prepare = $db->preparet($sql, LPMTables::MEMBERS)) {
             if (!$editMode) {
                 $db->queryt("DELETE FROM `%s` WHERE `id` = '" . $issueId . "'", LPMTables::ISSUES);

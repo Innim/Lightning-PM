@@ -60,19 +60,44 @@ let scrumBoard = {
         });
     },
     takeIssue: function (e) {
+        $dialog = $("#takeIssueConfirm");
         const $control = $(e.currentTarget);
         const $sticker = $control.parents('.scrum-board-sticker');
-        
-        scrumBoard.takeIssueBy($sticker);
+
+        if ($('.sticker-issue-members', $sticker).children().length > 0) {
+            const takeAndClose = (replace) => {
+                scrumBoard.takeIssueBy($sticker, replace);
+                $dialog.dialog("close");
+            }
+
+            $dialog.dialog({
+                resizable: false,
+                height: "auto",
+                width: 400,
+                modal: true,
+                buttons: {
+                    "Добавить": () => takeAndClose(false),
+                    "Заменить": () => takeAndClose(true),
+                },
+            });
+        } else {
+            scrumBoard.takeIssueBy($sticker);
+        }
     },
-    takeIssueBy: function ($sticker) {
+    takeIssueBy: function ($sticker, replace = true) {
         const issueId = $sticker.data('issueId');
         preloader.show();
-        srv.issue.takeIssue(issueId, function (res) {
+        srv.issue.takeIssue(issueId, replace, function (res) {
             preloader.hide();
             if (res.success) {
                 $sticker.addClass('mine');
-                $('.sticker-issue-members', $sticker).text(res.memberName);
+                const $members = $('.sticker-issue-members', $sticker);
+                if (replace) {
+                    $members.empty();
+                } else if ($members.children().length > 0) {
+                    $members.append(', ');
+                }
+                $members.append(res.memberHtml);
                 issuePage.scumColUpdateInfo();
             }
         });

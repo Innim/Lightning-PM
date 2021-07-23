@@ -30,14 +30,29 @@ const createBranch = {
         );
 
         const $selectRepo = $('#repository', $el);
+        const $selectBranch = $('#parentBranch', $el);
+        const $branchName = $('#branchName', $el);
+
         $selectRepo.on('change', () => {
             const repoId = $selectRepo.val();
             createBranch.onSelectRepository(repoId);
         });
 
-        const $selectBranch = $('#parentBranch', $el);
         $selectBranch.on('change', () => {
-            $("#branchName", $el).trigger('focus');
+            $branchName.trigger('focus');
+        });
+
+        $branchName.on('input', () => {
+            const el = $branchName[0];
+            const selectionStart = el.selectionStart;
+            const name = $branchName.val();
+            const res = name.replace(/[_ ]/, '-').toLowerCase();
+
+            if (name != res) {
+                $branchName.val(res);
+                el.selectionStart = selectionStart;
+                el.selectionEnd = selectionStart;
+            }
         });
     },
     show: function (projectId, issueId, issueIdInProject) {
@@ -53,7 +68,7 @@ const createBranch = {
             if (res.success) {
                 $el.dialog('open');
                 createBranch.setRepositories(res.list, res.popularRepositoryId, res.myPopularRepositoryIds);
-                $("#branchName", $el).val(issueIdInProject + '.').focus();
+                $("#branchName", $el).val(issueIdInProject + '.').trigger('focus');
             } else {
                 createBranch.close();
                 showError(res.error ?? 'Не удалось получить список репозиториев');
