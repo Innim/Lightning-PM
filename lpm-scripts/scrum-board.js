@@ -5,6 +5,8 @@ $(document).ready(
                 e.setAttribute('title', e.textContent)
             }
         });
+
+        sprintTarget.init();
     }
 );
 
@@ -124,6 +126,65 @@ let scrumBoard = {
         }
     },
 };
+
+const sprintTarget = {
+    init: function (modalParam) {
+        $('#addTarget').dialog({...sprintTarget.defaultParam, ...modalParam});
+        $('.target-btn').click(function () {
+            sprintTarget.open();
+        });
+        if ($('.text-target').text()) {
+            $('.title-target').removeClass('hidden');
+        }
+    },
+    open: function () {
+        $('#addTarget').dialog('open');
+    },
+    close: function () {
+        $('#addTarget').dialog('close');
+    },
+    save: function () {
+        const targetText = $('.input-target').val();
+        const projectId = $('#scrumBoard').data('project-id');
+
+        srv.project.setSprintTarget(projectId, targetText, function (res) {
+            if (res) {
+                $('.text-target').html(res.targetHTML);
+                $('.input-target').val(res.targetText);
+
+                if (!res.targetText) {
+                    $('.title-target').addClass('hidden');
+                } else {
+                    $('.title-target').removeClass('hidden');
+                }
+            }
+        });
+        sprintTarget.close();
+    },
+    defaultParam: {
+        dialogClass: 'modal-target-sprint',
+        autoOpen: false,
+        modal: true,
+        width: 540,
+        height: 394,
+        closeText: 'Закрыть',
+        resizable: false,
+        buttons: [
+            {
+                text: 'Сохранить',
+                click: function () {
+                    sprintTarget.save();
+                }
+            },
+            {
+                text: 'Отмена',
+                click: function () {
+                    sprintTarget.close();
+                }
+            }
+        ]
+    }
+}
 
 const ScrumStickerState = Object.freeze({
     backlog: 0,
