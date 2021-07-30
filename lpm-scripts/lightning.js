@@ -530,10 +530,5 @@ let parser = {
 $(document).ready(() => {
     $(window).load(() => {
         states.updateView();
-        if ($('#issueForm > div.validateError').html() != '') {
-            $('#issueForm > div.validateError').show();
-        }
-
-        issuePage.updateStat();
     });
 });
