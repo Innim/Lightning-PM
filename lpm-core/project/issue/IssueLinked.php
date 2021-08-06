@@ -18,10 +18,10 @@ class IssueLinked extends LPMBaseObject
         $created = DateTimeUtils::mysqlDate($created);
         $hash = [
             'INSERT'  => compact('issueId', 'linkedIssueId', 'created'),
-            'INTO'    => LPMTables::ISSUE_BRANCH,
+            'INTO'    => LPMTables::ISSUE_LINKED,
             'IGNORE'  => '',
         ];
-
+        
         self::buildAndSaveToDb($hash);
     }
 

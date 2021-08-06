@@ -104,8 +104,8 @@ CREATE TABLE `lpm_issue_labels` (
   KEY `projectId` (`projectId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Метки для задач';
 
-DROP TABLE IF EXISTS `issue_linked`;
-CREATE TABLE `issue_linked` (
+DROP TABLE IF EXISTS `lpm_issue_linked`;
+CREATE TABLE `lpm_issue_linked` (
   `issueId` int(11) NOT NULL COMMENT 'ID основной задачи',
   `linkedIssueId` int(11) NOT NULL COMMENT 'ID связанной задачи',
   `created` datetime NOT NULL COMMENT 'Дата создания связи',

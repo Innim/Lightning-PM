@@ -321,7 +321,7 @@ ADD `userId` bigint(19) NOT NULL COMMENT 'Идентификатор польз�
 
 -- v0.10.5
 
-CREATE TABLE `issue_linked` (
+CREATE TABLE `lpm_issue_linked` (
   `issueId` int(11) NOT NULL COMMENT 'ID основной задачи',
   `linkedIssueId` int(11) NOT NULL COMMENT 'ID связанной задачи',
   `created` datetime NOT NULL COMMENT 'Дата создания связи',

@@ -27,6 +27,11 @@ class LPMTables
      */
     const ISSUE_COUNTERS = 'issue_counters';
     /**
+     * Связанные задачи.
+     * @var string
+     */
+    const ISSUE_LINKED = 'issue_linked';
+    /**
      * Информация об участнике задачи.
      * @var string
      */
