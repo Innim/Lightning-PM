@@ -316,4 +316,12 @@ CREATE TABLE `lpm_work_study` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
--- 2020-12-07 08:34:11
+DROP TABLE IF EXISTS `lpm_instance_targets`;
+CREATE TABLE `lpm_instance_targets` (
+    `instanceType` int(20) DEFAULT NULL COMMENT 'Тип экземпляра',
+    `instanceId` int(20) DEFAULT NULL COMMENT 'ID экземпляра',
+    `content` longtext COLLATE 'utf8_unicode_ci' DEFAULT NULL COMMENT 'Содержимое целей',
+    PRIMARY KEY (`instanceType`,`instanceId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Цели указанной сущности.';
+
+-- 2021-08-06
