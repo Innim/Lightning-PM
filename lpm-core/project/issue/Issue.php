@@ -422,7 +422,7 @@ SQL;
     /**
      * Возвращает список меток по имени.
      * @param $issueName Имя задачи.
-     * @return array{string} Список меток в указанном имени.
+     * @return array<string> Список меток в указанном имени.
      */
     public static function getLabelsByName($issueName)
     {

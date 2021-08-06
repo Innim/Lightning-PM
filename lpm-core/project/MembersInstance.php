@@ -50,6 +50,7 @@ abstract class MembersInstance extends LPMBaseObject
 
     /**
      * Определяет, есть ли хотя бы один участник.
+     * @return bool
      */
     public function hasMembers()
     {

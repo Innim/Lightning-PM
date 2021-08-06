@@ -195,7 +195,7 @@ class PageConstructor
     public $_title    = '';
     public $_header   = '';
 
-    private $_openGraph = '';
+    private $_openGraph = null;
     private $_themeDir  = '';
     
     /**
@@ -253,6 +253,10 @@ class PageConstructor
         return SITE_URL . SCRIPTS_DIR . $file;
     }
     
+    /**
+     * Возвращает данные Open Graph.
+     * @return array Ассоциативный массив данных.
+     */
     public function getOpenGraph()
     {
         return $this->_openGraph;
