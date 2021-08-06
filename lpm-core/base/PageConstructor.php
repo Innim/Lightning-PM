@@ -41,11 +41,6 @@ class PageConstructor
         return Project::getAvailList($isArchive);
     }
 
-    public static function switchIsArchive()
-    {
-        return Project::switchIsArchive();
-    }
-
     public static function getIssuesList()
     {
         return Issue::getCurrentList();

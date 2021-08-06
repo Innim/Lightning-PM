@@ -162,8 +162,6 @@ class ProjectPage extends LPMPage
                 $this->saveIssue();
             } elseif ($_POST['actionType'] == 'editIssue' && isset($_POST['issueId'])) {
                 $this->saveIssue(true);
-            } elseif ($_POST['actionType'] == 'editIssueLabel') {
-                $this->saveLabel();
             }
         }
 
