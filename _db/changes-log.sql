@@ -326,4 +326,12 @@ CHANGE `instanceType` `instanceType` smallint(2) NOT NULL AFTER `userId`;
 
 -- v0.10.7
 
+CREATE TABLE `lpm_instance_targets` (
+    `instanceType` int(20) DEFAULT NULL COMMENT 'Тип экземпляра',
+    `instanceId` int(20) DEFAULT NULL COMMENT 'ID экземпляра',
+    `content` longtext COLLATE 'utf8_unicode_ci' DEFAULT NULL COMMENT 'Содержимое целей',
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Цели указанной сущности.';
+
+-- v0.10.8
+
 --NEXT

@@ -2191,3 +2191,60 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	box-sizing: border-box;
 	margin: 10px auto;
 }
+
+/**
+ * === sprint targets ===
+ */
+.scrum-board-target {
+	max-width: 48%;
+	margin-bottom: 12px;
+}
+
+.title-target {
+	margin: 8px 0 8px 0;
+	font-weight: 700;
+}
+
+.text-target p {
+	margin: 0;
+}
+
+.target-btn {
+	margin: 0;
+	padding: 0;
+	min-width: auto;
+	min-height: auto;
+	display: block;
+	font-size: 12px;
+	line-height: 12px;
+	text-decoration: underline;
+	color: #666666;
+	border: none;
+	background: transparent;
+}
+
+/* Модальное окно целей спринта */
+
+.modal-target-sprint .ui-dialog-titlebar {
+	color: #666666;
+}
+
+.modal-target-sprint .ui-dialog-titlebar-close {
+	display: none;
+}
+
+.input-target {
+	width: 100%;
+	max-width: 480px;
+	height: 160px;
+	resize: vertical;
+}
+
+.target-note {
+	font-size: 11px;
+	color: #999999;
+}
+
+/**
+ * === end sprint targets ===
+ */

@@ -385,4 +385,36 @@ class ProjectService extends LPMBaseService
 
         return $this->answer();
     }
+    
+    /**
+     * Добавляет цели спринта для текущего проекта.
+     * @param int $instanceId id проекта.
+     * @param array $target массив целий спринта.
+     */
+    public function addSprintTarget($instanceId, $target) {
+        $projectId = (int) $instanceId;
+        $targetText = (string) $target;
+    
+        try {
+            $project = Project::loadById($projectId);
+            $user = $this->getUser();
+            if (!$project || !$project->hasReadPermission($user)) {
+                return $this->error("Проект не существует или недостаточно прав");
+            }
+            
+            $result = Project::updateSprintTarget($projectId, $targetText);
+            if (!$result) {
+                return $this->error('Цели проекта не добавлены. Ошибка записи в БД.');
+            }
+    
+            $markdownText = HTMLHelper::getMarkdownText($targetText);
+            
+            $this->add2Answer('targetHTML', $markdownText);
+            $this->add2Answer('targetText', $targetText);
+        } catch ( Exception $e) {
+            return $this->exception($e);
+        }
+        
+        return $this->answer();
+    }
 }

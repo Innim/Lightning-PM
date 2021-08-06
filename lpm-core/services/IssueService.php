@@ -495,16 +495,25 @@ class IssueService extends LPMBaseService
         $projectId = (int)$projectId;
 
         try {
+            // проверим, что существует такой проект
+            if (!Project::loadById($projectId)) {
+                return $this->error('Нет такого проекта');
+            }
+            
             // прежде чем отправлять все задачи в архив, делаем snapshot доски
             ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
 
             if (!ScrumSticker::removeStickersForProject($projectId)) {
                 return $this->errorDBSave();
             }
+            
+            $currentNumSprint = ScrumStickerSnapshot::getLastSnapshotId($projectId) + 1;
+            
         } catch (\Exception $e) {
             return $this->exception($e);
         }
-    
+        
+        $this->add2Answer('numSprint', $currentNumSprint);
         return $this->answer();
     }
 

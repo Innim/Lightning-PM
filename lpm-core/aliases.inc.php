@@ -265,6 +265,15 @@ function lpm_print_table_scrum_board_issue_member(User $member)
 
 
 /**
+ * Распечатывает форму добавления/редактирования цели спринта для текущего проекта.
+ * @param $project
+ */
+function lpm_print_sprint_target_form($project)
+{
+    return PagePrinter::sprintTargetForm($project);
+}
+
+/**
 *   Возвращает текущую страницу
 */
 function lpm_get_current_page()
@@ -473,3 +482,4 @@ function lpm_check_delete_comment($authorId, $commentId)
 {
     return PageConstructor::checkDeleteComment($authorId, $commentId);
 }
+
