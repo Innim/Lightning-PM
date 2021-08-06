@@ -303,7 +303,7 @@ let issueForm = {
                     issueForm.setIssueBy({
                         name: Issue.getCompletionName(issue.name),
                         hours: issue.hours,
-                        desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
+                        desc: issue.desc,
                         priority: issue.priority,
                         completeDate: issue.getCompleteDateInput(),
                         type: issue.type,
