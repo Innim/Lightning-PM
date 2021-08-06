@@ -495,16 +495,25 @@ class IssueService extends LPMBaseService
         $projectId = (int)$projectId;
 
         try {
+            // проверим, что существует такой проект
+            if (!Project::loadById($projectId)) {
+                return $this->error('Нет такого проекта');
+            }
+            
             // прежде чем отправлять все задачи в архив, делаем snapshot доски
             ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
 
             if (!ScrumSticker::removeStickersForProject($projectId)) {
                 return $this->errorDBSave();
             }
+            
+            $currentNumSprint = ScrumStickerSnapshot::getLastSnapshotId($projectId) + 1;
+            
         } catch (\Exception $e) {
             return $this->exception($e);
         }
-    
+        
+        $this->add2Answer('numSprint', $currentNumSprint);
         return $this->answer();
     }
 
@@ -708,18 +717,24 @@ class IssueService extends LPMBaseService
         $obj = $issue->getClientObject();
         $members = $issue->getMembers();
         $testers = $issue->getTesters();
+        $masters = $issue->getMasters();
         $images = $issue->getImages();
-        $obj->members = array();
-        $obj->testers = array();
-        $obj->images = array();
+        $obj->members = [];
+        $obj->testers = [];
+        $obj->masters = [];
+        $obj->images = [];
         $obj->isOnBoard = $issue->isOnBoard();
 
         foreach ($members as $member) {
-            array_push($obj->members, $member->getClientObject());
+            $obj->members[] = $member->getClientObject();
         }
 
         foreach ($testers as $tester) {
-            array_push($obj->testers, $tester->getClientObject());
+            $obj->testers[] = $tester->getClientObject();
+        }
+
+        foreach ($masters as $master) {
+            $obj->masters[] = $tester->getClientObject();
         }
 
         foreach ($images as $image) {

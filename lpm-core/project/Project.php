@@ -22,12 +22,18 @@ class Project extends MembersInstance
     
     public static function loadList($where = null)
     {
-        return StreamObject::loadListDefault(
-            self::getDB(),
-            $where,
-            LPMTables::PROJECTS,
-            __CLASS__
-        );
+        $tables = [LPMTables::PROJECTS, LPMTables::INSTANCE_TARGETS];
+
+        $sql = "SELECT `projects`.*, `target`.`content` AS `sprintTarget` FROM `%1\$s` AS projects " .
+            "LEFT JOIN `%2\$s` AS target ON `target`.`instanceId` = `projects`.`id` " .
+            "AND `target`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' ";
+    
+        if (is_array($where)) {
+            $where = implode( ' AND `projects`.', $where );
+        }
+        $sql .= "WHERE `projects`." . $where;
+        
+        return StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
     }
 
     /**
@@ -269,6 +275,26 @@ class Project extends MembersInstance
     }
     
     /**
+     * Обновляет в БД цели спринта текущего scrum проекта.
+     * @param int $projectId индентификатор проекта.
+     * @param string $targetText текст цели спринта.
+     */
+    public static function updateSprintTarget($projectId, $targetText)
+    {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        
+        $text = $db->real_escape_string($targetText);
+        $text = str_replace('%', '%%', $text);
+        $instanceType = LPMInstanceTypes::PROJECT;
+        
+        $sql = "REPLACE `%s` (`instanceType`, `instanceId`, `content`) " .
+            "VALUES ('" . $instanceType . "', '" . $projectId . "', '" . $text . "')";
+        $result = $db->queryt($sql, LPMTables::INSTANCE_TARGETS);
+        
+        return $result;
+    }
+    
+    /**
      *
      * @var int
      */
@@ -309,6 +335,12 @@ class Project extends MembersInstance
      * @var Boolean|null
      */
     public $fixedInstance;
+    
+    /**
+     * Цели спринта проекта.
+     * @var string|null
+     */
+    public $sprintTarget;
 
     private $_importantIssuesCount = -1;
 
@@ -321,6 +353,12 @@ class Project extends MembersInstance
      * @var User
      */
     private $_master;
+    
+    /**
+     * Форматированный текст.
+     * @var string|null
+     */
+    private $_htmlText = null;
     
     public function __construct()
     {
@@ -479,6 +517,19 @@ class Project extends MembersInstance
         }
 
         return $this->_master;
+    }
+    
+    /**
+     * Возвращает форматированый текст для вставки в HTML код.
+     * @return string
+     */
+    public function getHTMLText()
+    {
+        if (empty($this->_htmlText)) {
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->sprintTarget);
+        }
+        
+        return $this->_htmlText;
     }
     
     protected function loadMembers()

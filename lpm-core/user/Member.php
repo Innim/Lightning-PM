@@ -55,12 +55,21 @@ class Member extends User
 
     public static function loadListByIssueForTest($issueId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId);
+        return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId, $onlyNotLocked);
     }
 
     public static function loadTesterForProject($projectId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId);
+        return self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $onlyNotLocked);
+    }
+
+    /**
+     * Загружает список мастеров, назначенных конкретной задаче.
+     * @return array<Member>
+     */
+    public static function loadMastersForIssue($issueId, $onlyNotLocked = false)
+    {
+        return self::loadListByInstance(LPMInstanceTypes::ISSUE_TO_MASTER, $issueId, $onlyNotLocked);
     }
 
     public static function hasIssueMember($issueId, $userId)

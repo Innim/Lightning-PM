@@ -15,15 +15,18 @@ class ScrumStickerSnapshot extends LPMBaseObject
     {
         $db = self::getDB();
         $projectId = (int) $projectId;
+        $tables = [LPMTables::SCRUM_SNAPSHOT_LIST, LPMTables::INSTANCE_TARGETS];
 
         // TODO: нужно ли ограничить как-то?
         // Выбираем (пока все) записи по переданному проекту
         $sql = <<<SQL
-        SELECT * FROM `%1\$s` WHERE `%1\$s`.`pid` = '${projectId}'
-        ORDER BY `%1\$s`.`created` DESC
+        SELECT snapshot.*, `target`.`content` AS `sprintTarget` FROM `%1\$s` AS snapshot
+        LEFT JOIN `%2\$s` AS target ON `target`.`instanceId` = `snapshot`.`id`
+        WHERE `snapshot`.`pid` = '${projectId}'
+        ORDER BY `snapshot`.`created` DESC
 SQL;
 
-        return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
+        return StreamObject::loadObjList($db, array_merge((array)$sql, $tables), __CLASS__);
     }
 
     /**
@@ -148,7 +151,7 @@ SQL;
             }
 
             $sid = $db->insert_id;
-
+            
             // добавляем всю необходимую информацию по снепшоте
             $sql = <<<SQL
                 INSERT INTO `%s` (`sid`, `added`, `issue_uid`, `issue_pid`, `issue_name`,
@@ -227,6 +230,14 @@ SQL;
                 // отменяем, т.к. на доске нет стикеров
                 $db->rollback();
             }
+    
+            // получаем id Snapshot, которого только что сохранили в БД
+            $snapshotId = self::getLastOwnSnapshotId();
+            // сохраняем в БД id Snapshot в таблице целий
+            $result = self::setSnapshotIdForTarget($projectId, $snapshotId);
+            if (!$result) {
+                throw new DBException($db, "Ошибка при сохранении целий снепшота");
+            }
         } catch (Exception $ex) {
             // что-то пошло не так -> отменяем все изменения
             $db->rollback();
@@ -257,7 +268,45 @@ SQL;
             return (int) $result['maxID'];
         }
     }
-
+    
+    /**
+     * Возвращает собственный id последнего снепшота в БД из таблицы снепшотов.
+     * @return int id снепшота.
+     * @throws Exception В случае, если произошла ошибка при запросе к БД.
+     */
+    public static function getLastOwnSnapshotId()
+    {
+        $db = self::getDB();
+        $sql = "SELECT MAX(`id`) AS id FROM `%s` ";
+        $query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST);
+        
+        if (!$query) {
+            throw new Exception("Ошибка доступа к базе при получении идентификатора снепшота");
+        }
+        $result = $query->fetch_assoc();
+        
+        return (int) $result['id'];
+    }
+    
+    /**
+     * Сохраняет id снепшота в таблице целей БД.
+     * @param int $projectId идентификатор проекта, для которого создается снепшот.
+     * @param int $snapshotId идентификатор снепшота без привязки к проекту.
+     */
+    public static function setSnapshotIdForTarget($projectId, $snapshotId) {
+        $snapshotType = LPMInstanceTypes::SNAPSHOT;
+        $projectType = LPMInstanceTypes::PROJECT;
+        
+        $db = self::getDB();
+        return $db->queryb([
+            'UPDATE' => LPMTables::INSTANCE_TARGETS,
+            'SET'    => ['instanceId' => $snapshotId,
+                        'instanceType' => $snapshotType],
+            'WHERE'  => ['instanceId' => $projectId,
+                        'instanceType' => $projectType],
+        ]);
+    }
+    
     /**
      * Идентификатор snapshot-а.
      * @var int
@@ -288,10 +337,20 @@ SQL;
      * @var
      */
     public $creatorId;
-
+    /**
+     * Цели спринта.
+     * @var
+     */
+    public $sprintTarget;
+    
     private $_creator;
     private $_stickers;
     private $_members;
+    /**
+     * Форматированный текст.
+     * @var string|null
+     */
+    private $_htmlText = null;
 
     public function __construct($id = 0)
     {
@@ -439,6 +498,19 @@ SQL;
             return ($sticker->issue_state == ScrumStickerState::TESTING ||
                     $sticker->issue_state == ScrumStickerState::DONE);
         });
+    }
+    
+    /**
+     * Возвращает форматированый текст для вставки в HTML код.
+     * @return string
+     */
+    public function getHTMLText()
+    {
+        if (empty($this->_htmlText)) {
+            $this->_htmlText = HTMLHelper::getMarkdownText($this->sprintTarget);
+        }
+        
+        return $this->_htmlText;
     }
 
     private function countSp($filterCallback = null, $getSpCallback = null)

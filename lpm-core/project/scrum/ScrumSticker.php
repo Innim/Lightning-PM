@@ -29,37 +29,36 @@ SQL;
             __CLASS__
         );
     }
-
+    
     public static function loadAllStickersList($userId)
     {
         $db = self::getDB();
-
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
-        $instanceType = LPMInstanceTypes::ISSUE;
-
+        $instanceType = implode(',', [LPMInstanceTypes::ISSUE, LPMInstanceTypes::ISSUE_FOR_TEST]);
+        
         $sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`, 
-			   'with_issue', `i`.*, `p`.`name` `projectName`, `p`.`uid` `projectUID` 
-		  FROM `%1\$s` `s` 
-    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
-    INNER JOIN `%3\$s` `m` ON `s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` = $instanceType
-    INNER JOIN `%4\$s` `p` ON `i`.`projectId` = `p`.`id`
-     	 WHERE `i`.`deleted` = 0 
-     	   AND `s`.`state` IN ($states)
-     	   AND `m`.`userId` = $userId
-     	   AND `p`.`isArchive` = 0
- 	  ORDER BY `i`.`priority` DESC
+		SELECT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`,
+			   'with_issue', `i`.*, `p`.`name` `projectName`, `p`.`uid` `projectUID`
+		FROM `%1\$s` `s`
+            INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
+            INNER JOIN `%3\$s` `m` ON `s`.`issueId` = `m`.`instanceId`
+            INNER JOIN `%4\$s` `p` ON `i`.`projectId` = `p`.`id`
+     	WHERE `i`.`deleted` = 0
+     	    AND `s`.`state` IN (${states})
+     	    AND `m`.`userId` = ${userId}
+     	    AND `m`.`instanceType` IN (${instanceType})
+     	    AND `p`.`isArchive` = 0
+ 	    ORDER BY `i`.`priority` DESC
 SQL;
-
+        
         return StreamObject::loadObjList(
             $db,
             [$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::MEMBERS, LPMTables::PROJECTS],
             __CLASS__
         );
     }
-
-
+    
     /**
      * Загружает стикер по идентификатору задачи
      * @param  int $issueId

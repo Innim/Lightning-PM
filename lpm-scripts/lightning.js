@@ -239,6 +239,9 @@ let srv = {
         getBranches: function (projectId, gitlabProjectId, onResult) {
             this.s._('getBranches');
         },
+        setSprintTarget: function (projectId, textTarget, onResult) {
+            this.s._('addSprintTarget');
+        },
     },
     projects: {
         s: new BaseService('ProjectsService'),
@@ -527,10 +530,5 @@ let parser = {
 $(document).ready(() => {
     $(window).load(() => {
         states.updateView();
-        if ($('#issueForm > div.validateError').html() != '') {
-            $('#issueForm > div.validateError').show();
-        }
-
-        issuePage.updateStat();
     });
 });

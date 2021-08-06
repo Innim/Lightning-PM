@@ -321,6 +321,19 @@ ADD `userId` bigint(19) NOT NULL COMMENT 'Идентификатор польз�
 
 -- v0.10.5
 
+ALTER TABLE `lpm_members`
+CHANGE `instanceType` `instanceType` smallint(2) NOT NULL AFTER `userId`;
+
+-- v0.10.7
+
+CREATE TABLE `lpm_instance_targets` (
+    `instanceType` int(20) DEFAULT NULL COMMENT 'Тип экземпляра',
+    `instanceId` int(20) DEFAULT NULL COMMENT 'ID экземпляра',
+    `content` longtext COLLATE 'utf8_unicode_ci' DEFAULT NULL COMMENT 'Содержимое целей',
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Цели указанной сущности.';
+
+-- v0.10.8
+
 CREATE TABLE `lpm_issue_linked` (
   `issueId` int(11) NOT NULL COMMENT 'ID основной задачи',
   `linkedIssueId` int(11) NOT NULL COMMENT 'ID связанной задачи',

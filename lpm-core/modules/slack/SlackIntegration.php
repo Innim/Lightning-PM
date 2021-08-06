@@ -86,10 +86,16 @@ class SlackIntegration
     public function notifyIssuePassTest(Issue $issue)
     {
         $project = $issue->getProject();
-        $master = $project->getMaster();
+        $masters = $issue->getMasters();
+        if (empty($masters)) {
+            $projectMaster = $project->getMaster();
+            if ($projectMaster != null) {
+                $masters = [$projectMaster];
+            }
+        }
 
         $text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *прошла тестирование*';
-        $text = $this->addMentionsByUsers($text, $master !== null ? [$master] : null);
+        $text = $this->addMentionsByUsers($text, $masters);
 
         $this->postMessageForIssue($issue, $text);
     }

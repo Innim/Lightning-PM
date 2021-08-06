@@ -725,6 +725,7 @@ WHERE;
 
     private $_images = null;
     private $_testers = null;
+    private $_masters = null;
 
     private $_htmlDesc = null;
 
@@ -1010,30 +1011,26 @@ WHERE;
         if ($this->_members === null) {
             return Member::hasIssueMember($this->id, $userId);
         } else {
-            $finded = false;
-            foreach ($this->_members as $member) {
-                if ($userId === $member->userId) {
-                    $finded = true;
-                    break;
-                }
-            }
-            return $finded;
+            return $this->hasUserIn($this->_members, $userId);
         }
     }
 
     public function isTester($userId)
     {
-        $testers = $this->getTesters();
-        $count = count($testers);
-        if ($count > 0) {
-            foreach ($testers as $tester) {
-                if ($tester->userId == $userId) {
-                    return true;
-                }
-            }
-        }
+        return $this->hasUserIn($this->getTesters(), $userId);
+    }
 
-        return false;
+    /**
+     * Определяет, является ли указанный пользователь мастером задачи.
+     * @param int $userId Идентификатор пользователя.
+     * @param bool $includingProject    Если `true`, будет выполнена проверка не только среди
+     *                                  мастеров задачи, но и проверен мастер проекта.
+     * @return bool
+     */
+    public function isMaster($userId, $includingProject = false)
+    {
+        return $this->hasUserIn($this->getMasters(), $userId) ||
+            $includingProject && $this->getProject()->masterId == $userId;
     }
     
     /**
@@ -1067,6 +1064,28 @@ WHERE;
     public function hasCompleteDate()
     {
         return !empty($this->completeDate);
+    }
+    
+    /**
+     * Возвращает количество дней до даты завершения задачи.
+     *
+     * Если дата завершения не задана - вернется 0.
+     * Если дата завершение уже прошло - будет отрицательное число.
+     *
+     * @return float Количество дней.
+     */
+    public function daysTillComplete()
+    {
+        if (!$this->hasCompleteDate()) {
+            return 0;
+        }
+
+        // Берем не текущую дату, а начало дня,
+        // чтобы сегодняшние задачи не считались просроченными
+        $today = DateTimeUtils::dayStart();
+
+        $diff = $this->completeDate - $today;
+        return $diff / 86400;
     }
     
     public function getCompletedDate()
@@ -1148,20 +1167,43 @@ WHERE;
 
     public function getTesterIds()
     {
-        if ($this->_testers == null && !$this->loadTesters()) {
-            return array();
-        }
-
-        $arr = array();
-        foreach ($this->_testers as $tester) {
-            array_push($arr, $tester->userId);
-        }
-        return $arr;
+        return $this->getMemberIdsBy($this->getTesters());
     }
 
     public function getTesterIdsStr()
     {
         return implode(',', $this->getTesterIds());
+    }
+
+    /**
+     * Возвращает список мастеров, назначенных этой задаче.
+     *
+     * Мастер проекта игнорируется.
+     * @return array<Member>
+     */
+    public function getMasters()
+    {
+        return $this->_masters == null && !$this->loadMasters() ? [] : $this->_masters;
+    }
+
+    /**
+     * Возвращает список идентификаторов мастеров, назначенных этой задаче.
+     *
+     * Мастер проекта игнорируется.
+     * @return array<int>
+     */
+    public function getMasterIds()
+    {
+        return $this->getMemberIdsBy($this->getMasters());
+    }
+
+    /**
+     * Возвращает строку идентификаторв мастеров, соеденных через запятую.
+     * @return string
+     */
+    public function getMasterIdsStr()
+    {
+        return implode(',', $this->getMasterIds());
     }
     
     public function getMembersSp()
@@ -1188,7 +1230,6 @@ WHERE;
         return true;
     }
 
-
     protected function loadTesters()
     {
         $this->_testers = Member::loadListByIssueForTest($this->id);
@@ -1196,6 +1237,20 @@ WHERE;
             throw new Exception('Ошибка при загрузке списка тестеров задачи');
         }
         return $this->_testers;
+    }
+
+    /**
+     * Загружается список мастеров для задачи.
+     * @return array<Member>
+     */
+    protected function loadMasters()
+    {
+        $this->_masters = Member::loadMastersForIssue($this->id);
+        if ($this->_masters === false) {
+            throw new Exception('Ошибка при загрузке списка мастеров задачи');
+        }
+
+        return $this->_masters;
     }
 
     /**
@@ -1208,5 +1263,26 @@ WHERE;
     public function getVideoLinks()
     {
         return ParseTextHelper::parseVideoLinks($this->getDesc());
+    }
+
+    private function hasUserIn($list, $userId)
+    {
+        foreach ($list as $user) {
+            if ($user->userId == $userId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function getMemberIdsBy($list)
+    {
+        $arr = [];
+        foreach ($list as $user) {
+            $arr[] = $user->userId;
+        }
+
+        return $arr;
     }
 }
