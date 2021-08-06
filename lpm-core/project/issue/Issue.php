@@ -110,11 +110,10 @@ SQL;
      */
     public static function loadListByProject(
         $projectId,
-        $issueStatus,
+        $issueStatus = null,
         $fromCompletedDate = null,
         $toCompletedDate = null
     ) {
-        //if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
         $where = "`i`.`projectId` = '" . $projectId . "'";
             
         $args = '';
