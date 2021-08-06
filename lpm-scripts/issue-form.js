@@ -82,7 +82,6 @@ let issueForm = {
                 membersSp: getArrVal("membersSp"),
                 testerIds: getArrVal("testers"),
                 masterIds: getArrVal("masters"),
-                parentId: getVal("parentId"),
                 issueId: getVal("issueId"),
                 imagesInfo: issueForm.getImagesFromPage(),
                 isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
@@ -117,7 +116,6 @@ let issueForm = {
             membersSp: data.membersSp,
             testerIds: data.testers,
             masterIds: data.masters,
-            parentId: data.parentId,
             issueId: isEdit ? data.issueId : '',
             newImagesUrls: data.imgUrls,
             imagesInfo: issueForm.getImagesFromPage(),
@@ -216,8 +214,6 @@ let issueForm = {
             $("#issueForm form li a[name=imgbyUrl]").hide();
         }
 
-        // родитель
-        $("#issueForm form input[name=parentId]").val(value.parentId);
         // идентификатор задачи
         if (isEdit)
             $("#issueForm form input[name=issueId]").val(value.issueId);
@@ -267,7 +263,6 @@ let issueForm = {
                         membersSp: issue.getMembersSp(),
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
-                        parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
@@ -308,7 +303,7 @@ let issueForm = {
                     issueForm.setIssueBy({
                         name: Issue.getCompletionName(issue.name),
                         hours: issue.hours,
-                        desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
+                        desc: issue.desc,
                         priority: issue.priority,
                         completeDate: issue.getCompleteDateInput(),
                         type: issue.type,
@@ -317,7 +312,6 @@ let issueForm = {
                         memberIds: issue.getMemberIds(),
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
-                        parentId: issue.parentId,
                         issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,

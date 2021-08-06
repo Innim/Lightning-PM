@@ -162,8 +162,6 @@ class ProjectPage extends LPMPage
                 $this->saveIssue();
             } elseif ($_POST['actionType'] == 'editIssue' && isset($_POST['issueId'])) {
                 $this->saveIssue(true);
-            } elseif ($_POST['actionType'] == 'editIssueLabel') {
-                $this->saveLabel();
             }
         }
 
@@ -523,6 +521,7 @@ class ProjectPage extends LPMPage
                                     "`completeDate` = VALUES( `completeDate` ), " .
                                     "`priority` = VALUES( `priority` )";
 
+                                    
             if (!$db->queryt($sql, LPMTables::ISSUES)) {
                 $engine->addError('Ошибка записи в базу');
             } else {
@@ -533,14 +532,7 @@ class ProjectPage extends LPMPage
                     if ($baseId > 0) {
                         $baseIssue = Issue::loadByIdInProject($this->_project->id, $baseId);
                         if ($baseIssue != null) {
-                            $textComment = "Задача по доделкам: " .
-                                Issue::getConstURLBy($this->_project->uid, $idInProject);
-                            Comment::add(
-                                LPMInstanceTypes::ISSUE,
-                                $baseIssue->id,
-                                $engine->getAuth()->getUserId(),
-                                $textComment
-                            );
+                            IssueLinked::create($baseIssue->id, $issueId, DateTimeUtils::$currentDate);
                         }
                     }
                 }

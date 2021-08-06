@@ -18,7 +18,7 @@ $project = $issue->getProject();
         <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
     </div>
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-    <article id="issueInfo" class="container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
+    <article id="issueInfo" class="issue-info container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
         data-labels="<?=implode(',', $issue->getLabelNames());?>">
         <h3>
@@ -128,12 +128,29 @@ $project = $issue->getProject();
             </div>
             <?php endif; ?>
         </div>
+        <?php
+            $linkedIssues = $issue->getLinkedIssues();
+            if (!empty($linkedIssues)):
+        ?>
+        <div id="linkedIssues" class="linked-issues">
+            <h5>Связанные задачи</h5>
+            <?php foreach ($linkedIssues as $item): ?>
+            <div class="linked-issue-item">
+                <a href="<?=$item->getURL4View();?>">
+                    <?php if ($item->projectId != $issue->projectId):?>
+                    [<?=$item->getProject()->name;?>]
+                    <?php endif;?>
+                    <?=$item->getIdInProject();?>. <?=$item->getName();?>
+                </a>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif;?>
         <p class="buttons-bar <? switch($issue->status): 
     case 0: ?>active-issue<?break;?> 
     <?case 1: ?>verify-issue<?break;?> 
     <?case 2: ?>completed-issue<?break;?>
     <?endswitch;?>">
-            <input type="hidden" name="parentId" value="<?=$issue->parentId;?>" />
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
             <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true)): ?>

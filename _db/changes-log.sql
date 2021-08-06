@@ -335,4 +335,13 @@ CREATE TABLE `lpm_instance_targets` (
 
 -- v0.10.8
 
+CREATE TABLE `lpm_issue_linked` (
+  `issueId` int(11) NOT NULL COMMENT 'ID основной задачи',
+  `linkedIssueId` int(11) NOT NULL COMMENT 'ID связанной задачи',
+  `created` datetime NOT NULL COMMENT 'Дата создания связи',
+  PRIMARY KEY (`issueId`,`linkedIssueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Связанные задачи';
+
+ALTER TABLE `lpm_issues` DROP `parentId`;
+
 --NEXT

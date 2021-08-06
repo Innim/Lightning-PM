@@ -1034,7 +1034,7 @@ ul.panel-submenu li {
 }
 
 /* панелька с информацией */
-.info-list {
+.info-list, .issue-info .linked-issues {
 	padding-left: 40px;
 }
 .info-list > .info-list-item {
@@ -1354,6 +1354,12 @@ table.issues-list tr.active-issue.tester {
 }
 #issueView .info-list .issue-completed-date-row {
 	display: none;
+}
+.linked-issues {
+	font-size: smaller;
+}
+.linked-issues h5 {
+	margin: 10px 0 2px;
 }
 #issueView .buttons-bar.completed-issue button.complete-btn {
 	display: none;

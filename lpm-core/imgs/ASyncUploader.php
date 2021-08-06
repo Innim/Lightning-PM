@@ -1,4 +1,5 @@
 <?php
+// XXX: сделать чтобы работал или выпилить
 class ASyncUploader
 {
     private $_success = true;

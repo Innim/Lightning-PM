@@ -52,7 +52,6 @@ CREATE TABLE `lpm_issues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `projectId` int(11) NOT NULL,
   `idInProject` int(11) NOT NULL,
-  `parentId` int(11) NOT NULL DEFAULT '0' COMMENT 'идентификатор родительской задачи',
   `name` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
   `hours` decimal(10,1) NOT NULL,
   `desc` text CHARACTER SET utf8mb4 NOT NULL,
@@ -105,6 +104,13 @@ CREATE TABLE `lpm_issue_labels` (
   KEY `projectId` (`projectId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Метки для задач';
 
+DROP TABLE IF EXISTS `lpm_issue_linked`;
+CREATE TABLE `lpm_issue_linked` (
+  `issueId` int(11) NOT NULL COMMENT 'ID основной задачи',
+  `linkedIssueId` int(11) NOT NULL COMMENT 'ID связанной задачи',
+  `created` datetime NOT NULL COMMENT 'Дата создания связи',
+  PRIMARY KEY (`issueId`,`linkedIssueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Связанные задачи';
 
 DROP TABLE IF EXISTS `lpm_issue_member_info`;
 CREATE TABLE `lpm_issue_member_info` (

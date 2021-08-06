@@ -639,7 +639,7 @@ function showIssue(issueId) {
     );
 };
 
-issuePage.showAddForm = function (type, parentId) {
+issuePage.showAddForm = function (type) {
     window.location.hash = 'add-issue';
     states.updateView();
 

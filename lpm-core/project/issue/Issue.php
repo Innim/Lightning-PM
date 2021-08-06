@@ -110,11 +110,10 @@ SQL;
      */
     public static function loadListByProject(
         $projectId,
-        $issueStatus,
+        $issueStatus = null,
         $fromCompletedDate = null,
         $toCompletedDate = null
     ) {
-        //if (null === $issueStatus) //$issueStatus = Issue::STATUS_IN_WORK;
         $where = "`i`.`projectId` = '" . $projectId . "'";
             
         $args = '';
@@ -199,6 +198,23 @@ WHERE;
         }
 
         return self::$_listByUser[$memberId];
+    }
+
+    /**
+     * Загружает список задач, связанных с указанной.
+     * @param int $issueId Идентификатор задачи.
+     * @return array<Issue>
+     */
+    public static function getListLinkedWith($issueId)
+    {
+        $where = <<<SQL
+(
+    (`l`.`issueId` = $issueId AND `l`.`linkedIssueId` = `i`.`id`) 
+    OR
+    (`l`.`issueId` = `i`.`id` AND `l`.`linkedIssueId` = $issueId)
+)
+SQL;
+        return self::loadList($where, '', ['l' => LPMTables::ISSUE_LINKED]);
     }
 
     public static function getCurrentList()
@@ -406,7 +422,7 @@ WHERE;
     /**
      * Возвращает список меток по имени.
      * @param $issueName Имя задачи.
-     * @return array{string} Список меток в указанном имени.
+     * @return array<string> Список меток в указанном имени.
      */
     public static function getLabelsByName($issueName)
     {
@@ -702,7 +718,6 @@ WHERE;
     const DESC_MAX_LEN = 60000;
     
     public $id            =  0;
-    public $parentId      =  0;
     public $projectId     =  0;
     public $projectName  = ''; /*для загрузки задач по неск-им проектам*/
     public $idInProject   =  0;
@@ -724,17 +739,13 @@ WHERE;
     public $status        = -1;
     public $commentsCount = 0;
 
-    private $_images = null;
-    private $_testers = null;
-    private $_masters = null;
-
-    private $_htmlDesc = null;
-
     /**
      *
      * @var User
      */
     public $author;
+
+
     /**
      * Проект, к которому относится задача
      * @var Project
@@ -746,7 +757,13 @@ WHERE;
      */
     private $_sticker = false;
     
-    //public $baseURL = '';
+    private $_images = null;
+    private $_testers = null;
+    private $_masters = null;
+
+    private $_linkedIssues = null;
+
+    private $_htmlDesc = null;
     
     public function __construct($id = 0)
     {
@@ -756,7 +773,6 @@ WHERE;
         
         $this->_typeConverter->addFloatVars(
             'id',
-            'parentId',
             'authorId',
             'type',
             'status',
@@ -769,7 +785,6 @@ WHERE;
         
         $this->addClientFields(
             'id',
-            'parentId',
             'idInProject',
             'name',
             'desc',
@@ -1160,6 +1175,29 @@ WHERE;
         return $res;
     }
 
+    /**
+     * @return array<{
+     *  type:string = youtube|video,
+     *  url:string
+     * ]>
+     * @see ParseTextHelper::parseVideoLinks()
+     */
+    public function getVideoLinks()
+    {
+        return ParseTextHelper::parseVideoLinks($this->getDesc());
+    }
+
+    /**
+     * Возвращает список связанных задач.
+     *
+     * Если данных о связанных задачах нет - они будут загружены из БД.
+     * @return array<Issue>
+     */
+    public function getLinkedIssues()
+    {
+        return  $this->_linkedIssues == null ? $this->loadLinkedIssues() : $this->_linkedIssues;
+    }
+
     public function getTesters()
     {
         if ($this->_testers == null && !$this->loadTesters()) {
@@ -1256,16 +1294,15 @@ WHERE;
         return $this->_masters;
     }
 
-    /**
-     * @return array<{
-     *  type:string = youtube|video,
-     *  url:string
-     * ]>
-     * @see ParseTextHelper::parseVideoLinks()
-     */
-    public function getVideoLinks()
+    private function loadLinkedIssues()
     {
-        return ParseTextHelper::parseVideoLinks($this->getDesc());
+        $list = Issue::getListLinkedWith($this->id);
+        if ($list === false) {
+            throw new Exception('Ошибка при загрузке связанных задач');
+        }
+
+        $this->_linkedIssues = $list;
+        return $list;
     }
 
     private function hasUserIn($list, $userId)
