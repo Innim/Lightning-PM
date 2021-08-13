@@ -12,7 +12,7 @@
         <button class="target-btn" title="Задать цели спринта">Задать цели спринта</button>
         <p class="title-target hidden"><i>Цели спринта:</i></p>
         <div class="text-target">
-            <?//=$project->getHTMLText();?>
+            <?=$project->getHTMLText();?>
         </div>
     </div>
 
@@ -26,7 +26,7 @@
 
     <?php
         lpm_print_table_scrum_board($stickers, false, true);
-        // lpm_print_sprint_target_form($project);
+        lpm_print_sprint_target_form($project);
     ?>
 </article>
 
