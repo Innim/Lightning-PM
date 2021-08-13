@@ -359,6 +359,16 @@ class Project extends MembersInstance
         parent::__construct();
         $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId', 'gitlabGroupId');
         $this->_typeConverter->addBoolVars('scrum', 'fixedInstance');
+
+        $this->addClientFields('id', 'uid', 'name', 'desc', 'scrum');
+    }
+
+    public function getClientObject($addfields = null)
+    {
+        $obj = parent::getClientObject($addfields);
+        $obj->url = $this->getUrl();
+
+        return $obj;
     }
     
     public function getID()
