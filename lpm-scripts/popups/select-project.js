@@ -9,6 +9,7 @@ const selectProject = {
     currentIssueId: null,
     currentOnSuccess: null,
     currentModeClass: null,
+    currentOnProjectChanged: null,
     init: function () {
         const $el = $("#selectProjectPopup");
         this.element = $el;
@@ -33,8 +34,13 @@ const selectProject = {
                 ]
             }
         );
+        
+        const $selectProject = $("#projectField", $el);
+        $selectProject.on('change', () => {
+            if (selectProject.currentOnProjectChanged) selectProject.currentOnProjectChanged($selectProject.val());
+        });
     },
-    show: function (projectId, issueId, onSuccess, mode) {
+    show: function (projectId, issueId, onSuccess, mode, onProjectChanged) {
         const $el = this.element;
         if (mode) {
             this.currentModeClass = mode + '-mode';
@@ -44,6 +50,7 @@ const selectProject = {
         this.currentProjectId = projectId;
         this.currentIssueId = issueId;
         this.currentOnSuccess = onSuccess;
+        this.currentOnProjectChanged = onProjectChanged;
 
         this.loadProjects((list) => {
             $el.dialog('open');
@@ -54,20 +61,24 @@ const selectProject = {
         this.currentProjectId = null;
         this.currentIssueId = null;
         this.currentOnSuccess = null;
+        this.currentOnProjectChanged = null;
 
         const $el = this.element;
-        if (this.currentModeClass) $el.removeClass(this.currentModeClass);
+        if (this.currentModeClass) {
+            $el.removeClass(this.currentModeClass);
+            this.currentModeClass = null;
+        }
         $("#projectField", $el).empty();
         $el.dialog('close');
     },
     save: function () {
         const $el = this.element;
-        const targeteProjectId = $("#projectField", $el).val();
+        const targetProjectId = $("#projectField", $el).val();
 
         const onSuccess = this.currentOnSuccess;
         this.close();
 
-        onSuccess(this.projects.find(obj => obj.id == targeteProjectId));
+        onSuccess(this.projects.find(obj => obj.id == targetProjectId));
     },
     loadProjects: function (onSuccess) {
         if (this.projects == null)  {
@@ -100,5 +111,6 @@ const selectProject = {
         });
 
         $selectProject.val(this.currentProjectId);
+        if (selectProject.currentOnProjectChanged) selectProject.currentOnProjectChanged($selectProject.val());
     },
 }
