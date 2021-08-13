@@ -230,22 +230,21 @@ let issueForm = {
 
         issueFormLabels.update();
     },
-    handleAddIssueByState: function (issueIdInProject) {
+    handleAddIssueByState: function (issueId) {
         if (issueForm.restoreInput(false)) return;
 
-        issueIdInProject = parseInt(issueIdInProject);
+        issueId = parseInt(issueId);
         const projectId = parseInt($('#issueProjectID').val());
 
-        if (issueIdInProject <= 0 || projectId <= 0)
+        if (issueId <= 0 || projectId <= 0)
             return;
 
         // показываем прелоадер
         preloader.show();
 
         // Пробуем загрузить данные задачи
-        srv.issue.loadByIdInProject(
-            issueIdInProject,
-            projectId,
+        srv.issue.load(
+            issueId,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();

@@ -263,6 +263,13 @@ const issuePage = {
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
+    copyIssue: () => {
+        const issueId = issuePage.getIssueId();
+        selectProject.show(issuePage.projectId, issueId, (targetProject) => {
+            const url = targetProject.url + '#copy-issue:' + issueId;
+            window.open(url, '_blank');
+        });
+    },
 };
 
 issuePage.loadMembers = function (handler) {
