@@ -180,6 +180,7 @@ class PageConstructor
     }
 
     private static $_usingScripts = [
+//        'libs/bootstrap.bundle.min',
         'libs/jquery-1.12.4.min',
         'libs/jquery-ui-1.12.1.min',
         'libs/jquery.form',

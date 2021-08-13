@@ -198,8 +198,8 @@ $project = $issue->getProject();
 
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <p class="buttons-bar">
-                <button type="submit">Отправить</button>
-                <button type="reset" onclick="comments.hideCommentForm();">Отмена</button>
+                <button class="btn btn-primary" type="submit">Отправить</button>
+                <button class="btn btn-secondary" type="reset" onclick="comments.hideCommentForm();">Отмена</button>
             </p>
         </form>
         <section class="comments-list">
