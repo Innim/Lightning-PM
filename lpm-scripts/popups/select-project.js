@@ -8,6 +8,7 @@ const selectProject = {
     currentProjectId: null,
     currentIssueId: null,
     currentOnSuccess: null,
+    currentModeClass: null,
     init: function () {
         const $el = $("#selectProjectPopup");
         this.element = $el;
@@ -33,8 +34,12 @@ const selectProject = {
             }
         );
     },
-    show: function (projectId, issueId, onSuccess) {
+    show: function (projectId, issueId, onSuccess, mode) {
         const $el = this.element;
+        if (mode) {
+            this.currentModeClass = mode + '-mode';
+            $el.addClass(this.currentModeClass);
+        }
 
         this.currentProjectId = projectId;
         this.currentIssueId = issueId;
@@ -51,6 +56,7 @@ const selectProject = {
         this.currentOnSuccess = null;
 
         const $el = this.element;
+        if (this.currentModeClass) $el.removeClass(this.currentModeClass);
         $("#projectField", $el).empty();
         $el.dialog('close');
     },

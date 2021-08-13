@@ -264,13 +264,16 @@ const issuePage = {
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
     copyIssue: () => issuePage.createIssueBy('copy-issue'),
-    finishedIssue: () => issuePage.createIssueBy('finished-issue'),
-    createIssueBy: function (hash) {
+    finishedIssue: () => issuePage.createIssueBy(
+        (issueId) => 'finished-issue:' + issueId + ':' + $('#targetKindField', selectProject.element).val(), 
+        'finished'
+    ),
+    createIssueBy: function (hash, mode) {
         const issueId = this.getIssueId();
         selectProject.show(this.projectId, issueId, (targetProject) => {
-            const url = targetProject.url + '#' + hash + ':' + issueId;
+            const url = targetProject.url + '#' + (typeof hash === 'function' ? hash(issueId) : hash + ':' + issueId);
             window.open(url, '_blank');
-        });
+        }, mode);
     },
 };
 

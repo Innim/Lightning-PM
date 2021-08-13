@@ -252,9 +252,16 @@ HTML;
     </p>
 </article>
 
-<article id="selectProjectPopup" title="Выберите проект" style="display: none;">
-    <p>
+<article id="selectProjectPopup" title="Выберите проект" class="select-project-popup" style="display: none;">
+    <div class="select-project-row">
         <label for="projectField">Создать задачу в </label>
         <select id="projectField"></select>
-    </p>
+    </div>
+    <div id="targetKind" class="select-project-row target-kind-row">
+        <label for="targetKindField">Задача по</label>
+        <select id="targetKindField">
+            <option value="apply">реализации в другом проекте</option>
+            <option value="finished">доделкам</option>
+        </select>
+    </div>
 </article>

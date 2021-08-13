@@ -273,7 +273,7 @@ let issueForm = {
             }
         );
     },
-    handleAddFinishedIssueByState: function (issueId) {
+    handleAddFinishedIssueByState: function (issueId, kind) {
         if (issueForm.restoreInput(false)) return;
 
         issueId = parseInt(issueId);
@@ -295,12 +295,26 @@ let issueForm = {
                 // Если создаётся задача по доделкам
                 if (res.success) {
                     const issue = new Issue(res.issue);
-                    // var url = $("#projectView").data('projectUrl');
+
+                    let name = issue.name;
+                    let desc = issue.desc;
+
+                    switch (kind) {
+                        case 'apply':
+                            desc = `Сделана в рамках другой [задачи](${issue.url}). 
+                            
+Нужно реализовать в проекте.
+                            `
+                            break;
+                        case 'finished':
+                        default:
+                            name = Issue.getCompletionName(issue.name);
+                    }
 
                     issueForm.setIssueBy({
-                        name: Issue.getCompletionName(issue.name),
+                        name: name,
                         hours: issue.hours,
-                        desc: issue.desc,
+                        desc: desc,
                         priority: issue.priority,
                         completeDate: issue.getCompleteDateInput(),
                         type: issue.type,
