@@ -190,6 +190,7 @@ class PageConstructor
         'libs/highlight.pack',
         'js-options.php$' ,
         'libs/clipboard.min',
+        'libs/lodash.min',
         'lightning'
     ];
     
