@@ -135,9 +135,9 @@ $project = $issue->getProject();
             <h5>Связанные задачи</h5>
             <?php foreach ($linkedIssues as $item): ?>
             <div class="linked-issue-item">
-                <a href="<?=$item->getURL4View();?>">
+                <a href="<?=$item->getConstURL();?>">
                     <?php if ($item->projectId != $issue->projectId):?>
-                    [<?=$item->getProject()->name;?>]
+                    <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
                     <?php endif;?>
                     <?=$item->getIdInProject();?>. <?=$item->getName();?>
                 </a>
@@ -163,8 +163,7 @@ $project = $issue->getProject();
         <a href="#" onclick="issuePage.copyIssue()" class="copy-issue-link">
             <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
         </a>
-        <a href="<?=$issue->getProjectUrl() . '#finished-issue:' . $issue->idInProject;?>" target="_blank"
-            class="finished-issue-link">
+        <a href="#" onclick="issuePage.finishedIssue()" class="finished-issue-link">
             <i class="fa fa-plus-square" aria-hidden="true" title="Добавить задачу по доделкам"></i>
         </a>
     </article>

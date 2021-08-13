@@ -532,10 +532,10 @@ class ProjectPage extends LPMPage
                 if (!$editMode) {
                     $issueId = $db->insert_id;
 
-                    $baseId = (int)$_POST['baseIdInProject'];
+                    $baseId = (int)$_POST['baseId'];
                     if ($baseId > 0) {
-                        $baseIssue = Issue::loadByIdInProject($this->_project->id, $baseId);
-                        if ($baseIssue != null) {
+                        $baseIssue = Issue::load($baseId);
+                        if ($baseIssue != null && $baseIssue->checkViewPermit($userId)) {
                             IssueLinked::create($baseIssue->id, $issueId, DateTimeUtils::$currentDate);
                         }
                     }

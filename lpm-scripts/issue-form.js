@@ -219,7 +219,7 @@ let issueForm = {
             $("#issueForm form input[name=issueId]").val(value.issueId);
         // действие меняем на редактирование
         $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
-        $("#issueForm form input[name=baseIdInProject]").val(value.baseIdInProject);
+        $("#issueForm form input[name=baseId]").val(value.baseId);
         // меняем заголовок кнопки сохранения
         $("#issueForm form .save-line button[type=submit]").text("Сохранить");
 
@@ -262,10 +262,9 @@ let issueForm = {
                         membersSp: issue.getMembersSp(),
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
-                        issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseIdInProject: 0
+                        baseId: 0
                     });
 
                 } else {
@@ -274,22 +273,21 @@ let issueForm = {
             }
         );
     },
-    handleAddFinishedIssueByState: function (issueIdInProject) {
+    handleAddFinishedIssueByState: function (issueId) {
         if (issueForm.restoreInput(false)) return;
 
-        issueIdInProject = parseInt(issueIdInProject);
-        var projectId = parseInt($('#issueProjectID').val());
+        issueId = parseInt(issueId);
+        const projectId = parseInt($('#issueProjectID').val());
 
-        if (issueIdInProject <= 0 || projectId <= 0)
+        if (issueId <= 0 || projectId <= 0)
             return;
 
         // показываем прелоадер
         preloader.show();
 
         // Пробуем загрузить данные задачи
-        srv.issue.loadByIdInProject(
-            issueIdInProject,
-            projectId,
+        srv.issue.load(
+            issueId,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();
@@ -311,10 +309,9 @@ let issueForm = {
                         memberIds: issue.getMemberIds(),
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
-                        issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseIdInProject: issueIdInProject
+                        baseId: issue.id,
                     });
                 } else {
                     srv.err(res);
