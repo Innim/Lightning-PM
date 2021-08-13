@@ -1046,6 +1046,10 @@ ul.panel-submenu li {
 	clear: both;
 }
 
+.info-list > .info-list-item.issue-complete-date-row.no-date {
+	display: none;
+}
+
 /* список пользователей */
 table.users-list thead th:first-child,
 table.users-list tbody td:first-child {
@@ -1341,6 +1345,9 @@ table.issues-list tr.active-issue.tester {
 }
 .linked-issues h5 {
 	margin: 10px 0 2px;
+}
+.linked-issues .linked-issue-project {
+	font-weight: bold;
 }
 #issueView .buttons-bar.completed-issue button.complete-btn {
 	display: none;

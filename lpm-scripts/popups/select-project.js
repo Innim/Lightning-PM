@@ -1,0 +1,98 @@
+$(function () {
+    selectProject.init();
+});
+
+const selectProject = {
+    element: null,
+    projects: null,
+    currentProjectId: null,
+    currentIssueId: null,
+    currentOnSuccess: null,
+    init: function () {
+        const $el = $("#selectProjectPopup");
+        this.element = $el;
+        $el.dialog(
+            {
+                autoOpen: false,
+                modal: true,
+                resizable: false,
+                buttons: [
+                    {
+                        text: "Продолжить",
+                        click: function () {
+                            selectProject.save();
+                        }
+                    },
+                    {
+                        text: "Отмена",
+                        click: function () {
+                            selectProject.close();
+                        }
+                    }
+                ]
+            }
+        );
+    },
+    show: function (projectId, issueId, onSuccess) {
+        const $el = this.element;
+
+        this.currentProjectId = projectId;
+        this.currentIssueId = issueId;
+        this.currentOnSuccess = onSuccess;
+
+        this.loadProjects((list) => {
+            $el.dialog('open');
+            this.setProjects(list);
+        });
+    },
+    close: function () {
+        this.currentProjectId = null;
+        this.currentIssueId = null;
+        this.currentOnSuccess = null;
+
+        const $el = this.element;
+        $("#projectField", $el).empty();
+        $el.dialog('close');
+    },
+    save: function () {
+        const $el = this.element;
+        const targeteProjectId = $("#projectField", $el).val();
+
+        const onSuccess = this.currentOnSuccess;
+        this.close();
+
+        onSuccess(this.projects.find(obj => obj.id == targeteProjectId));
+    },
+    loadProjects: function (onSuccess) {
+        if (this.projects == null)  {
+            preloader.show();
+            
+            srv.projects.getList((res) => {
+                preloader.hide();
+                if (res.success) {
+                    this.projects = res.list;
+                    onSuccess(res.list);
+                } else {
+                    this.close();
+                    showError(res.error ?? 'Не удалось получить список проектов');
+                }
+            });
+        } else {
+            onSuccess(this.projects);
+        }
+    },
+    setProjects: function (list) {
+        const $el = this.element;
+        const $selectProject = $('#projectField', $el);
+        $selectProject.empty();
+
+        if (list.length == 0) return;
+
+        list.forEach(item => {
+            $selectProject.append($("<option></option>")
+                .attr("value", item.id).text(item.name));
+        });
+
+        $selectProject.val(this.currentProjectId);
+    },
+}

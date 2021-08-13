@@ -4,6 +4,26 @@ require_once(dirname(__FILE__) . '/../init.inc.php');
 
 class ProjectsService extends LPMBaseService
 {
+    /**
+     * Возвращает список проектов.
+     *
+     * Будут возвращены только нехаархивированные проекты,
+     * к которым у пользователя есть доступ.
+     *
+     * Порядок соответствует порядку в общем списке проектов.
+     */
+    public function getList()
+    {
+        try {
+            $list = Project::getAvailList(false);
+        } catch (Exception $e) {
+            return $this->exception($e);
+        }
+
+        $this->add2Answer('list', $list);
+        return $this->answer();
+    }
+
     public function setIsArchive($projectId, $value)
     {
         $isArchive = $value ? 1 : 0;

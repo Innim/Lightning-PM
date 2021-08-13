@@ -263,6 +263,15 @@ const issuePage = {
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
+    copyIssue: () => issuePage.createIssueBy('copy-issue'),
+    finishedIssue: () => issuePage.createIssueBy('finished-issue'),
+    createIssueBy: function (hash) {
+        const issueId = this.getIssueId();
+        selectProject.show(this.projectId, issueId, (targetProject) => {
+            const url = targetProject.url + '#' + hash + ':' + issueId;
+            window.open(url, '_blank');
+        });
+    },
 };
 
 issuePage.loadMembers = function (handler) {
@@ -609,8 +618,9 @@ issuePage.removeIssue = function (e) {
     }
 };
 
-issuePage.putStickerOnBoard = function (issueId) {
+issuePage.putStickerOnBoard = function () {
     preloader.show();
+    const issueId = $('#issueInfo').data('issueId');
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
         if (res.success) {

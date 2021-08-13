@@ -67,7 +67,7 @@ class IssueService extends LPMBaseService
             return $this->error('Нет такой задачи');
         }
         
-        if (!$issue->checkEditPermit($this->_auth->getUserId())) {
+        if (!$issue->checkEditPermit($this->getUserId())) {
             return $this->error('У Вас нет прав на редактирование этой задачи');
         }
 
@@ -92,15 +92,9 @@ class IssueService extends LPMBaseService
             return $this->error('Нет такой задачи');
         }
         
-        // TODO проверка на возможность просмотра
-        
-        /*$obj = $issue->getClientObject();
-        $members = $issue->getMembers();
-        $obj['members'] = array();
-
-        foreach ($members as $member) {
-            array_push( $obj['members'], $member->getClientObject() );
-        }*/
+        if (!$issue->checkViewPermit($this->getUserId())) {
+            return $this->error('У Вас нет прав на просмотр этой задачи');
+        }
         
         $this->add2Answer('issue', $this->getIssue4Client($issue));
         return $this->answer();
@@ -119,8 +113,10 @@ class IssueService extends LPMBaseService
         if (!$issue = Issue::loadByIdInProject($projectId, (float) $idInProject)) {
             return $this->error('Нет такой задачи');
         }
-
-        // TODO проверка на возможность просмотра
+        
+        if (!$issue->checkViewPermit($this->getUserId())) {
+            return $this->error('У Вас нет прав на просмотр этой задачи');
+        }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
         return $this->answer();
@@ -138,9 +134,9 @@ class IssueService extends LPMBaseService
             return $this->error('Нет такой задачи');
         }
         
-        // TODO проверка прав
-        //if (!$issue->checkEditPermit( $this->_auth->getUserId() ))
-        //return $this->error( 'У Вас нет прав на редактирование этой задачи' );
+        if (!$issue->checkEditPermit($this->getUserId())) {
+            return $this->error('У Вас нет прав на редактирование этой задачи');
+        }
         
         try {
             Issue::remove($this->getUser(), $issue);
@@ -508,7 +504,6 @@ class IssueService extends LPMBaseService
             }
             
             $currentNumSprint = ScrumStickerSnapshot::getLastSnapshotId($projectId) + 1;
-            
         } catch (\Exception $e) {
             return $this->exception($e);
         }

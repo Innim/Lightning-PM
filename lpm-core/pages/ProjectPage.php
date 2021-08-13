@@ -68,7 +68,7 @@ class ProjectPage extends LPMPage
             self::PUID_MEMBERS,
             'Участники',
             'project-members',
-            ['users-chooser'],
+            ['popups/users-chooser'],
             '',
             User::ROLE_MODERATOR
         );
@@ -239,7 +239,11 @@ class ProjectPage extends LPMPage
         $this->_title = $this->getTitleByIssue($issue);
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
-        $this->_js = array_merge(['issue', 'create-branch', 'pass-test'], $this->getIssueJs(), $this->getCommentJs());
+        $this->_js = array_merge(
+            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/select-project'],
+            $this->getIssueJs(),
+            $this->getCommentJs()
+        );
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
@@ -528,10 +532,10 @@ class ProjectPage extends LPMPage
                 if (!$editMode) {
                     $issueId = $db->insert_id;
 
-                    $baseId = (int)$_POST['baseIdInProject'];
+                    $baseId = (int)$_POST['baseId'];
                     if ($baseId > 0) {
-                        $baseIssue = Issue::loadByIdInProject($this->_project->id, $baseId);
-                        if ($baseIssue != null) {
+                        $baseIssue = Issue::load($baseId);
+                        if ($baseIssue != null && $baseIssue->checkViewPermit($userId)) {
                             IssueLinked::create($baseIssue->id, $issueId, DateTimeUtils::$currentDate);
                         }
                     }

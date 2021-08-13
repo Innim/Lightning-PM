@@ -817,6 +817,16 @@ SQL;
         return $obj;
     }
     
+    public function checkViewPermit($userId)
+    {
+        if ($userId == $this->authorId) {
+            return true;
+        }
+        
+        // TODO проверку прав
+        return true;
+    }
+    
     public function checkEditPermit($userId)
     {
         if ($userId == $this->authorId) {
