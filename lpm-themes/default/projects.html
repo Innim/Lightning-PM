@@ -31,7 +31,7 @@
 			<p class="project-desc"><?=$project->getDesc();?></p>
 			<?php if (lpm_is_moderator()): ?>
 			<input type="hidden" name="projectId" value="<?=$project->id;?>" />
-			<a href="javascript:;" class="archive btn" onclick="setIsArchive(event);">В архив</a>
+			<a href="javascript:;" class="archive btn btn-secondary" onclick="setIsArchive(event);">В архив</a>
 			<?php endif; ?>
 		</li>
 		<?php endforeach; ?>
