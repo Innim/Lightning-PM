@@ -1060,6 +1060,10 @@ ul.panel-submenu li {
 	clear: both;
 }
 
+.info-list > .info-list-item.issue-complete-date-row.no-date {
+	display: none;
+}
+
 /* список пользователей */
 table.users-list thead th:first-child,
 table.users-list tbody td:first-child {

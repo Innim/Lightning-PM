@@ -12,22 +12,21 @@ $isOnBoard = $issue->isOnBoard();
 $project = $issue->getProject();
 ?>
 <article id="issueView">
-    <h1><a href="<?=lpm_get_base_page_url();?>">
-            <?lpm_print_header();?></a></h1>
+    <h1><a href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a></h1>
     <div class="header-operations-bar">
         <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
     </div>
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
     <article id="issueInfo" class="issue-info container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
-        data-labels="<?=implode(',', $issue->getLabelNames());?>">
+        data-labels="<?=implode(',', $issue->getLabelNames());?>" data-issue-id="<?=$issue->id;?>">
         <h3>
             <span class="issue-id"><?=$issue->getIdInProject();?></span>.
             <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
                 class="issues-hours-box">(<span
                     class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
             <?php if ($project->scrum && !$isOnBoard):?>
-            <a href="#" onclick="return issuePage.putStickerOnBoard(<?=$issue->id;?>);" title="Поместить на Scrum доску"
+            <a href="#" onclick="return issuePage.putStickerOnBoard();" title="Поместить на Scrum доску"
                 class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
             <?php endif;?>
         </h3>
@@ -62,7 +61,7 @@ $project = $issue->getProject();
                 <span class="label">Дата создания</span>
                 <span class="value"><?=$issue->getCreateDate();?></span>
             </div>
-            <div class="issue-complete-date-row info-list-item" style="<?=$issue->hasCompleteDate() ? '' : 'display: none;';?>">
+            <div class="issue-complete-date-row info-list-item <?=$issue->hasCompleteDate() ? '' : 'no-date';?>">
                 <span class="label">Дата завершения</span>
                 <span class="value"><?=$issue->getCompleteDate();?></span>
                 <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>" />
@@ -213,9 +212,14 @@ $project = $issue->getProject();
     </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=$userId;?>">
+<?php 
+$labelsJson = json_encode($issue -> getLabelNames());
+echo <<<HTML
 <script type="text/javascript">
-    var issueLabels = <?= json_encode($issue -> getLabelNames());?>;
+    var issueLabels = $labelsJson;
 </script>
+HTML;
+?>
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
 
 <article id="createBranch" title="Создать ветку задачи">

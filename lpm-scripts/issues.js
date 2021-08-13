@@ -609,8 +609,9 @@ issuePage.removeIssue = function (e) {
     }
 };
 
-issuePage.putStickerOnBoard = function (issueId) {
+issuePage.putStickerOnBoard = function () {
     preloader.show();
+    const issueId = $('#issueInfo').data('issueId');
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
         if (res.success) {
