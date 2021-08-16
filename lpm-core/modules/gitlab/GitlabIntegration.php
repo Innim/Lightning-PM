@@ -8,7 +8,7 @@ class GitlabIntegration
 
     private static $_instance;
     /**
-     * @return SlackIntegration
+     * @return GitlabIntegration
      */
     public static function getInstance(/*User */$user)
     {

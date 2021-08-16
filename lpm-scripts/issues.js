@@ -263,6 +263,54 @@ const issuePage = {
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
+    copyIssue: () => issuePage.createIssueBy('copy-issue'),
+    finishedIssue: () => { 
+        const $kindField = $('#targetKindField', selectProject.element);
+        issuePage.createIssueBy(
+            (issueId) => 'finished-issue:' + issueId + ':' + $kindField.val(), 
+            'finished',
+            (projectId) => {
+                const isCurrent = projectId == issuePage.projectId;
+                let needResetVal = false;
+                $('option', $kindField).each((_, item) => {
+                    let visible = true;
+                    $option = $(item);
+                    switch ($option.val()) {
+                        case 'apply':
+                            visible = !isCurrent;
+                            break;
+                        case 'finished':
+                            visible = isCurrent;
+                            break;
+                    }
+
+                    if (visible) {
+                        $option.show();
+                    } else {
+                        $option.hide();
+                        needResetVal = needResetVal || $option.prop('selected');
+                    }
+                });
+
+                if (needResetVal) {
+                    $('option', $kindField).each((_, item) => {
+                        $option = $(item);
+                        if ($option.css('display') !== 'none') {
+                            $option.prop('selected', true);
+                            return false;
+                        }
+                    })
+                }
+            },
+        );
+    },
+    createIssueBy: function (hash, mode, onProjectChanged) {
+        const issueId = this.getIssueId();
+        selectProject.show(this.projectId, issueId, (targetProject) => {
+            const url = targetProject.url + '#' + (typeof hash === 'function' ? hash(issueId) : hash + ':' + issueId);
+            window.open(url, '_blank');
+        }, mode, onProjectChanged);
+    },
 };
 
 issuePage.loadMembers = function (handler) {
@@ -609,8 +657,9 @@ issuePage.removeIssue = function (e) {
     }
 };
 
-issuePage.putStickerOnBoard = function (issueId) {
+issuePage.putStickerOnBoard = function () {
     preloader.show();
+    const issueId = $('#issueInfo').data('issueId');
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
         if (res.success) {
@@ -639,7 +688,7 @@ function showIssue(issueId) {
     );
 };
 
-issuePage.showAddForm = function (type, parentId) {
+issuePage.showAddForm = function (type) {
     window.location.hash = 'add-issue';
     states.updateView();
 

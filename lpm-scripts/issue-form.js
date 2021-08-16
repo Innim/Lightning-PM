@@ -82,7 +82,6 @@ let issueForm = {
                 membersSp: getArrVal("membersSp"),
                 testerIds: getArrVal("testers"),
                 masterIds: getArrVal("masters"),
-                parentId: getVal("parentId"),
                 issueId: getVal("issueId"),
                 imagesInfo: issueForm.getImagesFromPage(),
                 isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
@@ -117,7 +116,6 @@ let issueForm = {
             membersSp: data.membersSp,
             testerIds: data.testers,
             masterIds: data.masters,
-            parentId: data.parentId,
             issueId: isEdit ? data.issueId : '',
             newImagesUrls: data.imgUrls,
             imagesInfo: issueForm.getImagesFromPage(),
@@ -216,14 +214,12 @@ let issueForm = {
             $("#issueForm form li a[name=imgbyUrl]").hide();
         }
 
-        // родитель
-        $("#issueForm form input[name=parentId]").val(value.parentId);
         // идентификатор задачи
         if (isEdit)
             $("#issueForm form input[name=issueId]").val(value.issueId);
         // действие меняем на редактирование
         $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
-        $("#issueForm form input[name=baseIdInProject]").val(value.baseIdInProject);
+        $("#issueForm form input[name=baseId]").val(value.baseId);
         // меняем заголовок кнопки сохранения
         $("#issueForm form .save-line button[type=submit]").text("Сохранить");
 
@@ -234,22 +230,21 @@ let issueForm = {
 
         issueFormLabels.update();
     },
-    handleAddIssueByState: function (issueIdInProject) {
+    handleAddIssueByState: function (issueId) {
         if (issueForm.restoreInput(false)) return;
 
-        issueIdInProject = parseInt(issueIdInProject);
+        issueId = parseInt(issueId);
         const projectId = parseInt($('#issueProjectID').val());
 
-        if (issueIdInProject <= 0 || projectId <= 0)
+        if (issueId <= 0 || projectId <= 0)
             return;
 
         // показываем прелоадер
         preloader.show();
 
         // Пробуем загрузить данные задачи
-        srv.issue.loadByIdInProject(
-            issueIdInProject,
-            projectId,
+        srv.issue.load(
+            issueId,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();
@@ -267,11 +262,9 @@ let issueForm = {
                         membersSp: issue.getMembersSp(),
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
-                        parentId: issue.parentId,
-                        issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseIdInProject: 0
+                        baseId: 0
                     });
 
                 } else {
@@ -280,22 +273,21 @@ let issueForm = {
             }
         );
     },
-    handleAddFinishedIssueByState: function (issueIdInProject) {
+    handleAddFinishedIssueByState: function (issueId, kind) {
         if (issueForm.restoreInput(false)) return;
 
-        issueIdInProject = parseInt(issueIdInProject);
-        var projectId = parseInt($('#issueProjectID').val());
+        issueId = parseInt(issueId);
+        const projectId = parseInt($('#issueProjectID').val());
 
-        if (issueIdInProject <= 0 || projectId <= 0)
+        if (issueId <= 0 || projectId <= 0)
             return;
 
         // показываем прелоадер
         preloader.show();
 
         // Пробуем загрузить данные задачи
-        srv.issue.loadByIdInProject(
-            issueIdInProject,
-            projectId,
+        srv.issue.load(
+            issueId,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();
@@ -303,12 +295,26 @@ let issueForm = {
                 // Если создаётся задача по доделкам
                 if (res.success) {
                     const issue = new Issue(res.issue);
-                    // var url = $("#projectView").data('projectUrl');
+
+                    let name = issue.name;
+                    let desc = issue.desc;
+
+                    switch (kind) {
+                        case 'apply':
+                            desc = `Сделана в рамках другой [задачи](${issue.url}). 
+                            
+Нужно реализовать в проекте.
+                            `
+                            break;
+                        case 'finished':
+                        default:
+                            name = Issue.getCompletionName(issue.name);
+                    }
 
                     issueForm.setIssueBy({
-                        name: Issue.getCompletionName(issue.name),
+                        name: name,
                         hours: issue.hours,
-                        desc: issue.desc + "\n\n" + "Оригинальная задача: " + issue.url,
+                        desc: desc,
                         priority: issue.priority,
                         completeDate: issue.getCompleteDateInput(),
                         type: issue.type,
@@ -317,11 +323,9 @@ let issueForm = {
                         memberIds: issue.getMemberIds(),
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
-                        parentId: issue.parentId,
-                        issueId: issue.id,
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseIdInProject: issueIdInProject
+                        baseId: issue.id,
                     });
                 } else {
                     srv.err(res);

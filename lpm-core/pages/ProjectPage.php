@@ -68,7 +68,7 @@ class ProjectPage extends LPMPage
             self::PUID_MEMBERS,
             'Участники',
             'project-members',
-            ['users-chooser'],
+            ['popups/users-chooser'],
             '',
             User::ROLE_MODERATOR
         );
@@ -162,8 +162,6 @@ class ProjectPage extends LPMPage
                 $this->saveIssue();
             } elseif ($_POST['actionType'] == 'editIssue' && isset($_POST['issueId'])) {
                 $this->saveIssue(true);
-            } elseif ($_POST['actionType'] == 'editIssueLabel') {
-                $this->saveLabel();
             }
         }
 
@@ -241,7 +239,11 @@ class ProjectPage extends LPMPage
         $this->_title = $this->getTitleByIssue($issue);
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
-        $this->_js = array_merge(['issue', 'create-branch', 'pass-test'], $this->getIssueJs(), $this->getCommentJs());
+        $this->_js = array_merge(
+            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/select-project'],
+            $this->getIssueJs(),
+            $this->getCommentJs()
+        );
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
@@ -523,24 +525,18 @@ class ProjectPage extends LPMPage
                                     "`completeDate` = VALUES( `completeDate` ), " .
                                     "`priority` = VALUES( `priority` )";
 
+                                    
             if (!$db->queryt($sql, LPMTables::ISSUES)) {
                 $engine->addError('Ошибка записи в базу');
             } else {
                 if (!$editMode) {
                     $issueId = $db->insert_id;
 
-                    $baseId = (int)$_POST['baseIdInProject'];
+                    $baseId = (int)$_POST['baseId'];
                     if ($baseId > 0) {
-                        $baseIssue = Issue::loadByIdInProject($this->_project->id, $baseId);
-                        if ($baseIssue != null) {
-                            $textComment = "Задача по доделкам: " .
-                                Issue::getConstURLBy($this->_project->uid, $idInProject);
-                            Comment::add(
-                                LPMInstanceTypes::ISSUE,
-                                $baseIssue->id,
-                                $engine->getAuth()->getUserId(),
-                                $textComment
-                            );
+                        $baseIssue = Issue::load($baseId);
+                        if ($baseIssue != null && $baseIssue->checkViewPermit($userId)) {
+                            IssueLinked::create($baseIssue->id, $issueId, DateTimeUtils::$currentDate);
                         }
                     }
                 }

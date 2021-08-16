@@ -22,18 +22,12 @@ class Project extends MembersInstance
     
     public static function loadList($where = null)
     {
-        $tables = [LPMTables::PROJECTS, LPMTables::INSTANCE_TARGETS];
-
-        $sql = "SELECT `projects`.*, `target`.`content` AS `sprintTarget` FROM `%1\$s` AS projects " .
-            "LEFT JOIN `%2\$s` AS target ON `target`.`instanceId` = `projects`.`id` " .
-            "AND `target`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' ";
-    
-        if (is_array($where)) {
-            $where = implode( ' AND `projects`.', $where );
-        }
-        $sql .= "WHERE `projects`." . $where;
-        
-        return StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
+        return StreamObject::loadListDefault(
+            self::getDB(),
+            $where,
+            LPMTables::PROJECTS,
+            __CLASS__
+        );
     }
 
     /**
@@ -365,6 +359,16 @@ class Project extends MembersInstance
         parent::__construct();
         $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId', 'gitlabGroupId');
         $this->_typeConverter->addBoolVars('scrum', 'fixedInstance');
+
+        $this->addClientFields('id', 'uid', 'name', 'desc', 'scrum');
+    }
+
+    public function getClientObject($addfields = null)
+    {
+        $obj = parent::getClientObject($addfields);
+        $obj->url = $this->getUrl();
+
+        return $obj;
     }
     
     public function getID()
