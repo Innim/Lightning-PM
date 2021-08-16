@@ -344,4 +344,6 @@ CREATE TABLE `lpm_issue_linked` (
 
 ALTER TABLE `lpm_issues` DROP `parentId`;
 
+-- v0.10.9
+
 --NEXT
