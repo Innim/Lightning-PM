@@ -138,7 +138,7 @@ const createBranch = {
         if (appropriateRepos.length == 1 || !myPopularRepositoryIds) {
             repoId = appropriateRepos[0];
         } else if (appropriateRepos.length > 1) {
-            repoId = myPopularRepositoryIds.find(id => appropriateRepos.indexOf(id));
+            repoId = myPopularRepositoryIds.find(id => appropriateRepos.indexOf(id) !== -1);
             if (repoId === undefined) repoId = appropriateRepos[0];
         } else {
             repoId = list.some(r => r.id == popularRepositoryId) ? popularRepositoryId : list[0].id;
