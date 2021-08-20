@@ -144,7 +144,6 @@ class Member extends User
         }
 
         return self::getDB()->queryb($hash);
-        //throw new Exception('Delete members error', \GMFramework\ErrorCode::SAVE_DATA);
     }
 
     public static function saveIssueMembers($issueId, $userIds)
@@ -156,7 +155,6 @@ class Member extends User
     {
         return self::saveMembers(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $userIds);
     }
-
 
     public static function saveProjectForTester($projectId, $userId)
     {

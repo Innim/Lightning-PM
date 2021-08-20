@@ -996,10 +996,6 @@ SQL;
         return self::getLabelsByName($this->getName());
     }
 
-    // public function getNormHours(){
-    // 	return $this->hours;
-    // }
-
     public function getStrHours()
     {
         return ($this->hours == .5) ? "1/2" : (string) $this->hours;
@@ -1008,7 +1004,7 @@ SQL;
     /**
      * Возвращает лейбл для параметра hours
      * @param  boolean $short Использовать сокращение
-     * @return Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+     * @return string Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
      */
     public function getNormHoursLabel($short = false)
     {
@@ -1137,18 +1133,8 @@ SQL;
     
     public function getAuthorLinkedName()
     {
-        return ($this->author) ? $this->author->getLinkedName() : '';
+        return $this->author ? $this->author->getLinkedName() : '';
     }
-    
-    /*public function getMembersLinkedName() {
-        if (!$this->_members) return '';
-        $names = array();
-        foreach ($this->_members as /*@var $member Member * /$member) {
-            array_push( $names, $member->getLinkedName() );
-        }
-
-        return implode( ', ', $names );
-    }*/
     
     public function getType()
     {
@@ -1191,6 +1177,7 @@ SQL;
                 $this->_sticker->issueId = $this->issueId;
             }
         }
+
         return $res;
     }
 
@@ -1219,10 +1206,7 @@ SQL;
 
     public function getTesters()
     {
-        if ($this->_testers == null && !$this->loadTesters()) {
-            return array();
-        }
-        return $this->_testers;
+        return $this->_testers == null && !$this->loadTesters() ? [] : $this->_testers;
     }
 
     public function getTesterIds()

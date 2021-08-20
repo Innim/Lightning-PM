@@ -524,7 +524,6 @@ class IssueService extends LPMBaseService
         $issueId = (int)$issueId;
         $replace = (bool)$replace;
 
-
         try {
             $issue = Issue::load($issueId);
             if ($issue === null) {
