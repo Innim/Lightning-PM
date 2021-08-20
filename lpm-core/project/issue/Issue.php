@@ -596,6 +596,7 @@ SQL;
         if ($issue->status === Issue::STATUS_COMPLETED) {
             $issue->completedDate = (float)DateTimeUtils::date();
             $hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
+            $issue->autoSetMasters();
         } elseif ($issue->status === Issue::STATUS_IN_WORK) {
             // Сбрасываем дату завершения
             $issue->completedDate = null;
@@ -603,6 +604,7 @@ SQL;
         } elseif ($issue->status === Issue::STATUS_WAIT) {
             // XXX: переделать - не должно быть обращения к сервису из модели
             IssueService::checkTester($issue);
+            $issue->autoSetMasters();
         }
 
         $db = self::getDB();
@@ -1231,6 +1233,56 @@ SQL;
     public function getTesterIdsStr()
     {
         return implode(',', $this->getTesterIds());
+    }
+
+    /**
+     * Автоматически назначает мастеров для задачи,
+     * если нет уже заданных для конкретной задачи.
+     *
+     * Мастера будут добавлены, если надутся подходящие по тегам.
+     * Мастер для проекта по умолчанию - не назначается.
+     */
+    public function autoSetMasters()
+    {
+        $masters = $this->getMasters();
+
+        if (empty($masters)) {
+            // Получаем список меток (тегов) для задачи
+            $labelNames = $this->getLabelNames();
+            if (!empty($labelNames)) {
+                // TODO: переделать чтобы не грузить лишнего
+                $labels = Issue::getLabels($this->projectId);
+                $labelIds = [];
+
+                foreach ($labels as $label) {
+                    if (in_array($label['label'], $labelNames)) {
+                        $labelIds[] = (int)$label['id'];
+                    }
+                }
+                $labelIds = array_unique($labelIds);
+
+                // TODO: грузить только кого надо
+                $specMasters = $this->getProject()->getSpecMasters();
+                $mastersById = [];
+                foreach ($specMasters as $master) {
+                    if (in_array($master->extraId, $labelIds)) {
+                        $mastersById[$master->userId] = $master;
+                    }
+                }
+
+                if (!empty($mastersById)) {
+                    $newMasterIds = array_keys($mastersById);
+
+                    if (!Member::saveIssueMasters($this->id, $newMasterIds)) {
+                        throw new \GMFramework\ProviderSaveException(
+                            'Не удалось сохранить автоматически назначенных мастеров для задачи'
+                        );
+                    }
+
+                    $this->_masters = array_values($mastersById);
+                }
+            }
+        }
     }
 
     /**

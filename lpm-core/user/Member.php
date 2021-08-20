@@ -144,6 +144,12 @@ class Member extends User
         return self::saveMembers(LPMInstanceTypes::ISSUE, $issueId, $userIds);
     }
 
+    public static function saveIssueMasters($issueId, $userIds)
+    {
+        return self::saveMembers(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $userIds);
+    }
+
+
     public static function saveProjectForTester($projectId, $userId)
     {
         return self::saveMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, [$userId]);
