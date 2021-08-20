@@ -391,7 +391,8 @@ class ProjectService extends LPMBaseService
      * @param int $instanceId id проекта.
      * @param array $target массив целий спринта.
      */
-    public function addSprintTarget($instanceId, $target) {
+    public function addSprintTarget($instanceId, $target)
+    {
         $projectId = (int) $instanceId;
         $targetText = (string) $target;
     
@@ -411,7 +412,7 @@ class ProjectService extends LPMBaseService
             
             $this->add2Answer('targetHTML', $markdownText);
             $this->add2Answer('targetText', $targetText);
-        } catch ( Exception $e) {
+        } catch (Exception $e) {
             return $this->exception($e);
         }
         
