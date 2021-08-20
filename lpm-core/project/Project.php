@@ -349,10 +349,10 @@ class Project extends MembersInstance
     private $_master;
     
     /**
-     * Форматированный текст.
+     * Форматированный текст целей спринта.
      * @var string|null
      */
-    private $_htmlText = null;
+    private $_sprintTargetHtml = null;
     
     public function __construct()
     {
@@ -527,13 +527,13 @@ class Project extends MembersInstance
      * Возвращает форматированый текст для вставки в HTML код.
      * @return string
      */
-    public function getHTMLText()
+    public function getSprintTargetHtml()
     {
-        if (empty($this->_htmlText)) {
-            $this->_htmlText = HTMLHelper::getMarkdownText($this->sprintTarget);
+        if (empty($this->_sprintTargetHtml)) {
+            $this->_sprintTargetHtml = HTMLHelper::getMarkdownText($this->sprintTarget);
         }
         
-        return $this->_htmlText;
+        return $this->_sprintTargetHtml;
     }
     
     protected function loadMembers()

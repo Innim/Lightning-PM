@@ -293,7 +293,8 @@ SQL;
      * @param int $projectId идентификатор проекта, для которого создается снепшот.
      * @param int $snapshotId идентификатор снепшота без привязки к проекту.
      */
-    public static function setSnapshotIdForTarget($projectId, $snapshotId) {
+    public static function setSnapshotIdForTarget($projectId, $snapshotId)
+    {
         $snapshotType = LPMInstanceTypes::SNAPSHOT;
         $projectType = LPMInstanceTypes::PROJECT;
         
@@ -350,7 +351,7 @@ SQL;
      * Форматированный текст.
      * @var string|null
      */
-    private $_htmlText = null;
+    private $_sprintTargetHtml = null;
 
     public function __construct($id = 0)
     {
@@ -501,16 +502,16 @@ SQL;
     }
     
     /**
-     * Возвращает форматированый текст для вставки в HTML код.
+     * Возвращает форматированый HTML текст целей спринта.
      * @return string
      */
-    public function getHTMLText()
+    public function getSprintTargetHtml()
     {
-        if (empty($this->_htmlText)) {
-            $this->_htmlText = HTMLHelper::getMarkdownText($this->sprintTarget);
+        if (empty($this->_sprintTargetHtml)) {
+            $this->_sprintTargetHtml = HTMLHelper::getMarkdownText($this->sprintTarget);
         }
         
-        return $this->_htmlText;
+        return $this->_sprintTargetHtml;
     }
 
     private function countSp($filterCallback = null, $getSpCallback = null)
