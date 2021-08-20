@@ -729,7 +729,7 @@ class IssueService extends LPMBaseService
         }
 
         foreach ($masters as $master) {
-            $obj->masters[] = $tester->getClientObject();
+            $obj->masters[] = $master->getClientObject();
         }
 
         foreach ($images as $image) {
