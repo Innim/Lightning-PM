@@ -118,8 +118,12 @@ class Member extends User
         return self::deleteMembers(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId, $userIds);
     }
 
+    public static function deleteProjectSpecMaster($projectId, $userId, $labelId)
+    {
+        return self::deleteMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, [$userId], $labelId);
+    }
 
-    public static function deleteMembers($instanceType, $instanceId, $userIds = null)
+    public static function deleteMembers($instanceType, $instanceId, $userIds = null, $extraId = null)
     {
         $hash = [
             'DELETE' => LPMTables::MEMBERS,
@@ -133,6 +137,10 @@ class Member extends User
 
         if ($userIds !== null) {
             $hash['WHERE'][] = '`userId` IN (' . implode(',', $userIds) . ')';
+        }
+
+        if ($extraId !== null) {
+            $hash['WHERE'][] = '`extraId` = ' . $extraId;
         }
 
         return self::getDB()->queryb($hash);

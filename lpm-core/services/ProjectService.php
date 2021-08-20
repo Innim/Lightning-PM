@@ -198,6 +198,40 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
+    /**
+     * Удаляет указанного участника проекта в качестве мастера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function deleteSpecMaster($projectId, $masterId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $masterId  = (int)$masterId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($masterId);
+        if (!$member) {
+            return $this->error('Мастер не найден в участниках проекта');
+        }
+
+        if (!Member::deleteProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
     public function addIssueMemberDefault($projectId, $memberByDefaultId)
     {
         $projectId = (int)$projectId;

@@ -1,10 +1,27 @@
 $(() => {
     projectMembers.projectId = $('#projectMembers input[name=projectId]').val();
+
+    $('#specMasters .spec-master-item .remove-link').on('click', function() { 
+        const $item = $(this).parent('.spec-master-item');
+        projectMembers.removeSpecMaster($item.data('userId'), $item.data('labelId'));
+    });
+    
     addSpecMaster.init();
 });
 
 const projectMembers = {
     projectId: null,
+    removeSpecMaster: function (userId, labelId) {
+        preloader.show();
+        srv.project.deleteSpecMaster(projectMembers.projectId, userId, labelId, res => {
+            preloader.hide();
+            if (res.success) {
+                $('#specMasters .spec-master-item[data-user-id=' + userId + '][data-label-id=' + labelId + ']').remove();
+            } else {
+                messages.alert('Не удалось удалить мастера')
+            }
+        });
+    },
 };
 
 const addSpecMaster = {
