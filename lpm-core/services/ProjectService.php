@@ -122,8 +122,6 @@ class ProjectService extends LPMBaseService
             if (!Project::updateMaster($project->id, $masterId)) {
                 return $this->error('Не удалось сохранить данные.');
             }
-        } else {
-            return $this->error('fuck: '. $masterId);
         }
 
         return $this->answer();

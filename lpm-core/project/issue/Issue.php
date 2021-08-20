@@ -343,6 +343,7 @@ SQL;
      * Возвращает список стандартных меток для задачи отсортированных по количеству использований.
      * @return array[{id, label, countUses, projectId}...n] Список меток для задачи.
      */
+    // TODO: перенести в IssueLabel
     public static function getLabels($projectId)
     {
         $labels = array();
@@ -365,6 +366,7 @@ SQL;
      * @param Имя меток, которые нужно вернуть.
      * @return array Список меток по имени.
      */
+    // TODO: перенести в IssueLabel
     public static function getLabelsByLabelText($label)
     {
         $db = LPMGlobals::getInstance()->getDBConnect();
@@ -385,6 +387,7 @@ SQL;
      * @param $id
      * @return array|null
      */
+    // TODO: перенести в IssueLabel
     public static function getLabel($id)
     {
         $id = (int) $id;
@@ -394,6 +397,7 @@ SQL;
         return ($res) ? $res->fetch_assoc() : null;
     }
 
+    // TODO: перенести в IssueLabel
     public static function labelsSort($label1, $label2)
     {
         return $label2['countUses'] - $label1['countUses'];
@@ -405,6 +409,7 @@ SQL;
      * @param $projectId Идентификатор проекта приоритет метки которого нужно изменить, либо 0,
      * если нужно изменить приоритет только общей для проектов метки.
      */
+    // TODO: перенести в IssueLabel
     public static function addLabelsUsing($labelNames, $projectId = 0)
     {
         $projectId = (int) $projectId;
@@ -423,6 +428,7 @@ SQL;
      * @param $issueName Имя задачи.
      * @return array<string> Список меток в указанном имени.
      */
+    // TODO: перенести в IssueLabel
     public static function getLabelsByName($issueName)
     {
         $labels = array();
@@ -444,6 +450,7 @@ SQL;
      * @param $deleted bool Удалена ли метка.
      * @return int|null Идентификатор вставленной/обновленной записи или null в случае ошибки.
      */
+    // TODO: перенести в IssueLabel
     public static function saveLabel($label, $projectId = 0, $id = 0, $countUses = 0, $deleted = 0)
     {
         $db = LPMGlobals::getInstance()->getDBConnect();
@@ -469,6 +476,7 @@ SQL;
      * @param $deleted bool Состояние удаления метки.
      * @return bool true в случае успешной операции, иначе false.
      */
+    // TODO: перенести в IssueLabel
     public static function changeLabelDeleted($id, $deleted)
     {
         $id = (int)$id;

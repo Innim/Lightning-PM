@@ -76,7 +76,7 @@ class ProjectPage extends LPMPage
             self::PUID_SETTINGS,
             'Настройки проекта',
             'project-settings',
-            ['project-settings'],
+            ['project/project-settings'],
             '',
             User::ROLE_MODERATOR
         );
@@ -789,7 +789,7 @@ class ProjectPage extends LPMPage
             $issueId,
             $masterIds,
             $editMode,
-            LPMInstanceTypes::ISSUE_TO_MASTER
+            LPMInstanceTypes::ISSUE_FOR_MASTER
         );
     }
 

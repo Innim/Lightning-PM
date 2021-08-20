@@ -45,7 +45,7 @@ class LPMInstanceTypes
     /**
      * Задача, для которой нужен мастер.
      */
-    const ISSUE_TO_MASTER = 7;
+    const ISSUE_FOR_MASTER = 7;
 
     /**
      * Instance snapshot

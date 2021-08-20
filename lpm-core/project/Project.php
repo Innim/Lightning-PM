@@ -331,7 +331,6 @@ class Project extends MembersInstance
      */
     public $masterId;
 
-
     /**
      * Идентификатор группы проектов на GitLab,
      * соответствующей текущему проекту в таске.

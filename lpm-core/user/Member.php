@@ -69,7 +69,7 @@ class Member extends User
      */
     public static function loadMastersForIssue($issueId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::ISSUE_TO_MASTER, $issueId, $onlyNotLocked);
+        return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $onlyNotLocked);
     }
 
     public static function hasIssueMember($issueId, $userId)
