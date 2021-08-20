@@ -8,8 +8,9 @@ class EmailNotifier extends LPMBaseObject
     public static function getInstance()
     {
         if (!self::$_instance) {
-            self::$_instance = new EmailNotifier();
+            self::$_instance = new EmailNotifier(!defined('EMAIL_NOTIFY_ENABLED') || EMAIL_NOTIFY_ENABLED);
         }
+        
         return self::$_instance;
     }
     
@@ -18,6 +19,11 @@ class EmailNotifier extends LPMBaseObject
     const PREF_ISSUE_STATE   = 3;
     const PREF_ISSUE_COMMENT = 4;
     
+    /**
+     * @var bool
+     */
+    private $_enabled;
+
     /**
      *
      * @var MailSender
@@ -94,6 +100,10 @@ class EmailNotifier extends LPMBaseObject
     
     public function send($toEmail, $toName, $subject, $messText)
     {
+        if (!$this->_enabled) {
+            return false;
+        }
+        
         $mess = new MailMessage(
             $toEmail,
             $subject,
