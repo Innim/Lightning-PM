@@ -154,6 +154,50 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
+    /**
+     * Устанавливает указанного участника проекта в качестве мастера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function addSpecMaster($projectId, $masterId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $masterId  = (int)$masterId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($masterId);
+        if (!$member) {
+            return $this->error('Мастер не найден в участниках проекта');
+        }
+
+        $label = Issue::getLabel($labelId);
+        if (!$label) {
+            return $this->error('Нет такого тега');
+        }
+
+        $labelProjectId = intval($label['projectId']);
+        if ($labelProjectId != 0 && $labelProjectId != $projectId) {
+            return $this->error('Тег не доступен в проекте');
+        }
+
+        if (!Member::saveProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
     public function addIssueMemberDefault($projectId, $memberByDefaultId)
     {
         $projectId = (int)$projectId;

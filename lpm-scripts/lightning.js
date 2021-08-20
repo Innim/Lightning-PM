@@ -212,6 +212,9 @@ let srv = {
         deleteMaster: function (projectId, onResult) {
             this.s._('deleteMaster');
         },
+        addSpecMaster: function(projectId, masterId, labelId, onResult) {
+            this.s._('addSpecMaster');
+        },
         deleteMemberDefault: function (projectId, onResult) {
             this.s._('deleteMemberDefault');
         },
