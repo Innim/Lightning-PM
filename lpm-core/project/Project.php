@@ -355,6 +355,11 @@ class Project extends MembersInstance
      * @var User
      */
     private $_master;
+
+    /**
+     * @var array<Member>
+     */
+    private $_specMasters = null;
     
     /**
      * Цели спринта проекта.
@@ -537,6 +542,16 @@ class Project extends MembersInstance
         return $this->_master;
     }
 
+
+    /**
+     * Возвращает список мастеров, определенных по тегам.
+     * @return array<Member>
+     */
+    public function getSpecMasters()
+    {
+        return $this->_specMasters == null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+    }
+
     /**
      * Возвращает текст текущих целей спринта.
      *
@@ -575,11 +590,17 @@ class Project extends MembersInstance
         return true;
     }
 
-    // public function setIsArchive( $projectId , $value ){
-    // 	$db = LPMGlobals::getInstance()->getDBConnect();
-    // 	$sql = "UPDATE `%1\$s`".
-    // 			"SET `isArchive` = '" . $value . "'" .
-    // 			"WHERE `id` = '" . $projectId . "'";
-    // 	return $db->queryt( $sql, LPMTables::PROJECTS );
-    // }
+    /**
+     * Загружается список мастеров, определенных по тегам.
+     * @return array<Member>
+     */
+    private function loadSpecMasters()
+    {
+        $this->_specMasters = Member::loadSpecMastersForProject($this->id);
+        if ($this->_specMasters === false) {
+            throw new Exception('Ошибка при загрузке списка мастеров по тегам');
+        }
+
+        return $this->_specMasters;
+    }
 }

@@ -72,6 +72,15 @@ class Member extends User
         return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $onlyNotLocked);
     }
 
+    /**
+     * Загружает список специализированных мастеров для конкретного проекта.
+     * @return array<Member>
+     */
+    public static function loadSpecMastersForProject($projectId, $onlyNotLocked = false)
+    {
+        return self::loadListByInstance(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, $onlyNotLocked);
+    }
+
     public static function hasIssueMember($issueId, $userId)
     {
         return self::hasMember(LPMInstanceTypes::ISSUE, $issueId, $userId);
@@ -138,6 +147,11 @@ class Member extends User
     public static function saveProjectForTester($projectId, $userId)
     {
         return self::saveMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, [$userId]);
+    }
+
+    public static function saveProjectSpecMaster($projectId, $userId, $labelId)
+    {
+        return self::saveMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, [$userId], $labelId);
     }
 
     public static function saveMembers($instanceType, $instanceId, $userIds, $extraId = 0)

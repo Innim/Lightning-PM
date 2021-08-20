@@ -51,4 +51,11 @@ class LPMInstanceTypes
      * Instance snapshot
      */
     const SNAPSHOT = 8;
+
+    /**
+     * Проект, для которой назначе специализированный мастер.
+     *
+     * Это мастер, назначаемый по тегу.
+     */
+    const PROJECT_FOR_SPEC_MASTER = 7;
 }
