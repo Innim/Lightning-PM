@@ -68,7 +68,7 @@ class ProjectPage extends LPMPage
             self::PUID_MEMBERS,
             'Участники',
             'project-members',
-            ['popups/users-chooser'],
+            ['project/project-members', 'popups/users-chooser'],
             '',
             User::ROLE_MODERATOR
         );
