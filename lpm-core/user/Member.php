@@ -140,15 +140,15 @@ class Member extends User
         return self::saveMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, [$userId]);
     }
 
-    public static function saveMembers($instanceType, $instanceId, $userIds)
+    public static function saveMembers($instanceType, $instanceId, $userIds, $extraId = 0)
     {
         $values = [];
         foreach ($userIds as $userId) {
-            $values[] = [$userId, $instanceType, $instanceId];
+            $values[] = [$userId, $instanceType, $instanceId, $extraId];
         }
 
         $hash = [
-            'REPLACE' => ['userId', 'instanceType', 'instanceId'],
+            'REPLACE' => ['userId', 'instanceType', 'instanceId', 'extraId'],
             'INTO' => LPMTables::MEMBERS,
             'VALUES' => $values
         ];
@@ -168,5 +168,19 @@ class Member extends User
             'IssueMember',
             $userId
         );
+    }
+
+    /**
+     * Дополнительный идентификатор, определяющий связь.
+     *
+     * Хранимое значение определяется контекстом.
+     */
+    public $extraId;
+
+    public function __construct()
+    {
+        parent::__construct();
+        
+        $this->_typeConverter->addIntVars('extraId');
     }
 }
