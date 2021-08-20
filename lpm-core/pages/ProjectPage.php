@@ -392,6 +392,8 @@ class ProjectPage extends LPMPage
             'data' => $_POST,
         ];
 
+        $projectId = $this->_project->id;
+
         // если это редактирование, то проверим идентификатор задачи
         // на соответствие её проекту и права пользователя
         if ($editMode) {
@@ -399,7 +401,7 @@ class ProjectPage extends LPMPage
             
             // проверяем что такая задача есть и она принадлежит текущему проекту
             $sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
-                                           "AND `projectId` = '" . $this->_project->id . "'";
+                                           "AND `projectId` = '" . $projectId . "'";
             if (!$query = $db->queryt($sql, LPMTables::ISSUES)) {
                 return $engine->addError('Ошибка записи в базу');
             }
@@ -469,7 +471,7 @@ class ProjectPage extends LPMPage
             }
 
             if (!empty($labels)) {
-                $allLabels = Issue::getLabels();
+                $allLabels = Issue::getLabels($projectId);
                 $countedLabels = [];
                 foreach ($allLabels as $value) {
                     $index = array_search($value['label'], $labels);

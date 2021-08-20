@@ -343,10 +343,9 @@ SQL;
      * Возвращает список стандартных меток для задачи отсортированных по количеству использований.
      * @return array[{id, label, countUses, projectId}...n] Список меток для задачи.
      */
-    public static function getLabels()
+    public static function getLabels($projectId)
     {
         $labels = array();
-        $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
         $sql = "SELECT `id`, `label`, `countUses`, `projectId` FROM `%s` WHERE (`deleted` = " . LabelState::ACTIVE . ") AND ".
             "(`projectId` = " . (int) $projectId . " OR `projectId` = 0)";
 
