@@ -223,20 +223,19 @@ SQL;
             // запрос больше не нужен
             $prepare->close();
 
-            // вроде бы все ок -> завершае транзакцию
+            // вроде бы все ок -> завершаем транзакцию
             if ($added) {
                 $db->commit();
+    
+                // TODO: добавить в транзакцию
+                // сохраняем в БД id Snapshot в таблице целей
+                $result = self::setSnapshotIdForTarget($projectId, $sid);
+                if (!$result) {
+                    throw new DBException($db, "Ошибка при сохранении целей снепшота " . $db->error);
+                }
             } else {
                 // отменяем, т.к. на доске нет стикеров
                 $db->rollback();
-            }
-    
-            // получаем id Snapshot, которого только что сохранили в БД
-            $snapshotId = self::getLastOwnSnapshotId();
-            // сохраняем в БД id Snapshot в таблице целий
-            $result = self::setSnapshotIdForTarget($projectId, $snapshotId);
-            if (!$result) {
-                throw new DBException($db, "Ошибка при сохранении целий снепшота");
             }
         } catch (Exception $ex) {
             // что-то пошло не так -> отменяем все изменения
@@ -267,25 +266,6 @@ SQL;
             $result = $query->fetch_assoc();
             return (int) $result['maxID'];
         }
-    }
-    
-    /**
-     * Возвращает собственный id последнего снепшота в БД из таблицы снепшотов.
-     * @return int id снепшота.
-     * @throws Exception В случае, если произошла ошибка при запросе к БД.
-     */
-    public static function getLastOwnSnapshotId()
-    {
-        $db = self::getDB();
-        $sql = "SELECT MAX(`id`) AS id FROM `%s` ";
-        $query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST);
-        
-        if (!$query) {
-            throw new Exception("Ошибка доступа к базе при получении идентификатора снепшота");
-        }
-        $result = $query->fetch_assoc();
-        
-        return (int) $result['id'];
     }
     
     /**
