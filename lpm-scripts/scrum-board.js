@@ -130,10 +130,8 @@ let scrumBoard = {
 const sprintTarget = {
     init: function (modalParam) {
         $('#addTarget').dialog({...sprintTarget.defaultParam, ...modalParam});
-        $('.target-btn').click(function () {
-            sprintTarget.open();
-        });
-        if ($('.text-target').text()) {
+        $('.target-btn').on('click', () => sprintTarget.open());
+        if ($('.text-target').text().trim()) {
             $('.title-target').removeClass('hidden');
         }
     },
