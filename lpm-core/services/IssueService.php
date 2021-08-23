@@ -249,6 +249,8 @@ class IssueService extends LPMBaseService
 
             $comment = $this->postComment($issue, $text, true);
 
+            $issue->autoSetMasters();
+
             // Отправляем оповещенив в slack
             $slack = SlackIntegration::getInstance();
             $slack->notifyIssuePassTest($issue);
