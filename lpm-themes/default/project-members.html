@@ -20,6 +20,12 @@ if (!empty($memberByDefaultId)) {
         }
     }
 }
+
+$labels = lpm_get_issue_labels();
+$labelNameById = [];
+foreach ($labels as $label) {
+    $labelNameById[(int)$label['id']] = $label['label'];
+}
 ?>
 <article id="projectMembers">
     <h1>
@@ -42,10 +48,11 @@ if (!empty($memberByDefaultId)) {
     <!-- Выбор мастера проекта // Начало -->
     <h3 class="headersProjectsMembers">Мастер проекта</h3>
     <div id="projectMaster" class="project-members-selector">
+        <h4>По умолчанию</h4>
         <?php
         $master = $project->getMaster();
         if (!empty($master)): 
-    ?>
+        ?>
         <ul>
             <li id="projectMaster" value="<?=$master->getName();?>">
                 <?=$master->getName();?>
@@ -63,6 +70,24 @@ if (!empty($memberByDefaultId)) {
             <button id="saveMaster" type="button">Подтвердить</button>
         </form>
         <?php endif; ?>
+
+        <form id="specMasters" action="">
+            <h4>Мастера по тегам</h4>
+            <ul class="spec-master-list">
+                <?php 
+                foreach ($project->getSpecMasters() as $master): 
+                    $labelName = empty($labelNameById[$master->extraId]) ? 'n/a' : $labelNameById[$master->extraId];
+                ?>
+                <li class="spec-master-item" data-user-id="<?=$master->getID();?>" data-label-id="<?=$master->extraId;?>">
+                    <span class="spec-master-label">[<?=$labelName;?>]</span>
+                    <span class="spec-master-name"><?=$master->getName();?></span>
+                    <a href="javascript:;" class="remove-link">Удалить</a>
+                </li>
+            <?php endforeach; ?>
+            </ul>
+
+            <button type="button" onclick="addSpecMaster.show();">Добавить</button>
+        </form>
     </div>
 
     <!-- Выбор мастера проекта // Конец -->
@@ -117,4 +142,25 @@ if (!empty($memberByDefaultId)) {
     </div>
     <?lpm_print_users_chooser();?>
 
+</article>
+
+<article id="addSpecMaster" title="Добавить мастера по тегу" style="display: none;">
+    <div class="add-spec-project-row">
+        <label for="selectTagForSpecMaster">Тег</label>
+        <select id="selectTagForSpecMaster">
+            <option value="0">-</option>
+            <?php foreach ($labels as $label): ?>
+            <option class="label-name" value=" <?=$label['id'];?> "><?=$label['label'];?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="add-spec-project-row">
+        <label for="selectSpecMaster">Мастер</label>
+        <select id="selectSpecMaster">
+            <option value="0">-</option>
+            <?php foreach ($projectMembers as $member): ?>
+            <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
 </article>

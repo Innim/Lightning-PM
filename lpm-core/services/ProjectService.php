@@ -122,8 +122,6 @@ class ProjectService extends LPMBaseService
             if (!Project::updateMaster($project->id, $masterId)) {
                 return $this->error('Не удалось сохранить данные.');
             }
-        } else {
-            return $this->error('fuck: '. $masterId);
         }
 
         return $this->answer();
@@ -151,6 +149,84 @@ class ProjectService extends LPMBaseService
             if (!Project::updateMaster($project->id, 0)) {
                 return $this->error('Не удалось сохранить данные.');
             }
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Устанавливает указанного участника проекта в качестве мастера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function addSpecMaster($projectId, $masterId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $masterId  = (int)$masterId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($masterId);
+        if (!$member) {
+            return $this->error('Мастер не найден в участниках проекта');
+        }
+
+        $label = Issue::getLabel($labelId);
+        if (!$label) {
+            return $this->error('Нет такого тега');
+        }
+
+        $labelProjectId = intval($label['projectId']);
+        if ($labelProjectId != 0 && $labelProjectId != $projectId) {
+            return $this->error('Тег не доступен в проекте');
+        }
+
+        if (!Member::saveProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Удаляет указанного участника проекта в качестве мастера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function deleteSpecMaster($projectId, $masterId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $masterId  = (int)$masterId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($masterId);
+        if (!$member) {
+            return $this->error('Мастер не найден в участниках проекта');
+        }
+
+        if (!Member::deleteProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
         }
 
         return $this->answer();
@@ -391,7 +467,8 @@ class ProjectService extends LPMBaseService
      * @param int $instanceId id проекта.
      * @param array $target массив целий спринта.
      */
-    public function addSprintTarget($instanceId, $target) {
+    public function addSprintTarget($instanceId, $target)
+    {
         $projectId = (int) $instanceId;
         $targetText = (string) $target;
     
@@ -411,7 +488,7 @@ class ProjectService extends LPMBaseService
             
             $this->add2Answer('targetHTML', $markdownText);
             $this->add2Answer('targetText', $targetText);
-        } catch ( Exception $e) {
+        } catch (Exception $e) {
             return $this->exception($e);
         }
         

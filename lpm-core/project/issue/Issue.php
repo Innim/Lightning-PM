@@ -343,10 +343,10 @@ SQL;
      * Возвращает список стандартных меток для задачи отсортированных по количеству использований.
      * @return array[{id, label, countUses, projectId}...n] Список меток для задачи.
      */
-    public static function getLabels()
+    // TODO: перенести в IssueLabel
+    public static function getLabels($projectId)
     {
         $labels = array();
-        $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
         $sql = "SELECT `id`, `label`, `countUses`, `projectId` FROM `%s` WHERE (`deleted` = " . LabelState::ACTIVE . ") AND ".
             "(`projectId` = " . (int) $projectId . " OR `projectId` = 0)";
 
@@ -366,6 +366,7 @@ SQL;
      * @param Имя меток, которые нужно вернуть.
      * @return array Список меток по имени.
      */
+    // TODO: перенести в IssueLabel
     public static function getLabelsByLabelText($label)
     {
         $db = LPMGlobals::getInstance()->getDBConnect();
@@ -386,6 +387,7 @@ SQL;
      * @param $id
      * @return array|null
      */
+    // TODO: перенести в IssueLabel
     public static function getLabel($id)
     {
         $id = (int) $id;
@@ -395,6 +397,7 @@ SQL;
         return ($res) ? $res->fetch_assoc() : null;
     }
 
+    // TODO: перенести в IssueLabel
     public static function labelsSort($label1, $label2)
     {
         return $label2['countUses'] - $label1['countUses'];
@@ -406,6 +409,7 @@ SQL;
      * @param $projectId Идентификатор проекта приоритет метки которого нужно изменить, либо 0,
      * если нужно изменить приоритет только общей для проектов метки.
      */
+    // TODO: перенести в IssueLabel
     public static function addLabelsUsing($labelNames, $projectId = 0)
     {
         $projectId = (int) $projectId;
@@ -424,6 +428,7 @@ SQL;
      * @param $issueName Имя задачи.
      * @return array<string> Список меток в указанном имени.
      */
+    // TODO: перенести в IssueLabel
     public static function getLabelsByName($issueName)
     {
         $labels = array();
@@ -445,6 +450,7 @@ SQL;
      * @param $deleted bool Удалена ли метка.
      * @return int|null Идентификатор вставленной/обновленной записи или null в случае ошибки.
      */
+    // TODO: перенести в IssueLabel
     public static function saveLabel($label, $projectId = 0, $id = 0, $countUses = 0, $deleted = 0)
     {
         $db = LPMGlobals::getInstance()->getDBConnect();
@@ -470,6 +476,7 @@ SQL;
      * @param $deleted bool Состояние удаления метки.
      * @return bool true в случае успешной операции, иначе false.
      */
+    // TODO: перенести в IssueLabel
     public static function changeLabelDeleted($id, $deleted)
     {
         $id = (int)$id;
@@ -589,6 +596,7 @@ SQL;
         if ($issue->status === Issue::STATUS_COMPLETED) {
             $issue->completedDate = (float)DateTimeUtils::date();
             $hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
+            $issue->autoSetMasters();
         } elseif ($issue->status === Issue::STATUS_IN_WORK) {
             // Сбрасываем дату завершения
             $issue->completedDate = null;
@@ -596,6 +604,7 @@ SQL;
         } elseif ($issue->status === Issue::STATUS_WAIT) {
             // XXX: переделать - не должно быть обращения к сервису из модели
             IssueService::checkTester($issue);
+            $issue->autoSetMasters();
         }
 
         $db = self::getDB();
@@ -987,10 +996,6 @@ SQL;
         return self::getLabelsByName($this->getName());
     }
 
-    // public function getNormHours(){
-    // 	return $this->hours;
-    // }
-
     public function getStrHours()
     {
         return ($this->hours == .5) ? "1/2" : (string) $this->hours;
@@ -999,7 +1004,7 @@ SQL;
     /**
      * Возвращает лейбл для параметра hours
      * @param  boolean $short Использовать сокращение
-     * @return Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+     * @return string Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
      */
     public function getNormHoursLabel($short = false)
     {
@@ -1128,18 +1133,8 @@ SQL;
     
     public function getAuthorLinkedName()
     {
-        return ($this->author) ? $this->author->getLinkedName() : '';
+        return $this->author ? $this->author->getLinkedName() : '';
     }
-    
-    /*public function getMembersLinkedName() {
-        if (!$this->_members) return '';
-        $names = array();
-        foreach ($this->_members as /*@var $member Member * /$member) {
-            array_push( $names, $member->getLinkedName() );
-        }
-
-        return implode( ', ', $names );
-    }*/
     
     public function getType()
     {
@@ -1182,6 +1177,7 @@ SQL;
                 $this->_sticker->issueId = $this->issueId;
             }
         }
+
         return $res;
     }
 
@@ -1210,10 +1206,7 @@ SQL;
 
     public function getTesters()
     {
-        if ($this->_testers == null && !$this->loadTesters()) {
-            return array();
-        }
-        return $this->_testers;
+        return $this->_testers == null && !$this->loadTesters() ? [] : $this->_testers;
     }
 
     public function getTesterIds()
@@ -1224,6 +1217,56 @@ SQL;
     public function getTesterIdsStr()
     {
         return implode(',', $this->getTesterIds());
+    }
+
+    /**
+     * Автоматически назначает мастеров для задачи,
+     * если нет уже заданных для конкретной задачи.
+     *
+     * Мастера будут добавлены, если надутся подходящие по тегам.
+     * Мастер для проекта по умолчанию - не назначается.
+     */
+    public function autoSetMasters()
+    {
+        $masters = $this->getMasters();
+
+        if (empty($masters)) {
+            // Получаем список меток (тегов) для задачи
+            $labelNames = $this->getLabelNames();
+            if (!empty($labelNames)) {
+                // TODO: переделать чтобы не грузить лишнего
+                $labels = Issue::getLabels($this->projectId);
+                $labelIds = [];
+
+                foreach ($labels as $label) {
+                    if (in_array($label['label'], $labelNames)) {
+                        $labelIds[] = (int)$label['id'];
+                    }
+                }
+                $labelIds = array_unique($labelIds);
+
+                // TODO: грузить только кого надо
+                $specMasters = $this->getProject()->getSpecMasters();
+                $mastersById = [];
+                foreach ($specMasters as $master) {
+                    if (in_array($master->extraId, $labelIds)) {
+                        $mastersById[$master->userId] = $master;
+                    }
+                }
+
+                if (!empty($mastersById)) {
+                    $newMasterIds = array_keys($mastersById);
+
+                    if (!Member::saveIssueMasters($this->id, $newMasterIds)) {
+                        throw new \GMFramework\ProviderSaveException(
+                            'Не удалось сохранить автоматически назначенных мастеров для задачи'
+                        );
+                    }
+
+                    $this->_masters = array_values($mastersById);
+                }
+            }
+        }
     }
 
     /**

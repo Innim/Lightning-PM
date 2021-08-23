@@ -524,7 +524,6 @@ class IssueService extends LPMBaseService
         $issueId = (int)$issueId;
         $replace = (bool)$replace;
 
-
         try {
             $issue = Issue::load($issueId);
             if ($issue === null) {
@@ -729,7 +728,7 @@ class IssueService extends LPMBaseService
         }
 
         foreach ($masters as $master) {
-            $obj->masters[] = $tester->getClientObject();
+            $obj->masters[] = $master->getClientObject();
         }
 
         foreach ($images as $image) {

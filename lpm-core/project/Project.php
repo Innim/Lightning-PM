@@ -289,6 +289,21 @@ class Project extends MembersInstance
     }
     
     /**
+     * Получает из БД цели текущего спринта scrum проекта.
+     * @param int $projectId индентификатор проекта.
+     * @return string
+     */
+    public static function loadSprintTarget($projectId)
+    {
+        $content = self::loadValFromDb(LPMTables::INSTANCE_TARGETS, 'content', [
+            'instanceType' => LPMInstanceTypes::PROJECT,
+            'instanceId' => $projectId
+        ]);
+
+        return $content === null ? '' : $content;
+    }
+    
+    /**
      *
      * @var int
      */
@@ -316,7 +331,6 @@ class Project extends MembersInstance
      */
     public $masterId;
 
-
     /**
      * Идентификатор группы проектов на GitLab,
      * соответствующей текущему проекту в таске.
@@ -329,12 +343,6 @@ class Project extends MembersInstance
      * @var Boolean|null
      */
     public $fixedInstance;
-    
-    /**
-     * Цели спринта проекта.
-     * @var string|null
-     */
-    public $sprintTarget;
 
     private $_importantIssuesCount = -1;
 
@@ -347,12 +355,23 @@ class Project extends MembersInstance
      * @var User
      */
     private $_master;
+
+    /**
+     * @var array<Member>
+     */
+    private $_specMasters = null;
     
     /**
-     * Форматированный текст.
+     * Цели спринта проекта.
      * @var string|null
      */
-    private $_htmlText = null;
+    private $_sprintTarget = null;
+    
+    /**
+     * Форматированный текст целей спринта.
+     * @var string|null
+     */
+    private $_sprintTargetHtml = null;
     
     public function __construct()
     {
@@ -522,18 +541,45 @@ class Project extends MembersInstance
 
         return $this->_master;
     }
+
+
+    /**
+     * Возвращает список мастеров, определенных по тегам.
+     * @return array<Member>
+     */
+    public function getSpecMasters()
+    {
+        return $this->_specMasters == null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+    }
+
+    /**
+     * Возвращает текст текущих целей спринта.
+     *
+     * Если цели спринта не были загружены - будет выполнен запрос к БД.
+     *
+     * См. также getSprintTargetHtml().
+     * @return string
+     */
+    public function getSprintTarget()
+    {
+        if ($this->_sprintTarget === null) {
+            $this->_sprintTarget = Project::loadSprintTarget($this->id);
+        }
+
+        return $this->_sprintTarget;
+    }
     
     /**
      * Возвращает форматированый текст для вставки в HTML код.
      * @return string
      */
-    public function getHTMLText()
+    public function getSprintTargetHtml()
     {
-        if (empty($this->_htmlText)) {
-            $this->_htmlText = HTMLHelper::getMarkdownText($this->sprintTarget);
+        if (empty($this->_sprintTargetHtml)) {
+            $this->_sprintTargetHtml = HTMLHelper::getMarkdownText($this->getSprintTarget());
         }
         
-        return $this->_htmlText;
+        return $this->_sprintTargetHtml;
     }
     
     protected function loadMembers()
@@ -544,11 +590,17 @@ class Project extends MembersInstance
         return true;
     }
 
-    // public function setIsArchive( $projectId , $value ){
-    // 	$db = LPMGlobals::getInstance()->getDBConnect();
-    // 	$sql = "UPDATE `%1\$s`".
-    // 			"SET `isArchive` = '" . $value . "'" .
-    // 			"WHERE `id` = '" . $projectId . "'";
-    // 	return $db->queryt( $sql, LPMTables::PROJECTS );
-    // }
+    /**
+     * Загружается список мастеров, определенных по тегам.
+     * @return array<Member>
+     */
+    private function loadSpecMasters()
+    {
+        $this->_specMasters = Member::loadSpecMastersForProject($this->id);
+        if ($this->_specMasters === false) {
+            throw new Exception('Ошибка при загрузке списка мастеров по тегам');
+        }
+
+        return $this->_specMasters;
+    }
 }

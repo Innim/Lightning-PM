@@ -68,7 +68,7 @@ class ProjectPage extends LPMPage
             self::PUID_MEMBERS,
             'Участники',
             'project-members',
-            ['popups/users-chooser'],
+            ['project/project-members', 'popups/users-chooser'],
             '',
             User::ROLE_MODERATOR
         );
@@ -76,7 +76,7 @@ class ProjectPage extends LPMPage
             self::PUID_SETTINGS,
             'Настройки проекта',
             'project-settings',
-            ['project-settings'],
+            ['project/project-settings'],
             '',
             User::ROLE_MODERATOR
         );
@@ -392,6 +392,8 @@ class ProjectPage extends LPMPage
             'data' => $_POST,
         ];
 
+        $projectId = $this->_project->id;
+
         // если это редактирование, то проверим идентификатор задачи
         // на соответствие её проекту и права пользователя
         if ($editMode) {
@@ -399,7 +401,7 @@ class ProjectPage extends LPMPage
             
             // проверяем что такая задача есть и она принадлежит текущему проекту
             $sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
-                                           "AND `projectId` = '" . $this->_project->id . "'";
+                                           "AND `projectId` = '" . $projectId . "'";
             if (!$query = $db->queryt($sql, LPMTables::ISSUES)) {
                 return $engine->addError('Ошибка записи в базу');
             }
@@ -469,7 +471,7 @@ class ProjectPage extends LPMPage
             }
 
             if (!empty($labels)) {
-                $allLabels = Issue::getLabels();
+                $allLabels = Issue::getLabels($projectId);
                 $countedLabels = [];
                 foreach ($allLabels as $value) {
                     $index = array_search($value['label'], $labels);
@@ -787,7 +789,7 @@ class ProjectPage extends LPMPage
             $issueId,
             $masterIds,
             $editMode,
-            LPMInstanceTypes::ISSUE_TO_MASTER
+            LPMInstanceTypes::ISSUE_FOR_MASTER
         );
     }
 

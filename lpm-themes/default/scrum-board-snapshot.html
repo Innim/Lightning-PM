@@ -35,7 +35,7 @@
         <?php if ($snapshot->sprintTarget): ?>
             <div class="scrum-board-target">
                 <p class="title-target hidden"><i>Цели спринта:</i></p>
-                <div class="text-target"><?=$snapshot->getHTMLText();?></div>
+                <div class="text-target"><?=$snapshot->getSprintTargetHtml();?></div>
             </div>
         <?php endif ?>
         <div class="scrum-snapshot-stat">
