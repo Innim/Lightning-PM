@@ -102,10 +102,10 @@ SQL;
      * Загружает список задач по проекту.
      * @param  integer 		  $projectId   Идентификатор проекта,
      * @param  array<integer> $issueStatus Список статусов задач, которые должны быть загружены.
-     * @param  string 		  $fromCompletedDate Минимальная дата завершени задачи
-     *                                       	 (в фотмате ГГГГ-ММ-ДД ЧЧ:ММ:СС)
-     * @param  string 		  $toCompletedDate Максимальная дата завершени задачи
-     *                                     	   (в фотмате ГГГГ-ММ-ДД ЧЧ:ММ:СС)
+     * @param  string 		  $fromCompletedDate Минимальная дата завершения задачи
+     *                                       	 (в формате ГГГГ-ММ-ДД ЧЧ:ММ:СС)
+     * @param  string 		  $toCompletedDate Максимальная дата завершения задачи
+     *                                     	   (в формате ГГГГ-ММ-ДД ЧЧ:ММ:СС)
      * @return array<Issue> Массив загруженных задач.
      */
     public static function loadListByProject(
@@ -728,13 +728,13 @@ SQL;
     
     public $id            =  0;
     public $projectId     =  0;
-    public $projectName  = ''; /*для загрузки задач по неск-им проектам*/
+    public $projectName  = ''; /*для загрузки задач по нескольким проектам*/
     public $idInProject   =  0;
     public $projectUID    = '';
     public $name          = '';
     public $desc          = '';
     /**
-     * Нормачасы. Для проектов, использующих Scrum - здесь story points
+     * Нормочасы. Для проектов, использующих Scrum - здесь story points
      * @var float
      */
     public $hours		  =  0;
@@ -812,9 +812,9 @@ SQL;
         $this->author = new User();
     }
 
-    public function getClientObject($addfields = null)
+    public function getClientObject($addFields = null)
     {
-        $obj = parent::getClientObject($addfields);
+        $obj = parent::getClientObject($addFields);
 
         if ($this->author) {
             $obj->author = $this->author->getClientObject();
@@ -857,7 +857,7 @@ SQL;
     }
 
     /**
-     * Возвращает моксимальное количество изображений.
+     * Возвращает максимальное количество изображений.
      * @return int Максимальное количество изображений.
      */
     public function getMaxImagesCount()
@@ -936,7 +936,6 @@ SQL;
      */
     public function getURL4View()
     {
-        //return $this->baseURL;
         $curPage = LightningEngine::getInstance()->getCurrentPage();
         return $curPage->getBaseUrl(ProjectPage::PUID_ISSUE, $this->idInProject);
     }
@@ -1002,9 +1001,9 @@ SQL;
     }
 
     /**
-     * Возвращает лейбл для параметра hours
+     * Возвращает строку для параметра hours
      * @param  boolean $short Использовать сокращение
-     * @return string Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+     * @return string Строка, со склонением, зависящим от значения hours. Например: часов, SP
      */
     public function getNormHoursLabel($short = false)
     {
@@ -1223,7 +1222,7 @@ SQL;
      * Автоматически назначает мастеров для задачи,
      * если нет уже заданных для конкретной задачи.
      *
-     * Мастера будут добавлены, если надутся подходящие по тегам.
+     * Мастера будут добавлены, если найдутся подходящие по тегам.
      * Мастер для проекта по умолчанию - не назначается.
      */
     public function autoSetMasters()
@@ -1292,7 +1291,7 @@ SQL;
     }
 
     /**
-     * Возвращает строку идентификаторв мастеров, соеденных через запятую.
+     * Возвращает строку идентификаторов мастеров, соединенных через запятую.
      * @return string
      */
     public function getMasterIdsStr()

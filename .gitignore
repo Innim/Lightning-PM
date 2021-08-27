@@ -12,6 +12,7 @@ classes.dump
 lpm-libs/test/
 /lpm-libs/gm-framework-v1.1.1
 .idea/
+.vscode/settings.json
 /lpm-core/tester/tester-add.php
 jsconfig.json
 .dev-env

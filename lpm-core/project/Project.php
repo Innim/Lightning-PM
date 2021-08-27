@@ -270,7 +270,7 @@ class Project extends MembersInstance
     
     /**
      * Обновляет в БД цели спринта текущего scrum проекта.
-     * @param int $projectId индентификатор проекта.
+     * @param int $projectId идентификатор проекта.
      * @param string $targetText текст цели спринта.
      */
     public static function updateSprintTarget($projectId, $targetText)
@@ -290,7 +290,7 @@ class Project extends MembersInstance
     
     /**
      * Получает из БД цели текущего спринта scrum проекта.
-     * @param int $projectId индентификатор проекта.
+     * @param int $projectId идентификатор проекта.
      * @return string
      */
     public static function loadSprintTarget($projectId)
@@ -382,9 +382,9 @@ class Project extends MembersInstance
         $this->addClientFields('id', 'uid', 'name', 'desc', 'scrum');
     }
 
-    public function getClientObject($addfields = null)
+    public function getClientObject($addFields = null)
     {
-        $obj = parent::getClientObject($addfields);
+        $obj = parent::getClientObject($addFields);
         $obj->url = $this->getUrl();
 
         return $obj;
@@ -423,8 +423,8 @@ class Project extends MembersInstance
     }
 
     /**
-     * Возвращает количество важных задач, открытых для текугео пользователя по этому проекту
-     * @return [type] [description]
+     * Возвращает количество важных задач, открытых для текущего пользователя по этому проекту
+     * @return int
      */
     public function getImportantIssuesCount()
     {
@@ -467,7 +467,7 @@ class Project extends MembersInstance
      * Возвращает номер текущего спринта (с 1), если проект является SCRUM проектом, иначе - 0.
      * @return int
      */
-    public function getCurrentSpintNum()
+    public function getCurrentSprintNum()
     {
         if ($this->scrum) {
             if ($this->_currentSprintNum === -1) {
@@ -481,10 +481,10 @@ class Project extends MembersInstance
     }
     
     /**
-     * Возвращает лейбл для параметра hours в задаче из проекта (без значения)
+     * Возвращает строку для параметра hours в задаче из проекта (без значения)
      * @param  int $value
      * @param  boolean $short Использовать сокращение
-     * @return Лейбл, со склонением, зависящим от значения hours. Например: часов, SP
+     * @return Строка, со склонением, зависящим от значения hours. Например: часов, SP
      */
     public function getNormHoursLabel($value, $short = false)
     {
@@ -570,7 +570,7 @@ class Project extends MembersInstance
     }
     
     /**
-     * Возвращает форматированый текст для вставки в HTML код.
+     * Возвращает форматированный текст для вставки в HTML код.
      * @return string
      */
     public function getSprintTargetHtml()

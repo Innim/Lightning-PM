@@ -22,7 +22,7 @@ class HTMLHelper
      * @param  string $text Текст для подсветки кода в нем.
      * @param  boolean $htmlEncode Определяет, нужно ли заменять html символы на эквиваленты внутри
      *                             блоков кода.
-     * @return string Текст, в котром уже подсвечен код.
+     * @return string Текст, в котором уже подсвечен код.
      */
     public static function codeIt($text, $htmlEncode = true)
     {
@@ -35,8 +35,8 @@ class HTMLHelper
                     if ($htmlEncode) {
                         $text = htmlentities($text);
                     }
-                    $classname = empty($matches[3]) ? 'nohighlight' : trim($matches[3]);
-                    $text = '<code class="' . $classname . '">' . $text . '</code>';
+                    $className = empty($matches[3]) ? 'no-highlight' : trim($matches[3]);
+                    $text = '<code class="' . $className . '">' . $text . '</code>';
                 } else {
                     $tag = 'code';
                     $text = $matches[2];
@@ -60,7 +60,7 @@ class HTMLHelper
      * - > цитаты
      * - заменяет переносы строки на br
      * - преобразует url в ссылки
-     * - поддержка задания списков через - (для вложенности следующет использовать отступ)
+     * - поддержка задания списков через - (для вложенности следует использовать отступ)
      * - поддержка прочей Markdown разметки (https://ru.wikipedia.org/wiki/Markdown)
      *
      * Текст внутри блока кода игнорируется (надо вызвать после codeIt()).
@@ -115,7 +115,7 @@ class HTMLHelper
     }
 
     /**
-     * Возвращает форматированый текст в разметке Markdown.
+     * Возвращает форматированный текст в разметке Markdown.
      * @param string $textContent
      * @return string
      */

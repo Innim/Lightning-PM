@@ -186,7 +186,7 @@ code {
 	line-height: 1.5;
 	word-wrap: break-word;
 }
-code.nohighlight {
+code.no-highlight {
 	display: block;
 
 	color: rgb(44, 45, 48);
