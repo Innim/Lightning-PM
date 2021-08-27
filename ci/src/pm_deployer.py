@@ -7,8 +7,8 @@ from ciutil.utils.util import random_str, generate_date_stamp
 class PMDeployer(SshWorker):
     """Деплой приложения."""
 
-    # файлы и директории которые не заливаеютс на боевой.
-    exclude_data = ['ci', '_db', '_private', 'CHANGELOG.md', 'README.md', 'lpm-config.inc.template.php', '.git']
+    # файлы и директории которые не заливаются на боевой.
+    exclude_data = ['ci', '.dev', '_private', 'CHANGELOG.md', 'README.md', 'lpm-config.inc.template.php', '.git']
 
     def __init__(self, ssh_info: SshInfo, upload_path, remote_app_path, git_branch, git_user, git_passwd, git_project):
         super().__init__(ssh_info)
