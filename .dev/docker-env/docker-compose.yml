@@ -1,0 +1,36 @@
+version: "3"
+services:
+  web:
+    build: ./
+    restart: unless-stopped
+    ports:
+      # TODO: вынести в .evn файл
+      - "80:80"
+    volumes:
+      - ../../:/var/www
+    depends_on:
+      - mysql-db
+      - memcached
+
+  mysql-db:
+    platform: linux/x86_64
+    image: mysql:8
+    restart: "no"
+    cap_add:
+      - SYS_NICE
+    environment:
+      - MYSQL_DATABASE=lightning_pm
+      - MYSQL_ROOT_PASSWORD=secret
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./config/etc/mysql/my.cnf:/etc/mysql/my.cnf
+      - ./data/db:/var/lib/mysql
+      - ./data/files:/var/lib/mysql-files
+      - ./data/tmp:/var/tmp
+    ports:
+      # TODO: вынести в .evn файл
+      - "33070:3306"
+
+  memcached:
+    image: memcached
+    restart: unless-stopped
