@@ -29,7 +29,7 @@ class HTMLHelper
         return self::processCode(
             $text,
             function ($matches) use ($htmlEncode) {
-                if (empty($matches[2])) {
+                if ($matches[2] === null || trim($matches[2]) === '') {
                     $tag = 'pre';
                     $text = trim($matches[4], "\n\r");
                     if ($htmlEncode) {
