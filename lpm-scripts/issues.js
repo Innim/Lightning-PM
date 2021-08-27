@@ -196,6 +196,9 @@ function createIssuesAutoComplete() {
     var cache = {};
     return {
         trigger: '#',
+        searchOpts: {
+            skip: true,
+        },
         selectTemplate: function (item) {
             let data = item.original;
             return '[#' + data.key + '](' + data.url + ')';
@@ -205,17 +208,17 @@ function createIssuesAutoComplete() {
             return '#' + data.key + ' ' + data.value;
         },
         noMatchTemplate: function () {
-            return '<li>Задач с таким ID не найдено.</li>';
+            return '<li>Задач не найдено.</li>';
         },
         values: function (text, cb) {
-            if (!text || isNaN(text)) return;
+            if (!text) return;
 
             if (cache[text]) {
                 cb(cache[text]);
                 return;
             }
 
-            srv.project.getIssueNamesByIdPart(issuePage.projectId, text,
+            srv.project.searchIssueNames(issuePage.projectId, text,
                 function (res) {
                     if (res.success) {
                         let list = res.list.map((e) => {
@@ -391,7 +394,6 @@ issuePage.getPriorityColor = function (val) {
 issuePage.updateStat = function () {
     if ($("#projectView").length == 0) return;
 
-    //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
     $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
 

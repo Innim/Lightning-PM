@@ -148,20 +148,18 @@ SQL;
 
     /**
      * Загружает список задач по части идентификатора в проекте.
-     * @param  array<int> $issueIds Идентификаторы задач
      * @return array<Issue>
      */
-    public static function loadListByIdInProjectPart($projectId, $part, $startsWith = true)
+    public static function searchListInProject($projectId, $needle)
     {
-        if (empty($part)) {
+        if (empty($needle)) {
             return self::loadListByProject($projectId);
         } else {
-            $val = $part . '%%';
-            if (!$startsWith) {
-                $val = '%%' . $val;
-            }
+            $needle = self::getDB()->escape4Search_t($needle);
             $where = <<<WHERE
-(`i`.`projectId` = $projectId AND `i`.`idInProject` LIKE '$val')
+(`i`.`projectId` = $projectId
+AND
+(`i`.`idInProject` LIKE '$needle%%' OR `i`.`name` LIKE '%%$needle%%'))
 WHERE;
             return self::loadList($where, '', '', '`i`.`idInProject` DESC');
         }

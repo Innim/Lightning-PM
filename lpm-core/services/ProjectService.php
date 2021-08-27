@@ -382,18 +382,17 @@ class ProjectService extends LPMBaseService
 
     /**
      * Получает базовую информацию о задаче (название, url и id в проекте),
-     * по части id в проекте.
+     * по части id или имени в проекте.
      *
-     * @param $idInProjectPart Начало идентификатора.
+     * @param $needle Начало идентификатора или часть имени.
      */
-    public function getIssueNamesByIdPart($projectId, $idInProjectPart)
+    public function searchIssueNames($projectId, $needle)
     {
         $projectId = (int)$projectId;
-        $idInProjectPart = (int)$idInProjectPart;
 
         try {
             $project = $this->getProjectRequireReadPermission($projectId);
-            $list = Issue::loadListByIdInProjectPart($projectId, (string)$idInProjectPart);
+            $list = Issue::searchListInProject($project->id, (string)$needle);
             $res = [];
             foreach ($list as $issue) {
                 $res[] = [
