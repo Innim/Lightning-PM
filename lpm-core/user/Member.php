@@ -27,7 +27,6 @@ class Member extends User
             $query[] = $leftJoinTable;
         }
 
-        // exit('<pre>' . self::getDB()->sprintft($query));
         return StreamObject::loadObjList(self::getDB(), $query, empty($class) ? __CLASS__ : $class);
     }
     

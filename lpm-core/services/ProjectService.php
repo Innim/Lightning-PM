@@ -95,7 +95,7 @@ class ProjectService extends LPMBaseService
     /**
      * Устанавливает указанного участника проекта в качестве мастера.
      * @param int $projectId Идентификатор проекта.
-     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
      */
     public function setMaster($projectId, $masterId)
     {
@@ -157,7 +157,7 @@ class ProjectService extends LPMBaseService
     /**
      * Устанавливает указанного участника проекта в качестве мастера для задач с указанным тегом.
      * @param int $projectId Идентификатор проекта.
-     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
      * @param int $labelId   Идентификатор тега.
      */
     public function addSpecMaster($projectId, $masterId, $labelId)
@@ -201,7 +201,7 @@ class ProjectService extends LPMBaseService
     /**
      * Удаляет указанного участника проекта в качестве мастера для задач с указанным тегом.
      * @param int $projectId Идентификатор проекта.
-     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
      * @param int $labelId   Идентификатор тега.
      */
     public function deleteSpecMaster($projectId, $masterId, $labelId)
@@ -286,7 +286,7 @@ class ProjectService extends LPMBaseService
         }
 
         if (Member::hasMember(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $userId)) {
-            return $this->error("Тестеровшик уже добавлен");
+            return $this->error("Тестировщик уже добавлен");
         }
 
         Member::saveProjectForTester($projectId, $userId);
@@ -382,18 +382,17 @@ class ProjectService extends LPMBaseService
 
     /**
      * Получает базовую информацию о задаче (название, url и id в проекте),
-     * по части id в проекте.
+     * по части id или имени в проекте.
      *
-     * @param $idInProjectPart Начало идентификатора.
+     * @param $needle Начало идентификатора или часть имени.
      */
-    public function getIssueNamesByIdPart($projectId, $idInProjectPart)
+    public function searchIssueNames($projectId, $needle)
     {
         $projectId = (int)$projectId;
-        $idInProjectPart = (int)$idInProjectPart;
 
         try {
             $project = $this->getProjectRequireReadPermission($projectId);
-            $list = Issue::loadListByIdInProjectPart($projectId, (string)$idInProjectPart);
+            $list = Issue::searchListInProject($project->id, (string)$needle);
             $res = [];
             foreach ($list as $issue) {
                 $res[] = [
@@ -427,7 +426,7 @@ class ProjectService extends LPMBaseService
             // Загрузим информацию о самом используемом репозитории в этом проекте
             // из последних 5
             $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
-            // А также загружаем топ репозиторие для текущего пользователя
+            // А также загружаем топ репозиториев для текущего пользователя
             $myPopularRepositoryIds = IssueBranch::loadPopularRepositories($project->id, $this->getUserId(), 10);
 
             $this->add2Answer('list', $list);
