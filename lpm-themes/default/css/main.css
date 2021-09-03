@@ -1789,6 +1789,10 @@ div.ftp
 	border-radius: 2px;
 }
 
+.scrum-board-sticker .name-project:hover {
+	color: #fff;
+}
+
 .scrum-board-sticker.orange {
 	background-color: #FEB93C;
 }
