@@ -18,7 +18,11 @@
                 <td>
                     <?if (!$worker->isRegistered()) {?>
                     <input type="hidden" value="<?=$worker->getID();?>" />
-                    <button onclick="workersPage.showAddForm( event );">Добавить</button>
+                    <button
+                        onclick="workersPage.showAddForm( event );"
+                        class="btn btn-primary">
+                        Добавить
+                    </button>
                     <?}?>
                 </td>
             </tr>
@@ -45,8 +49,8 @@
         </ol>
         <input type="hidden" name="userId" />
         <p class="save-line">
-            <button type="submit">Добавить</button>
-            <button type="reset" onclick="showMain();">Отмена</button>
+            <button type="submit" class="btn btn-success">Добавить</button>
+            <button type="reset" onclick="showMain();" class="btn btn-primary">Отмена</button>
         </p>
     </form>
 </article>

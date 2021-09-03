@@ -30,10 +30,10 @@ $isModerator = lpm_is_moderator();
             <td><?=$user->getEmail();?></td>
             <td><?=$user->getLastVisit();?></td>
             <?php if ($isModerator): ?>
-            <td>
+            <td style="text-align: center;">
                 <input type="hidden" name="userId" value="<?=$user->userId;?>" />
-                <button id="unlocked-btn" onclick="usersPage.lockUser(event);">Разблокировать</button>
-                <button id="locked-btn" onclick="usersPage.lockUser(event);">Заблокировать</button>
+                <button class="btn btn-secondary" id="unlocked-btn" onclick="usersPage.lockUser(event);">Разблокировать</button>
+                <button class="btn btn-danger" id="locked-btn" onclick="usersPage.lockUser(event);">Заблокировать</button>
             </td>
             <?php endif; ?>
         </tr>
