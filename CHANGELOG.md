@@ -1,5 +1,7 @@
 ## Next release
 
+- Подключение Bootstrap 5.0 (пока без JS).
+
 ### Added
 
 - Docker окружение.
