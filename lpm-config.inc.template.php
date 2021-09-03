@@ -70,6 +70,21 @@ define('GITLAB_SUDO_USER', '');
 // Токен для GitLab Hook
 define('GITLAB_HOOK_TOKEN', '');
 
+// Настройки сервера кэша
+
+/**
+ * Имя хоста сервера memcached.
+ *
+ * Если используете Docker окружение из проекта,
+ * то будет: memcached
+ * @var string
+ */
+define('MEMCACHED_HOST', '');
+/**
+ * Порт сервера memcached.
+ */
+define('MEMCACHED_PORT', 11211);
+
 // Настройки каналов оповещений
 
 // Оповещать по Email

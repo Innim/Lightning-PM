@@ -85,6 +85,10 @@ class LightningEngine
      * @var ExternalApiManager
      */
     private $_apiManager;
+    /**
+     * @var CacheController
+     */
+    private $_cache;
     
     /**
      * Ошибки, которые надо вывести пользователю
@@ -240,6 +244,15 @@ class LightningEngine
         }
 
         return $this->_commentsManager;
+    }
+    
+    /**
+     * Контроллер кэша.
+     * @return CacheController
+     */
+    public function getCache()
+    {
+        return empty($this->_cache) ? ($this->_cache = new CacheController()) : $this->_cache;
     }
     
     /**

@@ -15,6 +15,7 @@
 Требуемые расширения, которые могут быть выключены по умолчанию:
  - [mbstring](https://www.php.net/manual/ru/intro.mbstring.php)
  - [Разбор XML](https://www.php.net/manual/ru/intro.xml.php)
+ - [memcached](https://www.php.net/manual/en/book.memcached.php)
 
 ## Установка
 
