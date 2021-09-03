@@ -20,6 +20,7 @@ services:
       - SYS_NICE
     environment:
       - MYSQL_DATABASE=lightning_pm
+      # TODO: вынести в .evn файл
       - MYSQL_ROOT_PASSWORD=secret
     command: --default-authentication-plugin=mysql_native_password
     volumes:
