@@ -9,25 +9,38 @@ class OwncloudHelper
      *
      * Если не удалось получить тип или $url не доступен,
      * то вернется null.
+     * @param string $url
+     * @param CacheController $cache
      * @return string Content-Type
      */
-    public static function getSharedFileType($url)
+    public static function getSharedFileType($url, $cache = null)
     {
-        $url = $url . "/download";
+        if ($cache != null) {
+            $cachedVal = $cache->getOwncloudSharedFileType($url);
+            if ($cachedVal !== false) {
+                return $cachedVal;
+            }
+        }
+        
+        $downloadUrl = $url . "/download";
         $prev = stream_context_get_options(stream_context_get_default());
-        // Устаналиваем таймаут поменьше
+        // Устанавливаем таймаут поменьше
         stream_context_set_default([
                 'http' => [
                     'timeout' => 2, // seconds
                 ]
             ]);
-        $header = @get_headers($url, 1);
+        $header = @get_headers($downloadUrl, 1);
         stream_context_set_default($prev);
 
         if (empty($header) || !isset($header['Content-Type'])) {
             return null;
         } else {
-            return $header['Content-Type'];
+            $type = $header['Content-Type'];
+            if ($cache != null) {
+                $cachedVal = $cache->setOwncloudSharedFileType($url, $type);
+            }
+            return $type;
         }
     }
 }

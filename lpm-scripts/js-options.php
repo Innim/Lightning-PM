@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../lpm-core/init.inc.php';
 new LightningEngine();
-$pc = LightningEngine::getInstance()->getCostructor();
+$pc = LightningEngine::getInstance()->getConstructor();
 
 header("Content-type: application/x-javascript");
 ?>

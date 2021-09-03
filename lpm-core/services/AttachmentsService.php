@@ -22,7 +22,7 @@ class AttachmentsService extends LPMBaseService
             try {
                 $data = $client->getMR($url);
             } catch (Gitlab\Exception\RuntimeException $e) {
-                // Игнорим если не найдено - может нет прав, может удалили, может url кривой
+                // Игнорируем если не найдено - может нет прав, может удалили, может url кривой
                 if ($e->getCode() != 404) {
                     return $this->exception($e);
                 }
@@ -45,7 +45,7 @@ class AttachmentsService extends LPMBaseService
      */
     public function getVideoInfo($url)
     {
-        $res = AttachmentVideoHelper::getInfoByUrl($url);
+        $res = AttachmentVideoHelper::getInfoByUrl($url, $this->cache());
         if (!empty($res)) {
             $html = $this->getHtml(function () use ($res) {
                 PagePrinter::videoItem($res);
@@ -59,7 +59,7 @@ class AttachmentsService extends LPMBaseService
 
     /**
      * Возвращает информацию об изображении по ссылке.
-     * @param String $url URL, по которому расшарено изобаржение.
+     * @param String $url URL, по которому расшарено изображение.
      * Поддерживаются ссылки на
      * Innim Cloud, Droplr и GIF с imgur.
      * @return [
@@ -68,7 +68,7 @@ class AttachmentsService extends LPMBaseService
      */
     public function getImageInfo($url)
     {
-        $res = AttachmentImageHelper::getInfoByUrl($url);
+        $res = AttachmentImageHelper::getInfoByUrl($url, $this->cache());
         if (!empty($res)) {
             $html = $this->getHtml(function () use ($res) {
                 PagePrinter::imageItem($res);
