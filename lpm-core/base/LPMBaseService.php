@@ -161,7 +161,7 @@ class LPMBaseService extends SecureService
      * быи права на чтение.
      *
      * Если нет такого проекта или нет прав на чтение -
-     * будет порождено искключение.
+     * будет порождено исключение.
      * @return Project
      */
     protected function getProjectRequireReadPermission($projectId)
@@ -201,5 +201,13 @@ class LPMBaseService extends SecureService
         }
 
         return $client;
+    }
+
+    /**
+     * @return CacheController
+     */
+    protected function cache()
+    {
+        return $this->_engine->cache();
     }
 }

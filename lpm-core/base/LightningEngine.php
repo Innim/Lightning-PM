@@ -250,7 +250,7 @@ class LightningEngine
      * Контроллер кэша.
      * @return CacheController
      */
-    public function getCache()
+    public function cache()
     {
         return empty($this->_cache) ? ($this->_cache = new CacheController()) : $this->_cache;
     }

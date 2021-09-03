@@ -4,6 +4,8 @@
  */
 class CacheController
 {
+    const OWNCLOUD_SHARED_FILE_TYPE_PREFIX = 'owncloud_shared_file_type_prefix-';
+
     /**
      * @var Memcached
      */
@@ -51,5 +53,20 @@ class CacheController
         }
 
         return $this->_memcached->set($key, $value, $expiredAt);
+    }
+
+    public function getOwncloudSharedFileType($url)
+    {
+        return $this->get($this->getOwncloudSharedFileTypeKey($url));
+    }
+
+    public function setOwncloudSharedFileType($url, $value)
+    {
+        return $this->set($this->getOwncloudSharedFileTypeKey($url), $value);
+    }
+
+    private function getOwncloudSharedFileTypeKey($url)
+    {
+        return self::OWNCLOUD_SHARED_FILE_TYPE_PREFIX . md5($url);
     }
 }
