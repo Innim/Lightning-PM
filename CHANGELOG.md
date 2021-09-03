@@ -1,9 +1,8 @@
 ## Next release
 
-- Подключение Bootstrap 5.0 (пока без JS).
-
 ### Added
 
+- Подключение Bootstrap 5.0 (пока без JS).
 - Docker окружение.
 - Кэш данных о вложениях (требует `memcached`).
 
