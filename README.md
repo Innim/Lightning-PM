@@ -67,6 +67,12 @@
 
 Скачать нужный `php-cs-fixer` можно [здесь](https://cs.symfony.com/download/php-cs-fixer-v2.phar).
 
+### Frontend
+
+В качестве библиотеки стилей используется Bootstrap 5. 
+Для переопределения глобальных Bootstrap стилей нужно использовать файл `/.lpm-themes/default/css/bootstrap-reset.css`.
+Для использования компонентов библиотеки см. документацию к [Bootstrap](https://getbootstrap.com/).
+
 ### Окружение
 
 #### Docker
