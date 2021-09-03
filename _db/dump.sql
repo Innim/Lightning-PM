@@ -140,7 +140,8 @@ CREATE TABLE `lpm_members` (
   `userId` bigint(10) NOT NULL,
   `instanceType` smallint(2) NOT NULL,
   `instanceId` bigint(19) NOT NULL,
-  PRIMARY KEY (`userId`,`instanceType`,`instanceId`)
+  `extraId` bigint(19) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`extraId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 

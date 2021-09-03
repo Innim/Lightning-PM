@@ -212,6 +212,12 @@ let srv = {
         deleteMaster: function (projectId, onResult) {
             this.s._('deleteMaster');
         },
+        addSpecMaster: function(projectId, masterId, labelId, onResult) {
+            this.s._('addSpecMaster');
+        },
+        deleteSpecMaster: function(projectId, masterId, labelId, onResult) {
+            this.s._('deleteSpecMaster');
+        },
         deleteMemberDefault: function (projectId, onResult) {
             this.s._('deleteMemberDefault');
         },
@@ -230,8 +236,8 @@ let srv = {
         setProjectSettings: function (projectId, scrum, slackNotifyChannel, onResult) {
             this.s._('setProjectSettings');
         },
-        getIssueNamesByIdPart: function (projectId, idInProjectPart, onResult) {
-            this.s._('getIssueNamesByIdPart');
+        searchIssueNames: function (projectId, idInProjectPart, onResult) {
+            this.s._('searchIssueNames');
         },
         getRepositories: function (projectId, onResult) {
             this.s._('getRepositories');

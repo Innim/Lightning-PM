@@ -170,7 +170,7 @@ code {
 	line-height: 1.5;
 	word-wrap: break-word;
 }
-code.nohighlight {
+code.no-highlight {
 	display: block;
 
 	color: rgb(44, 45, 48);
@@ -2246,3 +2246,19 @@ form.pass-test #passTestComment textarea.comment-text-field {
 /**
  * === end sprint targets ===
  */
+
+ /* Окно выбора проекта */
+
+ .select-project-popup .select-project-row {
+	margin: 10px 0;
+ }
+
+ /* Окно выбора проекта для создания задачи */
+
+ .select-project-popup .target-kind-row {
+	 display: none;
+ }
+
+ .select-project-popup.finished-mode .target-kind-row {
+	display: block;
+ }

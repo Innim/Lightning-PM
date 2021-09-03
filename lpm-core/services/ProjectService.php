@@ -95,7 +95,7 @@ class ProjectService extends LPMBaseService
     /**
      * Устанавливает указанного участника проекта в качестве мастера.
      * @param int $projectId Идентификатор проекта.
-     * @param int $masterId  Идентификатор участника, которо надо сделать мастером.
+     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
      */
     public function setMaster($projectId, $masterId)
     {
@@ -122,8 +122,6 @@ class ProjectService extends LPMBaseService
             if (!Project::updateMaster($project->id, $masterId)) {
                 return $this->error('Не удалось сохранить данные.');
             }
-        } else {
-            return $this->error('fuck: '. $masterId);
         }
 
         return $this->answer();
@@ -151,6 +149,84 @@ class ProjectService extends LPMBaseService
             if (!Project::updateMaster($project->id, 0)) {
                 return $this->error('Не удалось сохранить данные.');
             }
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Устанавливает указанного участника проекта в качестве мастера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function addSpecMaster($projectId, $masterId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $masterId  = (int)$masterId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($masterId);
+        if (!$member) {
+            return $this->error('Мастер не найден в участниках проекта');
+        }
+
+        $label = Issue::getLabel($labelId);
+        if (!$label) {
+            return $this->error('Нет такого тега');
+        }
+
+        $labelProjectId = intval($label['projectId']);
+        if ($labelProjectId != 0 && $labelProjectId != $projectId) {
+            return $this->error('Тег не доступен в проекте');
+        }
+
+        if (!Member::saveProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Удаляет указанного участника проекта в качестве мастера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function deleteSpecMaster($projectId, $masterId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $masterId  = (int)$masterId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($masterId);
+        if (!$member) {
+            return $this->error('Мастер не найден в участниках проекта');
+        }
+
+        if (!Member::deleteProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
         }
 
         return $this->answer();
@@ -210,7 +286,7 @@ class ProjectService extends LPMBaseService
         }
 
         if (Member::hasMember(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $userId)) {
-            return $this->error("Тестеровшик уже добавлен");
+            return $this->error("Тестировщик уже добавлен");
         }
 
         Member::saveProjectForTester($projectId, $userId);
@@ -306,18 +382,17 @@ class ProjectService extends LPMBaseService
 
     /**
      * Получает базовую информацию о задаче (название, url и id в проекте),
-     * по части id в проекте.
+     * по части id или имени в проекте.
      *
-     * @param $idInProjectPart Начало идентификатора.
+     * @param $needle Начало идентификатора или часть имени.
      */
-    public function getIssueNamesByIdPart($projectId, $idInProjectPart)
+    public function searchIssueNames($projectId, $needle)
     {
         $projectId = (int)$projectId;
-        $idInProjectPart = (int)$idInProjectPart;
 
         try {
             $project = $this->getProjectRequireReadPermission($projectId);
-            $list = Issue::loadListByIdInProjectPart($projectId, (string)$idInProjectPart);
+            $list = Issue::searchListInProject($project->id, (string)$needle);
             $res = [];
             foreach ($list as $issue) {
                 $res[] = [
@@ -351,7 +426,7 @@ class ProjectService extends LPMBaseService
             // Загрузим информацию о самом используемом репозитории в этом проекте
             // из последних 5
             $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
-            // А также загружаем топ репозиторие для текущего пользователя
+            // А также загружаем топ репозиториев для текущего пользователя
             $myPopularRepositoryIds = IssueBranch::loadPopularRepositories($project->id, $this->getUserId(), 10);
 
             $this->add2Answer('list', $list);
@@ -391,7 +466,8 @@ class ProjectService extends LPMBaseService
      * @param int $instanceId id проекта.
      * @param array $target массив целий спринта.
      */
-    public function addSprintTarget($instanceId, $target) {
+    public function addSprintTarget($instanceId, $target)
+    {
         $projectId = (int) $instanceId;
         $targetText = (string) $target;
     
@@ -411,7 +487,7 @@ class ProjectService extends LPMBaseService
             
             $this->add2Answer('targetHTML', $markdownText);
             $this->add2Answer('targetText', $targetText);
-        } catch ( Exception $e) {
+        } catch (Exception $e) {
             return $this->exception($e);
         }
         

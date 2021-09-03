@@ -5,7 +5,7 @@
  * Сюда входит:
  * - список задач (открытых и завершенных)
  * - отображение задачи
- * - добавление/редакторивание задачи
+ * - добавление/редактирование задачи
  * - участники проекта
  * - список комментов к задачам проекта
  * - скрам-борд
@@ -68,7 +68,7 @@ class ProjectPage extends LPMPage
             self::PUID_MEMBERS,
             'Участники',
             'project-members',
-            ['popups/users-chooser'],
+            ['project/project-members', 'popups/users-chooser'],
             '',
             User::ROLE_MODERATOR
         );
@@ -76,7 +76,7 @@ class ProjectPage extends LPMPage
             self::PUID_SETTINGS,
             'Настройки проекта',
             'project-settings',
-            ['project-settings'],
+            ['project/project-settings'],
             '',
             User::ROLE_MODERATOR
         );
@@ -121,12 +121,12 @@ class ProjectPage extends LPMPage
             // Если мы на странице задачи, но не авторизовались,
             // запомним заголовок в Open Graph, чтобы в превью нормально показывалось
             if (!$this->_curSubpage && $this->getPUID() == self::PUID_ISSUE) {
-                $issueId = $this->getCurentIssueId((float)$this->getAddParam());
+                $issueId = $this->getCurrentIssueId((float)$this->getAddParam());
                 if ($issueId > 0 && ($issue = Issue::load((float)$issueId))) {
                     // Получаем картинку из задачи
                     // TODO: вообще-то это не очень безопасно, т.к. OG возвращается без авторизации
                     // а в картинках теоретически может быть что-то важное.
-                    // Но пока есть такоей запрос, сделаем так.
+                    // Но пока есть такой запрос, сделаем так.
                     $images = $issue->getImages();
                     $imageUrl = empty($images) ? null : $images[0]->getSource();
                     $this->SetOpenGraph($this->getTitleByIssue($issue), null, $imageUrl);
@@ -223,7 +223,7 @@ class ProjectPage extends LPMPage
 
     private function initIssue()
     {
-        $issueId = $this->getCurentIssueId((float)$this->getAddParam());
+        $issueId = $this->getCurrentIssueId((float)$this->getAddParam());
         if ($issueId <= 0 || !$issue = Issue::load((float)$issueId)) {
             LightningEngine::go2URL($this->getUrl());
         }
@@ -368,7 +368,7 @@ class ProjectPage extends LPMPage
      * @param mixed $idInProject
      * @return $issueId
      */
-    private function getCurentIssueId($idInProject)
+    private function getCurrentIssueId($idInProject)
     {
         return Issue::loadIssueId($this->_project->id, $idInProject);
     }
@@ -385,12 +385,14 @@ class ProjectPage extends LPMPage
     private function saveIssue($editMode = false)
     {
         $engine = $this->_engine;
-        // TODO: вынеси отсюда все сохрание и выделить работу с БД
+        // TODO: вынеси отсюда все сохранение и выделить работу с БД
         $db = LPMGlobals::getInstance()->getDBConnect();
         // Сохраняем весь input, чтобы в случае ошибки восстановить форму
         $this->_issueInput = [
             'data' => $_POST,
         ];
+
+        $projectId = $this->_project->id;
 
         // если это редактирование, то проверим идентификатор задачи
         // на соответствие её проекту и права пользователя
@@ -399,7 +401,7 @@ class ProjectPage extends LPMPage
             
             // проверяем что такая задача есть и она принадлежит текущему проекту
             $sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
-                                           "AND `projectId` = '" . $this->_project->id . "'";
+                                           "AND `projectId` = '" . $projectId . "'";
             if (!$query = $db->queryt($sql, LPMTables::ISSUES)) {
                 return $engine->addError('Ошибка записи в базу');
             }
@@ -469,7 +471,7 @@ class ProjectPage extends LPMPage
             }
 
             if (!empty($labels)) {
-                $allLabels = Issue::getLabels();
+                $allLabels = Issue::getLabels($projectId);
                 $countedLabels = [];
                 foreach ($allLabels as $value) {
                     $index = array_search($value['label'], $labels);
@@ -787,7 +789,7 @@ class ProjectPage extends LPMPage
             $issueId,
             $masterIds,
             $editMode,
-            LPMInstanceTypes::ISSUE_TO_MASTER
+            LPMInstanceTypes::ISSUE_FOR_MASTER
         );
     }
 

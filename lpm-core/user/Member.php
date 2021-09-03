@@ -27,7 +27,6 @@ class Member extends User
             $query[] = $leftJoinTable;
         }
 
-        // exit('<pre>' . self::getDB()->sprintft($query));
         return StreamObject::loadObjList(self::getDB(), $query, empty($class) ? __CLASS__ : $class);
     }
     
@@ -69,7 +68,16 @@ class Member extends User
      */
     public static function loadMastersForIssue($issueId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::ISSUE_TO_MASTER, $issueId, $onlyNotLocked);
+        return self::loadListByInstance(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $onlyNotLocked);
+    }
+
+    /**
+     * Загружает список специализированных мастеров для конкретного проекта.
+     * @return array<Member>
+     */
+    public static function loadSpecMastersForProject($projectId, $onlyNotLocked = false)
+    {
+        return self::loadListByInstance(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, $onlyNotLocked);
     }
 
     public static function hasIssueMember($issueId, $userId)
@@ -109,8 +117,12 @@ class Member extends User
         return self::deleteMembers(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId, $userIds);
     }
 
+    public static function deleteProjectSpecMaster($projectId, $userId, $labelId)
+    {
+        return self::deleteMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, [$userId], $labelId);
+    }
 
-    public static function deleteMembers($instanceType, $instanceId, $userIds = null)
+    public static function deleteMembers($instanceType, $instanceId, $userIds = null, $extraId = null)
     {
         $hash = [
             'DELETE' => LPMTables::MEMBERS,
@@ -126,8 +138,11 @@ class Member extends User
             $hash['WHERE'][] = '`userId` IN (' . implode(',', $userIds) . ')';
         }
 
+        if ($extraId !== null) {
+            $hash['WHERE'][] = '`extraId` = ' . $extraId;
+        }
+
         return self::getDB()->queryb($hash);
-        //throw new Exception('Delete members error', \GMFramework\ErrorCode::SAVE_DATA);
     }
 
     public static function saveIssueMembers($issueId, $userIds)
@@ -135,20 +150,30 @@ class Member extends User
         return self::saveMembers(LPMInstanceTypes::ISSUE, $issueId, $userIds);
     }
 
+    public static function saveIssueMasters($issueId, $userIds)
+    {
+        return self::saveMembers(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $userIds);
+    }
+
     public static function saveProjectForTester($projectId, $userId)
     {
         return self::saveMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, [$userId]);
     }
 
-    public static function saveMembers($instanceType, $instanceId, $userIds)
+    public static function saveProjectSpecMaster($projectId, $userId, $labelId)
+    {
+        return self::saveMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, [$userId], $labelId);
+    }
+
+    public static function saveMembers($instanceType, $instanceId, $userIds, $extraId = 0)
     {
         $values = [];
         foreach ($userIds as $userId) {
-            $values[] = [$userId, $instanceType, $instanceId];
+            $values[] = [$userId, $instanceType, $instanceId, $extraId];
         }
 
         $hash = [
-            'REPLACE' => ['userId', 'instanceType', 'instanceId'],
+            'REPLACE' => ['userId', 'instanceType', 'instanceId', 'extraId'],
             'INTO' => LPMTables::MEMBERS,
             'VALUES' => $values
         ];
@@ -168,5 +193,19 @@ class Member extends User
             'IssueMember',
             $userId
         );
+    }
+
+    /**
+     * Дополнительный идентификатор, определяющий связь.
+     *
+     * Хранимое значение определяется контекстом.
+     */
+    public $extraId;
+
+    public function __construct()
+    {
+        parent::__construct();
+        
+        $this->_typeConverter->addIntVars('extraId');
     }
 }

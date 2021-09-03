@@ -4,11 +4,11 @@
     $project - проект
 */
 ?>
-<article id="addTarget" title="Цели спринта #<?=$project->getCurrentSpintNum();?>">
+<article id="addTarget" title="Цели спринта #<?=$project->getCurrentSprintNum();?>">
     <form class="form-target">
-        <textarea class="input-target" placeholder="Укажите цели спринта"><?=$project->sprintTarget;?></textarea>
+        <textarea class="input-target" placeholder="Укажите цели спринта"><?=$project->getSprintTarget();?></textarea>
     </form>
-    <p class="target-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
+    <p class="target-note">Можете использовать <strong>*звёздочки*</strong>, <em>_подчеркивания_</em>,
         <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
     </p>
 </article>

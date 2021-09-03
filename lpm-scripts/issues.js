@@ -196,6 +196,9 @@ function createIssuesAutoComplete() {
     var cache = {};
     return {
         trigger: '#',
+        searchOpts: {
+            skip: true,
+        },
         selectTemplate: function (item) {
             let data = item.original;
             return '[#' + data.key + '](' + data.url + ')';
@@ -205,17 +208,17 @@ function createIssuesAutoComplete() {
             return '#' + data.key + ' ' + data.value;
         },
         noMatchTemplate: function () {
-            return '<li>Задач с таким ID не найдено.</li>';
+            return '<li>Задач не найдено.</li>';
         },
         values: function (text, cb) {
-            if (!text || isNaN(text)) return;
+            if (!text) return;
 
             if (cache[text]) {
                 cb(cache[text]);
                 return;
             }
 
-            srv.project.getIssueNamesByIdPart(issuePage.projectId, text,
+            srv.project.searchIssueNames(issuePage.projectId, text,
                 function (res) {
                     if (res.success) {
                         let list = res.list.map((e) => {
@@ -264,13 +267,52 @@ const issuePage = {
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
     copyIssue: () => issuePage.createIssueBy('copy-issue'),
-    finishedIssue: () => issuePage.createIssueBy('finished-issue'),
-    createIssueBy: function (hash) {
+    finishedIssue: () => { 
+        const $kindField = $('#targetKindField', selectProject.element);
+        issuePage.createIssueBy(
+            (issueId) => 'finished-issue:' + issueId + ':' + $kindField.val(), 
+            'finished',
+            (projectId) => {
+                const isCurrent = projectId == issuePage.projectId;
+                let needResetVal = false;
+                $('option', $kindField).each((_, item) => {
+                    let visible = true;
+                    $option = $(item);
+                    switch ($option.val()) {
+                        case 'apply':
+                            visible = !isCurrent;
+                            break;
+                        case 'finished':
+                            visible = isCurrent;
+                            break;
+                    }
+
+                    if (visible) {
+                        $option.show();
+                    } else {
+                        $option.hide();
+                        needResetVal = needResetVal || $option.prop('selected');
+                    }
+                });
+
+                if (needResetVal) {
+                    $('option', $kindField).each((_, item) => {
+                        $option = $(item);
+                        if ($option.css('display') !== 'none') {
+                            $option.prop('selected', true);
+                            return false;
+                        }
+                    })
+                }
+            },
+        );
+    },
+    createIssueBy: function (hash, mode, onProjectChanged) {
         const issueId = this.getIssueId();
         selectProject.show(this.projectId, issueId, (targetProject) => {
-            const url = targetProject.url + '#' + hash + ':' + issueId;
+            const url = targetProject.url + '#' + (typeof hash === 'function' ? hash(issueId) : hash + ':' + issueId);
             window.open(url, '_blank');
-        });
+        }, mode, onProjectChanged);
     },
 };
 
@@ -352,7 +394,6 @@ issuePage.getPriorityColor = function (val) {
 issuePage.updateStat = function () {
     if ($("#projectView").length == 0) return;
 
-    //$( ".project-stat .issues-total" ).text( $( "#issuesList > tbody > tr" ).size() );
     $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
     $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
 

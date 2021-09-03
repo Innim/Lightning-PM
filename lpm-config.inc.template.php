@@ -69,3 +69,8 @@ define('GITLAB_SUDO_USER', '');
 
 // Токен для GitLab Hook
 define('GITLAB_HOOK_TOKEN', '');
+
+// Настройки каналов оповещений
+
+// Оповещать по Email
+define('EMAIL_NOTIFY_ENABLED', true);

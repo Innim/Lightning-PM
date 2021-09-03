@@ -22,7 +22,7 @@ class LPMInstanceTypes
     const PROJECT = 2;
 
     /**
-     * Instance тип для пользователя задачи в снепшоте.
+     * Instance тип для пользователя задачи в снимке.
      * @var int
      */
     const SNAPSHOT_ISSUE_MEMBERS = 3;
@@ -33,7 +33,7 @@ class LPMInstanceTypes
     const ISSUE_FOR_TEST = 4;
 
     /**
-     * Instance тестар задачи в снепште.
+     * Instance тестер задачи в снимке.
      */
     const SNAPSHOT_ISSUE_FOR_TEST = 5;
 
@@ -45,10 +45,17 @@ class LPMInstanceTypes
     /**
      * Задача, для которой нужен мастер.
      */
-    const ISSUE_TO_MASTER = 7;
+    const ISSUE_FOR_MASTER = 7;
 
     /**
      * Instance snapshot
      */
     const SNAPSHOT = 8;
+
+    /**
+     * Проект, для которого назначен специализированный мастер.
+     *
+     * Это мастер, назначаемый по тегу.
+     */
+    const PROJECT_FOR_SPEC_MASTER = 7;
 }

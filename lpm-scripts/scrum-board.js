@@ -118,6 +118,7 @@ let scrumBoard = {
                 preloader.hide();
                 if (res.success) {
                     $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
+                    sprintTarget.setValue('', '');
                     issuePage.scumColUpdateInfo();
                 } else {
                     srv.err(res);
@@ -130,11 +131,20 @@ let scrumBoard = {
 const sprintTarget = {
     init: function (modalParam) {
         $('#addTarget').dialog({...sprintTarget.defaultParam, ...modalParam});
-        $('.target-btn').click(function () {
-            sprintTarget.open();
-        });
-        if ($('.text-target').text()) {
-            $('.title-target').removeClass('hidden');
+        $('.target-btn').on('click', () => sprintTarget.open());
+        this.updateVisibility();
+    },
+    setValue: function (text, html) {
+        $('.text-target').html(html);
+        $('.input-target').val(text);
+
+        sprintTarget.updateVisibility();
+    },
+    updateVisibility: function () {
+        if ($('.text-target').text().trim()) {
+            $('.title-target').show();
+        } else {
+            $('.title-target').hide();
         }
     },
     open: function () {
@@ -149,14 +159,7 @@ const sprintTarget = {
 
         srv.project.setSprintTarget(projectId, targetText, function (res) {
             if (res) {
-                $('.text-target').html(res.targetHTML);
-                $('.input-target').val(res.targetText);
-
-                if (!res.targetText) {
-                    $('.title-target').addClass('hidden');
-                } else {
-                    $('.title-target').removeClass('hidden');
-                }
+                sprintTarget.setValue(res.targetText, res.targetHTML);
             }
         });
         sprintTarget.close();

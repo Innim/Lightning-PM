@@ -66,7 +66,7 @@ let comments = {
 
 		comments.invalidateLinks();
 	},
-	toogleCommentForm: function () {
+	toggleCommentForm: function () {
 		const $comments = $('#comments .comments-list');
 		comments.invalidateLinks(!$comments.is(':visible'));
 		$comments.slideToggle('normal');

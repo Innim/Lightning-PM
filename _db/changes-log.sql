@@ -344,4 +344,15 @@ CREATE TABLE `lpm_issue_linked` (
 
 ALTER TABLE `lpm_issues` DROP `parentId`;
 
+-- v0.10.9
+
+ALTER TABLE `lpm_members`
+ADD `extraId` bigint(19) NOT NULL DEFAULT '0';
+
+ALTER TABLE `lpm_members`
+ADD PRIMARY KEY `userId_instanceType_instanceId_extraId` (`userId`, `instanceType`, `instanceId`, `extraId`),
+DROP INDEX `PRIMARY`;
+
+-- v0.10.10
+
 --NEXT

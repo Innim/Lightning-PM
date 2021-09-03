@@ -33,7 +33,7 @@ class IssueService extends LPMBaseService
      */
     public function restore($issueId)
     {
-        // востанавливать задачу может создатель задачи,
+        // восстанавливать задачу может создатель задачи,
         // исполнитель задачи или модератор
         $issue = Issue::load((float)$issueId);
         if (!$issue) {
@@ -249,7 +249,9 @@ class IssueService extends LPMBaseService
 
             $comment = $this->postComment($issue, $text, true);
 
-            // Отправляем оповещенив в slack
+            $issue->autoSetMasters();
+
+            // Отправляем оповещение в slack
             $slack = SlackIntegration::getInstance();
             $slack->notifyIssuePassTest($issue);
 
@@ -398,7 +400,7 @@ class IssueService extends LPMBaseService
         try {
             // Проверяем состояние
             if (!ScrumStickerState::validateValue($state)) {
-                throw new Exception('Неизвестный стейт');
+                throw new Exception('Неизвестное состояние');
             }
 
             $sticker = ScrumSticker::load($issueId);
@@ -523,7 +525,6 @@ class IssueService extends LPMBaseService
     {
         $issueId = (int)$issueId;
         $replace = (bool)$replace;
-
 
         try {
             $issue = Issue::load($issueId);
@@ -729,7 +730,7 @@ class IssueService extends LPMBaseService
         }
 
         foreach ($masters as $master) {
-            $obj->masters[] = $tester->getClientObject();
+            $obj->masters[] = $master->getClientObject();
         }
 
         foreach ($images as $image) {
@@ -767,7 +768,7 @@ class IssueService extends LPMBaseService
             Comment::remove($user, $comment);
 
             if ($comment->instanceType == LPMInstanceTypes::ISSUE) {
-                // обновляем счетчик коментариев для задачи
+                // обновляем счетчик комментариев для задачи
                 Issue::updateCommentsCounter($comment->instanceId);
             }
         } catch (Exception $e) {
