@@ -276,6 +276,6 @@ JS;
      */
     private static function getPC()
     {
-        return LightningEngine::getInstance()->getCostructor();
+        return LightningEngine::getInstance()->getConstructor();
     }
 }

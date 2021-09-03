@@ -3,7 +3,7 @@
 /**
  * Шаблон файла конфигурации.
  * Необходимо заполнить значения констант
- * и переменовать его в lpm-config.inc.php
+ * и переименовать его в lpm-config.inc.php
  * @author GreyMag
  * @copyright 2011
  */
@@ -11,6 +11,9 @@
 // настройки БД
 /**
  * Сервер БД mysql
+ *
+ * Если используете Docker окружение из проекта,
+ * то будет: mysql-db
  * @var string
  */
 define('MYSQL_SERVER', '');
@@ -69,6 +72,21 @@ define('GITLAB_SUDO_USER', '');
 
 // Токен для GitLab Hook
 define('GITLAB_HOOK_TOKEN', '');
+
+// Настройки сервера кэша
+
+/**
+ * Имя хоста сервера memcached.
+ *
+ * Если используете Docker окружение из проекта,
+ * то будет: memcached
+ * @var string
+ */
+define('MEMCACHED_HOST', '');
+/**
+ * Порт сервера memcached.
+ */
+define('MEMCACHED_PORT', 11211);
 
 // Настройки каналов оповещений
 

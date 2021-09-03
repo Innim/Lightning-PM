@@ -24,8 +24,8 @@ class ExternalApiManager
     }
 
     /**
-     * Возврашает API по идентификатору.
-     * @param  string $uid Уникальный идентифкатор API.
+     * Возвращает API по идентификатору.
+     * @param  string $uid Уникальный идентификатор API.
      * @return ExternalApi|null
      */
     public function getByUid($uid)

@@ -10,7 +10,7 @@ class LightningEngine
      */
     const SESSION_PREV_PATH = 'lightning_prev_path';
     /**
-     * Сообщения об ошибках, которые надо показать после смены страниы.
+     * Сообщения об ошибках, которые надо показать после смены страницы.
      */
     const SESSION_NEXT_ERRORS = 'lightning_next_errors';
 
@@ -64,7 +64,7 @@ class LightningEngine
      *
      * @var PageConstructor
      */
-    private $_contructor;
+    private $_constructor;
     /**
      * @var PagesManager
      */
@@ -85,6 +85,10 @@ class LightningEngine
      * @var ExternalApiManager
      */
     private $_apiManager;
+    /**
+     * @var CacheController
+     */
+    private $_cache;
     
     /**
      * Ошибки, которые надо вывести пользователю
@@ -103,7 +107,7 @@ class LightningEngine
         $this->_params       = new LPMParams();
         $this->_auth         = new LPMAuth($this->_params->getQueryArg(LPMParams::QUERY_ARG_SID));
         $this->_pagesManager = new PagesManager($this);
-        $this->_contructor   = new PageConstructor($this->_pagesManager);
+        $this->_constructor   = new PageConstructor($this->_pagesManager);
         $this->_apiManager   = new ExternalApiManager($this);
     }
 
@@ -128,7 +132,7 @@ class LightningEngine
                 throw new Exception('API uid is not defined');
             }
 
-            $api = $this->_apiManager->getbyUid($uid);
+            $api = $this->_apiManager->getByUid($uid);
             if (!$api) {
                 throw new Exception('API with uid ' . $uid . ' is not registered');
             }
@@ -161,7 +165,7 @@ class LightningEngine
         }
 
         try {
-            $this->_contructor->createPage();
+            $this->_constructor->createPage();
         } catch (Exception $e) {
             $this->debugOnException($e);
 
@@ -182,7 +186,7 @@ class LightningEngine
     public function addError($errString)
     {
         if (LPMGlobals::isDebugMode()) {
-            // В дебаге добавляем ошибку БД в текст, чтобы проще отлаживать
+            // В debug добавляем ошибку БД в текст, чтобы проще отлаживать
             $db = LPMGlobals::getInstance()->getDBConnect();
             if ($db->errno > 0) {
                 $errString .= ' (DB error #' . $db->errno . ': ' . $db->error . ')';
@@ -207,9 +211,9 @@ class LightningEngine
     /**
      * @var PageConstructor
      */
-    public function getCostructor()
+    public function getConstructor()
     {
-        return $this->_contructor;
+        return $this->_constructor;
     }
     
     /**
@@ -240,6 +244,15 @@ class LightningEngine
         }
 
         return $this->_commentsManager;
+    }
+    
+    /**
+     * Контроллер кэша.
+     * @return CacheController
+     */
+    public function cache()
+    {
+        return empty($this->_cache) ? ($this->_cache = new CacheController()) : $this->_cache;
     }
     
     /**
@@ -335,7 +348,7 @@ class LightningEngine
             }
             // пересылка на главную
             // т.к. нам надо пересылать данные OG, то нужно обязательно
-            // сохранить сессиию, но грабберы сайтов (для которых и нужен OG)
+            // сохранить сессию, но грабберы сайтов (для которых и нужен OG)
             // не поддерживают cookie, поэтому передаем явно
             self::go2URL(null, [LPMParams::QUERY_ARG_SID => session_id()]);
         }

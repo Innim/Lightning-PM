@@ -8,16 +8,17 @@ class ParseTextHelper
 
     /**
      * Получает ссылки на видео из текста.
-     * @param  string $html Текст (с ссылками на видео в формате html).
+     * @param string $html Текст (с ссылками на видео в формате html).
      * @return array<{
      *  type:string = youtube|video,
      *  url:string
      * ]>
      */
-    public static function parseVideoLinks($html)
+    public static function parseVideoLinks($html, $cache = null)
     {
+        $cache = LightningEngine::getInstance()->cache();
         $pattern = AttachmentVideoHelper::getPattern(null, '"');
-        return AttachmentVideoHelper::getVideoWith($html, $pattern);
+        return AttachmentVideoHelper::getVideoWith($html, $pattern, $cache);
     }
 
     /**
@@ -54,7 +55,7 @@ class ParseTextHelper
                         $res[] = $mr;
                     }
                 } catch (Gitlab\Exception\RuntimeException $e) {
-                    // Игнорим если не найдено - можжет нет прав, может удалили, может url кривой
+                    // Игнорируем если не найдено - может нет прав, может удалили, может url кривой
                     if ($e->getCode() != 404) {
                         throw $e;
                     }

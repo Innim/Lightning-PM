@@ -170,7 +170,7 @@ class PageConstructor
         if (null !== $args) {
             extract($args);
         }
-        include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
+        include LightningEngine::getInstance()->getConstructor()->getThemePath() . $name . '.html';
     }
 
     public static function getHtml(callable $printHtml)
