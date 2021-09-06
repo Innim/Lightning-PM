@@ -2,7 +2,7 @@ version: "3"
 services:
   web:
     build: ./
-    user: "$USER_ID:$GROUP_ID"
+#    user: "$USER_ID:$GROUP_ID"
     restart: unless-stopped
     ports:
       - "${APP_PORT}:80"
