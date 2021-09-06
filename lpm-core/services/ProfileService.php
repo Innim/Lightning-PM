@@ -25,11 +25,9 @@ class ProfileService extends LPMBaseService
                "WHERE `userId` = '" . $this->_auth->getUserId() . "'";
         if (!$query = $this->_db->queryt($sql, LPMTables::USERS)) {
             return $this->error('Ошибка чтения из базы');
-        //$engine->addError( 'Ошибка чтения из базы' );
         } elseif ($userInfo = $query->fetch_assoc()) {
             if (!User::passwordVerify($currentPass, $userInfo['pass'])) {
                 return $this->error('Неверный пароль');
-            //$engine->addError( 'Неверный пароль' );
             } else {
                 $salt = User::blowfishSalt();
                 $sql = "UPDATE `%s` SET ".
@@ -40,6 +38,7 @@ class ProfileService extends LPMBaseService
                 }
             }
         }
+        
         return $this->answer();
     }
 }

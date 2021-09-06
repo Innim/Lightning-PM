@@ -47,7 +47,6 @@ SQL;
         ORDER BY `%1\$s`.`created` DESC, `%1\$s`.`pid` DESC
 SQL;
 
-        // echo $db->sprintft([$sql, LPMTables::SCRUM_SNAPSHOT_LIST]);
         return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
     }
 
