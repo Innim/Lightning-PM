@@ -39,7 +39,7 @@ services:
     ports:
       - "${ADMINER_PORT}:8080"
     depends_on:
-      - mysql-db
+      - db
 
   memcached:
     image: memcached
