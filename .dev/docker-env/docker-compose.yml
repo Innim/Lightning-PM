@@ -2,23 +2,24 @@ version: "3"
 services:
   web:
     build: ./
+    user: "$USER_ID:$GROUP_ID"
     restart: unless-stopped
     ports:
       - "${APP_PORT}:80"
     volumes:
       - ../../:/var/www
     depends_on:
-      - mysql-db
+      - db
       - memcached
 
-  mysql-db:
-    platform: linux/x86_64
+  db:
+#    platform: linux/x86_64
     image: mysql:8
     restart: unless-stopped
+    user: "$USER_ID:$GROUP_ID"
     cap_add:
       - SYS_NICE
     environment:
-#      - MYSQL_DATABASE=lightning_pm
       - MYSQL_DATABASE=$MYSQL_DATABASE
       - MYSQL_USER=$MYSQL_USER
       - MYSQL_PASSWORD=$MYSQL_PASSWORD

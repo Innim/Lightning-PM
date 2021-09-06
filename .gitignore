@@ -17,3 +17,4 @@ lpm-libs/test/
 jsconfig.json
 .dev-env
 .dev/docker-env/data/
+.env
