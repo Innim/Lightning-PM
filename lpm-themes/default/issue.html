@@ -151,13 +151,13 @@ $project = $issue->getProject();
     <?case 2: ?>completed-issue<?break;?>
     <?endswitch;?>">
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
-            <button class="restore-btn" onclick="restoreIssue(event);">Открыть</button>
+            <button class="btn btn-secondary restore-btn" onclick="restoreIssue(event);">Открыть</button>
             <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true)): ?>
-            <button class="verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
+            <button class="btn btn-primary verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
             <?php endif ?>
-            <button class="complete-btn" onclick="completeIssue(event);">Завершить</button>
-            <button onclick="issuePage.showEditForm();">Редактировать</button>
-            <button onclick="issuePage.removeIssue(event);">Удалить</button>
+            <button class="btn btn-success complete-btn" onclick="completeIssue(event);">Завершить</button>
+            <button class="btn btn-primary" onclick="issuePage.showEditForm();">Редактировать</button>
+            <button class="btn btn-danger" onclick="issuePage.removeIssue(event);">Удалить</button>
         </p>
         <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
         <a href="#" onclick="issuePage.copyIssue()" class="copy-issue-link">
@@ -195,8 +195,8 @@ $project = $issue->getProject();
 
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <p class="buttons-bar">
-                <button type="submit">Отправить</button>
-                <button type="reset" onclick="comments.hideCommentForm();">Отмена</button>
+                <button class="btn btn-primary" type="submit">Отправить</button>
+                <button class="btn btn-secondary" type="reset" onclick="comments.hideCommentForm();">Отмена</button>
             </p>
         </form>
         <section class="comments-list">
@@ -210,7 +210,7 @@ $project = $issue->getProject();
     </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=$userId;?>">
-<?php 
+<?php
 $labelsJson = json_encode($issue -> getLabelNames());
 echo <<<HTML
 <script type="text/javascript">

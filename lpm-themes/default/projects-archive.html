@@ -19,7 +19,7 @@
 			<p class="project-desc"><?=$project->getDesc();?></p>
 			<? if (lpm_is_moderator()): ?>
 			<input type="hidden" name="projectId" value="<?=$project->id;?>" />
-			<a href="#" class="develop btn" onclick="setIsArchive(event);">Восстановить</a>
+			<a href="#" class="develop" onclick="setIsArchive(event);">Восстановить</a>
 			<? endif; ?>
 		</li>
 		<?php endforeach; endif;?>

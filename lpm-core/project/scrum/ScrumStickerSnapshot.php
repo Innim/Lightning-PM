@@ -5,7 +5,7 @@
 class ScrumStickerSnapshot extends LPMBaseObject
 {
     /**
-     * Загружает список снепшотов по идентификатору проекта (вначале новые).
+     * Загружает список снапшотов по идентификатору проекта (вначале новые).
      * @param int $projectId
      * @return ScrumStickerSnapshot[]
      * @throws DBException
@@ -30,7 +30,7 @@ SQL;
     }
 
     /**
-     * Загружает список снепшотов по идентификатору проекта (вначале новые).
+     * Загружает список снапшотов по идентификатору проекта (вначале новые).
      * @param int $createFrom
      * @param int $createdTo
      * @return ScrumStickerSnapshot[]
@@ -47,7 +47,6 @@ SQL;
         ORDER BY `%1\$s`.`created` DESC, `%1\$s`.`pid` DESC
 SQL;
 
-        // echo $db->sprintft([$sql, LPMTables::SCRUM_SNAPSHOT_LIST]);
         return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
     }
 
@@ -60,7 +59,7 @@ SQL;
     }
 
     /**
-     * Загружает снепшот по идентификатору проекта и идентификатору снепшота в проекте.
+     * Загружает снапшот по идентификатору проекта и идентификатору снапшота в проекте.
      * @param int $projectId
      * @param int $idInProject
      * @return ScrumStickerSnapshot|null
@@ -133,13 +132,13 @@ SQL;
         $db = self::getDB();
 
         try {
-            // получаем идентификатор снепшота в проекте
+            // получаем идентификатор снапшота в проекте
             $idInProject = self::getLastSnapshotId($projectId) + 1;
 
             // начинаем транзакцию
             $db->begin_transaction();
 
-            // запись о новом снепшоте
+            // запись о новом снапшоте
             $sql = <<<SQL
                 INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `created`)
                 VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${created}')
@@ -147,19 +146,19 @@ SQL;
 
             // если что-то пошло не так
             if (!$db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)) {
-                throw new DBException($db, "Ошибка при сохранении нового снепшота");
+                throw new DBException($db, "Ошибка при сохранении нового снапшота");
             }
 
             $sid = $db->insert_id;
             
-            // добавляем всю необходимую информацию по снепшоте
+            // добавляем всю необходимую информацию по снапшоте
             $sql = <<<SQL
                 INSERT INTO `%s` (`sid`, `added`, `issue_uid`, `issue_pid`, `issue_name`,
                     `issue_state`, `issue_sp`, `issue_members_sp`, `issue_priority`)
                 VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
-            // подготавливаем запрос для вставки данных о стикерах снепшота
+            // подготавливаем запрос для вставки данных о стикерах снапшота
             if (!$prepare = $db->preparet($sql, LPMTables::SCRUM_SNAPSHOT)) {
                 throw new DBException($db, "Ошибка при подготовке запроса.");
             }
@@ -231,7 +230,7 @@ SQL;
                 // сохраняем в БД id Snapshot в таблице целей
                 $result = self::setSnapshotIdForTarget($projectId, $sid);
                 if (!$result) {
-                    throw new DBException($db, "Ошибка при сохранении целей снепшота " . $db->error);
+                    throw new DBException($db, "Ошибка при сохранении целей снапшота " . $db->error);
                 }
             } else {
                 // отменяем, т.к. на доске нет стикеров
@@ -246,9 +245,9 @@ SQL;
     }
 
     /**
-     * Возвращает номер последнего снепшота в архиве.
-     * @param int $projectId идентификатор проекта, для которого создается снепшот.
-     * @return int Номер последнего снепшота в проекте или 0 - если еще не было снимков.
+     * Возвращает номер последнего снапшота в архиве.
+     * @param int $projectId идентификатор проекта, для которого создается снапшот.
+     * @return int Номер последнего снапшота в проекте или 0 - если еще не было снимков.
      * @throws Exception В случае, если произошла ошибка при запросе к БД.
      */
     public static function getLastSnapshotId($projectId)
@@ -257,7 +256,7 @@ SQL;
         $sql = "SELECT MAX(`idInProject`) AS maxID FROM `%s` " .
             "WHERE `pid` = '" . $projectId . "'";
         if (!$query = $db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)) {
-            throw new Exception("Ошибка доступа к базе при получении идентификатора снепшота в проекте!");
+            throw new Exception("Ошибка доступа к базе при получении идентификатора снапшота в проекте!");
         }
 
         if ($query->num_rows == 0) {
@@ -269,9 +268,9 @@ SQL;
     }
     
     /**
-     * Сохраняет id снепшота в таблице целей БД.
-     * @param int $projectId идентификатор проекта, для которого создается снепшот.
-     * @param int $snapshotId идентификатор снепшота без привязки к проекту.
+     * Сохраняет id снапшота в таблице целей БД.
+     * @param int $projectId идентификатор проекта, для которого создается снапшот.
+     * @param int $snapshotId идентификатор снапшота без привязки к проекту.
      */
     public static function setSnapshotIdForTarget($projectId, $snapshotId)
     {
@@ -294,7 +293,7 @@ SQL;
      */
     public $id;
     /**
-     * Порядковый номер снепшота по проекту.
+     * Порядковый номер снапшота по проекту.
      * @var int
      */
     public $idInProject = 0;
@@ -344,7 +343,7 @@ SQL;
     }
 
     /**
-     * Возвращает порядковый номер снепшота по проекту.
+     * Возвращает порядковый номер снапшота по проекту.
      * @return int
      */
     public function getIdInProject()
@@ -353,7 +352,7 @@ SQL;
     }
 
     /**
-     * Путь до просмотра снепшота
+     * Путь до просмотра снапшота
      * @return string
      */
     public function getSnapshotUrl()
@@ -363,7 +362,7 @@ SQL;
     }
 
     /**
-     * Путь до списка снепшотов
+     * Путь до списка снапшотов
      */
     public function getUrl()
     {
@@ -433,7 +432,7 @@ SQL;
 
     /**
      * Проверяет, участвовал ли указанный пользователь в спринте
-     * (считается что участвовал, если на него была поставлена хотья бы одна задача)
+     * (считается что участвовал, если на него была поставлена хотя бы одна задача)
      * @return bool
      */
     public function hasMembers($userId)
@@ -482,7 +481,7 @@ SQL;
     }
     
     /**
-     * Возвращает форматированый HTML текст целей спринта.
+     * Возвращает форматированный HTML текст целей спринта.
      * @return string
      */
     public function getSprintTargetHtml()

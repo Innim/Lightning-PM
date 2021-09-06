@@ -16,7 +16,7 @@ abstract class ExternalApi
     /**
      * Уникальный идентификатор API.
      *
-     * Испрользуется в адресе.
+     * Используется в адресе.
      * @return string
      */
     public function getUid()

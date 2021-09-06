@@ -18,13 +18,13 @@ class AttachmentImageHelper
     ];
 
     /**
-     * Обрабатывает $url и перобразует его к прямому адресу до картинки.
+     * Обрабатывает $url и преобразует его к прямому адресу до картинки.
      *
-     * Если URL не подходит по формату под обработу
+     * Если URL не подходит по формату под обработку
      * (т.е. не описан в этом методе заранее),
-     * то он веренется без модификации.
+     * то он вернётся без модификации.
      *
-     * Метод не проверяет, ведет ли URL действительно на изобрабражение или нет.
+     * Метод не проверяет, ведет ли URL действительно на изображение или нет.
      */
     public static function getDirectUrl($url)
     {
@@ -46,16 +46,19 @@ class AttachmentImageHelper
     /**
      * Возвращает данные об изображении по URL.
      *
-     * Если URL не является поддреживаемым адресом
+     * Если URL не является поддерживаемым адресом
      * изображения, то вернется null.
+     *
+     * @param string $url
+     * @param CacheController $cache
      */
-    public static function getInfoByUrl($url)
+    public static function getInfoByUrl($url, $cache = null)
     {
         $url = trim($url);
         foreach (self::URL_PATTERNS as $pattern) {
             if (preg_match("/^" . $pattern . "$/i", $url)) {
                 if ($pattern == self::PATTERN_OWNCLOUD) {
-                    $type = OwncloudHelper::getSharedFileType($url);
+                    $type = OwncloudHelper::getSharedFileType($url, $cache);
                     if (empty($type) || strpos($type, 'image/') !== 0) {
                         return null;
                     }

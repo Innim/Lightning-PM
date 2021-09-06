@@ -58,7 +58,7 @@ class PageConstructor
 
     public static function getUserIssues()
     {
-        return Issue::getListbyMember(LightningEngine::getInstance()->getUserId());
+        return Issue::getListByMember(LightningEngine::getInstance()->getUserId());
     }
     
     public static function getDateLinks()
@@ -170,7 +170,7 @@ class PageConstructor
         if (null !== $args) {
             extract($args);
         }
-        include LightningEngine::getInstance()->getCostructor()->getThemePath() . $name . '.html';
+        include LightningEngine::getInstance()->getConstructor()->getThemePath() . $name . '.html';
     }
 
     public static function getHtml(callable $printHtml)
@@ -181,6 +181,7 @@ class PageConstructor
     }
 
     private static $_usingScripts = [
+//        'libs/bootstrap.bundle.min',
         'libs/jquery-1.12.4.min',
         'libs/jquery-ui-1.12.1.min',
         'libs/jquery.form',
@@ -190,6 +191,7 @@ class PageConstructor
         'libs/highlight.pack',
         'js-options.php$' ,
         'libs/clipboard.min',
+        'libs/lodash.min',
         'lightning'
     ];
     
@@ -204,7 +206,7 @@ class PageConstructor
      */
     private $_pagesManager;
 
-    // Версионный параметр для сброса кэша
+    // Параметр версии для сброса кэша
     private $_versionParam;
     
     public function __construct(PagesManager $pagesManager)

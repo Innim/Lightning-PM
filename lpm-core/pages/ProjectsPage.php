@@ -5,7 +5,7 @@
 class ProjectsPage extends LPMPage
 {
     const UID = 'projects';
-    const PUID_DEVL = 'develop';
+    const PUID_DEVELOP = 'develop';
     const PUID_ARCH = 'projects-archive';
     const PUID_USER_ISSUES = 'user-issues';
     const PUID_STAT = 'stat';
@@ -21,9 +21,9 @@ class ProjectsPage extends LPMPage
         
         $this->_js[] = 'projects';
 
-        $this->_defaultPUID = self::PUID_DEVL;
+        $this->_defaultPUID = self::PUID_DEVELOP;
 
-        $this->addSubPage(self::PUID_DEVL, 'В разработке');
+        $this->addSubPage(self::PUID_DEVELOP, 'В разработке');
         $this->addSubPage(self::PUID_ARCH, 'Архив', 'projects-archive');
         $this->addSubPage(self::PUID_USER_ISSUES, 'Мои задачи', 'user-issues', ['issues']);
         $this->addSubPage(
@@ -48,9 +48,10 @@ class ProjectsPage extends LPMPage
             return false;
         }
         
-        if (count($_POST) > 0) {
+        if (!empty($_POST)) {
             if (!$this->addProject($_POST)) {
-                return false;
+                $engine = LightningEngine::getInstance();
+                $engine->addError($this->_error);
             }
         } elseif ($this->_curSubpage) {
             switch ($this->_curSubpage->uid) {
@@ -84,14 +85,13 @@ class ProjectsPage extends LPMPage
 
     private function addProject($input)
     {
-        $engine = LightningEngine::getInstance();
         foreach ($input as $key => $value) {
             $input[$key] = trim($value);
         }
 
         // добавление нового проекта
         if (empty($input['name']) || empty($input['uid']) || empty($input['desc'])) {
-            return $engine->addError('Заполнены не все поля');
+            return $this->error('Заполнены не все поля');
         }
 
         $uid  = strtolower($input['uid']);
@@ -99,17 +99,17 @@ class ProjectsPage extends LPMPage
         $desc = mb_substr($input['desc'], 0, 65535);
 
         if (!$this->validateProjectUid($uid)) {
-            return $engine->addError(
+            return $this->error(
                 'Введён недопустимый идентификатор - используйте латинские буквы, цифры и тире'
             );
         }
 
         if (Project::load($uid)) {
-            return $this->error('Проект с таким идентификатором уже создан');
+            return $this->error('Проект с таким uid уже существует');
         }
-        
+
         if (!Project::addProject($uid, $name, $desc)) {
-            $engine->addError('Не удалось создать проект');
+            return $this->error('Не удалось создать проект');
         } else {
             // переход на страницу проекта
             LightningEngine::go2URL($this->getUrl());

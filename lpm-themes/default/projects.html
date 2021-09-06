@@ -19,8 +19,8 @@
 				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
 				<?php endif ?>	
 			</button>
-			<?php if (($countImportaint=$project->getImportantIssuesCount())>0): ?>
-			<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportaint;?>
+			<?php if (($countImportant=$project->getImportantIssuesCount())>0): ?>
+			<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportant;?>
 			</div>
 			<?php endif; ?>
 			<?php if ($project->scrum): ?>
@@ -31,7 +31,7 @@
 			<p class="project-desc"><?=$project->getDesc();?></p>
 			<?php if (lpm_is_moderator()): ?>
 			<input type="hidden" name="projectId" value="<?=$project->id;?>" />
-			<a href="javascript:;" class="archive btn" onclick="setIsArchive(event);">В архив</a>
+			<a href="javascript:;" class="archive" onclick="setIsArchive(event);">В архив</a>
 			<?php endif; ?>
 		</li>
 		<?php endforeach; ?>
@@ -56,8 +56,8 @@
 		<textarea placeholder="Описание" name="desc" maxlength="65535"><?lpm_print_post_var('desc');?></textarea>
 		<div>
 			<p class="save-line">
-				<button type="submit">Добавить</button>
-				<button type="reset" onclick="showProjectsList();">Отмена</button>
+				<button type="submit" class="btn btn-success complete-btn">Добавить</button>
+				<button type="reset" class="btn btn-primary" onclick="showProjectsList();">Отмена</button>
 			</p>
 			<p class="links-line">
 				<a href="#" onclick="showProjectsList(); return false;">К списку</a>

@@ -43,7 +43,11 @@ foreach ($labels as $label) {
         <?php endforeach; ?>
     </ul>
 
-    <button onclick="openMembersChooser();">Добавить</button>
+    <button
+        class="btn btn-primary"
+        onclick="openMembersChooser();">
+        Добавить
+    </button>
 
     <!-- Выбор мастера проекта // Начало -->
     <h3 class="headersProjectsMembers">Мастер проекта</h3>
@@ -67,7 +71,12 @@ foreach ($labels as $label) {
                 <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
                 <?php endforeach; ?>
             </select>
-            <button id="saveMaster" type="button">Подтвердить</button>
+            <button
+                id="saveMaster"
+                type="button"
+                class="btn btn-primary">
+                Подтвердить
+            </button>
         </form>
         <?php endif; ?>
 
@@ -86,7 +95,12 @@ foreach ($labels as $label) {
             <?php endforeach; ?>
             </ul>
 
-            <button type="button" onclick="addSpecMaster.show();">Добавить</button>
+            <button
+                type="button"
+                onclick="addSpecMaster.show();"
+                class="btn btn-primary">
+                Добавить
+            </button>
         </form>
     </div>
 
@@ -110,7 +124,12 @@ foreach ($labels as $label) {
                 <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
                 <?php endforeach; ?>
             </select>
-            <button id="btnSelectMember" type="submit">Подтвердить</button>
+            <button
+                id="btnSelectMember"
+                type="submit"
+                class="btn btn-primary">
+                Подтвердить
+            </button>
         </form>
         <?php endif;?>
     </div>
@@ -136,7 +155,12 @@ foreach ($labels as $label) {
                 <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
                 <?php endforeach; ?>
             </select>
-            <button id="btnSelect" type="button">Подтвердить</button>
+            <button
+                id="btnSelect"
+                type="button"
+                class="btn btn-primary">
+                Подтвердить
+            </button>
         </form>
         <?php endif; ?>
     </div>

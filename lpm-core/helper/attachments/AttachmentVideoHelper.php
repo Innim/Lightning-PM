@@ -18,13 +18,15 @@ class AttachmentVideoHelper
     /**
      * Возвращает данные о видео по URL.
      *
-     * Если URL не является поддреживаемым адресом
+     * Если URL не является поддерживаемым адресом
      * видео, то вернется null.
+     * @param string $url
+     * @param CacheController $cache
      */
-    public static function getInfoByUrl($url)
+    public static function getInfoByUrl($url, $cache = null)
     {
         $pattern = self::getPattern();
-        $list = self::getVideoWith($url, $pattern);
+        $list = self::getVideoWith($url, $pattern, $cache);
         return empty($list) ? null : $list[0];
     }
 
@@ -46,7 +48,12 @@ class AttachmentVideoHelper
         return $pattern;
     }
 
-    public static function getVideoWith($text, $pattern)
+    /**
+     * @param string $text
+     * @param string $pattern
+     * @param CacheController $cache
+     */
+    public static function getVideoWith($text, $pattern, $cache = null)
     {
         preg_match_all($pattern, $text, $match);
 
@@ -55,7 +62,7 @@ class AttachmentVideoHelper
             $urlPrefix = $match[1][$key];
             $videoUid = $match[2][$key];
 
-            $data = self::getInfoBy($urlPrefix, $videoUid);
+            $data = self::getInfoBy($urlPrefix, $videoUid, $cache);
             if ($data !== null) {
                 $list[] = $data;
             }
@@ -64,7 +71,12 @@ class AttachmentVideoHelper
         return $list;
     }
 
-    private static function getInfoBy($urlPrefix, $videoUid)
+    /**
+     * @param string $urlPrefix
+     * @param string $videoUid
+     * @param CacheController $cache
+     */
+    private static function getInfoBy($urlPrefix, $videoUid, $cache = null)
     {
         $type = 'video';
         $url = null;
@@ -86,7 +98,7 @@ class AttachmentVideoHelper
         } else {
             // Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
             $original = "https://" . $urlPrefix . $videoUid;
-            $type = OwncloudHelper::getSharedFileType($original);
+            $type = OwncloudHelper::getSharedFileType($original, $cache);
 
             if (empty($type) || strpos($type, 'video/') !== 0) {
                 $url = null;

@@ -66,23 +66,7 @@ article {
 	margin: 20px auto;
     /*padding-left: 20px;*/
 }
-button, a.button, input[type=submit] {
-    padding        : 5px 10px;
-    border-radius  : 2px 2px;
-    border         : solid 1px rgb(153, 153, 153);
-    background     : -moz-linear-gradient(top,#ffffff, #ddd);
-    background     : -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(255, 255, 255)), to(rgb(221, 221, 221)));
-    color          : #333333;
-    text-decoration: none;
-    cursor         : pointer;
-    display        : inline-block;
-    text-align     : center;
-    text-shadow    : 0px 1px 1px rgba(255,255,255,1);
-    line-height    : 1;
-    min-width      : 150px;
-    min-height     : 30px;
-    font-size      : 12pt; 
-}
+
 button.ui-button {
     min-width: 0;
     min-height: 0;
@@ -330,7 +314,8 @@ div.container {
 	margin   : 20px auto;
 }
 article.container > h3,
-div.container > h3 { 
+div.container > h3 {
+	box-sizing: content-box;
 	background-color: #ffffff;
 	width           : 100%;
 	padding         : 0px 15px;
@@ -522,8 +507,8 @@ form ol.form-fields > li:last-child {
     position:relative;
     vertical-align: middle;
     cursor:default;
-    width: 140px;
-    padding: 3px;    
+    width: 150px;
+    padding: 0;
 }
 
 #dropdown:hover #priority-values {
@@ -706,6 +691,7 @@ form ol.form-fields > li:last-child {
 /*========================*/
 
 .priority-val.circle {
+	box-sizing: content-box;
 	display: inline-block;
     width: 6px;
     height: 6px;
@@ -1138,11 +1124,6 @@ ul.projects-list > li {
 	position: relative;
 	margin: 2em 2em 2em 0;
 }
-.btn{
-	position: absolute;
-	right: 0px;
-	font-size: smaller;
-}
 ul.projects-list .btn.archive,
 ul.projects-list .btn.develop
 {
@@ -1381,6 +1362,7 @@ table.issues-list tr.active-issue.tester {
     display: none;
 }
 #issueView .container {
+	box-sizing: content-box;
 	clear: both;
 	position: relative;
 }
@@ -1807,6 +1789,10 @@ div.ftp
 	border-radius: 2px;
 }
 
+.scrum-board-sticker .name-project:hover {
+	color: #fff;
+}
+
 .scrum-board-sticker.orange {
 	background-color: #FEB93C;
 }
@@ -1828,6 +1814,9 @@ div.ftp
 }
 .scrum-board-sticker a {
 	text-decoration: none;
+}
+.scrum-board-sticker a:hover {
+	color: initial;
 }
 .scrum-board-sticker .sticker-issue-id {
 	position: absolute;

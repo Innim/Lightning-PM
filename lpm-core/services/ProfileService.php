@@ -19,17 +19,15 @@ class ProfileService extends LPMBaseService
         return $this->answer();
     }
     
-    public function newPass($curentPass, $newPass)
+    public function newPass($currentPass, $newPass)
     {
         $sql = "SELECT `pass` FROM `%s` " .
                "WHERE `userId` = '" . $this->_auth->getUserId() . "'";
         if (!$query = $this->_db->queryt($sql, LPMTables::USERS)) {
             return $this->error('Ошибка чтения из базы');
-        //$engine->addError( 'Ошибка чтения из базы' );
         } elseif ($userInfo = $query->fetch_assoc()) {
-            if (!User::passwordVerify($curentPass, $userInfo['pass'])) {
+            if (!User::passwordVerify($currentPass, $userInfo['pass'])) {
                 return $this->error('Неверный пароль');
-            //$engine->addError( 'Неверный пароль' );
             } else {
                 $salt = User::blowfishSalt();
                 $sql = "UPDATE `%s` SET ".
@@ -40,6 +38,7 @@ class ProfileService extends LPMBaseService
                 }
             }
         }
+        
         return $this->answer();
     }
 }

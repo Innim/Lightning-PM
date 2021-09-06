@@ -61,7 +61,7 @@ class LPMAuth
         $this->_email   = $email;
         $this->_isLogin = true;
         $this->_hashId = $hashId;
-        $expire = DateTimeUtils::$currentDate + LPMOptions::getInstance()->cookieExpire; // на месяцок
+        $expire = DateTimeUtils::$currentDate + LPMOptions::getInstance()->cookieExpire; // на месяц
 
         if ($cookieHash != '') {
             $this->setCookie(self::COOKIE_USER_ID, $userId, $expire);
@@ -163,7 +163,7 @@ class LPMAuth
                 if ($data = $query->fetch_assoc()) {
                     // создаем новый хэш
                     $hash = self::createCookieHash();
-                    // авторизация с новым хэшем
+                    // авторизация с новым хешем
                     $this->init($data['userId'], $data['email'], $hash, $data['id']);
                 } else {
                     $this->destroy();

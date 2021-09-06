@@ -13,7 +13,7 @@ class IssueBranch extends LPMBaseObject
      * @param  int    $repositoryId Идентификатор репозитория.
      * @param  string $name         Имя ветки.
      */
-    public static function create($issueId, $repositoryId, $name, $userId, $lastСommit = null, $mergedInDevelop = null)
+    public static function create($issueId, $repositoryId, $name, $userId, $lastCommit = null, $mergedInDevelop = null)
     {
         $date = DateTimeUtils::mysqlDate();
 
@@ -25,8 +25,8 @@ class IssueBranch extends LPMBaseObject
             $fields4Update[] = 'mergedInDevelop';
         }
 
-        if ($lastСommit === null) {
-            $lastСommit = '';
+        if ($lastCommit === null) {
+            $lastCommit = '';
         } else {
             $fields4Update[] = 'lastСommit';
         }
@@ -114,7 +114,7 @@ class IssueBranch extends LPMBaseObject
      *
      * @param int $projectId    Идентификатор проекта.
      * @param int $userId       Идентификатор пользователя. Если указан - то будут загружены
-     *                          только данные для укаказанного пользователя.
+     *                          только данные для указанного пользователя.
      * @param int $inLast       Передайте число элементов, если надо делать выборку
      *                          не по всем, а только из указанного количества последних.
      * @return array<int> Идентификаторы репозиториев по порядку.
@@ -132,7 +132,7 @@ class IssueBranch extends LPMBaseObject
          WHERE `b`.`issueId` = `i`.`id` AND `i`.`projectId` = $projectId
       ORDER BY `date` DESC 
         $selectLimitSql
-    ) AS `last_entiries` 
+    ) AS `last_entries` 
     GROUP BY `repositoryId`
     ORDER BY `count` DESC $limitSql
 SQL;

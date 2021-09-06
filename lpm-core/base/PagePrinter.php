@@ -51,17 +51,13 @@ class PagePrinter
     
     public static function cssLinks()
     {
-        /*$args = func_get_args();
-        $str = '';
-        foreach ($args as $file) {
-            $str .= elf::cssLink( $file ) . "\n";
-        }
-        return $str;*/
-        self::cssLink('main');
         self::cssLink('jquery-ui-1.12.1.min');
         self::cssLink('highlightjs-styles/default');
         self::cssLink('font-awesome5/css/fontawesome-all.min');
         self::cssLink('tribute');
+        self::cssLink('bootstrap.min');
+        self::cssLink('bootstrap-reset');
+        self::cssLink('main');
     }
     
     public static function errors()
@@ -136,7 +132,7 @@ class PagePrinter
     }
     
     /**
-     * Распечатывает список прикрепленных изобаржений.
+     * Распечатывает список прикрепленных изображений.
      * @param  array $videoLinks Список объектов с данными ссылок на видео.
      */
     public static function imageList($imageLinks)
@@ -280,6 +276,6 @@ JS;
      */
     private static function getPC()
     {
-        return LightningEngine::getInstance()->getCostructor();
+        return LightningEngine::getInstance()->getConstructor();
     }
 }

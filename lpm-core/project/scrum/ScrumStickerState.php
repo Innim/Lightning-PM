@@ -17,11 +17,11 @@ class ScrumStickerState extends \GMFramework\Enum
      */
     const IN_PROGRESS = 2;
     /**
-     * В колонке "Тестировние" или "Проверка"
+     * В колонке "Тестирование" или "Проверка"
      */
     const TESTING = 3;
     /**
-     * В колоке "Выполнено"
+     * В колонке "Выполнено"
      */
     const DONE = 4;
     /**

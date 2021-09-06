@@ -105,11 +105,11 @@ class LPMTables
      */
     const RECOVERY_EMAILS = 'recovery_emails';
     /**
-     * Список scrum снепшотов по проектам
+     * Список scrum снапшотов по проектам
      */
     const SCRUM_SNAPSHOT_LIST = 'scrum_snapshot_list';
     /**
-     * Данные scrum снепшотов
+     * Данные scrum снапшотов
      */
     const SCRUM_SNAPSHOT = 'scrum_snapshot';
     /**

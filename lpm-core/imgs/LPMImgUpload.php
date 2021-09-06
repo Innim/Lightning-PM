@@ -4,7 +4,7 @@
  * Предполагается, что поле для загрузки изображения имеет определенное имя.
  * Также надо не забывать указывать <code>enctype="multipart/form-data"</code> у формы
  * @author GreyMag
- * @see LMPImgUpdload::IMG_INPUT_NAME
+ * @see LPMImgUpload::IMG_INPUT_NAME
  *
  */
 class LPMImgUpload
@@ -76,7 +76,7 @@ class LPMImgUpload
      * Если передано null - кэшируется исходное изображение.
      * @param string $dir
      * @param string $prefix
-     * @param boolean $defaultLoad Будет выполнена загрука по умолчанию (из $_FILES с именем IMG_INPUT_NAME)
+     * @param boolean $defaultLoad Будет выполнена загрузка по умолчанию (из $_FILES с именем IMG_INPUT_NAME)
      */
     public function __construct(
         $maxPhotos = 1,
@@ -151,7 +151,7 @@ class LPMImgUpload
 
     /**
      * Загружает изображения из массива строк base64
-     * (используется для загрузки из ьуфера обмена)
+     * (используется для загрузки из буфера обмена)
      * @param  array $array
      * @return boolean
      */
@@ -232,7 +232,7 @@ class LPMImgUpload
                 //определяем размер скачиваемой картинки
                 $context = stream_context_create(array(
                     // XXX здесь дыра безопасности по сути - отключена проверка ssl
-                    // на с включенной нифига не работает droplr, хотя сертификат у них правильный
+                    // на с включенной не работает droplr, хотя сертификат у них правильный
                     'ssl' => array(
                         'verify_peer' => false,
                         'verify_peer_name' => false
@@ -400,9 +400,9 @@ class LPMImgUpload
         // Проверяем, существует ли директория
         // и пытаемся создать, если не существует
         if (!empty($dir)) {
-            $dirpath = LPMImg::getSrcImgPath($dir);
+            $dirPath = LPMImg::getSrcImgPath($dir);
 
-            if (!is_dir($dirpath) && !mkdir($dirpath)) {
+            if (!is_dir($dirPath) && !mkdir($dirPath)) {
                 return $this->error('Ошибка при создании директории');
             }
             
@@ -419,7 +419,7 @@ class LPMImgUpload
             $srcFilepath = LPMImg::getSrcImgPath($srcFilename);
         } while (file_exists($srcFilepath));
 
-        // Пемемещаем исходный файл
+        // Перемещаем исходный файл
         $moveFunc = $uploaded ? 'move_uploaded_file' : 'rename';
         if (!call_user_func($moveFunc, $filepath, $srcFilepath)) {
             return $this->error('Ошибка при сохранении файла');
@@ -458,7 +458,7 @@ class LPMImgUpload
      */
     public function removeImgs()
     {
-        // удаляем файли и
+        // удаляем файлы и
         // не забываем удалять из базы
         $ids = array();
         while ($img = array_shift($this->_imgs)) {

@@ -2,7 +2,7 @@
 /**
  * Базовый класс страницы.
  *
- * При создании новой надо обязатально добавлять её в PagesManager,
+ * При создании новой надо обязательно добавлять её в PagesManager,
  * чтобы она начала работать.
  */
 abstract class LPMPage
@@ -258,7 +258,7 @@ abstract class LPMPage
      * Возвращает дополнительные параметры:
      * счет начинается с ($this->_baseParamsCount + 1)-го параметра
      * @param int $num
-     * @return Ambigous <string, multitype:>
+     * @return mixed
      */
     protected function getAddParam($num = 0)
     {

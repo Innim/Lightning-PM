@@ -115,8 +115,8 @@ $userId = lpm_get_user()->userId;
 			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
 			<td>
 				<input type="hidden" name="issueId" value="<?=$issue->id;?>" />
-				<button onclick="restoreIssue( event );" class="restore-btn">Открыть</button>
-				<button onclick="completeIssue( event );" class="complete-btn">Завершить</button>
+				<button onclick="restoreIssue( event );" class="btn btn-secondary restore-btn">Открыть</button>
+				<button onclick="completeIssue( event );" class="btn btn-success complete-btn">Завершить</button>
 			</td>
 		</tr>
 		<?php endforeach;?>

@@ -63,7 +63,7 @@ class WorkStudyService extends LPMBaseService
             return false;
         }
         
-        // TODO проверка можераторских прав
+        // TODO проверка прав модератора
         //if (!$this->_auth->)
         
         return true;
