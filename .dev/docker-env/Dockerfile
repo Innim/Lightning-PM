@@ -4,10 +4,10 @@ USER root
 ARG sshpass=secret
 
 WORKDIR /root
-ENV DEBIAN_FRONTEND noninteractive 
+ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt -y update && \ 
-	apt -y upgrade  
+RUN apt -y update && \
+	apt -y upgrade
 
 RUN apt -y install  wget mc vim openssh-server supervisor apt-transport-https lsb-release ca-certificates
 
@@ -27,12 +27,12 @@ ADD config/etc/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 ADD config/etc/php/7.1/apache2/php.ini /etc/php/7.1/apache2/php.ini
 
 
-RUN mkdir /var/run/sshd
-RUN echo 'root:secret' | chpasswd
+#RUN mkdir /var/run/sshd
+#RUN echo 'root:secret' | chpasswd
 #RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+#RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 CMD ["/usr/bin/supervisord"]
 
-EXPOSE 80 443 22 
+EXPOSE 80 443 22
 
