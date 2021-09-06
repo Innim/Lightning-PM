@@ -1,11 +1,11 @@
 <?php
 /**
- * Данные снепшота стикера на Scrum доске.
+ * Данные снапшота стикера на Scrum доске.
  */
 class ScrumStickerSnapshotItem extends MembersInstance
 {
     /**
-     * Загружает список элементов снепшота по идентификатору снепшота.
+     * Загружает список элементов снапшота по идентификатору снапшота.
      * @param int $snapshotId
      * @return ScrumStickerSnapshotItem[]
      * @throws DBException
@@ -40,7 +40,7 @@ SQL;
      */
     public $id;
     /**
-     * Идентификатор снепшота.
+     * Идентификатор снапшота.
      * @var int
      */
     public $sid;
@@ -76,9 +76,9 @@ SQL;
     public $issue_sp;
 
     /**
-     * Количество SP по учатникам.
+     * Количество SP по участникам.
      * Может быть не задано, если в задаче 1 участник или
-     * если запись старая и была сделана до введения функицонала.
+     * если запись старая и была сделана до введения функционала.
      * @var string
      */
     public $issue_members_sp;
@@ -114,7 +114,7 @@ SQL;
         $this->_members = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $this->id);
 
         if ($this->_members === false) {
-            throw new Exception('Ошибка при загрузке снепшота списка исполнителей задачи');
+            throw new Exception('Ошибка при загрузке снапшота списка исполнителей задачи');
         }
 
         return true;
@@ -131,7 +131,7 @@ SQL;
                 foreach ($membersSp as $item) {
                     if (!is_object($item) || !isset($item->userId, $item->sp)) {
                         throw new Exception(
-                            "Некорректные данные SP по учатникам для стикера #" . $this->id,
+                            "Некорректные данные SP по участникам для стикера #" . $this->id,
                             1
                         );
                     }
@@ -176,7 +176,7 @@ SQL;
 
     /**
      * Получает количество SP по участнику.
-     * Если такого учатсника нет - вернет 0. Если учатсник есть, но для него не заданы
+     * Если такого участника нет - вернет 0. Если участник есть, но для него не заданы
      * SP (при условии что участников больше одного) - будет порождено исключение.
      * @param  int $userId
      * @return float

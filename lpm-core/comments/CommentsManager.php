@@ -47,7 +47,7 @@ class CommentsManager
             EmailNotifier::PREF_ISSUE_COMMENT
         );
 
-        // обновляем счетчик коментариев для задачи
+        // обновляем счетчик комментариев для задачи
         Issue::updateCommentsCounter($issueId);
 
         Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);

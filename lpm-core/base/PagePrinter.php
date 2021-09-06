@@ -132,7 +132,7 @@ class PagePrinter
     }
     
     /**
-     * Распечатывает список прикрепленных изобаржений.
+     * Распечатывает список прикрепленных изображений.
      * @param  array $videoLinks Список объектов с данными ссылок на видео.
      */
     public static function imageList($imageLinks)

@@ -1,7 +1,7 @@
 <?php
 class Link
 {
-    public static function getUrlByUid($uid, $_subuids = '')
+    public static function getUrlByUid($uid, $_subUids = '')
     {
         $args = func_get_args();
         array_shift($args);

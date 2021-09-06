@@ -5,7 +5,7 @@
  * Для подключения надо вручную добавить нужные хуки в Admin Area > System Hooks.
  *
  * URL: https://task_url/api/gitlab/
- * Secret Token: То, что передается в конструктор этого класса присоздании.
+ * Secret Token: То, что передается в конструктор этого класса при создании.
  * Trigger:
  * - Merge request events.
  * - Push events.

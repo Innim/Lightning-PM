@@ -52,7 +52,7 @@ class GitlabIntegration
     }
 
     /**
-     * Устаналивает токен пользователя.
+     * Устанавливает токен пользователя.
      * @param string $token Токен
      */
     public function setUserToken($token)

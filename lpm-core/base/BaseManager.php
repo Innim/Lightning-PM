@@ -19,8 +19,8 @@ abstract class BaseManager extends LPMBaseObject
      * @param int $limitCount = 0
      * @param int $limitStart = -1
      * @param string|array $tables = null
-     * @throws Exception В случае ошибки при выолнении запроса
-     * @throws Exception Если переданые неврные входные параметры
+     * @throws Exception В случае ошибки при выполнении запроса
+     * @throws Exception Если переданные неверные входные параметры
      */
     protected function loadObjectsList(
         $from,
@@ -30,8 +30,7 @@ abstract class BaseManager extends LPMBaseObject
         $limitCount = 0,
         $limitStart = -1,
         $tables = null
-    )
-    {
+    ) {
         if ($class !== null && is_subclass_of($class, 'StreamObject')) {
             throw new Exception('Переданный класс должен быть наследником StreamObject');
         }
