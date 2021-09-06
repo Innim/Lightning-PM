@@ -258,7 +258,7 @@ abstract class LPMPage
      * Возвращает дополнительные параметры:
      * счет начинается с ($this->_baseParamsCount + 1)-го параметра
      * @param int $num
-     * @return Ambigous <string, multitype:>
+     * @return mixed
      */
     protected function getAddParam($num = 0)
     {

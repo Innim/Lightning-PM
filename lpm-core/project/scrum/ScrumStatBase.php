@@ -21,7 +21,7 @@ abstract class ScrumStatBase extends LPMBaseObject
     abstract public function getSP();
 
     /**
-     * Количество спринтов в статстике.
+     * Количество спринтов в статистике.
      * @return int
      */
     public function getSnapshotsCount()

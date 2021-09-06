@@ -19,8 +19,8 @@
 				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
 				<?php endif ?>	
 			</button>
-			<?php if (($countImportaint=$project->getImportantIssuesCount())>0): ?>
-			<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportaint;?>
+			<?php if (($countImportant=$project->getImportantIssuesCount())>0): ?>
+			<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportant;?>
 			</div>
 			<?php endif; ?>
 			<?php if ($project->scrum): ?>

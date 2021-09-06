@@ -58,7 +58,7 @@ class PageConstructor
 
     public static function getUserIssues()
     {
-        return Issue::getListbyMember(LightningEngine::getInstance()->getUserId());
+        return Issue::getListByMember(LightningEngine::getInstance()->getUserId());
     }
     
     public static function getDateLinks()
@@ -206,7 +206,7 @@ class PageConstructor
      */
     private $_pagesManager;
 
-    // Версионный параметр для сброса кэша
+    // Параметр версии для сброса кэша
     private $_versionParam;
     
     public function __construct(PagesManager $pagesManager)

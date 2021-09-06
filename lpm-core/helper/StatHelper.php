@@ -48,7 +48,7 @@ class StatHelper
     public static function getStatDaysRange($month, $year)
     {
         // День в месяце, законченный до которого спринт относим к предыдущему
-        // TODO: вынести в поции? или просто константу?
+        // TODO: вынести в опции? или просто константу?
         $dayInMonthForSprint = 5;
         list($nextMonth, $nextYear) = StatHelper::getNextMonthYear($month, $year);
 

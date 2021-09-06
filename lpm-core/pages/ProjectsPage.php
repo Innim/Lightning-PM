@@ -5,7 +5,7 @@
 class ProjectsPage extends LPMPage
 {
     const UID = 'projects';
-    const PUID_DEVL = 'develop';
+    const PUID_DEVELOP = 'develop';
     const PUID_ARCH = 'projects-archive';
     const PUID_USER_ISSUES = 'user-issues';
     const PUID_STAT = 'stat';
@@ -21,9 +21,9 @@ class ProjectsPage extends LPMPage
         
         $this->_js[] = 'projects';
 
-        $this->_defaultPUID = self::PUID_DEVL;
+        $this->_defaultPUID = self::PUID_DEVELOP;
 
-        $this->addSubPage(self::PUID_DEVL, 'В разработке');
+        $this->addSubPage(self::PUID_DEVELOP, 'В разработке');
         $this->addSubPage(self::PUID_ARCH, 'Архив', 'projects-archive');
         $this->addSubPage(self::PUID_USER_ISSUES, 'Мои задачи', 'user-issues', ['issues']);
         $this->addSubPage(
