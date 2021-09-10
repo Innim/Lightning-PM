@@ -23,7 +23,8 @@ class UserPage extends LPMPage
             'user-edit',
             null,
             '',
-            User::ROLE_MODERATOR
+            User::ROLE_MODERATOR,
+            false
         );
     }
 
