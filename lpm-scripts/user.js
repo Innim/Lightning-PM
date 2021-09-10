@@ -8,11 +8,10 @@ $(document).ready(
             srv.users.setSlackName(userId, slackName, function (res) {
                 preloader.hide();
                 if (res.success) {
-                    $('#changePass > div.validateError').hide();
+                    $('#user > div.validateError').hide();
                     messages.info('Сохранено');
                 } else {
-                    $('#changePass > div.validateError').html(res.error);
-                    $('#changePass > div.validateError').show();
+                    $('#user > div.validateError').html(res.error).show();
                 }
             });
         });
