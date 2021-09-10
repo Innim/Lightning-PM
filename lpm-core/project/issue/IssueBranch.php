@@ -28,11 +28,11 @@ class IssueBranch extends LPMBaseObject
         if ($lastCommit === null) {
             $lastCommit = '';
         } else {
-            $fields4Update[] = 'lastСommit';
+            $fields4Update[] = 'lastCommit';
         }
 
         $hash = [
-            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastСommit', 'mergedInDevelop', 'userId'),
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastCommit', 'mergedInDevelop', 'userId'),
             'INTO'    => LPMTables::ISSUE_BRANCH
         ];
 
@@ -55,7 +55,7 @@ class IssueBranch extends LPMBaseObject
     public static function loadByLastCommits($repositoryId, $lastCommits, $onlyNotMergedInDevelop = false)
     {
         $lastCommitsVal = "'" . implode("', '", $lastCommits) . "'";
-        $where = '`repositoryId` = ' . $repositoryId . ' AND `lastСommit` IN (' . $lastCommitsVal . ')';
+        $where = '`repositoryId` = ' . $repositoryId . ' AND `lastCommit` IN (' . $lastCommitsVal . ')';
         if ($onlyNotMergedInDevelop) {
             $where .= ' AND `mergedInDevelop` = 0';
         }
@@ -260,11 +260,11 @@ SQL;
      * @param  string $name         Имя ветки.
      * @param  string $lastCommit   ID последнего коммита.
      */
-    public static function updateLastCommit($repositoryId, $name, $lastСommit)
+    public static function updateLastCommit($repositoryId, $name, $lastCommit)
     {
         self::buildAndSaveToDb([
             'UPDATE'  => LPMTables::ISSUE_BRANCH,
-            'SET' => compact('lastСommit'),
+            'SET' => compact('lastCommit'),
             'WHERE' => compact('repositoryId', 'name'),
         ]);
     }
@@ -301,7 +301,7 @@ SQL;
      * т.е. это должен быть коммит, которого нет в develop
      * (пока ветка не влита).
      */
-    public $lastСommit;
+    public $lastCommit;
 
     /**
      * Отметка о влитии в develop.
