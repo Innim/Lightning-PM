@@ -5,12 +5,20 @@
 ## Требования
 
 - PHP 7.1-7.3
-- MySQL 5.5
+- MySQL 8
 - Apache с поддержкой `.htaccess` и включенным модулем `mod_rewrite`
 
 ### Настройки PHP
 
-`short_open_tag = On`
+```
+short_open_tag = On
+```
+
+### Настройки MySQL
+
+```
+sql_mode=''
+```
 
 Требуемые расширения, которые могут быть выключены по умолчанию:
  - [mbstring](https://www.php.net/manual/ru/intro.mbstring.php)
