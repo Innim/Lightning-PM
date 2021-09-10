@@ -11,7 +11,7 @@ $isModerator = lpm_is_moderator();
 	<h3>
 		<?lpm_print_header();?>
 		<?php if ($isModerator): ?>
-		<small class="text-muted"><a href="<?=$editUrl;?>">Редактировать</a></small>
+		<small class="text-muted"><a href="<?=$editUrl;?>"><i class="fas fa-user-edit"></i></a></small>
 		<?php endif; ?>
 	</h3>
 	<div>
