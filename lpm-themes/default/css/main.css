@@ -1473,6 +1473,12 @@ blockquote > p {
 {
 	color: #999999;
 }
+#issueForm .note kbd {
+	opacity: .3;
+}
+#issueForm .note:hover kbd {
+	opacity: 1;
+}
 
 #issueForm .note a {
 	color: #999999;
