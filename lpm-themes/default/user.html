@@ -2,30 +2,19 @@
 /* 
 Требуются: 
     $user - отображаемый пользователь
+	$editUrl - URL страницы редактирования пользователя
 */
+
+$isModerator = lpm_is_moderator();
 ?>
 <article id="user" class="container">
 	<h3>
 		<?lpm_print_header();?>
+		<?php if ($isModerator): ?>
+		<small class="text-muted"><a href="<?=$editUrl;?>">Редактировать</a></small>
+		<?php endif; ?>
 	</h3>
-	<div class="validateError"></div>
-	<div class="info-message"></div>
 	<div>
-		<form id="editUser" action="">
-			<input type="hidden" name="userId" value="<?=$user->userId;?>">
-			<ol class="form-fields">
-				<li>
-					<label for="slackName">Slack Member ID</label>
-					<input type="text" id="slackName" name="slackName" value="<?=$user->slackName;?>">
-					<div class="hint"><a
-							href="https://medium.com/@moshfeu/how-to-find-my-member-id-in-slack-workspace-d4bba942e38c"
-							target="_black">Как найти Member ID</a></div>
-				</li>
-				<li>
-					<button class="btn btn-primary" type="submit">Сохранить</button>
-					<button class="btn btn-secondary" type="reset">Отменить</button>
-				</li>
-				</ul>
-		</form>
+		<img class="user-avatar x-middle img-thumbnail" src="<?=$user->getAvatarUrl();?>" />
 	</div>
 </article>

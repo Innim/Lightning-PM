@@ -280,6 +280,7 @@ abstract class LPMPage
                 }
                 $this->_title = $subpage->title;
                 $this->_js = array_merge($this->_js, $subpage->js);
+                break;
             }
         }
     }

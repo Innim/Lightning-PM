@@ -688,8 +688,6 @@ class ProjectPage extends LPMPage
 
     private function getProjectedCommentsPage()
     {
-        // $page = $this->getParam($this->_baseParamsCount + 1);
-        // return empty($page) ? 1 : (int)$page;
         return $this->getPageArg();
     }
 

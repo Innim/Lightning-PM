@@ -1,6 +1,6 @@
 $(document).ready(
     function () {
-        $('form#editUser').submit(function (event) {
+        $('form#editUser').on('submit', function (event) {
             event.preventDefault();
             let userId = $('#editUser input[name=userId]').val();
             let slackName = $('#editUser input[name=slackName]').val();
