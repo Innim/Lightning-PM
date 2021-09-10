@@ -47,6 +47,15 @@ CREATE TABLE `lpm_images` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='загруженные пользователем изображения';
 
 
+DROP TABLE IF EXISTS `lpm_instance_targets`;
+CREATE TABLE `lpm_instance_targets` (
+  `instanceType` int NOT NULL COMMENT 'Тип экземпляра',
+  `instanceId` int NOT NULL COMMENT 'ID экземпляра',
+  `content` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci COMMENT 'Содержимое целей',
+  PRIMARY KEY (`instanceType`,`instanceId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Цели указанной сущности.';
+
+
 DROP TABLE IF EXISTS `lpm_issues`;
 CREATE TABLE `lpm_issues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

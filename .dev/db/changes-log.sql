@@ -355,4 +355,8 @@ DROP INDEX `PRIMARY`;
 
 -- v0.10.10
 
+ALTER TABLE `lpm_instance_targets`
+CHANGE `instanceType` `instanceType` int NOT NULL COMMENT 'Тип экземпляра' FIRST,
+CHANGE `instanceId` `instanceId` int NOT NULL COMMENT 'ID экземпляра' AFTER `instanceType`;
+
 --NEXT
