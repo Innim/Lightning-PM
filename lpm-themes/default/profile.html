@@ -32,10 +32,10 @@
         </ol>
 
         <article id="changePass" class="hidden-state">
-            <div class="validateError"></div>
+            <div class="alert alert-danger validateError" role="alert"></div>
 
             <form method="post" action="" onsubmit="profilePage.saveNewPass(); return false;">
-                <div class="info-message"></div>
+                <div class="alert alert-success info-message" role="alert"></div>
                 <ol class="form-fields">
                     <li>
                         <!-- <label for="curentPass">Текущий пароль</label> -->
@@ -62,7 +62,7 @@
         <article id="userSettings" class="hidden-state">
             <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
                 <h4>Настройки оповещений по email</h4>
-                <div class="info-message"></div>
+                <div class="alert alert-success info-message" role="alert"></div>
                 <ol class="form-fields">
                     <li>
                         <input id="seAddIssue" name="seAddIssue" type="checkbox"

@@ -45,7 +45,7 @@
 <?php if (lpm_can_create_project()): ?>
 <article id="addProjectForm" class="container">
 	<h3>Добавить проект</h3>
-	<div class="validateError">
+	<div class="alert alert-danger validateError" role="alert">
 		<?php lpm_print_errors(); ?>
 	</div>
 	<form onsubmit="return validateAddProj();" method="post">

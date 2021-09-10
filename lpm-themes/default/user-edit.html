@@ -9,9 +9,9 @@
 	<h3>
 		<span><a href="<?=$viewUrl;?>">Назад</a></span>
 		<?lpm_print_header();?>
-	</h3>
-	<div class="validateError"></div>
-	<div class="info-message"></div>
+	</h3>	
+	<div class="alert alert-danger validateError" role="alert"></div>
+	<div class="alert alert-success info-message" role="alert"></div>
 	<div>
 		<form id="editUser" action="">
 			<input type="hidden" name="userId" value="<?=$user->userId;?>">

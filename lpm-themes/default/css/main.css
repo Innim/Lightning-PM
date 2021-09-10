@@ -388,33 +388,12 @@ ol#profileInfo.info-list {
 	margin          : 10px auto 10px;
 }
 
-.validateError {
-	width           : 90%;
-	margin          : 10px auto 10px;
-	padding         : 5px;
-	background-color: #f6cdcd;
-	border          : 1px solid #c45151;
-	color           : #ff0000;
-	border-radius   : 5px;
-	/*display         : none;*/
-}
-
 .validateError:empty{
     display: none;
 }
 
 .info-message {
-    width           : 90%;
-    margin          : 10px auto 10px;
-    padding         : 5px;
-    background-color: #9ee081;
-    border: 1px solid #6fa955;
-    color: #386724;
-    border-radius   : 5px; 
     display         : none; 
-}
-.info-message p {
-    text-align      :center; 
 }
 
 .operations-line {

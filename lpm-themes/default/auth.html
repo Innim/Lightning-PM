@@ -1,6 +1,6 @@
 <article id="authForm" class="container">
 	<h3>Авторизация</h3>
-	<div class="validateError"><?php if (isset($_POST['signIn'])) lpm_print_errors();?></div>
+	<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signIn'])) lpm_print_errors();?></div>
 	<form method="post">
 		<input placeholder="Email" type="email" name="aemail" required="required"
 			value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>" />
@@ -19,7 +19,7 @@
 </article>
 <article id="registrationForm" class="container">
 	<h3>Регистрация</h3>
-	<div class="validateError"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
+	<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
 	<form onsubmit="return validateReg();" action="#reg" method="post">
 		<input placeholder="Email*" type="email" name="email" required="required"
 			value="<?=isset($_POST['email'])?$_POST['email']:'';?>" />

@@ -10,7 +10,7 @@ $descMaxLen = Issue::DESC_MAX_LEN;
 ?>
 <article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
     <h3></h3>
-    <div class="validateError"><?php lpm_print_errors(); ?></div>
+    <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data">
         <ol>
             <li>
