@@ -809,6 +809,11 @@ function setIssueInfo(issue) {
     else
         $('#issueInfo .testers-row').hide();
 
+    if (masters)
+        $('#issueInfo .masters-row').show();
+    else
+        $('#issueInfo .masters-row').hide();
+
     issuePage.updatePriorityVals();
 
     $("#issueInfo > p > input[name=issueId]").val(issue.id);
@@ -1146,7 +1151,7 @@ function Issue(obj) {
 
     this.getMembers = function () {
         var str = '';
-        if (this.members)
+        if (this.members) {
             for (var i = 0; i < this.members.length; i++) {
                 var member = this.members[i];
                 if (i > 0) str += ', ';
@@ -1154,7 +1159,9 @@ function Issue(obj) {
                 if (member.sp)
                     str += " (" + member.sp + " SP)";
             }
-        return str;
+        }
+
+        return str ? str : 'Не назначены';
     };
 
     this.getMemberIds = function () {
