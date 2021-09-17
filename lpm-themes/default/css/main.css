@@ -1667,19 +1667,6 @@ div.ftp
     font-size: 70%;
 }
 
-/* Счетчик задач */
-.count-importaint
-{
-	background: #CCCCCC;
-	color: black;
-	display: inline-block;
-	-webkit-border-radius:4px;
-	-moz-border-radius:4px;
-	border-radius:4px;
-	padding: 3px 5px;
-	margin-left: 5px;
-	font-size: 0.8em;
-}
 /*Меню скопировать в issue*/
 .popup-menu 
 {
