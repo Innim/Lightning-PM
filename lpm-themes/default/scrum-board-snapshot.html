@@ -28,15 +28,15 @@
         </ul>
         <?php endif;?>
     </div>
-    <?php else: ?>
-        <a class="link-title-snapshot" href="<?=$snapshot->getUrl()?>">
-            <h3 class="text-title-snapshot"><u>SCRUM архив:</u></h3>
-        </a>
+    <?php else: ?>        
+        <h3 class="text-title-snapshot"><a class="link-title-snapshot" href="<?=$snapshot->getUrl()?>">SCRUM архив:</a></h3>
         <?php if ($snapshot->sprintTarget): ?>
-            <div class="scrum-board-target">
-                <p class="title-target hidden"><i>Цели спринта:</i></p>
-                <div class="text-target"><?=$snapshot->getSprintTargetHtml();?></div>
+        <div class="card w-50 my-2 scrum-board-target">
+            <div class="card-body">
+                <h5 class="card-title title-target">Цели спринта</h5>
+                <p class="card-text text-target"><?=$snapshot->getSprintTargetHtml();?></p>
             </div>
+        </div>
         <?php endif ?>
         <div class="scrum-snapshot-stat">
             <b><?=$snapshot->getCreateDate()?></b> <i>Scrum snapshot #<?=$snapshot->idInProject?></i> создан пользователем

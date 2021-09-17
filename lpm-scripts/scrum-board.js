@@ -143,8 +143,10 @@ const sprintTarget = {
     updateVisibility: function () {
         if ($('.text-target').text().trim()) {
             $('.title-target').show();
+            $('.text-target').show();
         } else {
             $('.title-target').hide();
+            $('.text-target').hide();
         }
     },
     open: function () {

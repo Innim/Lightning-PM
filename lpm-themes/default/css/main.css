@@ -1707,7 +1707,7 @@ div.ftp
 .hidden {
 	display: none;
 }
-#scrumBoard h3 {
+.scrum-board-header {
 	float: left;
 }
 #scrumBoard h3 .scrum-board-info {
@@ -1880,8 +1880,7 @@ div.ftp
 }
 
 #scrumBoard .scrum-snapshot-stat {
-	clear: both;
-	margin-top: 50px;
+	margin-top: 10px;
 	margin-left: 5px;
 	margin-bottom: 10px;
 }
@@ -2181,37 +2180,6 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	height: 300px;
 	box-sizing: border-box;
 	margin: 10px auto;
-}
-
-/**
- * === sprint targets ===
- */
-.scrum-board-target {
-	max-width: 48%;
-	margin-bottom: 12px;
-}
-
-.title-target {
-	margin: 8px 0 8px 0;
-	font-weight: 700;
-}
-
-.text-target p {
-	margin: 0;
-}
-
-.target-btn {
-	margin: 0;
-	padding: 0;
-	min-width: auto;
-	min-height: auto;
-	display: block;
-	font-size: 12px;
-	line-height: 12px;
-	text-decoration: underline;
-	color: #666666;
-	border: none;
-	background: transparent;
 }
 
 /* Модальное окно целей спринта */
