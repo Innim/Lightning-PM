@@ -33,14 +33,17 @@ class ProjectsService extends LPMBaseService
             return $this->error('Недостаточно прав');
         }
         
-        if ($projectId > 0) {
-            $sql = "UPDATE `%1\$s`".
-                    "SET `isArchive` = '" . $value . "'" .
-                    "WHERE `id` = '" . $projectId . "'";
+        if ($projectId <= 0) {
+            return $this->error('Неверный ID проекта');
+        }
+
+        $sql = "UPDATE `%1\$s`".
+                    ' SET `isArchive` = ' . $isArchive .
+                    ' WHERE `id` = ' . $projectId;
         
-            if (!$this->_db->queryt($sql, LPMTables::PROJECTS)) {
-                return $this->error('Ошибка записи в БД');
-            }
+        // TODO: вынести
+        if (!$this->_db->queryt($sql, LPMTables::PROJECTS)) {
+            return $this->error('Ошибка записи в БД');
         }
 
         return $this->answer();
