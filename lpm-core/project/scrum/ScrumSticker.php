@@ -91,13 +91,22 @@ SQL;
      * @param  int $projectId Идентификатор проекта,
      * @return
      */
-    public static function removeStickersForProject($projectId)
+    public static function removeStickersForProject($projectId, $excludedStates = null)
     {
+        $statesWhere = '';
+        if (!empty($excludedStates)) {
+            $excludedStatesStr = implode(',', $excludedStates);
+            $statesWhere = <<<SQL
+AND `s`.`state` NOT IN (${excludedStatesStr})
+SQL;
+        }
+
         $db = self::getDB();
         $sql = <<<SQL
     		DELETE `s` FROM `%1\$s` `s`
     		     INNER JOIN `%2\$s` `i` ON `i`.`id` = `s`.`issueId`
-    		 WHERE `i`.`projectId` = ${projectId}
+    		 WHERE `i`.`projectId` = ${projectId} 
+                   ${statesWhere}
 SQL;
 
         return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);

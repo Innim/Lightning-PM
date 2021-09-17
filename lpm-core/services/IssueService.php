@@ -486,11 +486,14 @@ class IssueService extends LPMBaseService
     /**
      * Убирает в архив стикеры с доски
      * @param int $projectId Идентификатор проекта
+     * @param bool $transferOpened Определяет, будут ли перенесены но новый спринт
+     *                             открытые задачи. Открытыми считаются задачи в TODO и работе.
      * @return
      */
-    public function removeStickersFromBoard($projectId)
+    public function removeStickersFromBoard($projectId, $transferOpened = false)
     {
         $projectId = (int)$projectId;
+        $transferOpened = (bool)$transferOpened;
 
         try {
             // проверим, что существует такой проект
@@ -501,7 +504,10 @@ class IssueService extends LPMBaseService
             // прежде чем отправлять все задачи в архив, делаем snapshot доски
             ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
 
-            if (!ScrumSticker::removeStickersForProject($projectId)) {
+            $notRemoveStates = $transferOpened
+                ? [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS]
+                : null;
+            if (!ScrumSticker::removeStickersForProject($projectId, $notRemoveStates)) {
                 return $this->errorDBSave();
             }
             

@@ -112,18 +112,55 @@ let scrumBoard = {
     },
     clearBoard: function () {
         if (confirm('Убрать все стикеры с доски?')) {
-            let projectId = $('#scrumBoard').data('projectId');
-            preloader.show();
-            srv.issue.removeStickersFromBoard(projectId, function (res) {
-                preloader.hide();
-                if (res.success) {
-                    $('#scrumBoard .scrum-board-table .scrum-board-sticker').remove();
-                    sprintTarget.setValue('', '');
-                    issuePage.scumColUpdateInfo();
-                } else {
-                    srv.err(res);
+            const projectId = $('#scrumBoard').data('projectId');
+
+            const transferCols = ['col-todo', 'col-in_progress'];
+            const columnsSelector = '#scrumBoard .scrum-board-table .scrum-board-col';
+
+            const doClear = function (transfer) {
+                preloader.show();
+                srv.issue.removeStickersFromBoard(projectId, transfer, function (res) {
+                    preloader.hide();
+                    if (res.success) {
+                        let $elements = $(columnsSelector);
+                        console.log(0, $elements);
+                        if (transfer) { 
+                            transferCols.forEach(col => $elements = $elements.not('.' + col));
+                            console.log(1, $elements);
+                        }
+                        $elements = $elements.find('.scrum-board-sticker');
+                        console.log(2,$elements);
+
+                        $elements.remove();
+                        sprintTarget.setValue('', '');
+                        issuePage.scumColUpdateInfo();
+                    } else {
+                        srv.err(res);
+                    }
+                });
+            }
+
+            if (transferCols.some(col => $(columnsSelector + '.' + col + ' .scrum-board-sticker').size() > 0))
+            {
+                const $dialog = $("#transferStickersConfirm");
+                const clearAndClose = (transfer) => {
+                    doClear(transfer);
+                    $dialog.dialog("close");
                 }
-            });
+
+                $dialog.dialog({
+                    resizable: false,
+                    height: "auto",
+                    width: 400,
+                    modal: true,
+                    buttons: {
+                        "Перенести": () => clearAndClose(true),
+                        "Не переносить": () => clearAndClose(false),
+                    },
+                });
+            } else {
+                doClear(false);
+            }
         }
     },
 };

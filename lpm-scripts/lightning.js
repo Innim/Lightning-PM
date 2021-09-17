@@ -173,7 +173,7 @@ let srv = {
         putStickerOnBoard: function (issueId, onResult) {
             this.s._('putStickerOnBoard');
         },
-        removeStickersFromBoard: function (projectId, onResult) {
+        removeStickersFromBoard: function (projectId, transferOpened, onResult) {
             this.s._('removeStickersFromBoard');
         },
         takeIssue: function (issueId, replace, onResult) {
