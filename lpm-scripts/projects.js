@@ -72,7 +72,7 @@ function validateAddProj() {
 function setIsArchive(e) {
 	var parent = e.currentTarget.parentElement;
 	var projectId = $('input[name=projectId]', parent).val();
-	var value = ($("a", parent).hasClass('archive btn')) ? true : false;
+	var value = ($("a", parent).hasClass('archive')) ? true : false;
 	srv.projects.setIsArchive(projectId, value, reload = function () {
 		location.reload();
 	});
