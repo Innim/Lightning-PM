@@ -6,6 +6,16 @@ class UserPage extends LPMPage
 {
     const UID = 'user';
     const PUID_EDIT = 'edit';
+
+    /**
+     * Возвращает URL страницы просмотра пользователя.
+     * @param int $userId Идентификатор пользователя.
+     * @return string
+     */
+    public static function getUrlFor($userId)
+    {
+        return Link::getUrlByUid(UserPage::UID, $userId);
+    }
     
     public function __construct()
     {

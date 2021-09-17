@@ -1394,6 +1394,9 @@ table.issues-list tr.active-issue.tester {
 .formatted-desc img {
 	max-width: 100%;
 }
+.formatted-desc .user-link {
+	font-weight: bold;
+}
 .comments-list .comments-list-item .text blockquote {
 	background-color: #e9e9e9;
 }

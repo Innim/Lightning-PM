@@ -254,7 +254,7 @@ class User extends LPMBaseObject
 
     public function getUrl()
     {
-        return Link::getUrlByUid(UserPage::UID, $this->userId);
+        return UserPage::getUrlFor($this->userId);
     }
     
     public function getLastVisit()

@@ -168,6 +168,10 @@ function createMembersAutoComplete() {
     var members = null;
     return {
         trigger: '@',
+        selectTemplate: function (item) {
+            let data = item.original;
+            return '[@' + data.key + '](user:' + data.id + ')';
+        },
         values: function (text, cb) {
             if (members !== null) {
                 cb(members);
@@ -183,7 +187,7 @@ function createMembersAutoComplete() {
                         let user = list[i];
                         let name = user.nick ? user.nick : user.firstName;
 
-                        members[i] = { key: name, value: name };
+                        members[i] = { key: name, value: name, id: user.userId };
                     }
                     cb(members);
                 }
