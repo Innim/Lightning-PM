@@ -1,0 +1,33 @@
+<?php
+/* 
+Требуются: 
+    $user - отображаемый пользователь
+	$viewUrl - URL просмотра профиля пользователя
+*/
+?>
+<article id="user" class="container">
+	<h3>
+		<span><a href="<?=$viewUrl;?>"><i class="fas fa-arrow-left"></i></a></span>
+		<?lpm_print_header();?>
+	</h3>	
+	<div class="alert alert-danger validateError" role="alert"></div>
+	<div class="alert alert-success info-message" role="alert"></div>
+	<div>
+		<form id="editUser" action="">
+			<input type="hidden" name="userId" value="<?=$user->userId;?>">
+			<ol class="form-fields">
+				<li>
+					<label for="slackName">Slack Member ID</label>
+					<input type="text" id="slackName" name="slackName" value="<?=$user->slackName;?>">
+					<div class="hint"><a
+							href="https://medium.com/@moshfeu/how-to-find-my-member-id-in-slack-workspace-d4bba942e38c"
+							target="_black">Как найти Member ID</a></div>
+				</li>
+				<li>
+					<button class="btn btn-primary" type="submit">Сохранить</button>
+					<button class="btn btn-secondary" type="reset">Отменить</button>
+				</li>
+				</ul>
+		</form>
+	</div>
+</article>

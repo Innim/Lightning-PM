@@ -31,7 +31,7 @@ foreach ($labels as $label) {
     <h1>
         <?lpm_print_header();?>
     </h1>
-    <div class="info-message" style="display: none;">Сохранено</div>
+    <div class="alert alert-success info-message" role="alert">Сохранено</div>
     <h3>Участники проекта</h3>
     <input type="hidden" name="projectId" value="<?=$project->getID();?>" />
     <ul class="users-list">

@@ -248,7 +248,13 @@ class User extends LPMBaseObject
     
     public function getLinkedName()
     {
-        return $this->getName();
+        $url = $this->getUrl();
+        return '<a href="' . $url . '">'.$this->getName() . '</a>';
+    }
+
+    public function getUrl()
+    {
+        return UserPage::getUrlFor($this->userId);
     }
     
     public function getLastVisit()
@@ -302,6 +308,7 @@ class User extends LPMBaseObject
         $obj = parent::clientObjectCreated($obj);
         
         $obj->linkedName = $this->getLinkedName();
+        $obj->url = $this->getUrl();
         return $obj;
     }
     

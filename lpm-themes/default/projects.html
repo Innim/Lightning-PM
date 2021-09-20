@@ -11,7 +11,15 @@
 		<?php $userId = lpm_get_user()->getID();?>
 		<?php foreach (lpm_get_projects_list( false ) as $project): ?>
 		<li>
+			<span class="position-relative pe-2">
 			<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
+			<?php if (($countImportant=$project->getImportantIssuesCount())>0): ?>
+			<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" title="Количество ваших задач с высоким приоритетом">
+				<?=$countImportant;?>
+				<span class="visually-hidden">Количество ваших задач с высоким приоритетом</span>
+			</span>
+			<?php endif; ?>
+			</span>
 			<button class="project-fix" data-id-project="<?=$project->id;?>" value="<?=$project->fixedInstance;?>">
 				<?php if ($project->fixedInstance): ?>
 				<i class="fa fa-thumbtack" aria-hidden="true"></i>
@@ -19,10 +27,6 @@
 				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
 				<?php endif ?>	
 			</button>
-			<?php if (($countImportant=$project->getImportantIssuesCount())>0): ?>
-			<div class="count-importaint" title="Количество ваших задач с высоким приоритетом"><?=$countImportant;?>
-			</div>
-			<?php endif; ?>
 			<?php if ($project->scrum): ?>
 			<div class="projects-list-item-submenu">
 				<a href="<?=$project->getScrumBoardUrl();?>">SCRUM доска</a>
@@ -45,7 +49,7 @@
 <?php if (lpm_can_create_project()): ?>
 <article id="addProjectForm" class="container">
 	<h3>Добавить проект</h3>
-	<div class="validateError">
+	<div class="alert alert-danger validateError" role="alert">
 		<?php lpm_print_errors(); ?>
 	</div>
 	<form onsubmit="return validateAddProj();" method="post">

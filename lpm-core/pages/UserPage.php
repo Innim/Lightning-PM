@@ -5,13 +5,37 @@
 class UserPage extends LPMPage
 {
     const UID = 'user';
+    const PUID_EDIT = 'edit';
+
+    /**
+     * Возвращает URL страницы просмотра пользователя.
+     * @param int $userId Идентификатор пользователя.
+     * @return string
+     */
+    public static function getUrlFor($userId)
+    {
+        return Link::getUrlByUid(UserPage::UID, $userId);
+    }
     
     public function __construct()
     {
-        parent::__construct(self::UID, '', true, true, '', '', User::ROLE_MODERATOR);
+        parent::__construct(self::UID, '', true, true);
 
         $this->_js[] = 'user';
         $this->_pattern = 'user';
+
+        $this->_defaultPUID = self::UID;
+        $this->_baseParamsCount = 2;
+
+        $this->addSubPage(
+            self::PUID_EDIT,
+            'Редактирование',
+            'user-edit',
+            null,
+            '',
+            User::ROLE_MODERATOR,
+            false
+        );
     }
 
     public function init()
@@ -34,8 +58,23 @@ class UserPage extends LPMPage
         $this->_header = $user->getName();
 
         $this->addTmplVar('user', $user);
+        
+        if (empty($this->_curSubpage)) {
+            $this->addTmplVar('editUrl', $this->getEditUrl($userId));
+        } else {
+            switch ($this->_curSubpage->uid) {
+                case self::PUID_EDIT:
+                    $this->addTmplVar('viewUrl', $this->getBaseUrl());
+                    break;
+            }
+        }
 
         return $this;
+    }
+
+    private function getEditUrl($userId)
+    {
+        return $this->getBaseUrl(self::PUID_EDIT);
     }
 
     private function getUserIdParam()

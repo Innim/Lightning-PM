@@ -47,6 +47,15 @@ CREATE TABLE `lpm_images` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='загруженные пользователем изображения';
 
 
+DROP TABLE IF EXISTS `lpm_instance_targets`;
+CREATE TABLE `lpm_instance_targets` (
+  `instanceType` int NOT NULL COMMENT 'Тип экземпляра',
+  `instanceId` int NOT NULL COMMENT 'ID экземпляра',
+  `content` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci COMMENT 'Содержимое целей',
+  PRIMARY KEY (`instanceType`,`instanceId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Цели указанной сущности.';
+
+
 DROP TABLE IF EXISTS `lpm_issues`;
 CREATE TABLE `lpm_issues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -69,20 +78,19 @@ CREATE TABLE `lpm_issues` (
 
 DROP TABLE IF EXISTS `lpm_issue_branch`;
 CREATE TABLE `lpm_issue_branch` (
-  `issueId` bigint(20) NOT NULL COMMENT 'ID задачи',
-  `repositoryId` int(20) NOT NULL COMMENT 'ID репозитория',
-  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Название ветки',
+  `issueId` bigint NOT NULL COMMENT 'ID задачи',
+  `repositoryId` int NOT NULL COMMENT 'ID репозитория',
+  `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'Название ветки',
   `date` datetime NOT NULL COMMENT 'Дата записи',
-  `lastСommit` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'ID последнего коммита',
+  `lastCommit` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'ID последнего коммита',
   `mergedInDevelop` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Отметка о влитии в develop',
-  `userId` bigint(19) NOT NULL COMMENT 'Идентификатор пользователя',
+  `userId` bigint NOT NULL COMMENT 'Идентификатор пользователя',
   PRIMARY KEY (`issueId`,`repositoryId`,`name`),
   KEY `repositoryId_name` (`repositoryId`,`name`),
   KEY `issueId` (`issueId`),
   KEY `issueId_mergedInDevelop` (`issueId`,`mergedInDevelop`),
-  KEY `repositoryId_lastСommit` (`repositoryId`,`lastСommit`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
-
+  KEY `repositoryId_lastCommit` (`repositoryId`,`lastCommit`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
 
 DROP TABLE IF EXISTS `lpm_issue_counters`;
 CREATE TABLE `lpm_issue_counters` (

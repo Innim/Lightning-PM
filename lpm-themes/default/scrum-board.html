@@ -8,15 +8,15 @@
 <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
     <h1><?php lpm_print_header();?></h1>
 
-    <div class="scrum-board-target">
-        <button class="target-btn" title="Задать цели спринта">Задать цели спринта</button>
-        <p class="title-target hidden"><i>Цели спринта:</i></p>
-        <div class="text-target">
-            <?=$project->getSprintTargetHtml();?>
+    <div class="card w-50 my-2 scrum-board-target">
+        <div class="card-body">
+            <h5 class="card-title title-target">Цели спринта</h5>
+            <div class="card-text text-target"><?=$project->getSprintTargetHtml();?></div>
+            <a href="#" class="card-link target-btn">Задать цели спринта</a>
         </div>
     </div>
 
-    <h3>SCRUM доска.
+    <h3 class="scrum-board-header">SCRUM доска.
         <span class="scrum-board-info">
             <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSprintNum();?></span>
             (<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp">, <span
@@ -33,5 +33,11 @@
 <article id="takeIssueConfirm" title="" style="display: none;">
     <p>
         Хотите добавиться исполнителем или заменить текущего?
+    </p>
+</article>
+
+<article id="transferStickersConfirm" title="" style="display: none;">
+    <p>
+        Перенести задачи из колонок "TO DO" и "В работе" на новый спринт?
     </p>
 </article>

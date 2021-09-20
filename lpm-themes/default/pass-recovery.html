@@ -1,6 +1,6 @@
 <article id="recPassForm" class="container">
     <h3>Восстановление пароля</h3>
-    <div class="validateError">
+    <div class="alert alert-danger validateError" role="alert">
         <? lpm_print_errors(); ?>
     </div>
     <?php switch(lpm_get_current_page()->getShow()) {
@@ -18,8 +18,9 @@
         </div>
     </form>
     <?php break; case 'successEmail': ?>
-    <div class="info-message" style="display: block;">
-        <p>На ваш email было отправлено письмо с инструкциями.</p>
+    
+	<div class="alert alert-success info-message" role="alert" style="display: block;">
+        На ваш email было отправлено письмо с инструкциями.
     </div>
 
     <p class="links-line">
@@ -27,8 +28,8 @@
     </p>
 
     <?php break; case 'recoverySuccess': ?>
-    <div class="info-message" style="display: block;">
-        <p>Пароль успешно изменен.</p>
+    <div class="alert alert-success info-message" role="alert" style="display: block;">
+        Пароль успешно изменен.
     </div>
     <p class="links-line">
         <a href="/">На главную</a>
@@ -36,7 +37,7 @@
 
     <?php break; case 'changePassForm': ?>
     <form method="post" action="">
-        <div class="info-message"></div>
+        <div class="alert alert-success info-message" role="alert"></div>
         <ol class="form-fields">
             <li>
                 <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24" required />

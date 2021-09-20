@@ -23,10 +23,7 @@ $isModerator = lpm_is_moderator();
         <?php foreach ($users as $user): ?>
         <tr class="<?=$user->isLocked()?'locked-user':'active-user';?>">
             <td><img class="user-avatar middle" src="<?=$user->getAvatarUrl();?>" /></td>
-            <td><?php if ($isModerator): 
-                ?><a href="<?=Link::getUrlByUid(UserPage::UID, $user->userId);?>"><?php endif; 
-                ?><?=$user->getName();?><?php 
-                if ($isModerator): ?></a><?php endif; ?></td>
+            <td><?=$user->getLinkedName();?></td>
             <td><?=$user->getEmail();?></td>
             <td><?=$user->getLastVisit();?></td>
             <?php if ($isModerator): ?>

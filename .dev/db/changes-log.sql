@@ -355,4 +355,16 @@ DROP INDEX `PRIMARY`;
 
 -- v0.10.10
 
+ALTER TABLE `lpm_instance_targets`
+CHANGE `instanceType` `instanceType` int NOT NULL COMMENT 'Тип экземпляра' FIRST,
+CHANGE `instanceId` `instanceId` int NOT NULL COMMENT 'ID экземпляра' AFTER `instanceType`;
+
+-- cyrillic letter in the name
+ALTER TABLE `lpm_issue_branch`
+CHANGE `lastСommit` `lastCommit` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID последнего коммита' AFTER `date`;
+
+ALTER TABLE `lpm_issue_branch`
+ADD INDEX `repositoryId_lastCommit` (`repositoryId`, `lastCommit`),
+DROP INDEX `repositoryId_lastСommit`;
+
 --NEXT
