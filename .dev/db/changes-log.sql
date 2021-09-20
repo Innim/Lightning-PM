@@ -367,4 +367,6 @@ ALTER TABLE `lpm_issue_branch`
 ADD INDEX `repositoryId_lastCommit` (`repositoryId`, `lastCommit`),
 DROP INDEX `repositoryId_lastСommit`;
 
+-- v0.12.1
+
 --NEXT
