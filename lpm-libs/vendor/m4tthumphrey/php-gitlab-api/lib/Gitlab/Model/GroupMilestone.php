@@ -5,26 +5,26 @@ namespace Gitlab\Model;
 use Gitlab\Client;
 
 /**
- * Class GroupMilestone
+ * @final
  *
- * @property-read int $id
- * @property-read int $iid
- * @property-read Group $group
- * @property-read int $group_id
- * @property-read string $title
- * @property-read string $description
- * @property-read string $state
- * @property-read string $created_at
- * @property-read string $updated_at
- * @property-read string $due_date
- * @property-read string $start_date
+ * @property int    $id
+ * @property int    $iid
+ * @property Group  $group
+ * @property int    $group_id
+ * @property string $title
+ * @property string $description
+ * @property string $state
+ * @property string $created_at
+ * @property string $updated_at
+ * @property string $due_date
+ * @property string $start_date
  */
 class GroupMilestone extends AbstractModel
 {
     /**
-     * @var array
+     * @var string[]
      */
-    protected static $properties = array(
+    protected static $properties = [
         'id',
         'iid',
         'group',
@@ -35,13 +35,14 @@ class GroupMilestone extends AbstractModel
         'created_at',
         'updated_at',
         'due_date',
-        'start_date'
-    );
+        'start_date',
+    ];
 
     /**
      * @param Client $client
-     * @param Group $group
-     * @param array $data
+     * @param Group  $group
+     * @param array  $data
+     *
      * @return GroupMilestone
      */
     public static function fromArray(Client $client, Group $group, array $data)
@@ -53,9 +54,12 @@ class GroupMilestone extends AbstractModel
 
     /**
      * GroupMilestone constructor.
-     * @param Group $group
-     * @param $id
+     *
+     * @param Group       $group
+     * @param int         $id
      * @param Client|null $client
+     *
+     * @return void
      */
     public function __construct(Group $group, $id, Client $client = null)
     {
