@@ -2,6 +2,7 @@ FROM debian:9
 USER root
 
 ARG sshpass=secret
+ARG php_version=7.3
 
 WORKDIR /root
 ENV DEBIAN_FRONTEND noninteractive
@@ -14,7 +15,7 @@ RUN apt -y install  wget mc vim openssh-server supervisor apt-transport-https ls
 RUN wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 RUN echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
 
-RUN apt update && apt -y install git apache2 libapache2-mod-php7.1 libapache2-mod-fcgid libapache2-mod-rpaf php7.1 php7.1-curl php7.1-gd php7.1-intl php7.1-ldap php7.1-mcrypt php7.1-memcached php7.1-mysql php7.1-pgsql php7.1-pspel php7.1-xsl php7.1-mbstring php7.1-xml php7.1-zip
+RUN apt update && apt -y install git apache2 libapache2-mod-php$php_version libapache2-mod-fcgid libapache2-mod-rpaf php$php_version php$php_version-curl php$php_version-gd php$php_version-intl php$php_version-ldap php$php_version-mcrypt php$php_version-memcached php$php_version-mysql php$php_version-pgsql php$php_version-pspel php$php_version-xsl php$php_version-mbstring php$php_version-xml php$php_version-zip
 
 RUN a2enmod actions authz_groupfile cgi headers rewrite socache_shmcb ssl
 
@@ -24,7 +25,7 @@ ADD config/etc/apache2/sites-enabled /etc/apache2/sites-enabled
 
 ADD config/etc/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 
-ADD config/etc/php/7.1/apache2/php.ini /etc/php/7.1/apache2/php.ini
+ADD config/etc/php/$php_version/apache2/php.ini /etc/php/$php_version/apache2/php.ini
 
 
 #RUN mkdir /var/run/sshd
