@@ -18,7 +18,7 @@ It is the ideal class to quickly integrate file upload in your site. If the file
 
 You can also use the class to work on local files, which is especially useful to use the image manipulation features. The class also supports Flash uploaders and XMLHttpRequest.
 
-The class works with PHP 5.3+ and PHP 7 (use version 1.x for PHP 4 support), and its error messages can be localized at will.
+The class works with PHP 5.3+, PHP 7 and PHP 8 (use version 1.x for PHP 4 support), and its error messages can be localized at will.
 
 
 ## Install via composer
@@ -56,7 +56,7 @@ Create a simple HTML file, with a form such as:
 ```
 Create a file called upload.php (into which you have first loaded the class):
 ```php
-$handle = new \verot\Upload\Upload($_FILES['image_field']);
+$handle = new \Verot\Upload\Upload($_FILES['image_field']);
 if ($handle->uploaded) {
   $handle->file_new_name_body   = 'image_resized';
   $handle->image_resize         = true;
