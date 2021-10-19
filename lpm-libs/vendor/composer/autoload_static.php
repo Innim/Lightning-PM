@@ -16,6 +16,10 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
     );
 
     public static $prefixLengthsPsr4 = array (
+        'W' => 
+        array (
+            'Webmozart\\Assert\\' => 17,
+        ),
         'S' => 
         array (
             'Symfony\\Polyfill\\Php80\\' => 23,
@@ -39,6 +43,10 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         'N' => 
         array (
             'Nyholm\\Psr7\\' => 12,
+        ),
+        'M' => 
+        array (
+            'Mailgun\\' => 8,
         ),
         'L' => 
         array (
@@ -72,6 +80,10 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
     );
 
     public static $prefixDirsPsr4 = array (
+        'Webmozart\\Assert\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/webmozart/assert/src',
+        ),
         'Symfony\\Polyfill\\Php80\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
@@ -114,8 +126,8 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         ),
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
-            1 => __DIR__ . '/..' . '/psr/http-factory/src',
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Psr\\Http\\Client\\' => 
         array (
@@ -133,10 +145,14 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         array (
             0 => __DIR__ . '/..' . '/nyholm/psr7/src',
         ),
+        'Mailgun\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/mailgun/mailgun-php/src',
+        ),
         'League\\Uri\\' => 
         array (
-            0 => __DIR__ . '/..' . '/league/uri-interfaces/src',
-            1 => __DIR__ . '/..' . '/league/uri/src',
+            0 => __DIR__ . '/..' . '/league/uri/src',
+            1 => __DIR__ . '/..' . '/league/uri-interfaces/src',
         ),
         'JoliCode\\Slack\\Api\\' => 
         array (
@@ -164,8 +180,8 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         ),
         'Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/php-http/message-factory/src',
-            1 => __DIR__ . '/..' . '/php-http/message/src',
+            0 => __DIR__ . '/..' . '/php-http/message/src',
+            1 => __DIR__ . '/..' . '/php-http/message-factory/src',
         ),
         'Http\\Discovery\\' => 
         array (
