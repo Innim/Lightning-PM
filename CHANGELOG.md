@@ -4,6 +4,7 @@
 
 - PHP 7.3.
 - Для работы со Slack API используется [jolicode/slack-php-api](https://github.com/jolicode/slack-php-api).
+- Отправка почты с помощью [Mailgun](http://mailgun.com).
 
 ## 0.12.1 - 2021-09-20
 

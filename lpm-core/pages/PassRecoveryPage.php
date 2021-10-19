@@ -125,6 +125,7 @@ class PassRecoveryPage extends BasePage
             $message .= "Ссылка будет действительна в течении суток.\r\n\r\n";
             $subject = "Восстановление пароля";
             EmailNotifier::getInstance()->send($email, $firstName, $subject, $message);
+            // TODO: обработать результат
             return true;
         }
     }
