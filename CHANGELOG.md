@@ -5,6 +5,8 @@
 - PHP 7.3.
 - Для работы со Slack API используется [jolicode/slack-php-api](https://github.com/jolicode/slack-php-api).
 - Отправка почты с помощью [Mailgun](http://mailgun.com).
+- Стикеры задач на 1/2 SP отображаются голубым цветом.
+
 ### Fixed
 
 - Восстановление пароля.

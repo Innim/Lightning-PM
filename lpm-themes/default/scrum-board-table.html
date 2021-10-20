@@ -61,8 +61,10 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                     $stickersByState[$state][$i] : null;
                 if ($sticker):
                     $sp = $sticker->getIssue()->hours;
-                    if ($sp < 1)
+                    if ($sp == 0)
                         $color = 'white';
+                    else if ($sp < 1)
+                        $color = 'blue';
                     else if ($sp <= 3)
                         $color = 'green';
                     else if ($sp <= 5)
@@ -71,7 +73,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                         $color = 'orange';
                     else
                         $color = 'red';
-                        $spStr = $sp == .5 ? "1/2" : $sp;
+                    $spStr = $sp == .5 ? "1/2" : $sp;
 
                     $issue = $sticker->getIssue();
                     $members = $issue->getMembers();
