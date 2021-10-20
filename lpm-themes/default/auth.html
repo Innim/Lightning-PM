@@ -7,7 +7,7 @@
 		<input placeholder="Пароль" type="password" name="apass" required="required" />
 		<div>
 			<p class="enter-line">
-				<button name="signIn" type="submit">Вход</button>
+				<button name="signIn" type="submit" class="btn btn-primary">Вход</button>
 			</p>
 			<p class="links-line">
 				<a href="javascript:showRegistration();">Регистрация</a>
@@ -24,7 +24,7 @@
 		<input placeholder="Email*" type="email" name="email" required="required"
 			value="<?=isset($_POST['email'])?$_POST['email']:'';?>" />
 		<input placeholder="Пароль*" type="password" name="pass" required="required" maxlength="24" />
-		<input placeholder="Подтвержение пароля*" type="password" name="repass" required="required" maxlength="24" />
+		<input placeholder="Подтверждение пароля*" type="password" name="repass" required="required" maxlength="24" />
 		<input placeholder="Имя*" type="text" name="firstName" required="required" maxlength="128"
 			value="<?=isset($_POST['firstName'])?$_POST['firstName']:'';?>" />
 		<input placeholder="Фамилия*" type="text" name="lastName" required="required" maxlength="128"
@@ -33,7 +33,7 @@
 			value="<?=isset($_POST['nick'])?$_POST['nick']:'';?>" />
 		<div>
 			<p class="save-line">
-				<button name="signUp" type="submit">Регистрация</button>
+				<button name="signUp" type="submit" class="btn btn-primary">Регистрация</button>
 			</p>
 			<p class="links-line">
 				<a href="javascript:showAuth();">Назад</a>
