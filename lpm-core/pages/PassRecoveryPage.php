@@ -124,13 +124,15 @@ class PassRecoveryPage extends LPMPage
         } else {
             $href = "pass-recovery/reclink/" . $key . "/?userId=" . urlencode(base64_encode($userId));
             $recoveryLink ='<a href="'. SITE_URL . $href .'"> ' . SITE_URL .  $href . '</a>';
-            $message  = "Здравствуйте $firstName,\r\n";
-            $message .= "Для восстановления пароля перейдите по ссылке:\r\n";
-            $message .= "-----------------------\r\n";
-            $message .= "$recoveryLink\r\n";
-            $message .= "-----------------------\r\n";
-            $message .= "Ссылка будет действительна в течении суток.\r\n\r\n";
+            $lines = [
+                "Здравствуйте, $firstName.",
+                "Для восстановления пароля перейдите по ссылке:",
+                "$recoveryLink",
+                "Ссылка будет действительна в течении суток.",
+            ];
             $subject = "Восстановление пароля";
+            $message = implode("<br>", $lines);
+            
             $res = EmailNotifier::getInstance()->send($email, $firstName, $subject, $message);
             if ($res) {
                 return true;
