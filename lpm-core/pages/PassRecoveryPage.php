@@ -1,6 +1,6 @@
 <?php
 
-class PassRecoveryPage extends BasePage
+class PassRecoveryPage extends LPMPage
 {
     private $_show ;
     private $_userId;
@@ -24,10 +24,12 @@ class PassRecoveryPage extends BasePage
                 $_POST[$key] = trim($value);
             }
             if (isset($_POST['remail'])) {
-                $email = $this->_db->escape_string($_POST['remail']);
+                // TODO: вынеси отсюда все сохранение и выделить работу с БД
+                $db = LPMGlobals::getInstance()->getDBConnect();
+                $email = $db->escape_string($_POST['remail']);
                 $sql = "SELECT `userId`, `pass`, `locked`, `firstName` " .
                        "FROM `%s` WHERE `email` = '" . $email . "'";
-                if (!$query = $this->_db->queryt($sql, LPMTables::USERS)) {
+                if (!$query = $db->queryt($sql, LPMTables::USERS)) {
                     $this->_engine->addError('Ошибка чтения из базы');
                 } elseif ($userInfo = $query->fetch_assoc()) {
                     if ($this->sendRecoveryEmail($userInfo['userId'], $userInfo['firstName'], $email)) {
@@ -79,10 +81,12 @@ class PassRecoveryPage extends BasePage
 
     private function getActualKey($userId)
     {
+        // TODO: вынеси отсюда все сохранение и выделить работу с БД
+        $db = LPMGlobals::getInstance()->getDBConnect();
         $curDate = DateTimeUtils::mysqlDate();
         $sql = "SELECT `recoveryKey` FROM `%s` WHERE `userId` = '" . $userId .
             "' AND `expDate` >= '". $curDate . "' LIMIT 1";
-        if (!$query = $this->_db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
+        if (!$query = $db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
             $this->_engine->addError('Ошибка чтения из базы');
             return false;
         } elseif ($row = $query->fetch_assoc()) {
@@ -105,13 +109,16 @@ class PassRecoveryPage extends BasePage
             return false;
         }
 
+        // TODO: вынеси отсюда все сохранение и выделить работу с БД
+        $db = LPMGlobals::getInstance()->getDBConnect();
+
         $expFormat = mktime(date("H"), date("i"), date("s"), date("m"), date("d")+1, date("Y"));
         $expDate = date("Y-m-d H:i:s", $expFormat);
         $key = md5(BaseString::randomStr());
         $sql = "REPLACE INTO `%s` (`userId`, `recoveryKey`, `expDate` )" .
                "VALUES ('" . $userId . "', '" . $key . "', '" . $expDate . "' )";
 
-        if (!$this->_db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
+        if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
             $this->_engine->addError('Ошибка записи в базу');
             return false;
         } else {
@@ -133,16 +140,19 @@ class PassRecoveryPage extends BasePage
     private function updatePass($newPass, $userId, $key)
     {
         if ($this->checkUrlKey($key, $userId)) {
+            // TODO: вынеси отсюда все сохранение и выделить работу с БД
+            $db = LPMGlobals::getInstance()->getDBConnect();
+
             $salt = User::blowfishSalt();
             $sql = "UPDATE `%s` SET ".
                    "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
                    "WHERE `userId` = '" . $userId . "'";
-            if (!$this->_db->queryt($sql, LPMTables::USERS)) {
+            if (!$db->queryt($sql, LPMTables::USERS)) {
                 $this->_engine->addError('Ошибка записи в БД');
             } else {
                 $this->_show = 'recoverySuccess';
                 $sql = "DELETE FROM `%s` WHERE `recoveryKey` = '" . $key . "'";
-                if (!$this->_db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
+                if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
                     $this->_engine->addError('ошибка удаления');
                 }
             }
