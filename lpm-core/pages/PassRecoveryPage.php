@@ -131,9 +131,14 @@ class PassRecoveryPage extends LPMPage
             $message .= "-----------------------\r\n";
             $message .= "Ссылка будет действительна в течении суток.\r\n\r\n";
             $subject = "Восстановление пароля";
-            EmailNotifier::getInstance()->send($email, $firstName, $subject, $message);
-            // TODO: обработать результат
-            return true;
+            $res = EmailNotifier::getInstance()->send($email, $firstName, $subject, $message);
+            if ($res) {
+                return true;
+            } else {
+                $this->_engine->addError('Не удалось отправить письмо, попробуйте позже или свяжитесь с администратором.');
+                // TODO: удалить из базы? или дать возможность запросить отправку еще раз
+                return false;
+            }
         }
     }
     
