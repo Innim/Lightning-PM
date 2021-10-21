@@ -9,12 +9,12 @@ if (!isset($addProjectName)) $addProjectName = false;
 if (!isset($addClearBoard)) $addClearBoard = false;
 ?>
 <div class="scrum-board-actions">
-    <a href="#" onclick="return scrumBoard.changeSPVisibility(true);" title="Показать SP по стикерам"
+    <a href="#" onclick="scrumBoard.changeSPVisibility(true); return false;" title="Показать SP по стикерам"
        class="scrum-board-actions-show-sp"><i class="fa fa-eye" aria-hidden="true"></i></a>
-    <a href="#" onclick="return scrumBoard.changeSPVisibility(false);" title="Скрыть SP по стикерам"
+    <a href="#" onclick="scrumBoard.changeSPVisibility(false); return false;" title="Скрыть SP по стикерам"
        class="scrum-board-actions-hide-sp"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
     <?php if ($addClearBoard): ?>
-        <a href="#" onclick="return scrumBoard.clearBoard(event);" title="Убрать все стикеры с доски"><i
+        <a href="#" onclick="scrumBoard.clearBoard(event); return false;" title="Убрать все стикеры с доски"><i
                 class="fa fa-archive" aria-hidden="true"></i></a>
     <?php endif; ?>
 </div>
