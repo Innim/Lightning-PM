@@ -138,6 +138,7 @@ class SlackIntegration
         $prefix = $this->getIssuePrefix($issue);
         $client = $this->getClient();
 
+        $threadTs = null;
         $res = $client->conversationsHistory(['channel' => $channel, 'limit' => 50]);
         if ($res->getOk()) {
             $messages = $res->getMessages();
