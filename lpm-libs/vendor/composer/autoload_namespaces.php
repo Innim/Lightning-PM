@@ -6,7 +6,6 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Rs\\Json' => array($vendorDir . '/php-jsonpointer/php-jsonpointer/src'),
     'Parsedown' => array($vendorDir . '/erusev/parsedown'),
-    'Evenement' => array($vendorDir . '/evenement/evenement/src'),
-    'Devristo\\Phpws\\' => array($vendorDir . '/devristo/phpws/src'),
 );

@@ -1,8 +1,6 @@
 <article id="recPassForm" class="container">
     <h3>Восстановление пароля</h3>
-    <div class="alert alert-danger validateError" role="alert">
-        <? lpm_print_errors(); ?>
-    </div>
+    <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <?php switch(lpm_get_current_page()->getShow()) {
         case 'emailForm': ?>
     <form method="post">
@@ -10,7 +8,7 @@
             value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>" />
         <div>
             <p class="enter-line">
-                <button type="submit">Восстановить</button>
+                <button type="submit" class="btn btn-primary">Восстановить</button>
             </p>
             <p class="links-line">
                 <a href="/">Назад</a>
@@ -43,16 +41,16 @@
                 <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24" required />
             </li>
             <li>
-                <input id="repeatPass" placeholder="Подтвержение пароля" type="password" name="rePass" maxlength="24"
+                <input id="repeatPass" placeholder="Подтверждение пароля" type="password" name="rePass" maxlength="24"
                     required />
             </li>
             <li>
-                <input type="hidden" name="userId" value="<?= lpm_get_current_page()->getUserId(); ?>" />
-                <input type="hidden" name="key" value="<?= lpm_get_current_page()->getKey(); ?>" />
+                <input type="hidden" name="userId" value="<?=lpm_get_current_page()->getUserId(); ?>" />
+                <input type="hidden" name="key" value="<?=lpm_get_current_page()->getKey(); ?>" />
             </li>
         </ol>
         <p class="save-line">
-            <button type="submit">Сохранить</button>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
         </p>
     </form>
     <?php break; } ?>

@@ -324,10 +324,11 @@ class GitlabIntegration
         }
 
         if ($this->_client === null && $this->_token !== null) {
-            $this->_client = \Gitlab\Client::create($this->_url)->authenticate(
-                $this->_token,
-                \Gitlab\Client::AUTH_URL_TOKEN
-            );
+            $client = new Gitlab\Client();
+            $client->setUrl($this->_url);
+            $client->authenticate($this->_token, Gitlab\Client::AUTH_HTTP_TOKEN);
+
+            $this->_client = $client;
         }
 
         return $this->_client;
@@ -340,11 +341,11 @@ class GitlabIntegration
         }
         
         if ($this->_sudoClient === null) {
-            $this->_sudoClient = \Gitlab\Client::create($this->_url)->authenticate(
-                $this->_sudoToken,
-                \Gitlab\Client::AUTH_URL_TOKEN,
-                $this->_sudoUser
-            );
+            $client = new Gitlab\Client();
+            $client->setUrl($this->_url);
+            $client->authenticate($this->_sudoToken, Gitlab\Client::AUTH_HTTP_TOKEN, $this->_sudoUser);
+
+            $this->_sudoClient = $client;
         }
 
         return $this->_sudoClient;

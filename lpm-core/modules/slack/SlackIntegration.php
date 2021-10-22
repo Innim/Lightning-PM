@@ -21,7 +21,6 @@ class SlackIntegration
     private $_token;
 
     private $_client;
-    private $_loop;
 
     public function __construct($token)
     {
@@ -101,16 +100,12 @@ class SlackIntegration
     }
 
     /**
-     * @return \Slack\ApiClient
+     * @return JoliCode\Slack\Client
      */
     private function getClient()
     {
         if ($this->_client == null) {
-            $loop = \React\EventLoop\Factory::create();
-            $client = new \Slack\ApiClient($loop);
-            $client->setToken($this->_token);
-
-            $this->_loop = $loop;
+            $client = JoliCode\Slack\ClientFactory::create($this->_token);
             $this->_client = $client;
         }
 
@@ -142,28 +137,28 @@ class SlackIntegration
         // Ищем сообщение, которое будет как базовое для ветки
         $prefix = $this->getIssuePrefix($issue);
         $client = $this->getClient();
-        $client->apiCall('conversations.history', ['channel' => $channel, 'count' => 50])->then(function (\Slack\Payload $res) use ($client, $channel, $text, $attachments, $prefix) {
-            $data = $res->getData();
-            // echo '<pre>groups.history: '; var_dump($data); echo '</pre>';
-            $threadTs = null;
-            if (!empty($data['ok'])) {
-                foreach ($data['messages'] as $message) {
-                    if (mb_strpos($message['text'], $prefix) !== false) {
-                        $threadTs = isset($message['thread_ts']) ?
-                            $message['thread_ts'] : $message['ts'];
-                        break;
+
+        $threadTs = null;
+        $res = $client->conversationsHistory(['channel' => $channel, 'limit' => 50]);
+        if ($res->getOk()) {
+            $messages = $res->getMessages();
+            foreach ($messages as $message) {
+                $msgText = $message->getText();
+                if (mb_strpos($msgText, $prefix) !== false) {
+                    $threadTs = $message->getThreadTs();
+                    if (empty($threadTs)) {
+                        $threadTs = $message->getTs();
                     }
+                    break;
                 }
             }
-            // else
-            // {
-            // 	// TODO: обработка ошибки
-            // }
+        }
+        // else
+        // {
+        // 	// TODO: обработка ошибки
+        // }
 
-            $this->postMessage($channel, $text, $attachments, $threadTs);
-        });
-
-        $this->_loop->run();
+        $this->postMessage($channel, $text, $attachments, $threadTs);
     }
 
     private function postMessage($channel, $text, $attachments = null, $threadTs = null)
@@ -176,15 +171,10 @@ class SlackIntegration
         if (!empty($threadTs)) {
             $args['thread_ts'] = $threadTs;
         }
-        $client->apiCall('chat.postMessage', $args)->then(function (\Slack\Payload $res) {
-            $data = $res->getData();
-            if (empty($data['ok'])) {
-                // TODO: обработка ошибки
-            }
-            // echo '<pre>'; var_dump($data); echo '</pre>';
-        });
-
-        $this->_loop->run();
+        $res = $client->chatPostMessage($args);
+        if (!$res->getOk()) {
+            // TODO: обработка ошибки
+        }
     }
 
     private function getIssuePrefix(Issue $issue)

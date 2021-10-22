@@ -88,6 +88,25 @@ define('MEMCACHED_HOST', '');
  */
 define('MEMCACHED_PORT', 11211);
 
+// Mailgun
+// Используется для отправки писем
+
+/**
+ * Домен, настроенный в Mailgun.
+ */
+define('MAILGUN_DOMAIN', '');
+
+/**
+ * Ключ API.
+ */
+define('MAILGUN_API_KEY', '');
+
+/**
+ * API URL.
+ */
+define('MAILGUN_ENDPOINT', '');
+
+
 // Настройки каналов оповещений
 
 // Оповещать по Email

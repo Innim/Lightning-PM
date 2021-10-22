@@ -19,6 +19,7 @@ class EmailNotifier extends LPMBaseObject
     const PREF_ISSUE_STATE   = 3;
     const PREF_ISSUE_COMMENT = 4;
     
+    // TODO: переделать флаг чтобы отключал только оповещения, но не запросы восстановления пароля например
     /**
      * @var bool
      */
@@ -26,15 +27,16 @@ class EmailNotifier extends LPMBaseObject
 
     /**
      *
-     * @var MailSender
+     * @var MailgunSender
      */
     private $_mail;
     
-    public function __construct()
+    public function __construct($enabled = true)
     {
         parent::__construct();
         
-        $this->_mail = new MailSender(
+        $this->_enabled = $enabled;
+        $this->_mail = MailgunSender::create(
             LPMOptions::getInstance()->fromEmail,
             LPMOptions::getInstance()->fromName
         );
@@ -104,12 +106,12 @@ class EmailNotifier extends LPMBaseObject
             return false;
         }
         
-        $mess = new MailMessage(
-            $toEmail,
+        $mess = new EmailMessage(
             $subject,
             $messText,
-            MailMessage::TYPE_TEXT,
-            $toName
+            $toEmail,
+            $toName,
+            true
         );
         if (LPMGlobals::isDebugMode()) {
             GMLog::getInstance()->logIt(

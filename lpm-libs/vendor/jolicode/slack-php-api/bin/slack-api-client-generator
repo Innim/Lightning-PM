@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+require dirname(__DIR__).'/vendor/autoload.php';
+
+use JoliCode\Slack\Command\CheckerCommand;
+use JoliCode\Slack\Command\GeneratePatchCommand;
+use JoliCode\Slack\Command\UpdateSpecificationCommand;
+use Symfony\Component\Console\Application;
+
+$application = new Application();
+$application->add(new CheckerCommand());
+$application->add(new GeneratePatchCommand());
+$application->add(new UpdateSpecificationCommand());
+$application->run();

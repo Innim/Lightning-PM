@@ -160,10 +160,10 @@ $project = $issue->getProject();
             <button class="btn btn-danger" onclick="issuePage.removeIssue(event);">Удалить</button>
         </p>
         <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
-        <a href="#" onclick="issuePage.copyIssue()" class="copy-issue-link">
+        <a href="#" onclick="issuePage.copyIssue(); return false;" class="copy-issue-link">
             <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
         </a>
-        <a href="#" onclick="issuePage.finishedIssue()" class="finished-issue-link">
+        <a href="#" onclick="issuePage.finishedIssue(); return false;" class="finished-issue-link">
             <i class="fa fa-plus-square" aria-hidden="true" title="Добавить задачу по доделкам"></i>
         </a>
     </article>

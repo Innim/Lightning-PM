@@ -7,53 +7,57 @@ namespace Composer\Autoload;
 class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
 {
     public static $files = array (
-        'ad155f8f1cf0d418fe49e248db8c661b' => __DIR__ . '/..' . '/react/promise/src/functions_include.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
+        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
+        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        '0d59ee240a4cd96ddbb4ff164fccea4d' => __DIR__ . '/..' . '/symfony/polyfill-php73/bootstrap.php',
         '9c67151ae59aff4788964ce8eb2a0f43' => __DIR__ . '/..' . '/clue/stream-filter/src/functions_include.php',
-        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
-        '6b06ce8ccf69c43a60a1e48495a034c9' => __DIR__ . '/..' . '/react/promise-timer/src/functions.php',
-        'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
-        'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
         '8cff32064859f4559445b89279f3199c' => __DIR__ . '/..' . '/php-http/message/src/filters.php',
-        '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'Z' => 
+        'W' => 
         array (
-            'Zend\\Validator\\' => 15,
-            'Zend\\Uri\\' => 9,
-            'Zend\\Stdlib\\' => 12,
-            'Zend\\ServiceManager\\' => 20,
-            'Zend\\Log\\' => 9,
-            'Zend\\Loader\\' => 12,
-            'Zend\\Http\\' => 10,
-            'Zend\\Escaper\\' => 13,
+            'Webmozart\\Assert\\' => 17,
         ),
         'S' => 
         array (
+            'Symfony\\Polyfill\\Php80\\' => 23,
+            'Symfony\\Polyfill\\Php73\\' => 23,
+            'Symfony\\Polyfill\\Ctype\\' => 23,
+            'Symfony\\Contracts\\Service\\' => 26,
+            'Symfony\\Contracts\\HttpClient\\' => 29,
+            'Symfony\\Component\\Yaml\\' => 23,
+            'Symfony\\Component\\Serializer\\' => 29,
             'Symfony\\Component\\OptionsResolver\\' => 34,
-            'Slack\\' => 6,
-        ),
-        'R' => 
-        array (
-            'React\\Stream\\' => 13,
-            'React\\Socket\\' => 13,
-            'React\\SocketClient\\' => 19,
-            'React\\Promise\\Timer\\' => 20,
-            'React\\Promise\\' => 14,
-            'React\\EventLoop\\' => 16,
-            'React\\Dns\\' => 10,
-            'React\\Cache\\' => 12,
+            'Symfony\\Component\\HttpClient\\' => 29,
         ),
         'P' => 
         array (
             'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
+            'Psr\\Http\\Client\\' => 16,
             'Psr\\Container\\' => 14,
+            'Psr\\Cache\\' => 10,
         ),
-        'I' => 
+        'N' => 
         array (
-            'Interop\\Container\\' => 18,
+            'Nyholm\\Psr7\\' => 12,
+        ),
+        'M' => 
+        array (
+            'Mailgun\\' => 8,
+        ),
+        'L' => 
+        array (
+            'League\\Uri\\' => 11,
+        ),
+        'J' => 
+        array (
+            'JoliCode\\Slack\\Api\\' => 19,
+            'JoliCode\\Slack\\' => 15,
+            'Jane\\OpenApiRuntime\\' => 20,
+            'Jane\\JsonSchemaRuntime\\' => 23,
         ),
         'H' => 
         array (
@@ -61,15 +65,12 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
             'Http\\Message\\MultipartStream\\' => 29,
             'Http\\Message\\' => 13,
             'Http\\Discovery\\' => 15,
+            'Http\\Client\\Common\\Plugin\\' => 26,
             'Http\\Client\\Common\\' => 19,
             'Http\\Client\\' => 12,
-            'Http\\Adapter\\Guzzle6\\' => 21,
         ),
         'G' => 
         array (
-            'GuzzleHttp\\Psr7\\' => 16,
-            'GuzzleHttp\\Promise\\' => 19,
-            'GuzzleHttp\\' => 11,
             'Gitlab\\' => 7,
         ),
         'C' => 
@@ -79,77 +80,45 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
     );
 
     public static $prefixDirsPsr4 = array (
-        'Zend\\Validator\\' => 
+        'Webmozart\\Assert\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-validator/src',
+            0 => __DIR__ . '/..' . '/webmozart/assert/src',
         ),
-        'Zend\\Uri\\' => 
+        'Symfony\\Polyfill\\Php80\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-uri/src',
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Zend\\Stdlib\\' => 
+        'Symfony\\Polyfill\\Php73\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-stdlib/src',
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php73',
         ),
-        'Zend\\ServiceManager\\' => 
+        'Symfony\\Polyfill\\Ctype\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-servicemanager/src',
+            0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
-        'Zend\\Log\\' => 
+        'Symfony\\Contracts\\Service\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-log/src',
+            0 => __DIR__ . '/..' . '/symfony/service-contracts',
         ),
-        'Zend\\Loader\\' => 
+        'Symfony\\Contracts\\HttpClient\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-loader/src',
+            0 => __DIR__ . '/..' . '/symfony/http-client-contracts',
         ),
-        'Zend\\Http\\' => 
+        'Symfony\\Component\\Yaml\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-http/src',
+            0 => __DIR__ . '/..' . '/symfony/yaml',
         ),
-        'Zend\\Escaper\\' => 
+        'Symfony\\Component\\Serializer\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-escaper/src',
+            0 => __DIR__ . '/..' . '/symfony/serializer',
         ),
         'Symfony\\Component\\OptionsResolver\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/options-resolver',
         ),
-        'Slack\\' => 
+        'Symfony\\Component\\HttpClient\\' => 
         array (
-            0 => __DIR__ . '/..' . '/coderstephen/slack-client/src',
-        ),
-        'React\\Stream\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/stream/src',
-        ),
-        'React\\Socket\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/socket/src',
-        ),
-        'React\\SocketClient\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/socket-client/src',
-        ),
-        'React\\Promise\\Timer\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/promise-timer/src',
-        ),
-        'React\\Promise\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/promise/src',
-        ),
-        'React\\EventLoop\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/event-loop/src',
-        ),
-        'React\\Dns\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/dns/src',
-        ),
-        'React\\Cache\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/react/cache/src',
+            0 => __DIR__ . '/..' . '/symfony/http-client',
         ),
         'Psr\\Log\\' => 
         array (
@@ -157,16 +126,49 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         ),
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
-            1 => __DIR__ . '/..' . '/psr/http-factory/src',
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Psr\\Http\\Client\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-client/src',
         ),
         'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'Interop\\Container\\' => 
+        'Psr\\Cache\\' => 
         array (
-            0 => __DIR__ . '/..' . '/container-interop/container-interop/src/Interop/Container',
+            0 => __DIR__ . '/..' . '/psr/cache/src',
+        ),
+        'Nyholm\\Psr7\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/nyholm/psr7/src',
+        ),
+        'Mailgun\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/mailgun/mailgun-php/src',
+        ),
+        'League\\Uri\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/league/uri/src',
+            1 => __DIR__ . '/..' . '/league/uri-interfaces/src',
+        ),
+        'JoliCode\\Slack\\Api\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jolicode/slack-php-api/generated',
+        ),
+        'JoliCode\\Slack\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jolicode/slack-php-api/src',
+        ),
+        'Jane\\OpenApiRuntime\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jane-php/open-api-runtime',
+        ),
+        'Jane\\JsonSchemaRuntime\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jane-php/json-schema-runtime',
         ),
         'Http\\Promise\\' => 
         array (
@@ -178,12 +180,16 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         ),
         'Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/php-http/message-factory/src',
-            1 => __DIR__ . '/..' . '/php-http/message/src',
+            0 => __DIR__ . '/..' . '/php-http/message/src',
+            1 => __DIR__ . '/..' . '/php-http/message-factory/src',
         ),
         'Http\\Discovery\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-http/discovery/src',
+        ),
+        'Http\\Client\\Common\\Plugin\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-http/cache-plugin/src',
         ),
         'Http\\Client\\Common\\' => 
         array (
@@ -193,25 +199,9 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         array (
             0 => __DIR__ . '/..' . '/php-http/httplug/src',
         ),
-        'Http\\Adapter\\Guzzle6\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/php-http/guzzle6-adapter/src',
-        ),
-        'GuzzleHttp\\Psr7\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
-        ),
-        'GuzzleHttp\\Promise\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
-        ),
-        'GuzzleHttp\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
-        ),
         'Gitlab\\' => 
         array (
-            0 => __DIR__ . '/..' . '/m4tthumphrey/php-gitlab-api/lib/Gitlab',
+            0 => __DIR__ . '/..' . '/m4tthumphrey/php-gitlab-api/src',
         ),
         'Clue\\StreamFilter\\' => 
         array (
@@ -220,6 +210,13 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
     );
 
     public static $prefixesPsr0 = array (
+        'R' => 
+        array (
+            'Rs\\Json' => 
+            array (
+                0 => __DIR__ . '/..' . '/php-jsonpointer/php-jsonpointer/src',
+            ),
+        ),
         'P' => 
         array (
             'Parsedown' => 
@@ -227,23 +224,15 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
                 0 => __DIR__ . '/..' . '/erusev/parsedown',
             ),
         ),
-        'E' => 
-        array (
-            'Evenement' => 
-            array (
-                0 => __DIR__ . '/..' . '/evenement/evenement/src',
-            ),
-        ),
-        'D' => 
-        array (
-            'Devristo\\Phpws\\' => 
-            array (
-                0 => __DIR__ . '/..' . '/devristo/phpws/src',
-            ),
-        ),
     );
 
     public static $classMap = array (
+        'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'JsonException' => __DIR__ . '/..' . '/symfony/polyfill-php73/Resources/stubs/JsonException.php',
+        'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
+        'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
+        'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
         'Verot\\Upload\\Upload' => __DIR__ . '/..' . '/verot/class.upload.php/src/class.upload.php',
     );
 

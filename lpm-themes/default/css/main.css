@@ -1750,7 +1750,6 @@ div.ftp
 	/*float: left;*/
 	font-size: 10pt;
     word-wrap: break-word;
-	background-color: #FE3678;
 }
 
 .scrum-board-sticker .name-project {
@@ -1772,6 +1771,12 @@ div.ftp
 	color: #fff;
 }
 
+.scrum-board-sticker.blue {
+	background-color: #cfe2ff;
+}
+.scrum-board-sticker.red {
+	background-color: #FE3678;
+}
 .scrum-board-sticker.orange {
 	background-color: #FEB93C;
 }
