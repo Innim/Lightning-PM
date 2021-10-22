@@ -259,10 +259,13 @@ class GitlabExternalApi extends ExternalApi
             foreach ($issues as $issue) {
                 $branches = $branchesByIssueId[$issue->id];
 
+                $repositoryName = $data['project']['name'];
+
                 // Оставляем коммент что влиты в develop
                 $commentTextArr = [];
                 foreach ($branches as $issueBranch) {
-                    $commentTextArr[] = '`' . $issueBranch->name . ' -> ' . self::DEVELOP_BRANCH . '`';
+                    $commentTextArr[] = '*' . $repositoryName . '*: `' .
+                        $issueBranch->name . ' -> ' . self::DEVELOP_BRANCH . '`';
                 }
 
                 $commentText = implode("\n", $commentTextArr);
