@@ -1,5 +1,7 @@
 ## Next release
 
+## 0.13.0 - 2021-10-22
+
 ### Added
 
 - PHP 7.3.
