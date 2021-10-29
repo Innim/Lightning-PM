@@ -140,7 +140,7 @@ let srv = {
         verify: function (issueId, onResult) {
             this.s._('verify');
         },
-        load: function (issueId, onResult) {
+        load: function (issueId, loadLinked, onResult) {
             this.s._('load');
         },
         loadByIdInProject: function (idInProject, projectId, onResult) {

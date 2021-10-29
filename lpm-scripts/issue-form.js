@@ -245,6 +245,7 @@ let issueForm = {
         // Пробуем загрузить данные задачи
         srv.issue.load(
             issueId,
+            false,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();
@@ -288,6 +289,7 @@ let issueForm = {
         // Пробуем загрузить данные задачи
         srv.issue.load(
             issueId,
+            false,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();

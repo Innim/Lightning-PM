@@ -679,6 +679,7 @@ issuePage.putStickerOnBoard = function () {
 function showIssue(issueId) {
     srv.issue.load(
         issueId,
+        false,
         function (res) {
             if (res.success) {
                 window.location.hash = 'issue-view';
