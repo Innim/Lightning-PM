@@ -217,6 +217,9 @@ code.no-highlight {
 .version {
 	font-size: 7pt;
 }
+.generation-time {
+	font-size: 0.6em;
+}
 a.back-link {
 	margin    : 0px;
 	text-align: left;

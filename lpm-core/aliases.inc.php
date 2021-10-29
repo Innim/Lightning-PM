@@ -483,3 +483,11 @@ function lpm_check_delete_comment($authorId, $commentId)
     return PageConstructor::checkDeleteComment($authorId, $commentId);
 }
 
+/**
+ * Возвращает время выполнения в секундах.
+ * @return float
+ */
+function lpm_get_execution_time()
+{
+    return LightningEngine::getInstance()->getExecutionTimeSec();
+}

@@ -73,6 +73,9 @@
 		<span class="version">
 			<?php lpm_print_product_name(); ?> v.
 			<?php lpm_print_version(); ?></span>
+		<div class="generation-time">
+			Время генерации: <?=round(lpm_get_execution_time(), 3);?> сек
+		</div>
 	</footer>
 	<div id="preloader">
 		<div class="indicator lds-spinner dark">

@@ -96,6 +96,12 @@ class LightningEngine
      */
     private $_errors = array();
     private $_nextErrors = array();
+
+    /**
+     * Время запуска.
+     * @var float
+     */
+    private $_startTime;
     
     public function __construct()
     {
@@ -109,6 +115,8 @@ class LightningEngine
         $this->_pagesManager = new PagesManager($this);
         $this->_constructor   = new PageConstructor($this->_pagesManager);
         $this->_apiManager   = new ExternalApiManager($this);
+
+        $this->_startTime = microtime(true);
     }
 
     public function run()
@@ -120,6 +128,16 @@ class LightningEngine
         } else {
             $this->createPage();
         }
+    }
+
+    /**
+     * Время выполнения на текущи момент в секундах.
+     * @return float
+     */
+    public function getExecutionTimeSec()
+    {
+        $current = microtime(true);
+        return $current - $this->_startTime;
     }
 
     private function apiCall()
