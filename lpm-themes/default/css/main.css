@@ -35,9 +35,6 @@ input {
 input[type="search"] {
 	box-sizing   : content-box;
 }
-input[type="checkbox"] {
-	height: 20px;
-}
 input[type="file"] {
 	height: auto;
 }
@@ -2214,6 +2211,10 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
  /* Окно выбора проекта для создания задачи */
 
+ .select-project-popup .copy-linked-issues-row {
+	display: none;
+}
+
  .select-project-popup .target-kind-row {
 	 display: none;
  }
@@ -2221,3 +2222,7 @@ form.pass-test #passTestComment textarea.comment-text-field {
  .select-project-popup.finished-mode .target-kind-row {
 	display: block;
  }
+
+ .select-project-popup.copy-mode .copy-linked-issues-row {
+	display: block;
+}

@@ -231,7 +231,7 @@ let issueForm = {
 
         issueFormLabels.update();
     },
-    handleAddIssueByState: function (issueId) {
+    handleAddIssueByState: function (issueId, copyLinked) {
         if (issueForm.restoreInput(false)) return;
 
         issueId = parseInt(issueId);
@@ -246,7 +246,7 @@ let issueForm = {
         // Пробуем загрузить данные задачи
         srv.issue.load(
             issueId,
-            false,
+            copyLinked,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();
@@ -266,7 +266,8 @@ let issueForm = {
                         masterIds: issue.getMasterIds(),
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseIds: []
+                        baseIds: issue.getLinkedBaseIds(),
+                        linkedIds: issue.getLinkedChildrenIds(),
                     });
 
                 } else {

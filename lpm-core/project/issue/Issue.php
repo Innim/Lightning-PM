@@ -827,7 +827,7 @@ SQL;
             $obj->author = $this->author->getClientObject();
         }
 
-        if ($this->isBaseLinked != null) {
+        if ($this->isBaseLinked !== null) {
             $obj->isBaseLinked = $this->isBaseLinked;
         }
 
