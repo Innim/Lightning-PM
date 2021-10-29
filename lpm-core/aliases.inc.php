@@ -110,7 +110,7 @@ function lpm_print_errors()
 }
 
 /**
- * Распечатывает основной контент странциы
+ * Распечатывает основной контент страницы
  */
 function lpm_print_page_content()
 {
@@ -218,7 +218,7 @@ function lpm_print_video_item($video)
 }
 
 /**
- * Распечатывает список прикрепленных изобаржений.
+ * Распечатывает список прикрепленных изображений.
  */
 function lpm_print_image_list($imageLinks)
 {
@@ -242,7 +242,7 @@ function lpm_print_issues_export_to_excel()
 }
 
 /**
- * Распечатывает вывод таблици Scrum доски.
+ * Распечатывает вывод таблицы Scrum доски.
  * @param $stickers
  * @param bool $addProjectName
  * @param bool $addClearBoard
@@ -291,7 +291,7 @@ function lpm_get_site_url()
 }
 
 /**
- * Возвращает url базовай текущей страницы
+ * Возвращает url базовой текущей страницы
  * @return string
  */
 function lpm_get_base_page_url()
@@ -329,9 +329,9 @@ function lpm_get_user_menu()
 /**
  * Возвращает список проектов
  */
-function lpm_get_projects_list($achive = false)
+function lpm_get_projects_list($archive = false)
 {
-    return PageConstructor::getProjectsList($achive);
+    return PageConstructor::getProjectsList($archive);
 }
 
 /**
@@ -367,7 +367,7 @@ function lpm_get_project_members()
 }
 
 /**
- * Возврашает тестера проекта
+ * Возвращает тестера проекта
  */
 function lpm_get_project_tester()
 {

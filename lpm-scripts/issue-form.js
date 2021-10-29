@@ -176,7 +176,7 @@ let issueForm = {
 
         $("#issueForm form textarea[name=desc]").val(value.desc);
 
-        var imgsCouns = 0
+        var imgsCount = 0
 
         // уже добавленные изображения
         let imgUploadLi = $("#issueForm form .images-list > li:has(input[type=file])");
@@ -194,7 +194,7 @@ let issueForm = {
                 imgsList.append(imgLI);
             });
 
-            imgsCouns += imgs.length;
+            imgsCount += imgs.length;
         }
         imgsList.append(imgUploadLi);
 
@@ -203,15 +203,15 @@ let issueForm = {
         if (newImgs) {
             newImgs.forEach((imgUrl) => {
                 if (imgUrl) {
-                    issueForm.addImagebyUrl(imgUrl);
-                    imgsCouns++;
+                    issueForm.addImageByUrl(imgUrl);
+                    imgsCount++;
                 }
             });
         }
 
-        if (imgsCouns >= window.lpmOptions.issueImgsCount) {
+        if (imgsCount >= window.lpmOptions.issueImgsCount) {
             imgUploadLi.hide();
-            $("#issueForm form li a[name=imgbyUrl]").hide();
+            $("#issueForm form li a[name=imgByUrl]").hide();
         }
 
         // идентификатор задачи
@@ -343,8 +343,8 @@ let issueForm = {
         $nameInput = $("#issueForm form input[name=name]");
         var name = $nameInput.val();
 
-        const spintNum = issueForm.getSprintNum();
-        const sprintStr = ' #' + spintNum;
+        const sprintNum = issueForm.getSprintNum();
+        const sprintStr = ' #' + sprintNum;
 
         const matches = name.match(/ #\d+/ig);
 
@@ -358,7 +358,7 @@ let issueForm = {
         $nameInput.val(name);
         issueFormLabels.update();
     },
-    addImagebyUrl: function (imageUrl, autofocus = false) {
+    addImageByUrl: function (imageUrl, autofocus = false) {
         // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
         var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
         var imgInput = $("#issueForm ul.images-url");
@@ -645,7 +645,6 @@ let issueFormLabels = {
 
         $("#removeIssuesLabelContainer .table-row").each(function () {
             var item = $.trim($(this).find(".label-name").text());
-            id = $(this).find(".label-name").data("labelid");
             if (item == labelName) {
                 $(this).remove();
             }

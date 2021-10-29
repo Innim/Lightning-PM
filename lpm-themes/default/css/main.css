@@ -809,7 +809,7 @@ ul.images-url > li > input {
 	padding: 0;
 	text-align: center;
 }
-#issueForm li > a[name="imgbyUrl"] {
+#issueForm li > a[name="imgByUrl"] {
 	margin-left: 50px;
 	font-size: small; 
 }
