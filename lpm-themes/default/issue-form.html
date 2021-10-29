@@ -174,7 +174,8 @@ $descMaxLen = Issue::DESC_MAX_LEN;
             <li>
                 <input type="hidden" name="issueId" value="0" />
                 <input type="hidden" name="actionType" value="addIssue" />
-                <input type="hidden" name="baseId" value="0" />
+                <input type="hidden" name="baseIds" value="" />
+                <input type="hidden" name="linkedIds" value="" />
                 <?php if ($project->scrum): ?>
                 <div class="put-to-board-line">
                     <input id="putToBoardField" name="putToBoard" type="checkbox">

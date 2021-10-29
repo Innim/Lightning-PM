@@ -534,13 +534,8 @@ class ProjectPage extends LPMPage
                 if (!$editMode) {
                     $issueId = $db->insert_id;
 
-                    $baseId = (int)$_POST['baseId'];
-                    if ($baseId > 0) {
-                        $baseIssue = Issue::load($baseId);
-                        if ($baseIssue != null && $baseIssue->checkViewPermit($userId)) {
-                            IssueLinked::create($baseIssue->id, $issueId, DateTimeUtils::$currentDate);
-                        }
-                    }
+                    $this->saveLinkedIssues($userId, $issueId, $_POST['baseIds'], false);
+                    $this->saveLinkedIssues($userId, $issueId, $_POST['linkedIds'], true);
                 }
 
                 // Валидируем заданное количество SP по участникам
@@ -689,6 +684,29 @@ class ProjectPage extends LPMPage
     private function getProjectedCommentsPage()
     {
         return $this->getPageArg();
+    }
+
+    private function saveLinkedIssues($userId, $issueId, $linkedIdsInput, $isCurrentBase)
+    {
+        $linkedIds = empty($linkedIdsInput) ? null : explode(',', $linkedIdsInput);
+        if (empty($linkedIds)) {
+            return;
+        }
+
+        foreach ($linkedIds as $linkedId) {
+            $linkedId = (int)$linkedId;
+            if ($linkedId > 0) {
+                $linkedIssue = Issue::load($linkedId);
+
+                if ($linkedIssue != null && $linkedIssue->checkViewPermit($userId)) {
+                    IssueLinked::create(
+                        $isCurrentBase ? $issueId : $linkedIssue->id,
+                        $isCurrentBase ? $linkedIssue->id : $issueId,
+                        DateTimeUtils::$currentDate
+                    );
+                }
+            }
+        }
     }
 
     private function saveImages4Issue($issueId, $hasCnt = 0)

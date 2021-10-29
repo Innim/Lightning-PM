@@ -219,7 +219,8 @@ let issueForm = {
             $("#issueForm form input[name=issueId]").val(value.issueId);
         // действие меняем на редактирование
         $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
-        $("#issueForm form input[name=baseId]").val(value.baseId);
+        $("#issueForm form input[name=baseIds]").val(value.baseIds?.join(',') ?? '');
+        $("#issueForm form input[name=linkedIds]").val(value.linkedIds?.join(',') ?? '');
         // меняем заголовок кнопки сохранения
         $("#issueForm form .save-line button[type=submit]").text("Сохранить");
 
@@ -265,7 +266,7 @@ let issueForm = {
                         masterIds: issue.getMasterIds(),
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseId: 0
+                        baseIds: []
                     });
 
                 } else {
@@ -327,7 +328,7 @@ let issueForm = {
                         masterIds: issue.getMasterIds(),
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseId: issue.id,
+                        baseIds: [issue.id],
                     });
                 } else {
                     srv.err(res);
