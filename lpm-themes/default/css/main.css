@@ -35,9 +35,6 @@ input {
 input[type="search"] {
 	box-sizing   : content-box;
 }
-input[type="checkbox"] {
-	height: 20px;
-}
 input[type="file"] {
 	height: auto;
 }
@@ -216,6 +213,9 @@ code.no-highlight {
 }
 .version {
 	font-size: 7pt;
+}
+.generation-time {
+	font-size: 0.6em;
 }
 a.back-link {
 	margin    : 0px;
@@ -806,7 +806,7 @@ ul.images-url > li > input {
 	padding: 0;
 	text-align: center;
 }
-#issueForm li > a[name="imgbyUrl"] {
+#issueForm li > a[name="imgByUrl"] {
 	margin-left: 50px;
 	font-size: small; 
 }
@@ -2211,6 +2211,10 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
  /* Окно выбора проекта для создания задачи */
 
+ .select-project-popup .copy-linked-issues-row {
+	display: none;
+}
+
  .select-project-popup .target-kind-row {
 	 display: none;
  }
@@ -2218,3 +2222,7 @@ form.pass-test #passTestComment textarea.comment-text-field {
  .select-project-popup.finished-mode .target-kind-row {
 	display: block;
  }
+
+ .select-project-popup.copy-mode .copy-linked-issues-row {
+	display: block;
+}

@@ -270,7 +270,13 @@ const issuePage = {
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
-    copyIssue: () => issuePage.createIssueBy('copy-issue'),
+    copyIssue: () => {
+        const $copyLinkedField = $("#copyLinkedIssuesField", selectProject.element);
+        issuePage.createIssueBy(
+            (issueId) => 'copy-issue:' + issueId + ':' + ($copyLinkedField.prop("checked") ? 1 : 0),
+            'copy'
+        );
+    },
     finishedIssue: () => { 
         const $kindField = $('#targetKindField', selectProject.element);
         issuePage.createIssueBy(
@@ -679,6 +685,7 @@ issuePage.putStickerOnBoard = function () {
 function showIssue(issueId) {
     srv.issue.load(
         issueId,
+        false,
         function (res) {
             if (res.success) {
                 window.location.hash = 'issue-view';
@@ -1103,6 +1110,7 @@ function Issue(obj) {
     this.images = obj.images;
     this.isOnBoard = obj.isOnBoard;
     this.url = obj.url;
+    this.linked = obj.linked;
 
     const getUsersStr = (list) => {
         var str = '';
@@ -1182,6 +1190,14 @@ function Issue(obj) {
 
     this.getMasterIds = function () {
         return this.masters.map(master => master.userId);
+    };
+
+    this.getLinkedBaseIds = function () {
+        return this.linked?.filter(i => i.isBaseLinked)?.map(i => i.id) ?? [];
+    };
+
+    this.getLinkedChildrenIds = function () {
+        return this.linked?.filter(i => !i.isBaseLinked)?.map(i => i.id) ?? [];
     };
 
     this.getDesc = function (formatted = false) {

@@ -69,6 +69,7 @@ const selectProject = {
             this.currentModeClass = null;
         }
         $("#projectField", $el).empty();
+        $("#copyLinkedIssuesField", $el).prop("checked", false);
         $el.dialog('close');
     },
     save: function () {
@@ -76,9 +77,10 @@ const selectProject = {
         const targetProjectId = $("#projectField", $el).val();
 
         const onSuccess = this.currentOnSuccess;
-        this.close();
 
         onSuccess(this.projects.find(obj => obj.id == targetProjectId));
+        
+        this.close();
     },
     loadProjects: function (onSuccess) {
         if (this.projects == null)  {

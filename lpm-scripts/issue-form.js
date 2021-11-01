@@ -176,7 +176,7 @@ let issueForm = {
 
         $("#issueForm form textarea[name=desc]").val(value.desc);
 
-        var imgsCouns = 0
+        var imgsCount = 0
 
         // уже добавленные изображения
         let imgUploadLi = $("#issueForm form .images-list > li:has(input[type=file])");
@@ -194,7 +194,7 @@ let issueForm = {
                 imgsList.append(imgLI);
             });
 
-            imgsCouns += imgs.length;
+            imgsCount += imgs.length;
         }
         imgsList.append(imgUploadLi);
 
@@ -203,15 +203,15 @@ let issueForm = {
         if (newImgs) {
             newImgs.forEach((imgUrl) => {
                 if (imgUrl) {
-                    issueForm.addImagebyUrl(imgUrl);
-                    imgsCouns++;
+                    issueForm.addImageByUrl(imgUrl);
+                    imgsCount++;
                 }
             });
         }
 
-        if (imgsCouns >= window.lpmOptions.issueImgsCount) {
+        if (imgsCount >= window.lpmOptions.issueImgsCount) {
             imgUploadLi.hide();
-            $("#issueForm form li a[name=imgbyUrl]").hide();
+            $("#issueForm form li a[name=imgByUrl]").hide();
         }
 
         // идентификатор задачи
@@ -219,7 +219,8 @@ let issueForm = {
             $("#issueForm form input[name=issueId]").val(value.issueId);
         // действие меняем на редактирование
         $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
-        $("#issueForm form input[name=baseId]").val(value.baseId);
+        $("#issueForm form input[name=baseIds]").val(value.baseIds?.join(',') ?? '');
+        $("#issueForm form input[name=linkedIds]").val(value.linkedIds?.join(',') ?? '');
         // меняем заголовок кнопки сохранения
         $("#issueForm form .save-line button[type=submit]").text("Сохранить");
 
@@ -230,7 +231,7 @@ let issueForm = {
 
         issueFormLabels.update();
     },
-    handleAddIssueByState: function (issueId) {
+    handleAddIssueByState: function (issueId, copyLinked) {
         if (issueForm.restoreInput(false)) return;
 
         issueId = parseInt(issueId);
@@ -245,6 +246,7 @@ let issueForm = {
         // Пробуем загрузить данные задачи
         srv.issue.load(
             issueId,
+            copyLinked,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();
@@ -264,7 +266,8 @@ let issueForm = {
                         masterIds: issue.getMasterIds(),
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseId: 0
+                        baseIds: issue.getLinkedBaseIds(),
+                        linkedIds: issue.getLinkedChildrenIds(),
                     });
 
                 } else {
@@ -288,6 +291,7 @@ let issueForm = {
         // Пробуем загрузить данные задачи
         srv.issue.load(
             issueId,
+            false,
             function (res) {
                 // скрываем прелоадер
                 preloader.hide();
@@ -325,7 +329,7 @@ let issueForm = {
                         masterIds: issue.getMasterIds(),
                         newImagesUrls: issue.getImagesUrl(),
                         isOnBoard: issue.isOnBoard,
-                        baseId: issue.id,
+                        baseIds: [issue.id],
                     });
                 } else {
                     srv.err(res);
@@ -340,8 +344,8 @@ let issueForm = {
         $nameInput = $("#issueForm form input[name=name]");
         var name = $nameInput.val();
 
-        const spintNum = issueForm.getSprintNum();
-        const sprintStr = ' #' + spintNum;
+        const sprintNum = issueForm.getSprintNum();
+        const sprintStr = ' #' + sprintNum;
 
         const matches = name.match(/ #\d+/ig);
 
@@ -355,7 +359,7 @@ let issueForm = {
         $nameInput.val(name);
         issueFormLabels.update();
     },
-    addImagebyUrl: function (imageUrl, autofocus = false) {
+    addImageByUrl: function (imageUrl, autofocus = false) {
         // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
         var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
         var imgInput = $("#issueForm ul.images-url");
@@ -642,7 +646,6 @@ let issueFormLabels = {
 
         $("#removeIssuesLabelContainer .table-row").each(function () {
             var item = $.trim($(this).find(".label-name").text());
-            id = $(this).find(".label-name").data("labelid");
             if (item == labelName) {
                 $(this).remove();
             }

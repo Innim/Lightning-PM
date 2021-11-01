@@ -212,7 +212,7 @@ WHERE;
     (`l`.`issueId` = `i`.`id` AND `l`.`linkedIssueId` = $issueId)
 )
 SQL;
-        return self::loadList($where, '', ['l' => LPMTables::ISSUE_LINKED]);
+        return self::loadList($where, '(`l`.`issueId` = `i`.`id`) AS `isBaseLinked`', ['l' => LPMTables::ISSUE_LINKED]);
     }
 
     public static function getCurrentList()
@@ -752,6 +752,15 @@ SQL;
      */
     public $author;
 
+    /**
+     * Если это модель связанной задачи, то поле определяет,
+     * является ли задача базовой в этой связке или зависимой.
+     *
+     * Для несвязанных задач будет null.
+     *
+     * @var bool
+     */
+    public $isBaseLinked;
 
     /**
      * Проект, к которому относится задача
@@ -787,7 +796,7 @@ SQL;
             'hours'
         );
         $this->_typeConverter->addIntVars('priority');
-        $this->_typeConverter->addBoolVars('isOnBoard');
+        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked');
         $this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
         
         $this->addClientFields(
@@ -816,6 +825,10 @@ SQL;
 
         if ($this->author) {
             $obj->author = $this->author->getClientObject();
+        }
+
+        if ($this->isBaseLinked !== null) {
+            $obj->isBaseLinked = $this->isBaseLinked;
         }
 
         $obj->url = $this->getConstURL();
@@ -1198,7 +1211,7 @@ SQL;
      */
     public function getLinkedIssues()
     {
-        return  $this->_linkedIssues == null ? $this->loadLinkedIssues() : $this->_linkedIssues;
+        return $this->_linkedIssues == null ? $this->loadLinkedIssues() : $this->_linkedIssues;
     }
 
     public function getTesters()

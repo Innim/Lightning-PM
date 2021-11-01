@@ -85,9 +85,12 @@ class IssueService extends LPMBaseService
     /**
      * Загружает информацию о задаче
      * @param float $issueId
+     * @param bool $loadLinked Определяет, нужно ли загружать связанные задачи.
      */
-    public function load($issueId)
+    public function load($issueId, $loadLinked = false)
     {
+        $loadLinked = (bool)$loadLinked;
+        
         if (!$issue = Issue::load((float)$issueId)) {
             return $this->error('Нет такой задачи');
         }
@@ -96,7 +99,7 @@ class IssueService extends LPMBaseService
             return $this->error('У Вас нет прав на просмотр этой задачи');
         }
         
-        $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $this->add2Answer('issue', $this->getIssue4Client($issue, true, $loadLinked));
         return $this->answer();
     }
 
@@ -714,35 +717,48 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
     
-    protected function getIssue4Client(Issue $issue, $loadMembers = true)
+    protected function getIssue4Client(Issue $issue, $loadMembers = true, $loadLinked = false)
     {
         $obj = $issue->getClientObject();
-        $members = $issue->getMembers();
-        $testers = $issue->getTesters();
-        $masters = $issue->getMasters();
+
+        if ($loadMembers) {
+            $members = $issue->getMembers();
+            $testers = $issue->getTesters();
+            $masters = $issue->getMasters();
+            $obj->members = [];
+            $obj->testers = [];
+            $obj->masters = [];
+
+            foreach ($members as $member) {
+                $obj->members[] = $member->getClientObject();
+            }
+
+            foreach ($testers as $tester) {
+                $obj->testers[] = $tester->getClientObject();
+            }
+
+            foreach ($masters as $master) {
+                $obj->masters[] = $master->getClientObject();
+            }
+        }
+
         $images = $issue->getImages();
-        $obj->members = [];
-        $obj->testers = [];
-        $obj->masters = [];
         $obj->images = [];
-        $obj->isOnBoard = $issue->isOnBoard();
-
-        foreach ($members as $member) {
-            $obj->members[] = $member->getClientObject();
-        }
-
-        foreach ($testers as $tester) {
-            $obj->testers[] = $tester->getClientObject();
-        }
-
-        foreach ($masters as $master) {
-            $obj->masters[] = $master->getClientObject();
-        }
 
         foreach ($images as $image) {
             array_push($obj->images, array( 'imgId' => $image->imgId,
                 'source' => $image->getSource(),
                 'preview' => $image->getPreview()));
+        }
+
+        $obj->isOnBoard = $issue->isOnBoard();
+
+        if ($loadLinked) {
+            $linked = $issue->getLinkedIssues();
+            $obj->linked = [];
+            foreach ($linked as $issue) {
+                $obj->linked[] = $issue->getClientObject();
+            }
         }
 
         return $obj;
