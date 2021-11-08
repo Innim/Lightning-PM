@@ -3,6 +3,12 @@
 ### Added
 
 - Лог ошибок обращения к GitLab API в production режиме.
+
+### Fixed
+
+- Не работает функционал автоматической отметки о влитии в `develop`
+(временный фикс в библиотеке, см. [issue](https://github.com/GitLabPHP/Client/issues/672)).
+
 ## 0.13.2 - 2021-11-03
 
 ### Fixed
