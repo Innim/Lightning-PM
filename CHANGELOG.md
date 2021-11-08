@@ -1,5 +1,7 @@
 ## Next release
 
+## 0.13.3 - 2021-11-08
+
 ### Added
 
 - Лог ошибок обращения к GitLab API в production режиме.
