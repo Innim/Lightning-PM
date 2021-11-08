@@ -61,7 +61,7 @@ class GitlabExternalApi extends ExternalApi
             } elseif ($eventName == self::EVENT_NAME_PUSH) {
                 return $this->onPushEvent($data);
             } else {
-                throw new Exception("Unhandled event " . $eventType . ", " . $eventName);
+                throw new Exception("Unhandled event: event_type=" . $eventType . ", event_name=" . $eventName);
             }
         } catch (Exception $e) {
             return $this->onException($e);
@@ -332,7 +332,7 @@ class GitlabExternalApi extends ExternalApi
     {
         $fileName = DateTimeUtils::mysqlDate(null, false) . '-' .
             DateTimeUtils::date('H-i-s') . '.log';
-        $dirPath = LOGS_PATH . '/api/gitlab' . $suffix . '/';
+        $dirPath = LOGS_PATH . '/api/gitlab-hook' . $suffix . '/';
         if (!is_dir($dirPath)) {
             mkdir($dirPath, 0755, true);
         }
