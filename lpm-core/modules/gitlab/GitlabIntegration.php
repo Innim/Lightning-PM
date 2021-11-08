@@ -107,7 +107,7 @@ class GitlabIntegration
 
             return $user->gitlabToken;
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return null;
         }
     }
@@ -147,7 +147,7 @@ class GitlabIntegration
             $res = $client->mergeRequests()->show($projectPath, $mrId);
             return $res === null ? null : new GitlabMergeRequest($res);
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return null;
         }
     }
@@ -168,7 +168,7 @@ class GitlabIntegration
             $res = $client->projects()->show($projectId);
             return new GitlabProject($res);
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return null;
         }
     }
@@ -191,7 +191,7 @@ class GitlabIntegration
             }
             return $res;
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return null;
         }
     }
@@ -227,7 +227,7 @@ class GitlabIntegration
             } while (count($list) == $perPage);
             return $res;
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return null;
         }
     }
@@ -250,7 +250,7 @@ class GitlabIntegration
             $res = $client->repositories()->createBranch($projectId, $name, $parent);
             return new GitlabBranch($res);
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return false;
         }
     }
@@ -276,7 +276,7 @@ class GitlabIntegration
             $res = $client->repositories()->compare($projectId, $fromShaOrBranch, $toShaOrBranch);
             return $res ? new GitlabCommit($res['commit']) : false;
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return false;
         }
     }
@@ -298,7 +298,7 @@ class GitlabIntegration
             $res = $client->mergeRequests()->addNote($projectId, $mrInternalId, $text);
             return $res;
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->onCallException(__METHOD__, $e);
             return false;
         }
     }
@@ -309,7 +309,7 @@ class GitlabIntegration
             $res = $this->sudoClient()->users()->all(['search' => $email]);
             return empty($res) ? null : $res[0];
         } catch (Exception $e) {
-            GMLog::writeLog('Exception during ' . __METHOD__ . ': ' . $e);
+            $this->logException($e, 'Exception during ' . __METHOD__);
             return null;
         }
     }
@@ -354,5 +354,33 @@ class GitlabIntegration
     private function getTokenName()
     {
         return 'Lightning PM at ' . SITE_URL;
+    }
+
+    private function onCallException(String $method, Exception $e)
+    {
+        $this->logException($e, 'Exception during ' . $method);
+    }
+
+    private function logException(Exception $e, $message = '')
+    {
+        $arr = [];
+        if (!empty($message)) {
+            $arr[] = $message;
+        }
+        $arr[] = $e->getMessage();
+        $arr[] = $e->getTraceAsString();
+
+        $this->logError(implode("\n", $arr));
+    }
+
+    private function logError($message)
+    {
+        $fileName = DateTimeUtils::mysqlDate(null, false) . '-' .
+            DateTimeUtils::date('H-i-s') . '.log';
+        $dirPath = LOGS_PATH . '/api/gitlab-error/';
+        if (!is_dir($dirPath)) {
+            mkdir($dirPath, 0755, true);
+        }
+        file_put_contents($dirPath . $fileName, $message);
     }
 }
