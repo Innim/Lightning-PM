@@ -1063,40 +1063,6 @@ table.users-list tr.active-user td button#unlocked-btn {
 	width  : 400px;
 	margin : 40px auto;
 }
-#authForm p.enter-line,
-#authForm p.links-line,
-#recPassForm p.enter-line,
-#recPassForm p.links-line {
-	width         : 90%;  
-	margin        : 0px auto;	
-}
-#authForm p.enter-line,
-#recPassForm p.enter-line {
-	vertical-align: bottom;
-	text-align    : right; 
-}
-#authForm p.enter-line span,
-#recPassForm p.enter-line span {
-	font-size: 10pt;
-}
-#authForm .enter-line button
-#recPassForm p.enter-line button {
-	display    : inline-block;
-	margin-left: 40px;
-}
-#authForm p.links-line,
-#registrationForm p.links-line,
-#recPassForm p.links-line{
-	text-align: center;
-	font-size : 10pt; 	
-	margin-top: 10px;
-}
-#registrationForm p.links-line,
-#recPassForm p.links-line {
-	text-align    : left;
-	margin-bottom : 0px;
-	padding-bottom: 0px 
-}
 
 
 /* список проектов и добавление проекта*/

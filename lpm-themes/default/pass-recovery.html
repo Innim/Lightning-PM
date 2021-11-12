@@ -1,20 +1,25 @@
+<?php
+$remail = isset($_POST['remail']) ? $_POST['remail'] : '';
+?>
+
 <article id="recPassForm" class="container">
     <h3>Восстановление пароля</h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <?php switch(lpm_get_current_page()->getShow()) {
         case 'emailForm': ?>
-    <form method="post">
-        <input placeholder="Email" type="email" name="remail" required="required"
-            value="<?=isset($_POST['aemail'])?$_POST['aemail']:'';?>" />
-        <div>
-            <p class="enter-line">
-                <button type="submit" class="btn btn-primary">Восстановить</button>
-            </p>
-            <p class="links-line">
-                <a href="/">Назад</a>
-            </p>
+    <form method="post" class="row row-cols-lg-auto g-3 align-items-center">
+        <div class="col-12">
+            <label for="emailInput" class="visually-hidden">Email</label>
+            <input type="email" placeholder="Email" class="form-control" id="emailInput" name="remail" required="required" value="<?=$remail?>">
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Восстановить</button>
+        </div>
+		<div class="mb-3 text-center">
+            <a href="/">Назад</a>
         </div>
     </form>
+
     <?php break; case 'successEmail': ?>
     
 	<div class="alert alert-success info-message" role="alert" style="display: block;">
@@ -36,22 +41,20 @@
     <?php break; case 'changePassForm': ?>
     <form method="post" action="">
         <div class="alert alert-success info-message" role="alert"></div>
-        <ol class="form-fields">
-            <li>
-                <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24" required />
-            </li>
-            <li>
-                <input id="repeatPass" placeholder="Подтверждение пароля" type="password" name="rePass" maxlength="24"
-                    required />
-            </li>
-            <li>
-                <input type="hidden" name="userId" value="<?=lpm_get_current_page()->getUserId(); ?>" />
-                <input type="hidden" name="key" value="<?=lpm_get_current_page()->getKey(); ?>" />
-            </li>
-        </ol>
-        <p class="save-line">
-            <button type="submit" class="btn btn-primary">Сохранить</button>
-        </p>
+        
+        <form method="post">
+            <div class="mb-3">
+                <label for="newPass" class="form-label">Пароль</label>
+                <input type="password" class="form-control" id="newPass" name="newPass" required="required" maxlength="24">
+              </div>
+              <div class="mb-3">
+                <label for="repeatPass" class="form-label">Подтверждение пароля</label>
+                <input type="password" class="form-control" id="repeatPass" name="rePass" required="required" maxlength="24">
+              </div>
+            <div class="mb-3 text-end">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
     </form>
     <?php break; } ?>
 
