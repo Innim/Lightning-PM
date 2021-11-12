@@ -49,15 +49,22 @@
 <?php if (lpm_can_create_project()): ?>
 <article id="addProjectForm" class="container">
 	<h3>Добавить проект</h3>
-	<div class="alert alert-danger validateError" role="alert">
-		<?php lpm_print_errors(); ?>
-	</div>
+	<div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
+
 	<form onsubmit="return validateAddProj();" method="post">
-		<input placeholder="Название проекта*" type="text" name="name" required="required" maxlength="255"
-			value="<?lpm_print_post_var('name');?>" />
-		<input placeholder="Уникальный идентификатор*" title="Допустимы строчные буквы (a-z), цифры и дефис" type="text"
-			name="uid" required="required" maxlength="255" value="<?lpm_print_post_var('uid');?>" />
-		<textarea placeholder="Описание" name="desc" maxlength="65535"><?lpm_print_post_var('desc');?></textarea>
+		<div class="mb-3">
+		  <label for="projectNameInput" class="form-label">Название проекта</label>
+		  <input id="projectNameInput" type="text" name="name" class="form-control" maxlength="255" required="required" value="<?php lpm_print_post_var('name');?>">
+		</div>
+		<div class="mb-3">
+		  <label for="projectUidInput" class="form-label">Уникальный идентификатор</label>
+		  <input id="projectUidInput" type="text" class="form-control" aria-describedby="projectUidHelp" placeholder="project-uid" name="uid" required="required" maxlength="255" value="<?php lpm_print_post_var('uid');?>">
+		  <div id="projectUidHelp" class="form-text">Допустимы строчные буквы (a-z), цифры и дефис.</div>
+		</div>
+		<div class="mb-3">
+			<label for="projectDescInput" class="form-label">Описание</label>
+			<textarea id="projectDescInput" class="form-control" name="desc" required="required" maxlength="65535"><?php lpm_print_post_var('desc');?></textarea>
+		</div>
 		<div>
 			<p class="save-line">
 				<button type="submit" class="btn btn-success complete-btn">Добавить</button>
@@ -67,6 +74,6 @@
 				<a href="#" onclick="showProjectsList(); return false;">К списку</a>
 			</p>
 		</div>
-	</form>
+	  </form>
 </article>
 <?php endif; ?>
