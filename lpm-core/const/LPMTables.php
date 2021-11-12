@@ -67,16 +67,6 @@ class LPMTables
      */
     const TAGS_LIST = 'tags_list';
     /**
-     * Список работников для учёта времени
-     * @var string
-     */
-    const WORKERS = 'workers';
-    /**
-     * Записи о времени
-     * @var string
-     */
-    const WORK_STUDY = 'work_study';
-    /**
      * Комментарии
      * @var string
      */

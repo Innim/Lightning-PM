@@ -343,14 +343,6 @@ function lpm_get_issues_list()
 }
 
 /**
-* Возвращает список сотрудников
-*/
-function lpm_get_workers_list()
-{
-    return PageConstructor::getWorkersList();
-}
-
-/**
  * Возвращает текущий проект
  */
 function lpm_get_project()
@@ -402,41 +394,6 @@ function lpm_get_user_issues()
 function lpm_get_users_choose_list()
 {
     return PageConstructor::getUsersChooseList();
-}
-/**
-* Возвращает список пользователей для добавления в работники
-*/
-function lpm_get_add_worker_list()
-{
-    return PageConstructor::getAddWorkerList();
-}
-/**
-* Возвращает массив ссылок-дат
-*/
-function lpm_get_date_links()
-{
-    return PageConstructor::getDateLinks();
-}
-/**
-* Возвращает массив ссылок-недель
-*/
-function lpm_get_week_links()
-{
-    return PageConstructor::getWeekLinks();
-}
-/**
-* Возвращает массив дней текущей недели
-*/
-function lpm_get_week_dates()
-{
-    return PageConstructor::getWeekDates();
-}
-/**
-* Возвращает массив работников со статистикой по неделе
-*/
-function lpm_get_week_stat()
-{
-    return PageConstructor::getWeekStat();
 }
 /**
  * Возвращает текущего пользователя

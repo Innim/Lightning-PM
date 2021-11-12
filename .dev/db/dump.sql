@@ -296,34 +296,7 @@ CREATE TABLE `lpm_user_auth` (
 
 
 DROP TABLE IF EXISTS `lpm_workers`;
-CREATE TABLE `lpm_workers` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `userId` bigint(18) NOT NULL COMMENT 'идентификатор пользователя',
-  `hours` int(3) NOT NULL DEFAULT '0',
-  `comingTime` time NOT NULL DEFAULT '00:00:00',
-  `lunchBreak` tinyint(1) NOT NULL DEFAULT '1',
-  `active` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `userId` (`userId`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-
 DROP TABLE IF EXISTS `lpm_work_study`;
-CREATE TABLE `lpm_work_study` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `workerId` bigint(20) NOT NULL DEFAULT '0',
-  `date` date NOT NULL DEFAULT '0000-00-00',
-  `comingTime` time NOT NULL DEFAULT '00:00:00',
-  `leavingTime` time NOT NULL DEFAULT '00:00:00',
-  `late` tinyint(1) NOT NULL DEFAULT '0',
-  `lunchBreak` tinyint(1) NOT NULL DEFAULT '1',
-  `mustHours` int(2) NOT NULL DEFAULT '0',
-  `mustComingTime` time NOT NULL DEFAULT '00:00:00',
-  `hoursAway` float NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `workerId` (`workerId`,`date`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 
 DROP TABLE IF EXISTS `lpm_instance_targets`;
 CREATE TABLE `lpm_instance_targets` (

@@ -1513,44 +1513,6 @@ blockquote > p {
     margin-top: 10px;
 }
 
-/* рабочее время */
-.dates-line {
-	margin     : 5px 0px;
-	/*font-weight: bold;*/
-}
-.dates-line a {
-    font-size  : smaller; 
-    font-weight: normal;
-}
-#workersStat table thead th span.day-name {
-	display: block;
-}
-#workersStat table thead th span.day-date {
-    font-size: smaller;
-}
-#workersStat table tbody > tr > td {
-	text-align: center;
-}
-#workersStat table tbody > tr > td:first-child {
-	font-weight: bold;
-	text-align : left;
-}
-#workersStat table tbody > tr td .no-info {
-    font-size: smaller;
-}
-#workersStat table tbody > tr .bad {
-	background-color: #FF2746;
-	color           : #ffffff; 
-}
-#workersStat table tbody > tr .good {
-    background-color: #6BFF7C;
-}
-#workersList table tr td:nth-child(2) div {
-	margin: 5px 0px;
-}
-#workersList table tr td:nth-child(2) input[type=radio] {
-	margin-right: 5px;
-}
 #issueInfo > h3 {
 	position: relative;
 }

@@ -1,5 +1,10 @@
 ## Next release
 
+
+### Removed
+
+- Модуль `workStudy`.
+
 ## 0.13.3 - 2021-11-08
 
 ### Added
