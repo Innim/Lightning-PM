@@ -18,47 +18,6 @@ h1 {
 h3 {
 	margin: 0px;
 }
-input, textarea, select { 
-	border-radius: 5px;	
-	border       : solid 1px #cccccc;
-	padding      : 5px;
-	margin       : 0px; 
-    font-size    : 12pt;
-    font-family  : inherit; 
-	/*box-shadow         : inset 0 2px 4px rgba(0,0,0,0.7);
-    -webkit-box-shadow : inset 0 2px 4px rgba(0,0,0,0.7);*/
-}
-input {
-	height       : 30px;
-	box-sizing   : border-box;
-}
-input[type="search"] {
-	box-sizing   : content-box;
-}
-input[type="file"] {
-	height: auto;
-}
-select {
-	height       : 30px;
-}
-input[type="radio"],
-input[type="range"] {
-	width        : auto;
-	height       : auto; 
-}
-input[type="range"] {
-	vertical-align: middle;
-}
-fieldset {
-    border       : none;
-    margin-bottom: 10px;
-}
-fieldset :last-of-type {
-	margin-bottom: 0px;
-}
-fieldset legend {
-	margin-left  : 20px;
-}
 article { 
 	margin: 20px auto;
     /*padding-left: 20px;*/
@@ -326,52 +285,8 @@ div.container > h3 {
 	font-size: 1.5em;
 	font-weight: normal;
 }
-.container input,
-.container textarea, 
-.container select,
-.container fieldset {
-	width   : 90%;
-	display : block;	
-	margin  : 0px auto;  
-}
-.container form > input {
-    margin: 20px auto;
-}
-
-.container fieldset {
-    padding: 0px;
-}
-.container fieldset legend {
-	font-weight: bold;
-}
-.container fieldset select {
-	width: 100%;
-}
-.container textarea {
-	min-height: 100px;
-}
-.container input[type="radio"],
-.container input[type="range"]  {
-    width    : auto;
-    height   : auto; 
-    display  : inline-block;
-}
-.container input[type="checkbox"] {
-    width: auto;
-    display: inline-block;    
-    vertical-align: top;
-}
-
-.container .save-line {
-	text-align: center;
-}
 
 /* Страница профиля */
-#profileView input[type="password"] {
-    width: auto;
-    display: inline-block;    
-    vertical-align: top;
-}
 
 ol#profileInfo.info-list {
 	list-style: none;
@@ -405,19 +320,6 @@ ol#profileInfo.info-list {
 	margin: 0 0 10px;
 	font-size: 0.9em;
 }
-fieldset.radio-group legend {
-	float  : left;
-}
-fieldset.radio-group ol {
-	padding: 0px;
-}
-fieldset.radio-group ol li {
-    background : none;
-    border     : none;
-    float      : left;
-    margin-left: 10px;    
-    list-style : none;    
-}
 .add-me-link {
 	font-size: x-small;
 	font-weight: normal;
@@ -425,7 +327,7 @@ fieldset.radio-group ol li {
 ol.members-list {
 	margin-bottom: 10px;
 	position : relative;
-	
+	list-style: none;
 }
 ol.members-list input.member-sp {
 	width: 20px;
@@ -458,19 +360,12 @@ form > ol > li label {
 	margin-right : 20px;
 	margin-bottom: 5px;
 }
-form > ol > li .put-to-board-line {
-	text-align: center;
-}
 form > ol > li p {
     text-align: center;
 }
 form > ol > li div.hint {
     display: block;
     font-size: .8em;
-}
-form ol.form-fields > li input {
-	width: auto;
-	display: inline-block;
 }
 form ol.form-fields > li:last-child {
 	margin-top: 25px;
@@ -792,19 +687,13 @@ ul.images-url{
 	list-style: none;
 	margin: 10px auto;
 	margin-top: 1%;
+	padding: 0;
 }
 ul.images-url > li {
 	display: block;	
 	margin: 10px auto;
 	padding: 0px;
 	position: relative;
-}
-ul.images-url > li > input {
-	max-width: 300px;
-	margin-top: 5px;
-	margin-left: 0;
-	padding: 0;
-	text-align: center;
 }
 #issueForm li > a[name="imgByUrl"] {
 	margin-left: 50px;
@@ -1381,16 +1270,6 @@ blockquote > p {
 
 
 /* Редактирование задачи */
-#issueForm form > ol > li label {
-	margin-left: 5%;
-	margin-bottom: 5px;
-}
-#issueForm form fieldset.radio-group ol li label {
-	margin: 0px;
-}
-#issueForm form > ol > li .put-to-board-line label {
-	margin: 0 5px;
-}
 #issueForm .text-warning {
 	color: #ccc;
 	text-align: right;
@@ -1398,51 +1277,13 @@ blockquote > p {
     margin: 5px auto 0;
 	padding: 0 5px;
 }
-
-#issueForm .note
-{
-	width: 90%;
-	margin: 5px auto 0;
-	padding: 0 5px;
-	font-size: .9em;
-	color: #cccccc;
-}
-#issueForm .note:hover 
-{
-	color: #999999;
-}
-#issueForm .note code 
-{
-	color: #C5C5C5;
-	padding: 0px 2px;
-	border: none;
-}
-#issueForm .note:hover code 
-{
-	color: #999999;
-}
-#issueForm .note kbd {
-	opacity: .3;
-}
-#issueForm .note:hover kbd {
-	opacity: 1;
-}
-
-#issueForm .note a {
-	color: #999999;
-}
-
-#issueForm .note a:hover {
-	color: #333333;
-}
-
-#issueForm .note a.tag {
+#issueForm .tags-line a.tag {
 	display: inline-block;
 	margin: 0 .2em;
 	text-decoration: none;
 }
 
-#issueForm .note .tag.quote {
+#issueForm .tags-line .tag.quote {
 	display: inline-block;
 	margin: 0 .2em;
 	border-left: solid 2px #cdcdcd;
@@ -1464,10 +1305,6 @@ blockquote > p {
 /* выбор пользователей */
 #usersChooser {
 	text-align: center;
-}
-#usersChooser input[type="search"] {
-	width: 90%;
-	margin-bottom: 10px;
 }
 #usersChooser div.list-box {
 	max-height: 500px;
@@ -1828,39 +1665,16 @@ div.ftp
 	margin-top: 10px;
 }
 
-.edit-issue-name-container {
-	width: 90%;
-	margin: 0 auto;
-}
-
-input.edit-issue-name {
-    width: 95%;
-    margin: 0;
-}
 
 .issue-name-quick-actions {
 	font-size: 0.7em;
 	display: block;
-	float: right;
-	clear: both;
-	margin: auto;
-	padding-top: 9px;
-	padding-right: 5px;
-	text-align: right;
 }
 
-.issue-name-quick-actions a {
-	padding: 2px;	
-	border-radius: 2px;
-	background-color: #1E90FF;
-	color: #fff;
-}
 .issue-labels-container {
 	font-size: 0.9em;
 	display: block;
-	width: 90%;
 	margin: auto;
-	padding-top: 5px;
 }
 
 .issue-labels-container a {
@@ -1944,16 +1758,6 @@ input.edit-issue-name {
 	float: left;
 	margin-top: 5px;
 	min-width: 250px;
-}
-
-#projectSettings form input {
-	/* margin: 0 0 0 220px ; */
-	margin: 0;
-}
-
-#projectSettings form input[type=text] {
-	height: 24px;
-	width: 170px;
 }
 .tooltip div {
 	display: none;

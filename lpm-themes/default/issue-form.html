@@ -11,66 +11,72 @@ $descMaxLen = Issue::DESC_MAX_LEN;
 <article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
     <h3></h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
-    <form onsubmit="return issueForm.validateIssueForm();" method="post" enctype="multipart/form-data">
-        <ol>
-            <li>
-                <div class="edit-issue-name-container">
-                    <span class="issue-name-quick-actions" >
-                        <?php if ($project->scrum): ?>
-                        <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueForm.addSprintNumToName()" title="Добавить номер спринта">
-                            <i class="fas fa-hashtag"></i>
-                        </a>
-                        <?php endif;?>
-                    </span>
-                    <input placeholder="Название задачи*" type="text" name="name" required="required" maxlength="255"
-                        class="edit-issue-name" oninput="issueFormLabels.issueNameChanged(this.value)" />                        
-                    
-                </div>
-                <span class="issue-labels-container">
-                    <?php 
-                        $issueLabels = $issue ? $issue->getLabelNames() : [];
-                        $projectLabels = array_map(function ($item) {
-                            return $item['label'];
-                        }, lpm_get_issue_labels());
-                        $labels = array_unique(array_merge($projectLabels, $issueLabels));
-                    ?>    
-                    <?php foreach ($labels as $label): ?>
-                    <a href="javascript:void(0)" class="issue-label"
-                        onclick="issueFormLabels.addToName('<?=$label;?>');"><?=$label;?></a>
-                    <?php endforeach; ?>
-                    <a href="javascript:void(0)" class="add-issue-label" onclick="issueFormLabels.openAdd()">
-                        <i class="far fa-plus-square" aria-hidden="true"></i>
+    <form onsubmit="return issueForm.validateIssueForm();" class="row g-3" method="post" enctype="multipart/form-data">
+
+        <div class="col-12 input-group">
+            <input type="text" class="form-control" id="issueNameInput" name="name" placeholder="Название задачи*"
+                    required="required" maxlength="255" oninput="issueFormLabels.issueNameChanged(this.value)">
+
+            <div class="input-group-text">
+                <span class="issue-name-quick-actions" >
+                    <?php if ($project->scrum): ?>
+                    <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueForm.addSprintNumToName()" title="Добавить номер спринта">
+                        <i class="fas fa-hashtag"></i>
                     </a>
-                    <?php if (lpm_is_moderator()):?>
-                    <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueFormLabels.openRemove()">
-                        <i class="far fa-minus-square" aria-hidden="true"></i>
-                    </a>
-                    <?php endif; ?>
+                    <?php endif;?>
                 </span>
-            </li>
-            <li>
-                <fieldset class="radio-group">
-                    <!-- <legend>Тип</legend> -->
-                    <ol>
-                        <li>
-                            <input id="develop" name="type" type="radio" value="<?=Issue::TYPE_DEVELOP;?>" checked>
-                            <label for="develop">Разработка</label>
-                        </li>
-                        <li>
-                            <input id="bug" name="type" type="radio" value="<?=Issue::TYPE_BUG;?>">
-                            <label for="bug">Ошибка</label>
-                        </li>
-                        <li>
-                            <input id="support" name="type" type="radio" value="<?=Issue::TYPE_SUPPORT;?>">
-                            <label for="support">Поддержка</label>
-                        </li>
-                    </ol>
-                </fieldset>
-            </li>
-            <li>
-                <label for="priopiry">Приоритет задачи</label>
-                <input type="range" id="priority" name="priority" min="0" max="99" value="49" step="1"
-                    onchange="issuePage.setPriorityVal(this.value);" />
+            </div>
+        </div>
+
+        <div class="col-12">
+            <span class="issue-labels-container">
+                <?php 
+                    $issueLabels = $issue ? $issue->getLabelNames() : [];
+                    $projectLabels = array_map(function ($item) {
+                        return $item['label'];
+                    }, lpm_get_issue_labels());
+                    $labels = array_unique(array_merge($projectLabels, $issueLabels));
+                ?>    
+                <?php foreach ($labels as $label): ?>
+                <a href="javascript:void(0)" class="issue-label"
+                    onclick="issueFormLabels.addToName('<?=$label;?>');"><?=$label;?></a>
+                <?php endforeach; ?>
+                <a href="javascript:void(0)" class="add-issue-label" onclick="issueFormLabels.openAdd()">
+                    <i class="far fa-plus-square" aria-hidden="true"></i>
+                </a>
+                <?php if (lpm_is_moderator()):?>
+                <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueFormLabels.openRemove()">
+                    <i class="far fa-minus-square" aria-hidden="true"></i>
+                </a>
+                <?php endif; ?>
+            </span>
+        </div>
+
+        <div class="col-12">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="type" id="develop" value="<?=Issue::TYPE_DEVELOP;?>" checked>
+                <label class="form-check-label" for="develop">Разработка</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="type" id="bug" value="<?=Issue::TYPE_BUG;?>">
+                <label class="form-check-label" for="bug">Ошибка</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="type" id="support" value="<?=Issue::TYPE_SUPPORT;?>">
+                <label class="form-check-label" for="support">Поддержка</label>
+              </div>
+        </div>
+
+        <div class="col-12 row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="priority" class="form-label">Приоритет задачи</label>
+            </div>
+            <div class="col-auto">
+                <input type="range" class="form-range" id="priority" name="priority" min="0" max="99" value="49" step="1"
+                    onchange="issuePage.setPriorityVal(this.value);">
+            </div>
+            
+            <div class="col-auto">
                 <div id="dropdown">
                     <span id="priorityVal" class="priority-val"></span>
                     <ul id="priority-values">
@@ -85,62 +91,73 @@ $descMaxLen = Issue::DESC_MAX_LEN;
                         </li>
                     </ul>
                 </div>
+                
                 <div id="priority-button-block">
                     <button id="upPriority" class="priorityButton" type="button"
                         onclick="issuePage.upPriorityVal();">&#9650;</button>
                     <button id="downPriority" class="priorityButton" type="button"
                         onclick="issuePage.downPriorityVal();">&#9660;</button>
                 </div>
-            </li>
-            <li>
-                <input placeholder="Дата окончания" type="text" class="date" name="completeDate" maxlength="255" />
-            </li>
-            <li class="members-row">
-                <fieldset>
-                    <legend>Исполнители <a href="javascript:void(0)" onclick="issueForm.addMeAsMember()" class="add-me-link">Добавить себя</a></legend>
-                    <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
-                    <ol id="issueMembers" class="members-list"></ol>
-                    <select id="addIssueMembers" onchange="issueForm.addIssueMember();"
+            </div>
+        </div>
+          
+        <div class="col-auto">
+            <input placeholder="Дата окончания" type="text" class="date form-control" name="completeDate" maxlength="255" />
+        </div>
+
+        <div class="col-12 row gy-2 members-row">
+            <h6>Исполнители <a href="javascript:void(0)" onclick="issueForm.addMeAsMember()" class="add-me-link">Добавить себя</a></h6>
+            <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
+            <!-- TODO: Bootstrap формы для SP -->
+            <ol id="issueMembers" class="members-list row"></ol>
+            <div class="col-auto gy-0">
+                <select id="addIssueMembers" class="form-select" onchange="issueForm.addIssueMember();"
                         data-default-member-id="<?=$performerId;?>">
-                        <option value="-1">Добавить</option>
-                        <?php foreach(lpm_get_project_members() as $member): ?>
-                        <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </fieldset>
-            </li>
-            <li class="testers-row">
-                <fieldset>
-                    <legend>Тестеры <a href="javascript:void(0)" onclick="issueForm.addMeAsTester()" class="add-me-link">Добавить себя</a></legend>
-                    <ol id="issueTesters" class="members-list"></ol>
-                    <select id="addIssueTesters" onchange="issueForm.addIssueTester();">
-                        <option value="-1">Добавить</option>
-                        <?php foreach (lpm_get_project_members() as $tester): ?>
-                        <option value="<?=$tester->userId;?>"><?=$tester->getName();?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </fieldset>
-            </li>
-            <li class="masters-row">
-                <fieldset>
-                    <legend>Мастеры <a href="javascript:void(0)" onclick="issueForm.addMeAsMaster()" class="add-me-link">Добавить себя</a></legend>
-                    <ol id="issueMasters" class="members-list"></ol>
-                    <select id="addIssueMasters" onchange="issueForm.addIssueMaster();">
-                        <option value="-1">Добавить</option>
-                        <?php foreach (lpm_get_project_members() as $master): ?>
-                        <option value="<?=$master->userId;?>"><?=$master->getName();?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </fieldset>
-            </li>
-            <li>
-                <input placeholder="Story Points" type="text" name="hours" maxlength="5" />
-            </li>
-            <li>
-                <textarea id="descField" placeholder="Описание" class="desc count-chars" name="desc"
-                    maxlength="<?=$descMaxLen;?>" data-chars-max="<?=$descMaxLen;?>"
-                    data-msg-color="warning"></textarea>
-                <div class="note tags-line">Вы можете использовать <a
+                    <option value="-1">Добавить</option>
+                    <?php foreach(lpm_get_project_members() as $member): ?>
+                    <option value="<?=$member->userId;?>"><?=$member->getName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-12 row gy-2 testers-row">
+            <h6>Тестеры <a href="javascript:void(0)" onclick="issueForm.addMeAsTester()" class="add-me-link">Добавить себя</a></h6>
+            <ol id="issueTesters" class="members-list row"></ol>
+            <div class="col-auto gy-0">
+                <select id="addIssueTesters" class="form-select" onchange="issueForm.addIssueTester();">
+                    <option value="-1">Добавить</option>
+                    <?php foreach(lpm_get_project_members() as $tester): ?>
+                    <option value="<?=$tester->userId;?>"><?=$tester->getName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-12 row gy-2 masters-row">
+            <h6>Мастеры <a href="javascript:void(0)" onclick="issueForm.addMeAsMaster()" class="add-me-link">Добавить себя</a></h6>
+            <ol id="issueMasters" class="members-list row"></ol>
+            <div class="col-auto gy-0">
+                <select id="addIssueMasters" class="form-select" onchange="issueForm.addIssueMaster();">
+                    <option value="-1">Добавить</option>
+                    <?php foreach(lpm_get_project_members() as $master): ?>
+                    <option value="<?=$master->userId;?>"><?=$master->getName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-auto">
+            <input placeholder="Story Points" type="text" class="form-control" name="hours" maxlength="5" />
+        </div>
+
+        <div class="col-12">
+            <textarea id="descField" placeholder="Описание" class="form-control desc count-chars" name="desc"
+                    maxlength="<?=$descMaxLen;?>" rows="10" aria-describedby="descFieldHelp"
+                    data-chars-max="<?=$descMaxLen;?>" data-msg-color="warning"></textarea>
+
+            <div id="descFieldHelp" class="form-text tags-line">
+                <p>Вы можете использовать <a
                         href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи:
                     <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*"
                         title="Ctrl + B">*жирный*</a>,
@@ -150,46 +167,57 @@ $descMaxLen = Issue::DESC_MAX_LEN;
                         title="Ctrl + U">__подчеркнутый__</a>, <a class="tag" href="javascript:void(0)"
                         style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>, <span class="tag quote"
                         title="Ctrl + G">&gt; цитата</span>, <a class="tag" href="javascript:void(0)"
-                        style="text-decoration:underline;" data-type="link" title="Ctrl + K">[ссылка](url)</a>. </div>
-                <div class="note tags-line">Также используйте <kbd>`</kbd> для строчного кода и <kbd>```</kbd> для
+                        style="text-decoration:underline;" data-type="link" title="Ctrl + K">[ссылка](url)</a>.</p>
+                <p>Также используйте <kbd>`</kbd> для строчного кода и <kbd>```</kbd> для
                     многострочного (можно указать язык: as, js, php и тд, добавляется сразу после открывающих кавычек,
-                    требуется перенос строки)</div>
-            </li>
-            <li>
-                <label>Изображения</label>
-                <input type="hidden" name="removedImages" value="">
-                <ul class="images-list">
-                    <li><input type="file" name="images[]" accept="image/*"
-                            onchange="imgUpload.onSelect(event,window.lpmOptions.issueImgsCount);" multiple /></li>
-                </ul>
-                <ul class="images-url">
-                    <li class="imgUrlTempl" style="display:none">
-                        <input name="imgUrls[]" placeholder="Введите URL изображения" type="text" value="" />
-                        <a class="remove-btn" href="javascript:;"></a>
-                    </li>
-                </ul>
-                <a name="imgByUrl" href="javascript:issueForm.addImageByUrl(undefined, true);">Добавить изображение по
-                    URL</a>
-            </li>
-            <li>
-                <input type="hidden" name="issueId" value="0" />
-                <input type="hidden" name="actionType" value="addIssue" />
-                <input type="hidden" name="baseIds" value="" />
-                <input type="hidden" name="linkedIds" value="" />
-                <?php if ($project->scrum): ?>
-                <div class="put-to-board-line">
-                    <input id="putToBoardField" name="putToBoard" type="checkbox">
-                    <label for="putToBoardField">Поместить на SCRUM доску</label>
-                </div>
-                <?php endif;?>
-                <p class="save-line">
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                    <button type="reset" class="btn btn-secondary" onclick="showMain();">Отмена</button>
-                </p>
-            </li>
-        </ol>
+                    требуется перенос строки).</p>
+            </div>
+        </div>
+
+        
+        <div class="col-auto">
+            <label for="imagesField" class="form-label">Изображения</label>
+            <input type="hidden" name="removedImages" value="">
+
+            <ul class="images-list">
+                <li>
+                    <input class="form-control" type="file" id="imagesField" name="images[]" accept="image/*"
+                            onchange="imgUpload.onSelect(event,window.lpmOptions.issueImgsCount);" multiple>
+                </li>
+            </ul>
+                   
+            <ul class="images-url">
+                <li class="imgUrlTempl" style="display:none">
+                    <div class="input-group">
+                        <input placeholder="Введите URL изображения" type="text" class="form-control" name="imgUrls[]"/>
+                        <div class="input-group-text"><a class="remove-img" href="javascript:;"><i class="fas fa-trash-alt"></i></a></div>
+                    </div>
+                </li>
+            </ul>
+            <a name="imgByUrl" href="javascript:issueForm.addImageByUrl(undefined, true);">Добавить изображение по
+                URL</a> 
+        </div>
+
+        <?php if ($project->scrum): ?>
+        <div class="col-12 form-group text-center">
+            <input class="form-check-input" type="checkbox" id="putToBoardField" name="putToBoard">
+            <label class="form-check-label" for="putToBoardField">Поместить на SCRUM доску</label>
+        </div>
+        <?php endif;?>
+
+        <input type="hidden" name="issueId" value="0" />
+        <input type="hidden" name="actionType" value="addIssue" />
+        <input type="hidden" name="baseIds" value="" />
+        <input type="hidden" name="linkedIds" value="" />
         <input type="hidden" value="<?=$project->getID();?>" id="issueProjectID">
+        
+        <div class="col-12 text-center save-line">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="reset" class="btn btn-secondary" onclick="showMain();">Отмена</button>
+        </div>
     </form>
+
+    <!-- TODO: Bootstrap формы -->
     <div id="addIssueLabelFormContainer" style="display: none;">
         <form id="addIssueLabelForm">
             <div>
@@ -204,7 +232,9 @@ $descMaxLen = Issue::DESC_MAX_LEN;
             <?php endif;?>
         </form>
     </div>
+
     <?php if (lpm_is_moderator()):?>
+    <!-- TODO: Bootstrap формы -->
     <div id="removeIssuesLabelContainer" style="display: none;">
         <div class="table">
             <div class="table-header">
@@ -270,7 +300,7 @@ $descMaxLen = Issue::DESC_MAX_LEN;
         <li class="image-item">
             <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview"></a>
             <input type="hidden" name="imgId" value="">
-            <a href="javascript:;" class="remove-btn"></a>
+            <a href="javascript:;" class="remove-btn remove-img"></a>
         </li>
     </div>
 </article>

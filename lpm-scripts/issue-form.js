@@ -1,6 +1,6 @@
 $(function ($) {
     document.addEventListener('paste', pasteClipboardImage);
-    $('.images-list').on('click', '.pasted-img .remove-btn', function () {
+    $('.images-list').on('click', '.pasted-img .remove-img', function () {
         $(this).parent('.pasted-img').remove();
     });
 
@@ -24,7 +24,7 @@ $(function ($) {
                         img.src = event.target.result;
                         $('input[type=file]').last().parent().before("<li id='current'><a></a></li>");
                         $('li#current a').append(img);
-                        $('li#current').append("<a class='remove-btn' onclick='javascript: return false;'>");
+                        $('li#current').append("<a class='remove-btn remove-img' onclick='javascript: return false;'>");
                         var input = document.createElement('input');
                         input.type = 'hidden';
                         input.name = 'clipboardImg[]';
@@ -189,7 +189,7 @@ let issueForm = {
                 $('a.image-link', imgLI).attr('href', img.source);
                 $('img.image-preview', imgLI).attr('src', img.preview);
                 $('input[name=imgId]', imgLI).val(img.imgId);
-                $('a.remove-btn', imgLI).click(issueForm.removeImage);
+                $('a.remove-img', imgLI).click(issueForm.removeImage);
 
                 imgsList.append(imgLI);
             });
@@ -361,7 +361,7 @@ let issueForm = {
     },
     addImageByUrl: function (imageUrl, autofocus = false) {
         // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
-        var urlLI = $("#issueForm li > ul.images-url > li.imgUrlTempl").clone().show();
+        var urlLI = $("#issueForm ul.images-url > li.imgUrlTempl").clone().show();
         var imgInput = $("#issueForm ul.images-url");
         urlLI.removeAttr('class');
         if (imageUrl)
