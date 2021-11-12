@@ -64,19 +64,20 @@ foreach ($labels as $label) {
             </li>
         </ul>
         <?php else: ?>
-        <form id="chooseMaster">
-            <select id="selectMaster">
-                <option value="0">Мастер не выбран</option>
-                <?php foreach ($projectMembers as $member): ?>
-                <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
-                <?php endforeach; ?>
-            </select>
-            <button
-                id="saveMaster"
-                type="button"
-                class="btn btn-primary">
-                Подтвердить
-            </button>
+        <form id="chooseMaster" class="row row-cols-lg-auto g-3 align-items-center">
+            <div class="col-12">
+                <label class="visually-hidden" for="inlineFormSelectPref">Мастер</label>
+                <select class="form-select" id="selectMaster">
+                    <option value="0">Мастер не выбран</option>
+                    <?php foreach ($projectMembers as $member): ?>
+                    <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button id="saveMaster" type="button" class="btn btn-primary">Подтвердить</button>
+            </div>
         </form>
         <?php endif; ?>
 
@@ -116,20 +117,20 @@ foreach ($labels as $label) {
             </li>
         </ul>
         <?php else: ?>
-        <form id="divPerformer" onsubmit="return false;">
-            <select id="selectMember">
-                <option value="0">Исполнитель не выбран</option>
-
-                <?php foreach ($projectMembers as $member): ?>
-                <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
-                <?php endforeach; ?>
-            </select>
-            <button
-                id="btnSelectMember"
-                type="submit"
-                class="btn btn-primary">
-                Подтвердить
-            </button>
+        <form id="divPerformer" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return false;">
+            <div class="col-12">
+                <label class="visually-hidden" for="inlineFormSelectPref">Исполнитель</label>
+                <select class="form-select" id="selectMember">
+                    <option value="0">Исполнитель не выбран</option>
+                    <?php foreach ($projectMembers as $member): ?>
+                    <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button id="btnSelectMember" type="button" class="btn btn-primary">Подтвердить</button>
+            </div>
         </form>
         <?php endif;?>
     </div>
@@ -147,20 +148,20 @@ foreach ($labels as $label) {
             </li>
         </ul>
         <?php else: ?>
-        <form id="formOption">
-            <select id="selectTester">
-                <option value="0">Тестер не выбран</option>
-
-                <?php foreach ($projectMembers as $member): ?>
-                <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
-                <?php endforeach; ?>
-            </select>
-            <button
-                id="btnSelect"
-                type="button"
-                class="btn btn-primary">
-                Подтвердить
-            </button>
+        <form id="formOption" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return false;">
+            <div class="col-12">
+                <label class="visually-hidden" for="inlineFormSelectPref">Тестировщик</label>
+                <select class="form-select" id="selectTester">
+                    <option value="0">Тестер не выбран</option>
+                    <?php foreach ($projectMembers as $member): ?>
+                    <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button id="btnSelect" type="button" class="btn btn-primary">Подтвердить</button>
+            </div>
         </form>
         <?php endif; ?>
     </div>
@@ -169,22 +170,26 @@ foreach ($labels as $label) {
 </article>
 
 <article id="addSpecMaster" title="Добавить мастера по тегу" style="display: none;">
-    <div class="add-spec-project-row">
-        <label for="selectTagForSpecMaster">Тег</label>
-        <select id="selectTagForSpecMaster">
-            <option value="0">-</option>
-            <?php foreach ($labels as $label): ?>
-            <option class="label-name" value=" <?=$label['id'];?> "><?=$label['label'];?></option>
-            <?php endforeach; ?>
-        </select>
+    <div class="row mb-3 add-spec-project-row">
+        <label for="selectTagForSpecMaster" class="col-sm-3 col-form-label">Тег</label>
+        <div class="col-sm-9">
+            <select class="form-select" id="selectTagForSpecMaster">
+                <option value="0">-</option>
+                <?php foreach ($labels as $label): ?>
+                <option class="label-name" value=" <?=$label['id'];?> "><?=$label['label'];?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
     </div>
-    <div class="add-spec-project-row">
-        <label for="selectSpecMaster">Мастер</label>
-        <select id="selectSpecMaster">
-            <option value="0">-</option>
-            <?php foreach ($projectMembers as $member): ?>
-            <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
-            <?php endforeach; ?>
-        </select>
+    <div class="row mb-3 add-spec-project-row">
+        <label for="selectSpecMaster" class="col-sm-3 col-form-label">Мастер</label>
+        <div class="col-sm-9">
+            <select class="form-select" id="selectSpecMaster">
+                <option value="0">-</option>
+                <?php foreach ($projectMembers as $member): ?>
+                <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
     </div>
 </article>
