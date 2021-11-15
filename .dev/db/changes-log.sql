@@ -372,4 +372,6 @@ DROP INDEX `repositoryId_lastСommit`;
 DROP TABLE IF EXISTS `lpm_workers`;
 DROP TABLE IF EXISTS `lpm_work_study`;
 
+-- v0.13.4
+
 --NEXT
