@@ -33,7 +33,6 @@ class PagesManager
             new ProjectPage(),
             new UsersPage(),
             new UserPage(),
-            new WorkStudyPage(),
             new ProfilePage()
         );
         

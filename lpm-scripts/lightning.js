@@ -192,12 +192,6 @@ let srv = {
             this.s._('deleteComment');
         }
     },
-    workStudy: {
-        s: new BaseService('WorkStudyService'),
-        addWorker: function (userId, hours, comingTime, onResult) {
-            this.s._('addWorker');
-        }
-    },
     project: {
         s: new BaseService('ProjectService'),
         addMembers: function (projectId, userIds, onResult) {

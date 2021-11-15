@@ -61,37 +61,6 @@ class PageConstructor
         return Issue::getListByMember(LightningEngine::getInstance()->getUserId());
     }
     
-    public static function getDateLinks()
-    {
-        // TODO сделать что-нибудь с этим!!
-        return LightningEngine::getInstance()->getCurrentPage()->getDateLinks();
-    }
-    
-    public static function getWeekLinks()
-    {
-        // TODO сделать что-нибудь с этим!!
-        return LightningEngine::getInstance()->getCurrentPage()->getWeekLinks();
-    }
-    
-    public static function getWeekDates()
-    {
-        // TODO сделать что-нибудь с этим!!
-        return LightningEngine::getInstance()->getCurrentPage()->getWeekDays();
-    }
-    
-    public static function getWeekStat()
-    {
-        // TODO сделать что-нибудь с этим!!
-        return LightningEngine::getInstance()->getCurrentPage()->getStat();
-    }
-    
-    public static function getAddWorkerList()
-    {
-        // TODO сделать что-нибудь с этим!!
-        //if (!WorkStudyPage::isCurrent()) return array();
-        return LightningEngine::getInstance()->getCurrentPage()->getAddWorkerList();
-    }
-    
     public static function getProject()
     {
         return Project::$currentProject;
@@ -107,12 +76,6 @@ class PageConstructor
     {
         $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
         return Issue::getLabels($projectId);
-    }
-    
-    public static function getWorkersList()
-    {
-        //if (!WorkStudyPage::isCurrent()) return array();
-        return LightningEngine::getInstance()->getCurrentPage()->getWorkers();
     }
 
     public static function getErrors()

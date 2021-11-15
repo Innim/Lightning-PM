@@ -1,13 +1,16 @@
-<article id="usersChooser" title="Выбрать пользователя">
-    <input name="usersFilter" onkeyup="ucInput();" onfocus="ucInput.interval = setInterval( ucInput, 500 );"
-        onblur="clearInterval( ucInput.interval );" type="search" placeholder="Введите имя для поиска" />
+<article id="usersChooser" title="Выбрать пользователя"> 
+    <input name="usersFilter" class="form-control form-control-sm" type="search" placeholder="Введите имя для поиска"
+        onkeyup="ucInput();" onfocus="ucInput.interval = setInterval(ucInput, 500);" onblur="clearInterval(ucInput.interval);">
+
     <div class="list-box">
         <table class="users-list no-avatar">
             <tbody>
                 <? foreach (lpm_get_users_choose_list() as $user) {?>
                 <tr>
                     <td><?=$user->getName();?></td>
-                    <td><input name="userId" type="checkbox" value="<?=$user->getID();?>" /></td>
+                    <td>
+                        <input name="userId" class="form-check-input" type="checkbox" id="checkboxNoLabel" value="<?=$user->getID();?>" aria-label="...">
+                    </td>
                 </tr>
                 <? }?>
             </tbody>
