@@ -4,8 +4,6 @@
  */
 class Comment extends LPMBaseObject
 {
-    private static $_listByInstance = array();
-    
     protected static function loadList($where)
     {
         $sql = "select * from `%1\$s`, `%2\$s` where `%1\$s`.`deleted` = '0'";
@@ -39,36 +37,15 @@ SQL;
         return StreamObject::loadObjList(self::getDB(), array($sql, LPMTables::COMMENTS,
                 LPMTables::USERS, LPMTables::PROJECTS, LPMTables::ISSUES), __CLASS__);
     }
-    
+
     public static function getListByInstance($instanceType, $instanceId = null)
     {
-        $list = null;
-
-        if (isset(self::$_listByInstance[$instanceType]) && $instanceId !== null &&
-                isset(self::$_listByInstance[$instanceType][$instanceId])) {
-            $list = self::$_listByInstance[$instanceType][$instanceId];
+        $where = '`%1$s`.`instanceType` = ' . $instanceType;
+        if ($instanceId !== null) {
+            $where .= ' AND `%1$s`.`instanceId` = ' . $instanceId;
         }
 
-        if ($list === null) {
-            if (LightningEngine::getInstance()->isAuth()) {
-                $where = '`%1$s`.`instanceType` = ' . $instanceType;
-                if ($instanceId !== null) {
-                    $where .= ' AND `%1$s`.`instanceId` = ' . $instanceId;
-                }
-                $list = self::loadList($where);
-
-                if ($instanceId !== null) {
-                    if (!isset(self::$_listByInstance[$instanceType])) {
-                        self::$_listByInstance[$instanceType] = array();
-                    }
-                    self::$_listByInstance[$instanceType][$instanceId] = $list;
-                }
-            } else {
-                $list = [];
-            }
-        }
-
-        return $list;
+        return self::loadList($where);
     }
     
     /**
