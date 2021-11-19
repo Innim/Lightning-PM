@@ -59,8 +59,7 @@ SQL;
         }
 
         $sql = <<<SQL
-SELECT DISTINCT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`, 
- 			    'with_issue', `i`.*, `p`.`name` `projectName`, `p`.`uid` as `projectUID`
+SELECT DISTINCT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`
                 $selectSql
 		   FROM `%1\$s` `s` 
      INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
@@ -71,11 +70,29 @@ SELECT DISTINCT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s
  	   ORDER BY $orderBySql
 SQL;
 
-        return StreamObject::loadObjList(
+
+        $list = StreamObject::loadObjList(
             $db,
             array_merge([$sql], $tables),
             __CLASS__
         );
+
+        // Чтобы получить полные данные задачи - лучше загрузим их отдельным запросом
+        $issueIds = [];
+        $stickerById = [];
+
+        foreach ($list as $sticker) {
+            $issueIds[] = $sticker->issueId;
+            $stickerById[$sticker->issueId] = $sticker;
+        }
+        
+        $issues = Issue::loadListByIds($issueIds);
+
+        foreach ($issues as $issue) {
+            $stickerById[$issue->id]->_issue = $issue;
+        }
+        
+        return $list;
     }
     
     public static function loadAllStickersList($userId)
@@ -297,13 +314,6 @@ SQL;
             }
         }
 
-        parent::loadStream(empty($data) ? $raw : $data);
-
-        if (isset($raw['with_issue'])) {
-            if ($this->_issue === null) {
-                $this->_issue = new Issue($this->issueId);
-            }
-            $this->_issue->loadStream($raw);
-        }
+        return parent::loadStream(empty($data) ? $raw : $data);
     }
 }

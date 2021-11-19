@@ -24,7 +24,7 @@ class Issue extends MembersInstance
         $sql = <<<SQL
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
     IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, 
-    `u`.*, `cnt`.*, `p`.`uid` as `projectUID`,
+    `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
     IFNULL(
         (SELECT 1 
           FROM `%6\$s` `cm`
@@ -201,7 +201,6 @@ WHERE;
                     ' AND `i`.`status` = ' . Issue::STATUS_IN_WORK .
                     // и проект не в архиве
                     ' AND `p`.`isArchive` = 0',
-                    '`p`.`name` AS `projectName`',
                     array('m' => LPMTables::MEMBERS)
                 );
             } else {
