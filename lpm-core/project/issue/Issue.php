@@ -19,11 +19,23 @@ class Issue extends MembersInstance
      */
     protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
     {
-        //return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
-        $sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
-                //"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
-                "IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, " .
-                "`u`.*, `cnt`.*, `p`.`uid` as `projectUID`";
+        $instanceType = LPMInstanceTypes::ISSUE;
+        $passTestType = IssueCommentType::PASS_TEST;
+        $sql = <<<SQL
+SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
+    IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, 
+    `u`.*, `cnt`.*, `p`.`uid` as `projectUID`,
+    IFNULL(
+        (SELECT 1 
+          FROM `%6\$s` `cm`
+    INNER JOIN `%7\$s` `icm` 
+            ON `icm`.`commentId` = `cm`.`id`
+         WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
+           AND `icm`.`type` = '$passTestType'
+      ORDER BY `date` DESC
+         LIMIT 1),
+        0) as `isPassTest`
+SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
         }
@@ -34,7 +46,9 @@ class Issue extends MembersInstance
             LPMTables::USERS,
             LPMTables::ISSUE_COUNTERS,
             LPMTables::PROJECTS,
-            LPMTables::SCRUM_STICKER
+            LPMTables::SCRUM_STICKER,
+            LPMTables::COMMENTS,
+            LPMTables::ISSUE_COMMENT
         );
 
         if (!empty($extraTables)) {
@@ -763,6 +777,14 @@ SQL;
     public $isBaseLinked;
 
     /**
+    * Есть ли отметка о тестировании.
+    *
+    * Если null, то это означает, что данные не загружены.
+    * @var bool
+    */
+    public $isPassTest;
+
+    /**
      * Проект, к которому относится задача
      * @var Project
      */
@@ -796,7 +818,7 @@ SQL;
             'hours'
         );
         $this->_typeConverter->addIntVars('priority');
-        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked');
+        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked', 'isPassTest');
         $this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
         
         $this->addClientFields(
