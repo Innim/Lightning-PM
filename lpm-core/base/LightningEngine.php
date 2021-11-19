@@ -207,7 +207,22 @@ class LightningEngine
             // В debug добавляем ошибку БД в текст, чтобы проще отлаживать
             $db = LPMGlobals::getInstance()->getDBConnect();
             if ($db->errno > 0) {
-                $errString .= ' (DB error #' . $db->errno . ': ' . $db->error . ')';
+                $errLines = [
+                    $errString,
+                    '',
+                    '[DEBUG INFORMATION]',
+                    'DB error #' . $db->errno . ': ' . $db->error . '',
+                ];
+
+                $lastQuery = $db->lastQuery;
+                if (empty($lastQuery)) {
+                    $errLines[] = 'No last query information';
+                } else {
+                    $errLines[] = 'SQL: ';
+                    $errLines[] = $lastQuery;
+                }
+
+                $errString = implode("\n", $errLines);
             }
         }
         $this->_errors[] = $errString;
@@ -380,10 +395,13 @@ class LightningEngine
             return;
         }
 
-        $this->addError(
-            '[' . get_class($e) . '] #' . $e->getCode() . ': ' . $e->getMessage() . "\n" .
-            $e->getTraceAsString() . "\n"
-        );
+        $errLines =
+        [
+            '[' . get_class($e) . '] #' . $e->getCode() . ': ' . $e->getMessage(),
+            $e->getTraceAsString()
+        ];
+
+        $this->addError(implode("\n", $errLines));
         echo '<h1>[DEBUG] ' . $title . '</h1>';
         echo '<pre>';
         var_dump($this->_errors);
