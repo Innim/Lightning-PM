@@ -4,18 +4,29 @@
  */
 class Comment extends LPMBaseObject
 {
+    private const ISSUE_COMMENT_PREFIX = 'ic_';
+
     protected static function loadList($where)
     {
-        $sql = "select * from `%1\$s`, `%2\$s` where `%1\$s`.`deleted` = '0'";
-        if ($where != '') {
-            $sql  .= " and " . $where;
-        }
-        $sql .= " and `%1\$s`.`authorId` = `%2\$s`.`userId` ".
-                    "order by `%1\$s`.`date` desc";
-        //GMLog::writeLog($sql);
+        $ic = self::ISSUE_COMMENT_PREFIX;
+
+        $whereSql = empty($where) ? '' : ' AND (' . $where . ')';
+        $sql = <<<SQL
+    SELECT `c`.*, `u`.*, 
+           `ic`.`commentId` `{$ic}commentId`, `ic`.`type` `{$ic}type`, `ic`.`data` `{$ic}data`
+      FROM `%1\$s` `c`
+INNER JOIN `%2\$s` `u` 
+        ON `c`.`authorId` = `u`.`userId`
+ LEFT JOIN `%3\$s` `ic`
+        ON `c`.`id` = `ic`.`commentId`
+     WHERE `c`.`deleted` = '0'
+           $whereSql
+  ORDER BY `c`.`date` DESC
+SQL;
+
         return StreamObject::loadObjList(
             self::getDB(),
-            [$sql, LPMTables::COMMENTS, LPMTables::USERS],
+            [$sql, LPMTables::COMMENTS, LPMTables::USERS, LPMTables::ISSUE_COMMENT],
             __CLASS__
         );
     }
@@ -40,9 +51,9 @@ SQL;
 
     public static function getListByInstance($instanceType, $instanceId = null)
     {
-        $where = '`%1$s`.`instanceType` = ' . $instanceType;
+        $where = '`c`.`instanceType` = ' . $instanceType;
         if ($instanceId !== null) {
-            $where .= ' AND `%1$s`.`instanceId` = ' . $instanceId;
+            $where .= ' AND `c`.`instanceId` = ' . $instanceId;
         }
 
         return self::loadList($where);
@@ -136,6 +147,11 @@ SQL;
      * @var Issue
      */
     public $issue;
+    /**
+     * Данные коммента задачи, если это коммент задачи и для него есть данные.
+     * @var IssueComment
+     */
+    public $issueComment;
 
     private $_mergeRequests;
     
@@ -225,11 +241,30 @@ SQL;
     
     public function getDate()
     {
-        return $this->dateLabel;//parent::getDateTime( $this->date );
+        return $this->dateLabel;
     }
     
     public function loadStream($hash)
     {
+        $issueCommentHash = [];
+        $icPrefix = self::ISSUE_COMMENT_PREFIX;
+        $icPrefixLen = mb_strlen($icPrefix);
+        foreach ($hash as $key => $value) {
+            if (strpos($key, $icPrefix) === 0) {
+                if ($value !== null) {
+                    $issueCommentHash[mb_substr($key, $icPrefixLen)] = $value;
+                }
+                unset($hash[$key]);
+            }
+        }
+
+        if (!empty($issueCommentHash)) {
+            $this->issueComment = new IssueComment();
+            if (!$this->issueComment->loadStream($issueCommentHash)) {
+                return false;
+            }
+        }
+
         return parent::loadStream($hash) && $this->author->loadStream($hash);
     }
     
