@@ -1596,6 +1596,12 @@ div.ftp
     margin-top: -2px;
     vertical-align: middle;
 }
+.scrum-board-sticker .pass-test-check{
+	display: none;
+}
+.scrum-board-sticker.pass-test .pass-test-check{
+	display: inline-block;
+}
 #scrumBoard.hide-sp .scrum-board-sticker .sticker-issue-sp {
 	display: none;	
 	margin: 0;
