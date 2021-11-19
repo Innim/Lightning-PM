@@ -38,7 +38,7 @@ SQL;
         $instanceType = implode(',', [LPMInstanceTypes::ISSUE, LPMInstanceTypes::ISSUE_FOR_TEST]);
         
         $sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`,
+		SELECT DISTINCT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`,
 			   'with_issue', `i`.*, `p`.`name` `projectName`, `p`.`uid` `projectUID`
 		FROM `%1\$s` `s`
             INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
