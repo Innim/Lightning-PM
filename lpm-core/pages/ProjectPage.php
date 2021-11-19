@@ -305,7 +305,7 @@ class ProjectPage extends LPMPage
     private function initScrumBoard()
     {
         $this->addTmplVar('project', $this->_project);
-        $this->addTmplVar('stickers', ScrumSticker::loadList($this->_project->id));
+        $this->addTmplVar('stickers', ScrumSticker::loadBoard($this->_project->id));
     }
 
     private function initScrumBoardSnapshot()

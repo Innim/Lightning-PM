@@ -5,57 +5,93 @@
  */
 class ScrumSticker extends LPMBaseObject
 {
-    public static function loadList($projectId)
+    /**
+     * Загружаем список стикеров на доске для указанного проекта.
+     */
+    public static function loadBoard($projectId)
     {
-        $db = self::getDB();
-
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
 
+        $where = <<<SQL
+`i`.`projectId` = ${projectId} AND `s`.`state` IN (${states})
+SQL;
+
+        return self::loadList($where);
+    }
+
+    protected static function loadList($where, $extraSelect = '', $extraTables = null, $extraTablesOn = null, $orderBy = null)
+    {
+        $db = self::getDB();
+
+        $selectSql = empty($extraSelect) ? '' : ', ' . $extraSelect;
+        $whereSql = empty($where) ? '' : ' AND (' . $where . ')';
+        $orderBySql = empty($orderBy) ? '`i`.`priority` DESC' : $orderBy;
+
+
+        $tables = [
+            LPMTables::SCRUM_STICKER,
+            LPMTables::ISSUES,
+            LPMTables::PROJECTS
+        ];
+        $innerJoinSql = '';
+
+        if (!empty($extraTables)) {
+            if (empty($extraTablesOn)) {
+                throw new \GMFramework\ProviderLoadException('Необходимо задать условие присоединения таблиц');
+            }
+
+            if (count($extraTables) != count($extraTablesOn)) {
+                throw new \GMFramework\ProviderLoadException('Необходимо задать условие присоединения для всех таблиц');
+            }
+
+            $t = count($tables);
+            $i = 0;
+            foreach ($extraTables as $alias => $table) {
+                $t++;
+
+                $onSql = $extraTablesOn[$i++];
+                $innerJoinSql .= <<<SQL
+     INNER JOIN `%{$t}\$s` `$alias` ON $onSql
+SQL;
+                $tables[] = $table;
+            }
+        }
+
         $sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`, 
-			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
-		  FROM `%1\$s` `s` 
-    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
-    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
-     	 WHERE `i`.`projectId` = ${projectId} AND `i`.`deleted` = 0 
-     	   AND `s`.`state` IN (${states})
- 	  ORDER BY `i`.`priority` DESC
+SELECT DISTINCT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`, 
+ 			    'with_issue', `i`.*, `p`.`name` `projectName`, `p`.`uid` as `projectUID`
+                $selectSql
+		   FROM `%1\$s` `s` 
+     INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
+     INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
+                $innerJoinSql
+     	  WHERE `i`.`deleted` = 0 
+                $whereSql
+ 	   ORDER BY $orderBySql
 SQL;
 
         return StreamObject::loadObjList(
             $db,
-            [$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS],
+            array_merge([$sql], $tables),
             __CLASS__
         );
     }
     
     public static function loadAllStickersList($userId)
     {
-        $db = self::getDB();
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
         $instanceType = implode(',', [LPMInstanceTypes::ISSUE, LPMInstanceTypes::ISSUE_FOR_TEST]);
         
-        $sql = <<<SQL
-		SELECT DISTINCT `s`.`issueId` `s_issueId`, `s`.`added` `s_added`, `s`.`state` `s_state`,
-			   'with_issue', `i`.*, `p`.`name` `projectName`, `p`.`uid` `projectUID`
-		FROM `%1\$s` `s`
-            INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id`
-            INNER JOIN `%3\$s` `m` ON `s`.`issueId` = `m`.`instanceId`
-            INNER JOIN `%4\$s` `p` ON `i`.`projectId` = `p`.`id`
-     	WHERE `i`.`deleted` = 0
-     	    AND `s`.`state` IN (${states})
-     	    AND `m`.`userId` = ${userId}
-     	    AND `m`.`instanceType` IN (${instanceType})
-     	    AND `p`.`isArchive` = 0
- 	    ORDER BY `i`.`priority` DESC
+        $where = <<<SQL
+`s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
 SQL;
-        
-        return StreamObject::loadObjList(
-            $db,
-            [$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::MEMBERS, LPMTables::PROJECTS],
-            __CLASS__
+        return self::loadList(
+            $where,
+            '',
+            ['m' => LPMTables::MEMBERS],
+            ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
         );
     }
     
@@ -66,24 +102,7 @@ SQL;
      */
     public static function load($issueId)
     {
-        $db = self::getDB();
-
-        $sql = <<<SQL
-		SELECT `s`.`issueId` `s_issueId`, `s`.`state` `s_state`, 
-			   'with_issue', `i`.*, `p`.`uid` as `projectUID`
-		  FROM `%1\$s` `s` 
-    INNER JOIN `%2\$s` `i` ON `s`.`issueId` = `i`.`id` 
-    INNER JOIN `%3\$s` `p` ON `i`.`projectId` = `p`.`id`
-     	 WHERE `s`.`issueId` = ${issueId} AND `i`.`deleted` = 0 
-SQL;
-
-        $list = StreamObject::loadObjList(
-            $db,
-            [$sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES, LPMTables::PROJECTS],
-            __CLASS__
-        );
-
-        return empty($list) ? null : $list[0];
+        return StreamObject::singleLoad($issueId, __CLASS__, '', 's`.`issueId');
     }
 
     /**
