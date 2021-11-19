@@ -21,9 +21,11 @@ class Issue extends MembersInstance
     {
         $instanceType = LPMInstanceTypes::ISSUE;
         $passTestType = IssueCommentType::PASS_TEST;
+        $statusWait = Issue::STATUS_WAIT;
+        $statusCompleted = Issue::STATUS_COMPLETED;
         $sql = <<<SQL
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
-    IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, 
+    IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
     IFNULL(
         (SELECT 1 
@@ -72,9 +74,14 @@ SQL;
         }
 
         if (empty($orderBy)) {
-            $orderBy = "FIELD(`i`.`status`, " . Issue::STATUS_WAIT . "," .
-                Issue::STATUS_IN_WORK . "," . Issue::STATUS_COMPLETED . "), " .
-                "`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC, `id` ASC";
+            $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
+            $orderBy = <<<SQL
+            FIELD(`i`.`status`, $statusesOrder),
+            `realCompleted` DESC, 
+            IF(`i`.`status` = $statusWait, `isPassTest`, 0) DESC,
+            `i`.`priority` DESC, 
+            `i`.`completeDate` ASC, `id` ASC
+            SQL;
         }
 
         $sql .= " AND `i`.`authorId` = `u`.`userId` ORDER BY " . $orderBy;

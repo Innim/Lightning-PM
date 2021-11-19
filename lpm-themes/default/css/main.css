@@ -1021,7 +1021,8 @@ table tr.verify-issue {
 	color           : #999999;
 }
 
-table tr td .icon-deadline {
+table.issues-list tr td .icon-deadline,
+table.issues-list tr td .pass-test-check {
 	display: none;
 }
 
@@ -1041,7 +1042,8 @@ table tr.deadline-urgent-issue a.issue-name  {
 
 table tr.deadline-outdated-issue a.issue-name,
 table tr.deadline-urgent-issue a.issue-name,  
-table tr.deadline-medium-issue a.issue-name {
+table tr.deadline-medium-issue a.issue-name,  
+table tr.pass-test a.issue-name  {
 	font-weight: bolder;
 }
 
@@ -1049,10 +1051,15 @@ table tr.deadline-medium-issue a.issue-name {
 	color: #00b100;
 }
 
+table.issues-list tr td .pass-test-check {
+	color: #00b100;
+}
+
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
-table tr.deadline-low-issue td .icon-deadline.icon-deadline-low {
+table tr.deadline-low-issue td .icon-deadline.icon-deadline-low,
+table.issues-list tr.pass-test .pass-test-check {
 	display: inline-block;
 }
 

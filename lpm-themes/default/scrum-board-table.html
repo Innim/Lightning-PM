@@ -82,7 +82,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                     <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
                 <?php endif; ?>
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
-                    <i class="fas fa-check-square pass-test-check"></i>
+                    <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
                     <?=$sticker->getName();?>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
