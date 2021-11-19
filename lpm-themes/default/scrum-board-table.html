@@ -49,6 +49,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
             <td class="scrum-board-col <?=$colStyles[$j];?>">
             <?php 
             $columnStickers = isset($stickersByState[$state]) ? $stickersByState[$state] : [];
+            ScrumSticker::sortStickersForBoard($state, $columnStickers);
             foreach ($columnStickers as $sticker):
                 $sp = $sticker->getIssue()->hours;
                 if ($sp == 0)

@@ -203,6 +203,25 @@ SQL;
         return $stickersByState;
     }
 
+    public static function sortStickersForBoard($state, &$list)
+    {
+        switch ($state) {
+            case ScrumStickerState::TESTING: {
+                // В тесте мы показываем вверху те, что уже прошли тест
+                usort($list, function (ScrumSticker $a, ScrumSticker $b) {
+                    $aIssue = $a->getIssue();
+                    $bIssue = $b->getIssue();
+                    if ($aIssue->isPassTest != $bIssue->isPassTest) {
+                        return $aIssue->isPassTest ? -1 : 1;
+                    }
+
+                    return $bIssue->priority - $aIssue->priority;
+                });
+                break;
+            }
+        }
+    }
+
     /**
      * Идентификатор задачи
      * @var int
