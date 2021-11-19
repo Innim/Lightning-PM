@@ -153,6 +153,20 @@ SQL;
         return $db->queryt($sql, LPMTables::SCRUM_STICKER);
     }
 
+    public static function splitByStates($list)
+    {
+        $stickersByState = [];
+        foreach ($list as $sticker) {
+            if (!isset($stickersByState[$sticker->state])) {
+                $stickersByState[$sticker->state] = [$sticker];
+            } else {
+                $stickersByState[$sticker->state][] = $sticker;
+            }
+        }
+
+        return $stickersByState;
+    }
+
     /**
      * Идентификатор задачи
      * @var int
