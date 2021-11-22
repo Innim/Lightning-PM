@@ -220,18 +220,20 @@ HTML;
 ?>
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
 
-<!-- TODO: Bootstrap формы -->
 <article id="createBranch" title="Создать ветку задачи">
     <form class="create-branch" onsubmit="createBranch.save(); return false;">
-        <ul class="create-branch-items">
-            <li>
-                <label for="repository">Репозиторий</label><select id="repository" name="repository"></select>
-            </li>
-            <li>
-                <label for="parentBranch">Из</label><select id="parentBranch" name="parentBranch"></select>
-            </li>
-            <li><label for="branchName">Название</label><input id="branchName" type="text" name="branchName"></li>
-        </ul>
+        <div class="mb-3">
+            <label for="repository" class="form-label">Репозиторий</label>
+            <select class="form-select" id="repository" name="repository"></select>
+        </div>
+        <div class="mb-3">
+            <label for="parentBranch" class="form-label">Из</label>
+            <select class="form-select" id="parentBranch" name="parentBranch"></select>
+        </div>
+        <div class="mb-3">
+            <label for="branchName" class="form-label">Название</label>
+            <input type="text" class="form-control" id="branchName" name="branchName">
+        </div>
     </form>
 </article>
 
@@ -253,11 +255,12 @@ HTML;
     </p>
 </article>
 
-<!-- TODO: Bootstrap формы -->
 <article id="selectProjectPopup" title="Выберите проект" class="select-project-popup" style="display: none;">
     <div class="select-project-row">
-        <label for="projectField">Создать задачу в </label>
-        <select id="projectField"></select>
+        <div class="mb-3">
+            <label for="projectField" class="form-label">Создать задачу в</label>
+            <select class="form-select" id="projectField"></select>
+        </div>
     </div>
     <div id="copyLinkedIssues" class="select-project-row copy-linked-issues-row">
         <div class="form-check">
@@ -268,10 +271,12 @@ HTML;
           </div>
     </div>
     <div id="targetKind" class="select-project-row target-kind-row">
-        <label for="targetKindField">Задача по</label>
-        <select id="targetKindField">
-            <option value="apply">реализации в другом проекте</option>
-            <option value="finished">доделкам</option>
-        </select>
+        <div class="mb-3">
+            <label for="targetKindField" class="form-label">Задача по</label>
+            <select class="form-select" id="targetKindField">
+                <option value="apply">реализации в другом проекте</option>
+                <option value="finished">доделкам</option>
+            </select>
+        </div>
     </div>
 </article>

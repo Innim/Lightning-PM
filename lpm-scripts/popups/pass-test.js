@@ -52,12 +52,10 @@ const passTest = {
     save: function () {
         const $el = $("#passTestDialog");
 
-        preloader.show();
         const comment = $("#passTestComment .comment-text-field", $el).val();
         issuePage.doSomethingAndPostCommentForCurrentIssue(
             (issueId, handler) => srv.issue.passTest(issueId, comment.trim(), handler),
             res => {
-                preloader.hide();
                 if (res.success)
                     passTest.close();
             });

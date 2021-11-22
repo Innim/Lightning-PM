@@ -47,6 +47,11 @@ class LPMTables
      */
     const ISSUE_BRANCH = 'issue_branch';
     /**
+     * Дополнительные данные комментария к задаче.
+     * @var string
+     */
+    const ISSUE_COMMENT = 'issue_comment';
+    /**
      * Стикеры для Scrum доски
      * @var string
      */

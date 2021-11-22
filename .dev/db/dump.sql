@@ -92,6 +92,14 @@ CREATE TABLE `lpm_issue_branch` (
   KEY `repositoryId_lastCommit` (`repositoryId`,`lastCommit`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Ветка задачи на GitLab репозитории.';
 
+DROP TABLE IF EXISTS `lpm_issue_comment`;
+CREATE TABLE `lpm_issue_comment` (
+  `commentId` bigint NOT NULL COMMENT 'ID комментария',
+  `type` varchar(255) NOT NULL COMMENT 'Тип комментария',
+  `data` varchar(255) NOT NULL COMMENT 'Данные комментария',
+  PRIMARY KEY (`commentId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Данные комментария к задаче';
+
 DROP TABLE IF EXISTS `lpm_issue_counters`;
 CREATE TABLE `lpm_issue_counters` (
   `issueId` bigint(20) NOT NULL COMMENT 'идентификатор задачи',

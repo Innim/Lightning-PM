@@ -7,8 +7,6 @@ if (empty($id)) die();
 
 $editorTabId = $id . 'EditTab';
 $previewTabId = $id . 'PreviewTab';
-
-// TODO: Bootstrap формы 
 ?>
 <div id="<?=$id;?>" class="comment-input-text-tabs">
     <ul>
@@ -16,9 +14,13 @@ $previewTabId = $id . 'PreviewTab';
       <li><a href="#<?=$previewTabId;?>">Предпросмотр</a></li>
     </ul>
     <div id="<?=$editorTabId;?>" class="editor-tab">
-        <textarea name="commentText" class="comment-text-field"></textarea>
-        <p class="comment-note">Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
-            <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.</p>        
+        <textarea id="commentText" class="form-control comment-text-field" name="commentText"
+         rows="5" aria-describedby="descFieldHelp"></textarea>
+
+         <div id="descFieldHelp" class="form-text">
+            Можете использовать <strong>*зведочки*</strong>, <em>_подчеркивания_</em>,
+            <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
+        </div>
     </div>
     <div id="<?=$previewTabId;?>" class="preview-tab">
         <div class="preview-comment comments-list-item"></div>

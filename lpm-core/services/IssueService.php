@@ -250,7 +250,7 @@ class IssueService extends LPMBaseService
                 $text = 'Прошла тестирование';
             }
 
-            $comment = $this->postComment($issue, $text, true);
+            $comment = $this->postComment($issue, $text, true, IssueCommentType::PASS_TEST);
 
             $issue->autoSetMasters();
 
@@ -803,9 +803,22 @@ class IssueService extends LPMBaseService
     /**
      * @return Comment
      */
-    private function postComment(Issue $issue, $text, $ignoreSlackNotification = false)
-    {
-        return $this->_engine->comments()->postComment($this->getUser(), $issue, $text, $ignoreSlackNotification);
+    private function postComment(
+        Issue $issue,
+        $text,
+        $ignoreSlackNotification = false,
+        string $type = null,
+        string $data = null
+    ) {
+        return $this->_engine->comments()->postComment(
+            $this->getUser(),
+            $issue,
+            $text,
+            $ignoreSlackNotification,
+            false,
+            $type,
+            $data
+        );
     }
 
     private function setupCommentAnswer(Comment $comment)

@@ -90,7 +90,7 @@ SQL;
     public static function createSnapshot($projectId, $userId)
     {
         // получаем список всех стикеров на текущей доске
-        $stickers = ScrumSticker::loadList($projectId);
+        $stickers = ScrumSticker::loadBoard($projectId);
 
         // Проверяем, что для всех задач в тесте/готово указаны все SP по участникам
         $membersSpByIssueId = [];
