@@ -1958,3 +1958,12 @@ form.pass-test #passTestComment textarea.comment-text-field {
  .select-project-popup.copy-mode .copy-linked-issues-row {
 	display: block;
 }
+
+
+/**
+* === Фильтры на Scrum-доске ===
+*/
+ .scrum-board-filters-container {
+	 max-width: 20%;
+	 margin-bottom: 10px;
+ }
