@@ -4,10 +4,16 @@
     $project - проект
 */
 ?>
-<div id="scrumBoardFilters" class="scrum-board-filters-container">
-    <vue-multiselect v-model="value"
-                     placeholder="Фильтр по тегам"
-                     :options="options"
-                     :searchable="true"
+
+<div id="scrumBoardFilters"
+     class="scrum-board-filters-container">
+    <vue-multiselect
+         placeholder="Фильтр по тегам"
+         v-model="value"
+         :options='<?=json_encode(lpm_get_issue_formatted_labels());?>'
+         :show-labels="false"
+         searchable
+         multiple
+         taggable
     ></vue-multiselect>
 </div>

@@ -1960,6 +1960,6 @@ form.pass-test #passTestComment textarea.comment-text-field {
 * === Фильтры на Scrum-доске ===
 */
  .scrum-board-filters-container {
-	 max-width: 20%;
+	 width: 50%;
 	 margin-bottom: 10px;
  }
