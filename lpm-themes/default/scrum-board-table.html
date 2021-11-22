@@ -83,7 +83,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 <?php endif; ?>
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
                     <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
-                    <?=$sticker->getName();?>
+                    <span class="sticker-issue-title"><?=$sticker->getName();?></span>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
                 <span class="sticker-issue-members"><?php
