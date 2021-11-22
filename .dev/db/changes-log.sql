@@ -374,7 +374,6 @@ DROP TABLE IF EXISTS `lpm_work_study`;
 
 -- v0.13.4
 
-DROP TABLE IF EXISTS `lpm_issue_comment`;
 CREATE TABLE `lpm_issue_comment` (
   `commentId` bigint NOT NULL COMMENT 'ID комментария',
   `type` varchar(255) NOT NULL COMMENT 'Тип комментария',
@@ -382,5 +381,6 @@ CREATE TABLE `lpm_issue_comment` (
   PRIMARY KEY (`commentId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Данные комментария к задаче';
 
+-- v0.13.5
 
 --NEXT
