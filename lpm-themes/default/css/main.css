@@ -711,7 +711,6 @@ ul.images-url > li {
 	max-width: none;
 }
 .comments .links-bar {
-	/*text-align: right;*/
 	height: 20px;
 	margin: 0 0 5px;
 }
@@ -743,37 +742,24 @@ a.create-branch-icon .plus-icon {
 	display: inline-block;
 	margin-right: 5px;
 }
-.comments form.add-comment textarea {
-	width     : 100%;
-	height    : 100px;
-	box-sizing: border-box;
-}
-.comments form.add-comment .comment-note
-{
-	margin: 5px 0;
-	font-size: .8em;
-	color: #999999;
-	text-align: left;
-}
 .comments form.add-comment .buttons-bar {
 	text-align: right;
 }
-.comments form.add-comment .ui-tabs .ui-tabs-panel {
+.comments form.add-comment .ui-tabs .ui-tabs-panel,
+#passTestComment.ui-tabs .ui-tabs-panel {
 	padding: 0;
 }
 .comments form.add-comment .preview-comment .lds-spinner div:after {
 	background: #333;
 }
-.comments form.add-comment .preview-comment.comments-list-item .text {
+.comments form.add-comment .preview-comment.comments-list-item .text,
+#passTestComment .preview-comment.comments-list-item .text {
 	margin: 0;
 }
 .comments .comments-list {
 	list-style: none;
 	padding: 0;
 }
-/*#projectComments.comments .comments-list {
-	padding: 0;
-}*/
 .comments .comments-list .comments-list-item {
 	border-top: solid 1px #cccccc;	
 }
@@ -1021,7 +1007,8 @@ table tr.verify-issue {
 	color           : #999999;
 }
 
-table tr td .icon-deadline {
+table.issues-list tr td .icon-deadline,
+table.issues-list tr td .pass-test-check {
 	display: none;
 }
 
@@ -1041,7 +1028,8 @@ table tr.deadline-urgent-issue a.issue-name  {
 
 table tr.deadline-outdated-issue a.issue-name,
 table tr.deadline-urgent-issue a.issue-name,  
-table tr.deadline-medium-issue a.issue-name {
+table tr.deadline-medium-issue a.issue-name,  
+table tr.pass-test a.issue-name  {
 	font-weight: bolder;
 }
 
@@ -1049,10 +1037,15 @@ table tr.deadline-medium-issue a.issue-name {
 	color: #00b100;
 }
 
+table.issues-list tr td .pass-test-check {
+	color: #00b100;
+}
+
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
-table tr.deadline-low-issue td .icon-deadline.icon-deadline-low {
+table tr.deadline-low-issue td .icon-deadline.icon-deadline-low,
+table.issues-list tr.pass-test .pass-test-check {
 	display: inline-block;
 }
 
@@ -1596,6 +1589,12 @@ div.ftp
     margin-top: -2px;
     vertical-align: middle;
 }
+.scrum-board-sticker .pass-test-check{
+	display: none;
+}
+.scrum-board-sticker.pass-test .pass-test-check{
+	display: inline-block;
+}
 #scrumBoard.hide-sp .scrum-board-sticker .sticker-issue-sp {
 	display: none;	
 	margin: 0;
@@ -1903,10 +1902,7 @@ form.pass-test ul.pass-test-items label {
 }
 
 form.pass-test #passTestComment textarea.comment-text-field {
-	width: 100%;
 	height: 300px;
-	box-sizing: border-box;
-	margin: 10px auto;
 }
 
 /* Модальное окно целей спринта */

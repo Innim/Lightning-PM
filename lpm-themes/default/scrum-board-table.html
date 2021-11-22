@@ -37,50 +37,42 @@ if (!isset($addClearBoard)) $addClearBoard = false;
     </thead>
     <tbody>
     <?php
-       $user = lpm_get_user();
-       // Просто сначала распределим по столбцам
-       $stickersByState = [];
-       $count = 0;
-       foreach ($stickers as $sticker)
-       {
-            if (!isset($stickersByState[$sticker->state]))
-            $stickersByState[$sticker->state] = [];
-            $stickersByState[$sticker->state][] = $sticker;
-            $count = max(count($stickersByState[$sticker->state]), $count);
-       }
+        $user = lpm_get_user();
+        // Просто сначала распределим по столбцам
+        $stickersByState = ScrumSticker::splitByStates($stickers);
         $columns = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
-        ScrumStickerState::TESTING, ScrumStickerState::DONE];
+            ScrumStickerState::TESTING, ScrumStickerState::DONE];
         $colStyles = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     ?>
     <tr>
         <?php foreach ($columns as $j => $state):?>
             <td class="scrum-board-col <?=$colStyles[$j];?>">
-            <?php for ($i = 0; $i < $count; ++$i):?>
-            <?php
-                $sticker = isset($stickersByState[$state], $stickersByState[$state][$i]) ?
-                    $stickersByState[$state][$i] : null;
-                if ($sticker):
-                    $sp = $sticker->getIssue()->hours;
-                    if ($sp == 0)
-                        $color = 'white';
-                    else if ($sp < 1)
-                        $color = 'blue';
-                    else if ($sp <= 3)
-                        $color = 'green';
-                    else if ($sp <= 5)
-                        $color = 'yellow';
-                    else if ($sp <= 8)
-                        $color = 'orange';
-                    else
-                        $color = 'red';
-                    $spStr = $sp == .5 ? "1/2" : $sp;
+            <?php 
+            $columnStickers = isset($stickersByState[$state]) ? $stickersByState[$state] : [];
+            ScrumSticker::sortStickersForBoard($state, $columnStickers);
+            foreach ($columnStickers as $sticker):
+                $sp = $sticker->getIssue()->hours;
+                if ($sp == 0)
+                    $color = 'white';
+                else if ($sp < 1)
+                    $color = 'blue';
+                else if ($sp <= 3)
+                    $color = 'green';
+                else if ($sp <= 5)
+                    $color = 'yellow';
+                else if ($sp <= 8)
+                    $color = 'orange';
+                else
+                    $color = 'red';
+                $spStr = $sp == .5 ? "1/2" : $sp;
 
-                    $issue = $sticker->getIssue();
-                    $members = $issue->getMembers();
+                $issue = $sticker->getIssue();
+                $members = $issue->getMembers();
 
-                    $cssClasses = [$color];
-                    if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
-                    if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
+                $cssClasses = [$color];
+                if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
+                if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
+                if ($issue->isPassTest) $cssClasses[] = 'pass-test';
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
@@ -89,7 +81,8 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 <?php if ($addProjectName): ?>
                     <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
                 <?php endif; ?>
-                <a class="sticker-header" href="<?=$sticker->getIssue()->getConstURL();?>">
+                <a href="<?=$sticker->getIssue()->getConstURL();?>">
+                    <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
                     <?=$sticker->getName();?>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
@@ -112,11 +105,9 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                        class="sticker-control-next"><i class="fa fa-caret-right" aria-hidden="true"></i></a>
                 </div>
             </div>
-            <?php endif;?>
-            <?php endfor;?>
+            <?php endforeach;?>
         </td>
         <?php endforeach;?>
     </tr>
-    <?php //endfor;?>
     </tbody>
 </table>

@@ -11,13 +11,24 @@ class CommentsManager
      * Публикация комментария к задаче.
      * @return Comment
      */
-    public function postComment(User $user, Issue $issue, $text, $ignoreSlackNotification = false, $ignoreMr = false)
-    {
+    public function postComment(
+        User $user,
+        Issue $issue,
+        $text,
+        $ignoreSlackNotification = false,
+        $ignoreMr = false,
+        string $type = null,
+        string $data = null
+    ) {
         $issueId = $issue->id;
         if (!$comment = $this->addComment($user, LPMInstanceTypes::ISSUE, $issueId, $text)) {
             throw new Exception("Не удалось добавить комментарий");
         }
         $comment->issue = $issue;
+
+        if (!empty($type)) {
+            IssueComment::create($comment->id, $type, $data);
+        }
 
         // отправка оповещений
         $memberIds = $issue->getMemberIds();

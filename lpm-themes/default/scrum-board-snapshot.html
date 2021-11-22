@@ -67,6 +67,8 @@
             </thead>
             <tbody>
                 <?php
+                // TODO: надо использовать lpm_print_table_scrum_board($stickers, false, false);
+                // но проблема тут в том, что $snapshot->getStickers() возвращает список не тех объектов
                 $user = lpm_get_user();
 
                 // Просто сначала распределим по столбцам
@@ -97,16 +99,18 @@
                             $stickersByState[$state][$i] : null;
                         if ($sticker):
                         $sp = $sticker->issue_sp;
-                        if ($sp < 1)
-                        $color = 'white';
+                        if ($sp == 0)
+                            $color = 'white';
+                        else if ($sp < 1)
+                            $color = 'blue';
                         else if ($sp <= 3)
-                        $color = 'green';
+                            $color = 'green';
                         else if ($sp <= 5)
-                        $color = 'yellow';
+                            $color = 'yellow';
                         else if ($sp <= 8)
-                        $color = 'orange';
+                            $color = 'orange';
                         else
-                        $color = 'red';
+                            $color = 'red';
                         $spStr = $sp == .5 ? "1/2" : $sp;
 
                         $userRole = $sticker->isTester($user->userId) ? 'tester' : ($sticker->isMember($user->userId) ? 'mine' : '');

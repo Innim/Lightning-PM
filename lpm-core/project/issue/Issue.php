@@ -19,11 +19,25 @@ class Issue extends MembersInstance
      */
     protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
     {
-        //return StreamObject::loadListDefault( $where, LPMTables::PROJECTS, __CLASS__ );
-        $sql = "SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, " .
-                //"IF(`%1\$s`.`status` <> 2, `%1\$s`.`priority`, 0) AS `realPriority`, " .
-                "IF(`i`.`status` = 2, `i`.`completedDate`, NULL) AS `realCompleted`, " .
-                "`u`.*, `cnt`.*, `p`.`uid` as `projectUID`";
+        $instanceType = LPMInstanceTypes::ISSUE;
+        $passTestType = IssueCommentType::PASS_TEST;
+        $statusWait = Issue::STATUS_WAIT;
+        $statusCompleted = Issue::STATUS_COMPLETED;
+        $sql = <<<SQL
+SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
+    IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
+    `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
+    IFNULL(
+        (SELECT 1 
+          FROM `%6\$s` `cm`
+    INNER JOIN `%7\$s` `icm` 
+            ON `icm`.`commentId` = `cm`.`id`
+         WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
+           AND `icm`.`type` = '$passTestType'
+      ORDER BY `date` DESC
+         LIMIT 1),
+        0) as `isPassTest`
+SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
         }
@@ -34,7 +48,9 @@ class Issue extends MembersInstance
             LPMTables::USERS,
             LPMTables::ISSUE_COUNTERS,
             LPMTables::PROJECTS,
-            LPMTables::SCRUM_STICKER
+            LPMTables::SCRUM_STICKER,
+            LPMTables::COMMENTS,
+            LPMTables::ISSUE_COMMENT
         );
 
         if (!empty($extraTables)) {
@@ -58,9 +74,14 @@ SQL;
         }
 
         if (empty($orderBy)) {
-            $orderBy = "FIELD(`i`.`status`, " . Issue::STATUS_WAIT . "," .
-                Issue::STATUS_IN_WORK . "," . Issue::STATUS_COMPLETED . "), " .
-                "`realCompleted` DESC, `i`.`priority` DESC, `i`.`completeDate` ASC, `id` ASC";
+            $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
+            $orderBy = <<<SQL
+            FIELD(`i`.`status`, $statusesOrder),
+            `realCompleted` DESC, 
+            IF(`i`.`status` = $statusWait, `isPassTest`, 0) DESC,
+            `i`.`priority` DESC, 
+            `i`.`completeDate` ASC, `id` ASC
+            SQL;
         }
 
         $sql .= " AND `i`.`authorId` = `u`.`userId` ORDER BY " . $orderBy;
@@ -187,7 +208,6 @@ WHERE;
                     ' AND `i`.`status` = ' . Issue::STATUS_IN_WORK .
                     // и проект не в архиве
                     ' AND `p`.`isArchive` = 0',
-                    '`p`.`name` AS `projectName`',
                     array('m' => LPMTables::MEMBERS)
                 );
             } else {
@@ -763,6 +783,14 @@ SQL;
     public $isBaseLinked;
 
     /**
+    * Есть ли отметка о тестировании.
+    *
+    * Если null, то это означает, что данные не загружены.
+    * @var bool
+    */
+    public $isPassTest;
+
+    /**
      * Проект, к которому относится задача
      * @var Project
      */
@@ -796,7 +824,7 @@ SQL;
             'hours'
         );
         $this->_typeConverter->addIntVars('priority');
-        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked');
+        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked', 'isPassTest');
         $this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
         
         $this->addClientFields(
