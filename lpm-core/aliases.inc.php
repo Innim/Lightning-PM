@@ -77,6 +77,14 @@ function lpm_print_scripts()
 }
 
 /**
+ * Распечатывает ссылки на js файлы модулей.
+ */
+function lpm_print_script_module()
+{
+    PagePrinter::jsModuleScripts();
+}
+
+/**
  * Распечатывает Open Graph мету.
  */
 function lpm_print_open_graph_meta()
@@ -271,6 +279,15 @@ function lpm_print_table_scrum_board_issue_member(User $member)
 function lpm_print_sprint_target_form($project)
 {
     return PagePrinter::sprintTargetForm($project);
+}
+
+/**
+ * Выводит шаблон компонента фильтров Scrum доски.
+ * @param $project
+ */
+function lpm_print_scrum_board_filters($project)
+{
+    return PagePrinter::sprintScrumBoardFilters($project);
 }
 
 /**

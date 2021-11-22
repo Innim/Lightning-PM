@@ -198,6 +198,14 @@ class PagePrinter
         }
     }
 
+    public static function jsModuleScripts()
+    {
+        $modules = PageConstructor::getUsingJSModules();
+        foreach ($modules as $moduleFileName) {
+            self::jsScriptModule($moduleFileName);
+        }
+    }
+
     /**
      * Возвращает JS строку, представляющую объект.
      */
@@ -257,6 +265,13 @@ JS;
         echo '<script type="text/javascript" src="' .
              self::getPC()->getJSLink($file) .
              '"></script>';
+    }
+
+    private static function jsScriptModule($file)
+    {
+        echo '<script type="module" src="' .
+            self::getPC()->getJSLink($file) .
+            '"></script>';
     }
     
     private static function cssLink($file)

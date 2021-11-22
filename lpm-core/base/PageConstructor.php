@@ -10,6 +10,11 @@ class PageConstructor
     {
         return self::$_usingScripts;
     }
+
+    public static function getUsingJSModules()
+    {
+        return self::$_usingJSModules;
+    }
     
     public static function getMainMenu()
     {
@@ -156,6 +161,10 @@ class PageConstructor
         'libs/clipboard.min',
         'libs/lodash.min',
         'lightning'
+    ];
+
+    private static $_usingJSModules = [
+        'scrum-board-filters/index'
     ];
     
     public $_title    = '';
