@@ -89,7 +89,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 <?php if ($addProjectName): ?>
                     <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
                 <?php endif; ?>
-                <a href="<?=$sticker->getIssue()->getConstURL();?>">
+                <a class="sticker-header" href="<?=$sticker->getIssue()->getConstURL();?>">
                     <?=$sticker->getName();?>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
