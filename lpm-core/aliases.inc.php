@@ -392,6 +392,17 @@ function lpm_get_issue_labels()
 }
 
 /**
+ * Возвращает список меток для задачи.
+ */
+function lpm_get_issue_formatted_labels()
+{
+    $labels = PageConstructor::getIssueLabels();
+    return array_values(array_map(function ($item) {
+        return $item['label'];
+    }, $labels));
+}
+
+/**
  * Возвращает список пользователей
  */
 function lpm_get_users_list()
