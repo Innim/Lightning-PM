@@ -189,7 +189,7 @@ let issueForm = {
                 $('a.image-link', imgLI).attr('href', img.source);
                 $('img.image-preview', imgLI).attr('src', img.preview);
                 $('input[name=imgId]', imgLI).val(img.imgId);
-                $('a.remove-img', imgLI).click(issueForm.removeImage);
+                $('a.remove-img', imgLI).on('click', issueForm.removeImage);
 
                 imgsList.append(imgLI);
             });
@@ -360,21 +360,16 @@ let issueForm = {
         issueFormLabels.update();
     },
     addImageByUrl: function (imageUrl, autofocus = false) {
-        // $("#issueForm li > ul.images-url > li input").removeAttr('autofocus');
-        var urlLI = $("#issueForm ul.images-url > li.imgUrlTempl").clone().show();
-        var imgInput = $("#issueForm ul.images-url");
+        const urlLI = $("#issueForm ul.images-url > li.imgUrlTempl").clone().show();
+        const imgInput = $("#issueForm ul.images-url");
         urlLI.removeAttr('class');
-        if (imageUrl)
-            urlLI[0].children[0].value = imageUrl;
-        //urlLI.("input").attr('autofocus','true');
-        //добавляем в контейнер
+        if (imageUrl) {
+            $('input[name="imgUrls[]"]', urlLI).val(imageUrl);
+        }
         imgInput.append(urlLI);
-        // setCaretPosition(urlLI.find("input"));
-        urlLI.find("a").click(function (event) {
-            urlLI.remove();
-        });
+        urlLI.find("a").on('click',  (event) => urlLI.remove());
 
-        if (autofocus) urlLI.find('input').focus();
+        if (autofocus) urlLI.find('input').trigger('focus');
     },
     resetUsers: function (listId, selectId) {
         $('#' + selectId + ' option').not('option[value=-1]').remove();
