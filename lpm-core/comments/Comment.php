@@ -88,7 +88,7 @@ SQL;
      */
     public static function load($id)
     {
-        return StreamObject::singleLoad($id, __CLASS__, '', '%1$s`.`id');
+        return StreamObject::singleLoad($id, __CLASS__, '', 'c`.`id');
     }
 
     public static function setTimeToDeleteComment($comment, $time)
