@@ -23,6 +23,7 @@ class Issue extends MembersInstance
 
         $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
+        $mergeRequestType = IssueCommentType::MERGE_REQUEST;
 
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
@@ -35,7 +36,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
  INNER JOIN `%7\$s` `icm` 
          ON `icm`.`commentId` = `cm`.`id`
       WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
-        AND `icm`.`type` IN ('$passTestType', '$requestChangesType')
+        AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
    ORDER BY `date` DESC
       LIMIT 1) AS `t_testState`
 SQL;
