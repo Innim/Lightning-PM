@@ -1702,22 +1702,6 @@ div.ftp
 	margin: -1px;
 }
 
-#addIssueLabelFormContainer #issueLabelText {
-	width: 300px;
-}
-
-#addIssueLabelFormContainer div {
-	padding: 5px 0;
-}
-
-#addIssueLabelFormContainer div.align-right {
-	text-align: right;
-}
-
-#isAllProjectsCheckbox {
-	vertical-align: middle;
-}
-
 #removeIssuesLabelContainer .table {
 	border: 1px solid #CCCCCC;
 	padding: 0;
