@@ -7,22 +7,31 @@
 ?>
 
 <div class="scrum-board-top-content">
-    <div class="card w-25 scrum-board-target">
-        <div class="card-body">
-            <h5 class="card-title title-target">Цели спринта</h5>
-            <div class="card-text text-target"><?=$project->getSprintTargetHtml();?></div>
-            <a href="#" class="card-link target-btn">Задать цели спринта</a>
+    <div class="content">
+        <div class="row">
+            <div class="col">
+                <h1><?php lpm_print_header();?></h1>
+            </div>
         </div>
-    </div>
+        <div class="row">
+            <div class="col d-flex flex-row align-items-end">
+                <div class="card w-25 scrum-board-target">
+                    <div class="card-body">
+                        <h5 class="card-title title-target">Цели спринта</h5>
+                        <div class="card-text text-target"><?=$project->getSprintTargetHtml();?></div>
+                        <a href="#" class="card-link target-btn">Задать цели спринта</a>
+                    </div>
+                </div>
 
-    <div class="w-50">
-        <?php lpm_print_scrum_board_filters($project); ?>
+                <div class="w-25 ms-1">
+                    <?php lpm_print_scrum_board_filters($project); ?>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
-    <h1><?php lpm_print_header();?></h1>
-
     <h3 class="scrum-board-header">SCRUM доска.
         <span class="scrum-board-info">
         <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSprintNum();?></span>
