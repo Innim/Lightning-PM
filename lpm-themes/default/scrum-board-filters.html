@@ -9,9 +9,11 @@
      class="scrum-board-filters-container">
     <vue-multiselect
          placeholder="Фильтр по тегам"
-         v-model="value"
+         v-model="selectedTags"
          :options='<?=json_encode(lpm_get_issue_formatted_labels());?>'
          :show-labels="false"
+         :max-height="200"
+         :close-on-select="false"
          searchable
          multiple
          taggable
