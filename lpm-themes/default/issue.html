@@ -188,12 +188,16 @@ $project = $issue->getProject();
                 <a href="#" class="toggle-comments" onclick="comments.toggleCommentForm(); return false;">Свернуть
                     комментарии</a>
                 <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
+                <?php if ($issue->isTesting()): ?>
+                <a href="#" onclick="comments.showCommentForm(true); return false;">Найдены проблемы</a>
+                <?php endif; ?>
             </div>
         </div>
         <form id="addCommentForm" class="add-comment" onsubmit="issuePage.postComment(); return false;">
             <?php lpm_print_comment_input_text('addCommentTabs');?>
 
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
+            <input type="hidden" name="requestChanges" value="" />
             <p class="buttons-bar">
                 <button class="btn btn-primary" type="submit">Отправить</button>
                 <button class="btn btn-secondary" type="reset" onclick="comments.hideCommentForm();">Отмена</button>

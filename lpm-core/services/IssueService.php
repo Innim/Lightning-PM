@@ -151,9 +151,10 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
     
-    public function comment($issueId, $text)
+    public function comment($issueId, $text, $requestChanges = false)
     {
         $issueId = (int)$issueId;
+        $requestChanges = (bool)$requestChanges;
 
         try {
             $issue = Issue::load($issueId);
@@ -161,7 +162,12 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            $comment = $this->postComment($issue, $text);
+            $comment = $this->postComment(
+                $issue,
+                $text,
+                false,
+                $requestChanges ? IssueCommentType::REQUEST_CHANGES : null
+            );
 
             $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {

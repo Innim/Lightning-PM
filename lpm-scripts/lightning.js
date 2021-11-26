@@ -149,7 +149,7 @@ let srv = {
         remove: function (issueId, onResult) {
             this.s._('remove');
         },
-        comment: function (issueId, text, onResult) {
+        comment: function (issueId, text, requestChanges, onResult) {
             this.s._('comment');
         },
         previewComment: function (text, onResult) {

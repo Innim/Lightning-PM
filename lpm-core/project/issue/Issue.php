@@ -1194,6 +1194,14 @@ SQL;
             default: return '';
         }
     }
+    
+    /**
+     * Определяет, находится ли сейчас задача в тестировании.
+     */
+    public function isTesting()
+    {
+        return $this->status == self::STATUS_WAIT;
+    }
 
     public function loadStream($hash)
     {
