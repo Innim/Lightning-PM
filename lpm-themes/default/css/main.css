@@ -1008,7 +1008,8 @@ table tr.verify-issue {
 }
 
 table.issues-list tr td .icon-deadline,
-table.issues-list tr td .pass-test-check {
+table.issues-list tr td .pass-test-check,
+table.issues-list tr td .changes-requested-check {
 	display: none;
 }
 
@@ -1041,11 +1042,16 @@ table.issues-list tr td .pass-test-check {
 	color: #00b100;
 }
 
+table.issues-list tr td .changes-requested-check {
+	color: #dc3545;
+}
+
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
 table tr.deadline-low-issue td .icon-deadline.icon-deadline-low,
-table.issues-list tr.pass-test .pass-test-check {
+table.issues-list tr.pass-test .pass-test-check, 
+table.issues-list tr.changes-requested .changes-requested-check {
 	display: inline-block;
 }
 
@@ -1589,10 +1595,12 @@ div.ftp
     margin-top: -2px;
     vertical-align: middle;
 }
-.scrum-board-sticker .pass-test-check{
+.scrum-board-sticker .pass-test-check,
+.scrum-board-sticker .changes-requested-check {
 	display: none;
 }
-.scrum-board-sticker.pass-test .pass-test-check{
+.scrum-board-sticker.pass-test .pass-test-check,
+.scrum-board-sticker.changes-requested .changes-requested-check {
 	display: inline-block;
 }
 #scrumBoard.hide-sp .scrum-board-sticker .sticker-issue-sp {

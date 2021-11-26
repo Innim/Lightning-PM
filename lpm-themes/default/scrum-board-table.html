@@ -73,6 +73,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
                 if ($issue->isPassTest) $cssClasses[] = 'pass-test';
+                if ($issue->isChangesRequested) $cssClasses[] = 'changes-requested';
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
@@ -83,6 +84,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 <?php endif; ?>
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
                     <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
+                    <i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
                     <?=$sticker->getName();?>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
