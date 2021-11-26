@@ -88,11 +88,7 @@ SQL;
 
         array_unshift($args, $sql);
 
-        try {
-            return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
-        } catch (Exception $e) {
-            exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
-        }
+        return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
     }
 
     /**
