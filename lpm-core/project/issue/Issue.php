@@ -182,7 +182,7 @@ SQL;
 AND
 (`i`.`idInProject` LIKE '$needle%%' OR `i`.`name` LIKE '%%$needle%%'))
 WHERE;
-            return self::loadList($where, '', '', '`i`.`idInProject` DESC');
+            return self::loadList($where, '', null, '`i`.`idInProject` DESC');
         }
     }
     
@@ -208,7 +208,8 @@ WHERE;
                     ' AND `i`.`status` = ' . Issue::STATUS_IN_WORK .
                     // и проект не в архиве
                     ' AND `p`.`isArchive` = 0',
-                    array('m' => LPMTables::MEMBERS)
+                    '',
+                    ['m' => LPMTables::MEMBERS]
                 );
             } else {
                 self::$_listByUser[$memberId] = array();
