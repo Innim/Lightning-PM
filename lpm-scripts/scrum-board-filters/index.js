@@ -1,2 +1,4 @@
-import {initFilters} from './filter-by-tag';
-initFilters();
+import {filterByTag} from './filter-by-tag';
+
+// Инициализация компонента фильтров по тегу на скрам доске
+filterByTag('#scrumBoardFilters');
