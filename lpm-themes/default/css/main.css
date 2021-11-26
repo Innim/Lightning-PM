@@ -1068,7 +1068,7 @@ table.issues-list tr.changes-requested .changes-requested-check {
 	font-size : smaller;
 }
 
-/* список задач и добавление/редактироание задачи */
+/* список задач и добавление/редактирование задачи */
 table.issues-list td {
 	position: relative;
 }

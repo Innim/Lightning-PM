@@ -8,7 +8,7 @@ if ('undefined' == typeof RegExp.escapeStr) {
         /*
         ( ) — круглые скобки;
         [ ] — квадратные скобки;
-        \ — обраный слеш;
+        \ — обратный слеш;
         . — точка;
         ^ — степень;
         $ — знак доллара;
@@ -260,7 +260,7 @@ let srv = {
         emailPref: function (addIssue, editIssue, issueState, issueComment, onResult) {
             this.s._('emailPref');
         },
-        newPass: function (curentPass, newPass, onResult) {
+        newPass: function (currentPass, newPass, onResult) {
             this.s._('newPass');
         }
     },
@@ -449,7 +449,7 @@ window.onload = function () {
         $('#noway').show();
     }
 
-    // galery
+    // gallery
     L.path = window.lpmOptions.themeUrl + 'imgs/';
     L.create();
 };
