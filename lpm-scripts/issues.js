@@ -760,6 +760,8 @@ function setIssueInfo(issue) {
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
 
+    $("#issueView").removeClass('issue-testing');
+
     $("#issueInfo .info-list").
         removeClass('active-issue').
         removeClass('verify-issue').
@@ -782,6 +784,7 @@ function setIssueInfo(issue) {
     } else if (issue.isVerify()) {
         $("#issueInfo .buttons-bar").addClass('verify-issue');
         $("#issueInfo .info-list").addClass('verify-issue');
+        $("#issueView").addClass('issue-testing');
     }
 
     const testers = issue.getTesters();

@@ -738,6 +738,12 @@ a.create-branch-icon .plus-icon {
 .comments .links-bar .comments-controls {
 	float: right;
 }
+.comments .links-bar .comments-controls .request-changes-link {
+	display: none;
+}
+#issueView.issue-testing .comments .links-bar .comments-controls .request-changes-link {
+	display: inline-block;
+}
 .comments .links-bar .scrum-comments-shortcut a {
 	display: inline-block;
 	margin-right: 5px;

@@ -10,8 +10,11 @@ $userId = lpm_get_user()->getID();
 $isOnBoard = $issue->isOnBoard();
 
 $project = $issue->getProject();
+
+$classes = [];
+if ($issue->isTesting()) $classes[] = 'issue-testing';
 ?>
-<article id="issueView">
+<article id="issueView" class="<?=implode(' ', $classes);?>">
     <h1><a href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a></h1>
     <div class="header-operations-bar">
         <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
@@ -188,9 +191,7 @@ $project = $issue->getProject();
                 <a href="#" class="toggle-comments" onclick="comments.toggleCommentForm(); return false;">Свернуть
                     комментарии</a>
                 <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
-                <?php if ($issue->isTesting()): ?>
-                <a href="#" onclick="comments.showCommentForm(true); return false;">Найдены проблемы</a>
-                <?php endif; ?>
+                <a href="#" class="request-changes-link" onclick="comments.showCommentForm(true); return false;">Найдены проблемы</a>
             </div>
         </div>
         <form id="addCommentForm" class="add-comment" onsubmit="issuePage.postComment(); return false;">
