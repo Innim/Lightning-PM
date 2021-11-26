@@ -5,10 +5,9 @@
     $stickers - список стикеров
 */
 ?>
-<article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
-    <h1><?php lpm_print_header();?></h1>
 
-    <div class="card w-50 my-2 scrum-board-target">
+<div class="scrum-board-top-content">
+    <div class="card w-25 scrum-board-target">
         <div class="card-body">
             <h5 class="card-title title-target">Цели спринта</h5>
             <div class="card-text text-target"><?=$project->getSprintTargetHtml();?></div>
@@ -16,7 +15,13 @@
         </div>
     </div>
 
-    <?php lpm_print_scrum_board_filters($project); ?>
+    <div class="w-50">
+        <?php lpm_print_scrum_board_filters($project); ?>
+    </div>
+</div>
+
+<article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
+    <h1><?php lpm_print_header();?></h1>
 
     <h3 class="scrum-board-header">SCRUM доска.
         <span class="scrum-board-info">

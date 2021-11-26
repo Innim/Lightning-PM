@@ -1955,11 +1955,16 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	display: block;
 }
 
+.scrum-board-top-content {
+	display: flex;
+	align-items: start;
+	margin-top: 15px;
+}
 
 /**
 * === Фильтры на Scrum-доске ===
 */
  .scrum-board-filters-container {
 	 width: 50%;
-	 margin-bottom: 10px;
+	 margin-left: 10px;
  }
