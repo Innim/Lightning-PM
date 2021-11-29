@@ -57,6 +57,7 @@ class PagePrinter
         self::cssLink('tribute');
         self::cssLink('bootstrap.min');
         self::cssLink('bootstrap-reset');
+        self::cssLink('vue-multiselect.min');
         self::cssLink('main');
     }
     
@@ -175,6 +176,14 @@ class PagePrinter
     {
         PageConstructor::includePattern('scrum-board-target-sprint', compact('project'));
     }
+
+    /**
+     * Распечатывает шаблон фильтров Scrum-доски.
+     */
+    public static function sprintScrumBoardFilters()
+    {
+        PageConstructor::includePattern('scrum-board-filters');
+    }
     
 
     /**
@@ -195,6 +204,14 @@ class PagePrinter
         $scripts = PageConstructor::getUsingScripts();
         foreach ($scripts as $scriptFileName) {
             self::jsScriptLink($scriptFileName);
+        }
+    }
+
+    public static function jsModuleScripts()
+    {
+        $modules = PageConstructor::getUsingJSModules();
+        foreach ($modules as $moduleFileName) {
+            self::jsScriptModule($moduleFileName);
         }
     }
 
@@ -257,6 +274,13 @@ JS;
         echo '<script type="text/javascript" src="' .
              self::getPC()->getJSLink($file) .
              '"></script>';
+    }
+
+    private static function jsScriptModule($file)
+    {
+        echo '<script type="module" src="' .
+            self::getPC()->getJSLink($file) .
+            '"></script>';
     }
     
     private static function cssLink($file)

@@ -302,16 +302,3 @@ CREATE TABLE `lpm_user_auth` (
   KEY `userId` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Данные авторизации по куки';
 
-
-DROP TABLE IF EXISTS `lpm_workers`;
-DROP TABLE IF EXISTS `lpm_work_study`;
-
-DROP TABLE IF EXISTS `lpm_instance_targets`;
-CREATE TABLE `lpm_instance_targets` (
-    `instanceType` int(20) DEFAULT NULL COMMENT 'Тип экземпляра',
-    `instanceId` int(20) DEFAULT NULL COMMENT 'ID экземпляра',
-    `content` longtext COLLATE 'utf8_unicode_ci' DEFAULT NULL COMMENT 'Содержимое целей',
-    PRIMARY KEY (`instanceType`,`instanceId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Цели указанной сущности.';
-
--- 2021-08-06

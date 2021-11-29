@@ -50,10 +50,11 @@ let comments = {
 		$('#addCommentForm .comment-text-field').val('');
 		window.localStorage.removeItem(comments.storeKey);
 	},
-	showCommentForm: function () {
+	showCommentForm: function (requestChanges = false) {
 		$('#comments form.add-comment').show();
 		$('#comments .links-bar a').hide();
-		$('#comments form.add-comment textarea[name=commentText]').focus();
+		$('#comments form.add-comment textarea[name=commentText]').trigger('focus');
+		$('#comments form.add-comment input[name=requestChanges]').val(requestChanges ? 1 : 0);
 	},
 	hideCommentForm: function (clear = true) {
 		if (clear) comments.clearForm();

@@ -55,6 +55,10 @@ $userId = lpm_get_user()->userId;
 			if ($issue->isPassTest) {
 				$classes[] = 'pass-test';
 			}
+
+			if ($issue->isChangesRequested) {
+				$classes[] = 'changes-requested';
+			}
 		?>
 		<tr class="<?=implode(' ', $classes);?>" data-id="<?=$issue->id;?>"
 			data-status="<?=$issue->status;?>" data-complete-date="<?=$issue->completeDate;?>"
@@ -93,6 +97,7 @@ $userId = lpm_get_user()->userId;
 			</td>
 			<td>
 				<i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
+				<i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
 				<i class="fas fa-calendar-times icon-deadline icon-deadline-outdated" title="Просрочена"></i>
 				<i class="fas fa-fire icon-deadline icon-deadline-urgent" title="Срочная"></i>
 				<i class="fas fa-calendar-alt icon-deadline icon-deadline-medium" title="Средней срочности"></i>

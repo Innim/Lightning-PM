@@ -760,6 +760,8 @@ function setIssueInfo(issue) {
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
 
+    $("#issueView").removeClass('issue-testing');
+
     $("#issueInfo .info-list").
         removeClass('active-issue').
         removeClass('verify-issue').
@@ -782,6 +784,7 @@ function setIssueInfo(issue) {
     } else if (issue.isVerify()) {
         $("#issueInfo .buttons-bar").addClass('verify-issue');
         $("#issueInfo .info-list").addClass('verify-issue');
+        $("#issueView").addClass('issue-testing');
     }
 
     const testers = issue.getTesters();
@@ -840,8 +843,9 @@ issuePage.commentMergeInDevelop = function () {
 };
 
 issuePage.postComment = function () {
-    var text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
-    issuePage.postCommentForCurrentIssue(text);
+    const text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
+    const requestChanges = $('#issueView .comments form.add-comment input[name=requestChanges]').val();
+    issuePage.postCommentForCurrentIssue(text, requestChanges == 1);
     return false;
 };
 
@@ -884,11 +888,11 @@ issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSucces
     }
 }
 
-issuePage.postCommentForCurrentIssue = function (text) {
+issuePage.postCommentForCurrentIssue = function (text, requestChanges = false) {
     if (text == '') return;
 
     issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.comment(issueId, text, handler));
+        (issueId, handler) => srv.issue.comment(issueId, text, requestChanges, handler));
 }
 
 issuePage.merged = function () {
