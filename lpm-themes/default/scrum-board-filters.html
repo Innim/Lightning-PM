@@ -1,0 +1,13 @@
+<div id="scrumBoardFilters">
+    <vue-multiselect
+         placeholder="Фильтр по тегам"
+         v-model="selectedTags"
+         :options='<?=json_encode(lpm_get_issue_labels_names());?>'
+         :show-labels="false"
+         :max-height="200"
+         close-on-select
+         searchable
+         multiple
+         taggable
+    ></vue-multiselect>
+</div>

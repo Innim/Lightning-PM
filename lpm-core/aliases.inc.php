@@ -77,6 +77,14 @@ function lpm_print_scripts()
 }
 
 /**
+ * Распечатывает ссылки на js файлы модулей.
+ */
+function lpm_print_script_module()
+{
+    PagePrinter::jsModuleScripts();
+}
+
+/**
  * Распечатывает Open Graph мету.
  */
 function lpm_print_open_graph_meta()
@@ -274,6 +282,14 @@ function lpm_print_sprint_target_form($project)
 }
 
 /**
+ * Выводит шаблон компонента фильтров Scrum доски.
+ */
+function lpm_print_scrum_board_filters()
+{
+    return PagePrinter::sprintScrumBoardFilters();
+}
+
+/**
 *   Возвращает текущую страницу
 */
 function lpm_get_current_page()
@@ -372,6 +388,17 @@ function lpm_get_project_tester()
 function lpm_get_issue_labels()
 {
     return PageConstructor::getIssueLabels();
+}
+
+/**
+ * Возвращает имена меток задач.
+ */
+function lpm_get_issue_labels_names()
+{
+    $labels = PageConstructor::getIssueLabels();
+    return array_values(array_map(function ($item) {
+        return $item['label'];
+    }, $labels));
 }
 
 /**

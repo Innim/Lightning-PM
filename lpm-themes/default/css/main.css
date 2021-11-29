@@ -1952,3 +1952,7 @@ form.pass-test #passTestComment textarea.comment-text-field {
  .select-project-popup.copy-mode .copy-linked-issues-row {
 	display: block;
 }
+
+.scrum-board-top-content {
+	margin-top: 15px;
+}

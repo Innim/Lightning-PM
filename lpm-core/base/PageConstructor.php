@@ -10,6 +10,11 @@ class PageConstructor
     {
         return self::$_usingScripts;
     }
+
+    public static function getUsingJSModules()
+    {
+        return self::$_usingJSModules;
+    }
     
     public static function getMainMenu()
     {
@@ -155,7 +160,13 @@ class PageConstructor
         'js-options.php$' ,
         'libs/clipboard.min',
         'libs/lodash.min',
+        'libs/vue@2',
+        'libs/vue-multiselect.min',
         'lightning'
+    ];
+
+    private static $_usingJSModules = [
+        'scrum-board-filters/index'
     ];
     
     public $_title    = '';
