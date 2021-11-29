@@ -283,11 +283,10 @@ function lpm_print_sprint_target_form($project)
 
 /**
  * Выводит шаблон компонента фильтров Scrum доски.
- * @param $project
  */
-function lpm_print_scrum_board_filters($project)
+function lpm_print_scrum_board_filters()
 {
-    return PagePrinter::sprintScrumBoardFilters($project);
+    return PagePrinter::sprintScrumBoardFilters();
 }
 
 /**
@@ -392,9 +391,9 @@ function lpm_get_issue_labels()
 }
 
 /**
- * Возвращает список меток для задачи.
+ * Возвращает имена меток задач.
  */
-function lpm_get_issue_formatted_labels()
+function lpm_get_issue_labels_names()
 {
     $labels = PageConstructor::getIssueLabels();
     return array_values(array_map(function ($item) {

@@ -1,19 +1,11 @@
-<?php
-/*
-Требуются:
-    $project - проект
-*/
-?>
-
-<div id="scrumBoardFilters"
-     class="scrum-board-filters-container">
+<div id="scrumBoardFilters">
     <vue-multiselect
          placeholder="Фильтр по тегам"
          v-model="selectedTags"
-         :options='<?=json_encode(lpm_get_issue_formatted_labels());?>'
+         :options='<?=json_encode(lpm_get_issue_labels_names());?>'
          :show-labels="false"
          :max-height="200"
-         :close-on-select="false"
+         close-on-select
          searchable
          multiple
          taggable
