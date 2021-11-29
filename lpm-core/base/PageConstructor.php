@@ -160,6 +160,8 @@ class PageConstructor
         'js-options.php$' ,
         'libs/clipboard.min',
         'libs/lodash.min',
+        'libs/vue@2',
+        'libs/vue-multiselect.min',
         'lightning'
     ];
 

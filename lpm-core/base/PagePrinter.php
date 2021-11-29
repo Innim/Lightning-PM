@@ -57,6 +57,7 @@ class PagePrinter
         self::cssLink('tribute');
         self::cssLink('bootstrap.min');
         self::cssLink('bootstrap-reset');
+        self::cssLink('vue-multiselect.min');
         self::cssLink('main');
     }
     
@@ -177,11 +178,11 @@ class PagePrinter
     }
 
     /**
-     * Распечатывает таблицу Scrum доски.
+     * Распечатывает шаблон фильтров Scrum-доски.
      */
-    public static function sprintScrumBoardFilters($project)
+    public static function sprintScrumBoardFilters()
     {
-        PageConstructor::includePattern('scrum-board-filters', compact('project'));
+        PageConstructor::includePattern('scrum-board-filters');
     }
     
 
