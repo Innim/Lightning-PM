@@ -208,11 +208,16 @@ SQL;
         switch ($state) {
             case ScrumStickerState::TESTING: {
                 // В тесте мы показываем вверху те, что уже прошли тест
+                // А за ними те, что требуют правок
                 usort($list, function (ScrumSticker $a, ScrumSticker $b) {
                     $aIssue = $a->getIssue();
                     $bIssue = $b->getIssue();
                     if ($aIssue->isPassTest != $bIssue->isPassTest) {
                         return $aIssue->isPassTest ? -1 : 1;
+                    }
+
+                    if ($aIssue->isChangesRequested != $bIssue->isChangesRequested) {
+                        return $aIssue->isChangesRequested ? -1 : 1;
                     }
 
                     return $bIssue->priority - $aIssue->priority;

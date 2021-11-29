@@ -204,7 +204,14 @@ class GitlabExternalApi extends ExternalApi
                         $commentText = $mr->description . "\n\n" . $commentText;
                     }
 
-                    $engine->comments()->postComment($user, $issue, $commentText, false, true);
+                    $engine->comments()->postComment(
+                        $user,
+                        $issue,
+                        $commentText,
+                        false,
+                        true,
+                        IssueCommentType::MERGE_REQUEST
+                    );
 
                     // Добавляем коммент со ссылкой на задачу в MR
                     if (!empty($mrComment)) {
