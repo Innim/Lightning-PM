@@ -12,6 +12,7 @@ class ParsedownExt extends Parsedown
     private $_delRegex;
     private $_underlineRegex;
     private $_userLinkRegex;
+    private $_taskLinkRegex;
 
     public function __construct()
     {
@@ -29,6 +30,9 @@ class ParsedownExt extends Parsedown
 
         array_unshift($this->InlineTypes['['], 'UserLink');
         $this->_userLinkRegex = '/^\[(@.*?)]\(user:([0-9]+)\)/';
+
+        array_unshift($this->InlineTypes['['], 'IssueLink');
+        $this->_taskLinkRegex = '/^\[(#\d*?)]\((.*?)\)/';
     }
 
     protected function inlineStrong($Excerpt)
@@ -67,6 +71,35 @@ class ParsedownExt extends Parsedown
                     ],
                 ],
             ];
+        }
+    }
+
+    protected function inlineIssueLink($Excerpt)
+    {
+        if (preg_match($this->_taskLinkRegex, $Excerpt['text'], $matches)) {
+            $issueId = mb_substr($matches[1], 1);
+            $project = Project::$currentProject;
+            $issue = Issue::loadByIdInProject($project->id, $issueId);
+            $images = $issue->getImages();
+            $imageUrl = empty($images) ? null : $images[0]->getSource();
+            if (!empty($issue)) {
+                return [
+                    'extent' => strlen($matches[0]),
+                    'element' => [
+                        'name' => 'a',
+                        'handler' => 'line',
+                        'nonNestables' => array('Url', 'Link'),
+                        'text' => $matches[1],
+                        'attributes' => [
+                            'href' => $matches[2],
+                            'data-issue-id' => $issue->getID(),
+                            'data-tooltip' => 'issue',
+                            'data-img' => $imageUrl,
+                            'title' => $issue->getName(),
+                        ],
+                    ],
+                ];
+            }
         }
     }
 
