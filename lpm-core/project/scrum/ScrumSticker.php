@@ -189,6 +189,25 @@ SQL;
         return $db->queryt($sql, LPMTables::SCRUM_STICKER);
     }
 
+    /**
+     * Ставит текущую дату в качестве даты добавления стикера
+     * для всех стикеров указанного проекта.
+     */
+    public static function updateStickerAdded($projectId)
+    {
+        $added = DateTimeUtils::mysqlDate();
+        
+        $db = self::getDB();
+        $sql = <<<SQL
+    UPDATE `%1\$s` `s`
+INNER JOIN `%2\$s` `i` ON `i`.`id` = `s`.`issueId`
+       SET `s`.`added` = '${added}'
+     WHERE `i`.`projectId` = ${projectId}
+SQL;
+
+        return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
+    }
+
     public static function splitByStates($list)
     {
         $stickersByState = [];
