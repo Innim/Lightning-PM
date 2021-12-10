@@ -81,6 +81,11 @@ class PagePrinter
         PageConstructor::includePattern('issue');
     }
     
+    public static function projectsList($list, $isArchive = false)
+    {
+        PageConstructor::includePattern('projects-list', compact('list', 'isArchive'));
+    }
+    
     public static function usersList()
     {
         PageConstructor::includePattern('users-list');

@@ -943,24 +943,7 @@ table.users-list tr.active-user td button#unlocked-btn {
 	margin : 40px auto;
 }
 
-
 /* список проектов и добавление проекта*/
-ul.projects-list {
-	list-style: circle;
-}
-ul.projects-list > li {
-	position: relative;
-	margin: 2em 2em 2em 0;
-}
-ul.projects-list .btn.archive,
-ul.projects-list .btn.develop
-{
-	margin-top: 5px;
-	font-size: 0.6em;
-}
-.projects-list ,project-name {
-	font-size: 1.1em;
-}
 .projects-list .project-fix {
 	margin: 0 0 0 16px;
 	padding: 0;
@@ -972,22 +955,9 @@ ul.projects-list .btn.develop
 	text-align: center;
 	background: transparent;
 }
-.projects-list .rotate-icon {
+.project-list-item .rotate-icon {
 	transform: rotate(45deg);
 	color: #999999;
-}
-.projects-list-item-submenu {
-	padding: 0 2px;
-}
-.projects-list-item-submenu > a {
-	font-size: 0.7em;
-}
-.projects-list .project-desc {
-	font-size: 0.9em;
-	border: 1px dotted #666666;
-	background-color: #f0f0f0;
-	padding: 5px;
-	margin-bottom: 0px;
 }
 table tr.completed-issue {
 	background-color: #cccccc;
