@@ -1,5 +1,9 @@
 ## Next release
 
+### Added
+
+- [Bootstrap] Шрифт по умолчанию.
+
 ## 0.13.7 - 2021-12-09
 
 ### Fixed
