@@ -124,6 +124,8 @@ SQL;
             }
         }
 
+        // TODO: проверить чтобы started был не раньше, чем предыдущий снимок?
+
         // Готовимся делать снимок
         $pid = $projectId;
         $created = DateTimeUtils::mysqlDate();
