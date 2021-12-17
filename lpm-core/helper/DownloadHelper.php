@@ -10,9 +10,12 @@ class DownloadHelper {
      * @param string $url URL изображения, которое надо скачать.
      * @param string $targetPath Путь, куда надо скачивать.
      * @param int    $maxSizeMb Максимальный допустимый размер в MB.
-     * @return 
+     * @param bool   $addExtension Если true, то к имени файла в $targetPath будет добавлено расширение,
+     *                             Автоматически определенное по ContentType
+     * @return string Путь до скачанного файла.
+     * @throws Exception В случае возникновения ошибки при скачивании.
      */
-    public static function downloadImage($url, $targetPath, $maxSizeMb = 10)
+    public static function downloadImage($url, $targetPath, $maxSizeMb = 10, $addExtension = false)
     {
          // определяем размер скачиваемой картинки
          $context = stream_context_create([
@@ -42,7 +45,7 @@ class DownloadHelper {
             }
 
             $size = -1;
-            // TODO: $type "Content-Type: image/png" и взять из него расширение
+            $contentType = null;
             // извлекаем из них размер
             foreach ($imageData["wrapper_data"] as $param) {
                 // Там может быть несколько content-length, если делаются пересылки
@@ -51,6 +54,9 @@ class DownloadHelper {
                     //получаем параметр
                     $param = explode(":", $param);
                     $size  = (int)(trim($param[1]));
+                } elseif (strripos($param, 'content-type') === 0) {
+                    $parts = explode(":", $param);
+                    $contentType = (trim($parts[1]));
                 }
             }
 
@@ -70,10 +76,16 @@ class DownloadHelper {
                 ));
             }
 
+            if ($addExtension && $contentType != null) {
+                $mimes = new \Mimey\MimeTypes;
+                $ext = $mimes->getExtension($contentType); 
+                if (!empty($ext)) $targetPath .= '.' . $ext;
+            }
+
 
             // Если размер файла валиден и он не превышает лимит - пишем файл на диск
             if (file_put_contents($targetPath, $stream, FILE_APPEND | LOCK_EX)) {
-                var_dump($imageData);
+                return $targetPath;
             } else {
                 // не удалось
                 throw new Exception('Ошибка скачивания или записи файла');
