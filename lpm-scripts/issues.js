@@ -7,7 +7,7 @@ $(document).ready(
             issuePage.labels = $('#issueInfo').data('labels').split(',');
         }
         issuePage.updatePriorityVals();
-        issuePage.scumColUpdateInfo();
+        issuePage.scrumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
 
         $('#issuesList .member-list a').click(function (e) {
@@ -677,7 +677,7 @@ issuePage.putStickerOnBoard = function () {
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
             $('#issueInfo').data('isOnBoard', true);
-            issuePage.scumColUpdateInfo();
+            issuePage.scrumColUpdateInfo();
         }
     });
 };
@@ -1038,7 +1038,7 @@ issuePage.resetFilter = function ()//e)
     return false;
 };
 
-issuePage.scumColUpdateInfo = function () {
+issuePage.scrumColUpdateInfo = function () {
     const cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     const getColStickersSelector = (col) =>
         '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker:visible';

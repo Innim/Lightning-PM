@@ -53,7 +53,7 @@ let scrumBoard = {
                     $('.scrum-board-col.col-' + colName).append($sticker);
                 }
 
-                issuePage.scumColUpdateInfo();
+                issuePage.scrumColUpdateInfo();
 
                 if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
                     scrumBoard.takeIssueBy($sticker);
@@ -100,7 +100,7 @@ let scrumBoard = {
                     $members.append(', ');
                 }
                 $members.append(res.memberHtml);
-                issuePage.scumColUpdateInfo();
+                issuePage.scrumColUpdateInfo();
             }
         });
     },
@@ -133,7 +133,7 @@ let scrumBoard = {
 
                         $elements.remove();
                         sprintTarget.setValue('', '');
-                        issuePage.scumColUpdateInfo();
+                        issuePage.scrumColUpdateInfo();
                     } else {
                         srv.err(res);
                     }
