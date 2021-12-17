@@ -1,7 +1,7 @@
 /**
  * Компонент фильтра задач по тегам на Scrum-доске.
  */
-export function filterByTag(filterElementSelector) {
+export function filterByTag(filterElementSelector, onChange) {
     Vue.component('vue-multiselect', window.VueMultiselect.default);
     new Vue({
         el: filterElementSelector,
@@ -16,6 +16,7 @@ export function filterByTag(filterElementSelector) {
                 } else {
                     this.showAllStickers();
                 }
+                onChange(selectedTags);
             }
         },
         methods: {
@@ -26,9 +27,12 @@ export function filterByTag(filterElementSelector) {
                 return el?.parentElement?.parentElement;
             },
             showElement(el, show) {
-                if ('hidden' in el) {
-                    el.hidden = !show;
-                }
+                // if ('hidden' in el) {
+                //     el.hidden = !show;
+                // }
+
+                // console.log('--- element ---', el);
+                el.style.display = show ? 'block' : 'none';
             },
             filterStickers(selectedTags) {
                 this.getStickerTitles().forEach((el) => {

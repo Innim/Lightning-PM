@@ -1,4 +1,6 @@
 import {filterByTag} from './filter-by-tag';
 
-// Инициализация компонента фильтров по тегу на скрам доске
-filterByTag('#scrumBoardFilters');
+// Инициализация компонента фильтров по тегу на Scrum доске
+filterByTag('#scrumBoardFilters', function() {
+    issuePage.scumColUpdateInfo();
+});
