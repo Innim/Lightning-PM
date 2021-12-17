@@ -46,6 +46,7 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         ),
         'M' => 
         array (
+            'Mimey\\' => 6,
             'Mailgun\\' => 8,
         ),
         'L' => 
@@ -144,6 +145,10 @@ class ComposerStaticInit51cb340be65004d3168bdafe96ca83c8
         'Nyholm\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/nyholm/psr7/src',
+        ),
+        'Mimey\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/ralouphie/mimey/src',
         ),
         'Mailgun\\' => 
         array (

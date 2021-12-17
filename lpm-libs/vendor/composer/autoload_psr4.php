@@ -22,6 +22,7 @@ return array(
     'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
     'Nyholm\\Psr7\\' => array($vendorDir . '/nyholm/psr7/src'),
+    'Mimey\\' => array($vendorDir . '/ralouphie/mimey/src'),
     'Mailgun\\' => array($vendorDir . '/mailgun/mailgun-php/src'),
     'League\\Uri\\' => array($vendorDir . '/league/uri/src', $vendorDir . '/league/uri-interfaces/src'),
     'JoliCode\\Slack\\Api\\' => array($vendorDir . '/jolicode/slack-php-api/generated'),
