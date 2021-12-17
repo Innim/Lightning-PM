@@ -5,11 +5,17 @@
 class CacheController
 {
     const OWNCLOUD_SHARED_FILE_TYPE_PREFIX = 'owncloud_shared_file_type_prefix-';
+    const IMAGE_CACHED_PREVIEW_PREFIX = 'image_cached_preview_prefix-';
 
     /**
      * @var Memcached
      */
     private $_memcached;
+
+    /**
+     * @var ImageCacheController
+     */
+    private $_images;
 
     public function __construct()
     {
@@ -27,7 +33,7 @@ class CacheController
     /**
      * Возвращает сохраненное значение.
      *
-     * Если кжш выключен, значения нет или у него истек срок жизни,
+     * Если кэш выключен, значения нет или у него истек срок жизни,
      * то вернется false.
      */
     public function get($key)
@@ -65,8 +71,47 @@ class CacheController
         return $this->set($this->getOwncloudSharedFileTypeKey($url), $value);
     }
 
+    /**
+     * Возвращает URL до превью изображения по URL.
+     * 
+     * Если превью нет, то оно будет создано.
+     * Если не удалось скачать изображение, 
+     * то превью не будет сделано и URL будет помечен
+     * как испорченный.
+     * 
+     * @param string $url исходного изображения
+     * @return string|null 
+     */
+    public function getImageCachedPreview($url)
+    {
+        $key = $this->getImageCachedPreviewKey($url);
+        $res = $this->get($key);
+
+        // Важна проверка именно на false, потому что null важное значение
+        if ($res === false) {
+            $res = $this->images()->createCache($url);
+            $this->set($key, $res, 24 * 3600);
+        }
+
+        return $res;
+    }
+
     private function getOwncloudSharedFileTypeKey($url)
     {
         return self::OWNCLOUD_SHARED_FILE_TYPE_PREFIX . md5($url);
+    }
+
+    private function getImageCachedPreviewKey($url)
+    {
+        return self::IMAGE_CACHED_PREVIEW_PREFIX . md5($url);
+    }
+
+    private function images() 
+    {
+        if (empty($this->_images)) {
+            $this->_images = new ImageCacheController();
+        }
+
+        return $this->_images;
     }
 }
