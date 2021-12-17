@@ -1039,31 +1039,35 @@ issuePage.resetFilter = function ()//e)
 };
 
 issuePage.scumColUpdateInfo = function () {
-    var cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
-    var totalSP = 0;
-    var totalNum = 0;
-    for (var i = 0; i < cols.length; ++i) {
-        var col = cols[i];
+    const cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+    const getColStickersSelector = (col) =>
+        '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker:visible';
 
-        var sp = 0;
-        $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').
-            each(function (i, el) {
-                sp += parseFloat($(el).data('stickerSp'));
-            });
-        var num = $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').size();
+    let totalSP = 0;
+    let totalNum = 0;
+    for (let i = 0; i < cols.length; ++i) {
+        const col = cols[i];
+        const colStickers = $(getColStickersSelector(col));
 
-        var selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
+        let sp = 0;
+        colStickers.each((i, el) => {
+            sp += parseFloat($(el).data('stickerSp'));
+        });
+
+        let num = colStickers.size();
+
+        let selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
 
         if (num > 0) {
             $(selector + ' .scrum-col-count .value').html(num);
 
-            var spSelector = selector + ' .scrum-col-sp';
+            let spSelector = selector + ' .scrum-col-sp';
             if (sp > 0)
                 $(spSelector).show();
             else
                 $(spSelector).hide();
 
-            var spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
+            let spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
             $(spSelector + ' .value').html(spScr);
 
             totalSP += sp;
@@ -1079,7 +1083,7 @@ issuePage.scumColUpdateInfo = function () {
         $('#scrumBoard .scrum-board-info').show();
         $('#scrumBoard .scrum-board-info .scrum-board-count .value').html(totalNum);
         if (totalSP > 0) {
-            var totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
+            let totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
             $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSpScr);
         }
         else
