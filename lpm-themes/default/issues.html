@@ -68,15 +68,14 @@ $userId = lpm_get_user()->userId;
 				<span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
 				<?php endif; ?>
 				<div class="tooltip">
-
 					<div class="commit-message-list">
-						<a class='copy-commit-message' href='javascript: void(0);'
-							data-clipboard-text='Issue #<?=$issue->getIdInProject() . ': ' . $issue->getName();?>'>
+						<a class='copy-commit-message'
+						    href='javascript: void(0);'
+							data-clipboard-text='Issue #<?=$issue->getIdInProject() . '>
+							: ' . $issue->getName();?>'>
 							Копировать коммит сообщение
 						</a>
 					</div>
-
-
 					<a class="id-issue" href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
 				</div>
 			</td>
