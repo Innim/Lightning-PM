@@ -1306,105 +1306,6 @@ blockquote > p {
 	font-size: 16px;
 }
 
-/* доступы */
-.access-list
-{
-	float: left;
-}
-
-.access-record
-{
-	float: left;
-	margin: 0 15px 15px 0;
-}
-
-.access-list li
-{
-	position: relative;
-	width: 300px;
-	border: 1px solid;
-	list-style: none;
-	display: inline-block;
-	padding: 10px 10px 20px;
-}
-
-.access-list li.base{
-	border-color: rgba(255, 0, 0, 0.3);
-	background: #FFECEC;
-}
-
-.access-list li.git{
-	border-color: rgba(0, 255, 0, 0.3);
-	background: #D6FFD6;
-}
-
-.access-list li.sql{
-	border-color: rgba(0, 0, 255, 0.3);
-	background: #E1E1FF;
-}
-
-.access-list li.ftp{
-	border-color: rgba(255, 137, 0, 0.3);
-	background: #FFF1E1;
-}
-
-.access-list .access-type
-{
-	position: relative;
-	display: table;
-	padding: 3px;
-	color: black;
-}
-
-div.base
-{
-	background: rgba(255, 0, 0, 0.3);
-}
-
-div.git
-{
-	background: rgba(0, 255, 0, 0.3);
-}
-
-div.sql
-{
-	background: rgba(0, 0, 255, 0.3);
-}
-
-div.ftp
-{
-	background: rgba(255, 137, 0, 0.3);
-}
-
-.access-item>*
-{
-	display: block;
-	margin-bottom: 5px;
-	overflow-x: hidden;
-}
-
-.access-item>*:hover
-{
-    overflow: visible;
-    overflow-wrap: break-word;
-}
-
-.access-item .description
-{
-	overflow-wrap: break-word;
-    overflow-y: auto;
-    max-height: 95px;
-    padding: 5px;
-}
-
-.access-controll
-{
-	position: absolute;
-    bottom: 0px;
-    right: 5px;
-    font-size: 70%;
-}
-
 /*Меню скопировать в issue*/
 .popup-menu 
 {
@@ -1782,20 +1683,6 @@ div.ftp
 .ui-tooltip .arrow.top:after {
 	bottom: -20px;
 	top: auto;
-}
-
-#btnSellect {
-	background: #e9eae2;
-	border-radius: 3px;
-	text-align-last: center ;
-	color: #000000;
-	font-size: 15px;
-	height: 16px;
-	width: 95px;
-	margin: 10px 0 0 3px;
-	overflow: hidden;
-	display: block;
-	padding: 15px;
 }
 .headersProjectsMembers {
 	margin-top: 10px;
