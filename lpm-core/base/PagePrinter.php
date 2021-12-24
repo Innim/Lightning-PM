@@ -189,6 +189,14 @@ class PagePrinter
     {
         PageConstructor::includePattern('scrum-board-filters');
     }
+
+    /**
+     * Распечатывает шаблон фильтров в списке задач.
+     */
+    public static function issueListFilter()
+    {
+        PageConstructor::includePattern('issue-list-filter');
+    }
     
 
     /**

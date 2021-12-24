@@ -298,6 +298,14 @@ function lpm_print_scrum_board_filters()
 }
 
 /**
+ * Выводит шаблон компонента фильтров списка задач.
+ */
+function lpm_print_issue_list_filters()
+{
+    return PagePrinter::issueListFilter();
+}
+
+/**
 *   Возвращает текущую страницу
 */
 function lpm_get_current_page()
