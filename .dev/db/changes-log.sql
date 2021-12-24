@@ -383,4 +383,10 @@ CREATE TABLE `lpm_issue_comment` (
 
 -- v0.13.5
 
+ALTER TABLE `lpm_members`
+ADD INDEX `instanceType_instanceId` (`instanceType`, `instanceId`);
+
+ALTER TABLE `lpm_issues`
+ADD INDEX `projectId` (`projectId`);
+
 --NEXT

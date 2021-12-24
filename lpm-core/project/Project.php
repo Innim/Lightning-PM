@@ -143,31 +143,44 @@ class Project extends MembersInstance
 
     /**
      * Получает из БД список всех проектов, доступные пользователю.
-     * @param object $user
+     * @param User $user
      * @param bool $isArchive
-     * @return array
+     * @param bool $loadImportantCount
+     * @return array<Project>
      */
-    private static function getInstanceList($user, $isArchive)
+    private static function getInstanceList(User $user, bool $isArchive, bool $loadImportantCount = false)
     {
+        // TODO: добавить счетчик сюда 
         $isModerator = $user->isModerator();
         $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE];
+
+        $instanceProject = LPMInstanceTypes::PROJECT;
+        $archive = $isArchive ? 1 : 0;
         
-        $sql = "SELECT projects.*, IF (fixed.instanceId IS NULL, 0, 1) AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects ";
+        $sql = <<<SQL
+    SELECT `p`.*, IF (`fixed`.`instanceId` IS NULL, 0, 1) AS `fixedInstance`, `fixed`.`dateFixed` AS `dateFixed` 
+      FROM `%1\$s` AS `p` 
+SQL;
         
         if (!$isModerator) {
-            $sql .= "INNER JOIN `%3\$s` AS members ON members.instanceId = projects.id " .
-                "AND `members`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-                "AND `members`.`userId` = '" . $user->userId . "' ";
+            $sql .= <<<SQL
+INNER JOIN `%3\$s` AS `m` 
+        ON `m`.`instanceId` = `p`.`id` 
+       AND `m`.`instanceType` = $instanceProject
+       AND `m`.`userId` = $user->userId 
+SQL;
             $tables[] = LPMTables::MEMBERS;
         }
     
-        $sql .=
-            "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
-            "AND `fixed`.`userId` = '" . $user->userId . "' " .
-            "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-            "WHERE `projects`.`isArchive`= " . ($isArchive ? 1 : 0) . " ".
-            "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
-    
+        $sql .= <<<SQL
+ LEFT JOIN `%2\$s` AS `fixed` 
+        ON `fixed`.`instanceId` = `p`.`id` 
+       AND `fixed`.`userId` = $user->userId
+       AND `fixed`.`instanceType` =  $instanceProject
+     WHERE `p`.`isArchive`= $archive
+  ORDER BY `dateFixed` DESC, `p`.`lastUpdate` DESC
+SQL;
+
         return StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
     }
 
