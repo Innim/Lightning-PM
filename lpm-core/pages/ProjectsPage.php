@@ -56,15 +56,14 @@ class ProjectsPage extends LPMPage
         } elseif ($this->_curSubpage) {
             switch ($this->_curSubpage->uid) {
                 case self::PUID_STAT:
-                    $this->statByProjects();
-                    break;
+                    return $this->statByProjects();
                 case self::PUID_MY_SCRUM_BOARD:
-                    $this->myScrumBoard();
-                    break;
+                    return $this->myScrumBoard();
             }
         }
 
-        return $this;
+
+        return $this->projectsList(false);
     }
 
     public function getLabel()
@@ -81,6 +80,12 @@ class ProjectsPage extends LPMPage
         }
 
         return $label;
+    }
+
+    private function projectsList($isArchive): ProjectsPage {
+        $list = Project::getAvailList($isArchive);
+        $this->addTmplVar('list', $list);
+        return $this;
     }
 
     private function addProject($input)
@@ -122,7 +127,7 @@ class ProjectsPage extends LPMPage
         return \GMFramework\Validation::checkStr($value, 255, 1, false, false, true);
     }
 
-    private function statByProjects()
+    private function statByProjects(): ProjectsPage
     {
         list($month, $year) = StatHelper::parseMonthYearFromArg($this->getParam(2));
 
@@ -165,12 +170,15 @@ class ProjectsPage extends LPMPage
         if (StatHelper::isAvailable($nextMonth, $nextYear)) {
             $this->addTmplVar('nextLink', $this->getMonthLink($nextMonth, $nextYear));
         }
+
+        return $this;
     }
 
-    private function myScrumBoard()
+    private function myScrumBoard(): ProjectsPage
     {
         $userId = LightningEngine::getInstance()->getUserId();
         $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($userId));
+        return $this;
     }
 
     private function getMonthLink($month, $year)

@@ -1,3 +1,11 @@
+<?php
+/* 
+Требуются: 
+	$list - список проектов
+*/
+
+$userId = lpm_get_user()->userId;
+?>
 <article id="projectsList">
 	<h1>
 		<?php lpm_print_header(); ?>
@@ -10,7 +18,6 @@
 	
 	<?php 
 		$isArchive = false;
-		$list = lpm_get_projects_list($isArchive);
 		lpm_print_projects_list($list, $isArchive);
 	?>
 	
