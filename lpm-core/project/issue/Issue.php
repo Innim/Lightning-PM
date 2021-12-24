@@ -340,7 +340,7 @@ SQL;
 
         $issueType = LPMInstanceTypes::ISSUE;
         $statusInWork = self::STATUS_IN_WORK;
-        $minPriority = 79;
+        $minPriority = self::IMPORTANT_PRIORITY;
 
         if (empty($projectId)) {
             $projectFrom = "INNER JOIN `%3\$s` `p` ON `p`.`id` = `i`.`projectId`";
@@ -755,6 +755,7 @@ SQL;
 
     const MAX_IMAGES_COUNT	= 10;
     const DESC_MAX_LEN = 60000;
+    const IMPORTANT_PRIORITY = 79;
     
     public $id            =  0;
     public $projectId     =  0;

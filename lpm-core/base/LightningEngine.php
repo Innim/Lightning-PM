@@ -131,7 +131,7 @@ class LightningEngine
     }
 
     /**
-     * Время выполнения на текущи момент в секундах.
+     * Время выполнения на текущий момент в секундах.
      * @return float
      */
     public function getExecutionTimeSec()

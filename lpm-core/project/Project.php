@@ -12,8 +12,6 @@ class Project extends MembersInstance
     
     private static $_availList = [];
 
-    private static $_isArchive = false;
-
     /**
      * Загруженные проекты по идентификаторам
      * @var array<int, Project>
@@ -132,7 +130,7 @@ class Project extends MembersInstance
         if (!isset(self::$_availList[$cacheKey])) {
             if (LightningEngine::getInstance()->isAuth()) {
                 $user = LightningEngine::getInstance()->getUser();
-                self::$_availList[$cacheKey] = self::getInstanceList($user, $isArchive);
+                self::$_availList[$cacheKey] = self::getInstanceList($user, $isArchive, true);
             } else {
                 self::$_availList[$cacheKey] = [];
             }
@@ -152,13 +150,39 @@ class Project extends MembersInstance
     {
         // TODO: добавить счетчик сюда 
         $isModerator = $user->isModerator();
-        $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE];
+        $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE, LPMTables::MEMBERS, LPMTables::ISSUES];
 
         $instanceProject = LPMInstanceTypes::PROJECT;
         $archive = $isArchive ? 1 : 0;
         
         $sql = <<<SQL
-    SELECT `p`.*, IF (`fixed`.`instanceId` IS NULL, 0, 1) AS `fixedInstance`, `fixed`.`dateFixed` AS `dateFixed` 
+    SELECT `p`.*, 
+           IF (`fixed`.`instanceId` IS NULL, 0, 1) AS `fixedInstance`, 
+           `fixed`.`dateFixed` AS `dateFixed`
+SQL;
+        if ($loadImportantCount) {
+            $issueType = LPMInstanceTypes::ISSUE;
+            $statusInWork = Issue::STATUS_IN_WORK;
+            $minPriority = Issue::IMPORTANT_PRIORITY;
+
+            $sql .= <<<SQL
+,
+           (SELECT COUNT(`i`.`id`) AS `count` 
+              FROM `%4\$s` `i`
+        INNER JOIN `%3\$s` `m`
+                ON `m`.`instanceId` = `i`.`id`
+             WHERE `m`.`userId` = $user->userId
+               AND `m`.`instanceType` = $issueType
+               AND `i`.`projectId` = `p`.`id`
+               AND `i`.`priority` >= $minPriority
+               AND `i`.`status` = $statusInWork
+               AND `i`.`deleted` = 0) AS `importantIssuesCount`
+
+SQL;
+            $tables[] = LPMTables::MEMBERS;
+        }
+
+        $sql .= <<<SQL
       FROM `%1\$s` AS `p` 
 SQL;
         
@@ -169,7 +193,6 @@ INNER JOIN `%3\$s` AS `m`
        AND `m`.`instanceType` = $instanceProject
        AND `m`.`userId` = $user->userId 
 SQL;
-            $tables[] = LPMTables::MEMBERS;
         }
     
         $sql .= <<<SQL
@@ -593,6 +616,15 @@ SQL;
         }
         
         return $this->_sprintTargetHtml;
+    }
+
+	protected function setVar($var, $value)
+	{
+        if ($var === 'importantIssuesCount') {
+            $this->_importantIssuesCount = (int)$value;
+            return true;
+        }
+        return parent::setVar($var, $value);
     }
     
     protected function loadMembers()
