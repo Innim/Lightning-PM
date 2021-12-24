@@ -394,6 +394,11 @@ form ol.form-fields > li:last-child {
 }
 
 /* Loading indicator */
+.spinner-border-large {
+	width: 3rem; 
+	height: 3rem;
+}
+
 .lds-spinner {
   color: official;
   display: inline-block;
@@ -620,14 +625,11 @@ ul.video-line:empty {
 	display: none;
  }
 
-ul.video-line > li > *{
+ul.video-line > li:not(.pending) > *{
 	background: black;
 	border: black solid 10px;
 }
-ul.video-line > li > .lds-spinner{
-	padding: 20px;
-	border-radius: 10px;
-}
+
 /* линия изображений в задаче */
 ul.images-line {
 	list-style: none;

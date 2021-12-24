@@ -99,25 +99,14 @@
 			if (!empty($errors)):
 		?>
 	<script type="text/javascript">
-		<? foreach($errors as $error) : ?>
+		<?php foreach($errors as $error) : ?>
 			showError("<?=addslashes($error);?>");
-		<? endforeach; ?>
+		<?php endforeach; ?>
 	</script>
 	<?php endif; ?>
 	<div id="templates" style="display:none">
-		<div class="lds-spinner">
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
+		<div class="preloader spinner-border" role="status">
+			<span class="visually-hidden">Loading...</span>
 		</div>
 	</div>
 </body>
