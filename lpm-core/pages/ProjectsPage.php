@@ -55,15 +55,23 @@ class ProjectsPage extends LPMPage
             }
         } elseif ($this->_curSubpage) {
             switch ($this->_curSubpage->uid) {
+                case self::PUID_DEVELOP:
+                    return $this->projectsList(false);
+                case self::PUID_ARCH:
+                    return $this->projectsList(true);
                 case self::PUID_STAT:
                     return $this->statByProjects();
                 case self::PUID_MY_SCRUM_BOARD:
                     return $this->myScrumBoard();
             }
+            // TODO: загрузка данных для остальных подстраниц
         }
 
+        // TODO: вообще если сюда дошли, то это должна быть ошибка
+        // т.к. тут в любом случае должна быть подстраница
+        // но надо допилить логику подстраниц и обработки добавления 
 
-        return $this->projectsList(false);
+        return $this;
     }
 
     public function getLabel()
