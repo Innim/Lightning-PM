@@ -91,26 +91,28 @@ class ParsedownExt extends Parsedown
                 try {
                     $project = Project::load($projectId);
                     $issue = Issue::loadByIdInProject($project->id, $issueId);
-                    $images = $issue->getImages();
-                    $imageUrl = empty($images) ? null : $images[0]->getSource();
-                    $url = $protocol . '://' . LightningEngine::getHost() . $path;
-                    if (!empty($issue)) {
-                        return [
-                            'extent' => strlen($matches[0]),
-                            'element' => [
-                                'name' => 'a',
-                                'handler' => 'line',
-                                'nonNestables' => array('Url', 'Link'),
-                                'text' => $text,
-                                'attributes' => [
-                                    'href' => $url,
-                                    'data-issue-id' => $issue->getID(),
-                                    'data-tooltip' => 'issue',
-                                    'data-img' => $imageUrl,
-                                    'title' => $issue->getName(),
+                    if ($issue != false) {
+                        $images = $issue->getImages();
+                        $imageUrl = empty($images) ? null : $images[0]->getSource();
+                        $url = $protocol . '://' . LightningEngine::getHost() . $path;
+                        if (!empty($issue)) {
+                            return [
+                                'extent' => strlen($matches[0]),
+                                'element' => [
+                                    'name' => 'a',
+                                    'handler' => 'line',
+                                    'nonNestables' => array('Url', 'Link'),
+                                    'text' => $text,
+                                    'attributes' => [
+                                        'href' => $url,
+                                        'data-issue-id' => $issue->getID(),
+                                        'data-tooltip' => 'issue',
+                                        'data-img' => $imageUrl,
+                                        'title' => $issue->getName(),
+                                    ],
                                 ],
-                            ],
-                        ];
+                            ];
+                        }
                     }
                 } catch (Exception $e) {}
             }
