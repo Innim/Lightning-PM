@@ -34,7 +34,7 @@ class ParsedownExt extends Parsedown
         array_unshift($this->InlineTypes['['], 'IssueLink');
         $host = LightningEngine::getHost();
         $protocols = ['http', 'https'];
-        $this->_taskLinkRegex = '/^\[(#\d*?)]\(('.
+        $this->_taskLinkRegex = '/\[(#\d*?)]\(('.
                 implode('|', $protocols).'):\/\/'.$host.'(.*?)\)/';
     }
 
