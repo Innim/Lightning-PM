@@ -176,6 +176,14 @@ function lpm_print_issue_view()
 }
 
 /**
+ * Распечатывает список проектов
+ */
+function lpm_print_projects_list($list, $isArchive = false)
+{
+    return PagePrinter::projectsList($list, $isArchive);
+}
+
+/**
  * Возвращает JS строку, представляющую объект.
  */
 function lpm_get_js_object($data)

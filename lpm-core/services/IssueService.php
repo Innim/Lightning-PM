@@ -519,6 +519,11 @@ class IssueService extends LPMBaseService
             if (!ScrumSticker::removeStickersForProject($projectId, $notRemoveStates)) {
                 return $this->errorDBSave();
             }
+
+            if (!empty($notRemoveStates)) {
+                // Если какие-то стикеры остались на доске - надо им обновить время добавления
+                ScrumSticker::updateStickerAdded($projectId);
+            }
             
             $currentNumSprint = ScrumStickerSnapshot::getLastSnapshotId($projectId) + 1;
         } catch (\Exception $e) {

@@ -229,62 +229,15 @@ class LPMImgUpload
                 
                 $value = AttachmentImageHelper::getDirectUrl($value);
 
-                //определяем размер скачиваемой картинки
-                $context = stream_context_create(array(
-                    // XXX здесь дыра безопасности по сути - отключена проверка ssl
-                    // на с включенной не работает droplr, хотя сертификат у них правильный
-                    'ssl' => array(
-                        'verify_peer' => false,
-                        'verify_peer_name' => false
-                    )));
-                $stream = fopen($value, "r", false, $context);
-                if (!$stream) {
-                    $this->error('Не удалось загрузить файл ' . $url);
-                }
-                //берем ее параметры из url
-                elseif ($imageData = stream_get_meta_data($stream)) {
-                    //если данные есть и имеют определенный тип
-                    if (isset($imageData["wrapper_data"]) && is_array($imageData["wrapper_data"])) {
-                        $size = -1;
-                        //извлекаем из них размер
-                        foreach ($imageData["wrapper_data"] as $param) {
-                            // Там может быть несколько content-length, если делаются пересылки
-                            // так что перебираем до последнего - все wrapper_data
-                            if (stristr($param, "content-length")) {
-                                //получаем параметр
-                                $param = explode(":", $param);
-                                $size  = (int)(trim($param[1]));
-                                //break;
-                            }
-                        }
+                try {
+                    DownloadHelper::downloadImage($value, $srcFileName, LPMImgUpload::MAX_SIZE);
 
-                        if ($size === -1) {
-                            $this->error('Не удалось получить размер файла');
-                        }
-                        //если размер файла валиден и он не превышает лимит - пишем файл на диск
-                        elseif ($size > 0 && ($size <= LPMImgUpload::MAX_SIZE * 1024 * 1024)) {
-                            if (file_put_contents($srcFileName, $stream, FILE_APPEND | LOCK_EX)) {
-                                //устанавливаем параметры для записи файла в базу
-                                $files[] = $srcFileName;
-                                $names[] = 'url_' . date('YmdHis_u') . '.png'; // тут бы настоящее имя выделить из url
-                            } else {
-                                //если картинку скачать не удалось - прерываем запись
-                                $this->error('Ошибка чтения файла');
-                            }
-                        } else {
-                            $this->error(sprintf(
-                                'Размер файла не должен превышать %d Мб',
-                                LPMImgUpload::MAX_SIZE
-                            ));
-                        }
-                    } else {
-                        $this->error('Неверный формат данных файла');
-                    }
-                } else {
-                    $this->error('Ошибка чтения данных потока');
+                    //устанавливаем параметры для записи файла в базу
+                    $files[] = $srcFileName;
+                    $names[] = 'url_' . date('YmdHis_u') . '.png'; // тут бы настоящее имя выделить из url
+                } catch (Exception $e) {
+                    $this->error($e->getMessage());
                 }
-
-                fclose($stream);
             }
         }
 

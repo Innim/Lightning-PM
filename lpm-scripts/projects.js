@@ -2,35 +2,42 @@
 /**
  * Список проектов и добавление нового
  */
-// по открытию страницы сразу убираем форму регистрации
-$(document).ready(
-	function () {
-		//$("#registrationForm").hide();
-		let isSending = false;
+ $(function ($) {
+	let isSending = false;
 
-		if ((/#add-project/i).test(window.location)) {
-			$("#projectsList").hide();
-			if ($('#addProjectForm > div.validateError').html() != '') {
-				$('#addProjectForm > div.validateError').show();
-			}
-		} else {
-			$("#addProjectForm").hide();
-			$('#addProjectForm > div.validateError').html('');
+	if ((/#add-project/i).test(window.location)) {
+		$("#projectsList").hide();
+		if ($('#addProjectForm > div.validateError').html() != '') {
+			$('#addProjectForm > div.validateError').show();
 		}
-
-		//Фиксация проекта в списке проектов.
-		$('.project-fix').click(function () {
-			if (!isSending) {
-				const self = $(this);
-				const projectId = self.data('id-project');
-				isSending = true;
-				srv.projects.setIsFixed(projectId, !self.val(), function () {
-					location.reload();
-				});
-			}
-		});
+	} else {
+		$("#addProjectForm").hide();
+		$('#addProjectForm > div.validateError').html('');
 	}
-);
+
+	//Фиксация проекта в списке проектов.
+	$('.project-fix').on('click', function () {
+		if (!isSending) {
+			const self = $(this);
+			const projectId = self.parents('.project-list-item').data('projectId');
+			const fixed = self.data('fixed')
+
+			isSending = true;
+			srv.projects.setIsFixed(projectId, !fixed, function () {
+				location.reload();
+			});
+		}
+	});
+
+	$('.project-archive-btn, .project-restore-btn').on('click', function () {
+		const self = $(this);
+		const projectId = self.parents('.project-list-item').data('projectId');
+		const value = self.hasClass('project-archive-btn');
+		srv.projects.setIsArchive(projectId, value, function () {
+			location.reload();
+		});
+	});
+ });
 
 function showAddProjectForm() {
 	$("#addProjectForm").show();
@@ -67,13 +74,4 @@ function validateAddProj() {
 		errorDisplay.show();
 		return false;
 	}
-};
-
-function setIsArchive(e) {
-	var parent = e.currentTarget.parentElement;
-	var projectId = $('input[name=projectId]', parent).val();
-	var value = ($("a", parent).hasClass('archive')) ? true : false;
-	srv.projects.setIsArchive(projectId, value, reload = function () {
-		location.reload();
-	});
 };
