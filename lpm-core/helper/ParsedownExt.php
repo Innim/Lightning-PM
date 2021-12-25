@@ -89,13 +89,11 @@ class ParsedownExt extends Parsedown
             if (count($pathParts) > 1) {
                 $projectId = $pathParts[2];
                 try {
-                    $project = Project::load($projectId);
-                    $issue = Issue::loadByIdInProject($project->id, $issueId);
-                    if ($issue != false) {
-                        $images = $issue->getImages();
-                        $imageUrl = empty($images) ? null : $images[0]->getSource();
-                        $url = $protocol . '://' . LightningEngine::getHost() . $path;
-                        if (!empty($issue)) {
+                    if ($project = Project::load($projectId)) {
+                        if ($issue = Issue::loadByIdInProject($project->id, $issueId)) {
+                            $images = $issue->getImages();
+                            $imageUrl = empty($images) ? null : $images[0]->getSource();
+                            $url = $protocol . '://' . LightningEngine::getHost() . $path;
                             return [
                                 'extent' => strlen($matches[0]),
                                 'element' => [
@@ -114,7 +112,7 @@ class ParsedownExt extends Parsedown
                             ];
                         }
                     }
-                } catch (Exception $e) {}
+                } catch(Exception $e) {}
             }
         }
     }
