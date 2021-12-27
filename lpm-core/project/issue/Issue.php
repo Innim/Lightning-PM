@@ -337,23 +337,35 @@ SQL;
     public static function getCountImportantIssues($userId, $projectId = null)
     {
         $projectId = (int)$projectId;
-        // $sql = "SELECT COUNT(*) AS count FROM `%1\$s` WHERE `%1\$s`.`priority` >= 79
-        // 		AND `%1\$s`.`deleted` = 0 AND `%1\$s`.`status` = '". self::STATUS_IN_WORK."'";
-        $sql = "SELECT COUNT(*) as count FROM `%1\$s` INNER JOIN `%2\$s` ON `%1\$s`.`instanceId` = `%2\$s`.`id`";
-        if ($projectId === 0) {
-            $sql .= 'INNER JOIN `%3$s` ON `%2$s`.`projectId` = `%3$s`.`id`';
-        }
-        $sql .=	"WHERE `%1\$s`.`userId`= '" . $userId . "' AND `%1\$s`.`instanceType`= 1 AND `%2\$s`.`priority` >= 79 
-				AND `%2\$s`.`deleted` = 0 AND `%2\$s`.`status` = '".
-                self::STATUS_IN_WORK."'";
-        if (0 !== $projectId) {
-            $sql .= " AND `%2\$s`.`projectId` = '".$projectId."'";
+
+        $issueType = LPMInstanceTypes::ISSUE;
+        $statusInWork = self::STATUS_IN_WORK;
+        $minPriority = self::IMPORTANT_PRIORITY;
+
+        if (empty($projectId)) {
+            $projectFrom = "INNER JOIN `%3\$s` `p` ON `p`.`id` = `i`.`projectId`";
+            $projectWhere = 'AND `p`.`isArchive` = 0';
         } else {
-            // Игнорируем архивные проекты
-            $sql .= " AND `%3\$s`.`isArchive` = 0";
+            $projectFrom = '';
+            $projectWhere = "AND `i`.`projectId` = $projectId";
         }
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $res = $db->queryt($sql, LPMTables::MEMBERS, LPMTables::ISSUES, LPMTables::PROJECTS);
+
+        $sql = <<<SQL
+    SELECT COUNT(`i`.`id`) AS `count`
+      FROM `%1\$s` `i`
+INNER JOIN `%2\$s` `m`
+        ON `m`.`instanceId` = `i`.`id`
+           $projectFrom
+     WHERE `m`.`userId` = $userId
+       AND `m`.`instanceType` = $issueType
+       $projectWhere
+       AND `i`.`priority` >= $minPriority
+       AND `i`.`status` = $statusInWork
+       AND `i`.`deleted` = 0
+SQL;
+
+        $db = self::getDB();
+        $res = $db->queryt($sql, LPMTables::ISSUES, LPMTables::MEMBERS, LPMTables::PROJECTS);
         return $res ? (int)$res->fetch_assoc()['count'] : 0;
     }
 
@@ -743,6 +755,7 @@ SQL;
 
     const MAX_IMAGES_COUNT	= 10;
     const DESC_MAX_LEN = 60000;
+    const IMPORTANT_PRIORITY = 79;
     
     public $id            =  0;
     public $projectId     =  0;

@@ -1,9 +1,14 @@
+<?php
+/* 
+Требуются: 
+	$list - список проектов
+*/
+?>
 <article id="projectsList">
 	<h1>
-		<?lpm_print_header();?>
+		<?php lpm_print_header();?>
 	</h1>
 	<ul class="projects-list">
-		<?php $list = lpm_get_projects_list(true);?>
 		<?php if (empty($list)): ?>
 		<p class="no-items">Архив пуст</p>
 		<?php 
