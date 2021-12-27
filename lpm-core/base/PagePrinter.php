@@ -185,9 +185,9 @@ class PagePrinter
     /**
      * Распечатывает шаблон фильтра Scrum-доски.
      */
-    public static function printScrumBoardFilter()
+    public static function scrumBoardFilter()
     {
-        PageConstructor::includePattern('scrum-board-filters');
+        PageConstructor::includePattern('scrum-board-filter');
     }
 
     /**

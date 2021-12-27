@@ -1,9 +1,8 @@
 /**
- * Компонент фильтра задач по тегам на Scrum-доске.
+ * Инициализирует компонент фильтра задач на Scrum-доске.
  */
-export function filterByTag(filterElementSelector, onChange) {
-    Vue.component('vue-multiselect', window.VueMultiselect.default);
-    new Vue({
+export function initScrumBoardFilter(filterElementSelector, onChange) {
+    return new Vue({
         el: filterElementSelector,
         data: {
             selectedTags: null,
@@ -27,11 +26,6 @@ export function filterByTag(filterElementSelector, onChange) {
                 return el?.parentElement?.parentElement;
             },
             showElement(el, show) {
-                // if ('hidden' in el) {
-                //     el.hidden = !show;
-                // }
-
-                // console.log('--- element ---', el);
                 el.style.display = show ? 'block' : 'none';
             },
             filterStickers(selectedTags) {

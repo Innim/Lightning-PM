@@ -294,7 +294,7 @@ function lpm_print_sprint_target_form($project)
  */
 function lpm_print_scrum_board_filter()
 {
-    return PagePrinter::printScrumBoardFilter();
+    return PagePrinter::scrumBoardFilter();
 }
 
 /**
