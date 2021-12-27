@@ -389,4 +389,6 @@ ADD INDEX `instanceType_instanceId` (`instanceType`, `instanceId`);
 ALTER TABLE `lpm_issues`
 ADD INDEX `projectId` (`projectId`);
 
+-- 0.13.10
+
 --NEXT
