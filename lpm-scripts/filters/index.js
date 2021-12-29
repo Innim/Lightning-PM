@@ -7,6 +7,6 @@ Vue.component('vue-multiselect', window.VueMultiselect.default);
 initScrumBoardFilter('#scrumBoardFilter', issuePage.scrumColUpdateInfo);
 
 // Инициализация компонента фильтров по тегу в списке задач
-// issueListFilter('#issueListFilter', () => {
-//     issuePage.scrumColUpdateInfo();
-// });
+issueListFilter('#issueListFilter', () => {
+    issuePage.scrumColUpdateInfo();
+});

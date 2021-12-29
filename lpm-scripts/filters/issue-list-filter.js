@@ -19,29 +19,27 @@ export function issueListFilter(filterElementSelector, onChange) {
             }
         },
         methods: {
-            getStickerTitles(selector = '.sticker-issue-title') {
+            getRows(selector ) {
+                const issuesList = document.getElementById('issuesList');
+                const rows = issuesList.tBodies[0].children;
                 return document.querySelectorAll(selector);
             },
             getStickerElement(el) {
-                return el?.parentElement?.parentElement;
+                // return el?.parentElement?.parentElement;
             },
             showElement(el, show) {
-                el.style.display = show ? 'block' : 'none';
+                // el.style.display = show ? 'block' : 'none';
             },
             filterStickers(selectedTags) {
-                this.getStickerTitles().forEach((el) => {
-                    const stickerTitle = el.innerText;
-                    const lastTagIndex = stickerTitle.lastIndexOf(']');
-                    const stickerTags = stickerTitle.substr(0, lastTagIndex + 1);
-                    const hasTag = selectedTags.some((tag) => stickerTags.includes(tag));
-                    this.showElement(this.getStickerElement(el), hasTag);
+                this.getRows().forEach((el) => {
+
                 });
             },
-            showAllStickers() {
-                this.getStickerTitles().forEach((el) => {
-                    this.showElement(this.getStickerElement(el), true);
-                });
-            }
+            // showAllStickers() {
+            //     this.getRows().forEach((el) => {
+            //         this.showElement(this.getStickerElement(el), true);
+            //     });
+            // }
         }
     });
 }

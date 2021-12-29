@@ -909,6 +909,8 @@ table.issues-list tr.changes-requested .changes-requested-check {
 
 /* просмотр проекта */
 #projectView .filters-line {
+	display: flex;
+	align-items: center;
 	float: left;
 	width: 70%;
 	font-size : smaller;
@@ -1688,4 +1690,20 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
 .scrum-board-top-content {
 	margin-top: 15px;
+}
+
+.multiselect {
+	min-height: 24px;
+	width: 180px;
+}
+
+.multiselect__tags {
+	min-height: 24px;
+	padding: 4px 24px 0 4px;
+	font-size: 12px;
+	background: #ccc;
+}
+
+.multiselect__select {
+	height: 32px;
 }
