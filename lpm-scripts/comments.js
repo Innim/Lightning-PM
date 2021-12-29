@@ -52,14 +52,14 @@ let comments = {
 	},
 	showCommentForm: function (requestChanges = false) {
 		$('#comments form.add-comment').show();
-		$('#comments .links-bar a').hide();
+		$('#comments .links-bar').hide();
 		$('#comments form.add-comment textarea[name=commentText]').trigger('focus');
 		$('#comments form.add-comment input[name=requestChanges]').val(requestChanges ? 1 : 0);
 	},
 	hideCommentForm: function (clear = true) {
 		if (clear) comments.clearForm();
 		$('#comments form.add-comment').hide();
-		$('#comments .links-bar a').show();
+		$('#comments .links-bar').show();
 		$('#addCommentTabs').tabs({
 			active: 0
 		});

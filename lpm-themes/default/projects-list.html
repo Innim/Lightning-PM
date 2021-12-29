@@ -10,8 +10,8 @@ $userId = lpm_get_user()->getID();
 <div class="row row-cols-3">
 	<?php foreach ($list as $project): ?>
 	<div class="col my-2">
-		<div class="card project-list-item" data-project-id="<?=$project->id;?>"  data-project-id="<?=$project->id;?>">
-			<div class="card-body position-relative">
+		<div class="card h-100 project-list-item" data-project-id="<?=$project->id;?>"  data-project-id="<?=$project->id;?>">
+			<div class="card-body position-relative d-flex flex-column">
 				<?php if (!$isArchive): ?>
 				<a href="javascript:void(0);" class="project-fix position-absolute top-0 end-0 pe-1" data-fixed="<?=$project->fixedInstance ? 1 : 0;?>">
 					<?php if ($project->fixedInstance): ?>
@@ -33,7 +33,8 @@ $userId = lpm_get_user()->getID();
 					</span>
 				</h5>
 				<p class="card-text"><?=$project->getDesc();?></p>
-					<div class="d-flex align-items-center">
+				
+				<div class="d-flex align-items-center mt-auto">
 					<?php if ($project->scrum): ?>
 					<a href="<?=$project->getScrumBoardUrl();?>" class="card-link">SCRUM доска</a>
 					<?php endif; ?>
@@ -47,7 +48,7 @@ $userId = lpm_get_user()->getID();
 					<?php endif; ?>
 				</div>
 			</div>
-			</div>
+		</div>
 	</div>
 	<?php endforeach; ?>
 </div>

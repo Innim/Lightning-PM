@@ -73,7 +73,8 @@ CREATE TABLE `lpm_issues` (
   `priority` tinyint(2) NOT NULL DEFAULT '49' COMMENT 'приоритет задачи',
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `status` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `projectId` (`projectId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `lpm_issue_branch`;
@@ -157,7 +158,8 @@ CREATE TABLE `lpm_members` (
   `instanceType` smallint(2) NOT NULL,
   `instanceId` bigint(19) NOT NULL,
   `extraId` bigint(19) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`extraId`)
+  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`extraId`),
+  KEY `instanceType_instanceId` (`instanceType`,`instanceId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 

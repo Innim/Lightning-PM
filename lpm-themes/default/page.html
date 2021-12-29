@@ -78,20 +78,9 @@
 			Время генерации: <?=round(lpm_get_execution_time(), 3);?> сек
 		</div>
 	</footer>
-	<div id="preloader">
-		<div class="indicator lds-spinner dark">
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
+	<div id="preloader" class="d-flex justify-content-center align-items-center fixed-top fixed-bottom bg-light bg-gradient invisible" style="--bs-bg-opacity: .25;">
+		<div class="spinner-grow text-secondary" role="status">
+			<span class="visually-hidden">Loading...</span>
 		</div>
 	</div>
 	<?php
@@ -99,25 +88,14 @@
 			if (!empty($errors)):
 		?>
 	<script type="text/javascript">
-		<? foreach($errors as $error) : ?>
+		<?php foreach($errors as $error) : ?>
 			showError("<?=addslashes($error);?>");
-		<? endforeach; ?>
+		<?php endforeach; ?>
 	</script>
 	<?php endif; ?>
 	<div id="templates" style="display:none">
-		<div class="lds-spinner">
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
+		<div class="preloader spinner-border" role="status">
+			<span class="visually-hidden">Loading...</span>
 		</div>
 	</div>
 </body>

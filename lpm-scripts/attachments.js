@@ -41,12 +41,14 @@ let attachments = {
     },
     add: function (ul, url, getInfo, defaultError) {
         let li = $(document.createElement("li"));
+        li.addClass('pending');
         li.append(preloader.getNewIndicatorMedium());
         ul.append(li);
 
         getInfo(url, function (res) {
             if (res.success) {
                 if (res.html) {
+                    li.removeClass('pending');
                     li.html(res.html);
                 } else {
                     li.remove();

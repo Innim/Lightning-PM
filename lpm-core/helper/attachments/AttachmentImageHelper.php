@@ -65,7 +65,9 @@ class AttachmentImageHelper
                 }
 
                 $url = self::getDirectUrl($url);
-                return (object) compact('url');
+                $previewUrl = $cache != null ? $cache->getImageCachedPreview($url) : null;
+
+                return (object) compact('url', 'previewUrl');
             }
         }
         

@@ -371,26 +371,29 @@ var preloader = {
     show: function () {
         this._showed++;
         if (this._showed == 1) {
-            $('#preloader').show();
+            $('#preloader').removeClass('invisible');
         }
     },
     hide: function () {
         if (this._showed == 0) return;
         this._showed--;
         if (this._showed == 0) {
-            $('#preloader').hide();
+            $('#preloader').addClass('invisible');
         }
     },
-    getNewIndicator: function (size) {
-        let res = $('#templates .lds-spinner').clone();
-        if (size) res.addClass(size);
+    getNewIndicator: function (className) {
+        const res = $('#templates .preloader').clone();
+        if (className) res.addClass(className);
         return res;
     },
+    getNewIndicatorLarge: function () {
+        return preloader.getNewIndicator('spinner-border-large');
+    },
     getNewIndicatorMedium: function () {
-        return preloader.getNewIndicator('medium');
+        return preloader.getNewIndicator();
     },
     getNewIndicatorSmall: function () {
-        return preloader.getNewIndicator('small');
+        return preloader.getNewIndicator('spinner-border-sm');
     },
 };
 

@@ -35,16 +35,6 @@ class PageConstructor
     {
         return LightningEngine::getInstance()->getCurrentPage()->getBaseUrl();
     }
-    
-    /**
-     * Получает все проекты пользователя.
-     * @param  boolean $isArchive флаг архивного проекта.
-     *
-     */
-    public static function getProjectsList($isArchive)
-    {
-        return Project::getAvailList($isArchive);
-    }
 
     public static function getIssuesList()
     {

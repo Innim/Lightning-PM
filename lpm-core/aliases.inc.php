@@ -359,14 +359,6 @@ function lpm_get_user_menu()
 }
 
 /**
- * Возвращает список проектов
- */
-function lpm_get_projects_list($archive = false)
-{
-    return PageConstructor::getProjectsList($archive);
-}
-
-/**
  * Возвращает список задач для текущего проекта
  */
 function lpm_get_issues_list()
