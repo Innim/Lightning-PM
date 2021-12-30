@@ -156,7 +156,7 @@ class PageConstructor
     ];
 
     private static $_usingJSModules = [
-        'scrum-board-filters/index'
+        'filters/index'
     ];
     
     public $_title    = '';

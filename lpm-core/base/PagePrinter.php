@@ -175,7 +175,7 @@ class PagePrinter
     }
     
     /**
-     * Распечатывает таблицу Scrum доски.
+     * Распечатывает шаблон целей спринта.
      */
     public static function sprintTargetForm($project)
     {
@@ -183,11 +183,19 @@ class PagePrinter
     }
 
     /**
-     * Распечатывает шаблон фильтров Scrum-доски.
+     * Распечатывает шаблон фильтра Scrum-доски.
      */
-    public static function sprintScrumBoardFilters()
+    public static function scrumBoardFilter()
     {
-        PageConstructor::includePattern('scrum-board-filters');
+        PageConstructor::includePattern('scrum-board-filter');
+    }
+
+    /**
+     * Распечатывает шаблон фильтра в списке задач.
+     */
+    public static function issueListFilter()
+    {
+        PageConstructor::includePattern('issue-list-filter');
     }
     
 

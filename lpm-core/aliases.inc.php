@@ -292,9 +292,17 @@ function lpm_print_sprint_target_form($project)
 /**
  * Выводит шаблон компонента фильтров Scrum доски.
  */
-function lpm_print_scrum_board_filters()
+function lpm_print_scrum_board_filter()
 {
-    return PagePrinter::sprintScrumBoardFilters();
+    return PagePrinter::scrumBoardFilter();
+}
+
+/**
+ * Выводит шаблон компонента фильтров списка задач.
+ */
+function lpm_print_issue_list_filters()
+{
+    return PagePrinter::issueListFilter();
 }
 
 /**

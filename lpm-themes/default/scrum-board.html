@@ -15,7 +15,7 @@
         </div>
         <div class="row">
             <div class="col d-flex flex-row align-items-end">
-                <div class="card w-25 scrum-board-target">
+                <div class="card scrum-board-target">
                     <div class="card-body">
                         <h5 class="card-title title-target">Цели спринта</h5>
                         <div class="card-text text-target"><?=$project->getSprintTargetHtml();?></div>
@@ -24,7 +24,7 @@
                 </div>
 
                 <div class="w-25 ms-1">
-                    <?php lpm_print_scrum_board_filters(); ?>
+                    <?php lpm_print_scrum_board_filter(); ?>
                 </div>
             </div>
         </div>

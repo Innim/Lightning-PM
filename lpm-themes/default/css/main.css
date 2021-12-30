@@ -909,6 +909,8 @@ table.issues-list tr.changes-requested .changes-requested-check {
 
 /* просмотр проекта */
 #projectView .filters-line {
+	display: flex;
+	align-items: center;
 	float: left;
 	width: 70%;
 	font-size : smaller;
@@ -1659,6 +1661,13 @@ form.pass-test #passTestComment textarea.comment-text-field {
 }
 
 /**
+ * Блок целей спринта
+ */
+.scrum-board-target {
+	min-width: 30%;
+}
+
+/**
  * === end sprint targets ===
  */
 
@@ -1688,4 +1697,27 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
 .scrum-board-top-content {
 	margin-top: 15px;
+}
+
+/**
+ * Фильтры в списке задач
+ */
+
+.filters-line .multiselect {
+	min-height: 24px;
+	min-width: 200px;
+}
+
+.filters-line .multiselect__tags {
+	min-height: 24px;
+	padding: 4px 24px 0 4px;
+	font-size: 14px;
+}
+
+.filters-line .multiselect__select {
+	height: 32px;
+}
+
+.filters-line .multiselect__tag {
+	overflow: unset;
 }
