@@ -25,37 +25,39 @@
 					class="issue-hours value"><?=$hours;?></span>&nbsp;<?=$project->getNormHoursLabel($hours);?>)</span>
 			из <span class="issues-total value"><?=$project->getTotalIssuesCount()?></span>
 		</div>
-		<div class="filters-line">
-			<button
-					type="button"
-					class="btn btn-outline-secondary btn-sm"
-			   		id="showIssues4MeLink"
-			   		onclick="issuePage.showIssues4Me();">
+		<div class="filters-line mb-1">
+			<div>
+				<button
+						type="button"
+						class="btn btn-outline-secondary btn-sm"
+						id="showIssues4MeLink"
+						onclick="issuePage.showIssues4Me();">
 					Показать только мои задачи
-			</button>
-			<button
-					type="button"
-					class="btn btn-outline-secondary btn-sm mx-1"
-			   		id="showIssues4AllLink"
-			   		onclick="issuePage.resetFilter();"
-					style="display:none;">
+				</button>
+				<button
+						type="button"
+						class="btn btn-outline-secondary btn-sm"
+						id="showIssues4AllLink"
+						onclick="issuePage.resetFilter();"
+						style="display:none;">
 					Показать все
-			</button>
-			<button
-					type="button"
-					class="btn btn-outline-secondary btn-sm mx-1"
-			   		id="showLastCreated"
-			   		onclick="issuePage.showLastCreated();">
+				</button>
+				<button
+						type="button"
+						class="btn btn-outline-secondary btn-sm mx-1"
+						id="showLastCreated"
+						onclick="issuePage.showLastCreated();">
 					Последние добавленные
-			</button>
-			<button
-					type="button"
-					class="btn btn-outline-secondary btn-sm mx-1"
-			   		id="sortDefault"
-			   		onclick="issuePage.sortDefault();"
-					style="display: none;">
+				</button>
+				<button
+						type="button"
+						class="btn btn-outline-secondary btn-sm mx-1"
+						id="sortDefault"
+						onclick="issuePage.sortDefault();"
+						style="display: none;">
 					Сортировать по умолчанию
-			</button>
+				</button>
+			</div>
 			<?php lpm_print_issue_list_filters(); ?>
 		</div>
 		<div class="operations-line">

@@ -1661,6 +1661,13 @@ form.pass-test #passTestComment textarea.comment-text-field {
 }
 
 /**
+ * Блок целей спринта
+ */
+.scrum-board-target {
+	min-width: 30%;
+}
+
+/**
  * === end sprint targets ===
  */
 
@@ -1692,18 +1699,25 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	margin-top: 15px;
 }
 
-.multiselect {
+/**
+ * Фильтры в списке задач
+ */
+
+.filters-line .multiselect {
 	min-height: 24px;
-	width: 180px;
+	min-width: 200px;
 }
 
-.multiselect__tags {
+.filters-line .multiselect__tags {
 	min-height: 24px;
 	padding: 4px 24px 0 4px;
-	font-size: 12px;
-	background: #ccc;
+	font-size: 14px;
 }
 
-.multiselect__select {
+.filters-line .multiselect__select {
 	height: 32px;
+}
+
+.filters-line .multiselect__tag {
+	overflow: unset;
 }

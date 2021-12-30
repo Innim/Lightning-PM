@@ -11,35 +11,38 @@ export function issueListFilter(filterElementSelector, onChange) {
         watch: {
             selectedTags: function(selectedTags) {
                 if (selectedTags.length) {
-                    this.filterStickers(selectedTags);
+                    this.filterIssues(selectedTags);
                 } else {
-                    this.showAllStickers();
+                    this.showAllIssues();
                 }
                 onChange(selectedTags);
             }
         },
         methods: {
-            getRows(selector ) {
-                const issuesList = document.getElementById('issuesList');
-                const rows = issuesList.tBodies[0].children;
-                return document.querySelectorAll(selector);
+            getRows(id = 'issuesList') {
+                const issuesList = document.getElementById(id);
+                const rows = issuesList.tBodies[0]?.children;
+                return [...rows];
             },
-            getStickerElement(el) {
-                // return el?.parentElement?.parentElement;
+            getIssueColElement({children}) {
+                return children[2].querySelector('.issue-name > .issue-name');
             },
             showElement(el, show) {
-                // el.style.display = show ? 'block' : 'none';
+                el.hidden = !show;
             },
-            filterStickers(selectedTags) {
-                this.getRows().forEach((el) => {
-
+            filterIssues(selectedTags) {
+                this.getRows().forEach((row) => {
+                    const issueColElement = this.getIssueColElement(row);
+                    const issueTitle = issueColElement.innerText;
+                    const lastTagIndex = issueTitle.lastIndexOf(']');
+                    const stickerTags = issueTitle.substr(0, lastTagIndex + 1);
+                    const hasTag = selectedTags.some((tag) => stickerTags.includes(tag));
+                    this.showElement(row, hasTag);
                 });
             },
-            // showAllStickers() {
-            //     this.getRows().forEach((el) => {
-            //         this.showElement(this.getStickerElement(el), true);
-            //     });
-            // }
+            showAllIssues() {
+                this.getRows().forEach((row) => this.showElement(row, true));
+            }
         }
     });
 }
