@@ -191,7 +191,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <a href="#" class="toggle-comments" onclick="comments.toggleCommentForm(); return false;">Свернуть
                     комментарии</a>
                 <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
-                <a href="#" class="request-changes-link" onclick="comments.showCommentForm(true); return false;">Найдены проблемы</a>
+                <a href="#" class="request-changes-link text-danger" onclick="comments.showCommentForm(true); return false;"><i class="fas fa-bug changes-requested-check"></i> Найдены проблемы</a>
             </div>
         </div>
         <form id="addCommentForm" class="add-comment" onsubmit="issuePage.postComment(); return false;">
