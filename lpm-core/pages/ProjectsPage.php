@@ -71,7 +71,7 @@ class ProjectsPage extends LPMPage
         // т.к. тут в любом случае должна быть подстраница
         // но надо допилить логику подстраниц и обработки добавления 
 
-        return $this;
+        return $this->projectsList(false);
     }
 
     public function getLabel()
