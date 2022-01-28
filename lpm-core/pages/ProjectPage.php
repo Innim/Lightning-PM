@@ -98,7 +98,7 @@ class ProjectPage extends LPMPage
                 self::PUID_SCRUM_BOARD,
                 'Scrum доска',
                 'scrum-board',
-                array_merge(['scrum-board'], $this->getIssueJs())
+                array_merge(['scrum-board', 'filters/scrum-board-filter'], $this->getIssueJs())
             );
             $this->addSubPage(
                 self::PUID_SCRUM_BOARD_SNAPSHOT,
@@ -351,7 +351,8 @@ class ProjectPage extends LPMPage
             'issues',
             'issue-form',
             'libs/tribute',
-            'libs/character-counter'
+            'libs/character-counter',
+            'filters/issue-list-filter',
         ];
     }
 
