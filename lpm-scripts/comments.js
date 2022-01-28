@@ -26,7 +26,7 @@ let comments = {
 		closed: 'fa-times-circle',
 	},
 	init: function () {
-		comments.storeKey = issuePage ? 'comment-' + issuePage.getIssueId() : 'comment';
+		comments.storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
 		comments.invalidateLinks();
 		comments.initAddForm();
 	},
