@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const issueColElement = this.getIssueColElement(row);
                         const issueTitle = issueColElement.innerText;
                         const lastTagIndex = issueTitle.lastIndexOf(']');
-                        const stickerTags = issueTitle.substr(0, lastTagIndex + 1);
-                        const hasTag = selectedTags.some((tag) => stickerTags.includes(tag));
+                        const issueTags = issueTitle.substr(0, lastTagIndex + 1);
+                        const hasTag = selectedTags.some((tag) => issueTags.includes(tag));
                         this.showElement(row, hasTag);
                     });
                 },
