@@ -47,4 +47,13 @@ class IssueComment extends LPMBaseObject
 
         $this->_typeConverter->addIntVars('commentId');
     }
+
+    /**
+     * Определяет, является ли комментарий запросом изменений
+     * (правки от тестировщика).
+     * @return bool
+     */
+    public function isRequestChanges() {
+        return $this->type == IssueCommentType::REQUEST_CHANGES;
+    }
 }

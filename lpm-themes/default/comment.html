@@ -9,6 +9,15 @@ if (empty($showIssueLink)) $showIssueLink = false;
 $issue = $comment->issue;
 $issueComment = $comment->issueComment;
 $url = $issue ? $comment->getIssueCommentUrl($issue) : null;
+
+$bgColorClass = '';
+$bgIconClass = '';
+if ($issueComment) {
+  if ($issueComment->isRequestChanges()) {
+    $bgColorClass = 'bg-warning bg-opacity-50';
+    $bgIconClass = 'fa-bug';
+  }
+}
 ?>
 
 <div class="row d-flex justify-content-center mt-5">
@@ -40,16 +49,22 @@ $url = $issue ? $comment->getIssueCommentUrl($issue) : null;
       </div>
     </div>
 
-    <div class="card mt-3">
+    <div class="card mt-3 <?=$bgColorClass;?> position-relative">
+
       <div class="card-body">        
-          <?php lpm_print_comment_text($comment->getText());?>        
+        <?php lpm_print_comment_text($comment->getText());?>
+      </div>
+      <div class="position-absolute bottom-0 end-0 p-1">
+        <?php if (!empty($bgIconClass)): ?>
+        <i class="fas <?=$bgIconClass;?> opacity-25 fa-lg"></i>
+        <?php endif; ?>
       </div>
 
-			<?php if ($showIssueLink && $comment->issue):?>
+			<?php if ($showIssueLink && $issue):?>
 			<div class="card-footer text-muted">
 				<span>Задача </span>
-				<a href="<?=$comment->issue->getConstURL();?>"
-					class="comment-issue-link"><?=$comment->issue->getName();?></a>
+				<a href="<?=$issue->getConstURL();?>"
+					class="comment-issue-link"><?=$issue->getName();?></a>
 			</div>
 			<?php endif;?>
     </div>
