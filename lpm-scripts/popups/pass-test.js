@@ -33,7 +33,7 @@ const passTest = {
 
         passTest.currentIssueId = issueId;
 
-        $('#passTestComment .comment-text-field', $el).val('Прошла тестирование\n\n');
+        $('#passTestComment .comment-text-field', $el).val('**Прошла тестирование**\n\n');
 
         $el.dialog('open');
     },

@@ -253,7 +253,7 @@ class IssueService extends LPMBaseService
             }
 
             if (empty($text)) {
-                $text = 'Прошла тестирование';
+                $text = '**Прошла тестирование**';
             }
 
             $comment = $this->postComment($issue, $text, true, IssueCommentType::PASS_TEST);

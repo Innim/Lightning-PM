@@ -12,10 +12,17 @@ $url = $issue ? $comment->getIssueCommentUrl($issue) : null;
 
 $bgColorClass = '';
 $bgIconClass = '';
-if ($issueComment) {
-  if ($issueComment->isRequestChanges()) {
-    $bgColorClass = 'bg-warning bg-opacity-50';
-    $bgIconClass = 'fa-bug';
+if (!empty($issueComment)) {
+  switch ($issueComment->type)
+  {
+    case IssueCommentType::REQUEST_CHANGES:
+      $bgColorClass = 'bg-warning bg-opacity-50';
+      $bgIconClass = 'fa-bug';
+      break;
+    case IssueCommentType::PASS_TEST:
+      $bgColorClass = 'bg-success bg-opacity-25';
+      $bgIconClass = 'fa-check';
+      break;
   }
 }
 ?>

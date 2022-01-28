@@ -63,4 +63,12 @@ class IssueComment extends LPMBaseObject
     public function isRequestChanges() {
         return $this->type == IssueCommentType::REQUEST_CHANGES;
     }
+
+    /**
+     * Определяет, является ли комментарий отметкой о прохождении теста.
+     * @return bool
+     */
+    public function isPassTest() {
+        return $this->type == IssueCommentType::PASS_TEST;
+    }
 }
