@@ -9,8 +9,8 @@ $(document).ready(function ($) {
 		let hash = window.location.hash;
 		if (hash.substr(0, 9) === '#comment-') {
 			$(".comments-list .comments-list-item").has("a.anchor[id=" + hash.substr(1) + "]")
-				.find(".text").css("backgroundColor", "#868686")
-				.animate({ backgroundColor: "#eeeeee" }, 1200);
+				.find(".card").css("backgroundColor", "#e0cffc")
+				.animate({ backgroundColor: "#ffffff" }, 1200);
 		}
 	}
 

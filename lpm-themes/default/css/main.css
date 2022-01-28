@@ -642,47 +642,14 @@ a.create-branch-icon .plus-icon {
 	list-style: none;
 	padding: 0;
 }
-.comments .comments-list .comments-list-item {
-	border-top: solid 1px #cccccc;	
-}
-.comments .comments-list .comments-list-item .comment-issue-line {
-	display: block;
-    padding: 0 5px 10px;
-    margin-top: -15px;
-    font-size: 12px;
-}
-.comments-list-item img.user-avatar {
-    float : left;
-    margin: 5px;
-    margin-top: 10px;
-}
-.comments-list-item .author {
-	margin-bottom: 0px;
-	font-size    : smaller;
-}
-.comments-list-item .date {
-    margin-top   : 0px;
-    font-size    : x-small;
-}
-.comments-list-item .date a
-{
-	outline: none;
-	color: inherit;
-}
-.comments-list-item .text {
-    background-color: #eeeeee;
-    padding         : 10px;
-    clear           : both;
-}
 .comments-list-item .text > p {
     margin: 0;
     padding: 0;
 }
 .comments-list-item ul.merge-requests {
 	margin: 10px 0 0;
-	padding: 10px;
+	padding: 0;
 	list-style: none;
-	background-color: #dddddd;
 }
 
 .comments-list-item ul.merge-requests:empty {
@@ -1481,13 +1448,6 @@ blockquote > p {
 
 .table-cell {
 	display: table-cell;
-}
-.delete-comment, .delete-comment:hover {
-	text-decoration: underline;
-	cursor: pointer;
-	float: right;
-	font-size: 10px;
-	padding: 0px;
 }
 
 #projectSettings form ul.form-items {
