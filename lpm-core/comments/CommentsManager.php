@@ -42,7 +42,7 @@ class CommentsManager
         }
 
         if (!empty($type)) {
-            IssueComment::create($comment->id, $type, $data);
+            $comment->issueComment = IssueComment::create($comment->id, $type, $data);
         }
 
         // отправка оповещений

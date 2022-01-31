@@ -77,14 +77,13 @@ $(document).ready(
         // BEGIN -- Комментарии
 
         $(document).on('click', '.delete-comment', function () {
-            let id = $(this).attr('data-comment-id');
-            let el = $(this);
-            let result = confirm('Удалить комментарий?');
+            const id = $(this).data('commentId');
+            const el = $(this);
+            const result = confirm('Удалить комментарий?');
             if (result) {
                 issuePage.deleteComment(id, function (res) {
                     if (res) {
-                        el.parent('div.comments-list-item').remove();
-                        el = null;
+                        el.parents('div.comments-list-item').remove();
                     }
                 });
             }
@@ -94,8 +93,8 @@ $(document).ready(
 
         if (!$('#is-admin').val()) {
             $('.delete-comment').each(function (index) {
-                let elementId = $(this).attr('id');
-                let startTime = $(this).attr('data-time');
+                const elementId = $(this).attr('id');
+                const startTime = $(this).data('time');
                 hideElementAfterDelay(elementId, startTime);
             });
         }
