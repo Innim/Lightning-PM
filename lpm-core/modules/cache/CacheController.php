@@ -6,6 +6,7 @@ class CacheController
 {
     const OWNCLOUD_SHARED_FILE_TYPE_PREFIX = 'owncloud_shared_file_type_prefix-';
     const IMAGE_CACHED_PREVIEW_PREFIX = 'image_cached_preview_prefix-';
+    const USER_SLACK_AVATAR_PREFIX = 'user_slack_avatar-';
 
     /**
      * @var Memcached
@@ -72,6 +73,23 @@ class CacheController
     }
 
     /**
+     * Возвращает URL аватара пользователя из Slack.
+     * 
+     * @return string|false URL аватара.
+     * Если значения нет, оно истекло или кэш выключен, 
+     * то вернется false. 
+     */
+    public function getUserSlackAvatarUrl($userId)
+    {
+        return $this->get($this->getUserSlackAvatarUrlKey($userId));
+    }
+
+    public function setUserSlackAvatarUrl($userId, $url)
+    {
+        return $this->set($this->getUserSlackAvatarUrlKey($userId), $url);
+    }
+
+    /**
      * Возвращает URL до превью изображения по URL.
      * 
      * Если превью нет, то оно будет создано.
@@ -104,6 +122,11 @@ class CacheController
     private function getImageCachedPreviewKey($url)
     {
         return self::IMAGE_CACHED_PREVIEW_PREFIX . md5($url);
+    }
+
+    private function getUserSlackAvatarUrlKey($userId)
+    {
+        return self::USER_SLACK_AVATAR_PREFIX . $userId;
     }
 
     private function images() 
