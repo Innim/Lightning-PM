@@ -741,17 +741,6 @@ ul.panel-submenu li {
 	display: none;
 }
 
-/* список пользователей */
-table.users-list thead th:first-child,
-table.users-list tbody td:first-child {
-	width     : 64px;
-	text-align: center;
-}
-table.users-list.no-avatar thead th:first-child,
-table.users-list.no-avatar tbody td:first-child {
-	width: auto;
-}
-
 table tr.locked-user {
 	background-color: #cccccc;
 	color           : #999999;

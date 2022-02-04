@@ -7,27 +7,31 @@
 $users = lpm_get_users_list();
 $isModerator = lpm_is_moderator();
 ?>
-<table class="users-list">
+<table class="users-list table">
     <thead>
         <tr>
-            <th></th>
-            <th>Пользователь</th>
-            <th>Email</th>
-            <th>Последний вход</th>
+            <th scope="col"></th>
+            <th scope="col">Пользователь</th>
             <?php if ($isModerator): ?>
-            <th>Операции</th>
+            <th scope="col">Email</th>
+            <?php endif; ?>
+            <th scope="col">Последний вход</th>
+            <?php if ($isModerator): ?>
+            <th scope="col" class="text-center">Операции</th>
             <?php endif; ?>
         </tr>
     </thead>
     <tbody>
         <?php foreach ($users as $user): ?>
-        <tr class="<?=$user->isLocked()?'locked-user':'active-user';?>">
+        <tr class="<?=$user->isLocked()?'locked-user':'active-user';?> align-middle">
             <td><img class="user-avatar middle" src="<?=$user->getAvatarUrl();?>" /></td>
             <td><?=$user->getLinkedName();?></td>
-            <td><?=$user->getEmail();?></td>
+            <?php if ($isModerator): ?>
+            <td><?=$user->email;?></td>
+            <?php endif; ?>
             <td><?=$user->getLastVisit();?></td>
             <?php if ($isModerator): ?>
-            <td style="text-align: center;">
+            <td class="text-center">
                 <input type="hidden" name="userId" value="<?=$user->userId;?>" />
                 <button class="btn btn-secondary" id="unlocked-btn" onclick="usersPage.lockUser(event);">Разблокировать</button>
                 <button class="btn btn-danger" id="locked-btn" onclick="usersPage.lockUser(event);">Заблокировать</button>
