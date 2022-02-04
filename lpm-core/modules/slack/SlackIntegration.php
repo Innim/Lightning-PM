@@ -1,6 +1,11 @@
 <?php
 /**
  * Интеграция со Slack.
+ * 
+ * Для работы интеграции требуется приложение со следующими scope:
+ * - incoming-webhook
+ * - groups:history
+ * - users.profile:read
  */
 class SlackIntegration
 {
