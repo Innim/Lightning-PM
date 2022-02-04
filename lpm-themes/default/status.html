@@ -1,0 +1,32 @@
+<?php
+/* 
+Требуются: 
+    AppStatus $status - модель статуса приложения
+*/
+?>
+<h1>Статус приложения</h1>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col" colspan="2">Кэш</th>  
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Включен</th>
+      <td class="<?=bool_class($status->cacheEnabled);?>"><?=bool_label($status->cacheEnabled);?></td>
+    </tr>
+  </tbody>
+</table>
+<?php
+
+function bool_class($value) 
+{
+    return $value ? 'table-success' : 'table-danger';
+}
+
+function bool_label($value) 
+{
+    return $value ? 'Да' : 'Нет';
+}
