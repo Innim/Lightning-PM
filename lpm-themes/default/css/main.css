@@ -659,6 +659,8 @@ a.create-branch-icon .plus-icon {
 .comments-list-item ul.merge-requests li {
 	padding: 5px;
 	border-radius: 5px;
+	border-width: 1px;
+	border-style: solid;
 }
 
 .comments-list-item ul.merge-requests li .state-icon {
@@ -667,6 +669,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.opened {
 	background-color: #ffffbc;
+	border-color: #ffc107;
 }
 
 .comments-list-item ul.merge-requests li.opened .state-icon {
@@ -675,6 +678,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.closed {
 	background-color: #fdcabe;
+	border-color: #dc3545;
 }
 .comments-list-item ul.merge-requests li.closed .state-icon {
 	color: #e50000;
@@ -682,6 +686,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.merged {
 	background-color: #e2ffd9;
+	border-color: #198754;
 }
 .comments-list-item ul.merge-requests li.merged .state-icon {
 	color: #2bbd00;
