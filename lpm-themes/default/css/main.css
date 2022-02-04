@@ -276,11 +276,6 @@ ol#profileInfo.info-list {
 	font-size : smaller;
 	text-align: right;
 }
-
-.page-desc {
-	margin: 0 0 10px;
-	font-size: 0.9em;
-}
 .add-me-link {
 	font-size: x-small;
 	font-weight: normal;
@@ -1519,15 +1514,6 @@ blockquote > p {
 	cursor: pointer;
 	color: #000000;
 	text-decoration: none;
-}
-
-/* Страница SCRUM статистики */
-.stat-summary {
-	margin: 5px 0;
-	text-align: right;
-}
-.stat-summary .stat-summary-value {
-	font-weight: bold;
 }
 
 /* Форма создания ветки */
