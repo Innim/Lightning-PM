@@ -25,6 +25,27 @@ button.ui-button {
     min-width: 0;
     min-height: 0;
 }
+table.backward-capability {
+	width: 100%;
+	border: 1px solid #cccccc;
+	border-spacing: 0px;	
+	border-collapse: collapse;
+}
+table.backward-capability thead th {
+    background-color: #666666;
+    color           : #ffffff; 
+}
+table.backward-capability tr {
+    background-color: #ffffff;
+}
+table.backward-capability tr:nth-of-type(2n) {
+    background-color: #eeeeee;
+}
+table.backward-capability th,
+table.backward-capability td {
+	padding: 5px;
+	border: 1px solid #cccccc;
+}
 nav {
 	width           : 100%;
 	margin-bottom   : 5px;	
