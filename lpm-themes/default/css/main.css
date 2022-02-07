@@ -794,7 +794,7 @@ table.users-list tr.active-user td button#unlocked-btn {
 	color: #999999;
 }
 table tr.completed-issue {
-	background-color: #cccccc;
+	background-color: #cccccc !important;
 	color           : #999999;
 }
 table tr.completed-issue .priority-val {
@@ -811,7 +811,7 @@ table tr.completed-issue a {
 }
 
 table tr.verify-issue {
-	background-color: #f8f3b5;
+	background-color: #f8f3b5 !important;
 	color           : #999999;
 }
 
@@ -927,7 +927,7 @@ table.issues-list tr.verify-issue td span.comments-count {
     color: #ffffff;
 }
 table tr.completed-issue:hover td span.comments-count {   
-    background: #dddddd;
+    background: #dddddd !important;
     color     : #999999;
 }
 table.issues-list td .on-board-state {
