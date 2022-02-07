@@ -1,6 +1,11 @@
 <?php
 /**
  * Интеграция со Slack.
+ * 
+ * Для работы интеграции требуется приложение со следующими scope:
+ * - incoming-webhook
+ * - groups:history
+ * - users.profile:read
  */
 class SlackIntegration
 {
@@ -97,6 +102,24 @@ class SlackIntegration
         $text = $this->addMentionsByUsers($text, $masters);
 
         $this->postMessageForIssue($issue, $text);
+    }
+
+    /**
+     * Получает информацию о профиле пользователя в Slack.
+     * 
+     * @param String $memberId Идентификатор участника в Slack. Хранится в User::$slackName. 
+     *                         Здесь нужно передавать именно ID, имя не подходит.
+     * @return JoliCode\Slack\Api\Model\ObjsUserProfile
+     * @throws JoliCode\Slack\Exception\SlackErrorResponse В случае ошибки в ответ на запрос.
+     */
+    public function getProfile(string $memberId)
+    {
+        $client = $this->getClient();
+        $res = $client->usersProfileGet([
+            'user' => $memberId
+        ]);
+
+        return $res->getProfile();
     }
 
     /**

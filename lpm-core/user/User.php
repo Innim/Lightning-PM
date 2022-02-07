@@ -297,7 +297,11 @@ class User extends LPMBaseObject
         $this->pref->loadStream($hash);
         
         if (empty($this->avatarUrl)) {
-            $this->avatarUrl = $this->getMyGravatar();
+            $this->avatarUrl = $this->getMySlackAvatar();
+
+            if (empty($this->avatarUrl)) {
+                $this->avatarUrl = $this->getMyGravatar();
+            }
         }
         
         parent::onLoadStream($hash);
@@ -315,6 +319,34 @@ class User extends LPMBaseObject
     private function getMyGravatar()
     {
         return $this->getGravatar($this->email);
+    }
+    
+    private function getMySlackAvatar()
+    {
+        if (empty($this->slackName)) return '';
+
+        $engine = LightningEngine::getInstance();
+        $cache = $engine->cache();
+
+        // Функционал аватаров из Slack включаем только если кэш включен
+        // потому что иначе заспамим Slack API, да и долго будет все.
+        // Если нужны будут аватарки и с выключенным кэшем - то нужно
+        // сделать хранение их в базе
+        if (!$cache->isEnabled()) return '';
+
+        $cachedValue = $cache->getUserSlackAvatarUrl($this->userId);
+        if ($cachedValue !== false) return $cachedValue;
+
+        $slack = SlackIntegration::getInstance();
+        try {
+            $profile = $slack->getProfile($this->slackName);
+            $url = $profile->getImage192();
+        } catch (Exception $e) {
+            $url = '';
+        }
+
+        $cache->setUserSlackAvatarUrl($this->userId, $url);
+        return $url;
     }
     
     /**
