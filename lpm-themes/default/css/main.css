@@ -965,7 +965,7 @@ table.issues-list td .priority-change-animation {
 	user-select: none;
 }
 table.issues-list tr.verify-issue.tester {
-	background: #FFEC80;
+	background: #FFEC80 !important;
 }
 /* Активная задача, на которую назначен тестером. Раскомментировать, если тоже нужно подсвечивать.
 table.issues-list tr.active-issue.tester {
