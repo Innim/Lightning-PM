@@ -325,7 +325,9 @@ class IssueService extends LPMBaseService
 
             $commentText = '*' . $gitlabProject->name . '*: `' . $commentText . '`';
 
-            $comment = $this->postComment($issue, $commentText, true);
+            $comment = $this->postComment($issue, $commentText, true, 
+                IssueCommentType::CREATE_BRANCH, 
+                IssueCommentCreateBranchData::serialize($gitlabProjectId, $finalBranchName));
 
             $user = $this->getUser();
             $userId = $user->userId;

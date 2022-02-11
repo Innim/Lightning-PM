@@ -22,4 +22,9 @@ class IssueCommentType
      * и не подходит ни в какой другой тип.
      */
     const MERGE_REQUEST = 'merge_request';
+
+    /**
+     * Комментарий о создании ветки.
+     */
+    const CREATE_BRANCH = 'create_branch';
 }

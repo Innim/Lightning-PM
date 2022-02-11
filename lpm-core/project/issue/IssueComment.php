@@ -46,6 +46,8 @@ class IssueComment extends LPMBaseObject
      */
     public $data;
 
+    private $_deserializedData;
+
     public function __construct($raw = null)
     {
         parent::__construct();
@@ -70,5 +72,29 @@ class IssueComment extends LPMBaseObject
      */
     public function isPassTest() {
         return $this->type == IssueCommentType::PASS_TEST;
+    }
+
+    /**
+     * Определяет, является ли комментарий информацией о создании ветки.
+     * @return bool
+     */
+    public function isCreateBranch() {
+        return $this->type == IssueCommentType::CREATE_BRANCH;
+    }
+
+    /**
+     * Возвращает данные ветки для коммента типа IssueCommentType::CREATE_BRANCH.
+     */
+    public function getCreateBranchData(): ?IssueCommentCreateBranchData
+    {
+        if ($this->isCreateBranch() && !empty($this->data)) {
+            if (empty($this->_deserializedData)) {
+                $this->_deserializedData = new IssueCommentCreateBranchData($this->data);
+            }
+
+            return $this->_deserializedData;
+        }
+
+        return null;
     }
 }
