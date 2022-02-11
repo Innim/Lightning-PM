@@ -8,6 +8,11 @@ class CacheController
     const IMAGE_CACHED_PREVIEW_PREFIX = 'image_cached_preview_prefix-';
     const USER_SLACK_AVATAR_PREFIX = 'user_slack_avatar-';
 
+    const HOUR = 60 * 60;
+    const DAY = 24 * self::HOUR;
+    const WEEK = 7 * self::DAY;
+    const MONTH = 30 * self::DAY;
+
     /**
      * @var Memcached
      */
@@ -63,6 +68,8 @@ class CacheController
      * @param string $key Ключ.
      * @param mixed $value Значение.
      * @param int $expiredAt Время (unixtime, s) истечения значения.
+     *                       Если значение больше 30*24*60*60, то считается что это unixtime,
+     *                       если меньше - то считается что это число секунд с текущего момента.
      * @return bool Вернется true, если данные были записаны, иначе false.
      */
     public function set($key, $value, $expiredAt = 0)
@@ -98,7 +105,7 @@ class CacheController
 
     public function setUserSlackAvatarUrl($userId, $url)
     {
-        return $this->set($this->getUserSlackAvatarUrlKey($userId), $url);
+        return $this->set($this->getUserSlackAvatarUrlKey($userId), $url, self::WEEK);
     }
 
     /**
@@ -120,7 +127,7 @@ class CacheController
         // Важна проверка именно на false, потому что null важное значение
         if ($res === false) {
             $res = $this->images()->createCache($url);
-            $this->set($key, $res, 24 * 3600);
+            $this->set($key, $res, self::DAY);
         }
 
         return $res;
