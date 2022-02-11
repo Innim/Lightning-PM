@@ -11,7 +11,7 @@ class StatusPage extends LPMPage
     public function __construct()
     {
         parent::__construct(self::UID, 'Статус', true, false, 'status', '', User::ROLE_ADMIN);
-
+        $this->addJS('admin', 'status');
     }
 
     public function init()
