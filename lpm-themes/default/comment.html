@@ -2,17 +2,80 @@
 /* 
 Требуются: 
     $comment - коммент
+    $showIssueLink = false - коммент
 */
+if (empty($showIssueLink)) $showIssueLink = false;
 
 $issue = $comment->issue;
+$issueComment = $comment->issueComment;
 $url = $issue ? $comment->getIssueCommentUrl($issue) : null;
+
+$bgColorClass = '';
+$bgIconClass = '';
+if (!empty($issueComment)) {
+  switch ($issueComment->type)
+  {
+    case IssueCommentType::REQUEST_CHANGES:
+      $bgColorClass = 'bg-warning bg-opacity-50';
+      $bgIconClass = 'fa-bug';
+      break;
+    case IssueCommentType::PASS_TEST:
+      $bgColorClass = 'bg-success bg-opacity-25';
+      $bgIconClass = 'fa-check';
+      break;
+  }
+}
 ?>
-<?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
-<p id="<?='comment_' . $comment->id?>" class="delete-comment" data-comment-id="<?=$comment->id?>"
-    data-user-id="<?=lpm_get_user()->getID();?>" data-time="<?=$comment->date?>">Удалить</p>
-<?php endif; ?>
-<img src="<?=$comment->getAuthorAvatarUrl();?>" class="user-avatar small" />
-<p class="author"><?=$comment->getAuthorLinkedName();?></p>
-<p class="date"><?php if ($url):?><a id="<?='comment-' . $comment->id?>" class="anchor"
-        href="<?=$url;?>"><?php endif;?><?=$comment->getDate();?><?php if ($url):?></a><?php endif;?></p>
-<?php lpm_print_comment_text($comment->getText());?>
+
+<div class="row d-flex justify-content-center mt-5">
+  <div class="col-md-12">
+    <div class="d-flex flex-start align-items-center position-relative ps-1">
+      <img
+        class="rounded-circle shadow-1-strong me-3"
+        src="<?=$comment->getAuthorAvatarUrl();?>"
+        alt="avatar" width="50" height="50"/>
+      <div>
+        <h6 class="fw-bold text-primary mb-0"><?=$comment->getAuthorLinkedName();?></h6>
+        <div class="text-muted small mt-1">
+          <?php if ($url):?>
+          <a id="<?='comment-' . $comment->id?>" class="anchor" href="<?=$url;?>"><?php endif;?>
+          <?=$comment->getDate();?>
+          <?php if ($url):?>
+          </a>
+          <?php endif;?>
+        </div>
+      </div>
+      
+      <div class="position-absolute top-0 end-0">
+        <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
+        <a href="javascript:void(0);" id="<?='delete_comment_' . $comment->id?>" class="delete-comment" title="Удалить"
+           data-comment-id="<?=$comment->id?>" data-user-id="<?=lpm_get_user()->getID();?>" data-time="<?=$comment->date?>">
+          <i class="fas fa-trash-alt"></i>
+        </a>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <div class="card mt-3 <?=$bgColorClass;?> position-relative">
+
+      <div class="card-body">        
+        <?php lpm_print_comment_text($comment->getText());?>
+      </div>
+      <div class="position-absolute bottom-0 end-0 p-1">
+        <?php if (!empty($bgIconClass)): ?>
+        <i class="fas <?=$bgIconClass;?> opacity-25 fa-lg"></i>
+        <?php endif; ?>
+      </div>
+
+			<?php if ($showIssueLink && $issue):?>
+			<div class="card-footer text-muted">
+				<span>Задача </span>
+				<a href="<?=$issue->getConstURL();?>"
+					class="comment-issue-link"><?=$issue->getName();?></a>
+			</div>
+			<?php endif;?>
+    </div>
+  </div>
+</div>
+    
+  

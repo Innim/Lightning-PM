@@ -3,7 +3,7 @@
         onkeyup="ucInput();" onfocus="ucInput.interval = setInterval(ucInput, 500);" onblur="clearInterval(ucInput.interval);">
 
     <div class="list-box">
-        <table class="users-list no-avatar">
+        <table class="users-list no-avatar backward-capability">
             <tbody>
                 <? foreach (lpm_get_users_choose_list() as $user) {?>
                 <tr>

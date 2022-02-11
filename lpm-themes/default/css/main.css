@@ -25,24 +25,24 @@ button.ui-button {
     min-width: 0;
     min-height: 0;
 }
-table {
+table.backward-capability {
 	width: 100%;
 	border: 1px solid #cccccc;
 	border-spacing: 0px;	
 	border-collapse: collapse;
 }
-table thead th {
+table.backward-capability thead th {
     background-color: #666666;
     color           : #ffffff; 
 }
-table tr {
+table.backward-capability tr {
     background-color: #ffffff;
 }
-table tr:nth-of-type(2n) {
+table.backward-capability tr:nth-of-type(2n) {
     background-color: #eeeeee;
 }
-table th,
-table td {
+table.backward-capability th,
+table.backward-capability td {
 	padding: 5px;
 	border: 1px solid #cccccc;
 }
@@ -296,11 +296,6 @@ ol#profileInfo.info-list {
 .operations-line {
 	font-size : smaller;
 	text-align: right;
-}
-
-.page-desc {
-	margin: 0 0 10px;
-	font-size: 0.9em;
 }
 .add-me-link {
 	font-size: x-small;
@@ -642,47 +637,14 @@ a.create-branch-icon .plus-icon {
 	list-style: none;
 	padding: 0;
 }
-.comments .comments-list .comments-list-item {
-	border-top: solid 1px #cccccc;	
-}
-.comments .comments-list .comments-list-item .comment-issue-line {
-	display: block;
-    padding: 0 5px 10px;
-    margin-top: -15px;
-    font-size: 12px;
-}
-.comments-list-item img.user-avatar {
-    float : left;
-    margin: 5px;
-    margin-top: 10px;
-}
-.comments-list-item .author {
-	margin-bottom: 0px;
-	font-size    : smaller;
-}
-.comments-list-item .date {
-    margin-top   : 0px;
-    font-size    : x-small;
-}
-.comments-list-item .date a
-{
-	outline: none;
-	color: inherit;
-}
-.comments-list-item .text {
-    background-color: #eeeeee;
-    padding         : 10px;
-    clear           : both;
-}
 .comments-list-item .text > p {
     margin: 0;
     padding: 0;
 }
 .comments-list-item ul.merge-requests {
 	margin: 10px 0 0;
-	padding: 10px;
+	padding: 0;
 	list-style: none;
-	background-color: #dddddd;
 }
 
 .comments-list-item ul.merge-requests:empty {
@@ -692,6 +654,8 @@ a.create-branch-icon .plus-icon {
 .comments-list-item ul.merge-requests li {
 	padding: 5px;
 	border-radius: 5px;
+	border-width: 1px;
+	border-style: solid;
 }
 
 .comments-list-item ul.merge-requests li .state-icon {
@@ -700,6 +664,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.opened {
 	background-color: #ffffbc;
+	border-color: #ffc107;
 }
 
 .comments-list-item ul.merge-requests li.opened .state-icon {
@@ -708,6 +673,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.closed {
 	background-color: #fdcabe;
+	border-color: #dc3545;
 }
 .comments-list-item ul.merge-requests li.closed .state-icon {
 	color: #e50000;
@@ -715,6 +681,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.merged {
 	background-color: #e2ffd9;
+	border-color: #198754;
 }
 .comments-list-item ul.merge-requests li.merged .state-icon {
 	color: #2bbd00;
@@ -790,17 +757,6 @@ ul.panel-submenu li {
 	display: none;
 }
 
-/* список пользователей */
-table.users-list thead th:first-child,
-table.users-list tbody td:first-child {
-	width     : 64px;
-	text-align: center;
-}
-table.users-list.no-avatar thead th:first-child,
-table.users-list.no-avatar tbody td:first-child {
-	width: auto;
-}
-
 table tr.locked-user {
 	background-color: #cccccc;
 	color           : #999999;
@@ -838,7 +794,7 @@ table.users-list tr.active-user td button#unlocked-btn {
 	color: #999999;
 }
 table tr.completed-issue {
-	background-color: #cccccc;
+	background-color: #cccccc !important;
 	color           : #999999;
 }
 table tr.completed-issue .priority-val {
@@ -855,7 +811,7 @@ table tr.completed-issue a {
 }
 
 table tr.verify-issue {
-	background-color: #f8f3b5;
+	background-color: #f8f3b5 !important;
 	color           : #999999;
 }
 
@@ -971,7 +927,7 @@ table.issues-list tr.verify-issue td span.comments-count {
     color: #ffffff;
 }
 table tr.completed-issue:hover td span.comments-count {   
-    background: #dddddd;
+    background: #dddddd !important;
     color     : #999999;
 }
 table.issues-list td .on-board-state {
@@ -1009,7 +965,7 @@ table.issues-list td .priority-change-animation {
 	user-select: none;
 }
 table.issues-list tr.verify-issue.tester {
-	background: #FFEC80;
+	background: #FFEC80 !important;
 }
 /* Активная задача, на которую назначен тестером. Раскомментировать, если тоже нужно подсвечивать.
 table.issues-list tr.active-issue.tester {
@@ -1482,13 +1438,6 @@ blockquote > p {
 .table-cell {
 	display: table-cell;
 }
-.delete-comment, .delete-comment:hover {
-	text-decoration: underline;
-	cursor: pointer;
-	float: right;
-	font-size: 10px;
-	padding: 0px;
-}
 
 #projectSettings form ul.form-items {
 	padding: 10px;
@@ -1586,15 +1535,6 @@ blockquote > p {
 	cursor: pointer;
 	color: #000000;
 	text-decoration: none;
-}
-
-/* Страница SCRUM статистики */
-.stat-summary {
-	margin: 5px 0;
-	text-align: right;
-}
-.stat-summary .stat-summary-value {
-	font-weight: bold;
 }
 
 /* Форма создания ветки */

@@ -144,9 +144,9 @@ function lpm_print_issue_form($project, $issue = null, $input = null)
 /**
 * Распечатывает отображение отдельного комментария.
 */
-function lpm_print_comment(Comment $comment)
+function lpm_print_comment(Comment $comment, $showIssueLink = false)
 {
-    return PagePrinter::comment($comment);
+    return PagePrinter::comment($comment, $showIssueLink);
 }
 
 /**

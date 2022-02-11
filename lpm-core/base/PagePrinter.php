@@ -96,9 +96,9 @@ class PagePrinter
         PageConstructor::includePattern('users-chooser');
     }
     
-    public static function comment(Comment $comment)
+    public static function comment(Comment $comment, $showIssueLink = false)
     {
-        PageConstructor::includePattern('comment', compact('comment'));
+        PageConstructor::includePattern('comment', compact('comment', 'showIssueLink'));
     }
     
     /**
