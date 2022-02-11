@@ -6,6 +6,8 @@
 ?>
 <h1>Статус приложения</h1>
 
+<div class="alert alert-success info-message" role="alert"></div>
+
 <table class="table">
   <thead>
     <tr>
@@ -13,6 +15,14 @@
     </tr>
   </thead>
   <tbody>
+    <?php if ($status->cacheEnabled):?>
+    <tr>
+      <th scope="row">Действия</th>
+      <td>
+        <button id="cacheFlushButton" type="button" class="btn btn-warning">Сбросить кэш</button>
+      </td>
+    </tr>
+    <?php endif;?>
     <tr>
       <th scope="row">Включен</th>
       <td class="<?=bool_class($status->cacheEnabled);?>"><?=bool_label($status->cacheEnabled);?></td>
