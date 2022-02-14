@@ -342,8 +342,8 @@ abstract class LPMPage
     protected function addJS($_)
     {
         $arr = func_get_args();
-        if (count($arr) > 0) {
-            array_merge($this->_js, $arr);
+        if (!empty($arr)) {
+            $this->_js = array_merge($this->_js, $arr);
         }
     }
 
