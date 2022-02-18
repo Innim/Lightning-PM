@@ -83,6 +83,14 @@ class IssueComment extends LPMBaseObject
     }
 
     /**
+     * Определяет, является ли комментарий автоматически созданным оповещением.
+     * @return bool
+     */
+    public function isAutoComment() {
+        return in_array($this->type, [IssueCommentType::CREATE_BRANCH]);
+    }
+
+    /**
      * Возвращает данные ветки для коммента типа IssueCommentType::CREATE_BRANCH.
      */
     public function getCreateBranchData(): ?IssueCommentCreateBranchData
