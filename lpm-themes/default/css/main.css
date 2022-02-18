@@ -314,18 +314,8 @@ ol.members-list {
 	position : relative;
 	list-style: none;
 }
-ol.members-list input.member-sp {
-	width: 20px;
-	margin-left: 5px;
-	display: inline-block;	
-	font-size: smaller;
-	padding: 1px 2px;
-	height: 14px;
-}
-ol.members-list .member-sp-label {
-	font-size: smaller;
-	margin-left: 5px;
-	display: inline-block;	
+.members-list .members-list-item.hide-sp .member-sp-container {
+	display: none;
 }
 
 fieldset > ol.members-list {

@@ -108,7 +108,6 @@ $descMaxLen = Issue::DESC_MAX_LEN;
         <div class="col-12 row gy-2 members-row">
             <h6>Исполнители <a href="javascript:void(0)" onclick="issueForm.addMeAsMember()" class="add-me-link">Добавить себя</a></h6>
             <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
-            <!-- TODO: Bootstrap формы для SP -->
             <ol id="issueMembers" class="members-list row"></ol>
             <div class="col-auto gy-0">
                 <select id="addIssueMembers" class="form-select" onchange="issueForm.addIssueMember();"
@@ -301,6 +300,23 @@ $descMaxLen = Issue::DESC_MAX_LEN;
             <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview"></a>
             <input type="hidden" name="imgId" value="">
             <a href="javascript:;" class="remove-btn remove-img"></a>
+        </li>
+
+        <li class="members-list-item hide-sp">
+            <div class="row gy-2 gx-3 py-1 align-items-center">
+                <div class="col-auto">
+                    <span class="user-name"></span>
+                    <input type="hidden" class="user-id-input" value="">
+                </div>
+                <div class="col-auto member-sp-container">
+                    <label class="visually-hidden" for="autoSizingInputGroup">SP</label>
+                    <div class="input-group input-group-sm" style="width: 80px;">
+                        <input type="text" class="form-control member-sp">
+                        <div class="input-group-text">SP</div>
+                    </div>
+                </div>
+                <a class="remove-btn"></a>
+            </div>
         </li>
     </div>
 </article>

@@ -45,7 +45,7 @@ $(document).ready(
             let field = $(e.currentTarget);
             if (!field.val()) {
                 var sum = 0;
-                $('#issueForm input.member-sp').each(function (i) {
+                $('#issueMembers input.member-sp').each(function (i) {
                     if (sum === -1)
                         return;
 
