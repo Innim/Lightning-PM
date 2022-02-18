@@ -37,7 +37,9 @@ $(document).ready(
                 }
             } else {
                 let marker = a.data('marker')
-                if (marker) insertFormattingMarker(input, marker);
+                if (marker) {
+                    insertFormattingMarker(input, marker, a.data('single'));
+                }
             }
         });
 
@@ -135,6 +137,9 @@ function bindFormattingHotkeys(selector) {
                     break;
                 case 'KeyG':
                     insertFormattingMarker(this, '> ', true);
+                    break;
+                case 'KeyH':
+                    insertFormattingMarker(this, '### ', true);
                     break;
                 case 'KeyK':
                     insertFormattingLink(this);
