@@ -83,6 +83,24 @@ class IssueComment extends LPMBaseObject
     }
 
     /**
+     * Определяет, является ли комментарий информацией о влитии ветки.
+     * 
+     * Данные могут отсутствовать, если отметка была выставлена вручную.
+     * @return bool
+     */
+    public function isBranchMerged() {
+        return $this->type == IssueCommentType::BRANCH_MERGED;
+    }
+
+    /**
+     * Определяет, является ли комментарий автоматически созданным оповещением.
+     * @return bool
+     */
+    public function isAutoComment() {
+        return in_array($this->type, [IssueCommentType::CREATE_BRANCH, IssueCommentType::BRANCH_MERGED]);
+    }
+
+    /**
      * Возвращает данные ветки для коммента типа IssueCommentType::CREATE_BRANCH.
      */
     public function getCreateBranchData(): ?IssueCommentCreateBranchData
@@ -90,6 +108,22 @@ class IssueComment extends LPMBaseObject
         if ($this->isCreateBranch() && !empty($this->data)) {
             if (empty($this->_deserializedData)) {
                 $this->_deserializedData = new IssueCommentCreateBranchData($this->data);
+            }
+
+            return $this->_deserializedData;
+        }
+
+        return null;
+    }
+
+    /**
+     * Возвращает данные ветки для коммента типа IssueCommentType::BRANCH_MERGED.
+     */
+    public function getBranchMergedData(): ?IssueCommentBranchMergedData
+    {
+        if ($this->isBranchMerged() && !empty($this->data)) {
+            if (empty($this->_deserializedData)) {
+                $this->_deserializedData = new IssueCommentBranchMergedData($this->data);
             }
 
             return $this->_deserializedData;

@@ -24,7 +24,7 @@ $(document).ready(
 
         // BEGIN -- Настройка формы 
 
-        $('#issueForm .note.tags-line a.tag').click(function (e) {
+        $('#issueForm .tags-line a.tag').on('click', function (e) {
             let a = $(e.currentTarget);
             let input = $('#issueForm textarea[name=desc]');
             let type = a.data('type');
@@ -41,7 +41,7 @@ $(document).ready(
             }
         });
 
-        $('#issueForm input[name=hours]').focus(function (e) {
+        $('#issueForm input[name=hours]').on('focus', function (e) {
             let field = $(e.currentTarget);
             if (!field.val()) {
                 var sum = 0;

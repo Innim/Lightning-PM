@@ -27,4 +27,9 @@ class IssueCommentType
      * Комментарий о создании ветки.
      */
     const CREATE_BRANCH = 'create_branch';
+
+    /**
+     * Комментарий о том, что ветка влита.
+     */
+    const BRANCH_MERGED = 'branch_merged';
 }
