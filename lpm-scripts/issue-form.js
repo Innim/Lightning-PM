@@ -392,45 +392,18 @@ let issueForm = {
         const option = selectElement.options[index];
         const userId = option.value;
 
-        /**
-         * @type HTMLOListElement
-         */
-        const ol = document.getElementById('issue' + fieldNameFirstUpper);
+        const $item = $('#issueFormTemplates .members-list-item').clone();
+        const $list = $('#issue' + fieldNameFirstUpper);
 
-        /**
-         * @type HTMLOListElement
-         */
-        const li = document.createElement('li');
+        $('.user-name', $item).html(option.innerHTML);
+        $('.user-id-input', $item)
+            .attr('name', fieldName + '[]')
+            .val(userId);
+        $('.remove-btn', $item).on('click', onRemoveClick);
 
-        /**
-         * @type HTMLSpanElement
-         */
-        const nameLabel = document.createElement('span');
-        nameLabel.innerHTML = option.innerHTML;
-        nameLabel.className = 'user-name';
+        if (processItem) processItem($item);
 
-        /**
-         * @type HTMLLinkElement
-         */
-        const idField = document.createElement('input');
-        idField.type = 'hidden';
-        idField.name = fieldName + '[]';
-        idField.value = userId;
-
-        /**
-         * @type HTMLButtonElement
-         */
-        const removeBtn = document.createElement('a');
-        removeBtn.className = 'remove-btn';
-        removeBtn.onclick = onRemoveClick;
-
-        li.appendChild(nameLabel);
-        li.appendChild(idField);
-        li.appendChild(removeBtn);
-
-        if (processItem) processItem(li);
-
-        ol.appendChild(li);
+        $list.append($item);
 
         selectElement.removeChild(option);
         selectElement.selectedIndex = 0;
@@ -444,12 +417,15 @@ let issueForm = {
         issueForm.addIssueMember(sp);
     },
     addIssueMember: function (sp) {
-        issueForm.addIssueMemberCommon('members', issueForm.removeIssueMember, (li) => {
+        issueForm.addIssueMemberCommon('members', issueForm.removeIssueMember, ($item) => {
             const scrum = $('#issueForm').data('projectScrum') == 1;
             if (scrum) {
-                $('a.remove-btn', li).
-                    before($('<input type="text" name="membersSp[]" class="member-sp">').val(sp > 0 ? sp : "")).
-                    before($('<span class="member-sp-label">').html("SP"));
+                $item.removeClass('hide-sp');
+                $('.member-sp', $item).attr('name', 'membersSp[]');
+
+                const spInt = parseInt(sp);
+                // TODO: удалить часть с проверкой на 0, тут должна быть NaN когда не надо показывать
+                if (Number.isInteger(spInt) && spInt > 0) $('.member-sp', $item).val(sp);
             }
         });
     },
@@ -472,7 +448,10 @@ let issueForm = {
         const fieldNameFirstUpper = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
         const selectName = 'addIssue' + fieldNameFirstUpper;
 
-        var li = $(e.currentTarget).parent('li');
+        const li = $(e.currentTarget).parents('.members-list-item');
+        if (li.length == 0) return;
+
+        console.log(li);
 
         const userId = $('input[name="' + fieldName + '[]"]', li).val();
         var userName = $('span.user-name', li).html();

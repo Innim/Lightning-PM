@@ -216,7 +216,8 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            $comment = $this->postComment($issue, '`-> develop`', true);
+            $comment = $this->postComment($issue, '`-> develop`', true, 
+                IssueCommentType::BRANCH_MERGED);
 
             if ($complete) {
                 try {

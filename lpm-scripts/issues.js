@@ -24,7 +24,7 @@ $(document).ready(
 
         // BEGIN -- Настройка формы 
 
-        $('#issueForm .note.tags-line a.tag').click(function (e) {
+        $('#issueForm .tags-line a.tag').on('click', function (e) {
             let a = $(e.currentTarget);
             let input = $('#issueForm textarea[name=desc]');
             let type = a.data('type');
@@ -37,15 +37,17 @@ $(document).ready(
                 }
             } else {
                 let marker = a.data('marker')
-                if (marker) insertFormattingMarker(input, marker);
+                if (marker) {
+                    insertFormattingMarker(input, marker, a.data('single'));
+                }
             }
         });
 
-        $('#issueForm input[name=hours]').focus(function (e) {
+        $('#issueForm input[name=hours]').on('focus', function (e) {
             let field = $(e.currentTarget);
             if (!field.val()) {
                 var sum = 0;
-                $('#issueForm input.member-sp').each(function (i) {
+                $('#issueMembers input.member-sp').each(function (i) {
                     if (sum === -1)
                         return;
 
@@ -135,6 +137,9 @@ function bindFormattingHotkeys(selector) {
                     break;
                 case 'KeyG':
                     insertFormattingMarker(this, '> ', true);
+                    break;
+                case 'KeyH':
+                    insertFormattingMarker(this, '### ', true);
                     break;
                 case 'KeyK':
                     insertFormattingLink(this);

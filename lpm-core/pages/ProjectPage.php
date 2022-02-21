@@ -98,7 +98,7 @@ class ProjectPage extends LPMPage
                 self::PUID_SCRUM_BOARD,
                 'Scrum доска',
                 'scrum-board',
-                array_merge(['scrum-board'], $this->getIssueJs())
+                array_merge(['scrum-board', 'filters/scrum-board-filter'], $this->getIssueJs())
             );
             $this->addSubPage(
                 self::PUID_SCRUM_BOARD_SNAPSHOT,
@@ -317,9 +317,19 @@ class ProjectPage extends LPMPage
         $sidInProject = (int) $this->getParam(3);
 
         if ($sidInProject > 0) {
-            foreach ($snapshots as $snapshot) {
+            foreach ($snapshots as $key => $snapshot) {
                 if ($snapshot->idInProject == $sidInProject) {
                     $this->addTmplVar('snapshot', $snapshot);
+
+                    // Массив отсортирован по дате, поэтому здесь идём в обратную сторону
+                    if ($key > 0) {
+                        $this->addTmplVar('nextSnapshot', $snapshots[$key - 1]);
+                    }
+
+                    if (($nextKey = $key + 1) < count($snapshots)) {
+                        $this->addTmplVar('prevSnapshot', $snapshots[$nextKey]);
+                    }
+
                     break;
                 }
             }
@@ -351,7 +361,8 @@ class ProjectPage extends LPMPage
             'issues',
             'issue-form',
             'libs/tribute',
-            'libs/character-counter'
+            'libs/character-counter',
+            'filters/issue-list-filter',
         ];
     }
 
