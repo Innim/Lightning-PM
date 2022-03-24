@@ -326,7 +326,18 @@ class GitlabExternalApi extends ExternalApi
     {
         $userData = $data[self::FIELD_USER];
         if (!empty($userData) && !empty($userData['email'])) {
-            $user = User::loadByEmail($userData['email']);
+
+            $email = $userData['email'];
+            if ($email === '[REDACTED]') {
+                if (!empty($userData['id'])) {
+                    $user = User::loadByGitlabId($userData['id']);
+                    // TODO: обработать, если не нашлось по id, например загрузить данные запросом
+                } else {
+                    $user = null;
+                }
+            } else {
+                $user = User::loadByEmail($email);
+            }
 
             if ($user != null && !empty($user->gitlabToken)) {
                 return $user;
