@@ -80,7 +80,16 @@ class GitlabExternalApi extends ExternalApi
 
     private function onException(Exception $e)
     {
-        $this->log($e->getMessage(), '-error');
+        $logEntry = $e->getMessage();
+
+        if ($e instanceof \GMFramework\ProviderException) {
+            $dbError = $this->engine()->getDebugDbError();
+            if ($dbError) {
+                $logEntry .= "\n\n" . $dbError;
+            }
+        }
+
+        $this->log($logEntry, '-error');
         // TODO: формат ошибки
         return $e->getMessage();
     }
