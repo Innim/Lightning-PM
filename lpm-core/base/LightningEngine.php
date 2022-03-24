@@ -204,29 +204,41 @@ class LightningEngine
     public function addError($errString)
     {
         if (LPMGlobals::isDebugMode()) {
-            // В debug добавляем ошибку БД в текст, чтобы проще отлаживать
-            $db = LPMGlobals::getInstance()->getDBConnect();
-            if ($db->errno > 0) {
-                $errLines = [
+            $dbError = $this->getDebugDbError();
+            if ($dbError) {
+                $errString = implode("\n", [
                     $errString,
                     '',
-                    '[DEBUG INFORMATION]',
-                    'DB error #' . $db->errno . ': ' . $db->error . '',
-                ];
-
-                $lastQuery = $db->lastQuery;
-                if (empty($lastQuery)) {
-                    $errLines[] = 'No last query information';
-                } else {
-                    $errLines[] = 'SQL: ';
-                    $errLines[] = $lastQuery;
-                }
-
-                $errString = implode("\n", $errLines);
+                    $dbError,
+                ]);
             }
         }
         $this->_errors[] = $errString;
         return false;
+    }
+
+    public function getDebugDbError()
+    {
+        // В debug добавляем ошибку БД в текст, чтобы проще отлаживать
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        if ($db->errno > 0) {
+            $errLines = [
+                '[DEBUG INFORMATION]',
+                'DB error #' . $db->errno . ': ' . $db->error . '',
+            ];
+
+            $lastQuery = $db->lastQuery;
+            if (empty($lastQuery)) {
+                $errLines[] = 'No last query information';
+            } else {
+                $errLines[] = 'SQL: ';
+                $errLines[] = $lastQuery;
+            }
+
+            return implode("\n", $errLines);
+        } else {
+            return false;
+        }
     }
     
     public function addNextError($errString)
