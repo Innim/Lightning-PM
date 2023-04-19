@@ -46,11 +46,13 @@ $remail = isset($_POST['remail']) ? $_POST['remail'] : '';
             <div class="mb-3">
                 <label for="newPass" class="form-label">Пароль</label>
                 <input type="password" class="form-control" id="newPass" name="newPass" required="required" maxlength="24">
-              </div>
-              <div class="mb-3">
+            </div>
+            <div class="mb-3">
                 <label for="repeatPass" class="form-label">Подтверждение пароля</label>
                 <input type="password" class="form-control" id="repeatPass" name="rePass" required="required" maxlength="24">
-              </div>
+            </div>
+            <input type="hidden" name="userId" value="<?=lpm_get_current_page()->getUserId(); ?>" />
+            <input type="hidden" name="key" value="<?=lpm_get_current_page()->getKey(); ?>" />
             <div class="mb-3 text-end">
                 <button type="submit" class="btn btn-primary">Сохранить</button>
             </div>
