@@ -461,9 +461,12 @@ SQL;
     // TODO: перенести в IssueLabel
     public static function getLabelsByName($issueName)
     {
-        $labels = array();
-        $matches = array();
-        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", trim($issueName), $matches)) {
+        $name = trim($issueName);
+        if (mb_substr($name, 0, 1) !== '[') return [];
+
+        $labels = [];
+        $matches = [];
+        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", $name, $matches)) {
             if (count($matches) > 1) {
                 $labels = array_unique($matches[1]);
             }
