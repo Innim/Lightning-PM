@@ -59,7 +59,8 @@ class Member extends User
 
     public static function loadTesterForProject($projectId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $onlyNotLocked);
+        $list = self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $onlyNotLocked);
+        return empty($list) ? null : $list[0];
     }
 
     /**

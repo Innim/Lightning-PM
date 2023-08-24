@@ -292,17 +292,6 @@ SQL;
 
         return $user->isAdmin() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
     }
-
-    public static function getProjectTester()
-    {
-        $projectId = self::$currentProject->getID();
-        $tester = Member::loadTesterForProject($projectId);
-        if (!$tester) {
-            return null;
-        }
-
-        return $tester[0];
-    }
     
     /**
      * Обновляет в БД цели спринта текущего scrum проекта.
@@ -391,6 +380,11 @@ SQL;
      * @var User
      */
     private $_master;
+
+    /**
+     * @var User
+     */
+    private $_tester;
 
     /**
      * @var array<Member>
@@ -576,6 +570,20 @@ SQL;
         }
 
         return $this->_master;
+    }
+
+    /**
+     * Возвращает пользователя, назначенного тестировщиком проекта.
+     * Если пользователь не выставлен, он будет загружен.
+     * @return User|null
+     */
+    public function getTester()
+    {
+        if ($this->_tester === null) {
+            $this->_tester = Member::loadTesterForProject($this->id);
+        }
+
+        return $this->_tester;
     }
 
 
