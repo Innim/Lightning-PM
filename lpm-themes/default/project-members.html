@@ -4,11 +4,9 @@
     $project - проект
     $projectMembers - участники проекта
     $projectTester - Тестировщик по умолчанию
+    $canEdit - может ли текущий участник редактировать
+    $labels - теги в проекте
 */
-
-$project = lpm_get_project();
-$projectMembers = lpm_get_project_members();
-$projectTester = lpm_get_project_tester();
 
 $defaultIssueMember = null;
 $memberByDefaultId = $project->defaultIssueMemberId;
@@ -21,7 +19,6 @@ if (!empty($memberByDefaultId)) {
     }
 }
 
-$labels = lpm_get_issue_labels();
 $labelNameById = [];
 foreach ($labels as $label) {
     $labelNameById[(int)$label['id']] = $label['label'];
@@ -29,7 +26,7 @@ foreach ($labels as $label) {
 ?>
 <article id="projectMembers">
     <h1>
-        <?lpm_print_header();?>
+        <?php lpm_print_header(); ?>
     </h1>
     <div class="alert alert-success info-message" role="alert">Сохранено</div>
     <h3>Участники проекта</h3>
@@ -43,11 +40,13 @@ foreach ($labels as $label) {
         <?php endforeach; ?>
     </ul>
 
+    <?php if ($canEdit): ?>
     <button
         class="btn btn-primary"
         onclick="openMembersChooser();">
         Добавить
     </button>
+    <?php endif; ?>
 
     <!-- Выбор мастера проекта // Начало -->
     <h3 class="headersProjectsMembers">Мастер проекта</h3>
@@ -60,10 +59,12 @@ foreach ($labels as $label) {
         <ul>
             <li id="projectMaster" value="<?=$master->getName();?>">
                 <?=$master->getName();?>
+                <?php if ($canEdit): ?>
                 <a href="javascript:;" id="removeMaster" class="remove-link">Удалить</a>
+                <?php endif; ?>
             </li>
         </ul>
-        <?php else: ?>
+        <?php elseif ($canEdit): ?>
         <form id="chooseMaster" class="row row-cols-lg-auto g-3 align-items-center">
             <div class="col-12">
                 <label class="visually-hidden" for="inlineFormSelectPref">Мастер</label>
@@ -79,6 +80,8 @@ foreach ($labels as $label) {
                 <button id="saveMaster" type="button" class="btn btn-primary">Подтвердить</button>
             </div>
         </form>
+        <?php else: ?>
+        <p>Не выбран</p>
         <?php endif; ?>
 
         <form id="specMasters" action="">
@@ -91,17 +94,21 @@ foreach ($labels as $label) {
                 <li class="spec-master-item" data-user-id="<?=$master->getID();?>" data-label-id="<?=$master->extraId;?>">
                     <span class="spec-master-label">[<?=$labelName;?>]</span>
                     <span class="spec-master-name"><?=$master->getName();?></span>
+                    <?php if ($canEdit): ?>
                     <a href="javascript:;" class="remove-link">Удалить</a>
+                    <?php endif; ?>
                 </li>
             <?php endforeach; ?>
             </ul>
 
+            <?php if ($canEdit): ?>
             <button
                 type="button"
                 onclick="addSpecMaster.show();"
                 class="btn btn-primary">
                 Добавить
             </button>
+            <?php endif; ?>
         </form>
     </div>
 
@@ -113,10 +120,12 @@ foreach ($labels as $label) {
         <?php if (!empty($defaultIssueMember)): ?>
         <ul>
             <li id="liNamePerformer" value="1"><?=$defaultIssueMember->getLinkedName(); ?>
+                <?php if ($canEdit): ?>
                 <a href="javascript:;" id="removeDefaultMember" class="remove-link">Удалить</a>
+                <?php endif; ?>
             </li>
         </ul>
-        <?php else: ?>
+        <?php elseif ($canEdit): ?>
         <form id="divPerformer" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return false;">
             <div class="col-12">
                 <label class="visually-hidden" for="inlineFormSelectPref">Исполнитель</label>
@@ -132,7 +141,9 @@ foreach ($labels as $label) {
                 <button id="btnSelectMember" type="button" class="btn btn-primary">Подтвердить</button>
             </div>
         </form>
-        <?php endif;?>
+        <?php else: ?>
+        <p>Не выбран</p>
+        <?php endif; ?>
     </div>
 
     <!-- Конец выбора исполнителей по умолчанию -->
@@ -144,10 +155,12 @@ foreach ($labels as $label) {
         <ul>
             <li id="NameTester" value="<?=$projectTester->getName();?>">
                 <?=$projectTester->getName();?>
+                <?php if ($canEdit): ?>
                 <a href="javascript:;" id="removeTester" class="remove-link">Удалить</a>
+                <?php endif; ?>
             </li>
         </ul>
-        <?php else: ?>
+        <?php elseif ($canEdit): ?>
         <form id="formOption" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return false;">
             <div class="col-12">
                 <label class="visually-hidden" for="inlineFormSelectPref">Тестировщик</label>
@@ -163,9 +176,11 @@ foreach ($labels as $label) {
                 <button id="btnSelect" type="button" class="btn btn-primary">Подтвердить</button>
             </div>
         </form>
+        <?php else: ?>
+        <p>Не выбран</p>
         <?php endif; ?>
     </div>
-    <?lpm_print_users_chooser();?>
+    <?php lpm_print_users_chooser();?>
 
 </article>
 

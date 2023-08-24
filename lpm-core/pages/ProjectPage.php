@@ -31,7 +31,6 @@ class ProjectPage extends LPMPage
      * @var Project
      */
     private $_project;
-    private $_currentPage;
 
     private $_issueInput;
 
@@ -69,8 +68,6 @@ class ProjectPage extends LPMPage
             'Участники',
             'project-members',
             ['project/project-members', 'popups/users-chooser'],
-            '',
-            User::ROLE_MODERATOR
         );
         $this->addSubPage(
             self::PUID_SETTINGS,
@@ -190,6 +187,10 @@ class ProjectPage extends LPMPage
                 $this->initComments();
                 break;
             }
+            case self::PUID_MEMBERS: {
+                $this->initMembers($user);
+                break;
+            }
             case self::PUID_SCRUM_BOARD: {
                 $this->initScrumBoard();
                 break;
@@ -264,8 +265,6 @@ class ProjectPage extends LPMPage
         $page = $this->getProjectedCommentsPage();
         $commentsPerPage = 100;
 
-        $this->_currentPage = $page;
-
         $comments = Comment::getIssuesListByProject(
             $this->_project->id,
             ($page - 1) * $commentsPerPage,
@@ -300,6 +299,23 @@ class ProjectPage extends LPMPage
         if (count($comments) === $commentsPerPage) {
             $this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
         }
+    }
+
+    private function initMembers(User $user)
+    {
+        $project = $this->_project;
+        $canEdit = $user->isModerator();
+
+        $projectMembers = $project->getMembers();
+        $projectTester = $project->getTester();
+
+        $labels = Issue::getLabels($project->id);
+        
+        $this->addTmplVar('project', $project);
+        $this->addTmplVar('projectMembers', $projectMembers);
+        $this->addTmplVar('projectTester', $projectTester);
+        $this->addTmplVar('canEdit', $canEdit);
+        $this->addTmplVar('labels', $labels);
     }
 
     private function initScrumBoard()
