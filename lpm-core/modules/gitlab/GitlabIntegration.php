@@ -95,7 +95,8 @@ class GitlabIntegration
         }
         
         try {
-            $expiresAt = date('Y-m-d', strtotime('+100 years'));
+            // нельзя делать токен дольше, чем на год
+            $expiresAt = date('Y-m-d', strtotime('+364 days')); 
             $res = $this->sudoClient()->users()->createImpersonationToken(
                 $gitlabUser['id'],
                 $this->getTokenName(),
