@@ -95,10 +95,12 @@ class GitlabIntegration
         }
         
         try {
+            $expiresAt = date('Y-m-d', strtotime('+100 years'));
             $res = $this->sudoClient()->users()->createImpersonationToken(
                 $gitlabUser['id'],
                 $this->getTokenName(),
-                ['api']
+                ['api'],
+                $expiresAt
             );
 
             $user->gitlabToken = $res['token'];

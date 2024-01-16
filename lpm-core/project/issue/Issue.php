@@ -930,24 +930,6 @@ SQL;
     {
         return self::MAX_IMAGES_COUNT;
     }
-    
-    /**
-     * Устанавливает название задачи.
-     * @param string $value Название задачи.
-     */
-    public function setTitle($value)
-    {
-        $this->title = $value;
-    }
-
-    /**
-     * Возвращает название задачи.
-     * @return string Название задачи.
-     */
-    public function getTitle()
-    {
-        return $this->title;
-    }
 
     /**
      * Загружает и возвращает объект проекта.
