@@ -2,7 +2,7 @@
  * Компонент фильтра по тегам в списке задач.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    issueListFilter.vm = (function issueListFilter(filterElementSelector, onChange) {
+    issuePage.filterByTagVm = (function issueListFilter(filterElementSelector, onChange) {
         return new Vue({
             el: filterElementSelector,
             data: {
@@ -25,9 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const rows = issuesList.tBodies[0]?.children;
                     return [...rows];
                 },
-                setFilter(tags) {
-                    this.selectedTags = tags;
-                },
                 showElement(el, show) {
                     el.hidden = !show;
                 },
@@ -47,27 +44,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    })('#issueListFilter', (tags) => {
-        issuePage.scrumColUpdateInfo(tags);
-        if (tags.length)  {
-            states.setState('tags:' + encodeURI(tags.join(',')), true);
-        } else {
-            states.setState('', true);
-        }
-    });
-
-    if (issueListFilter.onStart != null) issueListFilter.onStart();
+    })('#issueListFilter', issuePage.onFilterByTagChanged);
 });
-
-const issueListFilter = {
-    vm: null,
-    onStart: null,
-    applyFilter: (tags) => {
-        if (issueListFilter.vm != null) {
-            issueListFilter.vm.setFilter(tags);
-        } else {
-            issueListFilter.onStart = () => issueListFilter.applyFilter(tags);
-        }
-    },
-    handleTagsState: (tagsStr) => issueListFilter.applyFilter(tagsStr.trim() == '' ? [] : decodeURI(tagsStr).split(','))
-}

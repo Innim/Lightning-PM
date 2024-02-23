@@ -1,5 +1,8 @@
 $(document).ready(
     function () {
+        states.addState(null);
+        states.addState(null, 'tags:#', issuePage.handleTagsFilterState);
+
         document.querySelectorAll('.name-project').forEach(function (e) {
             if (e.scrollWidth > e.offsetWidth) {
                 e.setAttribute('title', e.textContent)

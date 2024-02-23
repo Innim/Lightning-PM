@@ -49,13 +49,13 @@ class ProjectPage extends LPMPage
             self::PUID_ISSUES,
             'Список задач',
             '',
-            array_merge(['project-issues', 'issues-export-to-excel'], $this->getIssueJs())
+            array_merge(['project-issues'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMPLETED_ISSUES,
             'Завершенные',
             '',
-            array_merge(['project-completed', 'issues-export-to-excel'], $this->getIssueJs())
+            array_merge(['project-completed'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMMENTS,
@@ -371,6 +371,14 @@ class ProjectPage extends LPMPage
         $this->addTmplVar('project', $this->_project);
     }
 
+    private function getIssuesListJs()
+    {
+        return [
+            'issues-export-to-excel',
+            'filters/issue-list-filter', 
+        ];
+    }
+
     private function getIssueJs()
     {
         return [
@@ -378,7 +386,6 @@ class ProjectPage extends LPMPage
             'issue-form',
             'libs/tribute',
             'libs/character-counter',
-            'filters/issue-list-filter',
         ];
     }
 

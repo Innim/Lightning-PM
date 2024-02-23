@@ -290,6 +290,7 @@ const issuePage = {
     idInProject: null,
     labels: null,
     members: null,
+    filterByTagVm: null, 
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
@@ -1058,6 +1059,21 @@ issuePage.resetFilter = function ()//e)
     $('#showIssues4AllLink').hide();
     $('#showIssues4MeLink').show();
     return false;
+};
+
+issuePage.handleTagsFilterState = function (value) {
+    console.log('value:', value);
+    const tags = value.trim() == '' ? [] : decodeURI(value).split(',');
+    issuePage.filterByTagVm.selectedTags = tags;
+}
+
+issuePage.onFilterByTagChanged = function (tags)  {
+    issuePage.scrumColUpdateInfo(tags);
+    if (tags.length)  {
+        states.setState('tags:' + encodeURI(tags.join(',')), true);
+    } else {
+        states.setState('', true);
+    }
 };
 
 issuePage.scrumColUpdateInfo = function () {
