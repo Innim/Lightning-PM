@@ -115,7 +115,7 @@ $userId = lpm_get_user()->userId;
 				<?php if ($issue->hasMembers()): ?>
 				<?php foreach ($issue->getMembers() as $i => $member): ?>
 				<?=$i>0?', ':''?><a href="javascript:;"
-					data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
+					data-member-id="<?=$member->getID();?>"><?=$member->getName();?></a>
 				<?php endforeach; ?>
 				<?php endif; ?>
 			</td>
