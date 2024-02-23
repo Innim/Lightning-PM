@@ -10,8 +10,27 @@ $(document).ready(
         issuePage.scrumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
 
-        $('#issuesList .member-list a').click(function (e) {
-            issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
+        $(document).on('click', '#showIssues4MeLink', function () {
+            states.setState('only-my');
+        });
+
+        $(document).on('click', '#showIssues4AllLink', function () {
+            // TODO: should remake this one
+            issuePage.resetFilter();
+        });
+
+        $(document).on('click', '#showLastCreated', function () {
+            states.setState('last-created');
+        });
+
+        $(document).on('click', '#sortDefault', function () {
+            // TODO: should remake this one
+            issuePage.sortDefault();
+        });
+
+        $(document).on('click', '#issuesList .member-list a', function (e) {
+            const memberId = $(e.currentTarget).data('memberId');
+            states.setState('by-user:' + memberId);
         });
 
         $(".comment-input-text-tabs").tabs({
@@ -271,6 +290,7 @@ const issuePage = {
     idInProject: null,
     labels: null,
     members: null,
+    filterByTagVm: null, 
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
@@ -692,11 +712,7 @@ function showIssue(issueId) {
         false,
         function (res) {
             if (res.success) {
-                window.location.hash = 'issue-view';
-                // if (window.location.search == '') window.location.search += '?';
-                //else window.location.search += '&';
-                //window.location.search += 'iid=' + issueId;
-                states.updateView();
+                states.setState('issue-view');
                 setIssueInfo(new Issue(res.issue));
             } else {
                 srv.err(res);
@@ -706,8 +722,7 @@ function showIssue(issueId) {
 };
 
 issuePage.showAddForm = function (type) {
-    window.location.hash = 'add-issue';
-    states.updateView();
+    states.setState('add-issue');
 
     if (typeof type != 'undefined') {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
@@ -749,8 +764,7 @@ issuePage.showAddForm = function (type) {
 
 issuePage.showEditForm = function () {
     // переключаем вид
-    window.location.hash = 'edit';
-    states.updateView();
+    states.setState('edit');
 };
 
 /**
@@ -959,8 +973,11 @@ issuePage.addComment = function (comment, html) {
     hideElementAfterDelay(elementId, commentTime);
 };
 
+issuePage.handleOnlyMeFilter = function () {
+    issuePage.showIssues4Me();
+}
+
 issuePage.showIssues4Me = function () {
-    window.location.hash = 'only-my';
     issuePage.filterByMemberId(lpInfo.userId);
 
     $('#showIssues4MeLink').hide();
@@ -968,8 +985,11 @@ issuePage.showIssues4Me = function () {
     return false;
 };
 
+issuePage.handleLastCreatedSort = function () {
+    issuePage.showLastCreated();
+}
+
 issuePage.showLastCreated = function () {
-    window.location.hash = 'last-created';
     var table = $('#issuesList');
     window.defaultIssues = table.html();
     table.find('tr:not(:first)').sort(function (a, b) {
@@ -988,8 +1008,11 @@ issuePage.sortDefault = function () {
     $('#showLastCreated').show();
 };
 
+issuePage.handleShowIssuesByUser = function (memberId) {
+    issuePage.showIssuesByUser(memberId);
+}
+
 issuePage.showIssuesByUser = function (memberId) {
-    window.location.hash = 'by-user:' + memberId;
     issuePage.filterByMemberId(memberId);
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
@@ -1035,11 +1058,22 @@ issuePage.resetFilter = function ()//e)
 
     $('#showIssues4AllLink').hide();
     $('#showIssues4MeLink').show();
-    //$('#showIssues4MeLink').text('Показать только мои задачи').
-    //    click(issuePage.showIssues4Me);
-    //e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
-    //e.currentTarget.innerText = 'Показать только мои задачи';
     return false;
+};
+
+issuePage.handleTagsFilterState = function (value) {
+    console.log('value:', value);
+    const tags = value.trim() == '' ? [] : decodeURI(value).split(',');
+    issuePage.filterByTagVm.selectedTags = tags;
+}
+
+issuePage.onFilterByTagChanged = function (tags)  {
+    issuePage.scrumColUpdateInfo(tags);
+    if (tags.length)  {
+        states.setState('tags:' + encodeURI(tags.join(',')), true);
+    } else {
+        states.setState('', true);
+    }
 };
 
 issuePage.scrumColUpdateInfo = function () {

@@ -2,7 +2,7 @@
  * Компонент фильтра по тегам в списке задач.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    (function issueListFilter(filterElementSelector, onChange) {
+    issuePage.filterByTagVm = (function issueListFilter(filterElementSelector, onChange) {
         return new Vue({
             el: filterElementSelector,
             data: {
@@ -44,5 +44,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    })('#issueListFilter', issuePage.scrumColUpdateInfo);
+    })('#issueListFilter', issuePage.onFilterByTagChanged);
 });
