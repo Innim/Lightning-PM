@@ -291,7 +291,7 @@ var states = {
         else {
             var arr = state.split(':');
             params = arr.length - 1;
-            state = '#' + arr[0];
+            state = arr[0];
         }
 
         for (var i = 0; i < this._list.length; i++) {
@@ -299,10 +299,26 @@ var states = {
         }
         this._list.push({ el: element, st: state, sh: showHandler, p: params });
     },
+    setState: function (state, skipUpdateView = false) {
+        const currentHash = window.location.hash;
+        var newHash;
+        if (state.trim() == '') {
+            newHash = '';
+        } else {
+            newHash = state;
+            
+        }
+
+        if (newHash != currentHash && '#' + newHash != currentHash) {
+            window.location.hash = newHash;
+            if (skipUpdateView != true) states.updateView();
+        }
+    },
     updateView: function () {
         var item;
         this.current = null;
         var hash = window.location.hash;
+        if (hash.startsWith('#')) hash = hash.substring(1);
         var hashArr = hash.split(':');
         var p = hashArr.length - 1;
         hash = hashArr.shift();
