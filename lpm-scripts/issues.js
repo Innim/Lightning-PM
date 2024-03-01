@@ -862,8 +862,8 @@ issuePage.commentMergeInDevelop = function () {
 
 issuePage.postComment = function () {
     const text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
-    const requestChanges = $('#issueView .comments form.add-comment input[name=requestChanges]').val();
-    issuePage.postCommentForCurrentIssue(text, requestChanges == 1);
+    const requestChanges = $('#issueView .comments form.add-comment input[name=requestChanges]').is(':checked');
+    issuePage.postCommentForCurrentIssue(text, requestChanges);
     return false;
 };
 

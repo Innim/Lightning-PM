@@ -617,9 +617,6 @@ a.create-branch-icon .plus-icon {
 	display: inline-block;
 	margin-right: 5px;
 }
-.comments form.add-comment .buttons-bar {
-	text-align: right;
-}
 .comments form.add-comment .ui-tabs .ui-tabs-panel,
 #passTestComment.ui-tabs .ui-tabs-panel {
 	padding: 0;
