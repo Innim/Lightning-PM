@@ -5,6 +5,7 @@
 class CacheController
 {
     const OWNCLOUD_SHARED_FILE_TYPE_PREFIX = 'owncloud_shared_file_type_prefix-';
+    const CLEAN_SHOT_SHARED_FILE_TYPE_PREFIX = 'clean_shot_shared_file_type_prefix-';
     const IMAGE_CACHED_PREVIEW_PREFIX = 'image_cached_preview_prefix-';
     const USER_SLACK_AVATAR_PREFIX = 'user_slack_avatar-';
 
@@ -91,6 +92,16 @@ class CacheController
         return $this->set($this->getOwncloudSharedFileTypeKey($url), $value);
     }
 
+    public function getCleanShotSharedFileType($url)
+    {
+        return $this->get($this->getCleanShotSharedFileTypeKey($url));
+    }
+
+    public function setCleanShotSharedFileType($url, $value)
+    {
+        return $this->set($this->getCleanShotSharedFileTypeKey($url), $value);
+    }
+
     /**
      * Возвращает URL аватара пользователя из Slack.
      * 
@@ -136,6 +147,11 @@ class CacheController
     private function getOwncloudSharedFileTypeKey($url)
     {
         return self::OWNCLOUD_SHARED_FILE_TYPE_PREFIX . md5($url);
+    }
+
+    private function getCleanShotSharedFileTypeKey($url)
+    {
+        return self::CLEAN_SHOT_SHARED_FILE_TYPE_PREFIX . md5($url);
     }
 
     private function getImageCachedPreviewKey($url)
