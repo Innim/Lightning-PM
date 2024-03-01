@@ -10,11 +10,14 @@ class AttachmentImageHelper
     const PATTERN_OWNCLOUD = "https?:\/\/cloud.innim.ru\/(index.php\/)?s\/[a-z0-9]+";
     // imgur gif
     const PATTERN_IMGUR_GIF = "https?:\/\/i.imgur.com\/[a-z0-9]+\.gifv";
+    // CleanShot
+    const PATTERN_CLEAN_SHOT = "https?:\/\/cln.sh\/[a-z0-9]+";
 
     const URL_PATTERNS = [
         self::PATTERN_DROPLR,
         self::PATTERN_OWNCLOUD,
         self::PATTERN_IMGUR_GIF,
+        self::PATTERN_CLEAN_SHOT,
     ];
 
     /**
@@ -28,7 +31,10 @@ class AttachmentImageHelper
      */
     public static function getDirectUrl($url)
     {
-        if (preg_match("/^" . self::PATTERN_DROPLR . "$/i", $url)) {
+        if (preg_match("/^" . self::PATTERN_CLEAN_SHOT . "$/i", $url)) {
+            // Если картинка из сервиса CleanShot (https://cleanshot.com)
+            $url .= '+';
+        } else if (preg_match("/^" . self::PATTERN_DROPLR . "$/i", $url)) {
             // Если картинка из сервиса droplr (http://droplr.com/)
             $url .= '+';
         } elseif (preg_match("/^" . self::PATTERN_OWNCLOUD . "$/i", $url)) {
@@ -57,11 +63,15 @@ class AttachmentImageHelper
         $url = trim($url);
         foreach (self::URL_PATTERNS as $pattern) {
             if (preg_match("/^" . $pattern . "$/i", $url)) {
+                $mediaType = 'image';
                 if ($pattern == self::PATTERN_OWNCLOUD) {
-                    $type = OwncloudHelper::getSharedFileType($url, $cache);
-                    if (empty($type) || strpos($type, 'image/') !== 0) {
-                        return null;
-                    }
+                    $mediaType = OwncloudHelper::getSharedFileType($url, $cache);
+                } else if ($pattern == self::PATTERN_CLEAN_SHOT) {
+                    $mediaType = CleanShotHelper::getSharedFileType($url, $cache);
+                }
+
+                if (empty($mediaType) || strpos($mediaType, 'image/') !== 0) {
+                    return null;
                 }
 
                 $url = self::getDirectUrl($url);
