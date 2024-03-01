@@ -20,6 +20,7 @@ $(document).ready(function ($) {
 
 let comments = {
 	storeKey: null,
+	typeStoreKey: null,
 	mrStateIcons: {
 		merged: 'fa-check-circle',
 		opened: 'fa-clock',
@@ -27,6 +28,7 @@ let comments = {
 	},
 	init: function () {
 		comments.storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
+		comments.typeStoreKey = comments.storeKey + '_type';
 		comments.invalidateLinks();
 		comments.initAddForm();
 	},
@@ -35,26 +37,34 @@ let comments = {
 		if (commentTextField.length == 0) return;
 
 		const storeKey = comments.storeKey;
+		const typeStoreKey = comments.typeStoreKey;
 		const savedText = window.localStorage.getItem(storeKey);
 		if (savedText) {
+			const savedType = window.localStorage.getItem(typeStoreKey);
 			commentTextField.val(savedText);
-			comments.showCommentForm();
+			comments.showCommentForm(savedType == 1);
 		}
 
+		const requestChangesField = $('#comments form.add-comment input[name=requestChanges]')
 		commentTextField.on('input', (e) => {
 			let text = e.target.value;
 			window.localStorage.setItem(storeKey, text);
+			window.localStorage.setItem(typeStoreKey, requestChangesField.is(':checked') ? 1 : 0);
+		});
+		requestChangesField.on('click', (e) => {
+			window.localStorage.setItem(typeStoreKey, requestChangesField.is(':checked') ? 1 : 0);
 		});
 	},
 	clearForm: function () {
 		$('#addCommentForm .comment-text-field').val('');
 		window.localStorage.removeItem(comments.storeKey);
+		window.localStorage.removeItem(comments.typeStoreKey);
 	},
 	showCommentForm: function (requestChanges = false) {
 		$('#comments form.add-comment').show();
 		$('#comments .links-bar').hide();
 		$('#comments form.add-comment textarea[name=commentText]').trigger('focus');
-		$('#comments form.add-comment input[name=requestChanges]').val(requestChanges ? 1 : 0);
+		$('#comments form.add-comment input[name=requestChanges]').prop('checked', requestChanges);
 	},
 	hideCommentForm: function (clear = true) {
 		if (clear) comments.clearForm();

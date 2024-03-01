@@ -198,11 +198,19 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             <?php lpm_print_comment_input_text('addCommentTabs');?>
 
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
-            <input type="hidden" name="requestChanges" value="" />
-            <p class="buttons-bar">
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-2 align-items-center">
+                <div class="form-check form-check-inline" >
+                    <input class="form-check-input" name="requestChanges" type="checkbox" value="" id="requestChangesCheckbox">
+                    <label class="form-check-label" for="requestChangesCheckbox">
+                        <i class="fas fa-bug changes-requested-check"></i>
+                        Найдены проблемы
+                    </label>
+                </div>
+                
                 <button class="btn btn-primary" type="submit">Отправить</button>
                 <button class="btn btn-secondary" type="reset" onclick="comments.hideCommentForm();">Отмена</button>
-            </p>
+            </div>
         </form>
         <section class="comments-list">
             <?php foreach ($comments as $comment): ?>
