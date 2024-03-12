@@ -55,6 +55,8 @@ class IssueBranch extends LPMBaseObject
      */
     public static function loadByLastCommits($repositoryId, $lastCommits, $onlyNotMergedInDevelop = false, $skipEmptyBranches = false)
     {
+        if (empty($lastCommits)) return [];
+
         $lastCommitsVal = "'" . implode("', '", $lastCommits) . "'";
         $where = '`repositoryId` = ' . $repositoryId . ' AND `lastCommit` IN (' . $lastCommitsVal . ')';
         if ($skipEmptyBranches) {

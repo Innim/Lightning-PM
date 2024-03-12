@@ -241,7 +241,10 @@ class GitlabExternalApi extends ExternalApi
     {
         $commitIds = [];
         foreach ($data['commits'] as $commitData) {
-            $commitIds[] = $commitData['id'];
+            $commitId = $commitData['id'];
+            if (!empty($commitId)) {
+                $commitIds[] = $commitId;
+            }
         }
 
         // Загружаем список IssueBranch по последним коммитам
