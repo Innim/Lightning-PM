@@ -125,11 +125,15 @@ class IssueBranch extends LPMBaseObject
         $limitSql = empty($limit) ? '' : 'LIMIT ' . $limit;
 
         $selectLimitSql = empty($inLast) ? '' : 'LIMIT ' . $inLast;
+        $where = "`b`.`issueId` = `i`.`id` AND `i`.`projectId` = $projectId";
+        if (!empty($userId)) {
+            $where .= " AND `b`.`userId` = $userId";
+        }
 
         $sql = <<<SQL
     SELECT `repositoryId`, COUNT(`repositoryId`) as `count` FROM (
         SELECT `repositoryId` FROM `%1\$s` `b`, `%2\$s` `i`
-         WHERE `b`.`issueId` = `i`.`id` AND `i`.`projectId` = $projectId
+         WHERE $where
       ORDER BY `date` DESC 
         $selectLimitSql
     ) AS `last_entries` 
