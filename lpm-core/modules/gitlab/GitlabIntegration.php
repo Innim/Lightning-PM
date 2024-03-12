@@ -264,7 +264,7 @@ class GitlabIntegration
      * @param $projectId Идентификатор проекта на GitLab.
      * @param $fromShaOrBranch SHA коммита или имя ветки/тега.
      * @param $toShaOrBranch SHA коммита или имя ветки/тега.
-     * @return GitlabBranch|null|false Если в ветке $toShaOrBranch
+     * @return GitlabCommit|null|false Если в ветке $toShaOrBranch
      * нет изменений, которые не присутствуют в ветке $fromShaOrBranch,
      * то вернется null. В случае ошибки вернется false.
      */
