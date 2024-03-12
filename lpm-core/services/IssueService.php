@@ -355,7 +355,7 @@ class IssueService extends LPMBaseService
 
                 // Если это стикер на доске и он еще не в работе - перевешиваем в работу
                 $sticker = ScrumSticker::load($issue->id);
-                if ($sticker !== null && $sticker->state == ScrumStickerState::TODO) {
+                if (!empty($sticker) && $sticker->state == ScrumStickerState::TODO) {
                     if (!ScrumSticker::updateStickerState($issue->id, ScrumStickerState::IN_PROGRESS)) {
                         return $this->errorDBSave();
                     }
