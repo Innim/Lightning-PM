@@ -334,7 +334,7 @@ class IssueService extends LPMBaseService
             $userId = $user->userId;
 
             // Записываем данные о том, что ветка привязана к задаче
-            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId);
+            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId, $branch->commit->id);
 
             if ($issue->status == Issue::STATUS_IN_WORK) {
                 // Если пользователя нет в исполнителях - добавим его автоматически
@@ -355,7 +355,7 @@ class IssueService extends LPMBaseService
 
                 // Если это стикер на доске и он еще не в работе - перевешиваем в работу
                 $sticker = ScrumSticker::load($issue->id);
-                if ($sticker !== null && $sticker->state == ScrumStickerState::TODO) {
+                if (!empty($sticker) && $sticker->state == ScrumStickerState::TODO) {
                     if (!ScrumSticker::updateStickerState($issue->id, ScrumStickerState::IN_PROGRESS)) {
                         return $this->errorDBSave();
                     }

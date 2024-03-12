@@ -391,4 +391,9 @@ ADD INDEX `projectId` (`projectId`);
 
 -- 0.13.10
 
+ALTER TABLE `lpm_issue_branch`
+ADD `initialCommit` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID изначального коммита' AFTER `date`;
+
+-- 0.13.27
+
 --NEXT
