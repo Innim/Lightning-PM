@@ -67,6 +67,6 @@
 			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
 		</div>
 	</article>
-	<?php lpm_print_issue_form($project, null, isset($input) ? $input : null); ?>
+	<?php lpm_print_issue_form($project, null, isset($input) ? $input : null, true); ?>
 	<?php lpm_print_issues_export_to_excel(); ?>
 </article>

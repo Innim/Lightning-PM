@@ -71,9 +71,9 @@ class PagePrinter
         PageConstructor::includePattern('issues', compact('list'));
     }
     
-    public static function issueForm($project, $issue, $input)
+    public static function issueForm($project, $issue, $input, $isHidden)
     {
-        PageConstructor::includePattern('issue-form', compact('project', 'issue', 'input'));
+        PageConstructor::includePattern('issue-form', compact('project', 'issue', 'input', 'isHidden'));
     }
     
     public static function issueView()
