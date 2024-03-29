@@ -306,7 +306,7 @@ class ProjectPage extends LPMPage
         $project = $this->_project;
         $canEdit = $user->isModerator();
 
-        $projectMembers = $project->getMembers();
+        $projectMembers = $project->getMembers(true);
         $projectTester = $project->getTester();
 
         $labels = Issue::getLabels($project->id);
