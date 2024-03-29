@@ -359,7 +359,7 @@ class User extends LPMBaseObject
      * @param boole $img True to return a complete IMG tag False for just the URL
      * @param array $attrs Optional, additional key/value attributes to include in the IMG tag
      * @return String containing either just a URL or a complete image tag
-     * @source http://gravatar.com/site/implement/images/php/
+     * @source https://gravatar.com/site/implement/images/php/
      */
     private function getGravatar(
         $email,
@@ -369,7 +369,7 @@ class User extends LPMBaseObject
         $img = false,
         $attrs = array()
     ) {
-        $url = 'http://www.gravatar.com/avatar/';
+        $url = 'https://www.gravatar.com/avatar/';
         $url .= md5(strtolower(trim($email)));
         $url .= "?s=$s&d=$d&r=$r";
         
