@@ -231,7 +231,7 @@ echo <<<HTML
 </script>
 HTML;
 ?>
-<?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
+<?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null, true); ?>
 
 <article id="createBranch" title="Создать ветку задачи">
     <form class="create-branch" onsubmit="createBranch.save(); return false;">
