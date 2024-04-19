@@ -429,6 +429,11 @@ class ProjectService extends LPMBaseService
             
             $list = $client->getProjects($project->gitlabGroupId);
 
+            $gitlabProjectIds = $project->getGitlabProjectIds();
+            foreach ($gitlabProjectIds as $projectId) {
+                $list[] = $client->getProject($projectId);
+            }
+
             // Загрузим информацию о самом используемом репозитории в этом проекте
             // из последних 5
             $popularRepositoryId = IssueBranch::loadPopularRepository($project->id, 5);
