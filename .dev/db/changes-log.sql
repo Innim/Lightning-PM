@@ -397,6 +397,6 @@ ADD `initialCommit` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID 
 -- 0.13.30
 
 ALTER TABLE `lpm_projects`
-ADD `gitlabProjectIds` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID про' AFTER `gitlabGroupId`;
+ADD `gitlabProjectIds` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID связанных проектов GitLab' AFTER `gitlabGroupId`;
 
 --NEXT
