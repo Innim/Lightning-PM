@@ -344,7 +344,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
+    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId, $gitlabProjectIds)
     {
         $projectId = (int)$projectId;
         $slackNotifyChannel = (string)$slackNotifyChannel;
@@ -366,7 +366,13 @@ class ProjectService extends LPMBaseService
             return $this->error('Проект не найден');
         }
 
-        $result = Project::updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId);
+        $result = Project::updateProjectSettings(
+            $projectId,
+            $scrum,
+            $slackNotifyChannel,
+            $gitlabGroupId,
+            $gitlabProjectIds,
+        );
 
         if (!$result) {
             return $this->error('Ошибка обновления таблицы');
