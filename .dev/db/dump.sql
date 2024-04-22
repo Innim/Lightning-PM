@@ -195,6 +195,7 @@ CREATE TABLE `lpm_projects` (
   `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте',
   `defaultIssueMemberId` int(11) NOT NULL COMMENT 'Исполнитель умолчанию',
   `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab',
+  `gitlabProjectIds` varchar(255) NOT NULL COMMENT 'ID связанных проектов GitLab',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

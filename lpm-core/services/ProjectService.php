@@ -344,7 +344,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
+    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId, $gitlabProjectIds)
     {
         $projectId = (int)$projectId;
         $slackNotifyChannel = (string)$slackNotifyChannel;
@@ -366,7 +366,13 @@ class ProjectService extends LPMBaseService
             return $this->error('Проект не найден');
         }
 
-        $result = Project::updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId);
+        $result = Project::updateProjectSettings(
+            $projectId,
+            $scrum,
+            $slackNotifyChannel,
+            $gitlabGroupId,
+            $gitlabProjectIds,
+        );
 
         if (!$result) {
             return $this->error('Ошибка обновления таблицы');
@@ -422,6 +428,20 @@ class ProjectService extends LPMBaseService
             $client = $this->requireGitlabIntegration($project);
             
             $list = $client->getProjects($project->gitlabGroupId);
+            $loadedProjectIds = array_map(function ($item) {
+                return $item['id'];
+            }, $list);
+
+            $gitlabProjectIds = $project->getGitlabProjectIds();
+            foreach ($gitlabProjectIds as $projectId) {
+                if (in_array($projectId, $loadedProjectIds)) {
+                    continue;
+                }
+                $gitlabProject = $client->getProject($projectId);
+                if (!empty($gitlabProject)) {
+                    $list[] = $gitlabProject;
+                }
+            }
 
             // Загрузим информацию о самом используемом репозитории в этом проекте
             // из последних 5

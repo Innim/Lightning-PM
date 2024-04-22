@@ -23,6 +23,13 @@
                     value="<?=empty($project->gitlabGroupId) ? '': $project->gitlabGroupId;?>">
             </li>
             <li>
+                <label id="gitlabProjectIdsLabel" for="gitlabProjectIds"
+                       title="Project ID доступен на странице проекта в пункте Actions. Указывать через запятую.">ID
+                    привязанных проектов в GitLab</label>
+                <input id="gitlabProjectIds" type="text"
+                       value="<?=implode(',',$project->getGitlabProjectIds());?>">
+            </li>
+            <li>
                 <label id="slackСhannelLabel" for="slackСhannel"
                     title="Для получения кликните правой клавишей мыши по имени канала и выберите 'Copy link'. Последняя часть в скопированном URL и есть искомый ID канала.">ID
                     канала

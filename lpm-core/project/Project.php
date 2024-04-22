@@ -66,7 +66,13 @@ class Project extends MembersInstance
      * Обновляет настройки проекта
      *
      */
-    public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
+    public static function updateProjectSettings(
+        $projectId,
+        $scrum,
+        $slackNotifyChannel,
+        $gitlabGroupId,
+        $gitlabProjectIds
+    )
     {
         $db = self::getDB();
 
@@ -76,6 +82,7 @@ class Project extends MembersInstance
                 'scrum' => $scrum,
                 'slackNotifyChannel' => $slackNotifyChannel,
                 'gitlabGroupId' => $gitlabGroupId,
+                'gitlabProjectIds' => $gitlabProjectIds,
             ],
             'WHERE' => [
                 'id' => $projectId
@@ -364,6 +371,13 @@ SQL;
     public $gitlabGroupId;
 
     /**
+     * Id привязанных проектов в GitLab.
+     * @var string
+     * @example '1,2,3'
+     */
+    public $gitlabProjectIds;
+
+    /**
      * Проект зафиксирован в таблице проектов
      * @var Boolean|null
      */
@@ -624,6 +638,14 @@ SQL;
         }
         
         return $this->_sprintTargetHtml;
+    }
+
+    /**
+     * Возвращает список привязанных id проектов в GitLab.
+     */
+    public function getGitlabProjectIds(): array
+    {
+        return empty($this->gitlabProjectIds) ? [] : explode(',', $this->gitlabProjectIds);
     }
 
 	protected function setVar($var, $value)

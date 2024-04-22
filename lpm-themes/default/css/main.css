@@ -1442,7 +1442,7 @@ blockquote > p {
 #projectSettings form label {
 	float: left;
 	margin-top: 5px;
-	min-width: 250px;
+	min-width: 280px;
 }
 .tooltip div {
 	display: none;
