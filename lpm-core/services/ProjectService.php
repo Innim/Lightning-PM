@@ -429,7 +429,7 @@ class ProjectService extends LPMBaseService
             
             $list = $client->getProjects($project->gitlabGroupId);
             $loadedProjectIds = array_map(function ($item) {
-                return $item['id'];
+                return $item->id;
             }, $list);
 
             $gitlabProjectIds = $project->getGitlabProjectIds();
@@ -440,6 +440,7 @@ class ProjectService extends LPMBaseService
                 $gitlabProject = $client->getProject($projectId);
                 if (!empty($gitlabProject)) {
                     $list[] = $gitlabProject;
+                    $loadedProjectIds[] = $projectId;
                 }
             }
 
