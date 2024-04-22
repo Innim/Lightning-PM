@@ -145,9 +145,7 @@ class GitlabExternalApi extends ExternalApi
         } else {
             $user = $this->getUser($data);
             if (!empty($user)) {
-                // Почему-то при повторной отправке события в Gitlab в хуке не передается action, а передаётся state
-                // Не уверен, возможно state и не стоит проверять
-                if ($objectAttributes['action'] == 'open' || $objectAttributes['state'] == 'opened') {
+                if ($objectAttributes['action'] == 'open') {
                     $this->onMROpen($user, $mr);
                 }
             }
