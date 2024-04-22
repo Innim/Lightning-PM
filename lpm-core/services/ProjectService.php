@@ -428,10 +428,19 @@ class ProjectService extends LPMBaseService
             $client = $this->requireGitlabIntegration($project);
             
             $list = $client->getProjects($project->gitlabGroupId);
+            $loadedProjectIds = array_map(function ($item) {
+                return $item['id'];
+            }, $list);
 
             $gitlabProjectIds = $project->getGitlabProjectIds();
             foreach ($gitlabProjectIds as $projectId) {
-                $list[] = $client->getProject($projectId);
+                if (in_array($projectId, $loadedProjectIds)) {
+                    continue;
+                }
+                $gitlabProject = $client->getProject($projectId);
+                if (!empty($gitlabProject)) {
+                    $list[] = $gitlabProject;
+                }
             }
 
             // Загрузим информацию о самом используемом репозитории в этом проекте
