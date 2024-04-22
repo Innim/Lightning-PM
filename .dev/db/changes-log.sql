@@ -394,7 +394,7 @@ ADD INDEX `projectId` (`projectId`);
 ALTER TABLE `lpm_issue_branch`
 ADD `initialCommit` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID изначального коммита' AFTER `date`;
 
--- 0.13.30
+-- 0.14.0
 
 ALTER TABLE `lpm_projects`
 ADD `gitlabProjectIds` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID связанных проектов GitLab' AFTER `gitlabGroupId`;
