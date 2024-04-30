@@ -2,30 +2,74 @@
 class Member extends User
 {
     public static function loadListByInstance(
-        $instanceType,
+        $instanceTypes,
         $instanceId,
         $onlyNotLocked = false,
-        $leftJoinTable = null,
+        $leftJoinTables = null,
         $class = null,
-        $userId = null
+        $userId = null,
+        $conditions = null
     ) {
-        $sql = "select * from `%2\$s`, `%1\$s` ";
-        if ($leftJoinTable) {
-            $sql .= "LEFT JOIN `%3\$s` USING (`userId`, `instanceId`) ";
+        
+        $tables = [LPMTables::MEMBERS, LPMTables::USERS];
+
+        $selectSql = '`u`.*, `m`.*';
+        $joinSql = '';
+        if ($leftJoinTables) {
+            $i = 0;
+            foreach ($leftJoinTables as $table => $hash) {
+                $s = count($tables) + 1;
+                $alias = empty($hash[0]) ? "t_$i" : $hash[0];
+                
+                $joinSql .= " LEFT JOIN `%$s\$s` `$alias`";
+                
+                if (!empty($hash['USING'])) {
+                    $joinSql .= ' USING (`' . implode('`, `', $hash['USING']) . '`)';
+                } else if (!empty($hash['ON'])) {
+                    $joinSql .= ' ON ' . $hash['ON'];
+                }
+
+                if (!empty($hash['SELECT'])) {
+                    $selectFields = array_map(function ($v) use ($alias) {
+                        if ($v != '*' && substr($v, 0, 1) !== '`') $v = '`' . $v . '`';
+                        return "`$alias`.$v";
+                    }, (array)$hash['SELECT']);
+                    $selectSql .= ", " . implode(', ',  $selectFields);
+                }
+
+                $tables[] = $table;
+                $i++;
+            }
         }
-        $sql .= "where `%1\$s`.`instanceId`   = '" . $instanceId   . "' " .
-                         "and `%1\$s`.`instanceType` = '" . $instanceType . "' " .
-                         "and `%1\$s`.`userId`       = `%2\$s`.`userId`";
+
+        $sql = "SELECT " . $selectSql . " FROM `%2\$s` `u`, `%1\$s` `m`" . $joinSql . 
+               " WHERE `m`.`userId`       = `u`.`userId`";
+
+        $sql .= " AND `m`.`instanceType`";
+        if (is_array($instanceTypes)) {
+            $sql .= " IN (" . implode(', ', $instanceTypes) . ")";
+        } else {
+            $sql .= " = '" . (int)$instanceTypes . "'";
+        }
+        
+        if ($instanceId != null) {
+            $sql .= " AND `m`.`instanceId` = " . $instanceId;
+        }
+
         if ($userId != null) {
-            $sql .= " and `%1\$s`.`userId` = " . $userId;
+            $sql .= " AND `m`.`userId` = " . $userId;
         }
+
         if ($onlyNotLocked) {
-            $sql .= " and `%2\$s`.`locked` = 0";
+            $sql .= " AND `u`.`locked` = 0";
         }
-        $query = [$sql, LPMTables::MEMBERS, LPMTables::USERS];
-        if ($leftJoinTable) {
-            $query[] = $leftJoinTable;
+
+        if ($conditions != null) {
+            $sql .= " AND ($conditions)";
         }
+
+
+        $query = array_merge([$sql], $tables);
 
         return StreamObject::loadObjList(self::getDB(), $query, empty($class) ? __CLASS__ : $class);
     }
@@ -33,6 +77,17 @@ class Member extends User
     public static function loadListByProject($projectId, $onlyNotLocked = false)
     {
         return self::loadListByInstance(LPMInstanceTypes::PROJECT, $projectId, $onlyNotLocked);
+    }
+
+    public static function loadListAnyForIssuesInProject($projectId, $issueStatus = null, $loadMembers = true, $loadTesters = true, $loadMasters = true) 
+    {
+        $types = [];
+        if ($loadMembers) $types[] = LPMInstanceTypes::ISSUE;
+        if ($loadTesters) $types[] = LPMInstanceTypes::ISSUE_FOR_TEST;
+        if ($loadMasters) $types[] = LPMInstanceTypes::ISSUE_FOR_MASTER;
+        if (empty($types)) return [];
+
+        return self::loadListForIssue($types, $projectId, $issueStatus);
     }
     
     public static function loadListByIssue($issueId, $onlyNotLocked = false)
@@ -190,11 +245,52 @@ class Member extends User
             LPMInstanceTypes::ISSUE,
             $issueId,
             $onlyNotLocked,
-            LPMTables::ISSUE_MEMBER_INFO,
+            [
+                LPMTables::ISSUE_MEMBER_INFO => self::getIssueMemberInfoJoin(),
+            ],
             'IssueMember',
             $userId
         );
     }
+
+    private static function loadListForIssue(
+        $instanceTypes,
+        $projectId,
+        $issueStatus = null,
+        $onlyNotLocked = false,
+        $userId = null
+    ) {
+        $issueWhere = "`i`.`projectId` = '" . $projectId . "'";
+        if (!empty($issueStatus)) {
+            $issueWhere .= " AND `i`.`status` IN (" . implode(',', $issueStatus) . ')';
+        }
+
+        return self::loadListByInstance(
+            $instanceTypes,
+            null,
+            $onlyNotLocked,
+            [
+                LPMTables::ISSUE_MEMBER_INFO => self::getIssueMemberInfoJoin(),
+                LPMTables::ISSUES => [
+                    'i',
+                    'ON' => '`m`.`instanceId` = `i`.`id`'
+                ]
+            ],
+            'IssueMember',
+            $userId,
+            $issueWhere,
+        );
+    }
+
+    private static function getIssueMemberInfoJoin() {
+        return [
+            'SELECT' => 'sp',
+            'USING' => ['userId', 'instanceId'], 
+        ];
+    }
+
+    public $instanceType;
+    public $instanceId;
 
     /**
      * Дополнительный идентификатор, определяющий связь.
@@ -207,6 +303,6 @@ class Member extends User
     {
         parent::__construct();
         
-        $this->_typeConverter->addIntVars('extraId');
+        $this->_typeConverter->addIntVars('instanceType', 'instanceId', 'extraId');
     }
 }

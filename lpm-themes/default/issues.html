@@ -111,12 +111,24 @@ $userId = lpm_get_user()->userId;
 				&nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
 				<?php endif; ?>
 			</td>
-			<td class="member-list">
+			<td>
 				<?php if ($issue->hasMembers()): ?>
-				<?php foreach ($issue->getMembers() as $i => $member): ?>
-				<?=$i>0?', ':''?><a href="javascript:;"
-					data-member-id="<?=$member->getID();?>"><?=$member->getName();?></a>
-				<?php endforeach; ?>
+				<div class="member-list">
+					<i class="fas fa-wrench" title="Разработчик"></i>
+					<?php foreach ($issue->getMembers() as $i => $member): 
+					?><?=$i>0?', ':''?><a href="javascript:;"
+						data-member-id="<?=$member->getID();?>"><?=$member->getName();?></a><?php 
+					endforeach; ?>
+				</div>
+				<?php endif; ?>
+
+				<?php if ($issue->hasTesters()): ?>
+				<div>
+					<i class="fas fa-flask" title="Тестировщик"></i>
+					<?php foreach ($issue->getTesters() as $i => $member):
+					?><?=$i>0?', ':''?><?=$member->getName();?><?php 
+					endforeach; ?>
+				</div>
 				<?php endif; ?>
 			</td>
 			<td>

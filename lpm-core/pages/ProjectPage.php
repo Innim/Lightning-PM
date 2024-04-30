@@ -215,10 +215,8 @@ class ProjectPage extends LPMPage
     private function initIssues()
     {
         // загружаем задачи
-        $openedIssues = Issue::loadListByProject(
-            $this->_project->id,
-            [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
-        );
+        $openedIssues = $this->loadIssues([Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
+            
         $this->addTmplVar('issues', $openedIssues);
     }
 
@@ -253,10 +251,7 @@ class ProjectPage extends LPMPage
     private function initCompletedIssues()
     {
         // загружаем  завершенные задачи
-        $completedIssues = Issue::loadListByProject(
-            $this->_project->id,
-            [Issue::STATUS_COMPLETED]
-        );
+        $completedIssues = $this->loadIssues([Issue::STATUS_COMPLETED]);
         $this->addTmplVar('issues', $completedIssues);
     }
 
@@ -414,6 +409,23 @@ class ProjectPage extends LPMPage
     private function getLastIssueId()
     {
         return Issue::getLastIssueId($this->_project->id);
+    }
+
+    private function loadIssues($statuses) 
+    {
+        $projectId = $this->_project->id;
+
+        $loadMembers = true;
+        $loadTesters = true;
+        $loadMasters = false;
+        // Загружаем всех участников задач (для оптимизации)
+        $issueParticipants = Member::loadListAnyForIssuesInProject($projectId, $statuses, $loadMembers, $loadTesters, $loadMasters);
+
+        $list = Issue::loadListByProject($projectId, $statuses);
+        foreach ($list as $issue) {
+            $issue->extractParticipantsFrom($issueParticipants, $loadMembers, $loadTesters, $loadMasters);
+        }
+        return $list;
     }
     
     private function saveIssue($editMode = false)
