@@ -1276,7 +1276,7 @@ SQL;
 
     public function getTesters()
     {
-        return $this->_testers == null && !$this->loadTesters() ? [] : $this->_testers;
+        return $this->_testers === null && !$this->loadTesters() ? [] : $this->_testers;
     }
 
     public function getTesterIds()
@@ -1347,7 +1347,7 @@ SQL;
      */
     public function getMasters()
     {
-        return $this->_masters == null && !$this->loadMasters() ? [] : $this->_masters;
+        return $this->_masters === null && !$this->loadMasters() ? [] : $this->_masters;
     }
 
     /**
@@ -1383,6 +1383,41 @@ SQL;
     public function getMembersSpStr()
     {
         return implode(',', $this->getMembersSp());
+    }
+
+    public function extractParticipantsFrom(&$list, $extractMembers = true, $extractTesters = true, $extractMasters = true) {
+        $allowedTypes = [];
+
+        if ($extractMembers) {
+            $this->_members = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE;
+        }
+
+        if ($extractTesters) {
+            $this->_testers = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE_FOR_TEST;
+        }
+
+        if ($extractMasters) {
+            $this->_masters = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE_FOR_MASTER;
+        }
+        
+        $len = count($list);
+        for ($i = 0; $i < $len; $i++) {
+            $member = $list[$i];
+            if ($member->instanceId == $this->id && in_array($member->instanceType, $allowedTypes)) {
+                switch ($member->instanceType) {
+                    case LPMInstanceTypes::ISSUE: $this->_members[] = $member; break;
+                    case LPMInstanceTypes::ISSUE_FOR_TEST: $this->_testers[] = $member; break;
+                    case LPMInstanceTypes::ISSUE_FOR_MASTER: $this->_masters[] = $member; break;
+                }
+
+                array_splice($list, $i, 1);
+                $i--;
+                $len--;
+            }
+        }
     }
 
     protected function loadMembers()
