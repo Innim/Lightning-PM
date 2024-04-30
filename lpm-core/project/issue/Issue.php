@@ -1265,6 +1265,15 @@ SQL;
         return $this->_linkedIssues == null ? $this->loadLinkedIssues() : $this->_linkedIssues;
     }
 
+    /**
+     * Определяет, есть ли хотя бы один тестировщик.
+     * @return bool
+     */
+    public function hasTesters()
+    {
+        return !empty($this->getTesters());
+    }
+
     public function getTesters()
     {
         return $this->_testers == null && !$this->loadTesters() ? [] : $this->_testers;
