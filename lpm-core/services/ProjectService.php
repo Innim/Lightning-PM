@@ -198,10 +198,55 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
+
+    /**
+     * Устанавливает указанного участника проекта в качестве тестировщика для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $userId    Идентификатор участника, которого надо сделать тестировщиком.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function addSpecTester($projectId, $userId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $userId    = (int)$userId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($userId);
+        if (!$member) {
+            return $this->error('Тестировщик не найден в участниках проекта');
+        }
+
+        $label = Issue::getLabel($labelId);
+        if (!$label) {
+            return $this->error('Нет такого тега');
+        }
+
+        $labelProjectId = intval($label['projectId']);
+        if ($labelProjectId != 0 && $labelProjectId != $projectId) {
+            return $this->error('Тег не доступен в проекте');
+        }
+
+        if (!Member::saveProjectSpecTester($project->id, $userId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
     /**
      * Удаляет указанного участника проекта в качестве мастера для задач с указанным тегом.
      * @param int $projectId Идентификатор проекта.
-     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
+     * @param int $masterId  Идентификатор участника, которого надо удалить из мастеров.
      * @param int $labelId   Идентификатор тега.
      */
     public function deleteSpecMaster($projectId, $masterId, $labelId)
@@ -226,6 +271,40 @@ class ProjectService extends LPMBaseService
         }
 
         if (!Member::deleteProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Удаляет указанного участника проекта в качестве тестера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $userId    Идентификатор участника, которого надо удалить из тестеров.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function deleteSpecTester($projectId, $userId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $userId    = (int)$userId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($userId);
+        if (!$member) {
+            return $this->error('Тестер не найден в участниках проекта');
+        }
+
+        if (!Member::deleteProjectSpecTester($project->id, $userId, $labelId)) {
             return $this->error('Не удалось сохранить данные.');
         }
 

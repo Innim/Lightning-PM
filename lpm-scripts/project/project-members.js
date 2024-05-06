@@ -7,6 +7,12 @@ $(() => {
     });
     
     addSpecMaster.init();
+
+    $('#specTesters .spec-tester-item .remove-link').on('click', function() { 
+        const $item = $(this).parent('.spec-tester-item');
+        projectMembers.removeSpecTester($item.data('userId'), $item.data('labelId'));
+    });
+    addSpecTester.init();
 });
 
 const projectMembers = {
@@ -22,15 +28,30 @@ const projectMembers = {
             }
         });
     },
+    removeSpecTester: function (userId, labelId) {
+        preloader.show();
+        srv.project.deleteSpecTester(projectMembers.projectId, userId, labelId, res => {
+            preloader.hide();
+            if (res.success) {
+                $('#specTesters .spec-tester-item[data-user-id=' + userId + '][data-label-id=' + labelId + ']').remove();
+            } else {
+                messages.alert('Не удалось удалить тестера')
+            }
+        });
+    },
 };
 
-const addSpecMaster = {
+const specMembers = (serviceMethod, dialog, errors) => ({
     element: null,
     init: function () {
-        const $el = $("#addSpecMaster");
+        const $el = $(`#addSpecMember`).clone();
         this.element = $el;
+        const self = this;
+
+        $('.select-spec-member-label', $el).text(dialog.label);
         $el.dialog(
             {
+                title: dialog.title,
                 autoOpen: false,
                 modal: true,
                 resizable: false,
@@ -38,13 +59,13 @@ const addSpecMaster = {
                     {
                         text: "Добавить",
                         click: function () {
-                            addSpecMaster.save();
+                            self.save();
                         }
                     },
                     {
                         text: "Отмена",
                         click: function () {
-                            addSpecMaster.close();
+                            self.close();
                         }
                     }
                 ]
@@ -57,31 +78,52 @@ const addSpecMaster = {
     },
     close: function () {
         const $el = this.element;
-        $("#selectTagForSpecMaster", $el).val(0);
-        $("#selectSpecMaster", $el).val(0);
+        $('.select-tag-for-spec-member', $el).val(0);
+        $('.select-spec-member', $el).val(0);
         $el.dialog('close');
     },
     save: function () {
         const $el = this.element;
+        const self = this;
 
-        const labelId = $("#selectTagForSpecMaster", $el).val();
-        const userId = $("#selectSpecMaster", $el).val();
+        const labelId = $('.select-tag-for-spec-member', $el).val();
+        const userId = $('.select-spec-member', $el).val();
         
         if (labelId <= 0) {
             messages.alert('Вы должны выбрать тег.')
         } else if (userId <= 0) {
             messages.alert('Вы должны выбрать пользователя.')
         } else {
-            srv.project.addSpecMaster(projectMembers.projectId, userId, labelId, res => {
+            serviceMethod.call(srv.project, projectMembers.projectId, userId, labelId, res => {
                 if (res.success) {
                     // TODO: добавить в список на лету
                     location.reload();
-
-                    addSpecMaster.close();
+                    self.close();
                 } else {
-                    messages.alert('Не удалось добавить мастера')
+                    messages.alert(errors.addFailed)
                 }
             });
         }
     },
-}
+});
+
+const addSpecMaster = specMembers(
+    srv.project.addSpecMaster, 
+    {
+        title: 'Добавить мастера по тегу',
+        label: 'Мастер',
+    },
+    {
+        addFailed: 'Не удалось добавить мастера',
+    },
+);
+const addSpecTester = specMembers(
+    srv.project.addSpecTester, 
+    {
+        title: 'Добавить тестировщика по тегу',
+        label: 'Тестер',
+    },
+    {
+        addFailed: 'Не удалось добавить тестировщика'
+    },
+);

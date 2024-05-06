@@ -404,6 +404,11 @@ SQL;
      * @var array<Member>
      */
     private $_specMasters = null;
+
+    /**
+     * @var array<Member>
+     */
+    private $_specTesters = null;
     
     /**
      * Цели спринта проекта.
@@ -416,6 +421,11 @@ SQL;
      * @var string|null
      */
     private $_sprintTargetHtml = null;
+
+    /**
+     * @var array<array>
+     */
+    private $_labels = null;
     
     public function __construct()
     {
@@ -600,14 +610,32 @@ SQL;
         return $this->_tester;
     }
 
-
     /**
      * Возвращает список мастеров, определенных по тегам.
      * @return array<Member>
      */
     public function getSpecMasters()
     {
-        return $this->_specMasters == null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+        return $this->_specMasters === null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+    }
+
+
+    /**
+     * Возвращает список тестеров, определенных по тегам.
+     * @return array<Member>
+     */
+    public function getSpecTesters()
+    {
+        return $this->_specTesters === null && !$this->loadSpecTesters() ? [] : $this->_specTesters;
+    }
+
+    /**
+     * Возвращает список тегов для проекта.
+     * @return array<array>
+     */
+    public function getLabels()
+    {
+        return $this->_labels === null && !$this->loadLabels() ? [] : $this->_labels;
     }
 
     /**
@@ -671,11 +699,38 @@ SQL;
      */
     private function loadSpecMasters()
     {
-        $this->_specMasters = Member::loadSpecMastersForProject($this->id);
-        if ($this->_specMasters === false) {
+        $list = Member::loadSpecMastersForProject($this->id);
+        if ($list === false) {
             throw new Exception('Ошибка при загрузке списка мастеров по тегам');
         }
 
+        $this->_specMasters = $list;
         return $this->_specMasters;
+    }
+
+    /**
+     * Загружается список тестеров, определенных по тегам.
+     * @return array<Member>
+     */
+    private function loadSpecTesters()
+    {
+        $list = Member::loadSpecTestersForProject($this->id);
+        if ($list === false) {
+            throw new Exception('Ошибка при загрузке списка тестеров по тегам');
+        }
+
+        $this->_specTesters = $list;
+        return $this->_specTesters;
+    }
+
+    private function loadLabels()
+    {
+        $list = Issue::getLabels($this->id);
+        if ($list === false) {
+            throw new Exception('Ошибка при загрузке списка тегов');
+        }
+
+        $this->_labels = $list;
+        return $this->_labels;
     }
 }

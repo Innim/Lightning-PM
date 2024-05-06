@@ -179,16 +179,44 @@ foreach ($labels as $label) {
         <?php else: ?>
         <p>Не выбран</p>
         <?php endif; ?>
+
+        <form id="specTesters" action="">
+            <h4>Тестировщики по тегам</h4>
+            <ul class="spec-tester-list">
+                <?php 
+                foreach ($project->getSpecTesters() as $tester): 
+                    $labelName = empty($labelNameById[$tester->extraId]) ? 'n/a' : $labelNameById[$tester->extraId];
+                ?>
+                <li class="spec-tester-item" data-user-id="<?=$tester->getID();?>" data-label-id="<?=$tester->extraId;?>">
+                    <span class="spec-tester-label">[<?=$labelName;?>]</span>
+                    <span class="spec-tester-name"><?=$tester->getName();?></span>
+                    <?php if ($canEdit): ?>
+                    <a href="javascript:;" class="remove-link">Удалить</a>
+                    <?php endif; ?>
+                </li>
+            <?php endforeach; ?>
+            </ul>
+
+            <?php if ($canEdit): ?>
+            <button
+                type="button"
+                onclick="addSpecTester.show();"
+                class="btn btn-primary">
+                Добавить
+            </button>
+            <?php endif; ?>
+        </form>
+
     </div>
     <?php lpm_print_users_chooser();?>
 
 </article>
 
-<article id="addSpecMaster" title="Добавить мастера по тегу" style="display: none;">
+<article id="addSpecMember" title="Добавить участника по тегу" style="display: none;">
     <div class="row mb-3 add-spec-project-row">
-        <label for="selectTagForSpecMaster" class="col-sm-3 col-form-label">Тег</label>
+        <label for="selectTagForSpecMember" class="col-sm-3 col-form-label">Тег</label>
         <div class="col-sm-9">
-            <select class="form-select" id="selectTagForSpecMaster">
+            <select class="form-select select-tag-for-spec-member" id="selectTagForSpecMember">
                 <option value="0">-</option>
                 <?php foreach ($labels as $label): ?>
                 <option class="label-name" value=" <?=$label['id'];?> "><?=$label['label'];?></option>
@@ -197,9 +225,9 @@ foreach ($labels as $label) {
         </div>
     </div>
     <div class="row mb-3 add-spec-project-row">
-        <label for="selectSpecMaster" class="col-sm-3 col-form-label">Мастер</label>
+        <label for="selectSpecMember" class="col-sm-3 col-form-label select-spec-member-label">Участник</label>
         <div class="col-sm-9">
-            <select class="form-select" id="selectSpecMaster">
+            <select class="form-select select-spec-member" id="selectSpecMember">
                 <option value="0">-</option>
                 <?php foreach ($projectMembers as $member): ?>
                 <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>

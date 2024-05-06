@@ -450,27 +450,6 @@ class IssueService extends LPMBaseService
     }
 
     /**
-     * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
-     */
-    public static function checkTester(Issue $issue)
-    {
-        $testers = $issue->getTesters();
-        $issueId = $issue->getID();
-        $type = LPMInstanceTypes::ISSUE_FOR_TEST;
-
-        if (empty($testers)) {
-            $projectId = $issue->getProject()->getID();
-            $projectTester = Member::loadTesterForProject($projectId);
-            if (empty($projectTester)) {
-                return null;
-            }
-
-            $testerId = (int) $projectTester->getID();
-            Member::saveMembers($type, $issueId, [$testerId]);
-        }
-    }
-
-    /**
      * Помещает стикер задачи на скрам доску
      * @param  int $issueId Идентификатор задачи
      * @return

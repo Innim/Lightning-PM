@@ -635,8 +635,7 @@ SQL;
             $issue->completedDate = null;
             $hash['SET']['completedDate'] = '0000-00-00 00:00:00';
         } elseif ($issue->status === Issue::STATUS_WAIT) {
-            // XXX: переделать - не должно быть обращения к сервису из модели
-            IssueService::checkTester($issue);
+            $issue->autoSetTesters();
             $issue->autoSetMasters();
         }
 
@@ -1301,42 +1300,97 @@ SQL;
         $masters = $this->getMasters();
 
         if (empty($masters)) {
-            // Получаем список меток (тегов) для задачи
-            $labelNames = $this->getLabelNames();
-            if (!empty($labelNames)) {
-                // TODO: переделать чтобы не грузить лишнего
-                $labels = Issue::getLabels($this->projectId);
-                $labelIds = [];
+            $issueId = $this->id;
+            $project = $this->getProject();
 
-                foreach ($labels as $label) {
-                    if (in_array($label['label'], $labelNames)) {
-                        $labelIds[] = (int)$label['id'];
-                    }
+            $this->_masters = $this->autoSetByLabels(
+                function () use ($project) {
+                    return $project->getSpecMasters();
+                },
+                function ($userIds) use ($issueId) {
+                    return Member::saveIssueMasters($issueId, $userIds);
                 }
-                $labelIds = array_unique($labelIds);
+            );
+        }
+    }
 
-                // TODO: грузить только кого надо
-                $specMasters = $this->getProject()->getSpecMasters();
-                $mastersById = [];
-                foreach ($specMasters as $master) {
-                    if (in_array($master->extraId, $labelIds)) {
-                        $mastersById[$master->userId] = $master;
-                    }
+    /**
+     * Автоматически назначает тестировщиков для задачи,
+     * если нет уже заданных для конкретной задачи.
+     *
+     * Тестеры будут добавлены, если найдутся подходящие по тегам.
+     * Если тестировщик по тегу не найдет, то будет назначен тестировщик по умолчанию.
+     * Мастер для проекта по умолчанию - не назначается.
+     */
+    public function autoSetTesters()
+    {
+        $testers = $this->getTesters();
+
+        if (empty($testers)) {
+            $issueId = $this->id;
+            $project = $this->getProject();
+
+            // Пытаемся выставить по тегам 
+            $testersByTags = $this->autoSetByLabels(
+                function () use ($project) {
+                    return $project->getSpecTesters();
+                },
+                function ($userIds) use ($issueId) {
+                    return Member::saveIssueTesters($issueId, $userIds);
                 }
+            );
 
-                if (!empty($mastersById)) {
-                    $newMasterIds = array_keys($mastersById);
-
-                    if (!Member::saveIssueMasters($this->id, $newMasterIds)) {
-                        throw new \GMFramework\ProviderSaveException(
-                            'Не удалось сохранить автоматически назначенных мастеров для задачи'
-                        );
-                    }
-
-                    $this->_masters = array_values($mastersById);
+            if (!empty($testersByTags)) {
+                $this->_testers = $testersByTags;
+            } else {
+                // Если нет, пытаемся выставить дефолтного 
+                $defaultTester = $project->getTester();
+                if (!empty($defaultTester)) {
+                    Member::saveIssueTesters($issueId, [$defaultTester->userId]);
+                    $this->_testers = [$defaultTester];
                 }
             }
         }
+    }
+
+    private function autoSetByLabels($getSpecMembers, $saveMembers)
+    {
+        // Получаем список меток (тегов) для задачи
+        $labelNames = $this->getLabelNames();
+        if (!empty($labelNames)) {
+            // TODO: переделать чтобы не грузить лишнего (можно грузить только нужные теги)
+            $labels = $this->getProject()->getLabels();
+            $labelIds = [];
+
+            foreach ($labels as $label) {
+                if (in_array($label['label'], $labelNames)) {
+                    $labelIds[] = (int)$label['id'];
+                }
+            }
+            $labelIds = array_unique($labelIds);
+
+            // TODO: грузить только кого надо
+            $specMembers = $getSpecMembers();
+            $usersById = [];
+            foreach ($specMembers as $member) {
+                if (in_array($member->extraId, $labelIds)) {
+                    $usersById[$member->userId] = $member;
+                }
+            }
+
+            if (!empty($usersById)) {
+                $newUserIds = array_keys($usersById);
+                if (!$saveMembers($newUserIds)) {
+                    throw new \GMFramework\ProviderSaveException(
+                        'Не удалось сохранить автоматически назначенных участников для задачи'
+                    );
+                }
+
+                return array_values($usersById);
+            }
+        }
+    
+        return [];
     }
 
     /**
