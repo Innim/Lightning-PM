@@ -597,8 +597,10 @@ issuePage.changePriority = function (e) {
                             $last = $next;
                         }
                         else {
-                            if ($last)
+                            if ($last) {
                                 $last.after($row);
+                                highlightIssueRow($row);
+                            }
                             break;
                         }
                     }
@@ -611,8 +613,10 @@ issuePage.changePriority = function (e) {
                             $first = $prev;
                         }
                         else {
-                            if ($first)
+                            if ($first) {
                                 $first.before($row);
+                                highlightIssueRow($row);
+                            }
                             break;
                         }
                     }
@@ -1395,4 +1399,11 @@ function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds
     } else {
         $('#' + elementId).remove();
     }
+}
+
+
+function highlightIssueRow($row) {
+    $row
+        .css("backgroundColor", "#e0cffc")
+        .animate({ backgroundColor: "#ffffff" }, 3000);
 }
