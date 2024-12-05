@@ -160,13 +160,20 @@ const createBranch = {
                 const $selectParent = $('#parentBranch', $el);
                 $selectParent.empty();
                 // Первой предлагаем develop - выбор по умолчанию
+                // потом master
+                // потом main
                 // потом все остальные рутовые ветки
                 // и только потом прочие, по алфавиту
+                const priorityBranches = ['develop', 'master', 'main'];
                 res.list.sort((a, b) => {
                     const aName = a.name;
                     const bName = b.name;
-                    if (aName == 'develop') return -1;
-                    if (bName == 'develop') return 1;
+
+                    for (var i = 0; i < priorityBranches.length; i++) {
+                        const priorityName = priorityBranches[i];
+                        if (aName == priorityName) return -1;
+                        if (bName == priorityName) return 1;
+                    }
 
                     const isARoot = !aName.includes('/');
                     const isBRoot = !bName.includes('/');
