@@ -122,7 +122,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     <?php foreach ($picture as $img): ?>
                     <li>
                         <a href="<?=$img->getSource();?>" class="image-link" rel="iLoad|Screenshots"><img
-                                src="<?=$img->getPreview();?>" class="image-preview" /></a>
+                                src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" /></a>
                         <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
                     </li>
                     <?endforeach;?>
