@@ -508,28 +508,29 @@ function setCaretPosition(elem, pos) {
 function completeIssue(e) {
     var parent = e.currentTarget.parentElement;
     var issueId = $('input[name=issueId]', parent).val();
+    if (issueId <= 0) return
 
-    if (issueId > 0) {
-        preloader.show();
-        srv.issue.complete(
-            issueId,
-            function (res) {
-                //btn.disabled = false;
-                preloader.hide();
-                if (res.success) {
-                    if ($('#issuesList').length > 0) {
-                        $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
-                        showMain();
-                    } else if ($('#issueView').length > 0) {
-                        setIssueInfo(new Issue(res.issue));
-                    }
-                    issuePage.updateStat();
-                } else {
-                    srv.err(res);
+    if (!confirm('Задача будет отмечена как завершенная. Продолжить?')) return;
+
+    preloader.show();
+    srv.issue.complete(
+        issueId,
+        function (res) {
+            //btn.disabled = false;
+            preloader.hide();
+            if (res.success) {
+                if ($('#issuesList').length > 0) {
+                    $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
+                    showMain();
+                } else if ($('#issueView').length > 0) {
+                    setIssueInfo(new Issue(res.issue));
                 }
+                issuePage.updateStat();
+            } else {
+                srv.err(res);
             }
-        );
-    }
+        }
+    );
 }
 
 issuePage.changePriority = function (e) {
