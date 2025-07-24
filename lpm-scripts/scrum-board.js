@@ -37,6 +37,8 @@ let scrumBoard = {
         else
             return;
 
+        if (state == 4 && !confirm('Завершить задачу?')) return;
+
         preloader.show();
         srv.issue.changeScrumState(issueId, state, function (res) {
             preloader.hide();
