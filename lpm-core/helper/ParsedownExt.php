@@ -12,6 +12,7 @@ class ParsedownExt extends Parsedown
     private $_delRegex;
     private $_underlineRegex;
     private $_userLinkRegex;
+    private $_taskLinkRegex;
 
     public function __construct()
     {
@@ -29,6 +30,12 @@ class ParsedownExt extends Parsedown
 
         array_unshift($this->InlineTypes['['], 'UserLink');
         $this->_userLinkRegex = '/^\[(@.*?)]\(user:([0-9]+)\)/';
+
+        array_unshift($this->InlineTypes['['], 'IssueLink');
+        $host = LightningEngine::getHost();
+        $protocols = ['http', 'https'];
+        $this->_taskLinkRegex = '/\[(#\d*?)]\(('.
+                implode('|', $protocols).'):\/\/'.$host.'(.*?)\)/';
     }
 
     protected function inlineStrong($Excerpt)
@@ -67,6 +74,46 @@ class ParsedownExt extends Parsedown
                     ],
                 ],
             ];
+        }
+    }
+
+    protected function inlineIssueLink($Excerpt)
+    {
+        if (preg_match($this->_taskLinkRegex, $Excerpt['text'], $matches) &&
+                count($matches) == 4) {
+            $protocol = $matches[2];
+            $path = $matches[3];
+            $text = $matches[1];
+            $issueId = mb_substr($text, 1);
+            $pathParts = explode('/', $path);
+            if (count($pathParts) > 1) {
+                $projectId = $pathParts[2];
+                try {
+                    if ($project = Project::load($projectId)) {
+                        if ($issue = Issue::loadByIdInProject($project->id, $issueId)) {
+                            $images = $issue->getImages();
+                            $imageUrl = empty($images) ? null : $images[0]->getSource();
+                            $url = $protocol . '://' . LightningEngine::getHost() . $path;
+                            return [
+                                'extent' => strlen($matches[0]),
+                                'element' => [
+                                    'name' => 'a',
+                                    'handler' => 'line',
+                                    'nonNestables' => array('Url', 'Link'),
+                                    'text' => $text,
+                                    'attributes' => [
+                                        'href' => $url,
+                                        'data-issue-id' => $issue->getID(),
+                                        'data-tooltip' => 'issue',
+                                        'data-img' => $imageUrl,
+                                        'title' => $issue->getName(),
+                                    ],
+                                ],
+                            ];
+                        }
+                    }
+                } catch(Exception $e) {}
+            }
         }
     }
 

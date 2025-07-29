@@ -1647,3 +1647,17 @@ form.pass-test #passTestComment textarea.comment-text-field {
 .filters-line .multiselect__tag {
 	overflow: unset;
 }
+
+.tooltip-link-issue-container {
+	max-height: 250px;
+}
+
+.tooltip-link-issue-container .tooltip-link-issue-title {
+	display: block;
+}
+
+.tooltip-link-issue-container .tooltip-link-issue-image {
+	max-width: 100%;
+	display: block;
+	margin-bottom: 5px;
+}

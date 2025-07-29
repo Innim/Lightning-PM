@@ -44,6 +44,10 @@ class LightningEngine
         }
         return $url;
     }
+
+    public static function getHost() {
+        return parse_url(SITE_URL, PHP_URL_HOST);
+    }
     
     /**
     *
