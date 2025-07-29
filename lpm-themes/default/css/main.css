@@ -1648,32 +1648,16 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	overflow: unset;
 }
 
-.tooltip-link-issue.ui-widget-shadow {
-	background: #fff !important;
-	box-shadow: 0 0 3px #666;
-}
-
-.tooltip-link-issue .arrow:after {
-	background: #fff;
-}
-
-.tooltip-link-issue .tooltip-link-issue-container {
-	overflow: hidden;
+.tooltip-link-issue-container {
 	max-height: 250px;
-	border-radius: 10px;
-	margin: 5px 0;
 }
 
-.tooltip-link-issue .tooltip-link-issue-title {
+.tooltip-link-issue-container .tooltip-link-issue-title {
 	display: block;
-	font-weight: bold;
-	color: #666;
-	font-size: 1.1em;
 }
 
-.tooltip-link-issue .tooltip-link-issue-image {
+.tooltip-link-issue-container .tooltip-link-issue-image {
 	max-width: 100%;
-	border-radius: 10px;
 	display: block;
-	margin: 5px auto 0;
+	margin-bottom: 5px;
 }

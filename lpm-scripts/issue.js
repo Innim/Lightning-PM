@@ -1,31 +1,37 @@
 $(document).ready(
     function () {
         $('#issueView .comments form.add-comment').hide();
-        $('[data-tooltip="issue"]').tooltip({
-            tooltipClass: 'tooltip-link-issue',
-            position: {
-                my: "center bottom-20",
-                at: "center top",
-                using: function (position, feedback) {
-                    $(this).css(position);
-                    $("<div>")
-                        .addClass("arrow")
-                        .addClass(feedback.vertical)
-                        .addClass(feedback.horizontal)
-                        .appendTo(this);
 
+        $('[data-tooltip="issue"]').each(function() {
+            const el = this;
+            const $el = $(el);
+            const title = $el.attr('title');
+            const imageUrl = $el.data('img');
+
+            // Clear the native browser tooltip
+            $el.removeAttr('title');
+
+
+            const popover = new bootstrap.Popover(el, {
+                trigger: 'hover focus',
+                // trigger: 'manual',
+                placement: 'top',
+                container: 'body',
+                html: true,
+                content: function () {
+                    const content = $('<div>').addClass('tooltip-link-issue-container')
+                    if (imageUrl) {
+                        content.append($('<img>').addClass('tooltip-link-issue-image').attr('src', imageUrl));
+                    }
+                    content.append($('<span>').addClass('tooltip-link-issue-title').text(title));
+                    return content;
                 },
-            },
-            content: function () {
-                const span = $('<span>').addClass('tooltip-link-issue-title').text($(this).prop('title'));
-                const div = $('<div>').addClass('tooltip-link-issue-container').append(span);
-                const imageUrl = $(this).data('img');
-                if (imageUrl) {
-                    const image = $('<img>').addClass('tooltip-link-issue-image').attr('src', imageUrl);
-                    div.append(image);
-                }
-                return div
-            },
+            });
+    
+            el.addEventListener('hide.bs.popover', function() {
+                // Force element to stay visible - some sort of bug in Bootstrap in conflict with jQuery
+                this.style.display = '';
+            });
         });
 
         states.addState($("#issueView"));

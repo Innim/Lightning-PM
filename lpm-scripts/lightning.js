@@ -501,7 +501,9 @@ $(document).ready(
 
         if (hljs) hljs.initHighlightingOnLoad();
 
-        $(document).tooltip({
+        $.widget.bridge('uitooltip', $.ui.tooltip);
+
+        $(document).uitooltip({
             position: {
                 my: "center bottom-20",
                 at: "center top",
