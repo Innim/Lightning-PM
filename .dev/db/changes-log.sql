@@ -413,6 +413,6 @@ CREATE TABLE `lpm_badges` (
   `gitlabProjectId` int DEFAULT NULL COMMENT 'Id проекта на GitLab',
   `gitlabRef` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Ветка, тег или коммит в репозитории',
   `comment` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT 'Комментарий к бэйджу'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';й';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';
 
 --NEXT
