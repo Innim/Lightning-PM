@@ -306,6 +306,32 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * Получает информацию о последнем пайплайне для проекта.
+     * @param int|string $projectId Идентификатор проекта на GitLab.
+     * @param string $ref Ветка или тег, для которого нужно получить пайплайн.
+     * @param bool $useSudo Использовать ли sudo пользователя или текущего.
+     * @return GitlabPipeline|null
+     */
+    public function getLatestPipeline($projectId, $ref, $useSudo = false) {
+        $client = $useSudo ? $this->sudoClient() : $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $projects = new GitlabClientProjectsExt($client);
+            $res = $projects->pipelineLatest($projectId, $ref);
+            if (empty($res)) {
+                return null;
+            }
+            return new GitlabPipeline($res);
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return null;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {
@@ -337,6 +363,9 @@ class GitlabIntegration
         return $this->_client;
     }
 
+    /**
+     * @return \Gitlab\Client
+     */
     private function sudoClient()
     {
         if (!$this->isAvailable()) {
