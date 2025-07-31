@@ -34,8 +34,8 @@ class ParsedownExt extends Parsedown
         array_unshift($this->InlineTypes['['], 'IssueLink');
         $host = LightningEngine::getHost();
         $protocols = ['http', 'https'];
-        $this->_taskLinkRegex = '/\[(#\d*?)]\(('.
-                implode('|', $protocols).'):\/\/'.$host.'(.*?)\)/';
+        $this->_taskLinkRegex = '/\[(.*)\]\(((?:'.
+                implode('|', $protocols).'):\/\/'.$host.'\/project\/(.*)\/issue\/(\d*)\/?#?)\)/';
     }
 
     protected function inlineStrong($Excerpt)
@@ -80,20 +80,21 @@ class ParsedownExt extends Parsedown
     protected function inlineIssueLink($Excerpt)
     {
         if (preg_match($this->_taskLinkRegex, $Excerpt['text'], $matches) &&
-                count($matches) == 4) {
-            $protocol = $matches[2];
-            $path = $matches[3];
+                count($matches) == 5) {
             $text = $matches[1];
-            $issueId = mb_substr($text, 1);
-            $pathParts = explode('/', $path);
-            if (count($pathParts) > 1) {
-                $projectId = $pathParts[2];
+            $url = $matches[2];
+            $projectUid = $matches[3];
+            $issueId = (int) $matches[4];
+            
+            if (!empty($projectUid) && !empty($issueId)) {
                 try {
-                    if ($project = Project::load($projectId)) {
+                    // here we have a potential vulnerability, because we can get info about any issue,
+                    // even if user has no access to it. But we already allow to get info about any issue
+                    // as open graph meta for any link, so it's not a problem.
+                    if ($project = Project::load($projectUid)) {
                         if ($issue = Issue::loadByIdInProject($project->id, $issueId)) {
                             $images = $issue->getImages();
                             $imageUrl = empty($images) ? null : $images[0]->getSource();
-                            $url = $protocol . '://' . LightningEngine::getHost() . $path;
                             return [
                                 'extent' => strlen($matches[0]),
                                 'element' => [

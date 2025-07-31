@@ -724,6 +724,7 @@ ul.panel-submenu li {
 /* панелька с информацией */
 .info-list, .issue-info .linked-issues {
 	padding-left: 40px;
+	padding-right: 40px;
 }
 .info-list > .info-list-item {
 	margin: 10px 0px;
@@ -982,11 +983,8 @@ table.issues-list tr.active-issue.tester {
 #issueView .info-list .issue-completed-date-row {
 	display: none;
 }
-.linked-issues {
+.linked-issues .card-body {
 	font-size: smaller;
-}
-.linked-issues h5 {
-	margin: 10px 0 2px;
 }
 .linked-issues .linked-issue-project {
 	font-weight: bold;

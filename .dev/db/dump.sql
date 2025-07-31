@@ -9,12 +9,13 @@ SET NAMES utf8mb4;
 
 DROP TABLE IF EXISTS `lpm_badges`;
 CREATE TABLE `lpm_badges` (
-  `id` int NOT NULL COMMENT 'ID',
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `type` varchar(255) NOT NULL COMMENT 'Тип бэйджа',
   `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Лейбл бейджа',
   `gitlabProjectId` int DEFAULT NULL COMMENT 'Id проекта на GitLab',
   `gitlabRef` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Ветка, тег или коммит в репозитории',
-  `comment` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT 'Комментарий к бэйджу'
+  `comment` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT 'Комментарий к бэйджу',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';
 
 DROP TABLE IF EXISTS `lpm_comments`;
