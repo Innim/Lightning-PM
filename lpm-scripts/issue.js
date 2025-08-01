@@ -22,7 +22,7 @@ $(document).ready(
                 content: function () {
                     const content = $('<div>').addClass('tooltip-link-issue-container')
                     if (imageUrl) {
-                        content.append($('<img>').addClass('tooltip-link-issue-image').attr('src', imageUrl));
+                        content.append($('<img>').addClass('tooltip-link-issue-image border border-1 rounded-3').attr('src', imageUrl));
                     }
                     content.append($('<span>').addClass('tooltip-link-issue-title').text(`${idInProject}. ${title}`));
                     return content;
