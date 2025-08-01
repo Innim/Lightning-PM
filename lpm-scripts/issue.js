@@ -5,6 +5,7 @@ $(document).ready(
         $('[data-tooltip="issue"]').each(function() {
             const el = this;
             const $el = $(el);
+            const idInProject = $el.data('id-in-project');
             const title = $el.attr('title');
             const imageUrl = $el.data('img');
 
@@ -21,9 +22,9 @@ $(document).ready(
                 content: function () {
                     const content = $('<div>').addClass('tooltip-link-issue-container')
                     if (imageUrl) {
-                        content.append($('<img>').addClass('tooltip-link-issue-image').attr('src', imageUrl));
+                        content.append($('<img>').addClass('tooltip-link-issue-image border border-1 rounded-3').attr('src', imageUrl));
                     }
-                    content.append($('<span>').addClass('tooltip-link-issue-title').text(title));
+                    content.append($('<span>').addClass('tooltip-link-issue-title').text(`${idInProject}. ${title}`));
                     return content;
                 },
             });

@@ -18,47 +18,32 @@ $(document).ready(function ($) {
 	comments.init();
 });
 
-let comments = {
-	storeKey: null,
-	typeStoreKey: null,
+const comments = {
+	saveableForm: null,
 	mrStateIcons: {
 		merged: 'fa-check-circle',
 		opened: 'fa-clock',
 		closed: 'fa-times-circle',
 	},
 	init: function () {
-		comments.storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
-		comments.typeStoreKey = comments.storeKey + '_type';
+		const storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
+		comments.saveableForm = new SaveableCommentForm(
+			'#addCommentForm .comment-text-field',
+			'#comments form.add-comment input[name=requestChanges]',
+			storeKey,
+			storeKey + '_type'
+		);
+
 		comments.invalidateLinks();
 		comments.initAddForm();
 	},
 	initAddForm: function () {
-		let commentTextField = $('#addCommentForm .comment-text-field');
-		if (commentTextField.length == 0) return;
-
-		const storeKey = comments.storeKey;
-		const typeStoreKey = comments.typeStoreKey;
-		const savedText = window.localStorage.getItem(storeKey);
-		if (savedText) {
-			const savedType = window.localStorage.getItem(typeStoreKey);
-			commentTextField.val(savedText);
-			comments.showCommentForm(savedType == 1);
-		}
-
-		const requestChangesField = $('#comments form.add-comment input[name=requestChanges]')
-		commentTextField.on('input', (e) => {
-			let text = e.target.value;
-			window.localStorage.setItem(storeKey, text);
-			window.localStorage.setItem(typeStoreKey, requestChangesField.is(':checked') ? 1 : 0);
-		});
-		requestChangesField.on('click', (e) => {
-			window.localStorage.setItem(typeStoreKey, requestChangesField.is(':checked') ? 1 : 0);
+		comments.saveableForm.init((_, requestChanges) => {
+			comments.showCommentForm(requestChanges);
 		});
 	},
 	clearForm: function () {
-		$('#addCommentForm .comment-text-field').val('');
-		window.localStorage.removeItem(comments.storeKey);
-		window.localStorage.removeItem(comments.typeStoreKey);
+		comments.saveableForm.clear();
 	},
 	showCommentForm: function (requestChanges = false) {
 		$('#comments form.add-comment').show();
@@ -137,4 +122,45 @@ let comments = {
 			});
 		}
 	}
+}
+
+function SaveableCommentForm(inputSelector, checkboxSelector, storeKey, checkboxStoreKey) {
+	this.storeKey = storeKey;
+	this.checkboxStoreKey = checkboxStoreKey;
+
+	this.init = function (onRestore) {
+		const commentTextField = $(inputSelector);
+		if (commentTextField.length == 0) return;
+
+		const checkboxField = $(checkboxSelector)
+
+		const storeKey = this.storeKey;
+		const checkboxStoreKey = this.checkboxStoreKey;
+
+		const savedText = window.localStorage.getItem(storeKey);
+		if (savedText) {
+			const checkboxValue = window.localStorage.getItem(checkboxStoreKey) == 1;
+			commentTextField.val(savedText);
+			checkboxField.prop('checked', checkboxValue);
+
+			onRestore(savedText, checkboxValue);
+		}
+
+		commentTextField.on('input', (e) => {
+			let text = e.target.value;
+			window.localStorage.setItem(storeKey, text);
+			window.localStorage.setItem(checkboxStoreKey, checkboxField.is(':checked') ? 1 : 0);
+		});
+
+		checkboxField.on('click', (e) => {
+			window.localStorage.setItem(checkboxStoreKey, checkboxField.is(':checked') ? 1 : 0);
+		});
+	}
+
+	this.clear = function () {
+		$(inputSelector).val('');
+		window.localStorage.removeItem(this.storeKey);
+		window.localStorage.removeItem(this.checkboxStoreKey);
+	}
+
 }

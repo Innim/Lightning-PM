@@ -105,6 +105,7 @@ class ParsedownExt extends Parsedown
                                     'attributes' => [
                                         'href' => $url,
                                         'data-issue-id' => $issue->getID(),
+                                        'data-id-in-project' => $issue->getIdInProject(),
                                         'data-tooltip' => 'issue',
                                         'data-img' => $imageUrl,
                                         'title' => $issue->getName(),
