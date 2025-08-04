@@ -602,6 +602,13 @@ a.create-branch-icon .plus-icon {
 	right:0;
 	bottom:0;
 	font-size: 0.5em;
+  	color: white;
+  	background: black;
+  	border-radius: 50%;
+  	aspect-ratio: 1 / 1;
+  	display: flex;
+  	align-items: center;
+  	justify-content: center;
 }
 
 .comments .links-bar .comments-controls {
