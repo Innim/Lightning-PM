@@ -112,7 +112,7 @@ const comments = {
 								.append('<i class="state-icon fas ' + icon + '"></i>')
 								.append('MR <a href="' + mr.url + '">!' + mr.internalId + '</a>');
 							if (mr.mergedAt) {
-								li.append(' <span class="merged-at small">(' + lpm.format.date(mr.mergedAt) + ')</span>');
+								li.append(' <span class="merged-at small" title="Дата влития">(<i class="fas fa-code-pull-request" ></i> ' + lpm.format.date(mr.mergedAt) + ')</span>');
 							}
 						} else {
 							li.remove();
