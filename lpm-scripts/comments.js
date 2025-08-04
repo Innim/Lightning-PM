@@ -111,6 +111,9 @@ const comments = {
 								.empty()
 								.append('<i class="state-icon fas ' + icon + '"></i>')
 								.append('MR <a href="' + mr.url + '">!' + mr.internalId + '</a>');
+							if (mr.mergedAt) {
+								li.append(' <span class="merged-at small">(' + lpm.format.date(mr.mergedAt) + ')</span>');
+							}
 						} else {
 							li.remove();
 						}
