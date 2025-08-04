@@ -682,6 +682,11 @@ a.create-branch-icon .plus-icon {
 	color: #2bbd00;
 }
 
+
+.comments-list-item ul.merge-requests li.merged .merged-at {
+	font-weight: bold;
+}
+
 #projectComments .pages-nav-bar {
 	text-align: center;
 	text-transform: uppercase;
