@@ -602,6 +602,13 @@ a.create-branch-icon .plus-icon {
 	right:0;
 	bottom:0;
 	font-size: 0.5em;
+  	color: white;
+  	background: black;
+  	border-radius: 50%;
+  	aspect-ratio: 1 / 1;
+  	display: flex;
+  	align-items: center;
+  	justify-content: center;
 }
 
 .comments .links-bar .comments-controls {
@@ -680,6 +687,11 @@ a.create-branch-icon .plus-icon {
 }
 .comments-list-item ul.merge-requests li.merged .state-icon {
 	color: #2bbd00;
+}
+
+
+.comments-list-item ul.merge-requests li.merged .merged-at {
+	font-weight: bold;
 }
 
 #projectComments .pages-nav-bar {
@@ -1647,15 +1659,25 @@ form.pass-test #passTestComment textarea.comment-text-field {
 }
 
 .tooltip-link-issue-container {
-	max-height: 250px;
+	max-height: 250px;  
+	overflow: hidden;
+  	display: flex;
+  	flex-direction: column;
 }
 
 .tooltip-link-issue-container .tooltip-link-issue-title {
-	display: block;
+	display: block;  
+	flex-shrink: 0;
+	padding-left: 2px;
+	padding-right: 2px;
 }
 
 .tooltip-link-issue-container .tooltip-link-issue-image {
+	width: 100%;
 	max-width: 100%;
 	display: block;
+	flex: 1;
+	min-height: 0;
+	object-fit: cover;
 	margin-bottom: 5px;
 }

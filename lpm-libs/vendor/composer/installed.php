@@ -1,11 +1,11 @@
 <?php return array(
     'root' => array(
-        'pretty_version' => 'dev-develop',
-        'version' => 'dev-develop',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '8c1c561f39df7a41950349843c63af7116037d69',
+        'reference' => '27b6d11402243c1d102f304e09ba069c29d8ec17',
         'name' => 'innim/lightning-pm',
         'dev' => true,
     ),
@@ -29,12 +29,12 @@
             'dev_requirement' => false,
         ),
         'innim/lightning-pm' => array(
-            'pretty_version' => 'dev-develop',
-            'version' => 'dev-develop',
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '8c1c561f39df7a41950349843c63af7116037d69',
+            'reference' => '27b6d11402243c1d102f304e09ba069c29d8ec17',
             'dev_requirement' => false,
         ),
         'jane-php/json-schema-runtime' => array(
@@ -290,12 +290,12 @@
             'dev_requirement' => false,
         ),
         'symfony/deprecation-contracts' => array(
-            'pretty_version' => 'v2.4.0',
-            'version' => '2.4.0.0',
+            'pretty_version' => 'v2.5.0',
+            'version' => '2.5.0.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/deprecation-contracts',
             'aliases' => array(),
-            'reference' => '5f38c8804a9e97d23e0c8d63341088cd8a22d627',
+            'reference' => '6f981ee24cf69ee7ce9736146d1c57c2780598a8',
             'dev_requirement' => false,
         ),
         'symfony/http-client' => array(
@@ -359,12 +359,12 @@
             'dev_requirement' => false,
         ),
         'symfony/serializer' => array(
-            'pretty_version' => 'v5.3.8',
-            'version' => '5.3.8.0',
+            'pretty_version' => 'v5.3.12',
+            'version' => '5.3.12.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/serializer',
             'aliases' => array(),
-            'reference' => 'a877799b1e94f792208bea68295f6675027c92be',
+            'reference' => 'bf570839e289e0bdde69c9fa867d3a42f5e8fde1',
             'dev_requirement' => false,
         ),
         'symfony/service-contracts' => array(

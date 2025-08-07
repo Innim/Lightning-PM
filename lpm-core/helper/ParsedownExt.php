@@ -34,8 +34,9 @@ class ParsedownExt extends Parsedown
         array_unshift($this->InlineTypes['['], 'IssueLink');
         $host = LightningEngine::getHost();
         $protocols = ['http', 'https'];
-        $this->_taskLinkRegex = '/\[(.*)\]\(((?:'.
-                implode('|', $protocols).'):\/\/'.$host.'\/project\/(.*)\/issue\/(\d*)\/?#?)\)/';
+
+        $this->_taskLinkRegex = '/^\[([^\]]*)\]\(((?:'.
+                implode('|', $protocols).'):\/\/'.$host.'\/project\/([a-zA-Z0-9_-]*)\/issue\/(\d*)\/?(?:#(?:comment-\d+)?)?)\)/';
     }
 
     protected function inlineStrong($Excerpt)
@@ -105,6 +106,7 @@ class ParsedownExt extends Parsedown
                                     'attributes' => [
                                         'href' => $url,
                                         'data-issue-id' => $issue->getID(),
+                                        'data-id-in-project' => $issue->getIdInProject(),
                                         'data-tooltip' => 'issue',
                                         'data-img' => $imageUrl,
                                         'title' => $issue->getName(),
