@@ -8,7 +8,7 @@ if ('undefined' == typeof RegExp.escapeStr) {
         /*
         ( ) — круглые скобки;
         [ ] — квадратные скобки;
-        \ — обраный слеш;
+        \ — обратный слеш;
         . — точка;
         ^ — степень;
         $ — знак доллара;
@@ -113,6 +113,23 @@ function ParallelService(service) {
     }
 }
 
+const lpm = {
+    format: {
+        date: function (unixTimeSec) {
+            const date = new Date(unixTimeSec * 1000);
+
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            return `${day}.${month}.${year} ${hours}:${minutes}`;
+        }
+    }
+}
+
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
 let srv = {
     gateway: gateway,
@@ -149,7 +166,7 @@ let srv = {
         remove: function (issueId, onResult) {
             this.s._('remove');
         },
-        comment: function (issueId, text, onResult) {
+        comment: function (issueId, text, requestChanges, onResult) {
             this.s._('comment');
         },
         previewComment: function (text, onResult) {
@@ -209,8 +226,14 @@ let srv = {
         addSpecMaster: function(projectId, masterId, labelId, onResult) {
             this.s._('addSpecMaster');
         },
+        addSpecTester: function(projectId, userId, labelId, onResult) {
+            this.s._('addSpecTester');
+        },
         deleteSpecMaster: function(projectId, masterId, labelId, onResult) {
             this.s._('deleteSpecMaster');
+        },
+        deleteSpecTester: function(projectId, userId, labelId, onResult) {
+            this.s._('deleteSpecTester');
         },
         deleteMemberDefault: function (projectId, onResult) {
             this.s._('deleteMemberDefault');
@@ -260,7 +283,7 @@ let srv = {
         emailPref: function (addIssue, editIssue, issueState, issueComment, onResult) {
             this.s._('emailPref');
         },
-        newPass: function (curentPass, newPass, onResult) {
+        newPass: function (currentPass, newPass, onResult) {
             this.s._('newPass');
         }
     },
@@ -291,7 +314,7 @@ var states = {
         else {
             var arr = state.split(':');
             params = arr.length - 1;
-            state = '#' + arr[0];
+            state = arr[0];
         }
 
         for (var i = 0; i < this._list.length; i++) {
@@ -299,10 +322,26 @@ var states = {
         }
         this._list.push({ el: element, st: state, sh: showHandler, p: params });
     },
+    setState: function (state, skipUpdateView = false) {
+        const currentHash = window.location.hash;
+        var newHash;
+        if (state.trim() == '') {
+            newHash = '';
+        } else {
+            newHash = state;
+            
+        }
+
+        if (newHash != currentHash && '#' + newHash != currentHash) {
+            window.location.hash = newHash;
+            if (skipUpdateView != true) states.updateView();
+        }
+    },
     updateView: function () {
         var item;
         this.current = null;
         var hash = window.location.hash;
+        if (hash.startsWith('#')) hash = hash.substring(1);
         var hashArr = hash.split(':');
         var p = hashArr.length - 1;
         hash = hashArr.shift();
@@ -371,26 +410,29 @@ var preloader = {
     show: function () {
         this._showed++;
         if (this._showed == 1) {
-            $('#preloader').show();
+            $('#preloader').removeClass('invisible');
         }
     },
     hide: function () {
         if (this._showed == 0) return;
         this._showed--;
         if (this._showed == 0) {
-            $('#preloader').hide();
+            $('#preloader').addClass('invisible');
         }
     },
-    getNewIndicator: function (size) {
-        let res = $('#templates .lds-spinner').clone();
-        if (size) res.addClass(size);
+    getNewIndicator: function (className) {
+        const res = $('#templates .preloader').clone();
+        if (className) res.addClass(className);
         return res;
     },
+    getNewIndicatorLarge: function () {
+        return preloader.getNewIndicator('spinner-border-large');
+    },
     getNewIndicatorMedium: function () {
-        return preloader.getNewIndicator('medium');
+        return preloader.getNewIndicator();
     },
     getNewIndicatorSmall: function () {
-        return preloader.getNewIndicator('small');
+        return preloader.getNewIndicator('spinner-border-sm');
     },
 };
 
@@ -449,7 +491,7 @@ window.onload = function () {
         $('#noway').show();
     }
 
-    // galery
+    // gallery
     L.path = window.lpmOptions.themeUrl + 'imgs/';
     L.create();
 };
@@ -476,7 +518,9 @@ $(document).ready(
 
         if (hljs) hljs.initHighlightingOnLoad();
 
-        $(document).tooltip({
+        $.widget.bridge('uitooltip', $.ui.tooltip);
+
+        $(document).uitooltip({
             position: {
                 my: "center bottom-20",
                 at: "center top",

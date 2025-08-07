@@ -31,7 +31,6 @@ class ProjectPage extends LPMPage
      * @var Project
      */
     private $_project;
-    private $_currentPage;
 
     private $_issueInput;
 
@@ -50,13 +49,13 @@ class ProjectPage extends LPMPage
             self::PUID_ISSUES,
             'Список задач',
             '',
-            array_merge(['project-issues', 'issues-export-to-excel'], $this->getIssueJs())
+            array_merge(['project-issues'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMPLETED_ISSUES,
             'Завершенные',
             '',
-            array_merge(['project-completed', 'issues-export-to-excel'], $this->getIssueJs())
+            array_merge(['project-completed'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMMENTS,
@@ -69,8 +68,6 @@ class ProjectPage extends LPMPage
             'Участники',
             'project-members',
             ['project/project-members', 'popups/users-chooser'],
-            '',
-            User::ROLE_MODERATOR
         );
         $this->addSubPage(
             self::PUID_SETTINGS,
@@ -98,7 +95,7 @@ class ProjectPage extends LPMPage
                 self::PUID_SCRUM_BOARD,
                 'Scrum доска',
                 'scrum-board',
-                array_merge(['scrum-board'], $this->getIssueJs())
+                array_merge(['scrum-board', 'filters/scrum-board-filter'], $this->getIssueJs())
             );
             $this->addSubPage(
                 self::PUID_SCRUM_BOARD_SNAPSHOT,
@@ -190,6 +187,10 @@ class ProjectPage extends LPMPage
                 $this->initComments();
                 break;
             }
+            case self::PUID_MEMBERS: {
+                $this->initMembers($user);
+                break;
+            }
             case self::PUID_SCRUM_BOARD: {
                 $this->initScrumBoard();
                 break;
@@ -214,10 +215,8 @@ class ProjectPage extends LPMPage
     private function initIssues()
     {
         // загружаем задачи
-        $openedIssues = Issue::loadListByProject(
-            $this->_project->id,
-            [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
-        );
+        $openedIssues = $this->loadIssues([Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
+            
         $this->addTmplVar('issues', $openedIssues);
     }
 
@@ -252,10 +251,7 @@ class ProjectPage extends LPMPage
     private function initCompletedIssues()
     {
         // загружаем  завершенные задачи
-        $completedIssues = Issue::loadListByProject(
-            $this->_project->id,
-            [Issue::STATUS_COMPLETED]
-        );
+        $completedIssues = $this->loadIssues([Issue::STATUS_COMPLETED]);
         $this->addTmplVar('issues', $completedIssues);
     }
 
@@ -263,8 +259,6 @@ class ProjectPage extends LPMPage
     {
         $page = $this->getProjectedCommentsPage();
         $commentsPerPage = 100;
-
-        $this->_currentPage = $page;
 
         $comments = Comment::getIssuesListByProject(
             $this->_project->id,
@@ -302,6 +296,23 @@ class ProjectPage extends LPMPage
         }
     }
 
+    private function initMembers(User $user)
+    {
+        $project = $this->_project;
+        $canEdit = $user->isModerator();
+
+        $projectMembers = $project->getMembers(true);
+        $projectTester = $project->getTester();
+
+        $labels = Issue::getLabels($project->id);
+        
+        $this->addTmplVar('project', $project);
+        $this->addTmplVar('projectMembers', $projectMembers);
+        $this->addTmplVar('projectTester', $projectTester);
+        $this->addTmplVar('canEdit', $canEdit);
+        $this->addTmplVar('labels', $labels);
+    }
+
     private function initScrumBoard()
     {
         $this->addTmplVar('project', $this->_project);
@@ -317,9 +328,19 @@ class ProjectPage extends LPMPage
         $sidInProject = (int) $this->getParam(3);
 
         if ($sidInProject > 0) {
-            foreach ($snapshots as $snapshot) {
+            foreach ($snapshots as $key => $snapshot) {
                 if ($snapshot->idInProject == $sidInProject) {
                     $this->addTmplVar('snapshot', $snapshot);
+
+                    // Массив отсортирован по дате, поэтому здесь идём в обратную сторону
+                    if ($key > 0) {
+                        $this->addTmplVar('nextSnapshot', $snapshots[$key - 1]);
+                    }
+
+                    if (($nextKey = $key + 1) < count($snapshots)) {
+                        $this->addTmplVar('prevSnapshot', $snapshots[$nextKey]);
+                    }
+
                     break;
                 }
             }
@@ -345,13 +366,21 @@ class ProjectPage extends LPMPage
         $this->addTmplVar('project', $this->_project);
     }
 
+    private function getIssuesListJs()
+    {
+        return [
+            'issues-export-to-excel',
+            'filters/issue-list-filter', 
+        ];
+    }
+
     private function getIssueJs()
     {
         return [
             'issues',
             'issue-form',
             'libs/tribute',
-            'libs/character-counter'
+            'libs/character-counter',
         ];
     }
 
@@ -380,6 +409,23 @@ class ProjectPage extends LPMPage
     private function getLastIssueId()
     {
         return Issue::getLastIssueId($this->_project->id);
+    }
+
+    private function loadIssues($statuses) 
+    {
+        $projectId = $this->_project->id;
+
+        $loadMembers = true;
+        $loadTesters = true;
+        $loadMasters = false;
+        // Загружаем всех участников задач (для оптимизации)
+        $issueParticipants = Member::loadListAnyForIssuesInProject($projectId, $statuses, $loadMembers, $loadTesters, $loadMasters);
+
+        $list = Issue::loadListByProject($projectId, $statuses);
+        foreach ($list as $issue) {
+            $issue->extractParticipantsFrom($issueParticipants, $loadMembers, $loadTesters, $loadMasters);
+        }
+        return $list;
     }
     
     private function saveIssue($editMode = false)

@@ -297,7 +297,11 @@ class User extends LPMBaseObject
         $this->pref->loadStream($hash);
         
         if (empty($this->avatarUrl)) {
-            $this->avatarUrl = $this->getMyGravatar();
+            $this->avatarUrl = $this->getMySlackAvatar();
+
+            if (empty($this->avatarUrl)) {
+                $this->avatarUrl = $this->getMyGravatar();
+            }
         }
         
         parent::onLoadStream($hash);
@@ -317,6 +321,34 @@ class User extends LPMBaseObject
         return $this->getGravatar($this->email);
     }
     
+    private function getMySlackAvatar()
+    {
+        if (empty($this->slackName)) return '';
+
+        $engine = LightningEngine::getInstance();
+        $cache = $engine->cache();
+
+        // Функционал аватаров из Slack включаем только если кэш включен
+        // потому что иначе заспамим Slack API, да и долго будет все.
+        // Если нужны будут аватарки и с выключенным кэшем - то нужно
+        // сделать хранение их в базе
+        if (!$cache->isEnabled()) return '';
+
+        $cachedValue = $cache->getUserSlackAvatarUrl($this->userId);
+        if ($cachedValue !== false) return $cachedValue;
+
+        $slack = SlackIntegration::getInstance();
+        try {
+            $profile = $slack->getProfile($this->slackName);
+            $url = $profile->getImage192();
+        } catch (Exception $e) {
+            $url = '';
+        }
+
+        $cache->setUserSlackAvatarUrl($this->userId, $url);
+        return $url;
+    }
+    
     /**
      * Get either a Gravatar URL or complete image tag for a specified email address.
      *
@@ -327,7 +359,7 @@ class User extends LPMBaseObject
      * @param boole $img True to return a complete IMG tag False for just the URL
      * @param array $attrs Optional, additional key/value attributes to include in the IMG tag
      * @return String containing either just a URL or a complete image tag
-     * @source http://gravatar.com/site/implement/images/php/
+     * @source https://gravatar.com/site/implement/images/php/
      */
     private function getGravatar(
         $email,
@@ -337,7 +369,7 @@ class User extends LPMBaseObject
         $img = false,
         $attrs = array()
     ) {
-        $url = 'http://www.gravatar.com/avatar/';
+        $url = 'https://www.gravatar.com/avatar/';
         $url .= md5(strtolower(trim($email)));
         $url .= "?s=$s&d=$d&r=$r";
         

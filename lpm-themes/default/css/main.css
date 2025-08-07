@@ -1,8 +1,6 @@
 @charset "UTF-8";
 
 body {
-	font-family: Arial;
-	font-size  : 11pt;
 	padding    : 0px;  
 	margin     : 0px;
 	min-height : 100%; 
@@ -22,29 +20,37 @@ article {
 	margin: 20px auto;
     /*padding-left: 20px;*/
 }
+/* Bootstrap extend -- start */
+.x-small { 
+	font-size: .75em;
+}
+.xx-small { 
+	font-size: .5em;
+}
+/* Bootstrap extend -- end */
 
 button.ui-button {
     min-width: 0;
     min-height: 0;
 }
-table {
+table.backward-capability {
 	width: 100%;
 	border: 1px solid #cccccc;
 	border-spacing: 0px;	
 	border-collapse: collapse;
 }
-table thead th {
+table.backward-capability thead th {
     background-color: #666666;
     color           : #ffffff; 
 }
-table tr {
+table.backward-capability tr {
     background-color: #ffffff;
 }
-table tr:nth-of-type(2n) {
+table.backward-capability tr:nth-of-type(2n) {
     background-color: #eeeeee;
 }
-table th,
-table td {
+table.backward-capability th,
+table.backward-capability td {
 	padding: 5px;
 	border: 1px solid #cccccc;
 }
@@ -222,22 +228,6 @@ p.header-back-link a.back-link {
 	width : 90%;
 	margin: 0px auto;
 }
-#preloader {
-	position        : absolute;
-	left            : 0px;
-	top             : 0px;
-	right           : 0px;
-	bottom          : 0px;
-	display         : none;
-	z-index			: 10000;
-	background-color: rgba( 255, 255, 255, 0.3);  
-}
-#preloader .indicator {
-	position: fixed;
-	margin: -40px -40px 0 0;
-	left: 50%;
-	top: 50%;
-}
 #noway {
 	display: none;
 	text-align: center;	
@@ -315,11 +305,6 @@ ol#profileInfo.info-list {
 	font-size : smaller;
 	text-align: right;
 }
-
-.page-desc {
-	margin: 0 0 10px;
-	font-size: 0.9em;
-}
 .add-me-link {
 	font-size: x-small;
 	font-weight: normal;
@@ -329,18 +314,8 @@ ol.members-list {
 	position : relative;
 	list-style: none;
 }
-ol.members-list input.member-sp {
-	width: 20px;
-	margin-left: 5px;
-	display: inline-block;	
-	font-size: smaller;
-	padding: 1px 2px;
-	height: 14px;
-}
-ol.members-list .member-sp-label {
-	font-size: smaller;
-	margin-left: 5px;
-	display: inline-block;	
+.members-list .members-list-item.hide-sp .member-sp-container {
+	display: none;
 }
 
 fieldset > ol.members-list {
@@ -381,7 +356,7 @@ form ol.form-fields > li:last-child {
     position:relative;
     vertical-align: middle;
     cursor:default;
-    width: 150px;
+    width: 160px;
     padding: 0;
 }
 
@@ -396,112 +371,9 @@ form ol.form-fields > li:last-child {
 }
 
 /* Loading indicator */
-.lds-spinner {
-  color: official;
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-.lds-spinner div {
-  transform-origin: 40px 40px;
-  animation: lds-spinner 1.2s linear infinite;
-}
-.lds-spinner div:after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 3px;
-  left: 37px;
-  width: 6px;
-  height: 18px;
-  border-radius: 20%;
-  background: #fff;
-}
-.lds-spinner.dark div:after {
-  background: #333;
-}
-.lds-spinner.medium {
-  width: 40px;
-  height: 40px;
-}
-.lds-spinner.medium div {
-  transform-origin: 20px 20px;
-}
-.lds-spinner.medium div:after {
-  top: 2px;
-  left: 18px;
-  width: 3px;
-  height: 9px;
-}
-.lds-spinner.small {
-  width: 20px;
-  height: 20px;
-}
-.lds-spinner.small div {
-  transform-origin: 10px 10px;
-}
-.lds-spinner.small div:after {
-  top: 1px;
-  left: 9px;
-  width: 2px;
-  height: 5px;
-}
-.lds-spinner div:nth-child(1) {
-  transform: rotate(0deg);
-  animation-delay: -1.1s;
-}
-.lds-spinner div:nth-child(2) {
-  transform: rotate(30deg);
-  animation-delay: -1s;
-}
-.lds-spinner div:nth-child(3) {
-  transform: rotate(60deg);
-  animation-delay: -0.9s;
-}
-.lds-spinner div:nth-child(4) {
-  transform: rotate(90deg);
-  animation-delay: -0.8s;
-}
-.lds-spinner div:nth-child(5) {
-  transform: rotate(120deg);
-  animation-delay: -0.7s;
-}
-.lds-spinner div:nth-child(6) {
-  transform: rotate(150deg);
-  animation-delay: -0.6s;
-}
-.lds-spinner div:nth-child(7) {
-  transform: rotate(180deg);
-  animation-delay: -0.5s;
-}
-.lds-spinner div:nth-child(8) {
-  transform: rotate(210deg);
-  animation-delay: -0.4s;
-}
-.lds-spinner div:nth-child(9) {
-  transform: rotate(240deg);
-  animation-delay: -0.3s;
-}
-.lds-spinner div:nth-child(10) {
-  transform: rotate(270deg);
-  animation-delay: -0.2s;
-}
-.lds-spinner div:nth-child(11) {
-  transform: rotate(300deg);
-  animation-delay: -0.1s;
-}
-.lds-spinner div:nth-child(12) {
-  transform: rotate(330deg);
-  animation-delay: 0s;
-}
-@keyframes lds-spinner {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+.spinner-border-large {
+	width: 3rem; 
+	height: 3rem;
 }
 
 #priority-values li span{
@@ -622,14 +494,11 @@ ul.video-line:empty {
 	display: none;
  }
 
-ul.video-line > li > *{
+ul.video-line > li:not(.pending) > *{
 	background: black;
 	border: black solid 10px;
 }
-ul.video-line > li > .lds-spinner{
-	padding: 20px;
-	border-radius: 10px;
-}
+
 /* линия изображений в задаче */
 ul.images-line {
 	list-style: none;
@@ -733,17 +602,27 @@ a.create-branch-icon .plus-icon {
 	right:0;
 	bottom:0;
 	font-size: 0.5em;
+  	color: white;
+  	background: black;
+  	border-radius: 50%;
+  	aspect-ratio: 1 / 1;
+  	display: flex;
+  	align-items: center;
+  	justify-content: center;
 }
 
 .comments .links-bar .comments-controls {
 	float: right;
 }
+.comments .links-bar .comments-controls .request-changes-link {
+	display: none;
+}
+#issueView.issue-testing .comments .links-bar .comments-controls .request-changes-link {
+	display: inline-block;
+}
 .comments .links-bar .scrum-comments-shortcut a {
 	display: inline-block;
 	margin-right: 5px;
-}
-.comments form.add-comment .buttons-bar {
-	text-align: right;
 }
 .comments form.add-comment .ui-tabs .ui-tabs-panel,
 #passTestComment.ui-tabs .ui-tabs-panel {
@@ -760,47 +639,14 @@ a.create-branch-icon .plus-icon {
 	list-style: none;
 	padding: 0;
 }
-.comments .comments-list .comments-list-item {
-	border-top: solid 1px #cccccc;	
-}
-.comments .comments-list .comments-list-item .comment-issue-line {
-	display: block;
-    padding: 0 5px 10px;
-    margin-top: -15px;
-    font-size: 12px;
-}
-.comments-list-item img.user-avatar {
-    float : left;
-    margin: 5px;
-    margin-top: 10px;
-}
-.comments-list-item .author {
-	margin-bottom: 0px;
-	font-size    : smaller;
-}
-.comments-list-item .date {
-    margin-top   : 0px;
-    font-size    : x-small;
-}
-.comments-list-item .date a
-{
-	outline: none;
-	color: inherit;
-}
-.comments-list-item .text {
-    background-color: #eeeeee;
-    padding         : 10px;
-    clear           : both;
-}
 .comments-list-item .text > p {
     margin: 0;
     padding: 0;
 }
 .comments-list-item ul.merge-requests {
 	margin: 10px 0 0;
-	padding: 10px;
+	padding: 0;
 	list-style: none;
-	background-color: #dddddd;
 }
 
 .comments-list-item ul.merge-requests:empty {
@@ -810,6 +656,8 @@ a.create-branch-icon .plus-icon {
 .comments-list-item ul.merge-requests li {
 	padding: 5px;
 	border-radius: 5px;
+	border-width: 1px;
+	border-style: solid;
 }
 
 .comments-list-item ul.merge-requests li .state-icon {
@@ -818,6 +666,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.opened {
 	background-color: #ffffbc;
+	border-color: #ffc107;
 }
 
 .comments-list-item ul.merge-requests li.opened .state-icon {
@@ -826,6 +675,7 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.closed {
 	background-color: #fdcabe;
+	border-color: #dc3545;
 }
 .comments-list-item ul.merge-requests li.closed .state-icon {
 	color: #e50000;
@@ -833,9 +683,15 @@ a.create-branch-icon .plus-icon {
 
 .comments-list-item ul.merge-requests li.merged {
 	background-color: #e2ffd9;
+	border-color: #198754;
 }
 .comments-list-item ul.merge-requests li.merged .state-icon {
 	color: #2bbd00;
+}
+
+
+.comments-list-item ul.merge-requests li.merged .merged-at {
+	font-weight: bold;
 }
 
 #projectComments .pages-nav-bar {
@@ -880,6 +736,7 @@ ul.panel-submenu li {
 /* панелька с информацией */
 .info-list, .issue-info .linked-issues {
 	padding-left: 40px;
+	padding-right: 40px;
 }
 .info-list > .info-list-item {
 	margin: 10px 0px;
@@ -908,17 +765,6 @@ ul.panel-submenu li {
 	display: none;
 }
 
-/* список пользователей */
-table.users-list thead th:first-child,
-table.users-list tbody td:first-child {
-	width     : 64px;
-	text-align: center;
-}
-table.users-list.no-avatar thead th:first-child,
-table.users-list.no-avatar tbody td:first-child {
-	width: auto;
-}
-
 table tr.locked-user {
 	background-color: #cccccc;
 	color           : #999999;
@@ -939,24 +785,7 @@ table.users-list tr.active-user td button#unlocked-btn {
 	margin : 40px auto;
 }
 
-
 /* список проектов и добавление проекта*/
-ul.projects-list {
-	list-style: circle;
-}
-ul.projects-list > li {
-	position: relative;
-	margin: 2em 2em 2em 0;
-}
-ul.projects-list .btn.archive,
-ul.projects-list .btn.develop
-{
-	margin-top: 5px;
-	font-size: 0.6em;
-}
-.projects-list ,project-name {
-	font-size: 1.1em;
-}
 .projects-list .project-fix {
 	margin: 0 0 0 16px;
 	padding: 0;
@@ -968,25 +797,12 @@ ul.projects-list .btn.develop
 	text-align: center;
 	background: transparent;
 }
-.projects-list .rotate-icon {
+.project-list-item .rotate-icon {
 	transform: rotate(45deg);
 	color: #999999;
 }
-.projects-list-item-submenu {
-	padding: 0 2px;
-}
-.projects-list-item-submenu > a {
-	font-size: 0.7em;
-}
-.projects-list .project-desc {
-	font-size: 0.9em;
-	border: 1px dotted #666666;
-	background-color: #f0f0f0;
-	padding: 5px;
-	margin-bottom: 0px;
-}
 table tr.completed-issue {
-	background-color: #cccccc;
+	background-color: #cccccc !important;
 	color           : #999999;
 }
 table tr.completed-issue .priority-val {
@@ -1003,12 +819,13 @@ table tr.completed-issue a {
 }
 
 table tr.verify-issue {
-	background-color: #f8f3b5;
+	background-color: #f8f3b5 !important;
 	color           : #999999;
 }
 
 table.issues-list tr td .icon-deadline,
-table.issues-list tr td .pass-test-check {
+table.issues-list tr td .pass-test-check,
+table.issues-list tr td .changes-requested-check {
 	display: none;
 }
 
@@ -1041,22 +858,29 @@ table.issues-list tr td .pass-test-check {
 	color: #00b100;
 }
 
+table.issues-list tr td .changes-requested-check {
+	color: #dc3545;
+}
+
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
 table tr.deadline-low-issue td .icon-deadline.icon-deadline-low,
-table.issues-list tr.pass-test .pass-test-check {
+table.issues-list tr.pass-test .pass-test-check, 
+table.issues-list tr.changes-requested .changes-requested-check {
 	display: inline-block;
 }
 
 /* просмотр проекта */
 #projectView .filters-line {
+	display: flex;
+	align-items: center;
 	float: left;
 	width: 70%;
 	font-size : smaller;
 }
 
-/* список задач и добавление/редактироание задачи */
+/* список задач и добавление/редактирование задачи */
 table.issues-list td {
 	position: relative;
 }
@@ -1111,7 +935,7 @@ table.issues-list tr.verify-issue td span.comments-count {
     color: #ffffff;
 }
 table tr.completed-issue:hover td span.comments-count {   
-    background: #dddddd;
+    background: #dddddd !important;
     color     : #999999;
 }
 table.issues-list td .on-board-state {
@@ -1149,7 +973,7 @@ table.issues-list td .priority-change-animation {
 	user-select: none;
 }
 table.issues-list tr.verify-issue.tester {
-	background: #FFEC80;
+	background: #FFEC80 !important;
 }
 /* Активная задача, на которую назначен тестером. Раскомментировать, если тоже нужно подсвечивать.
 table.issues-list tr.active-issue.tester {
@@ -1171,11 +995,8 @@ table.issues-list tr.active-issue.tester {
 #issueView .info-list .issue-completed-date-row {
 	display: none;
 }
-.linked-issues {
+.linked-issues .card-body {
 	font-size: smaller;
-}
-.linked-issues h5 {
-	margin: 10px 0 2px;
 }
 .linked-issues .linked-issue-project {
 	font-weight: bold;
@@ -1324,105 +1145,6 @@ blockquote > p {
 	right: 10px;
 	margin-top: -7px;
 	font-size: 16px;
-}
-
-/* доступы */
-.access-list
-{
-	float: left;
-}
-
-.access-record
-{
-	float: left;
-	margin: 0 15px 15px 0;
-}
-
-.access-list li
-{
-	position: relative;
-	width: 300px;
-	border: 1px solid;
-	list-style: none;
-	display: inline-block;
-	padding: 10px 10px 20px;
-}
-
-.access-list li.base{
-	border-color: rgba(255, 0, 0, 0.3);
-	background: #FFECEC;
-}
-
-.access-list li.git{
-	border-color: rgba(0, 255, 0, 0.3);
-	background: #D6FFD6;
-}
-
-.access-list li.sql{
-	border-color: rgba(0, 0, 255, 0.3);
-	background: #E1E1FF;
-}
-
-.access-list li.ftp{
-	border-color: rgba(255, 137, 0, 0.3);
-	background: #FFF1E1;
-}
-
-.access-list .access-type
-{
-	position: relative;
-	display: table;
-	padding: 3px;
-	color: black;
-}
-
-div.base
-{
-	background: rgba(255, 0, 0, 0.3);
-}
-
-div.git
-{
-	background: rgba(0, 255, 0, 0.3);
-}
-
-div.sql
-{
-	background: rgba(0, 0, 255, 0.3);
-}
-
-div.ftp
-{
-	background: rgba(255, 137, 0, 0.3);
-}
-
-.access-item>*
-{
-	display: block;
-	margin-bottom: 5px;
-	overflow-x: hidden;
-}
-
-.access-item>*:hover
-{
-    overflow: visible;
-    overflow-wrap: break-word;
-}
-
-.access-item .description
-{
-	overflow-wrap: break-word;
-    overflow-y: auto;
-    max-height: 95px;
-    padding: 5px;
-}
-
-.access-controll
-{
-	position: absolute;
-    bottom: 0px;
-    right: 5px;
-    font-size: 70%;
 }
 
 /*Меню скопировать в issue*/
@@ -1589,10 +1311,12 @@ div.ftp
     margin-top: -2px;
     vertical-align: middle;
 }
-.scrum-board-sticker .pass-test-check{
+.scrum-board-sticker .pass-test-check,
+.scrum-board-sticker .changes-requested-check {
 	display: none;
 }
-.scrum-board-sticker.pass-test .pass-test-check{
+.scrum-board-sticker.pass-test .pass-test-check,
+.scrum-board-sticker.changes-requested .changes-requested-check {
 	display: inline-block;
 }
 #scrumBoard.hide-sp .scrum-board-sticker .sticker-issue-sp {
@@ -1660,11 +1384,6 @@ div.ftp
 	margin-bottom: 10px;
 }
 
-#sprint-stat .sprint-members-stat {
-	margin-top: 10px;
-}
-
-
 .issue-name-quick-actions {
 	font-size: 0.7em;
 	display: block;
@@ -1686,22 +1405,6 @@ div.ftp
 	background: #ffff00;
 	border-radius: 5px;
 	margin: -1px;
-}
-
-#addIssueLabelFormContainer #issueLabelText {
-	width: 300px;
-}
-
-#addIssueLabelFormContainer div {
-	padding: 5px 0;
-}
-
-#addIssueLabelFormContainer div.align-right {
-	text-align: right;
-}
-
-#isAllProjectsCheckbox {
-	vertical-align: middle;
 }
 
 #removeIssuesLabelContainer .table {
@@ -1735,13 +1438,6 @@ div.ftp
 .table-cell {
 	display: table-cell;
 }
-.delete-comment, .delete-comment:hover {
-	text-decoration: underline;
-	cursor: pointer;
-	float: right;
-	font-size: 10px;
-	padding: 0px;
-}
 
 #projectSettings form ul.form-items {
 	padding: 10px;
@@ -1756,7 +1452,7 @@ div.ftp
 #projectSettings form label {
 	float: left;
 	margin-top: 5px;
-	min-width: 250px;
+	min-width: 280px;
 }
 .tooltip div {
 	display: none;
@@ -1817,24 +1513,6 @@ div.ftp
 	bottom: -20px;
 	top: auto;
 }
-
-#btnSellect {
-	background: #e9eae2;
-	border-radius: 3px;
-	text-align-last: center ;
-	color: #000000;
-	font-size: 15px;
-	height: 16px;
-	width: 95px;
-	margin: 10px 0 0 3px;
-	overflow: hidden;
-	display: block;
-	padding: 15px;
-}
-.headersProjectsMembers {
-	margin-top: 10px;
-	margin-bottom: 10px;
-}
 .btnSelect {
 	float: left;
 }
@@ -1853,15 +1531,6 @@ div.ftp
 	cursor: pointer;
 	color: #000000;
 	text-decoration: none;
-}
-
-/* Страница SCRUM статистики */
-.stat-summary {
-	margin: 5px 0;
-	text-align: right;
-}
-.stat-summary .stat-summary-value {
-	font-weight: bold;
 }
 
 /* Форма создания ветки */
@@ -1928,6 +1597,13 @@ form.pass-test #passTestComment textarea.comment-text-field {
 }
 
 /**
+ * Блок целей спринта
+ */
+.scrum-board-target {
+	min-width: 30%;
+}
+
+/**
  * === end sprint targets ===
  */
 
@@ -1953,4 +1629,55 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
  .select-project-popup.copy-mode .copy-linked-issues-row {
 	display: block;
+}
+
+.scrum-board-top-content {
+	margin-top: 15px;
+}
+
+/**
+ * Фильтры в списке задач
+ */
+
+.filters-line .multiselect {
+	min-height: 24px;
+	min-width: 200px;
+}
+
+.filters-line .multiselect__tags {
+	min-height: 24px;
+	padding: 4px 24px 0 4px;
+	font-size: 14px;
+}
+
+.filters-line .multiselect__select {
+	height: 32px;
+}
+
+.filters-line .multiselect__tag {
+	overflow: unset;
+}
+
+.tooltip-link-issue-container {
+	max-height: 250px;  
+	overflow: hidden;
+  	display: flex;
+  	flex-direction: column;
+}
+
+.tooltip-link-issue-container .tooltip-link-issue-title {
+	display: block;  
+	flex-shrink: 0;
+	padding-left: 2px;
+	padding-right: 2px;
+}
+
+.tooltip-link-issue-container .tooltip-link-issue-image {
+	width: 100%;
+	max-width: 100%;
+	display: block;
+	flex: 1;
+	min-height: 0;
+	object-fit: cover;
+	margin-bottom: 5px;
 }

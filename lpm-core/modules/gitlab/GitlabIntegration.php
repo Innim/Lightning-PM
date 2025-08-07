@@ -95,10 +95,13 @@ class GitlabIntegration
         }
         
         try {
+            // нельзя делать токен дольше, чем на год
+            $expiresAt = date('Y-m-d', strtotime('+364 days')); 
             $res = $this->sudoClient()->users()->createImpersonationToken(
                 $gitlabUser['id'],
                 $this->getTokenName(),
-                ['api']
+                ['api'],
+                $expiresAt
             );
 
             $user->gitlabToken = $res['token'];
@@ -261,7 +264,7 @@ class GitlabIntegration
      * @param $projectId Идентификатор проекта на GitLab.
      * @param $fromShaOrBranch SHA коммита или имя ветки/тега.
      * @param $toShaOrBranch SHA коммита или имя ветки/тега.
-     * @return GitlabBranch|null|false Если в ветке $toShaOrBranch
+     * @return GitlabCommit|null|false Если в ветке $toShaOrBranch
      * нет изменений, которые не присутствуют в ветке $fromShaOrBranch,
      * то вернется null. В случае ошибки вернется false.
      */
@@ -303,6 +306,32 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * Получает информацию о последнем пайплайне для проекта.
+     * @param int|string $projectId Идентификатор проекта на GitLab.
+     * @param string $ref Ветка или тег, для которого нужно получить пайплайн.
+     * @param bool $useSudo Использовать ли sudo пользователя или текущего.
+     * @return GitlabPipeline|null
+     */
+    public function getLatestPipeline($projectId, $ref, $useSudo = false) {
+        $client = $useSudo ? $this->sudoClient() : $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $projects = new GitlabClientProjectsExt($client);
+            $res = $projects->pipelineLatest($projectId, $ref);
+            if (empty($res)) {
+                return null;
+            }
+            return new GitlabPipeline($res);
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return null;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {
@@ -334,6 +363,9 @@ class GitlabIntegration
         return $this->_client;
     }
 
+    /**
+     * @return \Gitlab\Client
+     */
     private function sudoClient()
     {
         if (!$this->isAvailable()) {

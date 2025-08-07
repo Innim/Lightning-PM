@@ -4,11 +4,13 @@
     $project - текущий проект
     $issue - редактируемая задача (при добавлении задачи - null)
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
+    $isHidden - определяет, скрыта ли по умолчанию
 */
 
 $descMaxLen = Issue::DESC_MAX_LEN;
+$isHidden = !empty($isHidden)
 ?>
-<article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
+<article id="issueForm" class="container" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
     <h3></h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <form onsubmit="return issueForm.validateIssueForm();" class="row g-3" method="post" enctype="multipart/form-data">
@@ -108,7 +110,6 @@ $descMaxLen = Issue::DESC_MAX_LEN;
         <div class="col-12 row gy-2 members-row">
             <h6>Исполнители <a href="javascript:void(0)" onclick="issueForm.addMeAsMember()" class="add-me-link">Добавить себя</a></h6>
             <?php $performerId = lpm_get_project()->defaultIssueMemberId; ?>
-            <!-- TODO: Bootstrap формы для SP -->
             <ol id="issueMembers" class="members-list row"></ol>
             <div class="col-auto gy-0">
                 <select id="addIssueMembers" class="form-select" onchange="issueForm.addIssueMember();"
@@ -164,9 +165,13 @@ $descMaxLen = Issue::DESC_MAX_LEN;
                     <a class="tag" href="javascript:void(0)" style="font-style: italic;" data-marker="_"
                         title="Ctrl + I">_курсив_</a>,
                     <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-marker="__"
-                        title="Ctrl + U">__подчеркнутый__</a>, <a class="tag" href="javascript:void(0)"
-                        style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>, <span class="tag quote"
-                        title="Ctrl + G">&gt; цитата</span>, <a class="tag" href="javascript:void(0)"
+                        title="Ctrl + U">__подчеркнутый__</a>, 
+                    <a class="tag" href="javascript:void(0)"
+                        style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>, 
+                    <a class="tag h6 small" href="javascript:void(0)" title="Ctrl + H"
+                        data-single="1" data-marker="### ">### Заголовок</a>, 
+                    <span class="tag quote" title="Ctrl + G">&gt; цитата</span>, 
+                    <a class="tag" href="javascript:void(0)"
                         style="text-decoration:underline;" data-type="link" title="Ctrl + K">[ссылка](url)</a>.</p>
                 <p>Также используйте <kbd>`</kbd> для строчного кода и <kbd>```</kbd> для
                     многострочного (можно указать язык: as, js, php и тд, добавляется сразу после открывающих кавычек,
@@ -217,24 +222,24 @@ $descMaxLen = Issue::DESC_MAX_LEN;
         </div>
     </form>
 
-    <!-- TODO: Bootstrap формы -->
     <div id="addIssueLabelFormContainer" style="display: none;">
         <form id="addIssueLabelForm">
-            <div>
-                <label for="issueLabelText">Метка: </label>
-                <input name="labelText" id="issueLabelText" />
+            <div class="mb-3">
+                <label for="issueLabelText" class="form-label">Метка:</label>
+                <input type="text" class="form-control" id="issueLabelText" name="labelText">
             </div>
             <?php if (lpm_is_moderator()):?>
-            <div class="align-right">
-                <input type="checkbox" name="isAllProjects" id="isAllProjectsCheckbox" />
-                <label for="isAllProjectsCheckbox">для всех проектов</label>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="isAllProjects" id="isAllProjectsCheckbox">
+                    <label class="form-check-label" for="isAllProjectsCheckbox">для всех проектов</label>
+                </div>
             </div>
             <?php endif;?>
         </form>
     </div>
 
     <?php if (lpm_is_moderator()):?>
-    <!-- TODO: Bootstrap формы -->
     <div id="removeIssuesLabelContainer" style="display: none;">
         <div class="table">
             <div class="table-header">
@@ -298,9 +303,26 @@ $descMaxLen = Issue::DESC_MAX_LEN;
 
     <div id="issueFormTemplates" style="display:none">
         <li class="image-item">
-            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview"></a>
+            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview border border-1 rounded-3"></a>
             <input type="hidden" name="imgId" value="">
             <a href="javascript:;" class="remove-btn remove-img"></a>
+        </li>
+
+        <li class="members-list-item hide-sp">
+            <div class="row gy-2 gx-3 py-1 align-items-center">
+                <div class="col-auto">
+                    <span class="user-name"></span>
+                    <input type="hidden" class="user-id-input" value="">
+                </div>
+                <div class="col-auto member-sp-container">
+                    <label class="visually-hidden" for="autoSizingInputGroup">SP</label>
+                    <div class="input-group input-group-sm" style="width: 80px;">
+                        <input type="text" class="form-control member-sp">
+                        <div class="input-group-text">SP</div>
+                    </div>
+                </div>
+                <a class="remove-btn"></a>
+            </div>
         </li>
     </div>
 </article>

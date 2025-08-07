@@ -20,23 +20,25 @@ class Issue extends MembersInstance
     protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
     {
         $instanceType = LPMInstanceTypes::ISSUE;
+
         $passTestType = IssueCommentType::PASS_TEST;
+        $requestChangesType = IssueCommentType::REQUEST_CHANGES;
+        $mergeRequestType = IssueCommentType::MERGE_REQUEST;
+
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
         $sql = <<<SQL
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
-    IFNULL(
-        (SELECT 1 
-          FROM `%6\$s` `cm`
-    INNER JOIN `%7\$s` `icm` 
-            ON `icm`.`commentId` = `cm`.`id`
-         WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
-           AND `icm`.`type` = '$passTestType'
-      ORDER BY `date` DESC
-         LIMIT 1),
-        0) as `isPassTest`
+    (SELECT `icm`.`type` 
+       FROM `%6\$s` `cm`
+ INNER JOIN `%7\$s` `icm` 
+         ON `icm`.`commentId` = `cm`.`id`
+      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
+        AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
+   ORDER BY `date` DESC
+      LIMIT 1) AS `t_testState`
 SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
@@ -75,10 +77,11 @@ SQL;
 
         if (empty($orderBy)) {
             $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
+            $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
             $orderBy = <<<SQL
             FIELD(`i`.`status`, $statusesOrder),
             `realCompleted` DESC, 
-            IF(`i`.`status` = $statusWait, `isPassTest`, 0) DESC,
+            IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
             `i`.`priority` DESC, 
             `i`.`completeDate` ASC, `id` ASC
             SQL;
@@ -88,11 +91,7 @@ SQL;
 
         array_unshift($args, $sql);
 
-        try {
-            return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
-        } catch (Exception $e) {
-            exit('Error: ' . $e->getMessage() . '<br>' . self::getDB()->error);
-        }
+        return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
     }
 
     /**
@@ -338,23 +337,35 @@ SQL;
     public static function getCountImportantIssues($userId, $projectId = null)
     {
         $projectId = (int)$projectId;
-        // $sql = "SELECT COUNT(*) AS count FROM `%1\$s` WHERE `%1\$s`.`priority` >= 79
-        // 		AND `%1\$s`.`deleted` = 0 AND `%1\$s`.`status` = '". self::STATUS_IN_WORK."'";
-        $sql = "SELECT COUNT(*) as count FROM `%1\$s` INNER JOIN `%2\$s` ON `%1\$s`.`instanceId` = `%2\$s`.`id`";
-        if ($projectId === 0) {
-            $sql .= 'INNER JOIN `%3$s` ON `%2$s`.`projectId` = `%3$s`.`id`';
-        }
-        $sql .=	"WHERE `%1\$s`.`userId`= '" . $userId . "' AND `%1\$s`.`instanceType`= 1 AND `%2\$s`.`priority` >= 79 
-				AND `%2\$s`.`deleted` = 0 AND `%2\$s`.`status` = '".
-                self::STATUS_IN_WORK."'";
-        if (0 !== $projectId) {
-            $sql .= " AND `%2\$s`.`projectId` = '".$projectId."'";
+
+        $issueType = LPMInstanceTypes::ISSUE;
+        $statusInWork = self::STATUS_IN_WORK;
+        $minPriority = self::IMPORTANT_PRIORITY;
+
+        if (empty($projectId)) {
+            $projectFrom = "INNER JOIN `%3\$s` `p` ON `p`.`id` = `i`.`projectId`";
+            $projectWhere = 'AND `p`.`isArchive` = 0';
         } else {
-            // Игнорируем архивные проекты
-            $sql .= " AND `%3\$s`.`isArchive` = 0";
+            $projectFrom = '';
+            $projectWhere = "AND `i`.`projectId` = $projectId";
         }
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $res = $db->queryt($sql, LPMTables::MEMBERS, LPMTables::ISSUES, LPMTables::PROJECTS);
+
+        $sql = <<<SQL
+    SELECT COUNT(`i`.`id`) AS `count`
+      FROM `%1\$s` `i`
+INNER JOIN `%2\$s` `m`
+        ON `m`.`instanceId` = `i`.`id`
+           $projectFrom
+     WHERE `m`.`userId` = $userId
+       AND `m`.`instanceType` = $issueType
+       $projectWhere
+       AND `i`.`priority` >= $minPriority
+       AND `i`.`status` = $statusInWork
+       AND `i`.`deleted` = 0
+SQL;
+
+        $db = self::getDB();
+        $res = $db->queryt($sql, LPMTables::ISSUES, LPMTables::MEMBERS, LPMTables::PROJECTS);
         return $res ? (int)$res->fetch_assoc()['count'] : 0;
     }
 
@@ -450,9 +461,12 @@ SQL;
     // TODO: перенести в IssueLabel
     public static function getLabelsByName($issueName)
     {
-        $labels = array();
-        $matches = array();
-        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", trim($issueName), $matches)) {
+        $name = trim($issueName);
+        if (mb_substr($name, 0, 1) !== '[') return [];
+
+        $labels = [];
+        $matches = [];
+        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", $name, $matches)) {
             if (count($matches) > 1) {
                 $labels = array_unique($matches[1]);
             }
@@ -621,8 +635,7 @@ SQL;
             $issue->completedDate = null;
             $hash['SET']['completedDate'] = '0000-00-00 00:00:00';
         } elseif ($issue->status === Issue::STATUS_WAIT) {
-            // XXX: переделать - не должно быть обращения к сервису из модели
-            IssueService::checkTester($issue);
+            $issue->autoSetTesters();
             $issue->autoSetMasters();
         }
 
@@ -744,6 +757,7 @@ SQL;
 
     const MAX_IMAGES_COUNT	= 10;
     const DESC_MAX_LEN = 60000;
+    const IMPORTANT_PRIORITY = 79;
     
     public $id            =  0;
     public $projectId     =  0;
@@ -784,12 +798,23 @@ SQL;
     public $isBaseLinked;
 
     /**
-    * Есть ли отметка о тестировании.
-    *
-    * Если null, то это означает, что данные не загружены.
-    * @var bool
-    */
+     * Есть ли отметка о тестировании.
+     *
+     * Если null, то это означает, что данные не загружены.
+     * @var bool
+     */
     public $isPassTest;
+
+    /**
+     * Задача ожидает внесения изменений.
+     *
+     * Задача ушла в тест, при тестировании обнаружены проблемы
+     * и в данный момент задача в состоянии ожидания внесения правок.
+     *
+     * Если null, то это означает, что данные не загружены.
+     * @var bool
+     */
+    public $isChangesRequested;
 
     /**
      * Проект, к которому относится задача
@@ -825,7 +850,7 @@ SQL;
             'hours'
         );
         $this->_typeConverter->addIntVars('priority');
-        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked', 'isPassTest');
+        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked', 'isPassTest', 'isChangesRequested');
         $this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
         
         $this->addClientFields(
@@ -903,24 +928,6 @@ SQL;
     public function getMaxImagesCount()
     {
         return self::MAX_IMAGES_COUNT;
-    }
-    
-    /**
-     * Устанавливает название задачи.
-     * @param string $value Название задачи.
-     */
-    public function setTitle($value)
-    {
-        $this->title = $value;
-    }
-
-    /**
-     * Возвращает название задачи.
-     * @return string Название задачи.
-     */
-    public function getTitle()
-    {
-        return $this->title;
     }
 
     /**
@@ -1194,6 +1201,14 @@ SQL;
             default: return '';
         }
     }
+    
+    /**
+     * Определяет, находится ли сейчас задача в тестировании.
+     */
+    public function isTesting()
+    {
+        return $this->status == self::STATUS_WAIT;
+    }
 
     public function loadStream($hash)
     {
@@ -1215,6 +1230,12 @@ SQL;
                 $this->_sticker->loadStream($sData);
                 $this->_sticker->issueId = $this->issueId;
             }
+        }
+
+        if (isset($hash['t_testState'])) {
+            $testState = $hash['t_testState'];
+            $this->isPassTest = $testState == IssueCommentType::PASS_TEST;
+            $this->isChangesRequested = $this->isTesting() && $testState == IssueCommentType::REQUEST_CHANGES;
         }
 
         return $res;
@@ -1243,9 +1264,18 @@ SQL;
         return $this->_linkedIssues == null ? $this->loadLinkedIssues() : $this->_linkedIssues;
     }
 
+    /**
+     * Определяет, есть ли хотя бы один тестировщик.
+     * @return bool
+     */
+    public function hasTesters()
+    {
+        return !empty($this->getTesters());
+    }
+
     public function getTesters()
     {
-        return $this->_testers == null && !$this->loadTesters() ? [] : $this->_testers;
+        return $this->_testers === null && !$this->loadTesters() ? [] : $this->_testers;
     }
 
     public function getTesterIds()
@@ -1270,42 +1300,97 @@ SQL;
         $masters = $this->getMasters();
 
         if (empty($masters)) {
-            // Получаем список меток (тегов) для задачи
-            $labelNames = $this->getLabelNames();
-            if (!empty($labelNames)) {
-                // TODO: переделать чтобы не грузить лишнего
-                $labels = Issue::getLabels($this->projectId);
-                $labelIds = [];
+            $issueId = $this->id;
+            $project = $this->getProject();
 
-                foreach ($labels as $label) {
-                    if (in_array($label['label'], $labelNames)) {
-                        $labelIds[] = (int)$label['id'];
-                    }
+            $this->_masters = $this->autoSetByLabels(
+                function () use ($project) {
+                    return $project->getSpecMasters();
+                },
+                function ($userIds) use ($issueId) {
+                    return Member::saveIssueMasters($issueId, $userIds);
                 }
-                $labelIds = array_unique($labelIds);
+            );
+        }
+    }
 
-                // TODO: грузить только кого надо
-                $specMasters = $this->getProject()->getSpecMasters();
-                $mastersById = [];
-                foreach ($specMasters as $master) {
-                    if (in_array($master->extraId, $labelIds)) {
-                        $mastersById[$master->userId] = $master;
-                    }
+    /**
+     * Автоматически назначает тестировщиков для задачи,
+     * если нет уже заданных для конкретной задачи.
+     *
+     * Тестеры будут добавлены, если найдутся подходящие по тегам.
+     * Если тестировщик по тегу не найдет, то будет назначен тестировщик по умолчанию.
+     * Мастер для проекта по умолчанию - не назначается.
+     */
+    public function autoSetTesters()
+    {
+        $testers = $this->getTesters();
+
+        if (empty($testers)) {
+            $issueId = $this->id;
+            $project = $this->getProject();
+
+            // Пытаемся выставить по тегам 
+            $testersByTags = $this->autoSetByLabels(
+                function () use ($project) {
+                    return $project->getSpecTesters();
+                },
+                function ($userIds) use ($issueId) {
+                    return Member::saveIssueTesters($issueId, $userIds);
                 }
+            );
 
-                if (!empty($mastersById)) {
-                    $newMasterIds = array_keys($mastersById);
-
-                    if (!Member::saveIssueMasters($this->id, $newMasterIds)) {
-                        throw new \GMFramework\ProviderSaveException(
-                            'Не удалось сохранить автоматически назначенных мастеров для задачи'
-                        );
-                    }
-
-                    $this->_masters = array_values($mastersById);
+            if (!empty($testersByTags)) {
+                $this->_testers = $testersByTags;
+            } else {
+                // Если нет, пытаемся выставить дефолтного 
+                $defaultTester = $project->getTester();
+                if (!empty($defaultTester)) {
+                    Member::saveIssueTesters($issueId, [$defaultTester->userId]);
+                    $this->_testers = [$defaultTester];
                 }
             }
         }
+    }
+
+    private function autoSetByLabels($getSpecMembers, $saveMembers)
+    {
+        // Получаем список меток (тегов) для задачи
+        $labelNames = $this->getLabelNames();
+        if (!empty($labelNames)) {
+            // TODO: переделать чтобы не грузить лишнего (можно грузить только нужные теги)
+            $labels = $this->getProject()->getLabels();
+            $labelIds = [];
+
+            foreach ($labels as $label) {
+                if (in_array($label['label'], $labelNames)) {
+                    $labelIds[] = (int)$label['id'];
+                }
+            }
+            $labelIds = array_unique($labelIds);
+
+            // TODO: грузить только кого надо
+            $specMembers = $getSpecMembers();
+            $usersById = [];
+            foreach ($specMembers as $member) {
+                if (in_array($member->extraId, $labelIds)) {
+                    $usersById[$member->userId] = $member;
+                }
+            }
+
+            if (!empty($usersById)) {
+                $newUserIds = array_keys($usersById);
+                if (!$saveMembers($newUserIds)) {
+                    throw new \GMFramework\ProviderSaveException(
+                        'Не удалось сохранить автоматически назначенных участников для задачи'
+                    );
+                }
+
+                return array_values($usersById);
+            }
+        }
+    
+        return [];
     }
 
     /**
@@ -1316,7 +1401,7 @@ SQL;
      */
     public function getMasters()
     {
-        return $this->_masters == null && !$this->loadMasters() ? [] : $this->_masters;
+        return $this->_masters === null && !$this->loadMasters() ? [] : $this->_masters;
     }
 
     /**
@@ -1352,6 +1437,41 @@ SQL;
     public function getMembersSpStr()
     {
         return implode(',', $this->getMembersSp());
+    }
+
+    public function extractParticipantsFrom(&$list, $extractMembers = true, $extractTesters = true, $extractMasters = true) {
+        $allowedTypes = [];
+
+        if ($extractMembers) {
+            $this->_members = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE;
+        }
+
+        if ($extractTesters) {
+            $this->_testers = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE_FOR_TEST;
+        }
+
+        if ($extractMasters) {
+            $this->_masters = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE_FOR_MASTER;
+        }
+        
+        $len = count($list);
+        for ($i = 0; $i < $len; $i++) {
+            $member = $list[$i];
+            if ($member->instanceId == $this->id && in_array($member->instanceType, $allowedTypes)) {
+                switch ($member->instanceType) {
+                    case LPMInstanceTypes::ISSUE: $this->_members[] = $member; break;
+                    case LPMInstanceTypes::ISSUE_FOR_TEST: $this->_testers[] = $member; break;
+                    case LPMInstanceTypes::ISSUE_FOR_MASTER: $this->_masters[] = $member; break;
+                }
+
+                array_splice($list, $i, 1);
+                $i--;
+                $len--;
+            }
+        }
     }
 
     protected function loadMembers()

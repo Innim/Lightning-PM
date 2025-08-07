@@ -5,7 +5,10 @@
     $snapshots - список снимков доски (обязателен, если не задан $snapshot)
 Опционально:
     $snapshot - данные конкретного снимка, если задано - будет показан он, если нет - список
+    $prevSnapshot = снимок предыдушего спринта
+    $nextSnapshot = снимок следующего спринта
 */
+
 ?>
 <article id="<?=isset($snapshot) ? 'scrumBoard' : 'scrumSnapshot'?>" data-project-id="<?=$project->id;?>"
     class="hide-sp">
@@ -29,7 +32,10 @@
         <?php endif;?>
     </div>
     <?php else: ?>        
-        <h3 class="text-title-snapshot"><a class="link-title-snapshot" href="<?=$snapshot->getUrl()?>">SCRUM архив:</a></h3>
+        <h3 class="text-title-snapshot">
+            <a class="link-title-snapshot" href="<?=$snapshot->getUrl()?>">SCRUM архив:</a>
+        </h3>
+
         <?php if ($snapshot->sprintTarget): ?>
         <div class="card w-50 my-2 scrum-board-target">
             <div class="card-body">
@@ -44,11 +50,37 @@
             <span class="scrum-snapshot-links">
                 <a href="<?=$snapshot->getStatUrl()?>">Статистика спринта</a>
             </span>
-            <span class="num-issues">Всего: <?=$snapshot->getNumStickers()?> шт, <?=$snapshot->getNumSp()?> SP (сделано
-                <?=$snapshot->getDoneSp()?> SP)</span>
         </div>
 
-        <table class="scrum-board-table">
+        <div class="d-flex justify-content-between align-items-end">
+            <div class="mb-2">
+                <?php if (isset($prevSnapshot)):?>
+                <a href="<?=$prevSnapshot->getSnapshotUrl();?>"
+                   class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-arrow-left"></i>
+                    #<?=$prevSnapshot->idInProject?>
+                    <?=$prevSnapshot->getCreateDate();?>
+                </a>
+                <?php endif;?>
+                <?php if (isset($nextSnapshot)):?>
+                <a href="<?=$nextSnapshot->getSnapshotUrl();?>"
+                   class="btn btn-outline-primary btn-sm">
+                    <?=$nextSnapshot->getCreateDate();?>
+                    #<?=$nextSnapshot->idInProject?>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <?php endif;?>
+            </div>
+
+            <div>
+                <span class="num-issues">
+                    Всего: <?=$snapshot->getNumStickers()?> шт,
+                        <?=$snapshot->getNumSp()?> SP (сделано <?=$snapshot->getDoneSp()?> SP)
+                </span>
+            </div>
+        </div>
+
+        <table class="scrum-board-table backward-capability">
             <thead>
                 <tr>
                     <th class="col-todo">TO DO<span class="scrum-col-info">(<span class="scrum-col-count"><span

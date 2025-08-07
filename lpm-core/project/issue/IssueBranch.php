@@ -13,7 +13,7 @@ class IssueBranch extends LPMBaseObject
      * @param  int    $repositoryId Идентификатор репозитория.
      * @param  string $name         Имя ветки.
      */
-    public static function create($issueId, $repositoryId, $name, $userId, $lastCommit = null, $mergedInDevelop = null)
+    public static function create($issueId, $repositoryId, $name, $userId, $initialCommit = null, $lastCommit = null, $mergedInDevelop = null)
     {
         $date = DateTimeUtils::mysqlDate();
 
@@ -32,7 +32,7 @@ class IssueBranch extends LPMBaseObject
         }
 
         $hash = [
-            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'lastCommit', 'mergedInDevelop', 'userId'),
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'initialCommit', 'lastCommit', 'mergedInDevelop', 'userId'),
             'INTO'    => LPMTables::ISSUE_BRANCH
         ];
 
@@ -51,11 +51,17 @@ class IssueBranch extends LPMBaseObject
      * @param  int           $repositoryId Идентификатор репозитория.
      * @param  array<string> $lastCommits  Список последних коммитов.
      * @param  bool          $onlyNotMergedInDevelop  Будут загружены только те, что еще не были влиты в develop.
+     * @param  bool          $skipEmptyBranches  Ветки без изменений (у которых последний коммит равен начальному), будут пропущены.
      */
-    public static function loadByLastCommits($repositoryId, $lastCommits, $onlyNotMergedInDevelop = false)
+    public static function loadByLastCommits($repositoryId, $lastCommits, $onlyNotMergedInDevelop = false, $skipEmptyBranches = false)
     {
+        if (empty($lastCommits)) return [];
+
         $lastCommitsVal = "'" . implode("', '", $lastCommits) . "'";
         $where = '`repositoryId` = ' . $repositoryId . ' AND `lastCommit` IN (' . $lastCommitsVal . ')';
+        if ($skipEmptyBranches) {
+            $where .= ' AND `lastCommit` <> `initialCommit`';
+        }
         if ($onlyNotMergedInDevelop) {
             $where .= ' AND `mergedInDevelop` = 0';
         }
@@ -125,11 +131,15 @@ class IssueBranch extends LPMBaseObject
         $limitSql = empty($limit) ? '' : 'LIMIT ' . $limit;
 
         $selectLimitSql = empty($inLast) ? '' : 'LIMIT ' . $inLast;
+        $where = "`b`.`issueId` = `i`.`id` AND `i`.`projectId` = $projectId";
+        if (!empty($userId)) {
+            $where .= " AND `b`.`userId` = $userId";
+        }
 
         $sql = <<<SQL
     SELECT `repositoryId`, COUNT(`repositoryId`) as `count` FROM (
         SELECT `repositoryId` FROM `%1\$s` `b`, `%2\$s` `i`
-         WHERE `b`.`issueId` = `i`.`id` AND `i`.`projectId` = $projectId
+         WHERE $where
       ORDER BY `date` DESC 
         $selectLimitSql
     ) AS `last_entries` 
@@ -270,6 +280,22 @@ SQL;
     }
 
     /**
+     * Обновляет ID изначального коммита.
+     *
+     * @param  int    $repositoryId  Идентификатор репозитория.
+     * @param  string $name          Имя ветки.
+     * @param  string $initialCommit ID изначального коммита.
+     */
+    public static function updateInitialCommit($repositoryId, $name, $initialCommit)
+    {
+        self::buildAndSaveToDb([
+            'UPDATE'  => LPMTables::ISSUE_BRANCH,
+            'SET' => compact('initialCommit'),
+            'WHERE' => compact('repositoryId', 'name'),
+        ]);
+    }
+
+    /**
      * Issue::$id
      * @var int
      */
@@ -293,6 +319,17 @@ SQL;
      * Дата записи.
      */
     public $date;
+
+    /**
+     * ID начального коммита.
+     *
+     * Здесь подразумевается именно коммит, с которого началась ветка, 
+     * т.е. это должен быть коммит, который есть в develop и в этой ветке
+     * (пока ветка не влита).
+     * 
+     * Может быть null, т.к. не всегда получается определить его корректно.
+     */
+    public $initialCommit;
 
     /**
      * ID последнего коммита.

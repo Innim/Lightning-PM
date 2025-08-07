@@ -1,27 +1,20 @@
+<?php
+/* 
+Требуются: 
+	$list - список проектов
+*/
+?>
 <article id="projectsList">
 	<h1>
-		<?lpm_print_header();?>
+		<?php lpm_print_header();?>
 	</h1>
 	<ul class="projects-list">
-		<?php $list = lpm_get_projects_list(true);?>
 		<?php if (empty($list)): ?>
 		<p class="no-items">Архив пуст</p>
-		<?php else: foreach ($list as $project):?>
-		<li>
-			<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
-			<button class="project-fix" data-id-project="<?=$project->id;?>" value="<?=$project->fixedInstance;?>">
-				<?php if ($project->fixedInstance): ?>
-				<i class="fa fa-thumbtack" aria-hidden="true"></i>
-				<?php else: ?>
-				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
-				<?php endif ?>
-			</button>
-			<p class="project-desc"><?=$project->getDesc();?></p>
-			<? if (lpm_is_moderator()): ?>
-			<input type="hidden" name="projectId" value="<?=$project->id;?>" />
-			<a href="#" class="develop" onclick="setIsArchive(event);">Восстановить</a>
-			<? endif; ?>
-		</li>
-		<?php endforeach; endif;?>
+		<?php 
+		else:
+			lpm_print_projects_list($list, true);
+		endif;
+		?>
 	</ul>
 </article>

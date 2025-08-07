@@ -6,30 +6,37 @@
 */
 ?>
 <article id="sprint-stat" data-project-id="<?=$project->id;?>" data-snapshot-id="<?=$snapshot->id;?>">
-	<h1>
-		<?lpm_print_header();?>
-	</h1>
+	<h1><?lpm_print_header();?></h1>
 
-	<h3>Статистика <a href="<?=$snapshot->getSnapshotUrl();?>">спринта #<?=$snapshot->idInProject;?></a></h3>
+	<div class="card mt-3">
+		<div class="card-header">
+			<h3>Статистика <a href="<?=$snapshot->getSnapshotUrl();?>">спринта #<?=$snapshot->idInProject;?></a></h3>
+		</div>
 
-	<table class="sprint-members-stat">
-		<tr>
-			<th>Участник</th>
-			<th>SP в Тестировании</th>
-			<th>SP в Готово</th>
-			<th>Сделано SP</th>
-		</tr>
-		<?php
-		foreach($snapshot->getMembers() as $member):
-    		$doneSp = $snapshot->getMemberDoneSP($member->userId);
-		?>
-		<tr data-done-sp="<?=$doneSp;?>">
-			<td><?=$member->getLinkedName();?></td>
-			<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::TESTING);?></td>
-			<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::DONE);?></td>
-			<td><?=$doneSp;?></td>
-		</tr>
-		<?php endforeach;?>
-
-	</table>
+		<div class="card-body">
+			<table class="sprint-members-stat table table-hover">
+				<thead>
+					<tr>
+						<th scope="col">Участник</th>
+						<th scope="col">SP в Тестировании</th>
+						<th scope="col">SP в Готово</th>
+						<th scope="col">Сделано SP</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					foreach($snapshot->getMembers() as $member):
+						$doneSp = $snapshot->getMemberDoneSP($member->userId);
+					?>
+					<tr data-done-sp="<?=$doneSp;?>">
+						<th scope="row"><?=$member->getLinkedName();?></th>
+						<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::TESTING);?></td>
+						<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::DONE);?></td>
+						<td><?=$doneSp;?></td>
+					</tr>
+					<?php endforeach;?>
+				</tbody>
+			</table>
+		</div>
+	</div>
 </article>

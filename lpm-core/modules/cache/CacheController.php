@@ -5,11 +5,24 @@
 class CacheController
 {
     const OWNCLOUD_SHARED_FILE_TYPE_PREFIX = 'owncloud_shared_file_type_prefix-';
+    const CLEAN_SHOT_SHARED_FILE_TYPE_PREFIX = 'clean_shot_shared_file_type_prefix-';
+    const IMAGE_CACHED_PREVIEW_PREFIX = 'image_cached_preview_prefix-';
+    const USER_SLACK_AVATAR_PREFIX = 'user_slack_avatar-';
+
+    const HOUR = 60 * 60;
+    const DAY = 24 * self::HOUR;
+    const WEEK = 7 * self::DAY;
+    const MONTH = 30 * self::DAY;
 
     /**
      * @var Memcached
      */
     private $_memcached;
+
+    /**
+     * @var ImageCacheController
+     */
+    private $_images;
 
     public function __construct()
     {
@@ -25,9 +38,21 @@ class CacheController
     }
 
     /**
+     * Сбрасывает кэш.
+     * 
+     * При этом данные не очищаются, они просто помечаются как устаревшие.
+     */
+    public function flush() 
+    {
+        if ($this->isEnabled()) {
+            $this->_memcached->flush();
+        }
+    }
+
+    /**
      * Возвращает сохраненное значение.
      *
-     * Если кжш выключен, значения нет или у него истек срок жизни,
+     * Если кэш выключен, значения нет или у него истек срок жизни,
      * то вернется false.
      */
     public function get($key)
@@ -44,6 +69,8 @@ class CacheController
      * @param string $key Ключ.
      * @param mixed $value Значение.
      * @param int $expiredAt Время (unixtime, s) истечения значения.
+     *                       Если значение больше 30*24*60*60, то считается что это unixtime,
+     *                       если меньше - то считается что это число секунд с текущего момента.
      * @return bool Вернется true, если данные были записаны, иначе false.
      */
     public function set($key, $value, $expiredAt = 0)
@@ -65,8 +92,84 @@ class CacheController
         return $this->set($this->getOwncloudSharedFileTypeKey($url), $value);
     }
 
+    public function getCleanShotSharedFileType($url)
+    {
+        return $this->get($this->getCleanShotSharedFileTypeKey($url));
+    }
+
+    public function setCleanShotSharedFileType($url, $value)
+    {
+        return $this->set($this->getCleanShotSharedFileTypeKey($url), $value);
+    }
+
+    /**
+     * Возвращает URL аватара пользователя из Slack.
+     * 
+     * @return string|false URL аватара.
+     * Если значения нет, оно истекло или кэш выключен, 
+     * то вернется false. 
+     */
+    public function getUserSlackAvatarUrl($userId)
+    {
+        return $this->get($this->getUserSlackAvatarUrlKey($userId));
+    }
+
+    public function setUserSlackAvatarUrl($userId, $url)
+    {
+        return $this->set($this->getUserSlackAvatarUrlKey($userId), $url, self::WEEK);
+    }
+
+    /**
+     * Возвращает URL до превью изображения по URL.
+     * 
+     * Если превью нет, то оно будет создано.
+     * Если не удалось скачать изображение, 
+     * то превью не будет сделано и URL будет помечен
+     * как испорченный.
+     * 
+     * @param string $url исходного изображения
+     * @return string|null 
+     */
+    public function getImageCachedPreview($url)
+    {
+        $key = $this->getImageCachedPreviewKey($url);
+        $res = $this->get($key);
+
+        // Важна проверка именно на false, потому что null важное значение
+        if ($res === false) {
+            $res = $this->images()->createCache($url);
+            $this->set($key, $res, self::DAY);
+        }
+
+        return $res;
+    }
+
     private function getOwncloudSharedFileTypeKey($url)
     {
         return self::OWNCLOUD_SHARED_FILE_TYPE_PREFIX . md5($url);
+    }
+
+    private function getCleanShotSharedFileTypeKey($url)
+    {
+        return self::CLEAN_SHOT_SHARED_FILE_TYPE_PREFIX . md5($url);
+    }
+
+    private function getImageCachedPreviewKey($url)
+    {
+        return self::IMAGE_CACHED_PREVIEW_PREFIX . md5($url);
+    }
+
+    private function getUserSlackAvatarUrlKey($userId)
+    {
+        return self::USER_SLACK_AVATAR_PREFIX . $userId;
+    }
+
+    private function images() 
+    {
+        if (empty($this->_images)) {
+            $this->_images = new ImageCacheController();
+        }
+
+        return $this->_images;
     }
 }

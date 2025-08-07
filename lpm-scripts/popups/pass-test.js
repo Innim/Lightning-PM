@@ -4,6 +4,7 @@ $(document).ready(function () {
 
 const passTest = {
     currentIssueId: null,
+	saveableForm: null,
     init: function () {
         $("#passTestDialog").dialog(
             {
@@ -24,29 +25,45 @@ const passTest = {
                             passTest.close();
                         }
                     }
-                ]
+                ],
+                close: function( event, ui ) {
+                    passTest.saveableForm.clear();
+                    passTest.currentIssueId = null;
+
+                    const $el = $("#passTestDialog");
+                    $('#passTestComment').tabs({
+                        active: 0
+                    });
+                    $('#addCommentForm .preview-comment').empty();
+                }
             }
         );
+
+        const issueId = typeof issuePage !== 'undefined' ? issuePage.getIssueId() : null;
+		const storeKey = issueId ? 'pass-test-comment-' + issueId : 'pass-test-comment';
+		passTest.saveableForm = new SaveableCommentForm(
+			'#passTestComment .comment-text-field',
+			null,
+			storeKey,
+			null
+		);
+
+        passTest.saveableForm.init((_text, _checkboxVal) => {
+            passTest.show(issueId, false);
+        });
     },
-    show: function (issueId) {
+    show: function (issueId, autoText = true) {
         const $el = $("#passTestDialog");
 
         passTest.currentIssueId = issueId;
 
-        $('#passTestComment .comment-text-field', $el).val('Прошла тестирование\n\n');
+        if (autoText) {
+            $('#passTestComment .comment-text-field', $el).val('**Прошла тестирование**\n\n');
+        }
 
         $el.dialog('open');
     },
     close: function () {
-        passTest.currentIssueId = null;
-
-        const $el = $("#passTestDialog");
-        $("#passTestComment .comment-text-field", $el).val('');
-        $('#passTestComment').tabs({
-            active: 0
-        });
-        $('#addCommentForm .preview-comment').empty();
-
         $el.dialog('close');
     },
     save: function () {

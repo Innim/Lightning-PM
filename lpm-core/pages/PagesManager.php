@@ -33,7 +33,8 @@ class PagesManager
             new ProjectPage(),
             new UsersPage(),
             new UserPage(),
-            new ProfilePage()
+            new ProfilePage(),
+            new StatusPage()
         );
         
         $this->addLink2UserMenu('Выход', ProfilePage::SUID_EXIT);

@@ -5,7 +5,7 @@
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => 'cacdf0801bb2a6b93b77e8f1256ff4b79c29a8f8',
+        'reference' => '8c1c561f39df7a41950349843c63af7116037d69',
         'name' => 'innim/lightning-pm',
         'dev' => true,
     ),
@@ -34,7 +34,7 @@
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => 'cacdf0801bb2a6b93b77e8f1256ff4b79c29a8f8',
+            'reference' => '8c1c561f39df7a41950349843c63af7116037d69',
             'dev_requirement' => false,
         ),
         'jane-php/json-schema-runtime' => array(
@@ -278,6 +278,15 @@
             'install_path' => __DIR__ . '/../psr/log',
             'aliases' => array(),
             'reference' => 'd49695b909c3b7628b6289db5479a1c204601f11',
+            'dev_requirement' => false,
+        ),
+        'ralouphie/mimey' => array(
+            'pretty_version' => '2.1.0',
+            'version' => '2.1.0.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../ralouphie/mimey',
+            'aliases' => array(),
+            'reference' => '8f74e6da73f9df7bd965e4e123f3d8fb9acb89ba',
             'dev_requirement' => false,
         ),
         'symfony/deprecation-contracts' => array(

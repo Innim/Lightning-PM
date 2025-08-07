@@ -151,9 +151,10 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
     
-    public function comment($issueId, $text)
+    public function comment($issueId, $text, $requestChanges = false)
     {
         $issueId = (int)$issueId;
+        $requestChanges = (bool)$requestChanges;
 
         try {
             $issue = Issue::load($issueId);
@@ -161,7 +162,12 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            $comment = $this->postComment($issue, $text);
+            $comment = $this->postComment(
+                $issue,
+                $text,
+                false,
+                $requestChanges ? IssueCommentType::REQUEST_CHANGES : null
+            );
 
             $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
@@ -210,7 +216,8 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            $comment = $this->postComment($issue, '`-> develop`', true);
+            $comment = $this->postComment($issue, '`-> develop`', true, 
+                IssueCommentType::BRANCH_MERGED);
 
             if ($complete) {
                 try {
@@ -247,7 +254,7 @@ class IssueService extends LPMBaseService
             }
 
             if (empty($text)) {
-                $text = 'Прошла тестирование';
+                $text = '**Прошла тестирование**';
             }
 
             $comment = $this->postComment($issue, $text, true, IssueCommentType::PASS_TEST);
@@ -319,13 +326,15 @@ class IssueService extends LPMBaseService
 
             $commentText = '*' . $gitlabProject->name . '*: `' . $commentText . '`';
 
-            $comment = $this->postComment($issue, $commentText, true);
+            $comment = $this->postComment($issue, $commentText, true, 
+                IssueCommentType::CREATE_BRANCH, 
+                IssueCommentCreateBranchData::serialize($gitlabProjectId, $finalBranchName));
 
             $user = $this->getUser();
             $userId = $user->userId;
 
             // Записываем данные о том, что ветка привязана к задаче
-            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId);
+            IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId, $branch->commit->id);
 
             if ($issue->status == Issue::STATUS_IN_WORK) {
                 // Если пользователя нет в исполнителях - добавим его автоматически
@@ -346,7 +355,7 @@ class IssueService extends LPMBaseService
 
                 // Если это стикер на доске и он еще не в работе - перевешиваем в работу
                 $sticker = ScrumSticker::load($issue->id);
-                if ($sticker !== null && $sticker->state == ScrumStickerState::TODO) {
+                if (!empty($sticker) && $sticker->state == ScrumStickerState::TODO) {
                     if (!ScrumSticker::updateStickerState($issue->id, ScrumStickerState::IN_PROGRESS)) {
                         return $this->errorDBSave();
                     }
@@ -441,27 +450,6 @@ class IssueService extends LPMBaseService
     }
 
     /**
-     * Проверяем есть ли тестер у задачи, если нет - добавляем тестера из проекта
-     */
-    public static function checkTester(Issue $issue)
-    {
-        $testers = $issue->getTesters();
-        $issueId = $issue->getID();
-        $type = LPMInstanceTypes::ISSUE_FOR_TEST;
-
-        if (empty($testers)) {
-            $projectId = $issue->getProject()->getID();
-            $projectTesters = Member::loadTesterForProject($projectId);
-            if (empty($projectTesters)) {
-                return null;
-            }
-
-            $testerId = (int) $projectTesters[0]->getID();
-            Member::saveMembers($type, $issueId, [$testerId]);
-        }
-    }
-
-    /**
      * Помещает стикер задачи на скрам доску
      * @param  int $issueId Идентификатор задачи
      * @return
@@ -512,6 +500,11 @@ class IssueService extends LPMBaseService
                 : null;
             if (!ScrumSticker::removeStickersForProject($projectId, $notRemoveStates)) {
                 return $this->errorDBSave();
+            }
+
+            if (!empty($notRemoveStates)) {
+                // Если какие-то стикеры остались на доске - надо им обновить время добавления
+                ScrumSticker::updateStickerAdded($projectId);
             }
             
             $currentNumSprint = ScrumStickerSnapshot::getLastSnapshotId($projectId) + 1;

@@ -12,8 +12,6 @@ class Project extends MembersInstance
     
     private static $_availList = [];
 
-    private static $_isArchive = false;
-
     /**
      * Загруженные проекты по идентификаторам
      * @var array<int, Project>
@@ -68,7 +66,13 @@ class Project extends MembersInstance
      * Обновляет настройки проекта
      *
      */
-    public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
+    public static function updateProjectSettings(
+        $projectId,
+        $scrum,
+        $slackNotifyChannel,
+        $gitlabGroupId,
+        $gitlabProjectIds
+    )
     {
         $db = self::getDB();
 
@@ -78,6 +82,7 @@ class Project extends MembersInstance
                 'scrum' => $scrum,
                 'slackNotifyChannel' => $slackNotifyChannel,
                 'gitlabGroupId' => $gitlabGroupId,
+                'gitlabProjectIds' => $gitlabProjectIds,
             ],
             'WHERE' => [
                 'id' => $projectId
@@ -132,7 +137,7 @@ class Project extends MembersInstance
         if (!isset(self::$_availList[$cacheKey])) {
             if (LightningEngine::getInstance()->isAuth()) {
                 $user = LightningEngine::getInstance()->getUser();
-                self::$_availList[$cacheKey] = self::getInstanceList($user, $isArchive);
+                self::$_availList[$cacheKey] = self::getInstanceList($user, $isArchive, true);
             } else {
                 self::$_availList[$cacheKey] = [];
             }
@@ -143,31 +148,69 @@ class Project extends MembersInstance
 
     /**
      * Получает из БД список всех проектов, доступные пользователю.
-     * @param object $user
+     * @param User $user
      * @param bool $isArchive
-     * @return array
+     * @param bool $loadImportantCount
+     * @return array<Project>
      */
-    private static function getInstanceList($user, $isArchive)
+    private static function getInstanceList(User $user, bool $isArchive, bool $loadImportantCount = false)
     {
+        // TODO: добавить счетчик сюда 
         $isModerator = $user->isModerator();
-        $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE];
+        $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE, LPMTables::MEMBERS, LPMTables::ISSUES];
+
+        $instanceProject = LPMInstanceTypes::PROJECT;
+        $archive = $isArchive ? 1 : 0;
         
-        $sql = "SELECT projects.*, IF (fixed.instanceId IS NULL, 0, 1) AS `fixedInstance`, fixed.dateFixed AS `dateFixed` FROM `%1\$s` AS projects ";
-        
-        if (!$isModerator) {
-            $sql .= "INNER JOIN `%3\$s` AS members ON members.instanceId = projects.id " .
-                "AND `members`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-                "AND `members`.`userId` = '" . $user->userId . "' ";
+        $sql = <<<SQL
+    SELECT `p`.*, 
+           IF (`fixed`.`instanceId` IS NULL, 0, 1) AS `fixedInstance`, 
+           `fixed`.`dateFixed` AS `dateFixed`
+SQL;
+        if ($loadImportantCount) {
+            $issueType = LPMInstanceTypes::ISSUE;
+            $statusInWork = Issue::STATUS_IN_WORK;
+            $minPriority = Issue::IMPORTANT_PRIORITY;
+
+            $sql .= <<<SQL
+,
+           (SELECT COUNT(`i`.`id`) AS `count` 
+              FROM `%4\$s` `i`
+        INNER JOIN `%3\$s` `m`
+                ON `m`.`instanceId` = `i`.`id`
+             WHERE `m`.`userId` = $user->userId
+               AND `m`.`instanceType` = $issueType
+               AND `i`.`projectId` = `p`.`id`
+               AND `i`.`priority` >= $minPriority
+               AND `i`.`status` = $statusInWork
+               AND `i`.`deleted` = 0) AS `importantIssuesCount`
+
+SQL;
             $tables[] = LPMTables::MEMBERS;
         }
+
+        $sql .= <<<SQL
+      FROM `%1\$s` AS `p` 
+SQL;
+        
+        if (!$isModerator) {
+            $sql .= <<<SQL
+INNER JOIN `%3\$s` AS `m` 
+        ON `m`.`instanceId` = `p`.`id` 
+       AND `m`.`instanceType` = $instanceProject
+       AND `m`.`userId` = $user->userId 
+SQL;
+        }
     
-        $sql .=
-            "LEFT JOIN `%2\$s` AS fixed ON fixed.instanceId = projects.id " .
-            "AND `fixed`.`userId` = '" . $user->userId . "' " .
-            "AND `fixed`.`instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-            "WHERE `projects`.`isArchive`= " . ($isArchive ? 1 : 0) . " ".
-            "ORDER BY dateFixed DESC, projects.lastUpdate DESC";
-    
+        $sql .= <<<SQL
+ LEFT JOIN `%2\$s` AS `fixed` 
+        ON `fixed`.`instanceId` = `p`.`id` 
+       AND `fixed`.`userId` = $user->userId
+       AND `fixed`.`instanceType` =  $instanceProject
+     WHERE `p`.`isArchive`= $archive
+  ORDER BY `dateFixed` DESC, `p`.`lastUpdate` DESC
+SQL;
+
         return StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
     }
 
@@ -256,17 +299,6 @@ class Project extends MembersInstance
 
         return $user->isAdmin() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
     }
-
-    public static function getProjectTester()
-    {
-        $projectId = self::$currentProject->getID();
-        $tester = Member::loadTesterForProject($projectId);
-        if (!$tester) {
-            return null;
-        }
-
-        return $tester[0];
-    }
     
     /**
      * Обновляет в БД цели спринта текущего scrum проекта.
@@ -339,6 +371,13 @@ class Project extends MembersInstance
     public $gitlabGroupId;
 
     /**
+     * Id привязанных проектов в GitLab.
+     * @var string
+     * @example '1,2,3'
+     */
+    public $gitlabProjectIds;
+
+    /**
      * Проект зафиксирован в таблице проектов
      * @var Boolean|null
      */
@@ -357,9 +396,19 @@ class Project extends MembersInstance
     private $_master;
 
     /**
+     * @var User
+     */
+    private $_tester;
+
+    /**
      * @var array<Member>
      */
     private $_specMasters = null;
+
+    /**
+     * @var array<Member>
+     */
+    private $_specTesters = null;
     
     /**
      * Цели спринта проекта.
@@ -372,6 +421,11 @@ class Project extends MembersInstance
      * @var string|null
      */
     private $_sprintTargetHtml = null;
+
+    /**
+     * @var array<array>
+     */
+    private $_labels = null;
     
     public function __construct()
     {
@@ -542,6 +596,19 @@ class Project extends MembersInstance
         return $this->_master;
     }
 
+    /**
+     * Возвращает пользователя, назначенного тестировщиком проекта.
+     * Если пользователь не выставлен, он будет загружен.
+     * @return User|null
+     */
+    public function getTester()
+    {
+        if ($this->_tester === null) {
+            $this->_tester = Member::loadTesterForProject($this->id);
+        }
+
+        return $this->_tester;
+    }
 
     /**
      * Возвращает список мастеров, определенных по тегам.
@@ -549,7 +616,26 @@ class Project extends MembersInstance
      */
     public function getSpecMasters()
     {
-        return $this->_specMasters == null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+        return $this->_specMasters === null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+    }
+
+
+    /**
+     * Возвращает список тестеров, определенных по тегам.
+     * @return array<Member>
+     */
+    public function getSpecTesters()
+    {
+        return $this->_specTesters === null && !$this->loadSpecTesters() ? [] : $this->_specTesters;
+    }
+
+    /**
+     * Возвращает список тегов для проекта.
+     * @return array<array>
+     */
+    public function getLabels()
+    {
+        return $this->_labels === null && !$this->loadLabels() ? [] : $this->_labels;
     }
 
     /**
@@ -581,6 +667,23 @@ class Project extends MembersInstance
         
         return $this->_sprintTargetHtml;
     }
+
+    /**
+     * Возвращает список привязанных id проектов в GitLab.
+     */
+    public function getGitlabProjectIds(): array
+    {
+        return empty($this->gitlabProjectIds) ? [] : explode(',', $this->gitlabProjectIds);
+    }
+
+	protected function setVar($var, $value)
+	{
+        if ($var === 'importantIssuesCount') {
+            $this->_importantIssuesCount = (int)$value;
+            return true;
+        }
+        return parent::setVar($var, $value);
+    }
     
     protected function loadMembers()
     {
@@ -596,11 +699,38 @@ class Project extends MembersInstance
      */
     private function loadSpecMasters()
     {
-        $this->_specMasters = Member::loadSpecMastersForProject($this->id);
-        if ($this->_specMasters === false) {
+        $list = Member::loadSpecMastersForProject($this->id);
+        if ($list === false) {
             throw new Exception('Ошибка при загрузке списка мастеров по тегам');
         }
 
+        $this->_specMasters = $list;
         return $this->_specMasters;
+    }
+
+    /**
+     * Загружается список тестеров, определенных по тегам.
+     * @return array<Member>
+     */
+    private function loadSpecTesters()
+    {
+        $list = Member::loadSpecTestersForProject($this->id);
+        if ($list === false) {
+            throw new Exception('Ошибка при загрузке списка тестеров по тегам');
+        }
+
+        $this->_specTesters = $list;
+        return $this->_specTesters;
+    }
+
+    private function loadLabels()
+    {
+        $list = Issue::getLabels($this->id);
+        if ($list === false) {
+            throw new Exception('Ошибка при загрузке списка тегов');
+        }
+
+        $this->_labels = $list;
+        return $this->_labels;
     }
 }

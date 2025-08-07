@@ -10,6 +10,11 @@ class PageConstructor
     {
         return self::$_usingScripts;
     }
+
+    public static function getUsingJSModules()
+    {
+        return self::$_usingJSModules;
+    }
     
     public static function getMainMenu()
     {
@@ -29,16 +34,6 @@ class PageConstructor
     public static function getBasePageURL()
     {
         return LightningEngine::getInstance()->getCurrentPage()->getBaseUrl();
-    }
-    
-    /**
-     * Получает все проекты пользователя.
-     * @param  boolean $isArchive флаг архивного проекта.
-     *
-     */
-    public static function getProjectsList($isArchive)
-    {
-        return Project::getAvailList($isArchive);
     }
 
     public static function getIssuesList()
@@ -118,11 +113,6 @@ class PageConstructor
     {
         return Project::checkDeleteComment($authorId, $commentId);
     }
-
-    public static function getProjectTester()
-    {
-        return Project::getProjectTester();
-    }
     
     /*public static function includeCSS( $name ) {
         include self::$_instance->getThemeDir() . 'css/' . $name . '.css';
@@ -144,7 +134,7 @@ class PageConstructor
     }
 
     private static $_usingScripts = [
-//        'libs/bootstrap.bundle.min',
+        'libs/bootstrap.bundle.min',
         'libs/jquery-1.12.4.min',
         'libs/jquery-ui-1.12.1.min',
         'libs/jquery.form',
@@ -155,7 +145,13 @@ class PageConstructor
         'js-options.php$' ,
         'libs/clipboard.min',
         'libs/lodash.min',
+        'libs/vue@2',
+        'libs/vue-multiselect.min',
         'lightning'
+    ];
+
+    private static $_usingJSModules = [
+        'filters/index'
     ];
     
     public $_title    = '';

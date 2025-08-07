@@ -7,6 +7,17 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS `lpm_badges`;
+CREATE TABLE `lpm_badges` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `type` varchar(255) NOT NULL COMMENT 'Тип бэйджа',
+  `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Лейбл бейджа',
+  `gitlabProjectId` int DEFAULT NULL COMMENT 'Id проекта на GitLab',
+  `gitlabRef` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Ветка, тег или коммит в репозитории',
+  `comment` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT 'Комментарий к бэйджу',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';
+
 DROP TABLE IF EXISTS `lpm_comments`;
 CREATE TABLE `lpm_comments` (
   `id` bigint(19) NOT NULL AUTO_INCREMENT COMMENT 'идентификатор комментария',
@@ -73,7 +84,8 @@ CREATE TABLE `lpm_issues` (
   `priority` tinyint(2) NOT NULL DEFAULT '49' COMMENT 'приоритет задачи',
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `status` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `projectId` (`projectId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `lpm_issue_branch`;
@@ -157,7 +169,9 @@ CREATE TABLE `lpm_members` (
   `instanceType` smallint(2) NOT NULL,
   `instanceId` bigint(19) NOT NULL,
   `extraId` bigint(19) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`extraId`)
+  PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`extraId`),
+  KEY `instanceType_instanceId` (`instanceType`,`instanceId`),
+  KEY `instanceId` (`instanceId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
@@ -193,6 +207,7 @@ CREATE TABLE `lpm_projects` (
   `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте',
   `defaultIssueMemberId` int(11) NOT NULL COMMENT 'Исполнитель умолчанию',
   `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab',
+  `gitlabProjectIds` varchar(255) NOT NULL COMMENT 'ID связанных проектов GitLab',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -302,16 +317,3 @@ CREATE TABLE `lpm_user_auth` (
   KEY `userId` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Данные авторизации по куки';
 
-
-DROP TABLE IF EXISTS `lpm_workers`;
-DROP TABLE IF EXISTS `lpm_work_study`;
-
-DROP TABLE IF EXISTS `lpm_instance_targets`;
-CREATE TABLE `lpm_instance_targets` (
-    `instanceType` int(20) DEFAULT NULL COMMENT 'Тип экземпляра',
-    `instanceId` int(20) DEFAULT NULL COMMENT 'ID экземпляра',
-    `content` longtext COLLATE 'utf8_unicode_ci' DEFAULT NULL COMMENT 'Содержимое целей',
-    PRIMARY KEY (`instanceType`,`instanceId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Цели указанной сущности.';
-
--- 2021-08-06

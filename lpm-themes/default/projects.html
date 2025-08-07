@@ -1,3 +1,9 @@
+<?php
+/* 
+Требуются: 
+	$list - список проектов
+*/
+?>
 <article id="projectsList">
 	<h1>
 		<?php lpm_print_header(); ?>
@@ -7,39 +13,12 @@
 		<a href="#" onclick="showAddProjectForm(); return false;">Добавить проект</a>
 	</p>
 	<?php endif; ?>
-	<ul class="projects-list">
-		<?php $userId = lpm_get_user()->getID();?>
-		<?php foreach (lpm_get_projects_list( false ) as $project): ?>
-		<li>
-			<span class="position-relative pe-2">
-			<a href="<?=$project->getUrl();?>" class='project-name'><?=$project->name;?></a>
-			<?php if (($countImportant=$project->getImportantIssuesCount())>0): ?>
-			<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" title="Количество ваших задач с высоким приоритетом">
-				<?=$countImportant;?>
-				<span class="visually-hidden">Количество ваших задач с высоким приоритетом</span>
-			</span>
-			<?php endif; ?>
-			</span>
-			<button class="project-fix" data-id-project="<?=$project->id;?>" value="<?=$project->fixedInstance;?>">
-				<?php if ($project->fixedInstance): ?>
-				<i class="fa fa-thumbtack" aria-hidden="true"></i>
-				<?php else: ?>
-				<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
-				<?php endif ?>	
-			</button>
-			<?php if ($project->scrum): ?>
-			<div class="projects-list-item-submenu">
-				<a href="<?=$project->getScrumBoardUrl();?>">SCRUM доска</a>
-			</div>
-			<?php endif; ?>
-			<p class="project-desc"><?=$project->getDesc();?></p>
-			<?php if (lpm_is_moderator()): ?>
-			<input type="hidden" name="projectId" value="<?=$project->id;?>" />
-			<a href="javascript:;" class="archive" onclick="setIsArchive(event);">В архив</a>
-			<?php endif; ?>
-		</li>
-		<?php endforeach; ?>
-	</ul>
+	
+	<?php 
+		$isArchive = false;
+		lpm_print_projects_list($list, $isArchive);
+	?>
+	
 	<?php if (lpm_can_create_project()): ?>
 	<p class="operations-line">
 		<a href="#" onclick="showAddProjectForm(); return false;">Добавить проект</a>

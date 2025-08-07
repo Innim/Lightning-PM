@@ -1,6 +1,11 @@
 <?php
 /**
  * Интеграция со Slack.
+ * 
+ * Для работы интеграции требуется приложение со следующими scope:
+ * - incoming-webhook
+ * - groups:history
+ * - users.profile:read
  */
 class SlackIntegration
 {
@@ -12,7 +17,7 @@ class SlackIntegration
     {
         if (self::$_instance === null) {
             // TODO: проверка на пустоту и существование?
-            self::$_instance = new SlackIntegration(SLACK_TOKEN);
+            self::$_instance = new SlackIntegration(SLACK_TOKEN, !defined('SLACK_NOTIFICATION_ENABLED') || SLACK_NOTIFICATION_ENABLED);
         }
 
         return self::$_instance;
@@ -21,14 +26,18 @@ class SlackIntegration
     private $_token;
 
     private $_client;
+    private $_notificationEnabled = true;
 
-    public function __construct($token)
+    public function __construct($token, $notificationEnabled)
     {
         $this->_token = $token;
+        $this->_notificationEnabled = $notificationEnabled;
     }
 
     public function notifyIssueForTest(Issue $issue)
     {
+        if (!$this->_notificationEnabled) return;
+        
         $text = $this->getIssuePrefix($issue) . '_"' . $issue->name . '"_ - в *тестирование*';
         $text = $this->addMentionsByUsers($text, $issue->getTesters());
 
@@ -42,6 +51,8 @@ class SlackIntegration
 
     public function notifyIssueCompleted(Issue $issue)
     {
+        if (!$this->_notificationEnabled) return;
+
         $text = $this->getIssuePrefix($issue) . $issue->getConstURL() . ' - *завершена*';
         $text = $this->addMentionsByUsers($text, $issue->getMembers());
 
@@ -50,6 +61,8 @@ class SlackIntegration
 
     public function notifyCommentTesterToMember(Issue $issue, Comment $comment)
     {
+        if (!$this->_notificationEnabled) return;
+
         $this->postMessageForIssueComment(
             $issue,
             $comment,
@@ -60,6 +73,8 @@ class SlackIntegration
 
     public function notifyCommentMemberToTester(Issue $issue, $comment)
     {
+        if (!$this->_notificationEnabled) return;
+
         $this->postMessageForIssueComment(
             $issue,
             $comment,
@@ -70,6 +85,8 @@ class SlackIntegration
 
     public function notifyMRMergedToTester(Issue $issue, GitlabMergeRequest $mr)
     {
+        if (!$this->_notificationEnabled) return;
+
         $mrTitle = 'MR !' . $mr->internalId;
         $text = $this->getIssuePrefix($issue) . $issue->getConstURL() .
             ' - *' . $mrTitle . ' влит*';
@@ -84,6 +101,8 @@ class SlackIntegration
 
     public function notifyIssuePassTest(Issue $issue)
     {
+        if (!$this->_notificationEnabled) return;
+
         $project = $issue->getProject();
         $masters = $issue->getMasters();
         if (empty($masters)) {
@@ -97,6 +116,24 @@ class SlackIntegration
         $text = $this->addMentionsByUsers($text, $masters);
 
         $this->postMessageForIssue($issue, $text);
+    }
+
+    /**
+     * Получает информацию о профиле пользователя в Slack.
+     * 
+     * @param String $memberId Идентификатор участника в Slack. Хранится в User::$slackName. 
+     *                         Здесь нужно передавать именно ID, имя не подходит.
+     * @return JoliCode\Slack\Api\Model\ObjsUserProfile
+     * @throws JoliCode\Slack\Exception\SlackErrorResponse В случае ошибки в ответ на запрос.
+     */
+    public function getProfile(string $memberId)
+    {
+        $client = $this->getClient();
+        $res = $client->usersProfileGet([
+            'user' => $memberId
+        ]);
+
+        return $res->getProfile();
     }
 
     /**

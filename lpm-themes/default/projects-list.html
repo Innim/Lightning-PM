@@ -1,0 +1,54 @@
+<?php
+/* 
+Требуются: 
+	$list - список проектов
+	$isArchive - это список архивных проектов?
+*/
+
+$userId = lpm_get_user()->getID();
+?>
+<div class="row row-cols-3">
+	<?php foreach ($list as $project): ?>
+	<div class="col my-2">
+		<div class="card h-100 project-list-item" data-project-id="<?=$project->id;?>"  data-project-id="<?=$project->id;?>">
+			<div class="card-body position-relative d-flex flex-column">
+				<?php if (!$isArchive): ?>
+				<a href="javascript:void(0);" class="project-fix position-absolute top-0 end-0 pe-1" data-fixed="<?=$project->fixedInstance ? 1 : 0;?>">
+					<?php if ($project->fixedInstance): ?>
+					<i class="fa fa-thumbtack" aria-hidden="true"></i>
+					<?php else: ?>
+					<i class="fa fa-thumbtack rotate-icon"aria-hidden="true"></i>
+					<?php endif; ?>	
+				</a>
+				<?php endif; ?>	
+				<h5 class="card-title">						
+					<span class="position-relative pe-2">
+						<a href="<?=$project->getUrl();?>"><?=$project->name;?></a>
+						<?php if (($countImportant=$project->getImportantIssuesCount())>0): ?>
+						<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" title="Количество ваших задач с высоким приоритетом">
+							<?=$countImportant;?>
+							<span class="visually-hidden">Количество ваших задач с высоким приоритетом</span>
+						</span>
+						<?php endif; ?>
+					</span>
+				</h5>
+				<p class="card-text"><?=$project->getDesc();?></p>
+				
+				<div class="d-flex align-items-center mt-auto">
+					<?php if ($project->scrum): ?>
+					<a href="<?=$project->getScrumBoardUrl();?>" class="card-link">SCRUM доска</a>
+					<?php endif; ?>
+					<?php if (lpm_is_moderator()): ?>
+					<?php
+						$archiveBtnClass = $isArchive ? 'project-restore-btn' : 'project-archive-btn';
+						$archiveBtnLabel = $isArchive ? 'Восстановить' : 'В архив';
+						$archiveBtnStyle = $isArchive ? 'primary' : 'danger';
+					?>
+					<button type="button" class="btn btn-sm btn-outline-<?=$archiveBtnStyle;?> ms-auto <?=$archiveBtnClass;?>"><?=$archiveBtnLabel;?></button>
+					<?php endif; ?>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php endforeach; ?>
+</div>

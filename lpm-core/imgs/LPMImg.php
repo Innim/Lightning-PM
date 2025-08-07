@@ -77,12 +77,12 @@ class LPMImg extends LPMBaseObject
     private $_upload;
     private $_errors = array();
     
-    public function __construct($srcImg = null)
+    public function __construct($srcImgName = null)
     {
         parent::__construct();
 
-        if ($srcImg !== null) {
-            $this->setSrcImg($srcImg);
+        if ($srcImgName !== null) {
+            $this->setSrcImgName($srcImgName);
         }
     }
     
@@ -114,6 +114,7 @@ class LPMImg extends LPMBaseObject
         
         if (!file_exists($this->_srcImg)) {
             $this->_errors[] = 'Не найдено исходное изображение';
+            return false;
         } elseif (!file_exists($cacheImg)) {
             if (!$this->_upload) {
                 $this->_upload = new \Verot\Upload\Upload($this->_srcImg);
@@ -172,6 +173,15 @@ class LPMImg extends LPMBaseObject
     {
         return $this->_srcImg;
     }
+
+    public function setSrcImg($value)
+    {
+        $baseSrcPath = self::getSrcImgPath();
+        $subPath = stripos($value, $baseSrcPath) === 0 
+            ? mb_substr($value, mb_strlen($baseSrcPath))
+            : basename($value);
+        $this->setSrc($value, $subPath);
+    }
     
     /**
      * Удаляет кэшированные изображения
@@ -203,28 +213,26 @@ class LPMImg extends LPMBaseObject
         FileSystemUtils::remove($this->_srcImg);
     }
 
-    /*protected function onLoadStream( $hash )
-    {
-        if (isset( $hash['url'] )) $this->setSrcImg( $hash['url'] );
-        parent::onLoadStream( $hash );
-    }*/
-
     protected function setVar($var, $value)
     {
         if ($var === 'url') {
-            $this->setSrcImg($value);
+            $this->setSrcImgName($value);
         } else {
             return parent::setVar($var, $value);
         }
     }
 
-    private function setSrcImg($value)
+    private function setSrcImgName($value)
     {
         //$this->_url = $value;
         // TODO обработку передаваемого полного url
-        $this->_srcImgName = $value;
-        $this->_srcImg = self::getSrcImgPath($value);
-        $nameParts = explode('.', $value);
+        $this->setSrc(self::getSrcImgPath($value), $value);
+    }
+
+    private function setSrc($fullPath, $subPath) {
+        $this->_srcImgName = $subPath;
+        $this->_srcImg = $fullPath;
+        $nameParts = explode('.', $subPath);
         $this->_imgExt  = array_pop($nameParts);
         
         $dirParts  = explode('/', implode('.', $nameParts));

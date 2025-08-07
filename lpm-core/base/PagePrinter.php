@@ -53,10 +53,11 @@ class PagePrinter
     {
         self::cssLink('jquery-ui-1.12.1.min');
         self::cssLink('highlightjs-styles/default');
-        self::cssLink('font-awesome5/css/fontawesome-all.min');
+        self::cssLink('font-awesome7/css/all.min');
         self::cssLink('tribute');
         self::cssLink('bootstrap.min');
         self::cssLink('bootstrap-reset');
+        self::cssLink('vue-multiselect.min');
         self::cssLink('main');
     }
     
@@ -70,14 +71,19 @@ class PagePrinter
         PageConstructor::includePattern('issues', compact('list'));
     }
     
-    public static function issueForm($project, $issue, $input)
+    public static function issueForm($project, $issue, $input, $isHidden)
     {
-        PageConstructor::includePattern('issue-form', compact('project', 'issue', 'input'));
+        PageConstructor::includePattern('issue-form', compact('project', 'issue', 'input', 'isHidden'));
     }
     
     public static function issueView()
     {
         PageConstructor::includePattern('issue');
+    }
+    
+    public static function projectsList($list, $isArchive = false)
+    {
+        PageConstructor::includePattern('projects-list', compact('list', 'isArchive'));
     }
     
     public static function usersList()
@@ -90,9 +96,9 @@ class PagePrinter
         PageConstructor::includePattern('users-chooser');
     }
     
-    public static function comment(Comment $comment)
+    public static function comment(Comment $comment, $showIssueLink = false)
     {
-        PageConstructor::includePattern('comment', compact('comment'));
+        PageConstructor::includePattern('comment', compact('comment', 'showIssueLink'));
     }
     
     /**
@@ -169,11 +175,27 @@ class PagePrinter
     }
     
     /**
-     * Распечатывает таблицу Scrum доски.
+     * Распечатывает шаблон целей спринта.
      */
     public static function sprintTargetForm($project)
     {
         PageConstructor::includePattern('scrum-board-target-sprint', compact('project'));
+    }
+
+    /**
+     * Распечатывает шаблон фильтра Scrum-доски.
+     */
+    public static function scrumBoardFilter()
+    {
+        PageConstructor::includePattern('scrum-board-filter');
+    }
+
+    /**
+     * Распечатывает шаблон фильтра в списке задач.
+     */
+    public static function issueListFilter()
+    {
+        PageConstructor::includePattern('issue-list-filter');
     }
     
 
@@ -195,6 +217,14 @@ class PagePrinter
         $scripts = PageConstructor::getUsingScripts();
         foreach ($scripts as $scriptFileName) {
             self::jsScriptLink($scriptFileName);
+        }
+    }
+
+    public static function jsModuleScripts()
+    {
+        $modules = PageConstructor::getUsingJSModules();
+        foreach ($modules as $moduleFileName) {
+            self::jsScriptModule($moduleFileName);
         }
     }
 
@@ -257,6 +287,13 @@ JS;
         echo '<script type="text/javascript" src="' .
              self::getPC()->getJSLink($file) .
              '"></script>';
+    }
+
+    private static function jsScriptModule($file)
+    {
+        echo '<script type="module" src="' .
+            self::getPC()->getJSLink($file) .
+            '"></script>';
     }
     
     private static function cssLink($file)

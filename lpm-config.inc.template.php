@@ -60,6 +60,8 @@ define('TIMEADJUST', 0);
 
 // Token для интеграции со Slack
 define('SLACK_TOKEN', '');
+// Оповещать по Slack
+// define('SLACK_NOTIFICATION_ENABLED', true);
 
 // GitLab URL
 define('GITLAB_URL', '');

@@ -15,6 +15,7 @@ class LightningEngine
     const SESSION_NEXT_ERRORS = 'lightning_next_errors';
 
     const API_PATH = 'api';
+    const BADGES_PATH = 'badges';
 
     /**
      * @return LightningEngine
@@ -43,6 +44,19 @@ class LightningEngine
             $url .= '?' . http_build_query($queryArgs);
         }
         return $url;
+    }
+
+    public static function getHost() {
+        $host = parse_url(SITE_URL, PHP_URL_HOST);
+
+        if (DEBUG) {
+            $port = parse_url(SITE_URL, PHP_URL_PORT);
+            if (!empty($port)) {
+                $host .= ':' . $port;       
+            }
+        }
+
+        return $host;
     }
     
     /**
@@ -122,16 +136,19 @@ class LightningEngine
     public function run()
     {
         $params = $this->_params;
-        if ($params->getArg(0) == self::API_PATH) {
+        $arg0 = $params->getArg(0);
+        if ($arg0 == self::API_PATH) {
             $params->shiftArg();
             $this->apiCall();
-        } else {
+        } elseif ($arg0 == self::BADGES_PATH) {
+            $this->staticGenerator();
+        } else  {
             $this->createPage();
         }
     }
 
     /**
-     * Время выполнения на текущи момент в секундах.
+     * Время выполнения на текущий момент в секундах.
      * @return float
      */
     public function getExecutionTimeSec()
@@ -160,6 +177,42 @@ class LightningEngine
         } catch (Exception $e) {
             $this->debugOnException($e);
             die('Fatal API call error');
+        }
+    }
+
+    private function staticGenerator() {
+        try {
+            $params = $this->_params;
+            $uid = $params->shiftArg();
+
+            if (!$uid) {
+                throw new Exception('Static generator uid is not defined');
+            }
+
+            switch ($uid) {
+                case self::BADGES_PATH:
+                    $id = $params->shiftArg();
+                    if (!$id) {
+                        throw new Exception('Badges generator id is not defined');
+                    }
+
+                    $generator = new BadgesGenerator($this, $id);
+                    break;
+                default:
+                    throw new Exception('Static generator with uid ' . $uid . ' is not registered');
+            }
+            
+            $result = $generator->generate();
+            $headers = $generator->getHeaders();
+            
+            foreach ($headers as $name => $value) {
+                header($name . ': ' . $value);
+            }
+
+            echo $result;
+        } catch (Exception $e) {
+            $this->debugOnException($e);
+            die('Fatal static generator call error');
         }
     }
 
@@ -204,29 +257,41 @@ class LightningEngine
     public function addError($errString)
     {
         if (LPMGlobals::isDebugMode()) {
-            // В debug добавляем ошибку БД в текст, чтобы проще отлаживать
-            $db = LPMGlobals::getInstance()->getDBConnect();
-            if ($db->errno > 0) {
-                $errLines = [
+            $dbError = $this->getDebugDbError();
+            if ($dbError) {
+                $errString = implode("\n", [
                     $errString,
                     '',
-                    '[DEBUG INFORMATION]',
-                    'DB error #' . $db->errno . ': ' . $db->error . '',
-                ];
-
-                $lastQuery = $db->lastQuery;
-                if (empty($lastQuery)) {
-                    $errLines[] = 'No last query information';
-                } else {
-                    $errLines[] = 'SQL: ';
-                    $errLines[] = $lastQuery;
-                }
-
-                $errString = implode("\n", $errLines);
+                    $dbError,
+                ]);
             }
         }
         $this->_errors[] = $errString;
         return false;
+    }
+
+    public function getDebugDbError()
+    {
+        // В debug добавляем ошибку БД в текст, чтобы проще отлаживать
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        if ($db->errno > 0) {
+            $errLines = [
+                '[DEBUG INFORMATION]',
+                'DB error #' . $db->errno . ': ' . $db->error . '',
+            ];
+
+            $lastQuery = $db->lastQuery;
+            if (empty($lastQuery)) {
+                $errLines[] = 'No last query information';
+            } else {
+                $errLines[] = 'SQL: ';
+                $errLines[] = $lastQuery;
+            }
+
+            return implode("\n", $errLines);
+        } else {
+            return false;
+        }
     }
     
     public function addNextError($errString)

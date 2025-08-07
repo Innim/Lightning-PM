@@ -7,11 +7,30 @@ $(document).ready(
             issuePage.labels = $('#issueInfo').data('labels').split(',');
         }
         issuePage.updatePriorityVals();
-        issuePage.scumColUpdateInfo();
+        issuePage.scrumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
 
-        $('#issuesList .member-list a').click(function (e) {
-            issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
+        $(document).on('click', '#showIssues4MeLink', function () {
+            states.setState('only-my');
+        });
+
+        $(document).on('click', '#showIssues4AllLink', function () {
+            // TODO: should remake this one
+            issuePage.resetFilter();
+        });
+
+        $(document).on('click', '#showLastCreated', function () {
+            states.setState('last-created');
+        });
+
+        $(document).on('click', '#sortDefault', function () {
+            // TODO: should remake this one
+            issuePage.sortDefault();
+        });
+
+        $(document).on('click', '#issuesList .member-list a', function (e) {
+            const memberId = $(e.currentTarget).data('memberId');
+            states.setState('by-user:' + memberId);
         });
 
         $(".comment-input-text-tabs").tabs({
@@ -24,7 +43,7 @@ $(document).ready(
 
         // BEGIN -- Настройка формы 
 
-        $('#issueForm .note.tags-line a.tag').click(function (e) {
+        $('#issueForm .tags-line a.tag').on('click', function (e) {
             let a = $(e.currentTarget);
             let input = $('#issueForm textarea[name=desc]');
             let type = a.data('type');
@@ -37,15 +56,17 @@ $(document).ready(
                 }
             } else {
                 let marker = a.data('marker')
-                if (marker) insertFormattingMarker(input, marker);
+                if (marker) {
+                    insertFormattingMarker(input, marker, a.data('single'));
+                }
             }
         });
 
-        $('#issueForm input[name=hours]').focus(function (e) {
+        $('#issueForm input[name=hours]').on('focus', function (e) {
             let field = $(e.currentTarget);
             if (!field.val()) {
                 var sum = 0;
-                $('#issueForm input.member-sp').each(function (i) {
+                $('#issueMembers input.member-sp').each(function (i) {
                     if (sum === -1)
                         return;
 
@@ -77,14 +98,13 @@ $(document).ready(
         // BEGIN -- Комментарии
 
         $(document).on('click', '.delete-comment', function () {
-            let id = $(this).attr('data-comment-id');
-            let el = $(this);
-            let result = confirm('Удалить комментарий?');
+            const id = $(this).data('commentId');
+            const el = $(this);
+            const result = confirm('Удалить комментарий?');
             if (result) {
                 issuePage.deleteComment(id, function (res) {
                     if (res) {
-                        el.parent('div.comments-list-item').remove();
-                        el = null;
+                        el.parents('div.comments-list-item').remove();
                     }
                 });
             }
@@ -94,8 +114,8 @@ $(document).ready(
 
         if (!$('#is-admin').val()) {
             $('.delete-comment').each(function (index) {
-                let elementId = $(this).attr('id');
-                let startTime = $(this).attr('data-time');
+                const elementId = $(this).attr('id');
+                const startTime = $(this).data('time');
                 hideElementAfterDelay(elementId, startTime);
             });
         }
@@ -136,6 +156,9 @@ function bindFormattingHotkeys(selector) {
                     break;
                 case 'KeyG':
                     insertFormattingMarker(this, '> ', true);
+                    break;
+                case 'KeyH':
+                    insertFormattingMarker(this, '### ', true);
                     break;
                 case 'KeyK':
                     insertFormattingLink(this);
@@ -267,6 +290,7 @@ const issuePage = {
     idInProject: null,
     labels: null,
     members: null,
+    filterByTagVm: null, 
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
@@ -484,28 +508,29 @@ function setCaretPosition(elem, pos) {
 function completeIssue(e) {
     var parent = e.currentTarget.parentElement;
     var issueId = $('input[name=issueId]', parent).val();
+    if (issueId <= 0) return
 
-    if (issueId > 0) {
-        preloader.show();
-        srv.issue.complete(
-            issueId,
-            function (res) {
-                //btn.disabled = false;
-                preloader.hide();
-                if (res.success) {
-                    if ($('#issuesList').length > 0) {
-                        $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
-                        showMain();
-                    } else if ($('#issueView').length > 0) {
-                        setIssueInfo(new Issue(res.issue));
-                    }
-                    issuePage.updateStat();
-                } else {
-                    srv.err(res);
+    if (!confirm('Задача будет отмечена как завершенная. Продолжить?')) return;
+
+    preloader.show();
+    srv.issue.complete(
+        issueId,
+        function (res) {
+            //btn.disabled = false;
+            preloader.hide();
+            if (res.success) {
+                if ($('#issuesList').length > 0) {
+                    $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
+                    showMain();
+                } else if ($('#issueView').length > 0) {
+                    setIssueInfo(new Issue(res.issue));
                 }
+                issuePage.updateStat();
+            } else {
+                srv.err(res);
             }
-        );
-    }
+        }
+    );
 }
 
 issuePage.changePriority = function (e) {
@@ -573,8 +598,10 @@ issuePage.changePriority = function (e) {
                             $last = $next;
                         }
                         else {
-                            if ($last)
+                            if ($last) {
                                 $last.after($row);
+                                highlightIssueRow($row);
+                            }
                             break;
                         }
                     }
@@ -587,8 +614,10 @@ issuePage.changePriority = function (e) {
                             $first = $prev;
                         }
                         else {
-                            if ($first)
+                            if ($first) {
                                 $first.before($row);
+                                highlightIssueRow($row);
+                            }
                             break;
                         }
                     }
@@ -677,7 +706,7 @@ issuePage.putStickerOnBoard = function () {
         if (res.success) {
             $('#issueInfo h3 .scrum-put-sticker').remove();
             $('#issueInfo').data('isOnBoard', true);
-            issuePage.scumColUpdateInfo();
+            issuePage.scrumColUpdateInfo();
         }
     });
 };
@@ -688,11 +717,7 @@ function showIssue(issueId) {
         false,
         function (res) {
             if (res.success) {
-                window.location.hash = 'issue-view';
-                // if (window.location.search == '') window.location.search += '?';
-                //else window.location.search += '&';
-                //window.location.search += 'iid=' + issueId;
-                states.updateView();
+                states.setState('issue-view');
                 setIssueInfo(new Issue(res.issue));
             } else {
                 srv.err(res);
@@ -702,8 +727,7 @@ function showIssue(issueId) {
 };
 
 issuePage.showAddForm = function (type) {
-    window.location.hash = 'add-issue';
-    states.updateView();
+    states.setState('add-issue');
 
     if (typeof type != 'undefined') {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
@@ -745,8 +769,7 @@ issuePage.showAddForm = function (type) {
 
 issuePage.showEditForm = function () {
     // переключаем вид
-    window.location.hash = 'edit';
-    states.updateView();
+    states.setState('edit');
 };
 
 /**
@@ -759,6 +782,8 @@ function setIssueInfo(issue) {
 
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
+
+    $("#issueView").removeClass('issue-testing');
 
     $("#issueInfo .info-list").
         removeClass('active-issue').
@@ -782,6 +807,7 @@ function setIssueInfo(issue) {
     } else if (issue.isVerify()) {
         $("#issueInfo .buttons-bar").addClass('verify-issue');
         $("#issueInfo .info-list").addClass('verify-issue');
+        $("#issueView").addClass('issue-testing');
     }
 
     const testers = issue.getTesters();
@@ -840,8 +866,9 @@ issuePage.commentMergeInDevelop = function () {
 };
 
 issuePage.postComment = function () {
-    var text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
-    issuePage.postCommentForCurrentIssue(text);
+    const text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
+    const requestChanges = $('#issueView .comments form.add-comment input[name=requestChanges]').is(':checked');
+    issuePage.postCommentForCurrentIssue(text, requestChanges);
     return false;
 };
 
@@ -884,11 +911,11 @@ issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSucces
     }
 }
 
-issuePage.postCommentForCurrentIssue = function (text) {
+issuePage.postCommentForCurrentIssue = function (text, requestChanges = false) {
     if (text == '') return;
 
     issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.comment(issueId, text, handler));
+        (issueId, handler) => srv.issue.comment(issueId, text, requestChanges, handler));
 }
 
 issuePage.merged = function () {
@@ -951,8 +978,11 @@ issuePage.addComment = function (comment, html) {
     hideElementAfterDelay(elementId, commentTime);
 };
 
+issuePage.handleOnlyMeFilter = function () {
+    issuePage.showIssues4Me();
+}
+
 issuePage.showIssues4Me = function () {
-    window.location.hash = 'only-my';
     issuePage.filterByMemberId(lpInfo.userId);
 
     $('#showIssues4MeLink').hide();
@@ -960,8 +990,11 @@ issuePage.showIssues4Me = function () {
     return false;
 };
 
+issuePage.handleLastCreatedSort = function () {
+    issuePage.showLastCreated();
+}
+
 issuePage.showLastCreated = function () {
-    window.location.hash = 'last-created';
     var table = $('#issuesList');
     window.defaultIssues = table.html();
     table.find('tr:not(:first)').sort(function (a, b) {
@@ -980,8 +1013,11 @@ issuePage.sortDefault = function () {
     $('#showLastCreated').show();
 };
 
+issuePage.handleShowIssuesByUser = function (memberId) {
+    issuePage.showIssuesByUser(memberId);
+}
+
 issuePage.showIssuesByUser = function (memberId) {
-    window.location.hash = 'by-user:' + memberId;
     issuePage.filterByMemberId(memberId);
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
@@ -1027,39 +1063,54 @@ issuePage.resetFilter = function ()//e)
 
     $('#showIssues4AllLink').hide();
     $('#showIssues4MeLink').show();
-    //$('#showIssues4MeLink').text('Показать только мои задачи').
-    //    click(issuePage.showIssues4Me);
-    //e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
-    //e.currentTarget.innerText = 'Показать только мои задачи';
     return false;
 };
 
-issuePage.scumColUpdateInfo = function () {
-    var cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
-    var totalSP = 0;
-    var totalNum = 0;
-    for (var i = 0; i < cols.length; ++i) {
-        var col = cols[i];
+issuePage.handleTagsFilterState = function (value) {
+    console.log('value:', value);
+    const tags = value.trim() == '' ? [] : decodeURI(value).split(',');
+    issuePage.filterByTagVm.selectedTags = tags;
+}
 
-        var sp = 0;
-        $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').
-            each(function (i, el) {
-                sp += parseFloat($(el).data('stickerSp'));
-            });
-        var num = $('#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker').size();
+issuePage.onFilterByTagChanged = function (tags)  {
+    issuePage.scrumColUpdateInfo(tags);
+    if (tags.length)  {
+        states.setState('tags:' + encodeURI(tags.join(',')), true);
+    } else {
+        states.setState('', true);
+    }
+};
 
-        var selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
+issuePage.scrumColUpdateInfo = function () {
+    const cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
+    const getColStickersSelector = (col) =>
+        '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker:visible';
+
+    let totalSP = 0;
+    let totalNum = 0;
+    for (let i = 0; i < cols.length; ++i) {
+        const col = cols[i];
+        const colStickers = $(getColStickersSelector(col));
+
+        let sp = 0;
+        colStickers.each((i, el) => {
+            sp += parseFloat($(el).data('stickerSp'));
+        });
+
+        let num = colStickers.size();
+
+        let selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
 
         if (num > 0) {
             $(selector + ' .scrum-col-count .value').html(num);
 
-            var spSelector = selector + ' .scrum-col-sp';
+            let spSelector = selector + ' .scrum-col-sp';
             if (sp > 0)
                 $(spSelector).show();
             else
                 $(spSelector).hide();
 
-            var spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
+            let spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
             $(spSelector + ' .value').html(spScr);
 
             totalSP += sp;
@@ -1075,7 +1126,7 @@ issuePage.scumColUpdateInfo = function () {
         $('#scrumBoard .scrum-board-info').show();
         $('#scrumBoard .scrum-board-info .scrum-board-count .value').html(totalNum);
         if (totalSP > 0) {
-            var totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
+            let totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
             $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSpScr);
         }
         else
@@ -1349,4 +1400,11 @@ function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds
     } else {
         $('#' + elementId).remove();
     }
+}
+
+
+function highlightIssueRow($row) {
+    $row
+        .css("backgroundColor", "#e0cffc")
+        .animate({ backgroundColor: "#ffffff" }, 3000);
 }

@@ -26,14 +26,7 @@ class CommentsManager
         }
         $comment->issue = $issue;
 
-        if (!empty($type)) {
-            IssueComment::create($comment->id, $type, $data);
-        }
-
-        // отправка оповещений
         $memberIds = $issue->getMemberIds();
-        $recipients = array_unique(array_merge($memberIds, [$issue->authorId]));
-
         if (!$ignoreMr && in_array($comment->authorId, $memberIds)) {
             // Если коммент оставил исполнитель, то будем искать MR в нем и запишем их в БД
             $mrList = $comment->getMergeRequests();
@@ -41,13 +34,24 @@ class CommentsManager
                 foreach ($mrList as $mr) {
                     IssueMR::createByMr($issue->id, $mr);
                 }
+
+                if (empty($type)) {
+                    $type = IssueCommentType::MERGE_REQUEST;
+                }
             }
         }
-        
+
+        if (!empty($type)) {
+            $comment->issueComment = IssueComment::create($comment->id, $type, $data);
+        }
+
+        // отправка оповещений
         if (!$ignoreSlackNotification) {
+            // TODO: учесть тип request_changes - особое оповещение
             $this->slackNotificationCommentTesterOrMembers($issue, $comment);
         }
 
+        $recipients = array_unique(array_merge($memberIds, [$issue->authorId]));
         EmailNotifier::getInstance()->sendMail2Allowed(
             'Новый комментарий к задаче "' . $issue->name . '"',
             $user->getName() . ' оставил комментарий к задаче "' .

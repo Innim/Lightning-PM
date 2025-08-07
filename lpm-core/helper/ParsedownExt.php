@@ -12,6 +12,7 @@ class ParsedownExt extends Parsedown
     private $_delRegex;
     private $_underlineRegex;
     private $_userLinkRegex;
+    private $_taskLinkRegex;
 
     public function __construct()
     {
@@ -29,6 +30,13 @@ class ParsedownExt extends Parsedown
 
         array_unshift($this->InlineTypes['['], 'UserLink');
         $this->_userLinkRegex = '/^\[(@.*?)]\(user:([0-9]+)\)/';
+
+        array_unshift($this->InlineTypes['['], 'IssueLink');
+        $host = LightningEngine::getHost();
+        $protocols = ['http', 'https'];
+
+        $this->_taskLinkRegex = '/^\[([^\]]*)\]\(((?:'.
+                implode('|', $protocols).'):\/\/'.$host.'\/project\/([a-zA-Z0-9_-]*)\/issue\/(\d*)\/?(?:#(?:comment-\d+)?)?)\)/';
     }
 
     protected function inlineStrong($Excerpt)
@@ -67,6 +75,48 @@ class ParsedownExt extends Parsedown
                     ],
                 ],
             ];
+        }
+    }
+
+    protected function inlineIssueLink($Excerpt)
+    {
+        if (preg_match($this->_taskLinkRegex, $Excerpt['text'], $matches) &&
+                count($matches) == 5) {
+            $text = $matches[1];
+            $url = $matches[2];
+            $projectUid = $matches[3];
+            $issueId = (int) $matches[4];
+            
+            if (!empty($projectUid) && !empty($issueId)) {
+                try {
+                    // here we have a potential vulnerability, because we can get info about any issue,
+                    // even if user has no access to it. But we already allow to get info about any issue
+                    // as open graph meta for any link, so it's not a problem.
+                    if ($project = Project::load($projectUid)) {
+                        if ($issue = Issue::loadByIdInProject($project->id, $issueId)) {
+                            $images = $issue->getImages();
+                            $imageUrl = empty($images) ? null : $images[0]->getSource();
+                            return [
+                                'extent' => strlen($matches[0]),
+                                'element' => [
+                                    'name' => 'a',
+                                    'handler' => 'line',
+                                    'nonNestables' => array('Url', 'Link'),
+                                    'text' => $text,
+                                    'attributes' => [
+                                        'href' => $url,
+                                        'data-issue-id' => $issue->getID(),
+                                        'data-id-in-project' => $issue->getIdInProject(),
+                                        'data-tooltip' => 'issue',
+                                        'data-img' => $imageUrl,
+                                        'title' => $issue->getName(),
+                                    ],
+                                ],
+                            ];
+                        }
+                    }
+                } catch(Exception $e) {}
+            }
         }
     }
 

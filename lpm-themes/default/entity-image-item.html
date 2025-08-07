@@ -1,10 +1,26 @@
 <?php
 /* 
 Требуются: 
-    $image - объект информации ({'url'})
+    $image - объект информации ({'url', 'previewUrl'})
 */
 if (!empty($image)):
+
+$previewModeEnabled = false;
+
+$hasPreview = !empty($image->previewUrl);
+$imgUrl = $hasPreview ? $image->previewUrl : $image->url;
+$imgClasses = [];
 ?>
-<img src="<?=$image->url;?>" />
+<?php 
+if ($hasPreview && $previewModeEnabled): 
+    $imgClasses[] = 'image-preview';
+    $imgClasses[] = 'border border-1 rounded-3';
+?>
+<a href="<?=$image->url;?>" class="image-link" rel="iLoad|Screenshots">
+<?php endif; ?>
+<img src="<?=$imgUrl;?>"  class="<?=implode(' ', $imgClasses);?>">
+<?php if ($hasPreview && $previewModeEnabled): ?>
+</a>
+<?php endif; ?>
 <?php
 endif; 

@@ -80,7 +80,16 @@ class GitlabExternalApi extends ExternalApi
 
     private function onException(Exception $e)
     {
-        $this->log($e->getMessage(), '-error');
+        $logEntry = $e->getMessage();
+
+        if ($e instanceof \GMFramework\ProviderException) {
+            $dbError = $this->engine()->getDebugDbError();
+            if ($dbError) {
+                $logEntry .= "\n\n" . $dbError;
+            }
+        }
+
+        $this->log($logEntry, '-error');
         // TODO: формат ошибки
         return $e->getMessage();
     }
@@ -204,7 +213,14 @@ class GitlabExternalApi extends ExternalApi
                         $commentText = $mr->description . "\n\n" . $commentText;
                     }
 
-                    $engine->comments()->postComment($user, $issue, $commentText, false, true);
+                    $engine->comments()->postComment(
+                        $user,
+                        $issue,
+                        $commentText,
+                        false,
+                        true,
+                        IssueCommentType::MERGE_REQUEST
+                    );
 
                     // Добавляем коммент со ссылкой на задачу в MR
                     if (!empty($mrComment)) {
@@ -225,11 +241,14 @@ class GitlabExternalApi extends ExternalApi
     {
         $commitIds = [];
         foreach ($data['commits'] as $commitData) {
-            $commitIds[] = $commitData['id'];
+            $commitId = $commitData['id'];
+            if (!empty($commitId)) {
+                $commitIds[] = $commitId;
+            }
         }
 
         // Загружаем список IssueBranch по последним коммитам
-        $issueBranches = IssueBranch::loadByLastCommits($repositoryId, $commitIds, true);
+        $issueBranches = IssueBranch::loadByLastCommits($repositoryId, $commitIds, true, true);
 
         if (!empty($issueBranches)) {
             $engine = $this->engine();
@@ -269,7 +288,9 @@ class GitlabExternalApi extends ExternalApi
                 }
 
                 $commentText = implode("\n", $commentTextArr);
-                $comments->postComment($user, $issue, $commentText, true, true);
+                $comments->postComment($user, $issue, $commentText, true, true,
+                    IssueCommentType::BRANCH_MERGED, 
+                    IssueCommentBranchMergedData::serializeBy($issueBranch));
 
                 // Проверяем права и вливаем только задачи, которые уже в тесте
                 if ($issue->checkEditPermit($user->userId) && $issue->status == Issue::STATUS_WAIT) {
@@ -300,6 +321,9 @@ class GitlabExternalApi extends ExternalApi
                 // обновляем последний коммит
                 $lastCommit = $commit->id;
                 IssueBranch::updateLastCommit($repositoryId, $branchName, $lastCommit);
+            } else {
+                // TODO: Если нет отличий от develop - надо обновить начальный коммит
+                // IssueBranch::updateInitialCommit($repositoryId, $branchName, $brachCommit);
             }
         }
     }
@@ -308,7 +332,18 @@ class GitlabExternalApi extends ExternalApi
     {
         $userData = $data[self::FIELD_USER];
         if (!empty($userData) && !empty($userData['email'])) {
-            $user = User::loadByEmail($userData['email']);
+
+            $email = $userData['email'];
+            if ($email === '[REDACTED]') {
+                if (!empty($userData['id'])) {
+                    $user = User::loadByGitlabId($userData['id']);
+                    // TODO: обработать, если не нашлось по id, например загрузить данные запросом
+                } else {
+                    $user = null;
+                }
+            } else {
+                $user = User::loadByEmail($email);
+            }
 
             if ($user != null && !empty($user->gitlabToken)) {
                 return $user;

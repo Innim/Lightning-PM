@@ -8,16 +8,21 @@ class IssueComment extends LPMBaseObject
      * Создает запись.
      *
      * Если запись уже создана - будет заменена.
+     * 
+     * @return 
      */
     public static function create(int $commentId, string $type, string $data = null)
     {
         $data = (string)$data;
+        $fields = compact('commentId', 'type', 'data');
         $hash = [
-            'REPLACE' => compact('commentId', 'type', 'data'),
+            'REPLACE' => $fields,
             'INTO'    => LPMTables::ISSUE_COMMENT
         ];
 
         self::buildAndSaveToDb($hash);
+
+        return (new IssueComment($fields));
     }
 
     /**
@@ -41,10 +46,89 @@ class IssueComment extends LPMBaseObject
      */
     public $data;
 
-    public function __construct()
+    private $_deserializedData;
+
+    public function __construct($raw = null)
     {
         parent::__construct();
 
         $this->_typeConverter->addIntVars('commentId');
+
+        if (!empty($raw)) $this->loadStream($raw);
+    }
+
+    /**
+     * Определяет, является ли комментарий запросом изменений
+     * (правки от тестировщика).
+     * @return bool
+     */
+    public function isRequestChanges() {
+        return $this->type == IssueCommentType::REQUEST_CHANGES;
+    }
+
+    /**
+     * Определяет, является ли комментарий отметкой о прохождении теста.
+     * @return bool
+     */
+    public function isPassTest() {
+        return $this->type == IssueCommentType::PASS_TEST;
+    }
+
+    /**
+     * Определяет, является ли комментарий информацией о создании ветки.
+     * @return bool
+     */
+    public function isCreateBranch() {
+        return $this->type == IssueCommentType::CREATE_BRANCH;
+    }
+
+    /**
+     * Определяет, является ли комментарий информацией о влитии ветки.
+     * 
+     * Данные могут отсутствовать, если отметка была выставлена вручную.
+     * @return bool
+     */
+    public function isBranchMerged() {
+        return $this->type == IssueCommentType::BRANCH_MERGED;
+    }
+
+    /**
+     * Определяет, является ли комментарий автоматически созданным оповещением.
+     * @return bool
+     */
+    public function isAutoComment() {
+        return in_array($this->type, [IssueCommentType::CREATE_BRANCH, IssueCommentType::BRANCH_MERGED]);
+    }
+
+    /**
+     * Возвращает данные ветки для коммента типа IssueCommentType::CREATE_BRANCH.
+     */
+    public function getCreateBranchData(): ?IssueCommentCreateBranchData
+    {
+        if ($this->isCreateBranch() && !empty($this->data)) {
+            if (empty($this->_deserializedData)) {
+                $this->_deserializedData = new IssueCommentCreateBranchData($this->data);
+            }
+
+            return $this->_deserializedData;
+        }
+
+        return null;
+    }
+
+    /**
+     * Возвращает данные ветки для коммента типа IssueCommentType::BRANCH_MERGED.
+     */
+    public function getBranchMergedData(): ?IssueCommentBranchMergedData
+    {
+        if ($this->isBranchMerged() && !empty($this->data)) {
+            if (empty($this->_deserializedData)) {
+                $this->_deserializedData = new IssueCommentBranchMergedData($this->data);
+            }
+
+            return $this->_deserializedData;
+        }
+
+        return null;
     }
 }

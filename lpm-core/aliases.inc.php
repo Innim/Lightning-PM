@@ -77,6 +77,14 @@ function lpm_print_scripts()
 }
 
 /**
+ * Распечатывает ссылки на js файлы модулей.
+ */
+function lpm_print_script_module()
+{
+    PagePrinter::jsModuleScripts();
+}
+
+/**
  * Распечатывает Open Graph мету.
  */
 function lpm_print_open_graph_meta()
@@ -128,17 +136,17 @@ function lpm_print_issues($list)
 /**
 * Распечатывает форму добавления/редактирования задачи для текущего проекта
 */
-function lpm_print_issue_form($project, $issue = null, $input = null)
+function lpm_print_issue_form($project, $issue = null, $input = null, $isHidden = null)
 {
-    return PagePrinter::issueForm($project, $issue, $input);
+    return PagePrinter::issueForm($project, $issue, $input, $isHidden);
 }
 
 /**
 * Распечатывает отображение отдельного комментария.
 */
-function lpm_print_comment(Comment $comment)
+function lpm_print_comment(Comment $comment, $showIssueLink = false)
 {
-    return PagePrinter::comment($comment);
+    return PagePrinter::comment($comment, $showIssueLink);
 }
 
 /**
@@ -165,6 +173,14 @@ function lpm_print_comment_input_text($id)
 function lpm_print_issue_view()
 {
     return PagePrinter::issueView();
+}
+
+/**
+ * Распечатывает список проектов
+ */
+function lpm_print_projects_list($list, $isArchive = false)
+{
+    return PagePrinter::projectsList($list, $isArchive);
 }
 
 /**
@@ -274,6 +290,22 @@ function lpm_print_sprint_target_form($project)
 }
 
 /**
+ * Выводит шаблон компонента фильтров Scrum доски.
+ */
+function lpm_print_scrum_board_filter()
+{
+    return PagePrinter::scrumBoardFilter();
+}
+
+/**
+ * Выводит шаблон компонента фильтров списка задач.
+ */
+function lpm_print_issue_list_filters()
+{
+    return PagePrinter::issueListFilter();
+}
+
+/**
 *   Возвращает текущую страницу
 */
 function lpm_get_current_page()
@@ -327,14 +359,6 @@ function lpm_get_user_menu()
 }
 
 /**
- * Возвращает список проектов
- */
-function lpm_get_projects_list($archive = false)
-{
-    return PageConstructor::getProjectsList($archive);
-}
-
-/**
  * Возвращает список задач для текущего проекта
  */
 function lpm_get_issues_list()
@@ -359,19 +383,22 @@ function lpm_get_project_members()
 }
 
 /**
- * Возвращает тестера проекта
- */
-function lpm_get_project_tester()
-{
-    return PageConstructor::getProjectTester();
-}
-
-/**
  * Возвращает список меток для задачи.
  */
 function lpm_get_issue_labels()
 {
     return PageConstructor::getIssueLabels();
+}
+
+/**
+ * Возвращает имена меток задач.
+ */
+function lpm_get_issue_labels_names()
+{
+    $labels = PageConstructor::getIssueLabels();
+    return array_values(array_map(function ($item) {
+        return $item['label'];
+    }, $labels));
 }
 
 /**

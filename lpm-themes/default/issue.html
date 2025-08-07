@@ -10,8 +10,11 @@ $userId = lpm_get_user()->getID();
 $isOnBoard = $issue->isOnBoard();
 
 $project = $issue->getProject();
+
+$classes = [];
+if ($issue->isTesting()) $classes[] = 'issue-testing';
 ?>
-<article id="issueView">
+<article id="issueView" class="<?=implode(' ', $classes);?>">
     <h1><a href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a></h1>
     <div class="header-operations-bar">
         <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
@@ -119,7 +122,7 @@ $project = $issue->getProject();
                     <?php foreach ($picture as $img): ?>
                     <li>
                         <a href="<?=$img->getSource();?>" class="image-link" rel="iLoad|Screenshots"><img
-                                src="<?=$img->getPreview();?>" class="image-preview" /></a>
+                                src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" /></a>
                         <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
                     </li>
                     <?endforeach;?>
@@ -127,25 +130,31 @@ $project = $issue->getProject();
             </div>
             <?php endif; ?>
         </div>
+
+        <hr class="text-secondary opacity-50 my-4">    
+
         <?php
             $linkedIssues = $issue->getLinkedIssues();
             if (!empty($linkedIssues)):
         ?>
         <div id="linkedIssues" class="linked-issues">
-            <h5>Связанные задачи</h5>
-            <?php foreach ($linkedIssues as $item): ?>
-            <div class="linked-issue-item">
-                <a href="<?=$item->getConstURL();?>">
-                    <?php if ($item->projectId != $issue->projectId):?>
-                    <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
-                    <?php endif;?>
-                    <?=$item->getIdInProject();?>. <?=$item->getName();?>
-                </a>
+            <div class="card text-dark bg-light mb-3">
+                <div class="card-header">Связанные задачи</div>
+                <div class="card-body"><?php foreach ($linkedIssues as $item): ?>
+                    <div class="linked-issue-item card-text">
+                        <a href="<?=$item->getConstURL();?>">
+                            <?php if ($item->projectId != $issue->projectId):?>
+                            <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
+                            <?php endif;?>
+                            <?=$item->getIdInProject();?>. <?=$item->getName();?>
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
-            <?php endforeach; ?>
         </div>
         <?php endif;?>
-        <p class="buttons-bar <? switch($issue->status): 
+        <p class="buttons-bar my-4 <? switch($issue->status): 
     case 0: ?>active-issue<?break;?> 
     <?case 1: ?>verify-issue<?break;?> 
     <?case 2: ?>completed-issue<?break;?>
@@ -164,7 +173,7 @@ $project = $issue->getProject();
             <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
         </a>
         <a href="#" onclick="issuePage.finishedIssue(); return false;" class="finished-issue-link">
-            <i class="fa fa-plus-square" aria-hidden="true" title="Добавить задачу по доделкам"></i>
+            <i class="fa fa-plus-square" aria-hidden="true" title="Добавить связанную задачу"></i>
         </a>
     </article>
     <article id="comments" class="comments">
@@ -175,29 +184,39 @@ $project = $issue->getProject();
                 <a href="#" class="create-branch-icon" onclick="issuePage.createBranch(); return false;"
                     title="Создать ветку для задачи">
                     <i class="fas fa-code-branch branch-icon" aria-hidden="true"></i><i
-                        class="fas fa-plus-circle plus-icon"></i>
+                        class="fas fa-plus plus-icon"></i>
                 </a>
                 <?php endif; ?>
                 <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i
                         class="far fa-check-square" aria-hidden="true"></i></a>
                 <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i
-                        class="fas fa-code-branch flip-vertical" aria-hidden="true"></i></a>
+                        class="fas fa-code-merge" aria-hidden="true"></i></a>
             </div>
             <?php endif;?>
             <div class="comments-controls">
                 <a href="#" class="toggle-comments" onclick="comments.toggleCommentForm(); return false;">Свернуть
                     комментарии</a>
                 <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
+                <a href="#" class="request-changes-link text-danger" onclick="comments.showCommentForm(true); return false;"><i class="fas fa-bug changes-requested-check"></i> Найдены проблемы</a>
             </div>
         </div>
         <form id="addCommentForm" class="add-comment" onsubmit="issuePage.postComment(); return false;">
             <?php lpm_print_comment_input_text('addCommentTabs');?>
 
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
-            <p class="buttons-bar">
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-2 align-items-center">
+                <div class="form-check form-check-inline" >
+                    <input class="form-check-input" name="requestChanges" type="checkbox" value="" id="requestChangesCheckbox">
+                    <label class="form-check-label" for="requestChangesCheckbox">
+                        <i class="fas fa-bug changes-requested-check"></i>
+                        Найдены проблемы
+                    </label>
+                </div>
+                
                 <button class="btn btn-primary" type="submit">Отправить</button>
                 <button class="btn btn-secondary" type="reset" onclick="comments.hideCommentForm();">Отмена</button>
-            </p>
+            </div>
         </form>
         <section class="comments-list">
             <?php foreach ($comments as $comment): ?>
@@ -218,7 +237,7 @@ echo <<<HTML
 </script>
 HTML;
 ?>
-<?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null); ?>
+<?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null, true); ?>
 
 <article id="createBranch" title="Создать ветку задачи">
     <form class="create-branch" onsubmit="createBranch.save(); return false;">

@@ -1,5 +1,8 @@
 $(document).ready(
     function () {
+        states.addState(null);
+        states.addState(null, 'tags:#', issuePage.handleTagsFilterState);
+
         document.querySelectorAll('.name-project').forEach(function (e) {
             if (e.scrollWidth > e.offsetWidth) {
                 e.setAttribute('title', e.textContent)
@@ -34,6 +37,8 @@ let scrumBoard = {
         else
             return;
 
+        if (state == 4 && !confirm('Завершить задачу?')) return;
+
         preloader.show();
         srv.issue.changeScrumState(issueId, state, function (res) {
             preloader.hide();
@@ -53,7 +58,7 @@ let scrumBoard = {
                     $('.scrum-board-col.col-' + colName).append($sticker);
                 }
 
-                issuePage.scumColUpdateInfo();
+                issuePage.scrumColUpdateInfo();
 
                 if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
                     scrumBoard.takeIssueBy($sticker);
@@ -100,7 +105,7 @@ let scrumBoard = {
                     $members.append(', ');
                 }
                 $members.append(res.memberHtml);
-                issuePage.scumColUpdateInfo();
+                issuePage.scrumColUpdateInfo();
             }
         });
     },
@@ -133,7 +138,7 @@ let scrumBoard = {
 
                         $elements.remove();
                         sprintTarget.setValue('', '');
-                        issuePage.scumColUpdateInfo();
+                        issuePage.scrumColUpdateInfo();
                     } else {
                         srv.err(res);
                     }

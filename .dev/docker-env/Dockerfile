@@ -1,4 +1,4 @@
-FROM debian:9
+FROM debian:11.11-slim
 USER root
 
 ARG sshpass=secret
@@ -15,7 +15,25 @@ RUN apt -y install  wget mc vim openssh-server supervisor apt-transport-https ls
 RUN wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 RUN echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
 
-RUN apt update && apt -y install git apache2 libapache2-mod-php$php_version libapache2-mod-fcgid libapache2-mod-rpaf php$php_version php$php_version-curl php$php_version-gd php$php_version-intl php$php_version-ldap php$php_version-mcrypt php$php_version-memcached php$php_version-mysql php$php_version-pgsql php$php_version-pspel php$php_version-xsl php$php_version-mbstring php$php_version-xml php$php_version-zip
+RUN apt update && apt -y install \
+  git apache2 \
+  libapache2-mod-php$php_version \
+  libapache2-mod-fcgid \
+  libapache2-mod-rpaf \
+  php$php_version \
+  php$php_version-curl \
+  php$php_version-gd \
+  php$php_version-intl \
+  php$php_version-ldap \
+  php$php_version-mcrypt \
+  php$php_version-memcached \
+  php$php_version-mysql \
+  php$php_version-pgsql \
+  php$php_version-pspell \
+  php$php_version-xsl \
+  php$php_version-mbstring \
+  php$php_version-xml \
+  php$php_version-zip
 
 RUN a2enmod actions authz_groupfile cgi headers rewrite socache_shmcb ssl
 
