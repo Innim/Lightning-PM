@@ -2,6 +2,7 @@ version: "3"
 services:
   web:
     build: ./
+    container_name: "lightning-pm"
 #    user: "$USER_ID:$GROUP_ID"
     restart: unless-stopped
     ports:
