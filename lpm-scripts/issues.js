@@ -547,7 +547,7 @@ issuePage.changePriority = function (e) {
                 let priorityVal = Issue.getPriorityDisplayVal(priority);
                 let tooltipHost = $('.priority-title-owner', $row);
                 tooltipHost.attr('title', 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)');
-                let tooltips = $(document).tooltip('instance').tooltips;
+                let tooltips = $(document).uitooltip('instance').tooltips;
                 for (var prop in tooltips) {
                     let item = tooltips[prop];
                     let element = item.element;

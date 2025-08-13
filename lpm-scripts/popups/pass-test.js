@@ -30,7 +30,6 @@ const passTest = {
                     passTest.saveableForm.clear();
                     passTest.currentIssueId = null;
 
-                    const $el = $("#passTestDialog");
                     $('#passTestComment').tabs({
                         active: 0
                     });
@@ -64,6 +63,7 @@ const passTest = {
         $el.dialog('open');
     },
     close: function () {
+        const $el = $("#passTestDialog");
         $el.dialog('close');
     },
     save: function () {
