@@ -27,13 +27,14 @@ use Symfony\Contracts\Service\ResetInterface;
 final class TraceableHttpClient implements HttpClientInterface, ResetInterface, LoggerAwareInterface
 {
     private $client;
-    private $tracedRequests = [];
     private $stopwatch;
+    private $tracedRequests;
 
-    public function __construct(HttpClientInterface $client, Stopwatch $stopwatch = null)
+    public function __construct(HttpClientInterface $client, ?Stopwatch $stopwatch = null)
     {
         $this->client = $client;
         $this->stopwatch = $stopwatch;
+        $this->tracedRequests = new \ArrayObject();
     }
 
     /**
@@ -57,11 +58,11 @@ final class TraceableHttpClient implements HttpClientInterface, ResetInterface, 
             $content = false;
         }
 
-        $options['on_progress'] = function (int $dlNow, int $dlSize, array $info) use (&$traceInfo, $onProgress) {
+        $options['on_progress'] = function (int $dlNow, int $dlSize, array $info, ?\Closure $resolve = null) use (&$traceInfo, $onProgress) {
             $traceInfo = $info;
 
             if (null !== $onProgress) {
-                $onProgress($dlNow, $dlSize, $info);
+                $onProgress($dlNow, $dlSize, $info, $resolve);
             }
         };
 
@@ -71,7 +72,7 @@ final class TraceableHttpClient implements HttpClientInterface, ResetInterface, 
     /**
      * {@inheritdoc}
      */
-    public function stream($responses, float $timeout = null): ResponseStreamInterface
+    public function stream($responses, ?float $timeout = null): ResponseStreamInterface
     {
         if ($responses instanceof TraceableResponse) {
             $responses = [$responses];
@@ -84,7 +85,7 @@ final class TraceableHttpClient implements HttpClientInterface, ResetInterface, 
 
     public function getTracedRequests(): array
     {
-        return $this->tracedRequests;
+        return $this->tracedRequests->getArrayCopy();
     }
 
     public function reset()
@@ -93,7 +94,7 @@ final class TraceableHttpClient implements HttpClientInterface, ResetInterface, 
             $this->client->reset();
         }
 
-        $this->tracedRequests = [];
+        $this->tracedRequests->exchangeArray([]);
     }
 
     /**

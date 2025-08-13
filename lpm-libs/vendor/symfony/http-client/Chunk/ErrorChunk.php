@@ -111,7 +111,7 @@ class ErrorChunk implements ChunkInterface
     /**
      * @return bool Whether the wrapped error has been thrown or not
      */
-    public function didThrow(bool $didThrow = null): bool
+    public function didThrow(?bool $didThrow = null): bool
     {
         if (null !== $didThrow && $this->didThrow !== $didThrow) {
             return !$this->didThrow = $didThrow;
@@ -120,10 +120,7 @@ class ErrorChunk implements ChunkInterface
         return $this->didThrow;
     }
 
-    /**
-     * @return array
-     */
-    public function __sleep()
+    public function __sleep(): array
     {
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
     }

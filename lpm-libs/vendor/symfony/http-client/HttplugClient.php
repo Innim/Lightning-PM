@@ -13,6 +13,7 @@ namespace Symfony\Component\HttpClient;
 
 use GuzzleHttp\Promise\Promise as GuzzlePromise;
 use GuzzleHttp\Promise\RejectedPromise;
+use GuzzleHttp\Promise\Utils;
 use Http\Client\Exception\NetworkException;
 use Http\Client\Exception\RequestException;
 use Http\Client\HttpAsyncClient;
@@ -39,13 +40,14 @@ use Symfony\Component\HttpClient\Response\HttplugPromise;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 if (!interface_exists(HttplugInterface::class)) {
     throw new \LogicException('You cannot use "Symfony\Component\HttpClient\HttplugClient" as the "php-http/httplug" package is not installed. Try running "composer require php-http/httplug".');
 }
 
 if (!interface_exists(RequestFactory::class)) {
-    throw new \LogicException('You cannot use "Symfony\Component\HttpClient\HttplugClient" as the "php-http/message-factory" package is not installed. Try running "composer require nyholm/psr7".');
+    throw new \LogicException('You cannot use "Symfony\Component\HttpClient\HttplugClient" as the "php-http/message-factory" package is not installed. Try running "composer require php-http/message-factory".');
 }
 
 /**
@@ -56,20 +58,25 @@ if (!interface_exists(RequestFactory::class)) {
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestFactory, StreamFactory, UriFactory
+final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestFactory, StreamFactory, UriFactory, ResetInterface
 {
     private $client;
     private $responseFactory;
     private $streamFactory;
+
+    /**
+     * @var \SplObjectStorage<ResponseInterface, array{RequestInterface, Promise}>|null
+     */
     private $promisePool;
+
     private $waitLoop;
 
-    public function __construct(HttpClientInterface $client = null, ResponseFactoryInterface $responseFactory = null, StreamFactoryInterface $streamFactory = null)
+    public function __construct(?HttpClientInterface $client = null, ?ResponseFactoryInterface $responseFactory = null, ?StreamFactoryInterface $streamFactory = null)
     {
         $this->client = $client ?? HttpClient::create();
         $this->responseFactory = $responseFactory;
         $this->streamFactory = $streamFactory ?? ($responseFactory instanceof StreamFactoryInterface ? $responseFactory : null);
-        $this->promisePool = \function_exists('GuzzleHttp\Promise\queue') ? new \SplObjectStorage() : null;
+        $this->promisePool = class_exists(Utils::class) ? new \SplObjectStorage() : null;
 
         if (null === $this->responseFactory || null === $this->streamFactory) {
             if (!class_exists(Psr17Factory::class) && !class_exists(Psr17FactoryDiscovery::class)) {
@@ -94,7 +101,7 @@ final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestF
     public function sendRequest(RequestInterface $request): Psr7ResponseInterface
     {
         try {
-            return $this->waitLoop->createPsr7Response($this->sendPsr7Request($request));
+            return HttplugWaitLoop::createPsr7Response($this->responseFactory, $this->streamFactory, $this->client, $this->sendPsr7Request($request), true);
         } catch (TransportExceptionInterface $e) {
             throw new NetworkException($e->getMessage(), $request, $e);
         }
@@ -138,7 +145,7 @@ final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestF
      *
      * @return int The number of remaining pending promises
      */
-    public function wait(float $maxDuration = null, float $idleTimeout = null): int
+    public function wait(?float $maxDuration = null, ?float $idleTimeout = null): int
     {
         return $this->waitLoop->wait(null, $maxDuration, $idleTimeout);
     }
@@ -218,10 +225,7 @@ final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestF
         throw new \LogicException(sprintf('You cannot use "%s()" as the "nyholm/psr7" package is not installed. Try running "composer require nyholm/psr7".', __METHOD__));
     }
 
-    /**
-     * @return array
-     */
-    public function __sleep()
+    public function __sleep(): array
     {
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
     }
@@ -236,7 +240,14 @@ final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestF
         $this->wait();
     }
 
-    private function sendPsr7Request(RequestInterface $request, bool $buffer = null): ResponseInterface
+    public function reset()
+    {
+        if ($this->client instanceof ResetInterface) {
+            $this->client->reset();
+        }
+    }
+
+    private function sendPsr7Request(RequestInterface $request, ?bool $buffer = null): ResponseInterface
     {
         try {
             $body = $request->getBody();
@@ -245,12 +256,17 @@ final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestF
                 $body->seek(0);
             }
 
-            return $this->client->request($request->getMethod(), (string) $request->getUri(), [
+            $options = [
                 'headers' => $request->getHeaders(),
                 'body' => $body->getContents(),
-                'http_version' => '1.0' === $request->getProtocolVersion() ? '1.0' : null,
                 'buffer' => $buffer,
-            ]);
+            ];
+
+            if ('1.0' === $request->getProtocolVersion()) {
+                $options['http_version'] = '1.0';
+            }
+
+            return $this->client->request($request->getMethod(), (string) $request->getUri(), $options);
         } catch (\InvalidArgumentException $e) {
             throw new RequestException($e->getMessage(), $request, $e);
         } catch (TransportExceptionInterface $e) {

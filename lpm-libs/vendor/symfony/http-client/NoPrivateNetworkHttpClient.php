@@ -19,13 +19,14 @@ use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Contracts\HttpClient\ResponseStreamInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Decorator that blocks requests to private networks by default.
  *
  * @author Hallison Boaventura <hallisonboaventura@gmail.com>
  */
-final class NoPrivateNetworkHttpClient implements HttpClientInterface, LoggerAwareInterface
+final class NoPrivateNetworkHttpClient implements HttpClientInterface, LoggerAwareInterface, ResetInterface
 {
     use HttpClientTrait;
 
@@ -58,7 +59,7 @@ final class NoPrivateNetworkHttpClient implements HttpClientInterface, LoggerAwa
         }
 
         if (!class_exists(IpUtils::class)) {
-            throw new \LogicException(sprintf('You can not use "%s" if the HttpFoundation component is not installed. Try running "composer require symfony/http-foundation".', __CLASS__));
+            throw new \LogicException(sprintf('You cannot use "%s" if the HttpFoundation component is not installed. Try running "composer require symfony/http-foundation".', __CLASS__));
         }
 
         $this->client = $client;
@@ -76,11 +77,35 @@ final class NoPrivateNetworkHttpClient implements HttpClientInterface, LoggerAwa
         }
 
         $subnets = $this->subnets;
+        $lastUrl = '';
         $lastPrimaryIp = '';
 
-        $options['on_progress'] = function (int $dlNow, int $dlSize, array $info) use ($onProgress, $subnets, &$lastPrimaryIp): void {
+        $options['on_progress'] = function (int $dlNow, int $dlSize, array $info, ?\Closure $resolve = null) use ($onProgress, $subnets, &$lastUrl, &$lastPrimaryIp): void {
+            if ($info['url'] !== $lastUrl) {
+                $host = trim(parse_url($info['url'], PHP_URL_HOST) ?: '', '[]');
+                $resolve ??= static fn () => null;
+
+                if (($ip = $host)
+                    && !filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)
+                    && !filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV4)
+                    && !$ip = $resolve($host)
+                ) {
+                    if ($ip = @(dns_get_record($host, \DNS_A)[0]['ip'] ?? null)) {
+                        $resolve($host, $ip);
+                    } elseif ($ip = @(dns_get_record($host, \DNS_AAAA)[0]['ipv6'] ?? null)) {
+                        $resolve($host, '['.$ip.']');
+                    }
+                }
+
+                if ($ip && IpUtils::checkIp($ip, $subnets ?? self::PRIVATE_SUBNETS)) {
+                    throw new TransportException(sprintf('Host "%s" is blocked for "%s".', $host, $info['url']));
+                }
+
+                $lastUrl = $info['url'];
+            }
+
             if ($info['primary_ip'] !== $lastPrimaryIp) {
-                if (IpUtils::checkIp($info['primary_ip'], $subnets ?? self::PRIVATE_SUBNETS)) {
+                if ($info['primary_ip'] && IpUtils::checkIp($info['primary_ip'], $subnets ?? self::PRIVATE_SUBNETS)) {
                     throw new TransportException(sprintf('IP "%s" is blocked for "%s".', $info['primary_ip'], $info['url']));
                 }
 
@@ -96,7 +121,7 @@ final class NoPrivateNetworkHttpClient implements HttpClientInterface, LoggerAwa
     /**
      * {@inheritdoc}
      */
-    public function stream($responses, float $timeout = null): ResponseStreamInterface
+    public function stream($responses, ?float $timeout = null): ResponseStreamInterface
     {
         return $this->client->stream($responses, $timeout);
     }
@@ -120,5 +145,12 @@ final class NoPrivateNetworkHttpClient implements HttpClientInterface, LoggerAwa
         $clone->client = $this->client->withOptions($options);
 
         return $clone;
+    }
+
+    public function reset()
+    {
+        if ($this->client instanceof ResetInterface) {
+            $this->client->reset();
+        }
     }
 }

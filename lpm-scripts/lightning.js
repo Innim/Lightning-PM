@@ -115,7 +115,7 @@ function ParallelService(service) {
 
 const lpm = {
     format: {
-        date: function (unixTimeSec) {
+        date: function (unixTimeSec, addTimeZone = true) {
             const date = new Date(unixTimeSec * 1000);
 
             const day = date.getDate().toString().padStart(2, '0');
@@ -125,7 +125,17 @@ const lpm = {
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
 
-            return `${day}.${month}.${year} ${hours}:${minutes}`;
+            let res = `${day}.${month}.${year} ${hours}:${minutes}`;
+            if (addTimeZone) {
+                const timeZoneOffset = date.getTimezoneOffset();
+                const sign = timeZoneOffset < 0 ? '+' : '-';
+                const absOffset = Math.abs(timeZoneOffset);
+                const tzHours = Math.floor(absOffset / 60).toString().padStart(2, '0');
+                const tzMinutes = (absOffset % 60).toString().padStart(2, '0');
+                res += ` GMT${sign}${tzHours}:${tzMinutes}`;
+            }
+
+            return res;
         }
     }
 }
