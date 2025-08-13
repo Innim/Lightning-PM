@@ -12,6 +12,8 @@
 namespace Symfony\Component\HttpClient\Internal;
 
 use Http\Client\Exception\NetworkException;
+use Http\Promise\Promise;
+use Psr\Http\Message\RequestInterface as Psr7RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -33,6 +35,9 @@ final class HttplugWaitLoop
     private $responseFactory;
     private $streamFactory;
 
+    /**
+     * @param \SplObjectStorage<ResponseInterface, array{Psr7RequestInterface, Promise}>|null $promisePool
+     */
     public function __construct(HttpClientInterface $client, ?\SplObjectStorage $promisePool, ResponseFactoryInterface $responseFactory, StreamFactoryInterface $streamFactory)
     {
         $this->client = $client;
@@ -41,13 +46,13 @@ final class HttplugWaitLoop
         $this->streamFactory = $streamFactory;
     }
 
-    public function wait(?ResponseInterface $pendingResponse, float $maxDuration = null, float $idleTimeout = null): int
+    public function wait(?ResponseInterface $pendingResponse, ?float $maxDuration = null, ?float $idleTimeout = null): int
     {
         if (!$this->promisePool) {
             return 0;
         }
 
-        $guzzleQueue = \GuzzleHttp\Promise\queue();
+        $guzzleQueue = \GuzzleHttp\Promise\Utils::queue();
 
         if (0.0 === $remainingDuration = $maxDuration) {
             $idleTimeout = 0.0;
@@ -74,7 +79,7 @@ final class HttplugWaitLoop
 
                     if ([, $promise] = $this->promisePool[$response] ?? null) {
                         unset($this->promisePool[$response]);
-                        $promise->resolve($this->createPsr7Response($response, true));
+                        $promise->resolve(self::createPsr7Response($this->responseFactory, $this->streamFactory, $this->client, $response, true));
                     }
                 } catch (\Exception $e) {
                     if ([$request, $promise] = $this->promisePool[$response] ?? null) {
@@ -109,22 +114,34 @@ final class HttplugWaitLoop
         return $count;
     }
 
-    public function createPsr7Response(ResponseInterface $response, bool $buffer = false): Psr7ResponseInterface
+    public static function createPsr7Response(ResponseFactoryInterface $responseFactory, StreamFactoryInterface $streamFactory, HttpClientInterface $client, ResponseInterface $response, bool $buffer): Psr7ResponseInterface
     {
-        $psrResponse = $this->responseFactory->createResponse($response->getStatusCode());
+        $responseParameters = [$response->getStatusCode()];
+
+        foreach ($response->getInfo('response_headers') as $h) {
+            if (11 <= \strlen($h) && '/' === $h[4] && preg_match('#^HTTP/\d+(?:\.\d+)? (?:\d\d\d) (.+)#', $h, $m)) {
+                $responseParameters[1] = $m[1];
+            }
+        }
+
+        $psrResponse = $responseFactory->createResponse(...$responseParameters);
 
         foreach ($response->getHeaders(false) as $name => $values) {
             foreach ($values as $value) {
-                $psrResponse = $psrResponse->withAddedHeader($name, $value);
+                try {
+                    $psrResponse = $psrResponse->withAddedHeader($name, $value);
+                } catch (\InvalidArgumentException $e) {
+                    // ignore invalid header
+                }
             }
         }
 
         if ($response instanceof StreamableInterface) {
-            $body = $this->streamFactory->createStreamFromResource($response->toStream(false));
+            $body = $streamFactory->createStreamFromResource($response->toStream(false));
         } elseif (!$buffer) {
-            $body = $this->streamFactory->createStreamFromResource(StreamWrapper::createResource($response, $this->client));
+            $body = $streamFactory->createStreamFromResource(StreamWrapper::createResource($response, $client));
         } else {
-            $body = $this->streamFactory->createStream($response->getContent(false));
+            $body = $streamFactory->createStream($response->getContent(false));
         }
 
         if ($body->isSeekable()) {
