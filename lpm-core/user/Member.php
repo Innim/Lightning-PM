@@ -118,6 +118,12 @@ class Member extends User
         return empty($list) ? null : $list[0];
     }
 
+    public static function loadPMForProject($projectId, $onlyNotLocked = false)
+    {
+        $list = self::loadListByInstance(LPMInstanceTypes::PM_FOR_PROJECT, $projectId, $onlyNotLocked);
+        return empty($list) ? null : $list[0];
+    }
+
     /**
      * Загружает список мастеров, назначенных конкретной задаче.
      * @return array<Member>
@@ -230,9 +236,14 @@ class Member extends User
         return self::saveMembers(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $userIds);
     }
 
-    public static function saveProjectForTester($projectId, $userId)
+    public static function saveTesterForProject($projectId, $userId)
     {
         return self::saveMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, [$userId]);
+    }
+
+    public static function saveProjectPM($projectId, $userId)
+    {
+        return self::saveMembers(LPMInstanceTypes::PM_FOR_PROJECT, $projectId, [$userId]);
     }
 
     public static function saveProjectSpecMaster($projectId, $userId, $labelId)

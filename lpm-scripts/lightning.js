@@ -257,6 +257,12 @@ let srv = {
         deleteTester: function ($projectId, onResult) {
             this.s._('deleteTester');
         },
+        setPM: function (projectId, userId, onResult) {
+            this.s._('setPM');
+        },
+        deletePM: function (projectId, onResult) {
+            this.s._('deletePM');
+        },
         getSumOpenedIssuesHours: function (projectId, onResult) {
             this.s._('getSumOpenedIssuesHours');
         },

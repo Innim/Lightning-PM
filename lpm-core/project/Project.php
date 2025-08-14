@@ -401,6 +401,11 @@ SQL;
     private $_tester;
 
     /**
+     * @var User
+     */
+    private $_pm;
+
+    /**
      * @var array<Member>
      */
     private $_specMasters = null;
@@ -608,6 +613,19 @@ SQL;
         }
 
         return $this->_tester;
+    }
+
+    /**
+     * Возвращает пользователя, назначенного PM проекта.
+     * Если пользователь не выставлен, он будет загружен.
+     * @return User|null
+     */
+    public function getPM() {
+        if ($this->_pm === null) {
+            $this->_pm = Member::loadPMForProject($this->id);
+        }
+
+        return $this->_pm;
     }
 
     /**

@@ -2,7 +2,7 @@ $(document).ready(
     function () {
         let projectId = $("#projectMembers input[name=projectId]").val();
 
-        function reloadOnSuccees(res) {
+        function reloadOnSuccess(res) {
             if (res.success) {
                 location.reload();
             } else {
@@ -18,11 +18,24 @@ $(document).ready(
             if (masterId == "0")
                 return event.preventDefault();
 
-            srv.project.setMaster(projectId, masterId, reloadOnSuccees);
+            srv.project.setMaster(projectId, masterId, reloadOnSuccess);
         });
 
         $('#removeMaster').click(function () {
-            srv.project.deleteMaster(projectId, reloadOnSuccees);
+            srv.project.deleteMaster(projectId, reloadOnSuccess);
+        });
+
+        $('#savePM').click(function (event) {
+            let pmId = $('#selectPM').val();
+
+            if (pmId == "0")
+                return event.preventDefault();
+
+            srv.project.setPM(projectId, pmId, reloadOnSuccess);
+        });
+
+        $('#removePM').click(function () {
+            srv.project.deletePM(projectId, reloadOnSuccess);
         });
 
         $('#btnSelectMember').click(function (event) {
@@ -32,11 +45,11 @@ $(document).ready(
             if (memberByDefaultId === "0") {
                 return event.preventDefault();
             }
-            srv.project.addIssueMemberDefault(projectId, memberByDefaultId, reloadOnSuccees);
+            srv.project.addIssueMemberDefault(projectId, memberByDefaultId, reloadOnSuccess);
         });
 
         $('#removeDefaultMember').click(function () {
-            srv.project.deleteMemberDefault(projectId, reloadOnSuccees);
+            srv.project.deleteMemberDefault(projectId, reloadOnSuccess);
         });
 
         // Добавляем тестера.
@@ -47,12 +60,12 @@ $(document).ready(
                 return event.preventDefault();
             }
 
-            srv.project.addTester(projectId, userId, reloadOnSuccees);
+            srv.project.addTester(projectId, userId, reloadOnSuccess);
         });
 
         // Удаляем тестера.
         $('#removeTester').click(function () {
-            srv.project.deleteTester(projectId, reloadOnSuccees);
+            srv.project.deleteTester(projectId, reloadOnSuccess);
         });
     }
 );

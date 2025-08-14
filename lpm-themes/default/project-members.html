@@ -113,6 +113,45 @@ foreach ($labels as $label) {
     </div>
 
     <!-- Выбор мастера проекта // Конец -->
+     
+    <!-- Выбор PM проекта // Начало -->
+    <h3 class="headersProjectsMembers">PM проекта</h3>
+    <div id="projectPM" class="project-members-selector">
+        <!-- <h4>По умолчанию</h4> -->
+        <?php
+        $pm = $project->getPM();
+        if (!empty($pm)): 
+        ?>
+        <ul>
+            <li value="<?=$pm->getName();?>">
+                <?=$pm->getName();?>
+                <?php if ($canEdit): ?>
+                <a href="javascript:;" id="removePM" class="remove-link">Удалить</a>
+                <?php endif; ?>
+            </li>
+        </ul>
+        <?php elseif ($canEdit): ?>
+        <form id="choosePM" class="row row-cols-lg-auto g-3 align-items-center">
+            <div class="col-12">
+                <label class="visually-hidden" for="inlineFormSelectPref">PM</label>
+                <select class="form-select" id="selectPM">
+                    <option value="0">PM не выбран</option>
+                    <?php foreach ($projectMembers as $member): ?>
+                    <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button id="savePM" type="button" class="btn btn-primary">Подтвердить</button>
+            </div>
+        </form>
+        <?php else: ?>
+        <p>Не выбран</p>
+        <?php endif; ?>
+    </div>
+
+    <!-- Выбор PM проекта // Конец -->
 
     <!-- Добавить исполнителя по умолчанию -->
     <h3 class="headersProjectsMembers">Исполнитель задач по умолчанию</h3>
