@@ -417,3 +417,9 @@ CREATE TABLE `lpm_badges` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';
 
 --NEXT
+
+ALTER TABLE `lpm_users_pref`
+ADD `seAddIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email о добавлении новой задачи для PM' AFTER `seIssueComment`,
+ADD `seEditIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменении задачи для PM' AFTER `seAddIssueForPM`,
+ADD `seIssueStateForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменения состояния задачи для PM' AFTER `seEditIssueForPM`,
+ADD `seIssueCommentForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оставлен комментарий к задаче для PM' AFTER `seIssueStateForPM`;

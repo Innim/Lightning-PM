@@ -296,7 +296,7 @@ let srv = {
     },
     profile: {
         s: new BaseService('ProfileService'),
-        emailPref: function (addIssue, editIssue, issueState, issueComment, onResult) {
+        emailPref: function (data, onResult) {
             this.s._('emailPref');
         },
         newPass: function (currentPass, newPass, onResult) {

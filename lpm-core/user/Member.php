@@ -124,6 +124,28 @@ class Member extends User
         return empty($list) ? null : $list[0];
     }
 
+    public static function isPMForAnyProject($userId)
+    {
+        $hash = [
+            'SELECT' => 1,
+            'FROM' => LPMTables::MEMBERS,
+            'WHERE' => [
+                'instanceType' => LPMInstanceTypes::PM_FOR_PROJECT,
+                'userId' => $userId
+            ],
+            'LIMIT' => 1
+        ];
+
+        $res = self::getDB()->queryb($hash);
+
+        if (!$res) {
+            throw new Exception('Check PM for any project failed', \GMFramework\ErrorCode::LOAD_DATA);
+        }
+
+        $row = $res->fetch_row();
+        return !empty($row) && (int)$row[0] == 1;
+    }
+
     /**
      * Загружает список мастеров, назначенных конкретной задаче.
      * @return array<Member>

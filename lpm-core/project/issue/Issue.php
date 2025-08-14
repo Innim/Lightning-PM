@@ -556,15 +556,49 @@ SQL;
         );
 
         // отправка оповещений
-        $members = $issue->getMemberIds();
-        array_push($members, $issue->authorId);
-        
-        EmailNotifier::getInstance()->sendMail2Allowed(
+        Issue::notifyByEmail(
+            $issue,
             'Удалена задача "' . $issue->name . '"',
             $user->getName() . ' удалил задачу "' . $issue->name .  '"',
-            $members,
             EmailNotifier::PREF_ISSUE_STATE
         );
+    }
+
+    public static function notifyByEmail(Issue $issue, $subject, $text, $basicPref, $addAuthor = true)
+    {
+        $allRecipients = [];
+
+        // отправляем оповещение участникам и автору задачи
+        $members = $issue->getMemberIds();
+        if ($addAuthor && !in_array($issue->authorId, $members)) {
+            $members[] = $issue->authorId;
+        }
+        
+        if (!empty($members)) {
+            $sent = EmailNotifier::getInstance()->sendMail2Allowed(
+                $subject,
+                $text,
+                $members,
+                $basicPref
+            );
+         
+            $allRecipients = array_merge($allRecipients, $sent);
+        }
+
+        // отправляем оповещение PM проекта
+        $project = $issue->getProject();
+        $pm = $project->getPM();
+        if ($pm != null && !in_array($pm->getID(), $allRecipients)) {
+            $sent = EmailNotifier::getInstance()->sendMail2Allowed(
+                $subject,
+                $text,
+                [$pm->getID()],
+                $basicPref,
+                EmailNotifier::PREF_ROLE_PM
+            );
+
+            $allRecipients = array_merge($allRecipients, $sent);
+        }
     }
 
     /**
@@ -670,10 +704,10 @@ SQL;
                 // TODO: оповестить в slaсk если вернули в работу
                 break;
             case Issue::STATUS_WAIT:
-                $subject = 'Задача "' . $issue->name . '"ожидает проверки';
+                $subject = 'Задача "' . $issue->name . '" ожидает проверки';
                 $text = empty($user) ?
                     'Задача "' . $issue->name . '" отправлена на проверку' :
-                    $user->getName() . ' поставил задачу "' . $issue->name . '"'.  '" на проверку';
+                    $user->getName() . ' отправил задачу "' . $issue->name . '" на проверку';
 
                 $slack->notifyIssueForTest($issue);
                 break;
@@ -681,15 +715,11 @@ SQL;
 
         // Почта
         if (!empty($subject) && !empty($text)) {
-            $members = $issue->getMemberIds();
-            $members[] = $issue->authorId;
-
             $text .= "\n" . 'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL();
-
-            EmailNotifier::getInstance()->sendMail2Allowed(
+            Issue::notifyByEmail(
+                $issue,
                 $subject,
                 $text,
-                $members,
                 EmailNotifier::PREF_ISSUE_STATE
             );
         }

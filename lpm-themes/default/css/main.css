@@ -342,7 +342,7 @@ form > ol > li div.hint {
     display: block;
     font-size: .8em;
 }
-form ol.form-fields > li:last-child {
+form ol.form-fields > li.buttons-line{
 	margin-top: 25px;
 }
 .priority-val {

@@ -51,14 +51,13 @@ class CommentsManager
             $this->slackNotificationCommentTesterOrMembers($issue, $comment);
         }
 
-        $recipients = array_unique(array_merge($memberIds, [$issue->authorId]));
-        EmailNotifier::getInstance()->sendMail2Allowed(
+        Issue::notifyByEmail(
+            $issue,
             'Новый комментарий к задаче "' . $issue->name . '"',
             $user->getName() . ' оставил комментарий к задаче "' .
             $issue->name .  '":' . "\n" .
             $comment->getCleanText() . "\n\n" .
             'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
-            $recipients,
             EmailNotifier::PREF_ISSUE_COMMENT
         );
 

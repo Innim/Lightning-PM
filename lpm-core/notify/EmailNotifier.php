@@ -18,6 +18,8 @@ class EmailNotifier extends LPMBaseObject
     const PREF_EDIT_ISSUE    = 2;
     const PREF_ISSUE_STATE   = 3;
     const PREF_ISSUE_COMMENT = 4;
+
+    const PREF_ROLE_PM = 1000;
     
     // TODO: переделать флаг чтобы отключал только оповещения, но не запросы восстановления пароля например
     /**
@@ -51,12 +53,16 @@ class EmailNotifier extends LPMBaseObject
      *
      * @param array $userIds
      * @param int $pref одна из констант <code>EmailNotifier::PREF_*</code>
+     * @param bool $exceptMe исключать ли текущего пользователя из списка
+     * @param int $prefRole роль, для которой проверяется настройка $pref. 
+     *                      Одна из констант <code>EmailNotifier::PREF_ROLE_*</code> 
+     * @return User[]
      */
-    public function getUsers4Send($userIds, $pref, $exceptMe = true)
+    public function getUsers4Send($userIds, $pref, $exceptMe = true, $prefRole = 0)
     {
         $userIds = array_unique($userIds);
         
-        $prefField = $this->getPrefField($pref);
+        $prefField = $this->getPrefField($pref, $prefRole);
         
         if ($exceptMe && LPMAuth::$current) {
             ArrayUtils::remove($userIds, LPMAuth::$current->getUserId());
@@ -76,28 +82,44 @@ class EmailNotifier extends LPMBaseObject
      *
      * @param string $subject
      * @param string $text
-     * @param array $users
+     * @param User[] $users
      * @param int $pref одна из констант <code>EmailNotifier::PREF_*</code>
+     * @param int $prefRole роль, для которой проверяется настройка $pref.
+     *                      Одна из констант <code>EmailNotifier::PREF_ROLE_*</code>
+     * @return int[] список идентификаторов пользователей, которым отправлено письмо
      */
-    public function sendMail2Allowed($subject, $text, $userIds, $pref)
+    public function sendMail2Allowed($subject, $text, $userIds, $pref, $prefRole = 0)
     {
-        return $this->sendMail2Users($subject, $text, $this->getUsers4Send($userIds, $pref));
+        return $this->sendMail2Users($subject, $text, $this->getUsers4Send($userIds, $pref, true, $prefRole));
     }
     
+    /**
+     * Отправляет письмо указанным пользователям.
+     * 
+     * @param string $subject
+     * @param string $text
+     * @param User[] $users
+     * @return int[] список идентификаторов пользователей, которым отправлено письмо
+     */
     public function sendMail2Users($subject, $text, $users)
     {
-        if (!empty($users)) {
-            $text .= "\n\n--\n" . LPMOptions::getInstance()->emailSubscript;
-            
-            foreach ($users as /*@var $user User */ $user) {
-                $this->send(
-                    $user->email,
-                    $user->getName(),
-                    $subject,
-                    $text
-                );
-            }
+        if (empty($users)) {
+            return [];
         }
+
+        $sentToIds = [];
+        $text .= "\n\n--\n" . LPMOptions::getInstance()->emailSubscript;
+        foreach ($users as $user) {
+            $this->send(
+                $user->email,
+                $user->getName(),
+                $subject,
+                $text
+            );
+            $sentToIds[] = $user->getID();
+        }
+
+        return $sentToIds;
     }
     
     public function send($toEmail, $toName, $subject, $messText)
@@ -118,26 +140,55 @@ class EmailNotifier extends LPMBaseObject
                 GMLog::getInstance()->logsPath . '/emails/' .
                 DateTimeUtils::mysqlDate(null, false) . '-' .
                 DateTimeUtils::date('H-i-s') . '.html',
-                $mess->getSubject() . "\r\n" .
+                "Send email\r\n" .
+                'To: ' . $mess->getToName() . ' <' . $mess->getToEmail() . ">\r\n" .
+                'Subject: ' . $mess->getSubject() . "\r\n\r\n" .
                 $mess->getMessage(),
                 'email'
             );
-            //	return true;
+
+            if (defined('EMAIL_NOTIFY_LOG_ONLY_IN_DEBUG') && EMAIL_NOTIFY_LOG_ONLY_IN_DEBUG) {
+                // в дебаге не отправляем, а только логируем
+                return true;
+            }
         }
 
         return $this->_mail->send($mess);
     }
     
-    private function getPrefField($pref)
+    private function getPrefField($pref, $prefRole)
     {
-        //$field = '';
+        $fieldBase = '';
+        $suffix = '';
+
         switch ($pref) {
-            case self::PREF_ADD_ISSUE: return 'seAddIssue';
-            case self::PREF_EDIT_ISSUE: return 'seEditIssue';
-            case self::PREF_ISSUE_STATE: return 'seIssueState';
-            case self::PREF_ISSUE_COMMENT: return 'seIssueComment';
+            case self::PREF_ADD_ISSUE: {
+                $fieldBase = 'seAddIssue';
+                break;
+            }
+            case self::PREF_EDIT_ISSUE: {
+                $fieldBase = 'seEditIssue';
+                break;
+            }
+            case self::PREF_ISSUE_STATE: {
+                $fieldBase = 'seIssueState';
+                break;
+            }
+            case self::PREF_ISSUE_COMMENT: {
+                $fieldBase = 'seIssueComment';
+                break;
+            }
             default: return 1;
         }
-        //return '`' . $field . '`';
+
+        switch ($prefRole) {
+            case self::PREF_ROLE_PM:
+                $suffix = 'ForPM';
+                break;
+            default:
+                $suffix = '';
+        }
+
+        return $fieldBase . $suffix;
     }
 }

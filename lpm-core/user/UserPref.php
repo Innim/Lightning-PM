@@ -6,6 +6,10 @@ class UserPref extends LPMBaseObject
     public $seEditIssue    = false;
     public $seIssueState   = false;
     public $seIssueComment = false;
+    public $seAddIssueForPM = false;
+    public $seEditIssueForPM = false;
+    public $seIssueStateForPM = false;
+    public $seIssueCommentForPM = false;
     
     public function __construct()
     {
@@ -16,7 +20,11 @@ class UserPref extends LPMBaseObject
             'seAddIssue',
             'seEditIssue',
             'seIssueState',
-            'seIssueComment'
+            'seIssueComment',
+            'seAddIssueForPM',
+            'seEditIssueForPM',
+            'seIssueStateForPM',
+            'seIssueCommentForPM'
         );
     }
 }
