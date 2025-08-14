@@ -54,10 +54,7 @@ class CommentsManager
         Issue::notifyByEmail(
             $issue,
             'Новый комментарий к задаче "' . $issue->name . '"',
-            $user->getName() . ' оставил комментарий к задаче "' .
-            $issue->name .  '":' . "\n" .
-            $comment->getCleanText() . "\n\n" .
-            'Просмотреть все комментарии можно по ссылке ' . $issue->getConstURL(),
+            IssueEmailFormatter::newCommentText($comment, $issue, $user),
             EmailNotifier::PREF_ISSUE_COMMENT
         );
 

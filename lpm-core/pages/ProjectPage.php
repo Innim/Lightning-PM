@@ -683,10 +683,8 @@ class ProjectPage extends LPMPage
                     Issue::updateImgsCounter($issueId, $uploader->getLoadedCount());
                 }
                 
-                $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
-                
                 // отсылаем оповещения
-                $this->notifyAboutIssueChange($issue, $issueURL, $editMode);
+                $this->notifyAboutIssueChange($issue, $editMode);
 
                 Project::updateIssuesCount($issue->projectId);
 
@@ -702,6 +700,7 @@ class ProjectPage extends LPMPage
                 // Очищаем сохраненные данные
                 $this->_issueInput = null;
             
+                $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
                 LightningEngine::go2URL($issueURL);
             }
         }
@@ -919,25 +918,22 @@ class ProjectPage extends LPMPage
         }
     }
 
-    private function notifyAboutIssueChange(Issue $issue, $issueURL, $editMode)
+    private function notifyAboutIssueChange(Issue $issue, $editMode)
     {
         $engine = $this->_engine;
+        $user = $engine->getUser();
         if ($editMode) {
             Issue::notifyByEmail(
                 $issue,
                 'Изменена задача "' . $issue->name . '"',
-                $engine->getUser()->getName() . ' изменил задачу "' .
-                $issue->name .  '", в которой Вы принимаете участие' . "\n" .
-                'Просмотреть задачу можно по ссылке ' .	$issueURL,
+                IssueEmailFormatter::issueChangedText($issue, $user),
                 EmailNotifier::PREF_EDIT_ISSUE
             );
         } else {
             Issue::notifyByEmail(
                 $issue,
                 'Добавлена задача "' . $issue->name . '"',
-                $engine->getUser()->getName() . ' добавил задачу "' .
-                $issue->name .  '", в которой Вы назначены исполнителем' . "\n" .
-                'Просмотреть задачу можно по ссылке ' .	$issueURL,
+                IssueEmailFormatter::issueAddedText($issue, $user),
                 EmailNotifier::PREF_ADD_ISSUE,
                 false
             );

@@ -559,7 +559,7 @@ SQL;
         Issue::notifyByEmail(
             $issue,
             'Удалена задача "' . $issue->name . '"',
-            $user->getName() . ' удалил задачу "' . $issue->name .  '"',
+            IssueEmailFormatter::issueDeletedText($issue, $user),
             EmailNotifier::PREF_ISSUE_STATE
         );
     }
@@ -689,25 +689,18 @@ SQL;
         switch ($issue->status) {
             case Issue::STATUS_COMPLETED:
                 $subject = 'Завершена задача "' . $issue->name . '"';
-                $text = empty($user) ?
-                    'Задача "' . $issue->name . '" завершена' :
-                    $user->getName() . ' отметил задачу "' . $issue->name . '" как завершённую';
+                $text = IssueEmailFormatter::issueCompletedText($issue, $user);
 
                 $slack->notifyIssueCompleted($issue);
                 break;
             case Issue::STATUS_IN_WORK:
                 $subject = 'Открыта задача "' . $issue->name . '"';
-                $text =  empty($user) ?
-                    'Задача "' . $issue->name . '" снова открыта' :
-                    $user->getName() . ' заново открыл задачу "' . $issue->name . '"';
-                
+                $text = IssueEmailFormatter::issueReopenedText($issue, $user);
                 // TODO: оповестить в slaсk если вернули в работу
                 break;
             case Issue::STATUS_WAIT:
                 $subject = 'Задача "' . $issue->name . '" ожидает проверки';
-                $text = empty($user) ?
-                    'Задача "' . $issue->name . '" отправлена на проверку' :
-                    $user->getName() . ' отправил задачу "' . $issue->name . '" на проверку';
+                $text = IssueEmailFormatter::issueSendForTestText($issue, $user);
 
                 $slack->notifyIssueForTest($issue);
                 break;
@@ -715,7 +708,6 @@ SQL;
 
         // Почта
         if (!empty($subject) && !empty($text)) {
-            $text .= "\n" . 'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL();
             Issue::notifyByEmail(
                 $issue,
                 $subject,
