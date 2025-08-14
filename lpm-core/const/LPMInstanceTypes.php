@@ -65,4 +65,9 @@ class LPMInstanceTypes
      * Это тестер, назначаемый по тегу.
      */
     const PROJECT_FOR_SPEC_TESTER = 8;
+
+    /**
+     * Instance PM для проекта
+     */
+    const PM_FOR_PROJECT = 9;
 }

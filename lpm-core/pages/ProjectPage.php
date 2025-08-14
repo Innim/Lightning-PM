@@ -922,25 +922,24 @@ class ProjectPage extends LPMPage
     private function notifyAboutIssueChange(Issue $issue, $issueURL, $editMode)
     {
         $engine = $this->_engine;
-        $members = $issue->getMemberIds();
         if ($editMode) {
-            $members[] = $issue->authorId; // TODO фильтр, чтобы не добавлялся дважды
-            EmailNotifier::getInstance()->sendMail2Allowed(
+            Issue::notifyByEmail(
+                $issue,
                 'Изменена задача "' . $issue->name . '"',
                 $engine->getUser()->getName() . ' изменил задачу "' .
                 $issue->name .  '", в которой Вы принимаете участие' . "\n" .
                 'Просмотреть задачу можно по ссылке ' .	$issueURL,
-                $members,
                 EmailNotifier::PREF_EDIT_ISSUE
             );
         } else {
-            EmailNotifier::getInstance()->sendMail2Allowed(
+            Issue::notifyByEmail(
+                $issue,
                 'Добавлена задача "' . $issue->name . '"',
                 $engine->getUser()->getName() . ' добавил задачу "' .
                 $issue->name .  '", в которой Вы назначены исполнителем' . "\n" .
                 'Просмотреть задачу можно по ссылке ' .	$issueURL,
-                $members,
-                EmailNotifier::PREF_ADD_ISSUE
+                EmailNotifier::PREF_ADD_ISSUE,
+                false
             );
         }
     }

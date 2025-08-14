@@ -28,7 +28,7 @@ class ProfilePage extends LPMPage
             return false;
         }
         
-        $engine = LightningEngine::getInstance();
+        $engine = $this->_engine;
         
         switch ($engine->getParams()->suid) {
             case self::SUID_EXIT: {
@@ -36,21 +36,10 @@ class ProfilePage extends LPMPage
                 LightningEngine::go2URL();
             } break;
             default: {
-                // просмотр профиля
-                /*if (isset( $_POST['form'])) {
-                  //var_dump( $_SERVER );
-                  if ($_POST['form'] == 'emailPref') {
-                    $sql = "UPDATE `%s` SET " .
-                            "`seAddIssue` = '" . (int)isset( $_POST['seAddIssue']) . "', " .
-                            "`seEditIssue` = '" . (int)isset( $_POST['seEditIssue']) . "', " .
-                            "`seIssueState` = '" . (int)isset( $_POST['seIssueState']) . "', " .
-                            "`seIssueComment` = '" . (int)isset( $_POST['seIssueComment']) . "' " .
-                           "WHERE `userId` = '" . $this->_engine->getAuth()->getUserId() . "'";
-                    if (!$this->_db->queryt( $sql, LPMTables::USERS_PREF ))
-                        $this->_engine->addError( 'Ошибка записи в базу' );
-                    //else LightningEngine::go2URL( $this->getUrl() . '#settings' );
-                  }
-                }*/
+                $user = $engine->getUser();
+
+                $this->addTmplVar('user', $user);
+                $this->addTmplVar('isPM', Member::isPMForAnyProject($user->getID()));
             }
         }
         

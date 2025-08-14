@@ -368,7 +368,7 @@ class ProjectService extends LPMBaseService
             return $this->error("Тестировщик уже добавлен");
         }
 
-        Member::saveProjectForTester($projectId, $userId);
+        Member::saveTesterForProject($projectId, $userId);
 
         $this->add2Answer("projectId", $projectId);
         $this->add2Answer("userId", $userId);
@@ -388,6 +388,53 @@ class ProjectService extends LPMBaseService
 
         if (!Member::deleteMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId)) {
             return $this->error("Ошибка удаления тестера.");
+        }
+
+        return $this->answer();
+    }
+
+    public function setPM($projectId, $userId)
+    {
+        $projectId = (float)$projectId;
+        $userId = (float)$userId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        // проверим, что существует такой проект
+        if (!Project::loadById($projectId)) {
+            return $this->error('Нет такого проекта');
+        }
+
+        if (empty($userId)) {
+            return $this->error("Неверные входные параметры");
+        }
+
+        if (Member::hasMember(LPMInstanceTypes::PM_FOR_PROJECT, $projectId, $userId)) {
+            return $this->error("PM уже добавлен");
+        }
+
+        Member::saveProjectPM($projectId, $userId);
+
+        $this->add2Answer("projectId", $projectId);
+        $this->add2Answer("userId", $userId);
+
+        return $this->answer();
+    }
+
+    public function deletePM($projectId)
+    {
+        $projectId = (int)$projectId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        if (!Member::deleteMembers(LPMInstanceTypes::PM_FOR_PROJECT, $projectId)) {
+            return $this->error("Ошибка удаления PM.");
         }
 
         return $this->answer();

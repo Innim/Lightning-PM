@@ -3,16 +3,32 @@ require_once(dirname(__FILE__) . '/../init.inc.php');
 
 class ProfileService extends LPMBaseService
 {
-    public function emailPref($addIssue, $editIssue, $issueState, $issueComment)
+    public function emailPref($data)
     {
-        $sql = "UPDATE `%s` SET " .
-                "`seAddIssue` = '" . (int)(boolean)$addIssue . "', " .
-                "`seEditIssue` = '" . (int)(boolean)$editIssue . "', " .
-                "`seIssueState` = '" . (int)(boolean)$issueState . "', " .
-                "`seIssueComment` = '" . (int)(boolean)$issueComment . "' " .
-                "WHERE `userId` = '" . $this->_auth->getUserId() . "'";
+        $allowed = [
+            'seAddIssue', 'seEditIssue', 'seIssueState', 'seIssueComment',
+            'seAddIssueForPM', 'seEditIssueForPM', 'seIssueStateForPM', 'seIssueCommentForPM'
+        ];
+
+        $fieldsForUpdate = [];
+        foreach ($data as $field => $value) {
+            if (in_array($field, $allowed)) {
+                $fieldsForUpdate[$field] = (int)(boolean)$value;
+            } else {
+                return $this->error('Недопустимое поле: ' . $field);
+            }
+        }
+
+        $db = $this->_db;
+        $userId = $this->getUserId();
+
+        $res = $db->queryb([
+            'UPDATE' => LPMTables::USERS_PREF,
+            'SET' => $fieldsForUpdate,
+            'WHERE' => ['userId' => $userId]
+        ]);
         
-        if (!$this->_db->queryt($sql, LPMTables::USERS_PREF)) {
+        if (!$res) {
             return $this->error('Ошибка записи в БД');
         }
         

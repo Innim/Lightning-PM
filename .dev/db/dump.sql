@@ -302,6 +302,10 @@ CREATE TABLE `lpm_users_pref` (
   `seEditIssue` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменении задачи',
   `seIssueState` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'оповещать на email об изменения состояния задачи',
   `seIssueComment` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'оставлен комментарий к задаче',
+  `seAddIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email о добавлении новой задачи для PM',
+  `seEditIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменении задачи для PM',
+  `seIssueStateForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменения состояния задачи для PM',
+  `seIssueCommentForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оставлен комментарий к задаче для PM',
   PRIMARY KEY (`userId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='настройки пользователя';
 

@@ -257,6 +257,12 @@ let srv = {
         deleteTester: function ($projectId, onResult) {
             this.s._('deleteTester');
         },
+        setPM: function (projectId, userId, onResult) {
+            this.s._('setPM');
+        },
+        deletePM: function (projectId, onResult) {
+            this.s._('deletePM');
+        },
         getSumOpenedIssuesHours: function (projectId, onResult) {
             this.s._('getSumOpenedIssuesHours');
         },
@@ -290,7 +296,7 @@ let srv = {
     },
     profile: {
         s: new BaseService('ProfileService'),
-        emailPref: function (addIssue, editIssue, issueState, issueComment, onResult) {
+        emailPref: function (data, onResult) {
             this.s._('emailPref');
         },
         newPass: function (currentPass, newPass, onResult) {

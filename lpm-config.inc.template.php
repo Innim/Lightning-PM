@@ -113,3 +113,5 @@ define('MAILGUN_ENDPOINT', '');
 
 // Оповещать по Email
 define('EMAIL_NOTIFY_ENABLED', true);
+// В дебаг-режиме не отправлять письма, а только писать в лог
+define('EMAIL_NOTIFY_LOG_ONLY_IN_DEBUG', false);
