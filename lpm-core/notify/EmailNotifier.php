@@ -133,7 +133,7 @@ class EmailNotifier extends LPMBaseObject
             $messText,
             $toEmail,
             $toName,
-            true
+            false
         );
         if (LPMGlobals::isDebugMode()) {
             GMLog::getInstance()->logIt(
