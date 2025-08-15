@@ -71,6 +71,15 @@
         <article id="userSettings" class="hidden-state">
             <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
                 <h4>Настройки оповещений по email</h4>
+
+                <h5 class="mt-4">
+                    Оповещения по связанным задачам
+
+                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Присылаются для задач, в которых Вы фигурируете как исполнитель, тестировщик, мастер или были её автором." class="ms-1">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </span>
+                </h5>
+
                 <div class="alert alert-success info-message" role="alert"></div>
                 <?php
                 $pref = $user->pref;
@@ -101,7 +110,12 @@
                 </div>
 
                 <?php if ($isPM): ?>
-                <h4 class="mt-4">Настройки оповещений как PM</h4>
+                <h5 class="mt-4" title="">
+                    Оповещения по задачам проекта для PM
+                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Присылаются для проектов, в которых Вы назначены как PM" class="ms-1">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </span>
+                </h5>
 
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" role="switch" id="seAddIssueForPM" name="seAddIssueForPM" 
@@ -126,7 +140,7 @@
                 <?php endif; ?>
 
                 <input type="hidden" name="form" value="emailPref" />
-                <p class="save-line">
+                <p class="save-line mt-4">
                     <button class="btn btn-primary" type="submit">Сохранить</button>
                     <button class="btn btn-secondary" type="reset">Отмена</button>
                 </p>
