@@ -32,11 +32,9 @@ class ParsedownExt extends Parsedown
         $this->_userLinkRegex = '/^\[(@.*?)]\(user:([0-9]+)\)/';
 
         array_unshift($this->InlineTypes['['], 'IssueLink');
-        $host = LightningEngine::getHost();
-        $protocols = ['http', 'https'];
 
-        $this->_taskLinkRegex = '/^\[([^\]]*)\]\(((?:'.
-                implode('|', $protocols).'):\/\/'.$host.'\/project\/([a-zA-Z0-9_-]*)\/issue\/(\d*)\/?(?:#(?:comment-\d+)?)?)\)/';
+        $issueUrlPattern = OwnUrlHelper::getIssueUrlPattern();
+        $this->_taskLinkRegex = '/^\[([^\]]*)\]\((' . $issueUrlPattern . ')\)/';
     }
 
     protected function inlineStrong($Excerpt)

@@ -89,9 +89,14 @@ $(document).ready(
             }
         });
 
-        setupAutoComplete(['#issueForm textarea[name=desc]',
+        const textInputs = [
+            '#issueForm textarea[name=desc]',
             'form.add-comment textarea[name=commentText]',
-            'form.pass-test #passTestComment textarea.comment-text-field']);
+            'form.pass-test #passTestComment textarea.comment-text-field'
+        ];
+
+        setupAutoComplete(textInputs);
+        setupPasteTransformer(textInputs);
 
         // Настройка формы -- END
 
@@ -264,6 +269,53 @@ function createIssuesAutoComplete() {
                 });
         },
     };
+}
+
+function setupPasteTransformer(inputSelectors) {
+    document.addEventListener('paste', function (event) {
+        const target = event.target;
+
+        if (!inputSelectors.some(sel => target.matches(sel))) {
+            return;
+        }
+
+        const clipboardData = event.clipboardData || window.clipboardData;
+        const pastedText = clipboardData.getData('text');
+        if (pastedText.length === 0) return;
+
+        const pattern = `^${lpmOptions.issueUrlPattern}$`;
+
+        const trimmed = pastedText.trim();
+        const match = trimmed.match(pattern);
+        if (match) {
+            event.preventDefault();
+
+            const start = pastedText.indexOf(trimmed);
+            const before = pastedText.substring(0, start);
+            const after = pastedText.substring(start + trimmed.length);
+            const markdownLink = `[#${match[2]}](${trimmed})`;
+            insertTextAtCursor(target, before + markdownLink + after);
+        }
+    });
+}
+
+function insertTextAtCursor(element, text) {
+  if (element.selectionStart !== undefined) {
+    const start = element.selectionStart;
+    const end = element.selectionEnd;
+    const value = element.value;
+
+    element.value = value.slice(0, start) + text + value.slice(end);
+    element.selectionStart = element.selectionEnd = start + text.length;
+  } 
+  else if (element.isContentEditable) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(document.createTextNode(text));
+    range.collapse(false);
+  }
 }
 
 function DropDown(el) {
