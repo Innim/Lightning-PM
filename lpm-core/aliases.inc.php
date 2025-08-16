@@ -298,6 +298,14 @@ function lpm_print_scrum_board_filter()
 }
 
 /**
+ * Выводит шаблон списка снимков Scrum доски.
+ */
+function lpm_print_scrum_board_snapshots_list(Project $project, $snapshots)
+{
+    return PagePrinter::scrumBoardSnapshotsList($project, $snapshots);
+}
+
+/**
  * Выводит шаблон компонента фильтров списка задач.
  */
 function lpm_print_issue_list_filters()

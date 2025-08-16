@@ -1375,13 +1375,18 @@ blockquote > p {
 	margin-right: 5px;
  }
 
-#scrumSnapshot .scrum-snapshot-list {
-	clear: both;
+.scrum-snapshot-list .card {
+    border-left: 4px solid transparent;
 }
 
-#scrumSnapshot .scrum-snapshot-list li {
-	margin-top: 10px;
-	margin-bottom: 10px;
+.scrum-snapshot-list .card-body {
+    padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .scrum-snapshot-list .card-body {
+        padding: 1rem;
+    }
 }
 
 .issue-name-quick-actions {

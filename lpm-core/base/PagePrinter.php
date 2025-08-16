@@ -191,6 +191,14 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает шаблон списка снимков Scrum доски.
+     */
+    public static function scrumBoardSnapshotsList(Project $project, $snapshots)
+    {
+        PageConstructor::includePattern('scrum-board-snapshots-list', compact('project', 'snapshots'));
+    }
+
+    /**
      * Распечатывает шаблон фильтра в списке задач.
      */
     public static function issueListFilter()
