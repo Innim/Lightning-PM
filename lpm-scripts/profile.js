@@ -91,39 +91,35 @@ profilePage.saveNewPass = function () {
 profilePage.saveEmailPref = function () {
     preloader.show();
 
+    const $form = $("#userSettings form");
+    const emailPrefs = ['seAddIssue', 'seEditIssue', 'seIssueState', 'seIssueComment',
+        'seAddIssueForPM', 'seEditIssueForPM', 'seIssueStateForPM', 'seIssueCommentForPM'];
+
+    const data = {};
+    emailPrefs.forEach(pref => {
+        const $checkbox = $(`input[name=${pref}]`, $form);
+        if ($checkbox.length > 0) {
+            data[pref] = $checkbox.is(':checked');
+        }
+    });
+
     srv.profile.emailPref(
-        $("#userSettings form input[name=seAddIssue]").is(':checked'),
-        $("#userSettings form input[name=seEditIssue]").is(':checked'),
-        $("#userSettings form input[name=seIssueState]").is(':checked'),
-        $("#userSettings form input[name=seIssueComment]").is(':checked'),
+        data,
         function (res) {
-            //btn.disabled = false;
             preloader.hide();
             if (res.success) {
-                if ($("#userSettings form input[name=seAddIssue]").is(':checked'))
-                    $("#userSettings form input[name=seAddIssue]").attr('checked', 'checked');
-                else
-                    $("#userSettings form input[name=seAddIssue]").removeAttr('checked');
-
-                if ($("#userSettings form input[name=seEditIssue]").is(':checked'))
-                    $("#userSettings form input[name=seEditIssue]").attr('checked', 'checked');
-                else
-                    $("#userSettings form input[name=seEditIssue]").removeAttr('checked');
-
-                if ($("#userSettings form input[name=seIssueState]").is(':checked'))
-                    $("#userSettings form input[name=seIssueState]").attr('checked', 'checked');
-                else
-                    $("#userSettings form input[name=seIssueState]").removeAttr('checked');
-
-                if ($("#userSettings form input[name=seIssueComment]").is(':checked'))
-                    $("#userSettings form input[name=seIssueComment]").attr('checked', 'checked');
-                else
-                    $("#userSettings form input[name=seIssueComment]").removeAttr('checked');
+                emailPrefs.forEach(pref => {
+                    const $checkbox = $(`input[name=${pref}]`, $form);
+                    if ($checkbox.is(':checked')) {
+                        $checkbox.attr('checked', 'checked');
+                    } else {
+                        $checkbox.removeAttr('checked');
+                    }
+                });
 
                 messages.info('Сохранено');
             } else {
                 srv.err(res);
-                $("#userSettings form button[type=submit]").click();
             }
         }
     );

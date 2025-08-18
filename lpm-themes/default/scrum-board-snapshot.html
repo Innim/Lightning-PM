@@ -16,21 +16,7 @@
         <?lpm_print_header();?>
     </h1>
     <?php if (!isset($snapshot)): ?>
-    <h3>SCRUM архив:</h3>
-    <div class="scrum-snapshot-list">
-        <?php if (empty($snapshots)): ?>
-        <p class="no-items">Нет записей</p>
-        <?php else:?>
-        <ul>
-            <?php foreach ($snapshots as $snapshot): ?>
-            <li>
-                <b><?=$snapshot->getCreateDate()?></b> <a href="<?=$snapshot->getSnapshotUrl();?>">Scrum snapshot
-                    #<?=$snapshot->idInProject?></a> создан пользователем `<i><?=$snapshot->getCreatorShortName()?>`</i>
-            </li>
-            <?php endforeach; ?>
-        </ul>
-        <?php endif;?>
-    </div>
+    <?php lpm_print_scrum_board_snapshots_list($project, $snapshots); ?>
     <?php else: ?>        
         <h3 class="text-title-snapshot">
             <a class="link-title-snapshot" href="<?=$snapshot->getUrl()?>">SCRUM архив:</a>

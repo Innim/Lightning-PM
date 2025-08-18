@@ -10,8 +10,27 @@ $(document).ready(
         issuePage.scrumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
 
-        $('#issuesList .member-list a').click(function (e) {
-            issuePage.showIssuesByUser($(e.currentTarget).data('memberId'));
+        $(document).on('click', '#showIssues4MeLink', function () {
+            states.setState('only-my');
+        });
+
+        $(document).on('click', '#showIssues4AllLink', function () {
+            // TODO: should remake this one
+            issuePage.resetFilter();
+        });
+
+        $(document).on('click', '#showLastCreated', function () {
+            states.setState('last-created');
+        });
+
+        $(document).on('click', '#sortDefault', function () {
+            // TODO: should remake this one
+            issuePage.sortDefault();
+        });
+
+        $(document).on('click', '#issuesList .member-list a', function (e) {
+            const memberId = $(e.currentTarget).data('memberId');
+            states.setState('by-user:' + memberId);
         });
 
         $(".comment-input-text-tabs").tabs({
@@ -70,9 +89,14 @@ $(document).ready(
             }
         });
 
-        setupAutoComplete(['#issueForm textarea[name=desc]',
+        const textInputs = [
+            '#issueForm textarea[name=desc]',
             'form.add-comment textarea[name=commentText]',
-            'form.pass-test #passTestComment textarea.comment-text-field']);
+            'form.pass-test #passTestComment textarea.comment-text-field'
+        ];
+
+        setupAutoComplete(textInputs);
+        setupPasteTransformer(textInputs);
 
         // Настройка формы -- END
 
@@ -247,6 +271,53 @@ function createIssuesAutoComplete() {
     };
 }
 
+function setupPasteTransformer(inputSelectors) {
+    document.addEventListener('paste', function (event) {
+        const target = event.target;
+
+        if (!inputSelectors.some(sel => target.matches(sel))) {
+            return;
+        }
+
+        const clipboardData = event.clipboardData || window.clipboardData;
+        const pastedText = clipboardData.getData('text');
+        if (pastedText.length === 0) return;
+
+        const pattern = `^${lpmOptions.issueUrlPattern}$`;
+
+        const trimmed = pastedText.trim();
+        const match = trimmed.match(pattern);
+        if (match) {
+            event.preventDefault();
+
+            const start = pastedText.indexOf(trimmed);
+            const before = pastedText.substring(0, start);
+            const after = pastedText.substring(start + trimmed.length);
+            const markdownLink = `[#${match[2]}](${trimmed})`;
+            insertTextAtCursor(target, before + markdownLink + after);
+        }
+    });
+}
+
+function insertTextAtCursor(element, text) {
+  if (element.selectionStart !== undefined) {
+    const start = element.selectionStart;
+    const end = element.selectionEnd;
+    const value = element.value;
+
+    element.value = value.slice(0, start) + text + value.slice(end);
+    element.selectionStart = element.selectionEnd = start + text.length;
+  } 
+  else if (element.isContentEditable) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(document.createTextNode(text));
+    range.collapse(false);
+  }
+}
+
 function DropDown(el) {
     this.dd = el;
     //this.placeholder = this.dd.children('span');
@@ -271,6 +342,7 @@ const issuePage = {
     idInProject: null,
     labels: null,
     members: null,
+    filterByTagVm: null, 
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
@@ -488,28 +560,29 @@ function setCaretPosition(elem, pos) {
 function completeIssue(e) {
     var parent = e.currentTarget.parentElement;
     var issueId = $('input[name=issueId]', parent).val();
+    if (issueId <= 0) return
 
-    if (issueId > 0) {
-        preloader.show();
-        srv.issue.complete(
-            issueId,
-            function (res) {
-                //btn.disabled = false;
-                preloader.hide();
-                if (res.success) {
-                    if ($('#issuesList').length > 0) {
-                        $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
-                        showMain();
-                    } else if ($('#issueView').length > 0) {
-                        setIssueInfo(new Issue(res.issue));
-                    }
-                    issuePage.updateStat();
-                } else {
-                    srv.err(res);
+    if (!confirm('Задача будет отмечена как завершенная. Продолжить?')) return;
+
+    preloader.show();
+    srv.issue.complete(
+        issueId,
+        function (res) {
+            //btn.disabled = false;
+            preloader.hide();
+            if (res.success) {
+                if ($('#issuesList').length > 0) {
+                    $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
+                    showMain();
+                } else if ($('#issueView').length > 0) {
+                    setIssueInfo(new Issue(res.issue));
                 }
+                issuePage.updateStat();
+            } else {
+                srv.err(res);
             }
-        );
-    }
+        }
+    );
 }
 
 issuePage.changePriority = function (e) {
@@ -526,7 +599,7 @@ issuePage.changePriority = function (e) {
                 let priorityVal = Issue.getPriorityDisplayVal(priority);
                 let tooltipHost = $('.priority-title-owner', $row);
                 tooltipHost.attr('title', 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)');
-                let tooltips = $(document).tooltip('instance').tooltips;
+                let tooltips = $(document).uitooltip('instance').tooltips;
                 for (var prop in tooltips) {
                     let item = tooltips[prop];
                     let element = item.element;
@@ -577,8 +650,10 @@ issuePage.changePriority = function (e) {
                             $last = $next;
                         }
                         else {
-                            if ($last)
+                            if ($last) {
                                 $last.after($row);
+                                highlightIssueRow($row);
+                            }
                             break;
                         }
                     }
@@ -591,8 +666,10 @@ issuePage.changePriority = function (e) {
                             $first = $prev;
                         }
                         else {
-                            if ($first)
+                            if ($first) {
                                 $first.before($row);
+                                highlightIssueRow($row);
+                            }
                             break;
                         }
                     }
@@ -692,11 +769,7 @@ function showIssue(issueId) {
         false,
         function (res) {
             if (res.success) {
-                window.location.hash = 'issue-view';
-                // if (window.location.search == '') window.location.search += '?';
-                //else window.location.search += '&';
-                //window.location.search += 'iid=' + issueId;
-                states.updateView();
+                states.setState('issue-view');
                 setIssueInfo(new Issue(res.issue));
             } else {
                 srv.err(res);
@@ -706,8 +779,7 @@ function showIssue(issueId) {
 };
 
 issuePage.showAddForm = function (type) {
-    window.location.hash = 'add-issue';
-    states.updateView();
+    states.setState('add-issue');
 
     if (typeof type != 'undefined') {
         $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
@@ -749,8 +821,7 @@ issuePage.showAddForm = function (type) {
 
 issuePage.showEditForm = function () {
     // переключаем вид
-    window.location.hash = 'edit';
-    states.updateView();
+    states.setState('edit');
 };
 
 /**
@@ -848,8 +919,8 @@ issuePage.commentMergeInDevelop = function () {
 
 issuePage.postComment = function () {
     const text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
-    const requestChanges = $('#issueView .comments form.add-comment input[name=requestChanges]').val();
-    issuePage.postCommentForCurrentIssue(text, requestChanges == 1);
+    const requestChanges = $('#issueView .comments form.add-comment input[name=requestChanges]').is(':checked');
+    issuePage.postCommentForCurrentIssue(text, requestChanges);
     return false;
 };
 
@@ -959,8 +1030,11 @@ issuePage.addComment = function (comment, html) {
     hideElementAfterDelay(elementId, commentTime);
 };
 
+issuePage.handleOnlyMeFilter = function () {
+    issuePage.showIssues4Me();
+}
+
 issuePage.showIssues4Me = function () {
-    window.location.hash = 'only-my';
     issuePage.filterByMemberId(lpInfo.userId);
 
     $('#showIssues4MeLink').hide();
@@ -968,8 +1042,11 @@ issuePage.showIssues4Me = function () {
     return false;
 };
 
+issuePage.handleLastCreatedSort = function () {
+    issuePage.showLastCreated();
+}
+
 issuePage.showLastCreated = function () {
-    window.location.hash = 'last-created';
     var table = $('#issuesList');
     window.defaultIssues = table.html();
     table.find('tr:not(:first)').sort(function (a, b) {
@@ -988,8 +1065,11 @@ issuePage.sortDefault = function () {
     $('#showLastCreated').show();
 };
 
+issuePage.handleShowIssuesByUser = function (memberId) {
+    issuePage.showIssuesByUser(memberId);
+}
+
 issuePage.showIssuesByUser = function (memberId) {
-    window.location.hash = 'by-user:' + memberId;
     issuePage.filterByMemberId(memberId);
     $('#showIssues4MeLink').hide();
     $('#showIssues4AllLink').show();
@@ -1035,11 +1115,22 @@ issuePage.resetFilter = function ()//e)
 
     $('#showIssues4AllLink').hide();
     $('#showIssues4MeLink').show();
-    //$('#showIssues4MeLink').text('Показать только мои задачи').
-    //    click(issuePage.showIssues4Me);
-    //e.currentTarget.onclick =issuePage.showIssues4Me;//= "issuePage.showIssues4Me(event); return false;";
-    //e.currentTarget.innerText = 'Показать только мои задачи';
     return false;
+};
+
+issuePage.handleTagsFilterState = function (value) {
+    console.log('value:', value);
+    const tags = value.trim() == '' ? [] : decodeURI(value).split(',');
+    issuePage.filterByTagVm.selectedTags = tags;
+}
+
+issuePage.onFilterByTagChanged = function (tags)  {
+    issuePage.scrumColUpdateInfo(tags);
+    if (tags.length)  {
+        states.setState('tags:' + encodeURI(tags.join(',')), true);
+    } else {
+        states.setState('', true);
+    }
 };
 
 issuePage.scrumColUpdateInfo = function () {
@@ -1361,4 +1452,11 @@ function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds
     } else {
         $('#' + elementId).remove();
     }
+}
+
+
+function highlightIssueRow($row) {
+    $row
+        .css("backgroundColor", "#e0cffc")
+        .animate({ backgroundColor: "#ffffff" }, 3000);
 }

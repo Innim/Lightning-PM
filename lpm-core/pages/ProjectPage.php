@@ -31,7 +31,6 @@ class ProjectPage extends LPMPage
      * @var Project
      */
     private $_project;
-    private $_currentPage;
 
     private $_issueInput;
 
@@ -50,13 +49,13 @@ class ProjectPage extends LPMPage
             self::PUID_ISSUES,
             'Список задач',
             '',
-            array_merge(['project-issues', 'issues-export-to-excel'], $this->getIssueJs())
+            array_merge(['project-issues'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMPLETED_ISSUES,
             'Завершенные',
             '',
-            array_merge(['project-completed', 'issues-export-to-excel'], $this->getIssueJs())
+            array_merge(['project-completed'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMMENTS,
@@ -69,8 +68,6 @@ class ProjectPage extends LPMPage
             'Участники',
             'project-members',
             ['project/project-members', 'popups/users-chooser'],
-            '',
-            User::ROLE_MODERATOR
         );
         $this->addSubPage(
             self::PUID_SETTINGS,
@@ -190,6 +187,10 @@ class ProjectPage extends LPMPage
                 $this->initComments();
                 break;
             }
+            case self::PUID_MEMBERS: {
+                $this->initMembers($user);
+                break;
+            }
             case self::PUID_SCRUM_BOARD: {
                 $this->initScrumBoard();
                 break;
@@ -214,10 +215,8 @@ class ProjectPage extends LPMPage
     private function initIssues()
     {
         // загружаем задачи
-        $openedIssues = Issue::loadListByProject(
-            $this->_project->id,
-            [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]
-        );
+        $openedIssues = $this->loadIssues([Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
+            
         $this->addTmplVar('issues', $openedIssues);
     }
 
@@ -252,10 +251,7 @@ class ProjectPage extends LPMPage
     private function initCompletedIssues()
     {
         // загружаем  завершенные задачи
-        $completedIssues = Issue::loadListByProject(
-            $this->_project->id,
-            [Issue::STATUS_COMPLETED]
-        );
+        $completedIssues = $this->loadIssues([Issue::STATUS_COMPLETED]);
         $this->addTmplVar('issues', $completedIssues);
     }
 
@@ -263,8 +259,6 @@ class ProjectPage extends LPMPage
     {
         $page = $this->getProjectedCommentsPage();
         $commentsPerPage = 100;
-
-        $this->_currentPage = $page;
 
         $comments = Comment::getIssuesListByProject(
             $this->_project->id,
@@ -300,6 +294,23 @@ class ProjectPage extends LPMPage
         if (count($comments) === $commentsPerPage) {
             $this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
         }
+    }
+
+    private function initMembers(User $user)
+    {
+        $project = $this->_project;
+        $canEdit = $user->isModerator();
+
+        $projectMembers = $project->getMembers(true);
+        $projectTester = $project->getTester();
+
+        $labels = Issue::getLabels($project->id);
+        
+        $this->addTmplVar('project', $project);
+        $this->addTmplVar('projectMembers', $projectMembers);
+        $this->addTmplVar('projectTester', $projectTester);
+        $this->addTmplVar('canEdit', $canEdit);
+        $this->addTmplVar('labels', $labels);
     }
 
     private function initScrumBoard()
@@ -355,6 +366,14 @@ class ProjectPage extends LPMPage
         $this->addTmplVar('project', $this->_project);
     }
 
+    private function getIssuesListJs()
+    {
+        return [
+            'issues-export-to-excel',
+            'filters/issue-list-filter', 
+        ];
+    }
+
     private function getIssueJs()
     {
         return [
@@ -362,7 +381,6 @@ class ProjectPage extends LPMPage
             'issue-form',
             'libs/tribute',
             'libs/character-counter',
-            'filters/issue-list-filter',
         ];
     }
 
@@ -391,6 +409,23 @@ class ProjectPage extends LPMPage
     private function getLastIssueId()
     {
         return Issue::getLastIssueId($this->_project->id);
+    }
+
+    private function loadIssues($statuses) 
+    {
+        $projectId = $this->_project->id;
+
+        $loadMembers = true;
+        $loadTesters = true;
+        $loadMasters = false;
+        // Загружаем всех участников задач (для оптимизации)
+        $issueParticipants = Member::loadListAnyForIssuesInProject($projectId, $statuses, $loadMembers, $loadTesters, $loadMasters);
+
+        $list = Issue::loadListByProject($projectId, $statuses);
+        foreach ($list as $issue) {
+            $issue->extractParticipantsFrom($issueParticipants, $loadMembers, $loadTesters, $loadMasters);
+        }
+        return $list;
     }
     
     private function saveIssue($editMode = false)
@@ -648,10 +683,8 @@ class ProjectPage extends LPMPage
                     Issue::updateImgsCounter($issueId, $uploader->getLoadedCount());
                 }
                 
-                $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
-                
                 // отсылаем оповещения
-                $this->notifyAboutIssueChange($issue, $issueURL, $editMode);
+                $this->notifyAboutIssueChange($issue, $editMode);
 
                 Project::updateIssuesCount($issue->projectId);
 
@@ -667,6 +700,7 @@ class ProjectPage extends LPMPage
                 // Очищаем сохраненные данные
                 $this->_issueInput = null;
             
+                $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
                 LightningEngine::go2URL($issueURL);
             }
         }
@@ -884,28 +918,24 @@ class ProjectPage extends LPMPage
         }
     }
 
-    private function notifyAboutIssueChange(Issue $issue, $issueURL, $editMode)
+    private function notifyAboutIssueChange(Issue $issue, $editMode)
     {
         $engine = $this->_engine;
-        $members = $issue->getMemberIds();
+        $user = $engine->getUser();
         if ($editMode) {
-            $members[] = $issue->authorId; // TODO фильтр, чтобы не добавлялся дважды
-            EmailNotifier::getInstance()->sendMail2Allowed(
+            Issue::notifyByEmail(
+                $issue,
                 'Изменена задача "' . $issue->name . '"',
-                $engine->getUser()->getName() . ' изменил задачу "' .
-                $issue->name .  '", в которой Вы принимаете участие' . "\n" .
-                'Просмотреть задачу можно по ссылке ' .	$issueURL,
-                $members,
+                IssueEmailFormatter::issueChangedText($issue, $user),
                 EmailNotifier::PREF_EDIT_ISSUE
             );
         } else {
-            EmailNotifier::getInstance()->sendMail2Allowed(
+            Issue::notifyByEmail(
+                $issue,
                 'Добавлена задача "' . $issue->name . '"',
-                $engine->getUser()->getName() . ' добавил задачу "' .
-                $issue->name .  '", в которой Вы назначены исполнителем' . "\n" .
-                'Просмотреть задачу можно по ссылке ' .	$issueURL,
-                $members,
-                EmailNotifier::PREF_ADD_ISSUE
+                IssueEmailFormatter::issueAddedText($issue, $user),
+                EmailNotifier::PREF_ADD_ISSUE,
+                false
             );
         }
     }

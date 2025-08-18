@@ -113,11 +113,6 @@ class PageConstructor
     {
         return Project::checkDeleteComment($authorId, $commentId);
     }
-
-    public static function getProjectTester()
-    {
-        return Project::getProjectTester();
-    }
     
     /*public static function includeCSS( $name ) {
         include self::$_instance->getThemeDir() . 'css/' . $name . '.css';
@@ -139,7 +134,7 @@ class PageConstructor
     }
 
     private static $_usingScripts = [
-//        'libs/bootstrap.bundle.min',
+        'libs/bootstrap.bundle.min',
         'libs/jquery-1.12.4.min',
         'libs/jquery-ui-1.12.1.min',
         'libs/jquery.form',

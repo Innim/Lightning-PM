@@ -119,4 +119,8 @@ class LPMTables
      * Таблица целей.
      */
     const INSTANCE_TARGETS = 'instance_targets';
+    /**
+     * Таблица бэйджей.
+     */
+    const BADGES = 'badges';
 }

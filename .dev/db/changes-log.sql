@@ -391,4 +391,38 @@ ADD INDEX `projectId` (`projectId`);
 
 -- 0.13.10
 
+ALTER TABLE `lpm_issue_branch`
+ADD `initialCommit` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID изначального коммита' AFTER `date`;
+
+-- 0.14.0
+
+ALTER TABLE `lpm_projects`
+ADD `gitlabProjectIds` varchar(255) COLLATE 'utf8_unicode_ci' NOT NULL COMMENT 'ID связанных проектов GitLab' AFTER `gitlabGroupId`;
+
+-- 0.14.1
+
+ALTER TABLE `lpm_members`
+ADD INDEX `instanceId` (`instanceId`);
+
+-- 0.15.0
+
+CREATE TABLE `lpm_badges` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `type` varchar(255) NOT NULL COMMENT 'Тип бэйджа',
+  `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Лейбл бейджа',
+  `gitlabProjectId` int DEFAULT NULL COMMENT 'Id проекта на GitLab',
+  `gitlabRef` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Ветка, тег или коммит в репозитории',
+  `comment` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT 'Комментарий к бэйджу',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';
+
+-- 0.15.8
+
+ALTER TABLE `lpm_users_pref`
+ADD `seAddIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email о добавлении новой задачи для PM' AFTER `seIssueComment`,
+ADD `seEditIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменении задачи для PM' AFTER `seAddIssueForPM`,
+ADD `seIssueStateForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменения состояния задачи для PM' AFTER `seEditIssueForPM`,
+ADD `seIssueCommentForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оставлен комментарий к задаче для PM' AFTER `seIssueStateForPM`;
+
+
 --NEXT

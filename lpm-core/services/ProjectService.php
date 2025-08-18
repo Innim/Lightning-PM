@@ -198,10 +198,55 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
+
+    /**
+     * Устанавливает указанного участника проекта в качестве тестировщика для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $userId    Идентификатор участника, которого надо сделать тестировщиком.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function addSpecTester($projectId, $userId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $userId    = (int)$userId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($userId);
+        if (!$member) {
+            return $this->error('Тестировщик не найден в участниках проекта');
+        }
+
+        $label = Issue::getLabel($labelId);
+        if (!$label) {
+            return $this->error('Нет такого тега');
+        }
+
+        $labelProjectId = intval($label['projectId']);
+        if ($labelProjectId != 0 && $labelProjectId != $projectId) {
+            return $this->error('Тег не доступен в проекте');
+        }
+
+        if (!Member::saveProjectSpecTester($project->id, $userId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
     /**
      * Удаляет указанного участника проекта в качестве мастера для задач с указанным тегом.
      * @param int $projectId Идентификатор проекта.
-     * @param int $masterId  Идентификатор участника, которого надо сделать мастером.
+     * @param int $masterId  Идентификатор участника, которого надо удалить из мастеров.
      * @param int $labelId   Идентификатор тега.
      */
     public function deleteSpecMaster($projectId, $masterId, $labelId)
@@ -226,6 +271,40 @@ class ProjectService extends LPMBaseService
         }
 
         if (!Member::deleteProjectSpecMaster($project->id, $masterId, $labelId)) {
+            return $this->error('Не удалось сохранить данные.');
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Удаляет указанного участника проекта в качестве тестера для задач с указанным тегом.
+     * @param int $projectId Идентификатор проекта.
+     * @param int $userId    Идентификатор участника, которого надо удалить из тестеров.
+     * @param int $labelId   Идентификатор тега.
+     */
+    public function deleteSpecTester($projectId, $userId, $labelId)
+    {
+        $projectId = (int)$projectId;
+        $userId    = (int)$userId;
+        $labelId   = (int)$labelId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Нет такого проекта');
+        }
+
+        $member = $project->getMember($userId);
+        if (!$member) {
+            return $this->error('Тестер не найден в участниках проекта');
+        }
+
+        if (!Member::deleteProjectSpecTester($project->id, $userId, $labelId)) {
             return $this->error('Не удалось сохранить данные.');
         }
 
@@ -289,7 +368,7 @@ class ProjectService extends LPMBaseService
             return $this->error("Тестировщик уже добавлен");
         }
 
-        Member::saveProjectForTester($projectId, $userId);
+        Member::saveTesterForProject($projectId, $userId);
 
         $this->add2Answer("projectId", $projectId);
         $this->add2Answer("userId", $userId);
@@ -309,6 +388,53 @@ class ProjectService extends LPMBaseService
 
         if (!Member::deleteMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId)) {
             return $this->error("Ошибка удаления тестера.");
+        }
+
+        return $this->answer();
+    }
+
+    public function setPM($projectId, $userId)
+    {
+        $projectId = (float)$projectId;
+        $userId = (float)$userId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        // проверим, что существует такой проект
+        if (!Project::loadById($projectId)) {
+            return $this->error('Нет такого проекта');
+        }
+
+        if (empty($userId)) {
+            return $this->error("Неверные входные параметры");
+        }
+
+        if (Member::hasMember(LPMInstanceTypes::PM_FOR_PROJECT, $projectId, $userId)) {
+            return $this->error("PM уже добавлен");
+        }
+
+        Member::saveProjectPM($projectId, $userId);
+
+        $this->add2Answer("projectId", $projectId);
+        $this->add2Answer("userId", $userId);
+
+        return $this->answer();
+    }
+
+    public function deletePM($projectId)
+    {
+        $projectId = (int)$projectId;
+
+        // проверяем права пользователя
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        if (!Member::deleteMembers(LPMInstanceTypes::PM_FOR_PROJECT, $projectId)) {
+            return $this->error("Ошибка удаления PM.");
         }
 
         return $this->answer();
@@ -344,7 +470,7 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
+    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId, $gitlabProjectIds)
     {
         $projectId = (int)$projectId;
         $slackNotifyChannel = (string)$slackNotifyChannel;
@@ -366,7 +492,13 @@ class ProjectService extends LPMBaseService
             return $this->error('Проект не найден');
         }
 
-        $result = Project::updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId);
+        $result = Project::updateProjectSettings(
+            $projectId,
+            $scrum,
+            $slackNotifyChannel,
+            $gitlabGroupId,
+            $gitlabProjectIds,
+        );
 
         if (!$result) {
             return $this->error('Ошибка обновления таблицы');
@@ -422,6 +554,21 @@ class ProjectService extends LPMBaseService
             $client = $this->requireGitlabIntegration($project);
             
             $list = $client->getProjects($project->gitlabGroupId);
+            $loadedProjectIds = array_map(function ($item) {
+                return $item->id;
+            }, $list);
+
+            $gitlabProjectIds = $project->getGitlabProjectIds();
+            foreach ($gitlabProjectIds as $projectId) {
+                if (in_array($projectId, $loadedProjectIds)) {
+                    continue;
+                }
+                $gitlabProject = $client->getProject($projectId);
+                if (!empty($gitlabProject)) {
+                    $list[] = $gitlabProject;
+                    $loadedProjectIds[] = $projectId;
+                }
+            }
 
             // Загрузим информацию о самом используемом репозитории в этом проекте
             // из последних 5

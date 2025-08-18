@@ -2,7 +2,7 @@
  * Компонент фильтра по тегам в списке задач.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    (function issueListFilter(filterElementSelector, onChange) {
+    issuePage.filterByTagVm = (function issueListFilter(filterElementSelector, onChange) {
         return new Vue({
             el: filterElementSelector,
             data: {
@@ -25,19 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const rows = issuesList.tBodies[0]?.children;
                     return [...rows];
                 },
-                getIssueColElement({children}) {
-                    return children[2].querySelector('.issue-name > .issue-name');
-                },
                 showElement(el, show) {
                     el.hidden = !show;
                 },
                 filterIssues(selectedTags) {
                     this.getRows().forEach((row) => {
-                        const issueColElement = this.getIssueColElement(row);
-                        const issueTitle = issueColElement.innerText;
-                        const lastTagIndex = issueTitle.lastIndexOf(']');
-                        const issueTags = issueTitle.substr(0, lastTagIndex + 1);
-                        const hasTag = selectedTags.some((tag) => issueTags.includes(tag));
+                        var hasTag = false
+                        const labelsStr = row.getAttribute('data-labels');
+                        if (labelsStr) {
+                            const labels = labelsStr.split(',');
+                            hasTag = selectedTags.some((tag) => labels.includes(tag));
+                        }
                         this.showElement(row, hasTag);
                     });
                 },
@@ -46,5 +44,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    })('#issueListFilter', issuePage.scrumColUpdateInfo);
+    })('#issueListFilter', issuePage.onFilterByTagChanged);
 });

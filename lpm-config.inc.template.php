@@ -60,6 +60,8 @@ define('TIMEADJUST', 0);
 
 // Token для интеграции со Slack
 define('SLACK_TOKEN', '');
+// Оповещать по Slack
+// define('SLACK_NOTIFICATION_ENABLED', true);
 
 // GitLab URL
 define('GITLAB_URL', '');
@@ -111,3 +113,5 @@ define('MAILGUN_ENDPOINT', '');
 
 // Оповещать по Email
 define('EMAIL_NOTIFY_ENABLED', true);
+// В дебаг-режиме не отправлять письма, а только писать в лог
+define('EMAIL_NOTIFY_LOG_ONLY_IN_DEBUG', false);

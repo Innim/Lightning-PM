@@ -81,6 +81,26 @@ TODO: Установка с помощью Docker
 
 Скачать нужный `php-cs-fixer` можно [здесь](https://cs.symfony.com/download/php-cs-fixer-v2.phar).
 
+### Зависимости
+
+Для управления зависимостями используется [Composer](https://getcomposer.org/).
+
+Установите `composer.phar` в директорию `lpm-libs` или скачайте его вручную и положите в эту директорию. См. [инструкцию](https://getcomposer.org/download/).
+
+Зависимости проекта указаны в файле `lpm-libs/composer.json`. 
+
+Для установки зависимостей нужно выполнить команду из директории `lpm-libs`:
+
+```bash
+php composer.phar install
+```
+
+Если у вас не установлен PHP на машине, и вы используете Docker, то можно выполнить команду в контейнере:
+
+```bash
+docker exec -w /var/www/lpm-libs/ lightning-pm php composer.phar install
+```
+
 ### Frontend
 
 В качестве библиотеки стилей используется Bootstrap 5. 

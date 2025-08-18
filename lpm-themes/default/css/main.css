@@ -342,13 +342,13 @@ form > ol > li div.hint {
     display: block;
     font-size: .8em;
 }
-form ol.form-fields > li:last-child {
+form ol.form-fields > li.buttons-line{
 	margin-top: 25px;
 }
 .priority-val {
 	padding: 3px;
 	color: #000000;
-	border-radius: 5px;	
+	border-radius: 7px;	
 }
 
 #dropdown{
@@ -439,12 +439,12 @@ form ol.form-fields > li:last-child {
 .priority-val.circle {
 	box-sizing: content-box;
 	display: inline-block;
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     vertical-align: middle;
     margin-right: 5px;
-    margin-top: 5px;
-    margin-left: -1px;
+    /* margin-top: 5px;
+    margin-left: -1px; */
 }
 button.remove-btn,
 a.remove-btn {
@@ -602,6 +602,13 @@ a.create-branch-icon .plus-icon {
 	right:0;
 	bottom:0;
 	font-size: 0.5em;
+  	color: white;
+  	background: black;
+  	border-radius: 50%;
+  	aspect-ratio: 1 / 1;
+  	display: flex;
+  	align-items: center;
+  	justify-content: center;
 }
 
 .comments .links-bar .comments-controls {
@@ -616,9 +623,6 @@ a.create-branch-icon .plus-icon {
 .comments .links-bar .scrum-comments-shortcut a {
 	display: inline-block;
 	margin-right: 5px;
-}
-.comments form.add-comment .buttons-bar {
-	text-align: right;
 }
 .comments form.add-comment .ui-tabs .ui-tabs-panel,
 #passTestComment.ui-tabs .ui-tabs-panel {
@@ -685,6 +689,11 @@ a.create-branch-icon .plus-icon {
 	color: #2bbd00;
 }
 
+
+.comments-list-item ul.merge-requests li.merged .merged-at {
+	font-weight: bold;
+}
+
 #projectComments .pages-nav-bar {
 	text-align: center;
 	text-transform: uppercase;
@@ -727,6 +736,7 @@ ul.panel-submenu li {
 /* панелька с информацией */
 .info-list, .issue-info .linked-issues {
 	padding-left: 40px;
+	padding-right: 40px;
 }
 .info-list > .info-list-item {
 	margin: 10px 0px;
@@ -937,11 +947,11 @@ table.issues-list td .on-board-state {
 }
 table.issues-list td .priority-change-bar {
 	position: absolute;
-	left: 6px;
+	left: 4px;
 	top: 50%;
-	width: 10px;
-	height: 36px;
-	margin-top: -15px;
+	width: 14px;
+	height: 38px;
+	margin-top: -17px;
 	color: #cecece;
 	font-size: 13px;
 }
@@ -985,11 +995,8 @@ table.issues-list tr.active-issue.tester {
 #issueView .info-list .issue-completed-date-row {
 	display: none;
 }
-.linked-issues {
+.linked-issues .card-body {
 	font-size: smaller;
-}
-.linked-issues h5 {
-	margin: 10px 0 2px;
 }
 .linked-issues .linked-issue-project {
 	font-weight: bold;
@@ -1368,13 +1375,18 @@ blockquote > p {
 	margin-right: 5px;
  }
 
-#scrumSnapshot .scrum-snapshot-list {
-	clear: both;
+.scrum-snapshot-list .card {
+    border-left: 4px solid transparent;
 }
 
-#scrumSnapshot .scrum-snapshot-list li {
-	margin-top: 10px;
-	margin-bottom: 10px;
+.scrum-snapshot-list .card-body {
+    padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .scrum-snapshot-list .card-body {
+        padding: 1rem;
+    }
 }
 
 .issue-name-quick-actions {
@@ -1445,7 +1457,7 @@ blockquote > p {
 #projectSettings form label {
 	float: left;
 	margin-top: 5px;
-	min-width: 250px;
+	min-width: 280px;
 }
 .tooltip div {
 	display: none;
@@ -1505,10 +1517,6 @@ blockquote > p {
 .ui-tooltip .arrow.top:after {
 	bottom: -20px;
 	top: auto;
-}
-.headersProjectsMembers {
-	margin-top: 10px;
-	margin-bottom: 10px;
 }
 .btnSelect {
 	float: left;
@@ -1653,4 +1661,28 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
 .filters-line .multiselect__tag {
 	overflow: unset;
+}
+
+.tooltip-link-issue-container {
+	max-height: 250px;  
+	overflow: hidden;
+  	display: flex;
+  	flex-direction: column;
+}
+
+.tooltip-link-issue-container .tooltip-link-issue-title {
+	display: block;  
+	flex-shrink: 0;
+	padding-left: 2px;
+	padding-right: 2px;
+}
+
+.tooltip-link-issue-container .tooltip-link-issue-image {
+	width: 100%;
+	max-width: 100%;
+	display: block;
+	flex: 1;
+	min-height: 0;
+	object-fit: cover;
+	margin-bottom: 5px;
 }

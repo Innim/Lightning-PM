@@ -2,7 +2,7 @@
  * Компонент фильтра задач на Scrum-доске.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    (function initScrumBoardFilter(filterElementSelector, onChange) {
+    issuePage.filterByTagVm = (function initScrumBoardFilter(filterElementSelector, onChange) {
         return new Vue({
             el: filterElementSelector,
             data: {
@@ -45,5 +45,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    })('#scrumBoardFilter', issuePage.scrumColUpdateInfo);
+    })('#scrumBoardFilter', issuePage.onFilterByTagChanged);
 });

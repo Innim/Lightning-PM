@@ -136,9 +136,9 @@ function lpm_print_issues($list)
 /**
 * Распечатывает форму добавления/редактирования задачи для текущего проекта
 */
-function lpm_print_issue_form($project, $issue = null, $input = null)
+function lpm_print_issue_form($project, $issue = null, $input = null, $isHidden = null)
 {
-    return PagePrinter::issueForm($project, $issue, $input);
+    return PagePrinter::issueForm($project, $issue, $input, $isHidden);
 }
 
 /**
@@ -298,6 +298,14 @@ function lpm_print_scrum_board_filter()
 }
 
 /**
+ * Выводит шаблон списка снимков Scrum доски.
+ */
+function lpm_print_scrum_board_snapshots_list(Project $project, $snapshots)
+{
+    return PagePrinter::scrumBoardSnapshotsList($project, $snapshots);
+}
+
+/**
  * Выводит шаблон компонента фильтров списка задач.
  */
 function lpm_print_issue_list_filters()
@@ -380,14 +388,6 @@ function lpm_get_project()
 function lpm_get_project_members()
 {
     return PageConstructor::getProjectMembers();
-}
-
-/**
- * Возвращает тестера проекта
- */
-function lpm_get_project_tester()
-{
-    return PageConstructor::getProjectTester();
 }
 
 /**

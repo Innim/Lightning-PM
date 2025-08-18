@@ -5,7 +5,7 @@ abstract class MembersInstance extends LPMBaseObject
     
     public function getMembers($onlyNotLocked = false)
     {
-        if ($this->_members == null && !$this->loadMembers()) {
+        if ($this->_members === null && !$this->loadMembers()) {
             return array();
         }
         if ($onlyNotLocked) {

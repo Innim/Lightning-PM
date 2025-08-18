@@ -12,7 +12,9 @@ class AttachmentVideoHelper
         // Droplr
         "d.pr\/v\/",
         // Innim owncloud
-        "cloud.innim.ru\/index.php\/s\/"
+        "cloud.innim.ru\/index.php\/s\/",
+        // CleanShot
+        "cln.sh\/",
     ];
 
     /**
@@ -79,6 +81,7 @@ class AttachmentVideoHelper
     private static function getInfoBy($urlPrefix, $videoUid, $cache = null)
     {
         $type = 'video';
+        $mediaType = 'video';
         $url = null;
 
         if (strpos($urlPrefix, 'youtube') === 0) {
@@ -95,16 +98,23 @@ class AttachmentVideoHelper
             // Это Droplr
             // $url = "http://d.pr/v/" . $videoUid . "+";
             $url = "https://" . $urlPrefix . $videoUid . "+";
+        } elseif (strpos($urlPrefix, 'cln.sh') === 0) {
+            // Это CleanShot
+            // Для него по формату ссылки не понятно, поэтому грузим заголовок
+            // $url = "https://cln.sh/" . $videoUid . "+";
+            $original = "https://" . $urlPrefix . $videoUid;
+            $url = $original . "+";
+            $mediaType = CleanShotHelper::getSharedFileType($original, $cache);
         } else {
             // Для owncloud по формату ссылки не понятно, поэтому грузим заголовок
             $original = "https://" . $urlPrefix . $videoUid;
-            $type = OwncloudHelper::getSharedFileType($original, $cache);
+            $url = $original . "/download";
+            
+            $mediaType = OwncloudHelper::getSharedFileType($original, $cache);
+        }
 
-            if (empty($type) || strpos($type, 'video/') !== 0) {
-                $url = null;
-            } else {
-                $url = $original . "/download";
-            }
+        if (empty($mediaType) || strpos($mediaType, 'video/') !== 0) {
+            $url = null;
         }
 
         return empty($url) ? null : (object) compact('type', 'url');

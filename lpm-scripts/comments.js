@@ -18,43 +18,38 @@ $(document).ready(function ($) {
 	comments.init();
 });
 
-let comments = {
-	storeKey: null,
+const comments = {
+	saveableForm: null,
 	mrStateIcons: {
 		merged: 'fa-check-circle',
 		opened: 'fa-clock',
 		closed: 'fa-times-circle',
 	},
 	init: function () {
-		comments.storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
+		const storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
+		comments.saveableForm = new SaveableCommentForm(
+			'#addCommentForm .comment-text-field',
+			'#comments form.add-comment input[name=requestChanges]',
+			storeKey,
+			storeKey + '_type'
+		);
+
 		comments.invalidateLinks();
 		comments.initAddForm();
 	},
 	initAddForm: function () {
-		let commentTextField = $('#addCommentForm .comment-text-field');
-		if (commentTextField.length == 0) return;
-
-		const storeKey = comments.storeKey;
-		const savedText = window.localStorage.getItem(storeKey);
-		if (savedText) {
-			commentTextField.val(savedText);
-			comments.showCommentForm();
-		}
-
-		commentTextField.on('input', (e) => {
-			let text = e.target.value;
-			window.localStorage.setItem(storeKey, text);
+		comments.saveableForm.init((_, requestChanges) => {
+			comments.showCommentForm(requestChanges);
 		});
 	},
 	clearForm: function () {
-		$('#addCommentForm .comment-text-field').val('');
-		window.localStorage.removeItem(comments.storeKey);
+		comments.saveableForm.clear();
 	},
 	showCommentForm: function (requestChanges = false) {
 		$('#comments form.add-comment').show();
 		$('#comments .links-bar').hide();
 		$('#comments form.add-comment textarea[name=commentText]').trigger('focus');
-		$('#comments form.add-comment input[name=requestChanges]').val(requestChanges ? 1 : 0);
+		$('#comments form.add-comment input[name=requestChanges]').prop('checked', requestChanges);
 	},
 	hideCommentForm: function (clear = true) {
 		if (clear) comments.clearForm();
@@ -116,6 +111,9 @@ let comments = {
 								.empty()
 								.append('<i class="state-icon fas ' + icon + '"></i>')
 								.append('MR <a href="' + mr.url + '">!' + mr.internalId + '</a>');
+							if (mr.mergedAt) {
+								li.append(' <span class="merged-at small" title="Дата влития">(<i class="fas fa-code-pull-request" ></i> ' + lpm.format.date(mr.mergedAt) + ')</span>');
+							}
 						} else {
 							li.remove();
 						}
@@ -127,4 +125,45 @@ let comments = {
 			});
 		}
 	}
+}
+
+function SaveableCommentForm(inputSelector, checkboxSelector, storeKey, checkboxStoreKey) {
+	this.storeKey = storeKey;
+	this.checkboxStoreKey = checkboxStoreKey;
+
+	this.init = function (onRestore) {
+		const commentTextField = $(inputSelector);
+		if (commentTextField.length == 0) return;
+
+		const checkboxField = $(checkboxSelector)
+
+		const storeKey = this.storeKey;
+		const checkboxStoreKey = this.checkboxStoreKey;
+
+		const savedText = window.localStorage.getItem(storeKey);
+		if (savedText) {
+			const checkboxValue = window.localStorage.getItem(checkboxStoreKey) == 1;
+			commentTextField.val(savedText);
+			checkboxField.prop('checked', checkboxValue);
+
+			onRestore(savedText, checkboxValue);
+		}
+
+		commentTextField.on('input', (e) => {
+			let text = e.target.value;
+			window.localStorage.setItem(storeKey, text);
+			window.localStorage.setItem(checkboxStoreKey, checkboxField.is(':checked') ? 1 : 0);
+		});
+
+		checkboxField.on('click', (e) => {
+			window.localStorage.setItem(checkboxStoreKey, checkboxField.is(':checked') ? 1 : 0);
+		});
+	}
+
+	this.clear = function () {
+		$(inputSelector).val('');
+		window.localStorage.removeItem(this.storeKey);
+		window.localStorage.removeItem(this.checkboxStoreKey);
+	}
+
 }

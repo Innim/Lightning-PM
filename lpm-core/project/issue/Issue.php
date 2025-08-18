@@ -461,9 +461,12 @@ SQL;
     // TODO: перенести в IssueLabel
     public static function getLabelsByName($issueName)
     {
-        $labels = array();
-        $matches = array();
-        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", trim($issueName), $matches)) {
+        $name = trim($issueName);
+        if (mb_substr($name, 0, 1) !== '[') return [];
+
+        $labels = [];
+        $matches = [];
+        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", $name, $matches)) {
             if (count($matches) > 1) {
                 $labels = array_unique($matches[1]);
             }
@@ -553,15 +556,49 @@ SQL;
         );
 
         // отправка оповещений
-        $members = $issue->getMemberIds();
-        array_push($members, $issue->authorId);
-        
-        EmailNotifier::getInstance()->sendMail2Allowed(
+        Issue::notifyByEmail(
+            $issue,
             'Удалена задача "' . $issue->name . '"',
-            $user->getName() . ' удалил задачу "' . $issue->name .  '"',
-            $members,
+            IssueEmailFormatter::issueDeletedText($issue, $user),
             EmailNotifier::PREF_ISSUE_STATE
         );
+    }
+
+    public static function notifyByEmail(Issue $issue, $subject, $text, $basicPref, $addAuthor = true)
+    {
+        $allRecipients = [];
+
+        // отправляем оповещение участникам и автору задачи
+        $members = $issue->getMemberIds();
+        if ($addAuthor && !in_array($issue->authorId, $members)) {
+            $members[] = $issue->authorId;
+        }
+        
+        if (!empty($members)) {
+            $sent = EmailNotifier::getInstance()->sendMail2Allowed(
+                $subject,
+                $text,
+                $members,
+                $basicPref
+            );
+         
+            $allRecipients = array_merge($allRecipients, $sent);
+        }
+
+        // отправляем оповещение PM проекта
+        $project = $issue->getProject();
+        $pm = $project->getPM();
+        if ($pm != null && !in_array($pm->getID(), $allRecipients)) {
+            $sent = EmailNotifier::getInstance()->sendMail2Allowed(
+                $subject,
+                $text,
+                [$pm->getID()],
+                $basicPref,
+                EmailNotifier::PREF_ROLE_PM
+            );
+
+            $allRecipients = array_merge($allRecipients, $sent);
+        }
     }
 
     /**
@@ -632,8 +669,7 @@ SQL;
             $issue->completedDate = null;
             $hash['SET']['completedDate'] = '0000-00-00 00:00:00';
         } elseif ($issue->status === Issue::STATUS_WAIT) {
-            // XXX: переделать - не должно быть обращения к сервису из модели
-            IssueService::checkTester($issue);
+            $issue->autoSetTesters();
             $issue->autoSetMasters();
         }
 
@@ -653,25 +689,18 @@ SQL;
         switch ($issue->status) {
             case Issue::STATUS_COMPLETED:
                 $subject = 'Завершена задача "' . $issue->name . '"';
-                $text = empty($user) ?
-                    'Задача "' . $issue->name . '" завершена' :
-                    $user->getName() . ' отметил задачу "' . $issue->name . '" как завершённую';
+                $text = IssueEmailFormatter::issueCompletedText($issue, $user);
 
                 $slack->notifyIssueCompleted($issue);
                 break;
             case Issue::STATUS_IN_WORK:
                 $subject = 'Открыта задача "' . $issue->name . '"';
-                $text =  empty($user) ?
-                    'Задача "' . $issue->name . '" снова открыта' :
-                    $user->getName() . ' заново открыл задачу "' . $issue->name . '"';
-                
+                $text = IssueEmailFormatter::issueReopenedText($issue, $user);
                 // TODO: оповестить в slaсk если вернули в работу
                 break;
             case Issue::STATUS_WAIT:
-                $subject = 'Задача "' . $issue->name . '"ожидает проверки';
-                $text = empty($user) ?
-                    'Задача "' . $issue->name . '" отправлена на проверку' :
-                    $user->getName() . ' поставил задачу "' . $issue->name . '"'.  '" на проверку';
+                $subject = 'Задача "' . $issue->name . '" ожидает проверки';
+                $text = IssueEmailFormatter::issueSendForTestText($issue, $user);
 
                 $slack->notifyIssueForTest($issue);
                 break;
@@ -679,15 +708,10 @@ SQL;
 
         // Почта
         if (!empty($subject) && !empty($text)) {
-            $members = $issue->getMemberIds();
-            $members[] = $issue->authorId;
-
-            $text .= "\n" . 'Просмотреть задачу можно по ссылке ' .	$issue->getConstURL();
-
-            EmailNotifier::getInstance()->sendMail2Allowed(
+            Issue::notifyByEmail(
+                $issue,
                 $subject,
                 $text,
-                $members,
                 EmailNotifier::PREF_ISSUE_STATE
             );
         }
@@ -926,24 +950,6 @@ SQL;
     public function getMaxImagesCount()
     {
         return self::MAX_IMAGES_COUNT;
-    }
-    
-    /**
-     * Устанавливает название задачи.
-     * @param string $value Название задачи.
-     */
-    public function setTitle($value)
-    {
-        $this->title = $value;
-    }
-
-    /**
-     * Возвращает название задачи.
-     * @return string Название задачи.
-     */
-    public function getTitle()
-    {
-        return $this->title;
     }
 
     /**
@@ -1280,9 +1286,18 @@ SQL;
         return $this->_linkedIssues == null ? $this->loadLinkedIssues() : $this->_linkedIssues;
     }
 
+    /**
+     * Определяет, есть ли хотя бы один тестировщик.
+     * @return bool
+     */
+    public function hasTesters()
+    {
+        return !empty($this->getTesters());
+    }
+
     public function getTesters()
     {
-        return $this->_testers == null && !$this->loadTesters() ? [] : $this->_testers;
+        return $this->_testers === null && !$this->loadTesters() ? [] : $this->_testers;
     }
 
     public function getTesterIds()
@@ -1307,42 +1322,97 @@ SQL;
         $masters = $this->getMasters();
 
         if (empty($masters)) {
-            // Получаем список меток (тегов) для задачи
-            $labelNames = $this->getLabelNames();
-            if (!empty($labelNames)) {
-                // TODO: переделать чтобы не грузить лишнего
-                $labels = Issue::getLabels($this->projectId);
-                $labelIds = [];
+            $issueId = $this->id;
+            $project = $this->getProject();
 
-                foreach ($labels as $label) {
-                    if (in_array($label['label'], $labelNames)) {
-                        $labelIds[] = (int)$label['id'];
-                    }
+            $this->_masters = $this->autoSetByLabels(
+                function () use ($project) {
+                    return $project->getSpecMasters();
+                },
+                function ($userIds) use ($issueId) {
+                    return Member::saveIssueMasters($issueId, $userIds);
                 }
-                $labelIds = array_unique($labelIds);
+            );
+        }
+    }
 
-                // TODO: грузить только кого надо
-                $specMasters = $this->getProject()->getSpecMasters();
-                $mastersById = [];
-                foreach ($specMasters as $master) {
-                    if (in_array($master->extraId, $labelIds)) {
-                        $mastersById[$master->userId] = $master;
-                    }
+    /**
+     * Автоматически назначает тестировщиков для задачи,
+     * если нет уже заданных для конкретной задачи.
+     *
+     * Тестеры будут добавлены, если найдутся подходящие по тегам.
+     * Если тестировщик по тегу не найдет, то будет назначен тестировщик по умолчанию.
+     * Мастер для проекта по умолчанию - не назначается.
+     */
+    public function autoSetTesters()
+    {
+        $testers = $this->getTesters();
+
+        if (empty($testers)) {
+            $issueId = $this->id;
+            $project = $this->getProject();
+
+            // Пытаемся выставить по тегам 
+            $testersByTags = $this->autoSetByLabels(
+                function () use ($project) {
+                    return $project->getSpecTesters();
+                },
+                function ($userIds) use ($issueId) {
+                    return Member::saveIssueTesters($issueId, $userIds);
                 }
+            );
 
-                if (!empty($mastersById)) {
-                    $newMasterIds = array_keys($mastersById);
-
-                    if (!Member::saveIssueMasters($this->id, $newMasterIds)) {
-                        throw new \GMFramework\ProviderSaveException(
-                            'Не удалось сохранить автоматически назначенных мастеров для задачи'
-                        );
-                    }
-
-                    $this->_masters = array_values($mastersById);
+            if (!empty($testersByTags)) {
+                $this->_testers = $testersByTags;
+            } else {
+                // Если нет, пытаемся выставить дефолтного 
+                $defaultTester = $project->getTester();
+                if (!empty($defaultTester)) {
+                    Member::saveIssueTesters($issueId, [$defaultTester->userId]);
+                    $this->_testers = [$defaultTester];
                 }
             }
         }
+    }
+
+    private function autoSetByLabels($getSpecMembers, $saveMembers)
+    {
+        // Получаем список меток (тегов) для задачи
+        $labelNames = $this->getLabelNames();
+        if (!empty($labelNames)) {
+            // TODO: переделать чтобы не грузить лишнего (можно грузить только нужные теги)
+            $labels = $this->getProject()->getLabels();
+            $labelIds = [];
+
+            foreach ($labels as $label) {
+                if (in_array($label['label'], $labelNames)) {
+                    $labelIds[] = (int)$label['id'];
+                }
+            }
+            $labelIds = array_unique($labelIds);
+
+            // TODO: грузить только кого надо
+            $specMembers = $getSpecMembers();
+            $usersById = [];
+            foreach ($specMembers as $member) {
+                if (in_array($member->extraId, $labelIds)) {
+                    $usersById[$member->userId] = $member;
+                }
+            }
+
+            if (!empty($usersById)) {
+                $newUserIds = array_keys($usersById);
+                if (!$saveMembers($newUserIds)) {
+                    throw new \GMFramework\ProviderSaveException(
+                        'Не удалось сохранить автоматически назначенных участников для задачи'
+                    );
+                }
+
+                return array_values($usersById);
+            }
+        }
+    
+        return [];
     }
 
     /**
@@ -1353,7 +1423,7 @@ SQL;
      */
     public function getMasters()
     {
-        return $this->_masters == null && !$this->loadMasters() ? [] : $this->_masters;
+        return $this->_masters === null && !$this->loadMasters() ? [] : $this->_masters;
     }
 
     /**
@@ -1389,6 +1459,41 @@ SQL;
     public function getMembersSpStr()
     {
         return implode(',', $this->getMembersSp());
+    }
+
+    public function extractParticipantsFrom(&$list, $extractMembers = true, $extractTesters = true, $extractMasters = true) {
+        $allowedTypes = [];
+
+        if ($extractMembers) {
+            $this->_members = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE;
+        }
+
+        if ($extractTesters) {
+            $this->_testers = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE_FOR_TEST;
+        }
+
+        if ($extractMasters) {
+            $this->_masters = [];
+            $allowedTypes[] = LPMInstanceTypes::ISSUE_FOR_MASTER;
+        }
+        
+        $len = count($list);
+        for ($i = 0; $i < $len; $i++) {
+            $member = $list[$i];
+            if ($member->instanceId == $this->id && in_array($member->instanceType, $allowedTypes)) {
+                switch ($member->instanceType) {
+                    case LPMInstanceTypes::ISSUE: $this->_members[] = $member; break;
+                    case LPMInstanceTypes::ISSUE_FOR_TEST: $this->_testers[] = $member; break;
+                    case LPMInstanceTypes::ISSUE_FOR_MASTER: $this->_masters[] = $member; break;
+                }
+
+                array_splice($list, $i, 1);
+                $i--;
+                $len--;
+            }
+        }
     }
 
     protected function loadMembers()

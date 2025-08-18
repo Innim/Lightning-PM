@@ -1,4 +1,11 @@
 <?php
+/* 
+Требуются: 
+	$user - пользователь, для которого отображается профиль
+    $isPM - является ли пользователь PM хотя бы одного проекта
+*/
+
+
 // TODO: Bootstrap формы
 ?>
 <article id="profileView">
@@ -6,7 +13,6 @@
         <?lpm_print_header();?>
     </h1>
     <article id="profilePanel" class="container">
-        <?$user = lpm_get_user();?>
         <h3><?=$user->getName();?></h3>
         <ul class="panel-submenu">
             <li><a href="#" onclick="return profilePage.showInfo();">Информация</a></li>
@@ -65,35 +71,76 @@
         <article id="userSettings" class="hidden-state">
             <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
                 <h4>Настройки оповещений по email</h4>
+
+                <h5 class="mt-4">
+                    Оповещения по связанным задачам
+
+                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Присылаются для задач, в которых Вы фигурируете как исполнитель, тестировщик, мастер или были её автором." class="ms-1">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </span>
+                </h5>
+
                 <div class="alert alert-success info-message" role="alert"></div>
-                <ol class="form-fields">
-                    <li>
-                        <input id="seAddIssue" name="seAddIssue" type="checkbox"
-                            <?if($user->pref->seAddIssue){?>checked="checked"
-                        <?}?>/>
-                        <label for="seAddIssue">Добавление задачи для меня</label>
-                    </li>
-                    <li>
-                        <input id="seEditIssue" name="seEditIssue" type="checkbox"
-                            <?if($user->pref->seEditIssue){?>checked="checked"
-                        <?}?>/>
-                        <label for="seEditIssue">Изменение задачи, в которой я участвую</label>
-                    </li>
-                    <li>
-                        <input id="seIssueState" name="seIssueState" type="checkbox"
-                            <?if($user->pref->seIssueState){?>checked="checked"
-                        <?}?>/>
-                        <label for="seIssueState">Изменение статуса, удаление задачи, в которой я участвую</label>
-                    </li>
-                    <li>
-                        <input id="seIssueComment" name="seIssueComment" type="checkbox"
-                            <?if($user->pref->seIssueComment){?>checked="checked"
-                        <?}?>/>
-                        <label for="seIssueComment">Добавление комментария к задаче, в которой я участвую</label>
-                    </li>
-                </ol>
+                <?php
+                $pref = $user->pref;
+                ?>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seAddIssue" name="seAddIssue" 
+                        <?php if($pref->seAddIssue):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seAddIssue">Добавление задачи для меня</label>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seEditIssue" name="seEditIssue" 
+                        <?php if($pref->seEditIssue):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seEditIssue">Изменение задачи, в которой я участвую</label>
+                </div>  
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueState" name="seIssueState" 
+                        <?php if($pref->seIssueState):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seIssueState">Изменение статуса, удаление задачи, в которой я участвую</label>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueComment" name="seIssueComment" 
+                        <?php if($pref->seIssueComment):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seIssueComment">Добавление комментария к задаче, в которой я участвую</label>
+                </div>
+
+                <?php if ($isPM): ?>
+                <h5 class="mt-4">
+                    Оповещения по задачам проекта для PM
+                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Присылаются для проектов, в которых Вы назначены как PM" class="ms-1">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </span>
+                </h5>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seAddIssueForPM" name="seAddIssueForPM" 
+                        <?php if($pref->seAddIssueForPM):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seAddIssueForPM">Добавление задачи в проекте</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seEditIssueForPM" name="seEditIssueForPM" 
+                        <?php if($pref->seEditIssueForPM):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seEditIssueForPM">Изменение задачи в проекте</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueStateForPM" name="seIssueStateForPM" 
+                        <?php if($pref->seIssueStateForPM):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seIssueStateForPM">Изменение статуса, удаление задачи в проекте</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueCommentForPM" name="seIssueCommentForPM" 
+                        <?php if($pref->seIssueCommentForPM):?>checked="checked"<?php endif;?>>
+                    <label class="form-check-label" for="seIssueCommentForPM">Добавление комментария к задаче в проекте</label>
+                </div>
+                <?php endif; ?>
+
                 <input type="hidden" name="form" value="emailPref" />
-                <p class="save-line">
+                <p class="save-line mt-4">
                     <button class="btn btn-primary" type="submit">Сохранить</button>
                     <button class="btn btn-secondary" type="reset">Отмена</button>
                 </p>

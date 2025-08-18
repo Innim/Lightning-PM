@@ -241,11 +241,14 @@ class GitlabExternalApi extends ExternalApi
     {
         $commitIds = [];
         foreach ($data['commits'] as $commitData) {
-            $commitIds[] = $commitData['id'];
+            $commitId = $commitData['id'];
+            if (!empty($commitId)) {
+                $commitIds[] = $commitId;
+            }
         }
 
         // Загружаем список IssueBranch по последним коммитам
-        $issueBranches = IssueBranch::loadByLastCommits($repositoryId, $commitIds, true);
+        $issueBranches = IssueBranch::loadByLastCommits($repositoryId, $commitIds, true, true);
 
         if (!empty($issueBranches)) {
             $engine = $this->engine();
@@ -318,6 +321,9 @@ class GitlabExternalApi extends ExternalApi
                 // обновляем последний коммит
                 $lastCommit = $commit->id;
                 IssueBranch::updateLastCommit($repositoryId, $branchName, $lastCommit);
+            } else {
+                // TODO: Если нет отличий от develop - надо обновить начальный коммит
+                // IssueBranch::updateInitialCommit($repositoryId, $branchName, $brachCommit);
             }
         }
     }

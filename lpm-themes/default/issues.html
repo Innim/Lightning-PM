@@ -62,7 +62,8 @@ $userId = lpm_get_user()->userId;
 		?>
 		<tr class="<?=implode(' ', $classes);?>" data-id="<?=$issue->id;?>"
 			data-status="<?=$issue->status;?>" data-complete-date="<?=$issue->completeDate;?>"
-			data-create-date="<?=$issue->createDate;?>">
+			data-create-date="<?=$issue->createDate;?>"
+			data-labels="<?=implode(',', $issue->getLabelNames());?>">
 			<td>
 				<?php if ($issue->isOnBoard()):?>
 				<span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
@@ -110,12 +111,24 @@ $userId = lpm_get_user()->userId;
 				&nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
 				<?php endif; ?>
 			</td>
-			<td class="member-list">
+			<td>
 				<?php if ($issue->hasMembers()): ?>
-				<?php foreach ($issue->getMembers() as $i => $member): ?>
-				<?=$i>0?', ':''?><a href="javascript:;"
-					data-member-id="<?=$member->getID();?>"><?=$member->getLinkedName();?></a>
-				<?php endforeach; ?>
+				<div class="member-list">
+					<i class="fas fa-wrench" title="Разработчик"></i>
+					<?php foreach ($issue->getMembers() as $i => $member): 
+					?><?=$i>0?', ':''?><a href="javascript:;"
+						data-member-id="<?=$member->getID();?>"><?=$member->getName();?></a><?php 
+					endforeach; ?>
+				</div>
+				<?php endif; ?>
+
+				<?php if ($issue->hasTesters()): ?>
+				<div>
+					<i class="fas fa-flask" title="Тестировщик"></i>
+					<?php foreach ($issue->getTesters() as $i => $member):
+					?><?=$i>0?', ':''?><?=$member->getName();?><?php 
+					endforeach; ?>
+				</div>
 				<?php endif; ?>
 			</td>
 			<td>

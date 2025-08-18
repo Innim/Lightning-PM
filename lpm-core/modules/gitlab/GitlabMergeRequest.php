@@ -65,6 +65,12 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
      */
     public $description;
 
+    /**
+     * Дата влития MR.
+     * @var \GMFramework\Date
+     */
+    public $mergedAt;
+
     private $_data;
 
     public function __construct($data)
@@ -82,12 +88,15 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
 
         $this->_int('id', 'internalId');
 
+        $this->mergedAt = new \GMFramework\Date();
+
         $this->addAlias('web_url', 'url');
         $this->addAlias('iid', 'internalId');
         $this->addAlias('source_branch', 'sourceBranch');
         $this->addAlias('target_branch', 'targetBranch');
         $this->addAlias('source_project_id', 'sourceProjectId');
         $this->addAlias('target_project_id', 'targetProjectId');
+        $this->addAlias('merged_at', 'mergedAt');
     }
 
     public function isOpened()

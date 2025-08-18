@@ -66,7 +66,13 @@ class Project extends MembersInstance
      * Обновляет настройки проекта
      *
      */
-    public static function updateProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId)
+    public static function updateProjectSettings(
+        $projectId,
+        $scrum,
+        $slackNotifyChannel,
+        $gitlabGroupId,
+        $gitlabProjectIds
+    )
     {
         $db = self::getDB();
 
@@ -76,6 +82,7 @@ class Project extends MembersInstance
                 'scrum' => $scrum,
                 'slackNotifyChannel' => $slackNotifyChannel,
                 'gitlabGroupId' => $gitlabGroupId,
+                'gitlabProjectIds' => $gitlabProjectIds,
             ],
             'WHERE' => [
                 'id' => $projectId
@@ -292,17 +299,6 @@ SQL;
 
         return $user->isAdmin() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
     }
-
-    public static function getProjectTester()
-    {
-        $projectId = self::$currentProject->getID();
-        $tester = Member::loadTesterForProject($projectId);
-        if (!$tester) {
-            return null;
-        }
-
-        return $tester[0];
-    }
     
     /**
      * Обновляет в БД цели спринта текущего scrum проекта.
@@ -375,6 +371,13 @@ SQL;
     public $gitlabGroupId;
 
     /**
+     * Id привязанных проектов в GitLab.
+     * @var string
+     * @example '1,2,3'
+     */
+    public $gitlabProjectIds;
+
+    /**
      * Проект зафиксирован в таблице проектов
      * @var Boolean|null
      */
@@ -393,9 +396,24 @@ SQL;
     private $_master;
 
     /**
+     * @var User
+     */
+    private $_tester;
+
+    /**
+     * @var User
+     */
+    private $_pm;
+
+    /**
      * @var array<Member>
      */
     private $_specMasters = null;
+
+    /**
+     * @var array<Member>
+     */
+    private $_specTesters = null;
     
     /**
      * Цели спринта проекта.
@@ -408,6 +426,11 @@ SQL;
      * @var string|null
      */
     private $_sprintTargetHtml = null;
+
+    /**
+     * @var array<array>
+     */
+    private $_labels = null;
     
     public function __construct()
     {
@@ -578,6 +601,32 @@ SQL;
         return $this->_master;
     }
 
+    /**
+     * Возвращает пользователя, назначенного тестировщиком проекта.
+     * Если пользователь не выставлен, он будет загружен.
+     * @return User|null
+     */
+    public function getTester()
+    {
+        if ($this->_tester === null) {
+            $this->_tester = Member::loadTesterForProject($this->id);
+        }
+
+        return $this->_tester;
+    }
+
+    /**
+     * Возвращает пользователя, назначенного PM проекта.
+     * Если пользователь не выставлен, он будет загружен.
+     * @return User|null
+     */
+    public function getPM() {
+        if ($this->_pm === null) {
+            $this->_pm = Member::loadPMForProject($this->id);
+        }
+
+        return $this->_pm;
+    }
 
     /**
      * Возвращает список мастеров, определенных по тегам.
@@ -585,7 +634,26 @@ SQL;
      */
     public function getSpecMasters()
     {
-        return $this->_specMasters == null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+        return $this->_specMasters === null && !$this->loadSpecMasters() ? [] : $this->_specMasters;
+    }
+
+
+    /**
+     * Возвращает список тестеров, определенных по тегам.
+     * @return array<Member>
+     */
+    public function getSpecTesters()
+    {
+        return $this->_specTesters === null && !$this->loadSpecTesters() ? [] : $this->_specTesters;
+    }
+
+    /**
+     * Возвращает список тегов для проекта.
+     * @return array<array>
+     */
+    public function getLabels()
+    {
+        return $this->_labels === null && !$this->loadLabels() ? [] : $this->_labels;
     }
 
     /**
@@ -618,6 +686,14 @@ SQL;
         return $this->_sprintTargetHtml;
     }
 
+    /**
+     * Возвращает список привязанных id проектов в GitLab.
+     */
+    public function getGitlabProjectIds(): array
+    {
+        return empty($this->gitlabProjectIds) ? [] : explode(',', $this->gitlabProjectIds);
+    }
+
 	protected function setVar($var, $value)
 	{
         if ($var === 'importantIssuesCount') {
@@ -641,11 +717,38 @@ SQL;
      */
     private function loadSpecMasters()
     {
-        $this->_specMasters = Member::loadSpecMastersForProject($this->id);
-        if ($this->_specMasters === false) {
+        $list = Member::loadSpecMastersForProject($this->id);
+        if ($list === false) {
             throw new Exception('Ошибка при загрузке списка мастеров по тегам');
         }
 
+        $this->_specMasters = $list;
         return $this->_specMasters;
+    }
+
+    /**
+     * Загружается список тестеров, определенных по тегам.
+     * @return array<Member>
+     */
+    private function loadSpecTesters()
+    {
+        $list = Member::loadSpecTestersForProject($this->id);
+        if ($list === false) {
+            throw new Exception('Ошибка при загрузке списка тестеров по тегам');
+        }
+
+        $this->_specTesters = $list;
+        return $this->_specTesters;
+    }
+
+    private function loadLabels()
+    {
+        $list = Issue::getLabels($this->id);
+        if ($list === false) {
+            throw new Exception('Ошибка при загрузке списка тегов');
+        }
+
+        $this->_labels = $list;
+        return $this->_labels;
     }
 }

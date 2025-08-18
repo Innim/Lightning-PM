@@ -1,5 +1,8 @@
 $(document).ready(
     function () {
+        states.addState(null);
+        states.addState(null, 'tags:#', issuePage.handleTagsFilterState);
+
         document.querySelectorAll('.name-project').forEach(function (e) {
             if (e.scrollWidth > e.offsetWidth) {
                 e.setAttribute('title', e.textContent)
@@ -33,6 +36,8 @@ let scrumBoard = {
             state = 0;
         else
             return;
+
+        if (state == 4 && !confirm('Завершить задачу?')) return;
 
         preloader.show();
         srv.issue.changeScrumState(issueId, state, function (res) {

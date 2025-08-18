@@ -113,6 +113,33 @@ function ParallelService(service) {
     }
 }
 
+const lpm = {
+    format: {
+        date: function (unixTimeSec, addTimeZone = true) {
+            const date = new Date(unixTimeSec * 1000);
+
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            let res = `${day}.${month}.${year} ${hours}:${minutes}`;
+            if (addTimeZone) {
+                const timeZoneOffset = date.getTimezoneOffset();
+                const sign = timeZoneOffset < 0 ? '+' : '-';
+                const absOffset = Math.abs(timeZoneOffset);
+                const tzHours = Math.floor(absOffset / 60).toString().padStart(2, '0');
+                const tzMinutes = (absOffset % 60).toString().padStart(2, '0');
+                res += ` GMT${sign}${tzHours}:${tzMinutes}`;
+            }
+
+            return res;
+        }
+    }
+}
+
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
 let srv = {
     gateway: gateway,
@@ -209,8 +236,14 @@ let srv = {
         addSpecMaster: function(projectId, masterId, labelId, onResult) {
             this.s._('addSpecMaster');
         },
+        addSpecTester: function(projectId, userId, labelId, onResult) {
+            this.s._('addSpecTester');
+        },
         deleteSpecMaster: function(projectId, masterId, labelId, onResult) {
             this.s._('deleteSpecMaster');
+        },
+        deleteSpecTester: function(projectId, userId, labelId, onResult) {
+            this.s._('deleteSpecTester');
         },
         deleteMemberDefault: function (projectId, onResult) {
             this.s._('deleteMemberDefault');
@@ -223,6 +256,12 @@ let srv = {
         },
         deleteTester: function ($projectId, onResult) {
             this.s._('deleteTester');
+        },
+        setPM: function (projectId, userId, onResult) {
+            this.s._('setPM');
+        },
+        deletePM: function (projectId, onResult) {
+            this.s._('deletePM');
         },
         getSumOpenedIssuesHours: function (projectId, onResult) {
             this.s._('getSumOpenedIssuesHours');
@@ -257,7 +296,7 @@ let srv = {
     },
     profile: {
         s: new BaseService('ProfileService'),
-        emailPref: function (addIssue, editIssue, issueState, issueComment, onResult) {
+        emailPref: function (data, onResult) {
             this.s._('emailPref');
         },
         newPass: function (currentPass, newPass, onResult) {
@@ -291,7 +330,7 @@ var states = {
         else {
             var arr = state.split(':');
             params = arr.length - 1;
-            state = '#' + arr[0];
+            state = arr[0];
         }
 
         for (var i = 0; i < this._list.length; i++) {
@@ -299,10 +338,26 @@ var states = {
         }
         this._list.push({ el: element, st: state, sh: showHandler, p: params });
     },
+    setState: function (state, skipUpdateView = false) {
+        const currentHash = window.location.hash;
+        var newHash;
+        if (state.trim() == '') {
+            newHash = '';
+        } else {
+            newHash = state;
+            
+        }
+
+        if (newHash != currentHash && '#' + newHash != currentHash) {
+            window.location.hash = newHash;
+            if (skipUpdateView != true) states.updateView();
+        }
+    },
     updateView: function () {
         var item;
         this.current = null;
         var hash = window.location.hash;
+        if (hash.startsWith('#')) hash = hash.substring(1);
         var hashArr = hash.split(':');
         var p = hashArr.length - 1;
         hash = hashArr.shift();
@@ -479,7 +534,9 @@ $(document).ready(
 
         if (hljs) hljs.initHighlightingOnLoad();
 
-        $(document).tooltip({
+        $.widget.bridge('uitooltip', $.ui.tooltip);
+
+        $(document).uitooltip({
             position: {
                 my: "center bottom-20",
                 at: "center top",
@@ -493,7 +550,6 @@ $(document).ready(
                 }
             }
         });
-
 
         window.lpInfo.userId = $('#curUserId').val();
         // Инициализация копирования в буфер

@@ -12,4 +12,5 @@ window.lpmOptions = {
 	gitlabUrl: '<?=defined('GITLAB_URL') ? GITLAB_URL : '';?>',
 	videoUrlPatterns: <?=json_encode(AttachmentVideoHelper::URL_PATTERNS);?>,
 	imageUrlPatterns: <?=json_encode(AttachmentImageHelper::URL_PATTERNS);?>,
+	issueUrlPattern: <?=json_encode(OwnUrlHelper::getIssueUrlPattern());?>,
 };

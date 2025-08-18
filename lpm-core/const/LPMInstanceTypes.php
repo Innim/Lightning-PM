@@ -58,4 +58,16 @@ class LPMInstanceTypes
      * Это мастер, назначаемый по тегу.
      */
     const PROJECT_FOR_SPEC_MASTER = 7;
+
+    /**
+     * Проект, для которого назначен специализированный тестер.
+     *
+     * Это тестер, назначаемый по тегу.
+     */
+    const PROJECT_FOR_SPEC_TESTER = 8;
+
+    /**
+     * Instance PM для проекта
+     */
+    const PM_FOR_PROJECT = 9;
 }

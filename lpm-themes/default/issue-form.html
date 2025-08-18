@@ -4,11 +4,13 @@
     $project - текущий проект
     $issue - редактируемая задача (при добавлении задачи - null)
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
+    $isHidden - определяет, скрыта ли по умолчанию
 */
 
 $descMaxLen = Issue::DESC_MAX_LEN;
+$isHidden = !empty($isHidden)
 ?>
-<article id="issueForm" class="container" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
+<article id="issueForm" class="container" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
     <h3></h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <form onsubmit="return issueForm.validateIssueForm();" class="row g-3" method="post" enctype="multipart/form-data">
@@ -301,7 +303,7 @@ $descMaxLen = Issue::DESC_MAX_LEN;
 
     <div id="issueFormTemplates" style="display:none">
         <li class="image-item">
-            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview"></a>
+            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview border border-1 rounded-3"></a>
             <input type="hidden" name="imgId" value="">
             <a href="javascript:;" class="remove-btn remove-img"></a>
         </li>

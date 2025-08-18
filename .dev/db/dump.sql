@@ -7,6 +7,17 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS `lpm_badges`;
+CREATE TABLE `lpm_badges` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `type` varchar(255) NOT NULL COMMENT 'Тип бэйджа',
+  `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Лейбл бейджа',
+  `gitlabProjectId` int DEFAULT NULL COMMENT 'Id проекта на GitLab',
+  `gitlabRef` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Ветка, тег или коммит в репозитории',
+  `comment` tinytext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT 'Комментарий к бэйджу',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';
+
 DROP TABLE IF EXISTS `lpm_comments`;
 CREATE TABLE `lpm_comments` (
   `id` bigint(19) NOT NULL AUTO_INCREMENT COMMENT 'идентификатор комментария',
@@ -159,7 +170,8 @@ CREATE TABLE `lpm_members` (
   `instanceId` bigint(19) NOT NULL,
   `extraId` bigint(19) NOT NULL DEFAULT '0',
   PRIMARY KEY (`userId`,`instanceType`,`instanceId`,`extraId`),
-  KEY `instanceType_instanceId` (`instanceType`,`instanceId`)
+  KEY `instanceType_instanceId` (`instanceType`,`instanceId`),
+  KEY `instanceId` (`instanceId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
@@ -195,6 +207,7 @@ CREATE TABLE `lpm_projects` (
   `masterId` bigint(19) NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте',
   `defaultIssueMemberId` int(11) NOT NULL COMMENT 'Исполнитель умолчанию',
   `gitlabGroupId` int(11) NOT NULL COMMENT 'Идентификатор группы проектов на GitLab',
+  `gitlabProjectIds` varchar(255) NOT NULL COMMENT 'ID связанных проектов GitLab',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -289,6 +302,10 @@ CREATE TABLE `lpm_users_pref` (
   `seEditIssue` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменении задачи',
   `seIssueState` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'оповещать на email об изменения состояния задачи',
   `seIssueComment` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'оставлен комментарий к задаче',
+  `seAddIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email о добавлении новой задачи для PM',
+  `seEditIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменении задачи для PM',
+  `seIssueStateForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменения состояния задачи для PM',
+  `seIssueCommentForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оставлен комментарий к задаче для PM',
   PRIMARY KEY (`userId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='настройки пользователя';
 

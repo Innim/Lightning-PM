@@ -53,7 +53,7 @@ class PagePrinter
     {
         self::cssLink('jquery-ui-1.12.1.min');
         self::cssLink('highlightjs-styles/default');
-        self::cssLink('font-awesome5/css/fontawesome-all.min');
+        self::cssLink('font-awesome7/css/all.min');
         self::cssLink('tribute');
         self::cssLink('bootstrap.min');
         self::cssLink('bootstrap-reset');
@@ -71,9 +71,9 @@ class PagePrinter
         PageConstructor::includePattern('issues', compact('list'));
     }
     
-    public static function issueForm($project, $issue, $input)
+    public static function issueForm($project, $issue, $input, $isHidden)
     {
-        PageConstructor::includePattern('issue-form', compact('project', 'issue', 'input'));
+        PageConstructor::includePattern('issue-form', compact('project', 'issue', 'input', 'isHidden'));
     }
     
     public static function issueView()
@@ -188,6 +188,14 @@ class PagePrinter
     public static function scrumBoardFilter()
     {
         PageConstructor::includePattern('scrum-board-filter');
+    }
+
+    /**
+     * Распечатывает шаблон списка снимков Scrum доски.
+     */
+    public static function scrumBoardSnapshotsList(Project $project, $snapshots)
+    {
+        PageConstructor::includePattern('scrum-board-snapshots-list', compact('project', 'snapshots'));
     }
 
     /**

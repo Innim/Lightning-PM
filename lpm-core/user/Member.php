@@ -2,30 +2,74 @@
 class Member extends User
 {
     public static function loadListByInstance(
-        $instanceType,
+        $instanceTypes,
         $instanceId,
         $onlyNotLocked = false,
-        $leftJoinTable = null,
+        $leftJoinTables = null,
         $class = null,
-        $userId = null
+        $userId = null,
+        $conditions = null
     ) {
-        $sql = "select * from `%2\$s`, `%1\$s` ";
-        if ($leftJoinTable) {
-            $sql .= "LEFT JOIN `%3\$s` USING (`userId`, `instanceId`) ";
+        
+        $tables = [LPMTables::MEMBERS, LPMTables::USERS];
+
+        $selectSql = '`u`.*, `m`.*';
+        $joinSql = '';
+        if ($leftJoinTables) {
+            $i = 0;
+            foreach ($leftJoinTables as $table => $hash) {
+                $s = count($tables) + 1;
+                $alias = empty($hash[0]) ? "t_$i" : $hash[0];
+                
+                $joinSql .= " LEFT JOIN `%$s\$s` `$alias`";
+                
+                if (!empty($hash['USING'])) {
+                    $joinSql .= ' USING (`' . implode('`, `', $hash['USING']) . '`)';
+                } else if (!empty($hash['ON'])) {
+                    $joinSql .= ' ON ' . $hash['ON'];
+                }
+
+                if (!empty($hash['SELECT'])) {
+                    $selectFields = array_map(function ($v) use ($alias) {
+                        if ($v != '*' && substr($v, 0, 1) !== '`') $v = '`' . $v . '`';
+                        return "`$alias`.$v";
+                    }, (array)$hash['SELECT']);
+                    $selectSql .= ", " . implode(', ',  $selectFields);
+                }
+
+                $tables[] = $table;
+                $i++;
+            }
         }
-        $sql .= "where `%1\$s`.`instanceId`   = '" . $instanceId   . "' " .
-                         "and `%1\$s`.`instanceType` = '" . $instanceType . "' " .
-                         "and `%1\$s`.`userId`       = `%2\$s`.`userId`";
+
+        $sql = "SELECT " . $selectSql . " FROM `%2\$s` `u`, `%1\$s` `m`" . $joinSql . 
+               " WHERE `m`.`userId`       = `u`.`userId`";
+
+        $sql .= " AND `m`.`instanceType`";
+        if (is_array($instanceTypes)) {
+            $sql .= " IN (" . implode(', ', $instanceTypes) . ")";
+        } else {
+            $sql .= " = '" . (int)$instanceTypes . "'";
+        }
+        
+        if ($instanceId != null) {
+            $sql .= " AND `m`.`instanceId` = " . $instanceId;
+        }
+
         if ($userId != null) {
-            $sql .= " and `%1\$s`.`userId` = " . $userId;
+            $sql .= " AND `m`.`userId` = " . $userId;
         }
+
         if ($onlyNotLocked) {
-            $sql .= " and `%2\$s`.`locked` = 0";
+            $sql .= " AND `u`.`locked` = 0";
         }
-        $query = [$sql, LPMTables::MEMBERS, LPMTables::USERS];
-        if ($leftJoinTable) {
-            $query[] = $leftJoinTable;
+
+        if ($conditions != null) {
+            $sql .= " AND ($conditions)";
         }
+
+
+        $query = array_merge([$sql], $tables);
 
         return StreamObject::loadObjList(self::getDB(), $query, empty($class) ? __CLASS__ : $class);
     }
@@ -33,6 +77,17 @@ class Member extends User
     public static function loadListByProject($projectId, $onlyNotLocked = false)
     {
         return self::loadListByInstance(LPMInstanceTypes::PROJECT, $projectId, $onlyNotLocked);
+    }
+
+    public static function loadListAnyForIssuesInProject($projectId, $issueStatus = null, $loadMembers = true, $loadTesters = true, $loadMasters = true) 
+    {
+        $types = [];
+        if ($loadMembers) $types[] = LPMInstanceTypes::ISSUE;
+        if ($loadTesters) $types[] = LPMInstanceTypes::ISSUE_FOR_TEST;
+        if ($loadMasters) $types[] = LPMInstanceTypes::ISSUE_FOR_MASTER;
+        if (empty($types)) return [];
+
+        return self::loadListForIssue($types, $projectId, $issueStatus);
     }
     
     public static function loadListByIssue($issueId, $onlyNotLocked = false)
@@ -59,7 +114,36 @@ class Member extends User
 
     public static function loadTesterForProject($projectId, $onlyNotLocked = false)
     {
-        return self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $onlyNotLocked);
+        $list = self::loadListByInstance(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, $onlyNotLocked);
+        return empty($list) ? null : $list[0];
+    }
+
+    public static function loadPMForProject($projectId, $onlyNotLocked = false)
+    {
+        $list = self::loadListByInstance(LPMInstanceTypes::PM_FOR_PROJECT, $projectId, $onlyNotLocked);
+        return empty($list) ? null : $list[0];
+    }
+
+    public static function isPMForAnyProject($userId)
+    {
+        $hash = [
+            'SELECT' => 1,
+            'FROM' => LPMTables::MEMBERS,
+            'WHERE' => [
+                'instanceType' => LPMInstanceTypes::PM_FOR_PROJECT,
+                'userId' => $userId
+            ],
+            'LIMIT' => 1
+        ];
+
+        $res = self::getDB()->queryb($hash);
+
+        if (!$res) {
+            throw new Exception('Check PM for any project failed', \GMFramework\ErrorCode::LOAD_DATA);
+        }
+
+        $row = $res->fetch_row();
+        return !empty($row) && (int)$row[0] == 1;
     }
 
     /**
@@ -78,6 +162,15 @@ class Member extends User
     public static function loadSpecMastersForProject($projectId, $onlyNotLocked = false)
     {
         return self::loadListByInstance(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, $onlyNotLocked);
+    }
+
+    /**
+     * Загружает список специализированных тестеров для конкретного проекта.
+     * @return array<Member>
+     */
+    public static function loadSpecTestersForProject($projectId, $onlyNotLocked = false)
+    {
+        return self::loadListByInstance(LPMInstanceTypes::PROJECT_FOR_SPEC_TESTER, $projectId, $onlyNotLocked);
     }
 
     public static function hasIssueMember($issueId, $userId)
@@ -122,6 +215,11 @@ class Member extends User
         return self::deleteMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, [$userId], $labelId);
     }
 
+    public static function deleteProjectSpecTester($projectId, $userId, $labelId)
+    {
+        return self::deleteMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_TESTER, $projectId, [$userId], $labelId);
+    }
+
     public static function deleteMembers($instanceType, $instanceId, $userIds = null, $extraId = null)
     {
         $hash = [
@@ -150,19 +248,34 @@ class Member extends User
         return self::saveMembers(LPMInstanceTypes::ISSUE, $issueId, $userIds);
     }
 
+    public static function saveIssueTesters($issueId, $userIds)
+    {
+        return self::saveMembers(LPMInstanceTypes::ISSUE_FOR_TEST, $issueId, $userIds);
+    }
+
     public static function saveIssueMasters($issueId, $userIds)
     {
         return self::saveMembers(LPMInstanceTypes::ISSUE_FOR_MASTER, $issueId, $userIds);
     }
 
-    public static function saveProjectForTester($projectId, $userId)
+    public static function saveTesterForProject($projectId, $userId)
     {
         return self::saveMembers(LPMInstanceTypes::TESTER_FOR_PROJECT, $projectId, [$userId]);
+    }
+
+    public static function saveProjectPM($projectId, $userId)
+    {
+        return self::saveMembers(LPMInstanceTypes::PM_FOR_PROJECT, $projectId, [$userId]);
     }
 
     public static function saveProjectSpecMaster($projectId, $userId, $labelId)
     {
         return self::saveMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_MASTER, $projectId, [$userId], $labelId);
+    }
+
+    public static function saveProjectSpecTester($projectId, $userId, $labelId)
+    {
+        return self::saveMembers(LPMInstanceTypes::PROJECT_FOR_SPEC_TESTER, $projectId, [$userId], $labelId);
     }
 
     public static function saveMembers($instanceType, $instanceId, $userIds, $extraId = 0)
@@ -189,11 +302,52 @@ class Member extends User
             LPMInstanceTypes::ISSUE,
             $issueId,
             $onlyNotLocked,
-            LPMTables::ISSUE_MEMBER_INFO,
+            [
+                LPMTables::ISSUE_MEMBER_INFO => self::getIssueMemberInfoJoin(),
+            ],
             'IssueMember',
             $userId
         );
     }
+
+    private static function loadListForIssue(
+        $instanceTypes,
+        $projectId,
+        $issueStatus = null,
+        $onlyNotLocked = false,
+        $userId = null
+    ) {
+        $issueWhere = "`i`.`projectId` = '" . $projectId . "'";
+        if (!empty($issueStatus)) {
+            $issueWhere .= " AND `i`.`status` IN (" . implode(',', $issueStatus) . ')';
+        }
+
+        return self::loadListByInstance(
+            $instanceTypes,
+            null,
+            $onlyNotLocked,
+            [
+                LPMTables::ISSUE_MEMBER_INFO => self::getIssueMemberInfoJoin(),
+                LPMTables::ISSUES => [
+                    'i',
+                    'ON' => '`m`.`instanceId` = `i`.`id`'
+                ]
+            ],
+            'IssueMember',
+            $userId,
+            $issueWhere,
+        );
+    }
+
+    private static function getIssueMemberInfoJoin() {
+        return [
+            'SELECT' => 'sp',
+            'USING' => ['userId', 'instanceId'], 
+        ];
+    }
+
+    public $instanceType;
+    public $instanceId;
 
     /**
      * Дополнительный идентификатор, определяющий связь.
@@ -206,6 +360,6 @@ class Member extends User
     {
         parent::__construct();
         
-        $this->_typeConverter->addIntVars('extraId');
+        $this->_typeConverter->addIntVars('instanceType', 'instanceId', 'extraId');
     }
 }

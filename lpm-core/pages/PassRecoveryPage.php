@@ -51,12 +51,14 @@ class PassRecoveryPage extends LPMPage
             $userId = $this->_engine->getParams()->getQueryArg('userId');
 
             $userId = base64_decode(urldecode($userId));
-            if (!empty($key)&& !empty($userId)) {
+            if (!empty($key) && !empty($userId)) {
                 if ($this->checkUrlKey($key, $userId)) {
                     $this->_userId = $userId;
                     $this->_recoveryKey = $key;
                     $this->_show = 'changePassForm';
                 }
+            } else {
+                $this->_engine->addError('Некорректная ссылка');
             }
         } else {
             $this->_show = 'emailForm';
