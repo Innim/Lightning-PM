@@ -56,6 +56,7 @@ class ServerRequest implements ServerRequestInterface
         $this->uri = $uri;
         $this->setHeaders($headers);
         $this->protocol = $version;
+        \parse_str($uri->getQuery(), $this->queryParams);
 
         if (!$this->hasHeader('Host')) {
             $this->updateHostFromUri();
@@ -77,6 +78,9 @@ class ServerRequest implements ServerRequestInterface
         return $this->uploadedFiles;
     }
 
+    /**
+     * @return static
+     */
     public function withUploadedFiles(array $uploadedFiles)
     {
         $new = clone $this;
@@ -90,6 +94,9 @@ class ServerRequest implements ServerRequestInterface
         return $this->cookieParams;
     }
 
+    /**
+     * @return static
+     */
     public function withCookieParams(array $cookies)
     {
         $new = clone $this;
@@ -103,6 +110,9 @@ class ServerRequest implements ServerRequestInterface
         return $this->queryParams;
     }
 
+    /**
+     * @return static
+     */
     public function withQueryParams(array $query)
     {
         $new = clone $this;
@@ -111,11 +121,17 @@ class ServerRequest implements ServerRequestInterface
         return $new;
     }
 
+    /**
+     * @return array|object|null
+     */
     public function getParsedBody()
     {
         return $this->parsedBody;
     }
 
+    /**
+     * @return static
+     */
     public function withParsedBody($data)
     {
         if (!\is_array($data) && !\is_object($data) && null !== $data) {
@@ -133,8 +149,15 @@ class ServerRequest implements ServerRequestInterface
         return $this->attributes;
     }
 
+    /**
+     * @return mixed
+     */
     public function getAttribute($attribute, $default = null)
     {
+        if (!\is_string($attribute)) {
+            throw new \InvalidArgumentException('Attribute name must be a string');
+        }
+
         if (false === \array_key_exists($attribute, $this->attributes)) {
             return $default;
         }
@@ -144,6 +167,10 @@ class ServerRequest implements ServerRequestInterface
 
     public function withAttribute($attribute, $value): self
     {
+        if (!\is_string($attribute)) {
+            throw new \InvalidArgumentException('Attribute name must be a string');
+        }
+
         $new = clone $this;
         $new->attributes[$attribute] = $value;
 
@@ -152,6 +179,10 @@ class ServerRequest implements ServerRequestInterface
 
     public function withoutAttribute($attribute): self
     {
+        if (!\is_string($attribute)) {
+            throw new \InvalidArgumentException('Attribute name must be a string');
+        }
+
         if (false === \array_key_exists($attribute, $this->attributes)) {
             return $this;
         }

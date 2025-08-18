@@ -51,8 +51,20 @@ class Stream implements StreamInterface
         ],
     ];
 
-    private function __construct()
+    /**
+     * @param resource $body
+     */
+    public function __construct($body)
     {
+        if (!\is_resource($body)) {
+            throw new \InvalidArgumentException('First argument to Stream::__construct() must be resource');
+        }
+
+        $this->stream = $body;
+        $meta = \stream_get_meta_data($this->stream);
+        $this->seekable = $meta['seekable'] && 0 === \fseek($this->stream, 0, \SEEK_CUR);
+        $this->readable = isset(self::READ_WRITE_HASH['read'][$meta['mode']]);
+        $this->writable = isset(self::READ_WRITE_HASH['write'][$meta['mode']]);
     }
 
     /**
@@ -71,21 +83,15 @@ class Stream implements StreamInterface
         if (\is_string($body)) {
             $resource = \fopen('php://temp', 'rw+');
             \fwrite($resource, $body);
+            \fseek($resource, 0);
             $body = $resource;
         }
 
-        if (\is_resource($body)) {
-            $new = new self();
-            $new->stream = $body;
-            $meta = \stream_get_meta_data($new->stream);
-            $new->seekable = $meta['seekable'] && 0 === \fseek($new->stream, 0, \SEEK_CUR);
-            $new->readable = isset(self::READ_WRITE_HASH['read'][$meta['mode']]);
-            $new->writable = isset(self::READ_WRITE_HASH['write'][$meta['mode']]);
-
-            return $new;
+        if (!\is_resource($body)) {
+            throw new \InvalidArgumentException('First argument to Stream::create() must be a string, resource or StreamInterface');
         }
 
-        throw new \InvalidArgumentException('First argument to Stream::create() must be a string, resource or StreamInterface.');
+        return new self($body);
     }
 
     /**
@@ -185,8 +191,12 @@ class Stream implements StreamInterface
 
     public function tell(): int
     {
-        if (false === $result = \ftell($this->stream)) {
-            throw new \RuntimeException('Unable to determine stream position');
+        if (!isset($this->stream)) {
+            throw new \RuntimeException('Stream is detached');
+        }
+
+        if (false === $result = @\ftell($this->stream)) {
+            throw new \RuntimeException('Unable to determine stream position: ' . (\error_get_last()['message'] ?? ''));
         }
 
         return $result;
@@ -194,7 +204,7 @@ class Stream implements StreamInterface
 
     public function eof(): bool
     {
-        return !$this->stream || \feof($this->stream);
+        return !isset($this->stream) || \feof($this->stream);
     }
 
     public function isSeekable(): bool
@@ -204,6 +214,10 @@ class Stream implements StreamInterface
 
     public function seek($offset, $whence = \SEEK_SET): void
     {
+        if (!isset($this->stream)) {
+            throw new \RuntimeException('Stream is detached');
+        }
+
         if (!$this->seekable) {
             throw new \RuntimeException('Stream is not seekable');
         }
@@ -225,6 +239,10 @@ class Stream implements StreamInterface
 
     public function write($string): int
     {
+        if (!isset($this->stream)) {
+            throw new \RuntimeException('Stream is detached');
+        }
+
         if (!$this->writable) {
             throw new \RuntimeException('Cannot write to a non-writable stream');
         }
@@ -232,8 +250,8 @@ class Stream implements StreamInterface
         // We can't know the size after writing anything
         $this->size = null;
 
-        if (false === $result = \fwrite($this->stream, $string)) {
-            throw new \RuntimeException('Unable to write to stream');
+        if (false === $result = @\fwrite($this->stream, $string)) {
+            throw new \RuntimeException('Unable to write to stream: ' . (\error_get_last()['message'] ?? ''));
         }
 
         return $result;
@@ -246,12 +264,16 @@ class Stream implements StreamInterface
 
     public function read($length): string
     {
+        if (!isset($this->stream)) {
+            throw new \RuntimeException('Stream is detached');
+        }
+
         if (!$this->readable) {
             throw new \RuntimeException('Cannot read from non-readable stream');
         }
 
-        if (false === $result = \fread($this->stream, $length)) {
-            throw new \RuntimeException('Unable to read from stream');
+        if (false === $result = @\fread($this->stream, $length)) {
+            throw new \RuntimeException('Unable to read from stream: ' . (\error_get_last()['message'] ?? ''));
         }
 
         return $result;
@@ -260,18 +282,25 @@ class Stream implements StreamInterface
     public function getContents(): string
     {
         if (!isset($this->stream)) {
-            throw new \RuntimeException('Unable to read stream contents');
+            throw new \RuntimeException('Stream is detached');
         }
 
-        if (false === $contents = \stream_get_contents($this->stream)) {
-            throw new \RuntimeException('Unable to read stream contents');
+        if (false === $contents = @\stream_get_contents($this->stream)) {
+            throw new \RuntimeException('Unable to read stream contents: ' . (\error_get_last()['message'] ?? ''));
         }
 
         return $contents;
     }
 
+    /**
+     * @return mixed
+     */
     public function getMetadata($key = null)
     {
+        if (null !== $key && !\is_string($key)) {
+            throw new \InvalidArgumentException('Metadata key must be a string');
+        }
+
         if (!isset($this->stream)) {
             return $key ? null : [];
         }
