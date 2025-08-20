@@ -4,9 +4,46 @@
  */
 class LPMBaseObject extends StreamObject
 {
+    private static $_queryBuilder;
+
+    /**
+     * @return DBConnect
+     */
     protected static function getDB()
     {
         return LPMGlobals::getInstance()->getDBConnect();
+    }
+
+    /**
+     * @return \GMFramework\DBQueryBuilder
+     */
+    protected static function getQueryBuilder()
+    {
+        if (self::$_queryBuilder === null) {
+            $db = self::getDB();
+            self::$_queryBuilder = new \GMFramework\DBQueryBuilder($db, $db->prefix);
+        }
+        return self::$_queryBuilder;
+    }
+    
+    /**
+     * Строит SQL запрос с помощью конструктора запросов \GMFramework\DBQueryBuilder
+     * @return string
+     */
+    protected static function buildQuery($sqlHash, $tables = null) 
+    {
+        return self::getQueryBuilder()->buildQuery($sqlHash, $tables);
+    }
+
+    /**
+     * Выполняет SQL запрос, построенный помощью конструктора запросов \GMFramework\DBQueryBuilder
+     * @return mysqli_result|bool
+     */
+    protected static function buildAndExecute($sqlHash, $tables = null) 
+    {
+        $db = self::getDB();
+        $sql = self::buildQuery($sqlHash, $tables);
+        return $db->query($sql);
     }
 
     protected static function loadAndParse($hash, $class)
@@ -48,10 +85,27 @@ class LPMBaseObject extends StreamObject
         return intval(self::loadValFromDb($table, $field, $where));
     }
 
+    /**
+     * Строит запрос и сохраняет данные в БД с помощью 
+     * старого конструктора запросов из DBConnect.
+     */
     protected static function buildAndSaveToDb($sqlHash)
     {
         $db = self::getDB();
         $res = $db->queryb($sqlHash);
+
+        if (!$res) {
+            throw new \GMFramework\ProviderSaveException();
+        }
+    }
+
+    /**
+     * Строит запрос и сохраняет данные в БД с помощью 
+     * нового конструктора запросов из \GMFramework\DBQueryBuilder.
+     */
+    protected static function buildAndSaveToDbV2($sqlHash)
+    {
+        $res = self::buildAndExecute($sqlHash);
 
         if (!$res) {
             throw new \GMFramework\ProviderSaveException();

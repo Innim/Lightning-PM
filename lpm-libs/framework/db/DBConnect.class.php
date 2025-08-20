@@ -42,6 +42,11 @@ class DBConnect extends \mysqli
 	 */
 	public $lastQuery;
 
+    /**
+     * @var DBQueryBuilder
+     */
+    private $builder;
+
 	/**
 	 * Вместо параметров, передаваемых в конструктор,
 	 * можно определить в рамках проекта соответствующие константы:
@@ -60,6 +65,8 @@ class DBConnect extends \mysqli
 		if (empty( $dbname   ) && defined( 'DB_NAME'      )) $dbname       = DB_NAME;
 		if (empty( $prefix   ) && defined( 'PREFIX'       )) $this->prefix = PREFIX;
 		else $this->prefix = $prefix;
+
+        $this->builder = new DBQueryBuilder($this, $this->prefix);
 
 		parent::__construct( $host, $username, $passwd, $dbname );
 		$this->set_charset( "utf8" );
@@ -282,220 +289,8 @@ class DBConnect extends \mysqli
      * @throws Exception При ошибке формирования запроса
      * @see DBConnect::escape_string_t()
      */
-    public function buildQuery( $sqlHash, $tables = null, $usePrefix = true ) {
-    	$sql = '';
-    	
-    	if ($tables != null && ( !is_array( $tables ) || count( $tables ) == 0)) {
-    		$tables = null;
-    	}
-    	
-    	$prefix = $usePrefix && $tables == null ? $this->prefix : '';
-    	
-    	// если запрос выборки
-    	if (isset( $sqlHash['SELECT'] )) {
-    		$sql = 'SELECT ';
-            $sql .= $this->getFieldsListForSQL( $sqlHash['SELECT'] );
-    		$sql .= ' FROM ';
-    		
-    		if (!isset( $sqlHash['FROM'] )) 
-    		  throw new Exception( 'Not defined FROM into the query' );
-
-            $aliases = isset($sqlHash['AS']) ? $sqlHash['AS'] : null;
-
-    		$sql = $this->addTablesFromHash( $sql, $sqlHash['FROM'], $prefix, $aliases );
-            
-    		// объединения
-    		$sql = $this->addJoinsFromHash( $sql, $sqlHash, $prefix );
-
-            // условие
-            $sql = $this->addWhereFromHash( $sql, $sqlHash );
-            
-            // группировка
-            if (!empty( $sqlHash['GROUP BY'] ))
-                $sql .= ' GROUP BY ' . $sqlHash['GROUP BY'];
-                
-            if (!empty( $sqlHash['HAVING'] ))
-                $sql .= ' HAVING ' . $sqlHash['HAVING'];
-
-            // порядок
-            $sql = $this->addOrderFromHash( $sql, $sqlHash );
-            
-            // ограничения
-            if (!empty( $sqlHash['LIMIT'] ))
-                $sql .= ' LIMIT '.$sqlHash['LIMIT'];
-    	}
-    	// если вставка
-    	else if (isset( $sqlHash['INSERT'] ) || isset( $sqlHash['REPLACE'] )) {
-    		if (isset($sqlHash['REPLACE'])) 
-            {
-                $replace = true;
-    			$inputData = $sqlHash['REPLACE'];
-    			$sql  = 'REPLACE';
-    		} 
-            else 
-            {
-                $replace = false;
-    			$inputData = $sqlHash['INSERT'];
-    			$sql  = 'INSERT';
-    		}
-
-            // доп опции
-            if (isset($sqlHash['DELAYED'])) $sql .= ' DELAYED';
-            if (isset($sqlHash['IGNORE']) && !$replace) $sql .= ' IGNORE';
-    			
-            $sql .= ' INTO ';
-            
-            if (!isset( $sqlHash['INTO'] )) 
-              throw new Exception( 'You must to define INTO parameter' );
-              
-            $sql .= '`' . $prefix . $sqlHash['INTO'] . '`';
-
-            $values = isset( $sqlHash['VALUES'] ) ? $sqlHash['VALUES'] : '';
-            if (!empty( $inputData ))
-            {
-            	if (is_array( $inputData )) {
-            		if (ArrayUtils::isAssoc( $inputData )) {
-	            		$fields = array_keys( $inputData );
-	            		$sql .= ' (`' . implode( '`, `', $fields ). '`)'; 
-	            		$values = array();           		
-	            		foreach ($inputData as $value) {
-	            			if (is_array( $value )) {            				
-	            				foreach ($value as $i=>$tmpVal) {
-	            					if (!isset( $values[$i] )) $values[$i] = '';
-	            					else $values[$i] .= ', ';
-	            					$values[$i] .= $this->getValueForSQL( $tmpVal ); 
-	            				}
-	            			} else {
-	            				if (is_array( $values )) $values = '';
-	                            else $values .= ', ';
-	                            $values .= $this->getValueForSQL( $value ); 
-	            			}
-	            		}
-            		} else {
-            			$sql .= ' (' . $this->getFieldsListForSQL( $inputData ) . ')';
-            		}
-            	} else $sql .= ' (' . $inputData . ')';
-            }
-
-            $sql .= ' VALUES ';
-            if (is_array( $values )) {
-            	foreach ($values as $i => $value) {
-            		if ($i > 0) $sql .= ',';
-            		$sql .= '(';
-            		if (is_array( $value )) {
-            			foreach ($value as $j => $val) {
-            				if ($j > 0) $sql .= ',';
-            				$sql .= $this->getValueForSQL( $val );
-            			}
-            		} else 
-            			$sql .= $value;
-            		$sql .= ')';
-            	}
-            } else
-	            $sql .= '(' . $values . ')';
-	            
-	        if (isset($sqlHash['ON DUPLICATE KEY UPDATE']) || isset($sqlHash['ODKU'])) 
-            {
-	        	$uValues = '';	    
-                if (!isset($sqlHash['ON DUPLICATE KEY UPDATE'])) 
-                    $sqlHash['ON DUPLICATE KEY UPDATE'] = $sqlHash['ODKU'];
-                
-	        	$dupl = $sqlHash['ON DUPLICATE KEY UPDATE'] === '' 
-	        	          ? array() : $sqlHash['ON DUPLICATE KEY UPDATE']; 
-	        	
-	        	if (is_array( $dupl )) 
-	        	{
-	        		if (ArrayUtils::isAssoc( $dupl ))
-	        			foreach ($dupl as $field => $value) {
-	        				if ($uValues != '') $uValues .= ', ';
-	        				if ($field{0} != '`') $field = '`' . $field . '`';
-	        				$uValues .= $field . ' = ' . $this->getValueForSQL( $value );
-	        			}
-	        		else 
-	        		{
-	                    $fields = count( $dupl ) > 0 ? $dupl : array_keys( $inputData );	           
-	                    foreach ($fields as $tmpField) {
-	                        if ($uValues != '') $uValues .= ', ';
-	                        
-	                        if (is_array( $tmpField ))
-	                            $uValues .= '`' . key( $tmpField ) . '` = ' . 
-	                                        $this->getValueForSQL( current( $tmpField ) );
-	                        else 
-	                            $uValues .= '`' . $tmpField . '` = VALUES(`' . $tmpField . '`)';
-	                    } 	
-	        		}        	
-	            } else {
-	        		$uValues = $dupl;
-	        	} 
-	        	
-	        	if ($uValues != '')
-	        	  $sql .= ' ON DUPLICATE KEY UPDATE ' . $uValues;
-	        }
-        }
-        // обновление 
-        else if (isset($sqlHash['UPDATE']))
-        {
-            $sql  = 'UPDATE ';
-            // таблицы
-            $sql  = $this->addTablesFromHash( $sql, $sqlHash['UPDATE'], $prefix );
-    		// объединения
-    		$sql  = $this->addJoinsFromHash( $sql, $sqlHash, $prefix );
-            $sql .= ' SET ';
-            
-            if (!isset( $sqlHash['SET'] ))
-                throw new Exception( 'You must to define SET parameter' );
-            
-            if (is_array( $sqlHash['SET'] )) {
-            	$set = '';
-            	foreach ($sqlHash['SET'] as $field => $value) {
-            		if ($set != '') $set .= ', ';
-            		$set .= '`' . $field . '` = ' . $this->getValueForSQL( $value );
-            	}
-            	$sql .= $set;
-            } else $sql .= $sqlHash['SET'];
-            
-            // условие
-            $sql = $this->addWhereFromHash( $sql, $sqlHash );
-			
-            // порядок
-            $sql = $this->addOrderFromHash( $sql, $sqlHash );
-			
-            // ограничения
-            if (!empty( $sqlHash['LIMIT'] ))
-                $sql .= ' LIMIT '.$sqlHash['LIMIT'];
-        }
-        // удаление
-        else if (isset($sqlHash['DELETE']))
-        {
-            $sql = 'DELETE FROM ';
-            
-            if (empty( $sqlHash['DELETE'] )) {
-            	if (!isset( $sqlHash['FROM'] )) 
-            	   throw new Exception( 'You must to define tables for delete query' );
-            	$tList= $sqlHash['FROM'];
-            } else $tList = $sqlHash['DELETE'];
-            
-            $sql = $this->addTablesFromHash( $sql, $tList, $prefix );
-            
-            // условие
-            $sql = $this->addWhereFromHash( $sql, $sqlHash );
-			
-            // порядок
-            $sql = $this->addOrderFromHash( $sql, $sqlHash );
-            
-            // ограничения
-            if (!empty( $sqlHash['LIMIT'] ))
-                $sql .= ' LIMIT '.$sqlHash['LIMIT'];
-        }
-        else throw new Exception( 'Unknown query type' );
-                
-        if ($tables != null) {
-        	$params = ArrayUtils::copy( $tables );
-        	array_unshift( $params, $sql ); 
-        	$sql = $this->sprintft( $params );
-        }
-    	
-    	return $sql;
+    public function buildQuery($sqlHash, $tables = null, $usePrefix = true) {
+    	return $this->builder->buildQuery($sqlHash, $tables, $usePrefix);
     }
     
 	/**
@@ -609,10 +404,9 @@ class DBConnect extends \mysqli
 	/**
      * @see mysqli::escape_string()
 	 */
-	public function escape_string( $value )
+	public function escape_string($value)
 	{
-		//$value = stripcslashes( $value );
-		return parent::real_escape_string( $value );
+		return $this->builder->escape_string($value);
 	}
 	
 	/**
@@ -690,13 +484,9 @@ class DBConnect extends \mysqli
 	 * подставляя имена таблиц с префиксами 
 	 * @param array $args первый элемент - форматируемая строка запроса, дальше - имена таблиц
 	 */
-	public function sprintft( $args )
+	public function sprintft($args)
 	{
-		for ($i = 1; $i < count( $args ); $i++) {
-            $args[$i] = $this->prefix . $args[$i];
-        } 
-
-        return call_user_func_array( 'sprintf', $args );
+        return $this->builder->sprintft($args);
 	}
 
     // ==================================================================
@@ -736,267 +526,5 @@ class DBConnect extends \mysqli
     
 	private function escape_t( $value ) {
 		return str_replace( '%', '%%', $value );
-	}
-
-    // ----------- вспомогательные методы для конструктора запросов ----------- 
-
-    /**
-     * Возвращает список полей через запятую. 
-     * Поля оборачиваются в магические кавычки, за исключением случаев:
-     * <ul>
-     * <li>Переданное значение является числом</li>
-     * <li>Переданное значение начинается с `</li>
-     * <li>Переданное значение начинается с '|"</li>
-     * <li>Переданное значение - пустая строка (будет обернуто в одинарные кавычки)</li>
-     * </ul><br/>
-     * Если передана строка - то она вернется без изменений.
-     * @param array|string $list
-     * @return string
-     */
-    private function getFieldsListForSQL($list) 
-    {
-        if (is_array($list)) 
-        {
-            $str = '';
-            foreach ($list as $field => $alias) 
-            {
-                if ($str != '') $str .= ', ';
-
-                if (is_int($field))
-                {
-                    $field = $alias;
-                    $alias = null;
-                }
-
-                if (!is_int($field) && !is_float($field)) 
-                {
-                    $field = (string)$field;
-                    if ($field === '') $field = "'" . $field . "'";
-                    else
-                    {
-                        $s = $field{0};
-
-                        if ($s !== '`' && $s !== '"' && $s !== "'") $field = '`' . $field . '`';
-                    }
-
-                    if (null !== $alias) $field .= ' AS `' . $alias . '`';
-                }
-                $str .= $field;
-            }
-            return $str;
-        } 
-        else return $list; 
-    }
-    
-    /**
-     * Парсит и добавляет join'ы таблиц
-     * @param string $sql
-     * @param array $sqlHash
-     * @param string $prefix
-     * @throws Exception
-     * @return string
-     */
-    private function addJoinsFromHash( $sql, $sqlHash, $prefix ) {
-        if (isset( $sqlHash['JOINS'] ))
-        {
-            foreach ($sqlHash['JOINS'] as $curJoin) {
-                if (!is_array( $curJoin ))
-                    throw new Exception( 'JOINS elements must be an array' );
-                if (!isset( $curJoin['ON']) && !isset( $curJoin['USING'] ))
-                    throw new Exception( 'Not defined ON or USING into the join query' );
-                 
-                $sql .= ' ' . key( $curJoin ) . ' ';
-
-                $table = current( $curJoin );
-                $alias = isset($curJoin['AS']) ? $curJoin['AS'] : null;
-
-                $sql  = $this->addTablesFromHash( $sql, $table, $prefix, $alias );
-                if (isset( $curJoin['ON'] ))
-                    $sql = $this->addWhereFromHash( $sql, $curJoin, 'ON' );
-                else
-                    $sql .= ' USING (' . $this->getFieldsListForSQL( $curJoin['USING'] ) . ') ';
-            }
-        }
-        
-        return $sql;
-    }
-    
-    private function addTablesFromHash( $sql, $tables, $prefix, $aliases = null ) {
-        if (is_array( $tables )) 
-        {
-            if ($aliases !== null)
-            {
-                if (!is_array($aliases) || count($tables) != count($aliases))
-                    throw new Exception( 'Count of the aliases must be equal to count of the tables' );
-            }
-
-            foreach ($tables as $i => $table) 
-            {
-                if ($i > 0) $sql .= ', ';
-                $sql .= $this->getTableName(
-                    $table, $prefix, $aliases !== null ? $aliases[$i] : null);
-            }
-        } 
-        else if (strlen( $tables ) == 0) throw new Exception( 'Field FROM must be not empty' );
-        else 
-        {
-            $sql .= $this->getTableName($tables, $prefix, $aliases);
-        }
-            
-        return $sql;
-    }
-
-    private function getTableName($table, $prefix, $alias = null)
-    {
-        $res = $prefix . $table;
-        if ($table{0} !== '`') $res = '`' . $res . '`';
-
-        if ($alias !== null)
-        {
-            if (is_array($alias)) $alias = $alias[0];
-
-            $alias = (string)$alias;
-            if ($alias !== '')
-            {
-                if ($alias{0} !== '`') $alias = '`' . $alias . '`';
-                $res .= ' AS ' . $alias;
-            }
-        }
-
-        return $res;
-    }
-    
-    private function getValueForSQL($val) 
-    {
-        if ($val !== 'NULL') 
-        {
-            if (is_string($val) && ($val === '' || $val{0} !== '`')) 
-                $val = "'" . $this->escape_string($val) . "'";
-            elseif (is_bool($val))
-                $val = (int)$val;
-            elseif (is_null($val))
-                $val = 'NULL';
-        }
-            
-        return $val;
-    }
-
-    private function where2Str($array, $join = 'AND')
-    {
-        $whereStr = '';
-        foreach ($array as $field => $value) 
-        {
-            if ($whereStr != '') $whereStr .= ' ' . $join . ' ';
-
-            $whereStr .= '(';
-            if (is_int($field))
-            {
-                if (null === $value) $whereStr .= '1';
-                else if (is_array($value))
-                {
-                    $cur = current($value);
-                    $subJoin = 'AND';
-                    if (($cur === 'OR' || 'AND' === $cur))
-                    {
-                        unset($value[key($value)]);
-                        $subJoin = $cur;
-                    }
-                    $whereStr .= '(' . $this->where2Str($value, $subJoin) . ')';
-                }
-                else $whereStr .= $value;
-            }
-            else 
-            {
-                if ($field{0} != '`') $field = '`' . $field . '`';
-                $whereStr .= $field;
-
-                if (is_array($value))
-                {
-                    $operators = array('>', '>=', '<', '<=', '<>', '=');
-                    $opFound = 0;
-                    foreach ($operators as $operator) 
-                    {
-                        if (array_key_exists($operator, $value)) 
-                        {
-                            if ($opFound > 0) $whereStr .= ' ' . $join . ' ' . $field;
-                            $subValue = $value[$operator];
-                            if (is_null($subValue) && $operator === '=') $whereStr .= ' IS NULL';
-                            else 
-                            {
-                                if (is_array($subValue) && ($operator === '=' || $operator === '<>'))
-                                {
-                                    if ($operator === '<>') $whereStr .= ' NOT';
-                                    $whereStr .= ' IN (';
-                                    $vi = 0;
-                                    foreach ($subValue as $vv) 
-                                    {
-                                        if ($vi++ > 0) $whereStr .= ',';
-                                        $whereStr .= $this->getValueForSQL($vv);
-                                    }
-                                    $whereStr .= ')';
-                                }
-                                else 
-                                {
-                                    $whereStr .= ' ' . $operator . ' ' . $this->getValueForSQL($subValue);    
-                                }
-                            }
-
-                            $opFound++;
-                        }
-                    }
-
-                    if ($opFound === 0)
-                    {
-                        $whereStr .= ' IN (';
-                        $vi = 0;
-                        foreach ($value as $vv) 
-                        {
-                            if ($vi++ > 0) $whereStr .= ',';
-                            $whereStr .= $this->getValueForSQL($vv);
-                        }
-                        $whereStr .= ')';
-                    }
-                }
-                else if (is_null($value))
-                {
-                    $whereStr .= ' IS NULL';
-                }
-                else 
-                {
-                    $whereStr .= ' = ' . $this->getValueForSQL( $value );
-                }
-            }
-            $whereStr .= ')';
-        }
-
-        return $whereStr;
-    }
-    
-    private function addWhereFromHash( $sql, $sqlHash, $condWord = 'WHERE' ) {
-        if (!isset( $sqlHash[$condWord] )) return $sql;
-        $where = $sqlHash[$condWord];
-
-        if (!empty( $where )) 
-        {
-            $condWord = ' ' . trim($condWord) . ' ';
-            if (is_array( $where )) $whereStr = $this->where2Str($where);
-            else $whereStr = $where;
-            
-            if (!empty($whereStr)) $sql .= $condWord . $whereStr;
-        }
-        return $sql;
-    } 
-    
-    private function addOrderFromHash( $sql, $sqlHash ) {
-        if (!empty( $sqlHash['ORDER BY'] )){
-            if (is_array( $sqlHash['ORDER BY'] )) {
-                if (count( $sqlHash['ORDER BY'] ) > 0)
-                  $sql .= ' ORDER BY ' . implode( ', ', $sqlHash['ORDER BY'] );
-            } else $sql .= ' ORDER BY ' . $sqlHash['ORDER BY'];
-        }
-        return $sql;
-    } 
-
+	}  
 }
-
-?>

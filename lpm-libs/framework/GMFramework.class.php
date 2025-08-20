@@ -133,6 +133,7 @@ class GMFramework
 			// db
 			case 'DBConnect'                :
             case 'DBConnectWithLog'         :
+            case 'DBQueryBuilder'           :
 			case 'MySqlDump'                : $package .= 'db/'; break;
             // exceptions
             case 'DBException'              : 
