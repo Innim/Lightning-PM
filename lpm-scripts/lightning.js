@@ -421,6 +421,89 @@ var messages = {
     }
 };
 
+lpm.dialog = {
+    show: function (options) {
+        const defaultOptions = {
+            title: null,
+            text: null,
+            content: null,
+            centered: true,
+            onPrimary: null,
+            onSecondary: null,
+            primaryBtn: 'OK',
+            secondaryBtn: 'Отмена',
+            secondaryBtnClass: null,
+        };
+
+        const opts = Object.assign({}, defaultOptions, options);
+
+        const $modalTemplate = $('#dynamicModal').clone();
+        var newId = 'dynamicModal-' + Date.now();
+        $modalTemplate.attr('id', newId);
+
+        if (opts.centered) $modalTemplate.addClass('modal-dialog-centered');
+
+        if (opts.title !== null) {
+            const $title = $('.modal-title', $modalTemplate);
+            $title.html(opts.title);
+        } else {
+            $('.modal-header', $modalTemplate).remove();
+        }
+
+        const $body = $('.modal-body', $modalTemplate);
+        if (opts.content !== null) {
+            $body.html(opts.content);
+        } else if (opts.text !== null) {
+            $body.html('<p>' + opts.text + '</p>');
+        } else {
+            $body.remove();
+        }
+
+        $('body').append($modalTemplate);
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById(newId));
+
+        let hasButtons = false;
+        const $primaryBtn = $('.btn-primary', $modalTemplate);
+        if (opts.primaryBtn) {
+            $primaryBtn.text(opts.primaryBtn);
+            $primaryBtn.on('click', function () {
+                if (opts.onPrimary) opts.onPrimary();
+                modal.hide();
+            });
+            hasButtons = true;
+        } else {
+            $primaryBtn.remove();
+        }
+
+        const $secondaryBtn = $('.btn-secondary', $modalTemplate);
+        if (opts.secondaryBtn) {
+            $secondaryBtn.text(opts.secondaryBtn);
+            if (opts.onSecondary) {
+                $secondaryBtn.off('click').on('click', function () {
+                    opts.onSecondary();
+                    modal.hide();
+                });
+            }
+            if (opts.secondaryBtnClass) {
+                $secondaryBtn.addClass(opts.secondaryBtnClass);
+            }
+            hasButtons = true;
+        } else {
+            $secondaryBtn.remove();
+        }
+
+        if (!hasButtons) {
+            $('.modal-footer', $modalTemplate).remove();
+        }
+
+        $modalTemplate.on('hidden.bs.modal', function () {
+            $modalTemplate.remove();
+        });
+
+        modal.show()
+    }
+}
+
 var preloader = {
     _showed: 0,
     show: function () {
