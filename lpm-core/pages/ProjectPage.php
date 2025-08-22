@@ -1003,7 +1003,7 @@ class ProjectPage extends LPMPage
 
     private function getTitleByIssue(Issue $issue)
     {
-        return '#' . $issue->idInProject . ' ' . $issue->name . ' - ' . $this->_project->name;
+        return '#' . $issue->idInProject . '. ' . $issue->name . ' - ' . $this->_project->name;
     }
 
     private function parseSP($value, $allowFloat = false)
