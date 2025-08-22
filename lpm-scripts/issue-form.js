@@ -62,13 +62,101 @@ let issueForm = {
     defaultMemberId: null,
     testers: null,
     masters: null,
+    lockAcquired: false,
+    acquireLock: function (issueId, revision, forced, onSuccess, onFail) {
+        preloader.show();
+
+        srv.issue.lockIssue(issueId, revision, forced, function (res) {
+            preloader.hide();
+            if (res.success) {
+                issueForm.lockAcquired = true;
+                onSuccess();
+            } else {
+                const errno = res.errno;
+                switch (errno) {
+                    case 201:
+                        lpm.dialog.show({
+                            title: 'Задача заблокирована',
+                            text: 'Задача заблокирована Вами: возможно задача редактируется в другом окне.',
+                            secondaryBtn: 'Переписать блокировку',
+                            secondaryBtnClass: 'btn-warning',
+                            onSecondary: function () {
+                                issueForm.acquireLock(issueId, revision, true, onSuccess, onFail);
+                            },
+                            onCancel: onFail, 
+                        });
+                        break;
+                    case 202:
+                        lpm.dialog.show({
+                            title: 'Задача заблокирована',
+                            content: res.dialogHtml,
+                            secondaryBtn: 'Принудительно перехватить',
+                            secondaryBtnClass: 'btn-warning',
+                            onSecondary: function () {
+                                if (confirm('Вы уверены, что хотите принудительно перехватить задачу? Это может привести к потере данных.')) {
+                                    issueForm.acquireLock(issueId, revision, true, onSuccess, onFail);
+                                } else {
+                                    if (onFail) onFail();
+                                }
+                            },
+                            onCancel: onFail,
+                        });
+                        break;
+                    default:
+                        srv.err(res);
+                        if (onFail) onFail();
+                }
+            }
+        });
+    },
+    cancel: function () {
+        const issueId = issueForm.getIssueId();
+        const leave = function () {
+            issueForm.onHide();
+            showMain();
+        };
+
+        if (issueId > 0) {
+            if (issueForm.lockAcquired) {
+                preloader.show();
+                const revision = issueForm.getRevision();
+                srv.issue.unlockIssue(issueId, revision, function (_) {
+                    issueForm.lockAcquired = false;
+                    preloader.hide();
+                    // ignore result
+                    leave();
+                });
+            } else {
+                leave();
+            }
+        } else {
+            leave();
+        }
+    },
+    getIssueId: () => parseInt($("#issueForm input[name=issueId]").val()),
+    getRevision: () => parseInt($("#issueForm input[name=revision]").val()),
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
     handleEditState: function () {
+        issueForm.onShow();  
         if (!issueForm.restoreInput(true)) {
-            let getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
-            let getArrVal = (fieldName) => {
+            const getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
+            const getArrVal = (fieldName) => {
                 let val = getVal(fieldName);
                 return val.length > 0 ? val.split(',') : [];
+            }
+
+            const issueId = getVal("issueId");
+            const revision = getVal("revision");
+
+            // don't acquire lock when restoring input or already have lock
+            if (!issueForm.lockAcquired) {
+                issueForm.acquireLock(
+                    issueId, 
+                    revision, 
+                    false, 
+                    () => {},
+                    () => issueForm.cancel(), 
+                );
             }
 
             issueForm.setIssueBy({
@@ -82,13 +170,15 @@ let issueForm = {
                 membersSp: getArrVal("membersSp"),
                 testerIds: getArrVal("testers"),
                 masterIds: getArrVal("masters"),
-                issueId: getVal("issueId"),
+                issueId: issueId,
+                revision: revision,
                 imagesInfo: issueForm.getImagesFromPage(),
                 isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
             }, true);
         }
     },
     handleAddState: function () {
+        issueForm.onShow();  
         if (!issueForm.restoreInput(false)) {
             issueForm.updateHeader(false);
 
@@ -96,6 +186,21 @@ let issueForm = {
                 issueForm.addIssueMemberById(issueForm.defaultMemberId);
             }
         }
+    },
+    onShow: function () {
+        window.addEventListener('beforeunload', issueForm.blockClose);
+
+        $("#issueForm form").on('submit', function() {
+            window.removeEventListener('beforeunload', issueForm.blockClose);
+        });
+    },
+    onHide: function () {
+        $('#issueForm > div.validateError').html('').hide();
+        window.removeEventListener('beforeunload', issueForm.blockClose);
+    },
+    blockClose: function (e) {
+        e.preventDefault();
+        e.returnValue = '';
     },
     restoreInput: function (isEdit) {
         if (!issueForm.inputForRestore) return false;
@@ -117,6 +222,7 @@ let issueForm = {
             testerIds: data.testers,
             masterIds: data.masters,
             issueId: isEdit ? data.issueId : '',
+            revision: isEdit ? data.revision : '',
             newImagesUrls: data.imgUrls,
             imagesInfo: issueForm.getImagesFromPage(),
             isOnBoard: data.putToBoard,
@@ -215,8 +321,10 @@ let issueForm = {
         }
 
         // идентификатор задачи
-        if (isEdit)
+        if (isEdit) {
             $("#issueForm form input[name=issueId]").val(value.issueId);
+            $("#issueForm form input[name=revision]").val(value.revision);
+        }
         // действие меняем на редактирование
         $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
         $("#issueForm form input[name=baseIds]").val(value.baseIds?.join(',') ?? '');

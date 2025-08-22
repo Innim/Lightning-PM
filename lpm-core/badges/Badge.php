@@ -10,7 +10,7 @@ class Badge extends LPMBaseObject {
         return StreamObject::singleLoad($id, __CLASS__);
     }
 
-     public static function loadList($where = null)
+    public static function loadList($where = null)
     {
         return StreamObject::loadListDefault(
             self::getDB(),

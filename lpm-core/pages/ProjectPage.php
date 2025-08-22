@@ -473,6 +473,13 @@ class ProjectPage extends LPMPage
             return;
         }
 
+        if (isset($curIssue)) {
+            $revision = isset($_POST['revision']) ? trim($_POST['revision']) : null;
+            if (!$this->unlockIssue($curIssue, $userId, $revision)) {
+                return;
+            }
+        }
+
         // TODO наверное нужен "белый список" тегов
         $_POST['desc'] = str_replace('%', '%%', $_POST['desc']);
         $_POST['hours']= str_replace('%', '%%', $_POST['hours']);
@@ -707,6 +714,32 @@ class ProjectPage extends LPMPage
         } 
 
         return !$this->hasErrors();
+    }
+
+    private function unlockIssue(Issue $issue, $userId,  $revision)
+    {
+        if ($revision === null) {
+            return $this->addError('Требуется указать ревизию задачи для разблокировки');
+        }
+
+        if ($issue->revision != $revision) {
+            // TODO: опцию переписать изменения
+            return $this->addError('Задача была изменена кем-то другим. Невозможно сохранить изменения');
+        }
+
+        $issueId = $issue->getId();
+        $lock = UserLock::getIssueLock($issueId);
+        if (empty($lock)) return true;
+
+        if ($userId != $lock->userId) {
+            // TODO: опцию перехватить блокировку
+            // TODO: данные о блокировке для отображения
+            return $this->addError('Задача заблокирована другим пользователем. Невозможно сохранить изменения');
+        }
+
+        UserLock::removeIssueLocks($issueId);
+
+        return true;
     }
 
     private function saveIssue(DBConnect $db, $issueId, $idInProject, $name, $desc, $userId, $hours, $type, $completeDate, $priority) 

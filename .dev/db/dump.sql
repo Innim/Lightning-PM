@@ -26,7 +26,7 @@ CREATE TABLE `lpm_comments` (
   `authorId` bigint(19) NOT NULL COMMENT 'идентификатор автора комментария',
   `date` datetime NOT NULL COMMENT 'дата',
   `text` text CHARACTER SET utf8mb4 NOT NULL COMMENT 'текст',
-  `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'клмментарий удалён',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'комментарий удалён',
   PRIMARY KEY (`id`),
   KEY `instanceType` (`instanceType`,`instanceId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='таблица комментариев';
@@ -78,12 +78,14 @@ CREATE TABLE `lpm_issues` (
   `type` tinyint(1) NOT NULL DEFAULT '0',
   `authorId` bigint(19) NOT NULL,
   `createDate` datetime NOT NULL,
+  `modifiedDate` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT 'дата последнего изменения записи',
   `startDate` datetime NOT NULL,
   `completeDate` datetime DEFAULT NULL,
   `completedDate` datetime DEFAULT NULL COMMENT 'дата реального завершения',
   `priority` tinyint(2) NOT NULL DEFAULT '49' COMMENT 'приоритет задачи',
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `status` tinyint(1) NOT NULL DEFAULT '0',
+  `revision` varchar(48) NOT NULL COMMENT 'ревизия задачи',
   PRIMARY KEY (`id`),
   KEY `projectId` (`projectId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -259,6 +261,21 @@ CREATE TABLE `lpm_scrum_sticker` (
   `added` datetime NOT NULL COMMENT 'дата добавления',
   PRIMARY KEY (`issueId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='стикер на scrum доске';
+
+
+DROP TABLE IF EXISTS `lpm_user_locks`;
+CREATE TABLE `lpm_user_locks` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи',
+  `userId` bigint NOT NULL COMMENT 'Идентификатор пользователя',
+  `date` datetime NOT NULL COMMENT 'Дата получения блокировки',
+  `expired` datetime NOT NULL COMMENT 'Дата истечения блокировки',
+  `instanceType` tinyint NOT NULL COMMENT 'Тип заблокированной сущности',
+  `instanceId` bigint NOT NULL COMMENT 'Id заблокированной сущности',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Блокировка удалена',
+  PRIMARY KEY (`id`),
+  KEY `instanceType_instanceId_deleted` (`instanceType`,`instanceId`,`deleted`),
+  KEY `userId` (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица блокировок разных сущностей пользователями';
 
 
 DROP TABLE IF EXISTS `lpm_users`;

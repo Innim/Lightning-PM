@@ -561,6 +561,96 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Блокирует задачу на момент редактирования.
+     * @param int $issueId Идентификатор задачи.
+     * @param String $revision Ревизия задачи, которая будет заблокирована.
+     * @param bool $forced Если true, то блокировка будет принудительной, даже
+     * @return
+     */
+    public function lockIssue($issueId, $revision, $forced = false) 
+    {
+        $issueId = (int)$issueId;
+        $forced = (bool)$forced;
+
+         try {
+            $issue = $this->getIssueForEdit($issueId);
+
+            if ($issue->revision != $revision) {
+                return $this->error('Задача была изменена. Пожалуйста, обновите страницу.');
+            }
+
+            $userId = $this->getUserId();
+
+            if (!$forced) {
+                $lock = UserLock::getIssueLock($issueId);
+
+                if (!empty($lock)) {
+                    $this->add2ErrorData('lock', $lock);
+                    if ($userId == $lock->userId) {
+                        return $this->error('Задача уже заблокирована вами.', 201);
+                    } else {
+                        $lockOwner = User::load($lock->userId);
+                        $html = $this->getHtml(function () use ($lockOwner, $lock) {
+                            PagePrinter::dialogContentIssueBlocked($lockOwner, $lock);
+                        });
+
+                        $this->add2ErrorData('dialogHtml', $html);
+                        return $this->error('Задача уже заблокирована другим пользователем', 202);
+                    }
+                }
+            }
+
+            UserLock::removeIssueLocks($issueId);
+            UserLock::createIssueLock($userId, $issueId);
+
+            $this->add2Answer('revision', $issue->revision);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+    
+        return $this->answer();
+    }
+
+    // TODO: update lock expired
+
+    /**
+     * Удаляет блокировку задачи.
+     * @param int $issueId Идентификатор задачи.
+     * @param String $revision Ревизия задачи, которая была заблокирована.
+     * @return
+     */
+    public function unlockIssue($issueId, $revision) 
+    {
+        $issueId = (int)$issueId;
+
+        try {
+            $issue = $this->getIssueForEdit($issueId);
+
+            $userId = $this->getUserId();
+
+            $lock = UserLock::getIssueLock($issueId);
+
+            if (empty($lock)) {
+                return $this->error('Задача не заблокирована');
+            }
+
+            if ($userId != $lock->userId) {
+                return $this->error('Задача заблокирована другим пользователем', 101);
+            }
+
+            if ($issue->revision != $revision) {
+                return $this->error('Задача была изменена', 102);
+            }
+
+            UserLock::removeIssueLocks($issueId);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Добавляет новую метку.
      * @param $label Текст метки.
      * @param $isForAllProjects Для всех ли проектов.
@@ -838,5 +928,19 @@ class IssueService extends LPMBaseService
     private function validateBranchName($value)
     {
         return \GMFramework\Validation::checkStr($value, 255, 1, false, false, true, '\/\._');
+    }
+
+    private function getIssueForEdit($issueId) 
+    {
+        $issue = Issue::load($issueId);
+        if (!$issue) {
+            throw new Exception('Нет такой задачи');
+        }
+
+        if (!$issue->checkEditPermit($this->getUserId())) {
+            throw new Exception('У Вас нет прав на редактирование этой задачи');
+        }
+
+        return $issue;
     }
 }

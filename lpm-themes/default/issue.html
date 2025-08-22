@@ -160,6 +160,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
     <?case 2: ?>completed-issue<?break;?>
     <?endswitch;?>">
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
+            <input type="hidden" name="revision" value="<?=$issue->revision;?>" />
             <button class="btn btn-secondary restore-btn" onclick="restoreIssue(event);">Открыть</button>
             <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true)): ?>
             <button class="btn btn-primary verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>

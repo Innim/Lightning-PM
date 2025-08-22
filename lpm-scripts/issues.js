@@ -346,6 +346,7 @@ const issuePage = {
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
+    getRevision: () => $('#issueView input[name=revision]').val(),
     copyIssue: () => {
         const $copyLinkedField = $("#copyLinkedIssuesField", selectProject.element);
         issuePage.createIssueBy(
@@ -820,8 +821,10 @@ issuePage.showAddForm = function (type) {
 };
 
 issuePage.showEditForm = function () {
-    // переключаем вид
-    states.setState('edit');
+    issueForm.acquireLock(issuePage.getIssueId(), issuePage.getRevision(), false, function () {
+        // переключаем вид
+        states.setState('edit');
+    });
 };
 
 /**

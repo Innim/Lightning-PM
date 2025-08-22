@@ -726,10 +726,12 @@ SQL;
     public static function changePriority(User $user, Issue $issue, $delta)
     {
         $issue->priority = (int)max(0, min($issue->priority + $delta, 100));
+        $issue->updateRevision();
         $hash = [
             'UPDATE' => LPMTables::ISSUES,
             'SET' => [
-                'priority' => $issue->priority
+                'priority' => $issue->priority,
+                'revision' => $issue->revision,
             ],
             'WHERE' => [
                 'id' => $issue->id
@@ -769,6 +771,14 @@ SQL;
         }
     }
 
+    /**
+     * Генерирует уникальную строку ревизии задачи.
+     * @return string Уникальная строка ревизии задачи.
+     */
+    public static function getNewRevision() {
+        return uniqid();
+    }
+
     const TYPE_DEVELOP     	= 0;
     const TYPE_BUG         	= 1;
     const TYPE_SUPPORT     	= 2;
@@ -796,11 +806,25 @@ SQL;
     public $type          = -1;
     public $authorId      =  0;
     public $createDate    =  0;
+    /**
+     * Дата последнего изменения задачи.
+     * @var float
+     */
+    public $modifiedDate  =  0;
     public $startDate     =  0;
     public $completeDate  =  0;
     public $completedDate =  0;
     public $priority      = 49;
     public $status        = -1;
+    /**
+     * Уникальная строка ревизии задачи.
+     * 
+     * Используется для идентификации конкретного состояния контента задачи.
+     * Изменение статуса задачи или ее удаление не меняет ревизию.
+     * @var string 
+     */
+    public $revision;
+
     public $commentsCount = 0;
 
     /**
@@ -873,8 +897,8 @@ SQL;
         );
         $this->_typeConverter->addIntVars('priority', 'projectId', 'idInProject');
         $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked', 'isPassTest', 'isChangesRequested');
-        $this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
-        
+        $this->addDateTimeFields('createDate', 'startDate', 'modifiedDate', 'completeDate', 'completedDate');
+
         $this->addClientFields(
             'id',
             'idInProject',
@@ -883,13 +907,15 @@ SQL;
             'type',
             'authorId',
             'createDate',
+            'modifiedDate',
             'completeDate',
             'completedDate',
             'startDate',
             'priority',
             'status',
             'commentsCount',
-            'hours'
+            'hours',
+            'revision',
         );
 
         $this->author = new User();
@@ -1494,6 +1520,11 @@ SQL;
                 $len--;
             }
         }
+    }
+
+    public function updateRevision()
+    {
+        $this->revision = $this->getNewRevision();
     }
 
     protected function loadMembers()

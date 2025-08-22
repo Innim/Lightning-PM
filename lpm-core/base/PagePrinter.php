@@ -206,7 +206,6 @@ class PagePrinter
         PageConstructor::includePattern('issue-list-filter');
     }
     
-
     /**
      * Распечатывает элемент исполнителя задачи в стикере на Scrum доске.
      * @param $member
@@ -214,6 +213,16 @@ class PagePrinter
     public static function tableScrumBoardIssueMember(User $member)
     {
         PageConstructor::includePattern('scrum-board-table-issue-member', compact('member'));
+    }
+
+    /**
+     * Распечатывает содержимое диалога блокировки задачи.
+     * @param User $user Пользователь, который заблокировал задачу.
+     * @param UserLock $lock Информация о блокировке задачи.
+     */
+    public static function dialogContentIssueBlocked(User $user, UserLock $lock)
+    {
+        PageConstructor::includePattern('dialog-content-issue-blocked', compact('user', 'lock'));
     }
 
     /*public static function mainCSSLink() {

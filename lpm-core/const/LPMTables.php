@@ -123,4 +123,8 @@ class LPMTables
      * Таблица бэйджей.
      */
     const BADGES = 'badges';
+    /**
+     * Таблица блокировок сущностей пользователями.
+     */
+    const USER_LOCKS = 'user_locks';
 }

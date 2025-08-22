@@ -215,10 +215,11 @@ $isHidden = !empty($isHidden)
         <input type="hidden" name="baseIds" value="" />
         <input type="hidden" name="linkedIds" value="" />
         <input type="hidden" value="<?=$project->getID();?>" id="issueProjectID">
-        
+        <input type="hidden" name="revision" value="<?=$issue ? $issue->revision : '';?>" />
+
         <div class="col-12 text-center save-line">
             <button type="submit" class="btn btn-primary">Сохранить</button>
-            <button type="reset" class="btn btn-secondary" onclick="showMain();">Отмена</button>
+            <button type="reset" class="btn btn-secondary" onclick="issueForm.cancel();">Отмена</button>
         </div>
     </form>
 

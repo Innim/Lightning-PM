@@ -206,6 +206,12 @@ let srv = {
         takeIssue: function (issueId, replace, onResult) {
             this.s._('takeIssue');
         },
+        lockIssue: function (issueId, revision, forced, onResult) {
+            this.s._('lockIssue');
+        },
+        unlockIssue: function (issueId, revision, onResult) {
+            this.s._('unlockIssue');
+        },
         addLabel: function (label, isForAllProjects, projectId, onResult) {
             this.s._('addLabel');
         },
@@ -430,6 +436,7 @@ lpm.dialog = {
             centered: true,
             onPrimary: null,
             onSecondary: null,
+            onCancel: null,
             primaryBtn: 'OK',
             secondaryBtn: 'Отмена',
             secondaryBtnClass: null,
@@ -438,7 +445,7 @@ lpm.dialog = {
         const opts = Object.assign({}, defaultOptions, options);
 
         const $modalTemplate = $('#dynamicModal').clone();
-        var newId = 'dynamicModal-' + Date.now();
+        const newId = 'dynamicModal-' + Date.now();
         $modalTemplate.attr('id', newId);
 
         if (opts.centered) $modalTemplate.addClass('modal-dialog-centered');
@@ -462,12 +469,16 @@ lpm.dialog = {
         $('body').append($modalTemplate);
         const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById(newId));
 
+        let onHidden = opts.onCancel;
+
         let hasButtons = false;
         const $primaryBtn = $('.btn-primary', $modalTemplate);
         if (opts.primaryBtn) {
             $primaryBtn.text(opts.primaryBtn);
             $primaryBtn.on('click', function () {
-                if (opts.onPrimary) opts.onPrimary();
+                if (opts.onPrimary) {
+                    onHidden = opts.onPrimary;
+                }
                 modal.hide();
             });
             hasButtons = true;
@@ -480,7 +491,7 @@ lpm.dialog = {
             $secondaryBtn.text(opts.secondaryBtn);
             if (opts.onSecondary) {
                 $secondaryBtn.off('click').on('click', function () {
-                    opts.onSecondary();
+                    onHidden = opts.onSecondary;
                     modal.hide();
                 });
             }
@@ -498,6 +509,10 @@ lpm.dialog = {
 
         $modalTemplate.on('hidden.bs.modal', function () {
             $modalTemplate.remove();
+
+            if (onHidden) {
+                onHidden();
+            }
         });
 
         modal.show()

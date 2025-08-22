@@ -1,0 +1,36 @@
+<?php
+/* 
+Требуются: 
+	$user - информация о пользователе
+    $lock - информация о блокировке задачи
+*/
+?>
+<div class="text-center">
+    <div class="text-danger fs-1 mb-3">
+        <i class="fas fa-lock"></i>
+    </div>
+
+    <div class="bg-light border-start border-danger border-4 p-3 my-3 rounded text-start">
+        <div class="mb-2">
+            <strong>Задача редактируется пользователем:</strong>
+            <div class="fw-semibold text-dark mt-1">
+                <i class="fas fa-user me-2"></i>
+                <span id="lockUserName"><?=$user->getLinkedName();?></span>
+            </div>
+        </div>
+        
+        <div>
+            <strong>Блокировка действует до:</strong>
+            <div class="fw-normal text-muted mt-1">
+                <i class="fas fa-clock me-2"></i>
+                <span id="lockExpireDate"><?=$lock->getFormattedExpired();?></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-warning mt-3" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Редактирование задачи временно недоступно. Вы можете подождать окончания блокировки или принудительно перехватить её.
+    </div>
+</div>
+                
