@@ -156,9 +156,9 @@ class ProjectPage extends LPMPage
         // проверяем, не добавили ли задачу или может отредактировали
         if (isset($_POST['actionType'])) {
             if ($_POST['actionType'] == 'addIssue') {
-                $this->saveIssue();
+                $this->handleFormAction();
             } elseif ($_POST['actionType'] == 'editIssue' && isset($_POST['issueId'])) {
-                $this->saveIssue(true);
+                $this->handleFormAction(true);
             }
         }
 
@@ -428,9 +428,11 @@ class ProjectPage extends LPMPage
         return $list;
     }
     
-    private function saveIssue($editMode = false)
+    private function handleFormAction($editMode = false)
     {
         $engine = $this->_engine;
+        $userId = $engine->getAuth()->getUserId();
+
         // TODO: вынеси отсюда все сохранение и выделить работу с БД
         $db = LPMGlobals::getInstance()->getDBConnect();
         // Сохраняем весь input, чтобы в случае ошибки восстановить форму
@@ -444,266 +446,188 @@ class ProjectPage extends LPMPage
         // на соответствие её проекту и права пользователя
         if ($editMode) {
             $issueId = (float)$_POST['issueId'];
-            
-            // проверяем что такая задача есть и она принадлежит текущему проекту
-            $sql = "SELECT `id`, `idInProject`, `name` FROM `%s` WHERE `id` = '" . $issueId . "' " .
-                                           "AND `projectId` = '" . $projectId . "'";
-            if (!$query = $db->queryt($sql, LPMTables::ISSUES)) {
-                return $engine->addError('Ошибка записи в базу');
-            }
-            
-            if ($query->num_rows == 0) {
+            $curIssue = Issue::load($issueId);
+
+            if (empty($curIssue) || $curIssue->projectId !== $projectId) {
                 return $engine->addError('Нет такой задачи для текущего проекта');
             }
-            $result = $query->fetch_assoc();
-            $idInProject = $result['idInProject'];
-            $issueName = $result['name'];
-        // TODO проверка прав
+
+            if (!$curIssue->checkEditPermit($userId)) {
+                return $engine->addError('У вас нет прав для редактирования этой задачи');
+            }
+
+            $idInProject = $curIssue->idInProject;
+            $issueName = $curIssue->name;
         } else {
-            $issueId = 'NULL';
+            $issueId = null;
             $idInProject = (int)$this->getLastIssueId();
             $issueName = null;
         }
 
         if (!$this->checkRequiredFields($_POST)) {
-            $engine->addError('Заполнены не все обязательные поля');
+            $this->addError('Заполнены не все обязательные поля');
             return;
         }
 
+        if (!$this->validateInputData($_POST, $completeDateArr)) {
+            return;
+        }
+
+        // TODO наверное нужен "белый список" тегов
+        $_POST['desc'] = str_replace('%', '%%', $_POST['desc']);
+        $_POST['hours']= str_replace('%', '%%', $_POST['hours']);
+        $_POST['name'] = trim(str_replace('%', '%%', $_POST['name']));
+
+        foreach ($_POST as $key => $value) {
+            if (!in_array($key, ['members', 'clipboardImg', 'imgUrls', 'testers', 'membersSp', 'masters'])) {
+                $_POST[$key] = $db->real_escape_string($value);
+            }
+        }
+
         $type = (int)$_POST['type'];
-        $inputCompleteDate = $_POST['completeDate'];
+        $completeDate = empty($completeDateArr) ? null : $completeDateArr[3] . '-' .
+                        $completeDateArr[2] . '-' .
+                        $completeDateArr[1] . ' ' .
+                        '00:00:00';
+        $priority = min(99, max(0, (int)$_POST['priority']));
 
-        if (!empty($inputCompleteDate) && preg_match(
-            "/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
-            $inputCompleteDate,
-            $completeDateArr
-        ) == 0) {
-            $engine->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
-        } elseif (!in_array($type, [Issue::TYPE_BUG, Issue::TYPE_DEVELOP, Issue::TYPE_SUPPORT])) {
-            $engine->addError('Недопустимый тип');
-        } elseif ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
-            $engine->addError('Недопустимое значение приоритета');
-        } elseif (mb_strlen($_POST['desc']) > Issue::DESC_MAX_LEN) {
-            $engine->addError('Слишком длинное описание. Максимальная длина: ' . Issue::DESC_MAX_LEN . ' символов');
-        } else {
-            // TODO наверное нужен "белый список" тегов
-            $_POST['desc'] = str_replace('%', '%%', $_POST['desc']);
-            $_POST['hours']= str_replace('%', '%%', $_POST['hours']);
-            $_POST['name'] = trim(str_replace('%', '%%', $_POST['name']));
+        // Обновляем меткам кол-во использований.
+        $origLabels = Issue::getLabelsByName($_POST['name']);
+        $labels = array_merge($origLabels);
 
-            foreach ($_POST as $key => $value) {
-                if (!in_array($key, ['members', 'clipboardImg', 'imgUrls', 'testers', 'membersSp', 'masters'])) {
-                    $_POST[$key] = $db->real_escape_string($value);
+        if ($issueName != null) {
+            $oldLabels = Issue::getLabelsByName($issueName);
+            foreach ($labels as $key => $value) {
+                if (in_array($value, $oldLabels)) {
+                    unset($labels[$key]);
+                }
+            }
+        }
+
+        if (!empty($labels)) {
+            $allLabels = Issue::getLabels($projectId);
+            $countedLabels = [];
+            foreach ($allLabels as $value) {
+                $index = array_search($value['label'], $labels);
+                if ($index !== false) {
+                    $countedLabels[] = $labels[$index];
+                    unset($labels[$index]);
                 }
             }
 
-            $completeDate = empty($completeDateArr) ? null : $completeDateArr[3] . '-' .
-                            $completeDateArr[2] . '-' .
-                            $completeDateArr[1] . ' ' .
-                            '00:00:00';
-            $priority = min(99, max(0, (int)$_POST['priority']));
-
-            // Обновляем меткам кол-во использований.
-            $origLabels = Issue::getLabelsByName($_POST['name']);
-            $labels = array_merge($origLabels);
-
-            if ($issueName != null) {
-                $oldLabels = Issue::getLabelsByName($issueName);
-                foreach ($labels as $key => $value) {
-                    if (in_array($value, $oldLabels)) {
-                        unset($labels[$key]);
-                    }
-                }
+            if (!empty($countedLabels)) {
+                Issue::addLabelsUsing($countedLabels, $this->_project->id);
             }
 
             if (!empty($labels)) {
-                $allLabels = Issue::getLabels($projectId);
-                $countedLabels = [];
-                foreach ($allLabels as $value) {
-                    $index = array_search($value['label'], $labels);
-                    if ($index !== false) {
-                        $countedLabels[] = $labels[$index];
-                        unset($labels[$index]);
-                    }
+                foreach ($labels as $newLabel) {
+                    Issue::saveLabel($newLabel, $this->_project->id, 0, 1);
                 }
-
-                if (!empty($countedLabels)) {
-                    Issue::addLabelsUsing($countedLabels, $this->_project->id);
-                }
-
-                if (!empty($labels)) {
-                    foreach ($labels as $newLabel) {
-                        Issue::saveLabel($newLabel, $this->_project->id, 0, 1);
-                    }
-                }
-            }
-
-            // Считаем SP
-            $hours = $this->parseSP($_POST['hours']);
-            $membersSp = null;
-            if (isset($_POST['membersSp']) && is_array($_POST['membersSp'])) {
-                $membersSp = [];
-                $spTotal = 0;
-                foreach ($_POST['membersSp'] as $sp) {
-                    $sp = $this->parseSP($sp, true);
-                    $membersSp[] = $sp;
-                    $spTotal += $sp;
-                }
-
-                if ($spTotal > 0 && $spTotal != $hours) {
-                    return $engine->addError('Количество SP по исполнителям не совпадает с общим');
-                }
-            }
-
-            // сохраняем задачу
-            $userId = $engine->getAuth()->getUserId();
-            $sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
-                                      "`authorId`, `createDate`, `completeDate`, `priority` ) " .
-                                "VALUES (". $issueId . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
-                                         "'" . $_POST['name'] . "', '" . $hours . "', '" . $_POST['desc'] . "', " .
-                                         "'" . $type . "', " .
-                                         "'" . $userId . "', " .
-                                      "'" . DateTimeUtils::mysqlDate() . "', " .
-                                      "" . (empty($completeDate) ? 'NULL' :  "'" . $completeDate  . "'") . ", " .
-                                      "'" . $priority . "' ) " .
-            "ON DUPLICATE KEY UPDATE `name` = VALUES( `name` ), " .
-                                    "`hours` = VALUES( `hours` ), " .
-                                    "`desc` = VALUES( `desc` ), " .
-                                    "`type` = VALUES( `type` ), " .
-                                    "`completeDate` = VALUES( `completeDate` ), " .
-                                    "`priority` = VALUES( `priority` )";
-
-                                    
-            if (!$db->queryt($sql, LPMTables::ISSUES)) {
-                $engine->addError('Ошибка записи в базу');
-            } else {
-                if (!$editMode) {
-                    $issueId = $db->insert_id;
-
-                    $this->saveLinkedIssues($userId, $issueId, $_POST['baseIds'], false);
-                    $this->saveLinkedIssues($userId, $issueId, $_POST['linkedIds'], true);
-                }
-
-                // Валидируем заданное количество SP по участникам
-
-                // Сохраняем участников
-                $memberIds = empty($_POST['members']) || !is_array($_POST['members']) ? [] : $_POST['members'];
-                if (!$this->saveMembers($db, $issueId, $memberIds, $editMode, $membersSp)) {
-                    return;
-                }
-
-                // Сохраняем тестеров
-                $testers = isset($_POST['testers']) ? $_POST['testers'] : [];
-                if (!$this->saveTesters($db, $issueId, $testers, $editMode)) {
-                    return;
-                }
-
-                // Сохраняем мастеров
-                $masters = isset($_POST['masters']) ? $_POST['masters'] : [];
-                if (!$this->saveMasters($db, $issueId, $masters, $editMode)) {
-                    return;
-                }
-
-                //удаление старых изображений
-                if (!empty($_POST["removedImages"])) {
-                    $delImg = $_POST["removedImages"];
-                    $delImg = explode(',', $delImg);
-                    $imgIds = [];
-                    foreach ($delImg as $imgIt) {
-                        $imgIt = (int)$imgIt;
-                        if ($imgIt > 0) {
-                            $imgIds[] = $imgIt;
-                        }
-                    }
-                    if (!empty($imgIds)) {
-                        $sql = "UPDATE `%s` ".
-                                    "SET `deleted`='1' ".
-                                    "WHERE `imgId` IN (".implode(',', $imgIds).") ".
-                                     "AND `deleted` = '0' ".
-                                     "AND `itemId`='".$issueId."' ".
-                                     "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
-                        $db->queryt($sql, LPMTables::IMAGES);
-                    }
-                }
-
-                // загружаем изображения
-                if ($editMode) {
-                    // если задача редактируется
-                    // считаем из базы кол-во картинок, имеющихся для задачи
-                    $sql = "SELECT COUNT(*) AS `cnt` FROM `%s` " .
-                        "WHERE `itemId` = '" . $issueId. "'".
-                        "AND `itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
-                        "AND `deleted` = '0'";
-                    
-                    if ($query = $db->queryt($sql, LPMTables::IMAGES)) {
-                        $row = $query->fetch_assoc();
-                        $loadedImgs = (int)$row['cnt'];
-                    } else {
-                        $engine->addError('Ошибка доступа к БД. Не удалось загрузить количество изображений');
-                        return;
-                    }
-                } else {
-                    // если добавляется
-                    $loadedImgs = 0;
-                }
-
-                $uploader = $this->saveImages4Issue($issueId, $loadedImgs);
-
-                if ($uploader === false) {
-                    return $engine->addError('Не удалось загрузить изображение');
-                }
-
-                $issue = Issue::load($issueId);
-                if (!$issue) {
-                    $engine->addError('Не удалось загрузить данные задачи');
-                    return;
-                }
-
-                // Если это SCRUM проект
-                if ($this->_project->scrum) {
-                    $putOnBoard = !empty($_POST['putToBoard']);
-                    if ($issue->isOnBoard() != $putOnBoard) {
-                        if ($putOnBoard) {
-                            if (!ScrumSticker::putStickerOnBoard($issue)) {
-                                return $engine->addError('Не удалось поместить стикер на доску');
-                            }
-                        } else {
-                            if (!ScrumSticker::updateStickerState(
-                                $issue->id,
-                                ScrumStickerState::BACKLOG
-                            )) {
-                                return $engine->addError('Не удалось снять стикер с доски');
-                            }
-                        }
-                    }
-                }
-
-                // обновляем счетчики изображений
-                if ($uploader->getLoadedCount() > 0 || $editMode) {
-                    Issue::updateImgsCounter($issueId, $uploader->getLoadedCount());
-                }
-                
-                // отсылаем оповещения
-                $this->notifyAboutIssueChange($issue, $editMode);
-
-                Project::updateIssuesCount($issue->projectId);
-
-                // Записываем лог
-                UserLogEntry::create(
-                    $userId,
-                    DateTimeUtils::$currentDate,
-                    $editMode ? UserLogEntryType::EDIT_ISSUE : UserLogEntryType::ADD_ISSUE,
-                    $issue->id,
-                    $editMode ? 'Full edit' : ''
-                );
-
-                // Очищаем сохраненные данные
-                $this->_issueInput = null;
-            
-                $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
-                LightningEngine::go2URL($issueURL);
             }
         }
+
+        // Считаем SP
+        $hours = $this->parseSP($_POST['hours']);
+        $membersSp = null;
+        if (isset($_POST['membersSp']) && is_array($_POST['membersSp'])) {
+            $membersSp = [];
+            $spTotal = 0;
+            foreach ($_POST['membersSp'] as $sp) {
+                $sp = $this->parseSP($sp, true);
+                $membersSp[] = $sp;
+                $spTotal += $sp;
+            }
+
+            if ($spTotal > 0 && $spTotal != $hours) {
+                return $engine->addError('Количество SP по исполнителям не совпадает с общим');
+            }
+        }
+
+        // сохраняем задачу
+        $issueId = $this->saveIssue($db, $issueId, $idInProject, $_POST['name'], $_POST['desc'], $userId, $hours, $type, $completeDate, $priority);
+        if (!$issueId) return;
+
+        if (!$editMode) {
+            $this->saveLinkedIssues($userId, $issueId, $_POST['baseIds'], false);
+            $this->saveLinkedIssues($userId, $issueId, $_POST['linkedIds'], true);
+        }
+
+        // Сохраняем участников
+        $memberIds = empty($_POST['members']) || !is_array($_POST['members']) ? [] : $_POST['members'];
+        if (!$this->saveMembers($db, $issueId, $memberIds, $editMode, $membersSp)) {
+            return;
+        }
+
+        // Сохраняем тестеров
+        $testers = isset($_POST['testers']) ? $_POST['testers'] : [];
+        if (!$this->saveTesters($db, $issueId, $testers, $editMode)) {
+            return;
+        }
+
+        // Сохраняем мастеров
+        $masters = isset($_POST['masters']) ? $_POST['masters'] : [];
+        if (!$this->saveMasters($db, $issueId, $masters, $editMode)) {
+            return;
+        }
+
+        // удаление старых изображений
+        if (!empty($_POST["removedImages"])) {
+            $this->removeImagesFromIssue($db, $issueId, $_POST["removedImages"]);
+        }
+
+        // загружаем изображения
+        if ($editMode) {
+            // если задача редактируется
+            // считаем из базы кол-во картинок, имеющихся для задачи
+            $loadedImgs = LPMImg::loadCountByInstance(LPMInstanceTypes::ISSUE, $issueId);
+        } else {
+            // если добавляется
+            $loadedImgs = 0;
+        }
+
+        $uploader = $this->saveImages4Issue($issueId, $loadedImgs);
+
+        if ($uploader === false) {
+            return $engine->addError('Не удалось загрузить изображение');
+        }
+
+        // перезагружаем данные задачи
+        $issue = Issue::load($issueId);
+        if (!$issue) {
+            $engine->addError('Не удалось загрузить данные задачи');
+            return;
+        }
+
+        // Если это SCRUM проект
+        if ($this->_project->scrum) {
+            $putOnBoard = !empty($_POST['putToBoard']);
+            if (!$this->updateScrumBoard($issue, $putOnBoard)) return;
+        }
+
+        // обновляем счетчики изображений
+        if ($uploader->getLoadedCount() > 0 || $editMode) {
+            Issue::updateImgsCounter($issueId, $uploader->getLoadedCount());
+        }
+        
+        // отсылаем оповещения
+        $this->notifyAboutIssueChange($issue, $editMode);
+
+        Project::updateIssuesCount($issue->projectId);
+
+        // Записываем лог
+        UserLogEntry::create(
+            $userId,
+            DateTimeUtils::$currentDate,
+            $editMode ? UserLogEntryType::EDIT_ISSUE : UserLogEntryType::ADD_ISSUE,
+            $issue->id,
+            $editMode ? 'Full edit' : ''
+        );
+
+        // Очищаем сохраненные данные
+        $this->_issueInput = null;
+    
+        $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
+        LightningEngine::go2URL($issueURL);
     }
 
     private function checkRequiredFields()
@@ -754,6 +678,69 @@ class ProjectPage extends LPMPage
         }
     }
 
+    private function validateInputData($input, &$completeDateMatches) 
+    {
+        $inputCompleteDate = $input['completeDate'];
+        if (!empty($inputCompleteDate)) {
+            $res = preg_match(
+                "/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
+                $inputCompleteDate,
+                $completeDateMatches
+            );
+            if (!$res) 
+            {
+                 return $this->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
+            }
+        }
+
+        $type = (int)$input['type'];
+        if (!in_array($type, [Issue::TYPE_BUG, Issue::TYPE_DEVELOP, Issue::TYPE_SUPPORT])) {
+            $this->addError('Недопустимый тип');
+        }
+        
+        if ($_POST['priority'] < 0 || $_POST['priority'] > 99) {
+            $this->addError('Недопустимое значение приоритета');
+        } 
+        
+        if (mb_strlen($_POST['desc']) > Issue::DESC_MAX_LEN) {
+            $this->addError('Слишком длинное описание. Максимальная длина: ' . Issue::DESC_MAX_LEN . ' символов');
+        } 
+
+        return !$this->hasErrors();
+    }
+
+    private function saveIssue(DBConnect $db, $issueId, $idInProject, $name, $desc, $userId, $hours, $type, $completeDate, $priority) 
+    {
+        $issueIdVal = $issueId === null ? 'NULL' : $issueId;
+        $revision = Issue::getNewRevision();
+        $sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
+                                    "`authorId`, `createDate`, `completeDate`, `priority`, `revision` ) " .
+                            "VALUES (". $issueIdVal . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
+                                        "'" . $name . "', '" . $hours . "', '" . $desc . "', " .
+                                        "'" . $type . "', " .
+                                        "'" . $userId . "', " .
+                                    "'" . DateTimeUtils::mysqlDate() . "', " .
+                                    "" . (empty($completeDate) ? 'NULL' :  "'" . $completeDate  . "'") . ", " .
+                                    "'" . $priority . "', '" . $revision . "' ) " .
+        "ON DUPLICATE KEY UPDATE `name` = VALUES( `name` ), " .
+                                "`hours` = VALUES( `hours` ), " .
+                                "`desc` = VALUES( `desc` ), " .
+                                "`type` = VALUES( `type` ), " .
+                                "`completeDate` = VALUES( `completeDate` ), " .
+                                "`priority` = VALUES( `priority` ), " .
+                                "`revision` = VALUES( `revision` )";
+
+         if (!$db->queryt($sql, LPMTables::ISSUES)) {
+            return $this->addError('Ошибка записи в базу');
+         }
+
+         if ($issueId === null) {
+             $issueId = $db->insert_id;
+         }
+
+         return $issueId;
+    }
+
     private function saveImages4Issue($issueId, $hasCnt = 0)
     {
         $uploader = new LPMImgUpload(
@@ -778,6 +765,28 @@ class ProjectPage extends LPMPage
             return false;
         }
         return $uploader;
+    }
+
+    private function removeImagesFromIssue(DBConnect $db, $issueId, $imagesIdsStr) 
+    {
+        $delImg = explode(',', $imagesIdsStr);
+        $imgIds = [];
+        foreach ($delImg as $imgId) {
+            $imgId = (int)$imgId;
+            if ($imgId > 0) {
+                $imgIds[] = $imgId;
+            }
+        }
+
+        if (!empty($imgIds)) {
+            $sql = "UPDATE `%s` ".
+                        "SET `deleted`='1' ".
+                        "WHERE `imgId` IN (".implode(',', $imgIds).") ".
+                            "AND `deleted` = '0' ".
+                            "AND `itemId`='".$issueId."' ".
+                            "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
+            $db->queryt($sql, LPMTables::IMAGES);
+        }
     }
 
     private function saveMembers($db, $issueId, $memberIds, $editMode, $spByMembers = null)
@@ -818,7 +827,6 @@ class ProjectPage extends LPMPage
                 return $engine->addError('Ошибка при сохранении информации об участниках');
             }
 
-            $spTotal = 0;
             foreach ($memberIds as $i => $memberId) {
                 $memberId = (float)$memberId;
                 $sp = $spByMembers[$i];
@@ -916,6 +924,26 @@ class ProjectPage extends LPMPage
             $prepare->close();
             return true;
         }
+    }
+
+    private function updateScrumBoard(Issue $issue, $putOnBoard)
+    {
+        if ($issue->isOnBoard() != $putOnBoard) {
+            if ($putOnBoard) {
+                if (!ScrumSticker::putStickerOnBoard($issue)) {
+                    return $this->addError('Не удалось поместить стикер на доску');
+                }
+            } else {
+                if (!ScrumSticker::updateStickerState(
+                    $issue->id,
+                    ScrumStickerState::BACKLOG
+                )) {
+                    return $this->addError('Не удалось снять стикер с доски');
+                }
+            }
+        }
+
+        return true;
     }
 
     private function notifyAboutIssueChange(Issue $issue, $editMode)

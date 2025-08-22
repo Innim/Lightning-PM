@@ -253,6 +253,16 @@ abstract class LPMPage
     {
         return $this->_engine->getParams()->getArgIndex($val);
     }
+
+    protected function addError($message)
+    {
+        return $this->_engine->addError($message);
+    }
+
+    protected function hasErrors()
+    {
+        return $this->_engine->hasErrors();
+    }
     
     /**
      * Возвращает дополнительные параметры:

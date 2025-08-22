@@ -15,7 +15,26 @@ class LPMImg extends LPMBaseObject
             __CLASS__
         );
     }
-    
+
+    public static function loadCountByInstance($instanceType, $instanceId)
+    {
+        $res = self::buildAndExecute([
+            'SELECT' => 'COUNT(*) AS `count`',
+            'FROM'   => LPMTables::IMAGES,
+            'WHERE'  => [
+                '`deleted` = 0',
+                '`itemType` = ' . $instanceType,
+                '`itemId` = ' . $instanceId 
+            ]
+        ]);
+
+        if (!$res) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        return (int)$res->fetch_assoc()['count'];
+    }
+
     public static function loadListByProject($projectId)
     {
         return self::loadListByInstance(LPMInstanceTypes::PROJECT, $projectId);

@@ -871,7 +871,7 @@ SQL;
             'commentsCount',
             'hours'
         );
-        $this->_typeConverter->addIntVars('priority');
+        $this->_typeConverter->addIntVars('priority', 'projectId', 'idInProject');
         $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked', 'isPassTest', 'isChangesRequested');
         $this->addDateTimeFields('createDate', 'startDate', 'completeDate', 'completedDate');
         

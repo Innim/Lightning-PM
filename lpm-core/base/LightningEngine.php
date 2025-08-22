@@ -416,6 +416,11 @@ class LightningEngine
         }
         return $arr;
     }
+
+    public function hasErrors()
+    {
+        return !empty($this->_errors);
+    }
     
     /**
      * @return BasePage
