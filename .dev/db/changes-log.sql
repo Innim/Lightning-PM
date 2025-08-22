@@ -424,8 +424,7 @@ ADD `seEditIssueForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещат
 ADD `seIssueStateForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оповещать на email об изменения состояния задачи для PM' AFTER `seEditIssueForPM`,
 ADD `seIssueCommentForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оставлен комментарий к задаче для PM' AFTER `seIssueStateForPM`;
 
-
---NEXT
+-- 0.16.0
 
 ALTER TABLE `lpm_issues`
 ADD `modifiedDate` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT 'дата последнего изменения записи' AFTER `createDate`,
@@ -444,3 +443,5 @@ CREATE TABLE `lpm_user_locks` (
   KEY `instanceType_instanceId_deleted` (`instanceType`,`instanceId`,`deleted`),
   KEY `userId` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица блокировок разных сущностей пользователями';
+
+--NEXT
