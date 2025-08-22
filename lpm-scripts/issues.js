@@ -275,9 +275,21 @@ function setupPasteTransformer(inputSelectors) {
     document.addEventListener('paste', function (event) {
         const target = event.target;
 
-        if (!inputSelectors.some(sel => target.matches(sel))) {
-            return;
-        }
+        if (!inputSelectors.some(sel => target.matches(sel))) return;
+
+        // Only for input or textarea for now (do not support contenteditable)
+        if (target.selectionStart == null || target.selectionEnd == null) return;
+
+        const value = target.value;
+        const start = target.selectionStart;
+        const end = target.selectionEnd;
+
+        const textBefore = value.slice(0, start);
+        const textAfter = value.slice(end);
+
+        // ignore if paste in link markdown
+        const isInsideMarkdownLink = textBefore.endsWith('](') && textAfter.startsWith(')');
+        if (isInsideMarkdownLink) return;
 
         const clipboardData = event.clipboardData || window.clipboardData;
         const pastedText = clipboardData.getData('text');
@@ -290,32 +302,16 @@ function setupPasteTransformer(inputSelectors) {
         if (match) {
             event.preventDefault();
 
-            const start = pastedText.indexOf(trimmed);
-            const before = pastedText.substring(0, start);
-            const after = pastedText.substring(start + trimmed.length);
+            const s = pastedText.indexOf(trimmed);
+            const preSpace = pastedText.substring(0, s);
+            const postSpace = pastedText.substring(s + trimmed.length);
             const markdownLink = `[#${match[2]}](${trimmed})`;
-            insertTextAtCursor(target, before + markdownLink + after);
+
+            const text = preSpace + markdownLink + postSpace;
+            target.value = textBefore + text + textAfter;
+            target.selectionStart = target.selectionEnd = start + text.length;
         }
     });
-}
-
-function insertTextAtCursor(element, text) {
-  if (element.selectionStart !== undefined) {
-    const start = element.selectionStart;
-    const end = element.selectionEnd;
-    const value = element.value;
-
-    element.value = value.slice(0, start) + text + value.slice(end);
-    element.selectionStart = element.selectionEnd = start + text.length;
-  } 
-  else if (element.isContentEditable) {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-    const range = selection.getRangeAt(0);
-    range.deleteContents();
-    range.insertNode(document.createTextNode(text));
-    range.collapse(false);
-  }
 }
 
 function DropDown(el) {
