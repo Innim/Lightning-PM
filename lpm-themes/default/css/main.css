@@ -1073,12 +1073,12 @@ blockquote > p {
 	margin: 0;
 	padding: 0;
 }
-#issueView .issue_copy
+
+#issueView .issue-actions
 {
 	position: absolute;
-	right: 10px;
+	right: 0px;
 	margin-top: -15px;
-	font-size: 0.6em
 }
 
 

@@ -519,6 +519,79 @@ lpm.dialog = {
     }
 }
 
+lpm.toast = {
+    show: function (message) {
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fa fa-check me-2"></i>${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '1055';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toastElement = document.createElement('div');
+        toastElement.innerHTML = toastHtml;
+        const toast = toastElement.firstElementChild;
+        toastContainer.appendChild(toast);
+        
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: 3000
+        });
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
+}
+
+lpm.utils = {
+    copyToClipboard: function (text) {
+        // Modern clipboard API (works in HTTPS/localhost)
+        if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(text);
+        } else {
+            // Fallback for HTTP or older browsers
+            return new Promise((resolve, reject) => {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (successful) {
+                        resolve();
+                    } else {
+                        reject();
+                    }
+                } catch (err) {
+                    document.body.removeChild(textArea);
+                    reject(err);
+                }
+            });
+        }
+    },
+};
+
 var preloader = {
     _showed: 0,
     show: function () {
@@ -647,6 +720,11 @@ $(document).ready(
                         .appendTo(this);
                 }
             }
+        });
+
+        $('body').on('hidden.bs.dropdown', function(e) {
+            // Force element to stay visible - some sort of bug in Bootstrap in conflict with jQuery
+            e.target.style.display = '';
         });
 
         window.lpInfo.userId = $('#curUserId').val();

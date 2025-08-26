@@ -33,11 +33,50 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
             <?php endif;?>
         </h3>
-        <div class="issue_copy">
-            <a id="copyText" class="copy-commit-message" href="javascript:void(0);"
-                data-clipboard-text='Issue #<?=$issue->getIdInProject() . ": " . $issue->getName();?>'>скопировать
-                commit сообщение</a>
+
+        <div class="issue-actions d-flex align-items-center justify-content-end gap-1 mb-3 me-2">
+            <a href="javascript:void(0);" 
+                onclick="issuePage.onClickCopyIssueUrl(event)" 
+                title="Копировать ссылку на задачу"
+                data-issue-url="<?=$issue->getConstURL();?>"
+                class="me-1 link-secondary">
+                <i class="fa fa-link fa-xs" aria-hidden="true"></i>
+            </a>
+            
+            <a href="javascript:void(0);" 
+                onclick="issuePage.onClickCopyMarkdownIssueLink(event)" 
+                title="Копировать ссылку как Markdown"
+                data-issue-url="<?=$issue->getConstURL();?>"
+                data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                class="me-1 link-secondary">
+                <i class="fa fa-hashtag fa-xs" aria-hidden="true"></i>
+            </a>
+            
+            <div class="dropdown">
+                <a href="javascript:void(0);" 
+                    class="dropdown-toggle-no-caret" 
+                    title="Дополнительные действия"
+                    id="issueActionsDropdown" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                    class="me-1 link-secondary">
+                    <i class="fa fa-ellipsis-h fa-xs" aria-hidden="true"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-sm" aria-labelledby="issueActionsDropdown">
+                    <li>
+                        <a class="dropdown-item py-1 px-2" 
+                            href="javascript:void(0);"
+                            onclick="issuePage.onClickCopyCommitMessage(event)"
+                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                            data-issue-name="<?=addslashes($issue->getName());?>">
+                            <i class="fa fa-code-commit me-1 fa-xs" aria-hidden="true"></i>
+                            <small>Копировать commit сообщение</small>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
+
         <div class="info-list <?switch($issue->status): 
     case 0: ?>active-issue <?break;?> 
     <? case 1: ?>verify-issue <?break;?> 

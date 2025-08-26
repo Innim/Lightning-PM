@@ -495,6 +495,39 @@ issuePage.updateStat = function () {
     });
 };
 
+issuePage.onClickCopyIssueUrl = function (event) {
+    const link = event.target.closest('a');
+    const url = link.getAttribute('data-issue-url');
+
+    lpm.utils.copyToClipboard(url).then(() => {
+       lpm.toast.show('Ссылка скопирована в буфер обмена'); 
+    });
+};
+
+issuePage.onClickCopyMarkdownIssueLink = function (event) {
+    const link = event.target.closest('a');
+    const url = link.getAttribute('data-issue-url');
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+
+    const text = '[#' + idInProject + '](' + url + ')';
+
+    lpm.utils.copyToClipboard(text).then(() => {
+       lpm.toast.show('Markdown ссылка скопирована в буфер'); 
+    });
+};
+
+issuePage.onClickCopyCommitMessage = function (event) {
+    const link = event.target.closest('a');
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+    const issueName = link.getAttribute('data-issue-name');
+
+    const text = 'Issue #' + idInProject + ': ' + issueName;
+
+    lpm.utils.copyToClipboard(text).then(() => {
+       lpm.toast.show('Commit сообщение скопировано'); 
+    });
+};
+
 function insertFormattingLink(input) {
     const text = getSelectedText(input);
     if (parser.findLinks(text)) {
