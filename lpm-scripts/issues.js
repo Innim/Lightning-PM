@@ -255,7 +255,7 @@ function createIssuesAutoComplete() {
                     if (res.success) {
                         let list = res.list.map((e) => {
                             return {
-                                key: e.idInProject,
+                                key: String(e.idInProject),
                                 value: e.name,
                                 url: e.url
                             };
