@@ -97,28 +97,29 @@ const comments = {
 		}
 
 		if (mrs.length > 0) {
-			let ul = $('.merge-requests', $item.parent('.formatted-desc'));
+			const $ul = $('.merge-requests', $item.parent('.formatted-desc'));
 			mrs.forEach(function (url, i, arr) {
-				let li = $(document.createElement("li"));
-				li.append(preloader.getNewIndicatorSmall());
-				ul.append(li);
+				const $el = $(document.createElement('div'));
+				$ul.append($(document.createElement("li")).addClass('mt-2').append($el));
+
+				$el.append(preloader.getNewIndicatorSmall());
 				srv.attachments.getMRInfo(url, function (res) {
 					if (res.success) {
 						if (res.data) {
-							let mr = res.data;
-							let icon = comments.mrStateIcons[mr.state];
-							li.attr('class', mr.state)
+							const mr = res.data;
+							const icon = comments.mrStateIcons[mr.state];
+							$el.attr('class', `merge-request ${mr.state}`)
 								.empty()
 								.append('<i class="state-icon fas ' + icon + '"></i>')
 								.append('MR <a href="' + mr.url + '">!' + mr.internalId + '</a>');
 							if (mr.mergedAt) {
-								li.append(' <span class="merged-at small" title="Дата влития">(<i class="fas fa-code-pull-request" ></i> ' + lpm.format.date(mr.mergedAt) + ')</span>');
+								$el.append(' <span class="merged-at small" title="Дата влития">(<i class="fas fa-code-pull-request" ></i> ' + lpm.format.date(mr.mergedAt) + ')</span>');
 							}
 						} else {
-							li.remove();
+							$el.remove();
 						}
 					} else {
-						li.empty().text(typeof res.error != 'undefined' ?
+						$el.empty().text(typeof res.error != 'undefined' ?
 							res.error : 'Не удалось получить данные MR.');
 					}
 				});

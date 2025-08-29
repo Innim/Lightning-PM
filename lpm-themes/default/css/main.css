@@ -653,44 +653,44 @@ a.create-branch-icon .plus-icon {
    display: none;
 }
 
-.comments-list-item ul.merge-requests li {
+.comments-list-item ul.merge-requests .merge-request {
 	padding: 5px;
 	border-radius: 5px;
 	border-width: 1px;
 	border-style: solid;
 }
 
-.comments-list-item ul.merge-requests li .state-icon {
+.comments-list-item ul.merge-requests .merge-request .state-icon {
 	margin-right: 5px;
 }
 
-.comments-list-item ul.merge-requests li.opened {
+.comments-list-item ul.merge-requests .merge-request.opened {
 	background-color: #ffffbc;
 	border-color: #ffc107;
 }
 
-.comments-list-item ul.merge-requests li.opened .state-icon {
+.comments-list-item ul.merge-requests .merge-request.opened .state-icon {
 	color: #838982;
 }
 
-.comments-list-item ul.merge-requests li.closed {
+.comments-list-item ul.merge-requests .merge-request.closed {
 	background-color: #fdcabe;
 	border-color: #dc3545;
 }
-.comments-list-item ul.merge-requests li.closed .state-icon {
+.comments-list-item ul.merge-requests .merge-request.closed .state-icon {
 	color: #e50000;
 }
 
-.comments-list-item ul.merge-requests li.merged {
+.comments-list-item ul.merge-requests .merge-request.merged {
 	background-color: #e2ffd9;
 	border-color: #198754;
 }
-.comments-list-item ul.merge-requests li.merged .state-icon {
+.comments-list-item ul.merge-requests .merge-request.merged .state-icon {
 	color: #2bbd00;
 }
 
 
-.comments-list-item ul.merge-requests li.merged .merged-at {
+.comments-list-item ul.merge-requests .merge-request.merged .merged-at {
 	font-weight: bold;
 }
 
