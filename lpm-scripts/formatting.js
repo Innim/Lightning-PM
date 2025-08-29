@@ -21,6 +21,10 @@ $(function ($) {
                     const img = $('<img>').addClass('tooltip-link-issue-image').attr('src', imageUrl);
                     const wrapper = $('<div>').addClass('img-wrapper border border-1 rounded-3').append(img);
                     content.append(wrapper);
+                    img.on('load', () => {
+                        wrapper.addClass('done');
+                        img.addClass('loaded');
+                    });
                 }
                 content.append($('<span>').addClass('tooltip-link-issue-title').text(`${idInProject}. ${title}`));
 

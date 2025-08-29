@@ -1686,3 +1686,42 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	object-fit: cover;
 	margin-bottom: 5px;
 }
+
+.img-wrapper {
+	position: relative;
+	overflow: hidden;
+	border-radius: 5px;
+	background: #eee;
+	aspect-ratio: 4 / 3;
+}
+
+/* Placeholder (shimmer effect) */
+.img-wrapper::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(135deg, #eee 25%, #ddd 50%, #eee 75%);
+	background-size: 200% 100%;
+	animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+	0% { background-position: -200% 0; }
+	100% { background-position: 200% 0; }
+}
+
+.img-wrapper img {
+	display: block;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.img-wrapper.done {
+	aspect-ratio: auto;
+	background: none;
+}
+.img-wrapper.done::before {
+	display: none; /* hide shimmer */
+}
+.img-wrapper img.loaded {
+	opacity: 1; /* fade in */
+}
