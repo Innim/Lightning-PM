@@ -379,6 +379,7 @@ class ProjectPage extends LPMPage
         return [
             'issues',
             'issue-form',
+            'formatting',
             'libs/tribute',
             'libs/character-counter',
         ];
@@ -389,6 +390,7 @@ class ProjectPage extends LPMPage
         return [
             'comments',
             'attachments',
+            'formatting',
         ];
     }
     

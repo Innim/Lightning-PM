@@ -231,7 +231,7 @@ class PagePrinter
     
     public static function jsScripts()
     {
-        $scripts = PageConstructor::getUsingScripts();
+        $scripts = array_unique(PageConstructor::getUsingScripts());
         foreach ($scripts as $scriptFileName) {
             self::jsScriptLink($scriptFileName);
         }
