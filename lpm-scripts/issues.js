@@ -10,15 +10,6 @@ $(document).ready(
         issuePage.scrumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
 
-        $(document).on('click', '#showIssues4MeLink', function () {
-            states.setState('only-my');
-        });
-
-        $(document).on('click', '#showIssues4AllLink', function () {
-            // TODO: should remake this one
-            issuePage.resetFilter();
-        });
-
         $(document).on('click', '#showLastCreated', function () {
             states.setState('last-created');
         });
@@ -30,7 +21,7 @@ $(document).ready(
 
         $(document).on('click', '#issuesList .member-list a', function (e) {
             const memberId = $(e.currentTarget).data('memberId');
-            states.setState('by-user:' + memberId);
+            issuePage.showIssuesByUser(memberId);
         });
 
         $(".comment-input-text-tabs").tabs({
@@ -338,7 +329,7 @@ const issuePage = {
     idInProject: null,
     labels: null,
     members: null,
-    filterByTagVm: null, 
+    filterVm: null, 
     getStatus: () => $('#issueInfo').data('status'),
     isCompleted: () => issuePage.getStatus() == 2,
     getIssueId: () => $('#issueView input[name=issueId]').val(),
@@ -1062,18 +1053,6 @@ issuePage.addComment = function (comment, html) {
     hideElementAfterDelay(elementId, commentTime);
 };
 
-issuePage.handleOnlyMeFilter = function () {
-    issuePage.showIssues4Me();
-}
-
-issuePage.showIssues4Me = function () {
-    issuePage.filterByMemberId(lpInfo.userId);
-
-    $('#showIssues4MeLink').hide();
-    $('#showIssues4AllLink').show();
-    return false;
-};
-
 issuePage.handleLastCreatedSort = function () {
     issuePage.showLastCreated();
 }
@@ -1097,72 +1076,47 @@ issuePage.sortDefault = function () {
     $('#showLastCreated').show();
 };
 
-issuePage.handleShowIssuesByUser = function (memberId) {
-    issuePage.showIssuesByUser(memberId);
-}
+issuePage.handleFilterState = function (value) {
+    const filters = value.trim() == '' ? [] : value.split(';');
+    const tags = [];
+    const userIds = [];
 
-issuePage.showIssuesByUser = function (memberId) {
-    issuePage.filterByMemberId(memberId);
-    $('#showIssues4MeLink').hide();
-    $('#showIssues4AllLink').show();
-    return false;
-};
-
-issuePage.filterByMemberId = function (userId) {
-    var list = document.getElementById('issuesList');
-    var rows = list.tBodies[0].children;
-    var row, fields = null;
-    var hide = true;
-
-    for (var i = 0; i < rows.length; i++) {
-        row = rows[i];
-        hide = true;
-
-        //if (!row.classList.contains('verify-issue')) {
-        fields_members = row.children[3].getElementsByTagName('a');
-        for (var j = 0; j < fields_members.length; j++) {
-            if (fields_members[j].getAttribute('data-member-id') == userId) {
-                hide = false;
-                break;
-            }
+    filters.forEach(filter => {
+        const [key, value] = filter.split('=');
+        if (key === 'tags') {
+            tags.push(...decodeURI(value).split(','));
+        } else if (key === 'users') {
+            userIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
         }
-        // }
+    });
 
-        if (hide)
-            row.hide();
-        else
-            row.show();
-    }
-};
-
-issuePage.resetFilter = function ()//e) 
-{
-    //$( '#issuesList > tbody > tr' ).show();
-    window.location.hash = '';
-    var rows = document.getElementById('issuesList').tBodies[0].children;
-
-    for (var i = 0; i < rows.length; i++) {
-        rows[i].show();
-    }
-
-    $('#showIssues4AllLink').hide();
-    $('#showIssues4MeLink').show();
-    return false;
-};
-
-issuePage.handleTagsFilterState = function (value) {
-    console.log('value:', value);
-    const tags = value.trim() == '' ? [] : decodeURI(value).split(',');
-    issuePage.filterByTagVm.selectedTags = tags;
+    const filterVm = issuePage.filterVm;
+    filterVm.selectedTags = tags;
+    filterVm.selectUsers(userIds)
 }
 
-issuePage.onFilterByTagChanged = function (tags)  {
+issuePage.onFilterChanged = function (filter)  {
+    const tags = filter.tags
+    const users = filter.users
     issuePage.scrumColUpdateInfo(tags);
-    if (tags.length)  {
-        states.setState('tags:' + encodeURI(tags.join(',')), true);
+    if (tags.length || users.length)  {
+        let filters = [];
+        if (tags.length) {
+            filters.push(`tags=${encodeURI(tags.join(','))}`);
+        }
+
+        if (users.length) {
+            filters.push(`users=${encodeURI(users.map(user => user.userId).join(','))}`);
+        }
+
+        states.setState('filter:' + filters.join(';'), true);
     } else {
         states.setState('', true);
     }
+}
+
+issuePage.showIssuesByUser = function (memberId) {
+    issuePage.filterVm.selectUsers([memberId]);
 };
 
 issuePage.scrumColUpdateInfo = function () {

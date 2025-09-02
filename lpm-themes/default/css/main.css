@@ -1644,23 +1644,15 @@ form.pass-test #passTestComment textarea.comment-text-field {
  * Фильтры в списке задач
  */
 
-.filters-line .multiselect {
-	min-height: 24px;
-	min-width: 200px;
+.issue-list-filter .multiselect,
+.issue-list-filter .multiselect .filter-selector {
+  width: 250px !important;
 }
 
-.filters-line .multiselect__tags {
-	min-height: 24px;
-	padding: 4px 24px 0 4px;
-	font-size: 14px;
-}
-
-.filters-line .multiselect__select {
-	height: 32px;
-}
-
-.filters-line .multiselect__tag {
-	overflow: unset;
+.issue-list-filter .multiselect,
+.issue-list-filter .multiselect__tags
+{
+  min-height: 24px;
 }
 
 .tooltip-link-issue-container {

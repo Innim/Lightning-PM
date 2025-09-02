@@ -378,6 +378,7 @@ class ProjectPage extends LPMPage
     {
         return [
             'issues',
+            'filters/issues-filter',
             'issue-form',
             'formatting',
             'libs/tribute',

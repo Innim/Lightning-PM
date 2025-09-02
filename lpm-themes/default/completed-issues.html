@@ -11,12 +11,6 @@
 			<span class="label">Завершено:</span>
 			<span class="issues-completed value"></span>
 		</p>
-		<p class="filters-line">
-			<a href="javascript:;" id="showIssues4MeLink" onclick="return issuePage.showIssues4Me();">Показать только
-				мои задачи</a>
-			<a href="javascript:;" id="showIssues4AllLink" onclick="return issuePage.resetFilter();"
-				style="display:none;">Показать все</a>
-		</p>
 		<? lpm_print_issues($issues); ?>
 	</article>
 	<? /*lpm_print_issue_view();*/ ?>

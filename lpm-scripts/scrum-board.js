@@ -1,7 +1,7 @@
 $(document).ready(
     function () {
         states.addState(null);
-        states.addState(null, 'tags:#', issuePage.handleTagsFilterState);
+        states.addState(null, 'filter:#', issuePage.handleFilterState);
 
         document.querySelectorAll('.name-project').forEach(function (e) {
             if (e.scrollWidth > e.offsetWidth) {

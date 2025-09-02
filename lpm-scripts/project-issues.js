@@ -6,10 +6,8 @@
 $(document).ready(
     function () {
         states.addState($("#projectView"));
-        states.addState($("#projectView"), 'only-my', issuePage.handleOnlyMeFilter);
         states.addState($("#projectView"), 'last-created', issuePage.handleLastCreatedSort);
-        states.addState($("#projectView"), 'by-user:#', issuePage.handleShowIssuesByUser);
-        states.addState($("#projectView"), 'tags:#', issuePage.handleTagsFilterState);
+        states.addState($("#projectView"), 'filter:#', issuePage.handleFilterState);
         states.addState($("#issueForm"), 'add-issue', issueForm.handleAddState);
         states.addState($("#issueForm"), 'copy-issue:#:#', issueForm.handleAddIssueByState);
         states.addState($("#issueForm"), 'finished-issue:#:#', issueForm.handleAddFinishedIssueByState);

@@ -1,13 +1,50 @@
-<div id="issueListFilter" class="mx-1">
-  <vue-multiselect
-          placeholder="Фильтр по тегам"
-          v-model="selectedTags"
-          :options='<?=json_encode(lpm_get_issue_labels_names());?>'
-          :show-labels="false"
-          :max-height="200"
-          close-on-select
-          searchable
-          multiple
-          taggable
-  ></vue-multiselect>
+<?php
+/*
+Требуются: 
+    $elementId - ID корневого HTML элемента
+*/
+?>
+<div id="<?=$elementId?>" class="mx-1 issue-list-filter">
+  <div class="row g-2 align-items-center">
+    <div class="col-auto">
+      <label class="form-label mb-0">Фильтры:</label>
+    </div>
+    <div class="filter-selector col">
+      <vue-multiselect
+        placeholder="Теги"
+        v-model="selectedTags"
+        :options='<?=json_encode(lpm_get_issue_labels_names());?>'
+        :show-labels="false"
+        :max-height="200"
+        close-on-select
+        searchable
+        multiple
+        taggable
+      ></vue-multiselect>
+    </div>
+    <div class="filter-selector col ms-1">
+      <vue-multiselect
+        ref="userMultiselect"
+        placeholder="Пользователи"
+        v-model="selectedUsers"
+        :options='<?=json_encode(lpm_get_project_members_for_filter());?>'
+        :show-labels="false"
+        :max-height="200"
+        :track-by="'userId'"
+        :label="'name'"
+        close-on-select
+        searchable
+        multiple
+      ></vue-multiselect>
+    </div>
+    <div class="col-auto">
+      <button
+        v-if="hasActiveFilters"
+        @click="clearAllFilters"
+        class="btn btn-sm btn-outline-secondary"
+        title="Очистить все фильтры">
+        <i class="fas fa-ban"></i>
+      </button>
+    </div>
+  </div>
 </div>

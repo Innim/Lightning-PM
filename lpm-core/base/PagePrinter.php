@@ -201,9 +201,9 @@ class PagePrinter
     /**
      * Распечатывает шаблон фильтра в списке задач.
      */
-    public static function issueListFilter()
+    public static function issueListFilter($elementId = 'issueListFilter')
     {
-        PageConstructor::includePattern('issue-list-filter');
+        PageConstructor::includePattern('issue-list-filter', compact('elementId'));
     }
     
     /**

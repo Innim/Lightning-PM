@@ -308,9 +308,9 @@ function lpm_print_scrum_board_snapshots_list(Project $project, $snapshots)
 /**
  * Выводит шаблон компонента фильтров списка задач.
  */
-function lpm_print_issue_list_filters()
+function lpm_print_issue_list_filters($elementId = 'issueListFilter')
 {
-    return PagePrinter::issueListFilter();
+    return PagePrinter::issueListFilter($elementId);
 }
 
 /**
@@ -407,6 +407,20 @@ function lpm_get_issue_labels_names()
     return array_values(array_map(function ($item) {
         return $item['label'];
     }, $labels));
+}
+
+/**
+ * Возвращает список объектов участников проекта для JS фильтра
+ */
+function lpm_get_project_members_for_filter()
+{
+    $users = PageConstructor::getProjectMembers();
+    return array_values(array_map(function ($user) {
+        return [
+            'userId' => $user->getID(), 
+            'name' => $user->getName(),
+        ];
+    }, $users));
 }
 
 /**

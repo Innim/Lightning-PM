@@ -2,48 +2,38 @@
  * Компонент фильтра задач на Scrum-доске.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    issuePage.filterByTagVm = (function initScrumBoardFilter(filterElementSelector, onChange) {
-        return new Vue({
-            el: filterElementSelector,
-            data: {
-                selectedTags: null,
-                options: []
-            },
-            watch: {
-                selectedTags: function(selectedTags) {
-                    if (selectedTags.length) {
-                        this.filterStickers(selectedTags);
-                    } else {
-                        this.showAllStickers();
-                    }
-                    onChange(selectedTags);
-                }
-            },
-            methods: {
-                getStickerTitles(selector = '.sticker-issue-title') {
-                    return document.querySelectorAll(selector);
-                },
-                getStickerElement(el) {
-                    return el?.parentElement?.parentElement;
-                },
-                showElement(el, show) {
-                    el.style.display = show ? 'block' : 'none';
-                },
-                filterStickers(selectedTags) {
-                    this.getStickerTitles().forEach((el) => {
-                        const stickerTitle = el.innerText;
-                        const lastTagIndex = stickerTitle.lastIndexOf(']');
-                        const stickerTags = stickerTitle.substr(0, lastTagIndex + 1);
-                        const hasTag = selectedTags.some((tag) => stickerTags.includes(tag));
-                        this.showElement(this.getStickerElement(el), hasTag);
-                    });
-                },
-                showAllStickers() {
-                    this.getStickerTitles().forEach((el) => {
-                        this.showElement(this.getStickerElement(el), true);
-                    });
-                }
+    issuePage.filterVm = lpm.components.issueListFilter.init({
+        selector: '#scrumBoardFilter',
+        filter: function (el, tags, userIds) {
+            if (tags.length > 0) {
+
+                const titleEl = el.querySelector('.sticker-issue-title');
+
+                const stickerTitle = titleEl.innerText;
+                const lastTagIndex = stickerTitle.lastIndexOf(']');
+                const stickerTags = stickerTitle.substr(0, lastTagIndex + 1);
+                if (stickerTags.length == 0) return false;
+
+                const hasTag = tags.some((tag) => stickerTags.includes(tag));
+                if (!hasTag) return false;
             }
-        });
-    })('#scrumBoardFilter', issuePage.onFilterByTagChanged);
+
+            if (userIds.length > 0) {
+                const memberListEl = el.querySelector('.sticker-issue-members');
+                if (!memberListEl) return false;
+
+                const memberLinks = memberListEl.querySelectorAll('[data-member-id]');
+                const memberIds = Array.from(memberLinks).map(link =>
+                    parseInt(link.getAttribute('data-member-id'))
+                );
+                const hasMatchingUser = userIds.some((userId) => memberIds.includes(userId));
+                if (!hasMatchingUser) return false;
+            }
+
+            return true;
+        },
+        getIssueElements: function () {
+            return document.querySelectorAll('.scrum-board-sticker');
+        },
+    });
 });

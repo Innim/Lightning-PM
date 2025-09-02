@@ -137,7 +137,14 @@ const lpm = {
 
             return res;
         }
-    }
+    },
+    components: {
+        /* reserved for dynamic components */
+    },
+    // later init
+    dialog: null,
+    toast: null,
+    utils: null,
 }
 
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
@@ -707,20 +714,70 @@ $(document).ready(
 
         $.widget.bridge('uitooltip', $.ui.tooltip);
 
-        $(document).uitooltip({
-            position: {
-                my: "center bottom-20",
-                at: "center top",
-                using: function (position, feedback) {
-                    $(this).css(position);
-                    $("<div>")
-                        .addClass("arrow")
-                        .addClass(feedback.vertical)
-                        .addClass(feedback.horizontal)
-                        .appendTo(this);
+        (function () {
+            const activeObservers = new WeakMap();
+
+            const clearObserver = function (target) {
+                const observer = activeObservers.get(target);
+                if (observer) {
+                    observer.disconnect();
+                    activeObservers.delete(target);
                 }
-            }
-        });
+            };
+
+            $(document).uitooltip({
+                open: function (event, ui) {
+                    const target = event.originalEvent?.target;
+                    if (!target) return;
+
+                    const $target = $(target);
+                    if (activeObservers.has(target)) return;
+
+                    // hack to fix bug with tooltip is staying open when element is removed by click on it
+                    const observer = new MutationObserver(() => {
+                        if (!document.body.contains(target) || !$target.is(':visible')) {
+                            const tooltips = $(document).uitooltip('instance').tooltips;
+                            for (var prop in tooltips) {
+                                const item = tooltips[prop];
+
+                                if (item.element[0] === target) {
+                                    item.tooltip[0].remove();
+                                }
+                            }
+                            
+                            clearObserver(target);
+                        }
+                    });
+                    
+                    observer.observe(document.body, {
+                        attributes: true,
+                        childList: true,
+                        subtree: true,
+                        attributeFilter: ['style', 'class', 'hidden'],
+                    });
+
+                    activeObservers.set(target, observer);
+                },
+                close: function(event, ui) {
+                    const target = event.originalEvent?.target;
+                    if (!target) return;
+                    clearObserver(target);
+                },
+                position: {
+                    my: "center bottom-20",
+                    at: "center top",
+                    using: function (position, feedback) {
+                        $(this).css(position);
+                        $("<div>")
+                            .addClass("arrow")
+                            .addClass(feedback.vertical)
+                            .addClass(feedback.horizontal)
+                            .appendTo(this);
+                    }
+                }
+            });
+
+        })();
 
         $('body').on('hidden.bs.dropdown', function(e) {
             // Force element to stay visible - some sort of bug in Bootstrap in conflict with jQuery
