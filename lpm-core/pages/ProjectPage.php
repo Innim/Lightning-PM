@@ -989,14 +989,14 @@ class ProjectPage extends LPMPage
         if ($editMode) {
             Issue::notifyByEmail(
                 $issue,
-                'Изменена задача "' . $issue->name . '"',
+                IssueEmailFormatter::issueChangedSubject($issue),
                 IssueEmailFormatter::issueChangedText($issue, $user),
                 EmailNotifier::PREF_EDIT_ISSUE
             );
         } else {
             Issue::notifyByEmail(
                 $issue,
-                'Добавлена задача "' . $issue->name . '"',
+                IssueEmailFormatter::issueAddedSubject($issue),
                 IssueEmailFormatter::issueAddedText($issue, $user),
                 EmailNotifier::PREF_ADD_ISSUE,
                 false

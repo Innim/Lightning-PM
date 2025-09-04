@@ -558,7 +558,7 @@ SQL;
         // отправка оповещений
         Issue::notifyByEmail(
             $issue,
-            'Удалена задача "' . $issue->name . '"',
+            IssueEmailFormatter::issueDeletedSubject($issue),
             IssueEmailFormatter::issueDeletedText($issue, $user),
             EmailNotifier::PREF_ISSUE_STATE
         );
@@ -688,18 +688,18 @@ SQL;
         $text = '';
         switch ($issue->status) {
             case Issue::STATUS_COMPLETED:
-                $subject = 'Завершена задача "' . $issue->name . '"';
+                $subject = IssueEmailFormatter::issueCompletedSubject($issue);
                 $text = IssueEmailFormatter::issueCompletedText($issue, $user);
 
                 $slack->notifyIssueCompleted($issue);
                 break;
             case Issue::STATUS_IN_WORK:
-                $subject = 'Открыта задача "' . $issue->name . '"';
+                $subject = IssueEmailFormatter::issueReopenedSubject($issue);
                 $text = IssueEmailFormatter::issueReopenedText($issue, $user);
                 // TODO: оповестить в slaсk если вернули в работу
                 break;
             case Issue::STATUS_WAIT:
-                $subject = 'Задача "' . $issue->name . '" ожидает проверки';
+                $subject = IssueEmailFormatter::issueSendForTestSubject($issue);
                 $text = IssueEmailFormatter::issueSendForTestText($issue, $user);
 
                 $slack->notifyIssueForTest($issue);

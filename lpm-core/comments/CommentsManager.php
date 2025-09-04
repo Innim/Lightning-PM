@@ -53,7 +53,7 @@ class CommentsManager
 
         Issue::notifyByEmail(
             $issue,
-            'Новый комментарий к задаче "' . $issue->name . '"',
+            IssueEmailFormatter::newCommentSubject($issue),
             IssueEmailFormatter::newCommentText($comment, $issue, $user),
             EmailNotifier::PREF_ISSUE_COMMENT
         );
