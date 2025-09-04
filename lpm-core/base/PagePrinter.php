@@ -164,6 +164,15 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает компактный компонент перехода к задаче по номеру в проекте.
+     * @param Project $project
+     */
+    public static function gotoIssue(Project $project)
+    {
+        PageConstructor::includePattern('components/goto-issue', compact('project'));
+    }
+
+    /**
      * Распечатывает таблицу Scrum доски.
      * @param $stickers
      * @param bool $addProjectName

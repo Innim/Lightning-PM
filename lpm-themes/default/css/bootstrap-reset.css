@@ -50,3 +50,6 @@ a:hover {
     position: relative;
     opacity: 1;
 }
+
+/* hide toggle button for collapsed elements */
+.hide-me[aria-expanded="true"] {display: none;}

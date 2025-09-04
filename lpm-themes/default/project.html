@@ -5,16 +5,20 @@
 Необязательные:
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
+
+$project = lpm_get_project(); 
 ?><article>
-	<h1><?php lpm_print_header();?></h1>
-	<?php $project = lpm_get_project();?>
+	<div class="col d-flex justify-content-between align-items-center">
+		<h1><?php lpm_print_header();?></h1>
+		<?php lpm_print_goto_issue($project); ?>
+	</div>
 	<article id="projectView" data-project-id="<?=$project->getID();?>">
-		<h3>Список задач
-			<span class="issues-operations">
-				<a href="#" onclick="return issuePage.showExportXls(event);" title="Экспорт в Excel"><i
-						class="fa fa-file-excel" aria-hidden="true"></i></a>
-			</span>
-		</h3>
+        <h3>Список задач
+            <span class="issues-operations">
+                <a href="#" onclick="return issuePage.showExportXls(event);" title="Экспорт в Excel"><i
+                        class="fa fa-file-excel" aria-hidden="true"></i></a>
+            </span>
+        </h3>
 		<div class="project-stat">
 			<span class="label">Открыто:</span>
 			<span class="issues-opened value"></span>
