@@ -1439,21 +1439,6 @@ blockquote > p {
 	display: table-cell;
 }
 
-#projectSettings form ul.form-items {
-	padding: 10px;
-	list-style-type: none;
-}
-
-#projectSettings form ul.form-items > li {
-	padding: 5px;
-	text-align: left;
-}
-
-#projectSettings form label {
-	float: left;
-	margin-top: 5px;
-	min-width: 280px;
-}
 .tooltip div {
 	display: none;
 	position: absolute;
