@@ -2,14 +2,14 @@ $(() => {
     projectMembers.projectId = $('#projectMembers input[name=projectId]').val();
 
     $('#specMasters .spec-master-item .remove-link').on('click', function() { 
-        const $item = $(this).parent('.spec-master-item');
+        const $item = $(this).closest('.spec-master-item');
         projectMembers.removeSpecMaster($item.data('userId'), $item.data('labelId'));
     });
     
     addSpecMaster.init();
 
     $('#specTesters .spec-tester-item .remove-link').on('click', function() { 
-        const $item = $(this).parent('.spec-tester-item');
+        const $item = $(this).closest('.spec-tester-item');
         projectMembers.removeSpecTester($item.data('userId'), $item.data('labelId'));
     });
     addSpecTester.init();

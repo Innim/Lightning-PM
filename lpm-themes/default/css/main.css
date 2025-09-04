@@ -262,6 +262,12 @@ div.container {
 	background-color: #ffffff;
 	margin   : 20px auto;
 }
+/* Use container width but avoid legacy border/padding on redesigned pages */
+#projectMembers.container {
+    padding: 0;
+    border: none;
+    background-color: transparent;
+}
 article.container > h3,
 div.container > h3 {
 	box-sizing: content-box;
@@ -1500,22 +1506,6 @@ blockquote > p {
 }
 .btnSelect {
 	float: left;
-}
-.headersProjectsMembers {
-	margin-top: 10px;
-	margin-bottom: 10px;
-}
-.project-members-selector .remove-link {
-	opacity: 0.3;
-	margin-left: 20px;
-	text-decoration: underline;
-	font-size: 0.9em;
-}
-.project-members-selector .remove-link:hover {
-	opacity: 1;
-	cursor: pointer;
-	color: #000000;
-	text-decoration: none;
 }
 
 /* Форма создания ветки */
