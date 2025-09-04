@@ -258,6 +258,14 @@ function lpm_print_issues_export_to_excel()
 }
 
 /**
+ * Печатает компонент быстрого перехода к задаче по номеру в проекте.
+ */
+function lpm_print_goto_issue($project)
+{
+    return PagePrinter::gotoIssue($project);
+}
+
+/**
  * Распечатывает вывод таблицы Scrum доски.
  * @param $stickers
  * @param bool $addProjectName

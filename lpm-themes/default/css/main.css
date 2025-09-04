@@ -78,7 +78,7 @@ nav#subMenu {
     padding-top     : 3px; 
 }
 nav#subMenu:empty {
-	display: none;
+    display: none;
 }
 header {
 	height        : 100px;
@@ -983,11 +983,6 @@ table.issues-list tr.active-issue.tester {
 /* просмотр задачи */
 #issueView > h1 {
 	float: left;
-}
-#issueView .header-operations-bar {
-	float: right;
-	margin-top: 35px;
-	font-size: 10px;
 }
 #issueView .info-list.completed-issue .issue-completed-date-row {
 	display: block;
