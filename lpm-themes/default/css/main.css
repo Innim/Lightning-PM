@@ -984,11 +984,6 @@ table.issues-list tr.active-issue.tester {
 #issueView > h1 {
 	float: left;
 }
-#issueView .header-operations-bar {
-	float: right;
-	margin-top: 35px;
-	font-size: 10px;
-}
 #issueView .info-list.completed-issue .issue-completed-date-row {
 	display: block;
 }

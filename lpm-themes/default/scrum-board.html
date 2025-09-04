@@ -9,8 +9,9 @@
 <div class="scrum-board-top-content">
     <div class="content">
         <div class="row">
-            <div class="col">
+            <div class="col d-flex justify-content-between align-items-center">
                 <h1><?php lpm_print_header();?></h1>
+                <?php lpm_print_goto_issue($project); ?>
             </div>
         </div>
         <div class="row">
@@ -26,18 +27,13 @@
                 <div class="ms-1">
                     <?php lpm_print_scrum_board_filter(); ?>
                 </div>
-
-                <div class="ms-1 align-self-start mt-2">
-                    <?php PageConstructor::includePattern('components/goto-issue', ['project' => $project]); ?>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
 <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
-    <h3 class="scrum-board-header clearfix">SCRUM доска.
-        <?php lpm_print_goto_issue($project); ?>
+    <h3 class="scrum-board-header">SCRUM доска.
         <span class="scrum-board-info">
         <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSprintNum();?></span>
         (<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp">, <span

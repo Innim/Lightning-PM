@@ -12,10 +12,10 @@
 ?>
 <article id="<?=isset($snapshot) ? 'scrumBoard' : 'scrumSnapshot'?>" data-project-id="<?=$project->id;?>"
     class="hide-sp">
-    <h1 class="clearfix">
-        <?lpm_print_header();?>
-        <?php lpm_print_goto_issue($project); ?>
-    </h1>
+	<div class="col d-flex justify-content-between align-items-center">
+		<h1><?php lpm_print_header();?></h1>
+		<?php lpm_print_goto_issue($project); ?>
+	</div>
     <?php if (!isset($snapshot)): ?>
     <?php lpm_print_scrum_board_snapshots_list($project, $snapshots); ?>
     <?php else: ?>        
