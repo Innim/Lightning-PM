@@ -21,6 +21,7 @@
             var projectId = parseInt(group.getAttribute('data-project-id'));
             var input = group.querySelector('.goto-issue-input');
             var btn = group.querySelector('.goto-issue-btn');
+            var collapse = group.closest('.collapse');
 
             function doNavigate() {
                 var id = normalizeId(input.value);
@@ -49,7 +50,6 @@
                     e.preventDefault();
                     e.stopPropagation();
                     // Hide any open collapse parent if exists
-                    var collapse = input.closest('.collapse');
                     if (collapse && typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
                         var c = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false });
                         c.hide();
@@ -57,6 +57,27 @@
                     input.blur();
                 }
             });
+
+            // Focus input when the collapse opens
+            if (collapse) {
+                collapse.addEventListener('shown.bs.collapse', function () {
+                    setTimeout(function(){
+                        input.focus();
+                        input.select();
+                    }, 0);
+                });
+
+                var cancel = collapse.querySelector('.goto-issue-cancel');
+                if (cancel) {
+                    cancel.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var c = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false });
+                        c.hide();
+                        input.value = '';
+                    });
+                }
+            }
         });
     }
 
