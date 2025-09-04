@@ -93,11 +93,13 @@ let issueForm = {
                             secondaryBtn: 'Принудительно перехватить',
                             secondaryBtnClass: 'btn-warning',
                             onSecondary: function () {
-                                if (confirm('Вы уверены, что хотите принудительно перехватить задачу? Это может привести к потере данных.')) {
-                                    issueForm.acquireLock(issueId, revision, true, onSuccess, onFail);
-                                } else {
-                                    if (onFail) onFail();
-                                }
+                                setTimeout(function() {
+                                    if (confirm('Вы уверены, что хотите принудительно перехватить задачу? Это может привести к потере данных.')) {
+                                        issueForm.acquireLock(issueId, revision, true, onSuccess, onFail);
+                                    } else {
+                                        if (onFail) onFail();
+                                    }
+                                }, 0);
                             },
                             onCancel: onFail,
                         });

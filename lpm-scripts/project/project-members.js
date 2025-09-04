@@ -42,68 +42,52 @@ const projectMembers = {
 };
 
 const specMembers = (serviceMethod, dialog, errors) => ({
-    element: null,
+    contentHtml: null,
     init: function () {
-        const $el = $(`#addSpecMember`).clone();
-        this.element = $el;
-        const self = this;
-
-        $('.select-spec-member-label', $el).text(dialog.label);
-        $el.dialog(
-            {
-                title: dialog.title,
-                autoOpen: false,
-                modal: true,
-                resizable: false,
-                buttons: [
-                    {
-                        text: "Добавить",
-                        click: function () {
-                            self.save();
-                        }
-                    },
-                    {
-                        text: "Отмена",
-                        click: function () {
-                            self.close();
-                        }
-                    }
-                ]
-            }
-        );
+        // cache template content for quicker show
+        this.contentHtml = $('#addSpecMember').html();
     },
     show: function () {
-        const $el = this.element;
-        $el.dialog('open');
-    },
-    close: function () {
-        const $el = this.element;
-        $('.select-tag-for-spec-member', $el).val(0);
-        $('.select-spec-member', $el).val(0);
-        $el.dialog('close');
-    },
-    save: function () {
-        const $el = this.element;
-        const self = this;
+        const dlgId = 'addSpecMember-' + Date.now();
+        const content = '<div id="' + dlgId + '">' + this.contentHtml + '</div>';
 
-        const labelId = $('.select-tag-for-spec-member', $el).val();
-        const userId = $('.select-spec-member', $el).val();
-        
-        if (labelId <= 0) {
-            messages.alert('Вы должны выбрать тег.')
-        } else if (userId <= 0) {
-            messages.alert('Вы должны выбрать пользователя.')
-        } else {
-            serviceMethod.call(srv.project, projectMembers.projectId, userId, labelId, res => {
-                if (res.success) {
-                    // TODO: добавить в список на лету
-                    location.reload();
-                    self.close();
-                } else {
-                    messages.alert(errors.addFailed)
+        // Show Bootstrap modal using shared helper
+        lpm.dialog.show({
+            title: dialog.title,
+            content: content,
+            primaryBtn: 'Добавить',
+            onPrimary: function () {
+                const $root = $('#' + dlgId);
+                console.log($root);
+                const labelId = $('.select-tag-for-spec-member', $root).val();
+                const userId = $('.select-spec-member', $root).val();
+
+                console.log(labelId, userId);
+                if (labelId <= 0) {
+                    messages.alert('Вы должны выбрать тег.');
+                    return;
                 }
-            });
-        }
+                if (userId <= 0) {
+                    messages.alert('Вы должны выбрать пользователя.');
+                    return;
+                }
+
+                serviceMethod.call(srv.project, projectMembers.projectId, userId, labelId, res => {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        messages.alert(errors.addFailed);
+                    }
+                });
+            },
+        });
+
+        // adjust label after content injected
+        const $root = $('#' + dlgId);
+        $('.select-spec-member-label', $root).text(dialog.label);
+        // ensure defaults
+        $('.select-tag-for-spec-member', $root).val(0);
+        $('.select-spec-member', $root).val(0);
     },
 });
 
