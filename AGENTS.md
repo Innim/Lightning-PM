@@ -80,3 +80,21 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - No stray debug statements or unused code.
 - Docs updated if behavior changed (or user requested).
 - Provided short verification steps or commands, if applicable.
+
+## Release Process
+- Verify version: set target in `lpm-core/version.inc.php` (`VERSION`).
+- Update changelog:
+  - Move items from `## Next` to `## {version} - {YYYY-MM-DD}` in `CHANGELOG.md`.
+  - Keep unrelated items under `## Next` for future.
+- DB changes:
+  - If `.dev/db/changes-log.sql` contains new statements since last release, replace the latest placeholder comment (e.g., `--NEXT`) with `-- {version}` directly above the new block.
+  - Do not edit `.dev/db/dump.sql`.
+- Commit on `develop`:
+  - `git add -A && git commit -m "release: {version}"`.
+- Merge to `master` and tag:
+  - `git checkout master && git merge --no-ff develop -m "merge: release {version}"`.
+  - `git tag -a version/{version} -m "Release {version}"`.
+- Push to all remotes:
+  - `git push --all --follow-tags` (or `git remote | xargs -I R git push R master --tags && git remote | xargs -I R git push R develop`).
+- Return to `develop`:
+  - `git checkout develop` and push if ahead.
