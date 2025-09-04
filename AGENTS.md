@@ -30,6 +30,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Match existing style and structure; follow patterns present in nearby files.
 - When changing behavior, update inline PHPDoc/comments and, if user asks, `CHANGELOG.md`.
 - In frontend JS within project pages, assume shared globals (`srv`, `showError`, `redirectTo`, `bootstrap`) are present; avoid redundant existence checks unless adding code outside the app context.
+ - For UI components, prefer adding a `PagePrinter` method that includes the template and expose it via an alias in `lpm-core/aliases.inc.php` (e.g., `lpm_print_goto_issue($project)`), then call the alias in templates instead of `includePattern()` directly.
 
 ## DB Changes
 - If a change requires schema updates:

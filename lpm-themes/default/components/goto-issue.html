@@ -3,20 +3,18 @@
  *  $project - current project
  */
 $pid = $project->getID();
-$collapseId = 'gotoIssueCollapse-' . $pid;
 ?>
-<div class="goto-issue-component d-inline-block float-end">
-    <a class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" href="#<?=$collapseId?>" role="button" aria-expanded="false" aria-controls="<?=$collapseId?>">
-        <i class="fa fa-location-arrow me-1" aria-hidden="true"></i>
-        Перейти к задаче
+<div class="goto-issue-component d-inline-block float-end align-middle">
+    <a class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" href="#gotoIssueCollapse" role="button" aria-expanded="false" aria-controls="gotoIssueCollapse" title="Перейти к задаче по номеру">
+        <i class="fa fa-search" aria-hidden="true"></i>
     </a>
-    <div class="collapse mt-1" id="<?=$collapseId?>">
-        <div class="input-group input-group-sm" data-project-id="<?=$pid?>">
+    <div class="collapse d-inline-block align-middle ms-1" id="gotoIssueCollapse">
+        <div class="input-group input-group-sm" data-project-id="<?=$pid?>" style="width: 150px;">
             <span class="input-group-text">#</span>
-            <input type="text" class="form-control goto-issue-input" placeholder="номер в проекте" aria-label="Номер задачи в проекте" />
-            <button class="btn btn-outline-secondary goto-issue-btn" type="button">Открыть</button>
+            <input type="text" class="form-control goto-issue-input" placeholder="id" aria-label="Номер задачи в проекте" />
+            <button class="btn btn-outline-secondary goto-issue-btn" type="button" title="Открыть">
+                <i class="fa fa-arrow-right" aria-hidden="true"></i>
+            </button>
         </div>
     </div>
-    
 </div>
-

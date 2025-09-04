@@ -8,7 +8,7 @@
 ?><article>
     <h1 class="clearfix">
         <?php lpm_print_header();?>
-        <?php $project = lpm_get_project(); PageConstructor::includePattern('components/goto-issue', ['project' => $project]); ?>
+        <?php $project = lpm_get_project(); lpm_print_goto_issue($project); ?>
     </h1>
 	<article id="projectView" data-project-id="<?=$project->getID();?>">
         <h3>Список задач

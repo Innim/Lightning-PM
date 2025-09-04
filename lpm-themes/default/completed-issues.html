@@ -8,7 +8,7 @@
     <article id="projectView" data-project-id="<?=$project->getID();?>">
         <h3 class="clearfix">
             Завершенные задачи
-            <?php PageConstructor::includePattern('components/goto-issue', ['project' => $project]); ?>
+            <?php lpm_print_goto_issue($project); ?>
         </h3>
 		<p class="project-stat">
 			<span class="label">Завершено:</span>

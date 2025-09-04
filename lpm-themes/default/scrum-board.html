@@ -36,7 +36,8 @@
 </div>
 
 <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
-    <h3 class="scrum-board-header">SCRUM доска.
+    <h3 class="scrum-board-header clearfix">SCRUM доска.
+        <?php lpm_print_goto_issue($project); ?>
         <span class="scrum-board-info">
         <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSprintNum();?></span>
         (<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp">, <span

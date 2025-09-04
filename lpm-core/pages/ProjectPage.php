@@ -61,7 +61,7 @@ class ProjectPage extends LPMPage
             self::PUID_COMMENTS,
             'Комментарии',
             'project-comments',
-            $this->getCommentJs()
+            array_merge(['goto-issue'], $this->getCommentJs())
         );
         $this->addSubPage(
             self::PUID_MEMBERS,
@@ -101,7 +101,7 @@ class ProjectPage extends LPMPage
                 self::PUID_SCRUM_BOARD_SNAPSHOT,
                 'Scrum архив',
                 'scrum-board-snapshot',
-                $this->getIssueJs()
+                array_merge(['goto-issue'], $this->getIssueJs())
             );
             $this->addSubPage(
                 self::PUID_SPRINT_STAT,

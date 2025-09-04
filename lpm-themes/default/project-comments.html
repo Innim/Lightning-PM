@@ -8,8 +8,9 @@
 */
 ?>
 <article id="projectComments" data-project-id="<?=$project->id;?>" class="comments">
-	<h1>
+	<h1 class="clearfix">
 		<?lpm_print_header();?>
+		<?php lpm_print_goto_issue($project); ?>
 	</h1>
 	<h3>Последние комментарии</h3>
 
