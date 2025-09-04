@@ -9,8 +9,10 @@ $pid = $project->getID();
         <i class="fa-regular fa-compass" aria-hidden="true"></i>
     </a>
     <div class="collapse collapse-horizontal" id="gotoIssueCollapse">
-        <a href="javascript:void(0)" class="goto-issue-cancel link-secondary small me-2" title="Отмена">Отмена</a>
         <div class="input-group input-group-sm" data-project-id="<?=$pid?>" style="width: 180px;">
+            <button class="btn btn-outline-secondary btn-sm px-1 goto-issue-cancel" type="button" title="Отмена">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </button>
             <span class="input-group-text">#</span>
             <input type="text" class="form-control goto-issue-input" placeholder="номер задачи" aria-label="Номер задачи в проекте" />
             <button class="btn btn-outline-secondary goto-issue-btn" type="button" title="Открыть">
