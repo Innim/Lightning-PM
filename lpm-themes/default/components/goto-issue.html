@@ -1,0 +1,22 @@
+<?php
+/* Requires:
+ *  $project - current project
+ */
+$pid = $project->getID();
+$collapseId = 'gotoIssueCollapse-' . $pid;
+?>
+<div class="goto-issue-component d-inline-block float-end">
+    <a class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" href="#<?=$collapseId?>" role="button" aria-expanded="false" aria-controls="<?=$collapseId?>">
+        <i class="fa fa-location-arrow me-1" aria-hidden="true"></i>
+        Перейти к задаче
+    </a>
+    <div class="collapse mt-1" id="<?=$collapseId?>">
+        <div class="input-group input-group-sm" data-project-id="<?=$pid?>">
+            <span class="input-group-text">#</span>
+            <input type="text" class="form-control goto-issue-input" placeholder="номер в проекте" aria-label="Номер задачи в проекте" />
+            <button class="btn btn-outline-secondary goto-issue-btn" type="button">Открыть</button>
+        </div>
+    </div>
+    
+</div>
+

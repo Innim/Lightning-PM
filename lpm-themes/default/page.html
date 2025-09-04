@@ -43,20 +43,11 @@
 		<a href="<?=$link->href;?>"><?=$link->label;?></a>
 		<? }?>
 	</nav>
-	<nav id="subMenu">
-		<?php foreach (lpm_get_sub_menu() as $link):?>
-		<a href="<?=$link->href;?>"><?=$link->label;?></a>
-		<?php endforeach;?>
-		<div id="gotoIssue" class="goto-issue collapsed" title="Перейти к задаче по номеру в проекте" style="display:none;">
-			<a href="javascript:void(0)" class="goto-issue-toggle" aria-label="Показать переход к задаче" title="Переход к задаче">
-				<i class="fa fa-hashtag" aria-hidden="true"></i>
-			</a>
-			<span class="goto-issue-form">
-				<input type="text" inputmode="numeric" pattern="[0-9]*" class="goto-issue-input" placeholder="#" aria-label="Номер задачи в проекте" />
-				<button type="button" class="goto-issue-btn" aria-label="Перейти">→</button>
-			</span>
-		</div>
-	</nav>
+    <nav id="subMenu">
+        <?php foreach (lpm_get_sub_menu() as $link):?>
+        <a href="<?=$link->href;?>"><?=$link->label;?></a>
+        <?php endforeach;?>
+    </nav>
 	<div id="content">
 		<?php lpm_print_page_content(); ?>
 	</div>

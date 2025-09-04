@@ -147,8 +147,7 @@ class PageConstructor
         'libs/lodash.min',
         'libs/vue@2',
         'libs/vue-multiselect.min',
-        'lightning',
-        'goto-issue'
+        'lightning'
     ];
 
     private static $_usingJSModules = [

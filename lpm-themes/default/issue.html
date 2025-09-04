@@ -16,8 +16,9 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
 ?>
 <article id="issueView" class="<?=implode(' ', $classes);?>">
     <h1><a href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a></h1>
-    <div class="header-operations-bar">
+    <div class="header-operations-bar clearfix">
         <a href="<?=$issue->getProjectUrl('add-issue');?>">Новая задача</a>
+        <?php PageConstructor::includePattern('components/goto-issue', ['project' => $project]); ?>
     </div>
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
     <article id="issueInfo" class="issue-info container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"

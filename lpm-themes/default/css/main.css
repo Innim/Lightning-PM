@@ -80,30 +80,6 @@ nav#subMenu {
 nav#subMenu:empty {
     display: none;
 }
-/* Go to issue widget */
-.goto-issue {
-    float: right;
-    margin: 2px 10px 3px 10px;
-    font-size: 10pt;
-}
-.goto-issue .goto-issue-toggle {
-    display: inline-block;
-    text-decoration: none;
-    color: inherit;
-    margin-right: 4px;
-}
-.goto-issue .goto-issue-form { display: inline-block; }
-.goto-issue.collapsed .goto-issue-form { display: none; }
-.goto-issue .goto-issue-input {
-    width: 70px;
-    font-size: 10pt;
-    padding: 1px 4px;
-    margin-right: 4px;
-}
-.goto-issue .goto-issue-btn {
-    font-size: 10pt;
-    padding: 1px 6px;
-}
 header {
 	height        : 100px;
 	background    : -moz-linear-gradient(top,#ffffff,#eeeeee);

@@ -5,8 +5,11 @@
 */
 ?><article id="completedIssuess">
 	<?php $project = lpm_get_project();?>
-	<article id="projectView" data-project-id="<?=$project->getID();?>">
-		<h3>Завершенные задачи</h3>
+    <article id="projectView" data-project-id="<?=$project->getID();?>">
+        <h3 class="clearfix">
+            Завершенные задачи
+            <?php PageConstructor::includePattern('components/goto-issue', ['project' => $project]); ?>
+        </h3>
 		<p class="project-stat">
 			<span class="label">Завершено:</span>
 			<span class="issues-completed value"></span>

@@ -26,6 +26,10 @@
                 <div class="ms-1">
                     <?php lpm_print_scrum_board_filter(); ?>
                 </div>
+
+                <div class="ms-1 align-self-start mt-2">
+                    <?php PageConstructor::includePattern('components/goto-issue', ['project' => $project]); ?>
+                </div>
             </div>
         </div>
     </div>

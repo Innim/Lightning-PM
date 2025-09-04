@@ -49,13 +49,13 @@ class ProjectPage extends LPMPage
             self::PUID_ISSUES,
             'Список задач',
             '',
-            array_merge(['project-issues'], $this->getIssuesListJs(), $this->getIssueJs())
+            array_merge(['project-issues', 'goto-issue'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMPLETED_ISSUES,
             'Завершенные',
             '',
-            array_merge(['project-completed'], $this->getIssuesListJs(), $this->getIssueJs())
+            array_merge(['project-completed', 'goto-issue'], $this->getIssuesListJs(), $this->getIssueJs())
         );
         $this->addSubPage(
             self::PUID_COMMENTS,
@@ -95,7 +95,7 @@ class ProjectPage extends LPMPage
                 self::PUID_SCRUM_BOARD,
                 'Scrum доска',
                 'scrum-board',
-                array_merge(['scrum-board', 'filters/scrum-board-filter'], $this->getIssueJs())
+                array_merge(['scrum-board', 'filters/scrum-board-filter', 'goto-issue'], $this->getIssueJs())
             );
             $this->addSubPage(
                 self::PUID_SCRUM_BOARD_SNAPSHOT,
@@ -239,7 +239,7 @@ class ProjectPage extends LPMPage
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
         $this->_js = array_merge(
-            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/select-project'],
+            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/select-project', 'goto-issue'],
             $this->getIssueJs(),
             $this->getCommentJs()
         );

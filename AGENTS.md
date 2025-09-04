@@ -29,6 +29,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Keep PHP 7.3 compatibility; avoid newer language features.
 - Match existing style and structure; follow patterns present in nearby files.
 - When changing behavior, update inline PHPDoc/comments and, if user asks, `CHANGELOG.md`.
+- In frontend JS within project pages, assume shared globals (`srv`, `showError`, `redirectTo`, `bootstrap`) are present; avoid redundant existence checks unless adding code outside the app context.
 
 ## DB Changes
 - If a change requires schema updates:
@@ -78,4 +79,3 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - No stray debug statements or unused code.
 - Docs updated if behavior changed (or user requested).
 - Provided short verification steps or commands, if applicable.
-
