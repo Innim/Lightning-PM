@@ -47,14 +47,23 @@ $project = lpm_get_project();
 			</div>
 			<?php lpm_print_issue_list_filters(); ?>
 		</div>
+
 		<div class="operations-line">
-			<a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
-			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
+			<a href="#" class="btn btn-outline-danger my-1" onclick="issuePage.showAddForm(1); return false;">
+				<i class="fas fa-bug"></i> Добавить ошибку
+			</a>
+			<a href="#" class="btn btn-outline-primary ms-2 my-1" onclick="issuePage.showAddForm(); return false;">
+				<i class="fas fa-tasks"></i> Добавить задачу
+			</a>
 		</div>
 		<?php lpm_print_issues($issues); ?>
-		<div class="operations-line">
-			<a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
-			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
+		<div class="operations-line mt-2">
+			<a href="#" class="btn btn-outline-danger my-1" onclick="issuePage.showAddForm(1); return false;">
+				<i class="fas fa-bug"></i> Добавить ошибку
+			</a>
+			<a href="#" class="btn btn-outline-primary ms-2 my-1" onclick="issuePage.showAddForm(); return false;">
+				<i class="fas fa-tasks"></i> Добавить задачу
+			</a>
 		</div>
 	</div>
 	<?php lpm_print_issue_form($project, null, isset($input) ? $input : null, true); ?>
