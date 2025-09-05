@@ -484,7 +484,8 @@ lpm.dialog = {
             $primaryBtn.text(opts.primaryBtn);
             $primaryBtn.on('click', function () {
                 if (opts.onPrimary) {
-                    onHidden = opts.onPrimary;
+                    onHidden = null;
+                    opts.onPrimary();
                 }
                 modal.hide();
             });
@@ -498,7 +499,8 @@ lpm.dialog = {
             $secondaryBtn.text(opts.secondaryBtn);
             if (opts.onSecondary) {
                 $secondaryBtn.off('click').on('click', function () {
-                    onHidden = opts.onSecondary;
+                    onHidden = null;
+                    opts.onSecondary();
                     modal.hide();
                 });
             }
