@@ -10,9 +10,6 @@ body {
 a {
 	color      : #000000;
 }
-h1 {
-	margin: 24px 0;
-}
 h3 {
 	margin: 0px;
 }
@@ -224,10 +221,6 @@ p.header-back-link a.back-link {
 	float       : right;
 	margin-right: 10px;
 }
-#content {
-	width : 90%;
-	margin: 0px auto;
-}
 #noway {
 	display: none;
 	text-align: center;	
@@ -253,8 +246,23 @@ p.header-back-link a.back-link {
 #noway a.browser.opera {
     background-image: url("../imgs/op.jpg");
 }
-article.container,
-div.container {	
+
+/* .container-main {
+
+} */
+@media (min-width:1400px) {
+  .container-main {
+    max-width:960px;
+  }
+}
+@media (min-width:1200px) {
+  .container-main  {
+    max-width:960px;
+  }
+}
+
+article.container-legacy,
+div.container-legacy {	
 	width    : 90%;
 	max-width: 900px;
 	padding  : 10px;
@@ -262,14 +270,9 @@ div.container {
 	background-color: #ffffff;
 	margin   : 20px auto;
 }
-/* Use container width but avoid legacy border/padding on redesigned pages */
-#projectMembers.container {
-    padding: 0;
-    border: none;
-    background-color: transparent;
-}
-article.container > h3,
-div.container > h3 {
+
+article.container-legacy > h3,
+div.container-legacy > h3 {
 	box-sizing: content-box;
 	background-color: #ffffff;
 	width           : 100%;
@@ -575,16 +578,6 @@ ul.images-url > li {
 	font-size: small; 
 }
 /* комментарии */
-.comments {
-	width    : 90%;
-    max-width: 900px;
-    padding  : 10px;
-    margin   : 20px auto;
-}
-#projectComments.comments {
-	width    : 100%;
-	max-width: none;
-}
 .comments .links-bar {
 	height: 20px;
 	margin: 0 0 5px;
@@ -727,7 +720,7 @@ a.create-branch-icon .plus-icon {
 }
 
 /* подменюшка панели */
-.container ul.panel-submenu {
+.container-legacy ul.panel-submenu {
 	list-style: none;
     padding: 0px;
     margin: -15px 0px 10px;
@@ -1014,7 +1007,7 @@ table.issues-list tr.active-issue.tester {
 #issueView .buttons-bar.verify-issue button.verify-btn {
     display: none;
 }
-#issueView .container {
+#issueView .container-legacy {
 	box-sizing: content-box;
 	clear: both;
 	position: relative;
@@ -1604,10 +1597,6 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
  .select-project-popup.copy-mode .copy-linked-issues-row {
 	display: block;
-}
-
-.scrum-board-top-content {
-	margin-top: 15px;
 }
 
 /**

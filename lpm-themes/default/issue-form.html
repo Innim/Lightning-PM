@@ -10,7 +10,7 @@
 $descMaxLen = Issue::DESC_MAX_LEN;
 $isHidden = !empty($isHidden)
 ?>
-<article id="issueForm" class="container" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
+<article id="issueForm" class="container-legacy" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>">
     <h3></h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <form onsubmit="return issueForm.validateIssueForm();" class="row g-3" method="post" enctype="multipart/form-data">

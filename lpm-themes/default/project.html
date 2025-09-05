@@ -7,12 +7,12 @@
 */
 
 $project = lpm_get_project(); 
-?><article>
+?><div class="mx-auto container-fluid px-4 py-4">
 	<div class="col d-flex justify-content-between align-items-center">
 		<h1><?php lpm_print_header();?></h1>
 		<?php lpm_print_goto_issue($project); ?>
 	</div>
-	<article id="projectView" data-project-id="<?=$project->getID();?>">
+	<div id="projectView" data-project-id="<?=$project->getID();?>">
         <h3>Список задач
             <span class="issues-operations">
                 <a href="#" onclick="return issuePage.showExportXls(event);" title="Экспорт в Excel"><i
@@ -56,7 +56,7 @@ $project = lpm_get_project();
 			<a href="#" onclick="issuePage.showAddForm(1); return false;">Добавить ошибку</a>
 			<a href="#" onclick="issuePage.showAddForm(); return false;">Добавить задачу</a>
 		</div>
-	</article>
+	</div>
 	<?php lpm_print_issue_form($project, null, isset($input) ? $input : null, true); ?>
 	<?php lpm_print_issues_export_to_excel(); ?>
-</article>
+</div>

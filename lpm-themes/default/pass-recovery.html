@@ -2,7 +2,7 @@
 $remail = isset($_POST['remail']) ? $_POST['remail'] : '';
 ?>
 
-<article id="recPassForm" class="container">
+<article id="recPassForm" class="container-legacy">
     <h3>Восстановление пароля</h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <?php switch(lpm_get_current_page()->getShow()) {

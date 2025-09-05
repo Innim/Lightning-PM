@@ -24,10 +24,8 @@ foreach ($labels as $label) {
     $labelNameById[(int)$label['id']] = $label['label'];
 }
 ?>
-<article id="projectMembers" class="container">
-    <h1>
-        <?php lpm_print_header(); ?>
-    </h1>
+<div id="projectMembers" class="mx-auto container container-main px-4 py-4">
+    <h1><?php lpm_print_header(); ?></h1>
     <input type="hidden" name="projectId" value="<?=$project->getID();?>" />
     <div class="card my-3">
         <div class="card-header">Участники проекта</div>
@@ -259,7 +257,7 @@ foreach ($labels as $label) {
         </div>
     <?php lpm_print_users_chooser();?>
     </div>
-</article>
+</div>
 
 <article id="addSpecMember" title="Добавить участника по тегу" style="display: none;">
     <div class="row mb-3 add-spec-project-row">
