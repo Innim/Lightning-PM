@@ -14,7 +14,7 @@ $project = $issue->getProject();
 $classes = [];
 if ($issue->isTesting()) $classes[] = 'issue-testing';
 ?>
-<article id="issueView" class="<?=implode(' ', $classes);?>">
+<article id="issueView" class="mx-auto container container-main px-4 py-4 <?=implode(' ', $classes);?>">
 	<div class="col d-flex justify-content-between align-items-center">
 		<h1><a href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a></h1>
         <div class="header-operations-bar row gx-2">
@@ -30,7 +30,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
 	</div>
 
     <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-    <article id="issueInfo" class="issue-info container block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
+    <article id="issueInfo" class="issue-info container-legacy block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
         data-labels="<?=implode(',', $issue->getLabelNames());?>" data-issue-id="<?=$issue->id;?>">
         <h3>
