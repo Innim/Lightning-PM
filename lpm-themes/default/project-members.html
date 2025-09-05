@@ -24,48 +24,94 @@ foreach ($labels as $label) {
     $labelNameById[(int)$label['id']] = $label['label'];
 }
 ?>
-<article id="projectMembers">
+<article id="projectMembers" class="container">
     <h1>
         <?php lpm_print_header(); ?>
     </h1>
-    <div class="alert alert-success info-message" role="alert">Сохранено</div>
-    <h3>Участники проекта</h3>
     <input type="hidden" name="projectId" value="<?=$project->getID();?>" />
-    <ul class="users-list">
+    <div class="card my-3">
+        <div class="card-header">Участники проекта</div>
+        <div class="card-body">
+            <div class="alert alert-success info-message" role="alert" style="display: none;">Сохранено</div>
+            <ul class="list-group mb-3">
         <?php foreach ($projectMembers as $member): ?>
-        <li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
             <span class="user-name"><?=$member->getLinkedName();?></span>
             <input id="userIdId" type="hidden" name="userId" value="<?=$member->getID();?>">
         </li>
         <?php endforeach; ?>
-    </ul>
+            </ul>
 
-    <?php if ($canEdit): ?>
-    <button
-        class="btn btn-primary"
-        onclick="openMembersChooser();">
-        Добавить
-    </button>
-    <?php endif; ?>
+            <?php if ($canEdit): ?>
+            <button
+                class="btn btn-primary"
+                onclick="openMembersChooser();">
+                Добавить
+            </button>
+            <?php endif; ?>
+        </div>
+    </div>
 
-    <!-- Выбор мастера проекта // Начало -->
-    <h3 class="headersProjectsMembers">Мастер проекта</h3>
-    <div id="projectMaster" class="project-members-selector">
-        <h4>По умолчанию</h4>
+    
+    <div class="card my-3">
+        <div class="card-header">PM проекта</div>
+        <div class="card-body">
+            <div id="projectPM" class="project-members-selector">
         <?php
-        $master = $project->getMaster();
-        if (!empty($master)): 
+        $pm = $project->getPM();
+        if (!empty($pm)):
         ?>
-        <ul>
-            <li id="projectMaster" value="<?=$master->getName();?>">
-                <?=$master->getName();?>
+        <ul class="list-group mb-0">
+            <li class="list-group-item d-flex justify-content-between align-items-center" value="<?=$pm->getName();?>">
+                <?=$pm->getName();?>
                 <?php if ($canEdit): ?>
-                <a href="javascript:;" id="removeMaster" class="remove-link">Удалить</a>
+                <a href="javascript:;" id="removePM" class="remove-link link-secondary small">Удалить</a>
                 <?php endif; ?>
             </li>
         </ul>
         <?php elseif ($canEdit): ?>
-        <form id="chooseMaster" class="row row-cols-lg-auto g-3 align-items-center">
+        <form id="choosePM" class="row row-cols-lg-auto g-3 align-items-center mb-0">
+            <div class="col-12">
+                <label class="visually-hidden" for="inlineFormSelectPref">PM</label>
+                <select class="form-select" id="selectPM">
+                    <option value="0">PM не выбран</option>
+                    <?php foreach ($projectMembers as $member): ?>
+                    <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="col-12">
+                <button id="savePM" type="button" class="btn btn-primary">Подтвердить</button>
+            </div>
+        </form>
+        <?php else: ?>
+        <p>Не выбран</p>
+        <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="card my-3">
+        <div class="card-header">Мастер проекта</div>
+        <div class="card-body">
+            <div id="projectMaster" class="project-members-selector">
+        <h6 class="text-body-secondary">По умолчанию</h6>
+        <?php
+        $master = $project->getMaster();
+        if (!empty($master)): 
+        ?>
+        <ul class="list-group mb-0">
+            <li class="list-group-item d-flex justify-content-between align-items-center" id="projectMaster" value="<?=$master->getName();?>">
+                <?=$master->getName();?>
+                <?php if ($canEdit): ?>
+                <a href="javascript:;" id="removeMaster" class="remove-link link-secondary small">Удалить</a>
+                <?php endif; ?>
+            </li>
+        </ul>
+        <?php elseif ($canEdit): ?>
+        <form id="chooseMaster" class="row row-cols-lg-auto g-3 align-items-center mb-3">
             <div class="col-12">
                 <label class="visually-hidden" for="inlineFormSelectPref">Мастер</label>
                 <select class="form-select" id="selectMaster">
@@ -85,21 +131,21 @@ foreach ($labels as $label) {
         <?php endif; ?>
 
         <form id="specMasters" action="">
-            <h4>Мастера по тегам</h4>
-            <ul class="spec-master-list">
+            <h6 class="text-body-secondary mt-3">Мастера по тегам</h6>
+            <table class="table spec-master-list tags-users-list list-unstyled mb-3">
                 <?php 
                 foreach ($project->getSpecMasters() as $master): 
                     $labelName = empty($labelNameById[$master->extraId]) ? 'n/a' : $labelNameById[$master->extraId];
                 ?>
-                <li class="spec-master-item" data-user-id="<?=$master->getID();?>" data-label-id="<?=$master->extraId;?>">
-                    <span class="spec-master-label">[<?=$labelName;?>]</span>
-                    <span class="spec-master-name"><?=$master->getName();?></span>
+                <tr class="spec-master-item" data-user-id="<?=$master->getID();?>" data-label-id="<?=$master->extraId;?>">
+                    <td class="tag w-auto"><span class="badge bg-light text-secondary"><?=$labelName;?></span></td>
+                    <td class="name w-100"><?=$master->getName();?></td>
                     <?php if ($canEdit): ?>
-                    <a href="javascript:;" class="remove-link">Удалить</a>
+                    <td class="w-auto"><a href="javascript:;" class="actions remove-link link-secondary small mx-1 px-1">Удалить</a></td>
                     <?php endif; ?>
-                </li>
+                </tr>
             <?php endforeach; ?>
-            </ul>
+            </table>
 
             <?php if ($canEdit): ?>
             <button
@@ -110,145 +156,109 @@ foreach ($labels as $label) {
             </button>
             <?php endif; ?>
         </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card my-3">
+        <div class="card-header">Исполнитель задач по умолчанию</div>
+        <div class="card-body">
+            <div class="project-members-selector">
+                <?php if (!empty($defaultIssueMember)): ?>
+                <ul class="list-group mb-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" id="liNamePerformer" value="1"><?=$defaultIssueMember->getLinkedName(); ?>
+                        <?php if ($canEdit): ?>
+                        <a href="javascript:;" id="removeDefaultMember" class="remove-link link-secondary small">Удалить</a>
+                        <?php endif; ?>
+                    </li>
+                </ul>
+                <?php elseif ($canEdit): ?>
+                <form id="divPerformer" class="row row-cols-lg-auto g-3 align-items-center mb-0" onsubmit="return false;">
+                    <div class="col-12">
+                        <label class="visually-hidden" for="inlineFormSelectPref">Исполнитель</label>
+                        <select class="form-select" id="selectMember">
+                            <option value="0">Исполнитель не выбран</option>
+                            <?php foreach ($projectMembers as $member): ?>
+                            <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12">
+                        <button id="btnSelectMember" type="button" class="btn btn-primary">Подтвердить</button>
+                    </div>
+                </form>
+                <?php else: ?>
+                <p>Не выбран</p>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
-    <!-- Выбор мастера проекта // Конец -->
-     
-    <!-- Выбор PM проекта // Начало -->
-    <h3 class="headersProjectsMembers">PM проекта</h3>
-    <div id="projectPM" class="project-members-selector">
-        <!-- <h4>По умолчанию</h4> -->
-        <?php
-        $pm = $project->getPM();
-        if (!empty($pm)): 
-        ?>
-        <ul>
-            <li value="<?=$pm->getName();?>">
-                <?=$pm->getName();?>
-                <?php if ($canEdit): ?>
-                <a href="javascript:;" id="removePM" class="remove-link">Удалить</a>
-                <?php endif; ?>
-            </li>
-        </ul>
-        <?php elseif ($canEdit): ?>
-        <form id="choosePM" class="row row-cols-lg-auto g-3 align-items-center">
-            <div class="col-12">
-                <label class="visually-hidden" for="inlineFormSelectPref">PM</label>
-                <select class="form-select" id="selectPM">
-                    <option value="0">PM не выбран</option>
-                    <?php foreach ($projectMembers as $member): ?>
-                    <option class="user-name" value="<?=$member->getID();?>"><?=$member->getLinkedName();?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+    
+    <div class="card my-3">
+        <div class="card-header">Тестировщик проекта</div>
+        <div class="card-body">
+            <div id="select-tester-option" class="project-members-selector">
+                <h6 class="text-body-secondary">По умолчанию</h6>
+                <?php if(!empty($projectTester)): ?>
+                <ul class="list-group mb-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" id="NameTester" value="<?=$projectTester->getName();?>">
+                        <?=$projectTester->getName();?>
+                        <?php if ($canEdit): ?>
+                        <a href="javascript:;" id="removeTester" class="remove-link link-secondary small">Удалить</a>
+                        <?php endif; ?>
+                    </li>
+                </ul>
+                <?php elseif ($canEdit): ?>
+                <form id="formOption" class="row row-cols-lg-auto g-3 align-items-center mb-3" onsubmit="return false;">
+                    <div class="col-12">
+                        <label class="visually-hidden" for="inlineFormSelectPref">Тестировщик</label>
+                        <select class="form-select" id="selectTester">
+                            <option value="0">Тестер не выбран</option>
+                            <?php foreach ($projectMembers as $member): ?>
+                            <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
             
-            <div class="col-12">
-                <button id="savePM" type="button" class="btn btn-primary">Подтвердить</button>
-            </div>
-        </form>
-        <?php else: ?>
-        <p>Не выбран</p>
-        <?php endif; ?>
-    </div>
-
-    <!-- Выбор PM проекта // Конец -->
-
-    <!-- Добавить исполнителя по умолчанию -->
-    <h3 class="headersProjectsMembers">Исполнитель задач по умолчанию</h3>
-    <div class="project-members-selector">
-        <?php if (!empty($defaultIssueMember)): ?>
-        <ul>
-            <li id="liNamePerformer" value="1"><?=$defaultIssueMember->getLinkedName(); ?>
-                <?php if ($canEdit): ?>
-                <a href="javascript:;" id="removeDefaultMember" class="remove-link">Удалить</a>
+                    <div class="col-12">
+                        <button id="btnSelect" type="button" class="btn btn-primary">Подтвердить</button>
+                    </div>
+                </form>
+                <?php else: ?>
+                <p>Не выбран</p>
                 <?php endif; ?>
-            </li>
-        </ul>
-        <?php elseif ($canEdit): ?>
-        <form id="divPerformer" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return false;">
-            <div class="col-12">
-                <label class="visually-hidden" for="inlineFormSelectPref">Исполнитель</label>
-                <select class="form-select" id="selectMember">
-                    <option value="0">Исполнитель не выбран</option>
-                    <?php foreach ($projectMembers as $member): ?>
-                    <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div class="col-12">
-                <button id="btnSelectMember" type="button" class="btn btn-primary">Подтвердить</button>
-            </div>
-        </form>
-        <?php else: ?>
-        <p>Не выбран</p>
-        <?php endif; ?>
-    </div>
+                <h6 class="text-body-secondary mt-3">Тестировщики по тегам</h6>
+                <form id="specTesters" action="">
+                    <table class="table spec-tester-list tags-users-list list-unstyled mb-3">
+                        <?php 
+                        foreach ($project->getSpecTesters() as $tester): 
+                            $labelName = empty($labelNameById[$tester->extraId]) ? 'n/a' : $labelNameById[$tester->extraId];
+                        ?>
+                        <tr class="spec-tester-item" data-user-id="<?=$tester->getID();?>" data-label-id="<?=$tester->extraId;?>">
+                            <td class="tag w-auto"><span class="badge bg-light text-secondary"><?=$labelName;?></span></td>
+                            <td class="name w-100"><?=$tester->getName();?></td>
+                            <?php if ($canEdit): ?>
+                            <td class="w-auto"> <a href="javascript:;" class="actions remove-link link-secondary small mx-1 px-1">Удалить</a></td>
+                            <?php endif; ?>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
 
-    <!-- Конец выбора исполнителей по умолчанию -->
-
-    <!-- Выбор Тестировщика проекта  -->
-    <h3 class="headersProjectsMembers">Тестировщик</h3>
-    <div id="select-tester-option" class="project-members-selector">
-        <?php if(!empty($projectTester)): ?>
-        <ul>
-            <li id="NameTester" value="<?=$projectTester->getName();?>">
-                <?=$projectTester->getName();?>
-                <?php if ($canEdit): ?>
-                <a href="javascript:;" id="removeTester" class="remove-link">Удалить</a>
-                <?php endif; ?>
-            </li>
-        </ul>
-        <?php elseif ($canEdit): ?>
-        <form id="formOption" class="row row-cols-lg-auto g-3 align-items-center" onsubmit="return false;">
-            <div class="col-12">
-                <label class="visually-hidden" for="inlineFormSelectPref">Тестировщик</label>
-                <select class="form-select" id="selectTester">
-                    <option value="0">Тестер не выбран</option>
-                    <?php foreach ($projectMembers as $member): ?>
-                    <option class="user-name" value=" <?=$member->getID();?> "><?=$member->getLinkedName();?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div class="col-12">
-                <button id="btnSelect" type="button" class="btn btn-primary">Подтвердить</button>
-            </div>
-        </form>
-        <?php else: ?>
-        <p>Не выбран</p>
-        <?php endif; ?>
-
-        <form id="specTesters" action="">
-            <h4>Тестировщики по тегам</h4>
-            <ul class="spec-tester-list">
-                <?php 
-                foreach ($project->getSpecTesters() as $tester): 
-                    $labelName = empty($labelNameById[$tester->extraId]) ? 'n/a' : $labelNameById[$tester->extraId];
-                ?>
-                <li class="spec-tester-item" data-user-id="<?=$tester->getID();?>" data-label-id="<?=$tester->extraId;?>">
-                    <span class="spec-tester-label">[<?=$labelName;?>]</span>
-                    <span class="spec-tester-name"><?=$tester->getName();?></span>
                     <?php if ($canEdit): ?>
-                    <a href="javascript:;" class="remove-link">Удалить</a>
+                    <button
+                        type="button"
+                        onclick="addSpecTester.show();"
+                        class="btn btn-primary">
+                        Добавить
+                    </button>
                     <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-            </ul>
-
-            <?php if ($canEdit): ?>
-            <button
-                type="button"
-                onclick="addSpecTester.show();"
-                class="btn btn-primary">
-                Добавить
-            </button>
-            <?php endif; ?>
-        </form>
-
-    </div>
+                </form>
+            </div>
+        </div>
     <?php lpm_print_users_chooser();?>
-
+    </div>
 </article>
 
 <article id="addSpecMember" title="Добавить участника по тегу" style="display: none;">
