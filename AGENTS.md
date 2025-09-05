@@ -80,6 +80,10 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - No stray debug statements or unused code.
 - Docs updated if behavior changed (or user requested).
 - Provided short verification steps or commands, if applicable.
+- If a release was performed:
+  - Current branch is `develop`.
+  - Tag `version/{version}` exists locally and is pushed.
+  - `CHANGELOG.md` contains the dated section for `{version}`.
 
 ## Release Process
 - Verify version: set target in `lpm-core/version.inc.php` (`VERSION`).
@@ -94,7 +98,13 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Merge to `master` and tag:
   - `git checkout master && git merge --no-ff develop -m "merge: release {version}"`.
   - `git tag -a version/{version} -m "Release {version}"`.
-- Push to all remotes:
-  - `git push --all --follow-tags` (or `git remote | xargs -I R git push R master --tags && git remote | xargs -I R git push R develop`).
+- Push:
+  - `git push origin master develop --follow-tags`
+  - Multiple remotes:
+    - `git remote | xargs -I R git push R master --follow-tags`
+    - `git remote | xargs -I R git push R develop`
 - Return to `develop`:
   - `git checkout develop` and push if ahead.
+  - Verify branch: `git rev-parse --abbrev-ref HEAD` → `develop`.
+  - Verify clean tree: `git status -sb` shows no changes.
+  - Verify tag exists: `git tag -l 'version/{version}'` (optional remote check: `git ls-remote --tags origin 'version/{version}'`).
