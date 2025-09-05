@@ -732,6 +732,10 @@ ul.panel-submenu li {
     text-align: center;
 }
 
+.container-legacy.issue-info {
+	width: 100%;
+}
+
 /* панелька с информацией */
 .info-list, .issue-info .linked-issues {
 	padding-left: 40px;
