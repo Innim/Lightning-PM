@@ -4,11 +4,11 @@
 	$list - список проектов
 */
 ?>
-<article id="projectsList">
+<div id="projectsList" class="mx-auto container-fluid px-4 py-4">
 	<h1>
 		<?php lpm_print_header();?>
 	</h1>
-	<ul class="projects-list">
+	<div class="projects-list">
 		<?php if (empty($list)): ?>
 		<p class="no-items">Архив пуст</p>
 		<?php 
@@ -16,5 +16,5 @@
 			lpm_print_projects_list($list, true);
 		endif;
 		?>
-	</ul>
-</article>
+	</div>
+</div>

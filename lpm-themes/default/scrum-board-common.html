@@ -4,7 +4,7 @@
     $stickers - список стикеров
 */
 ?>
-<article id="scrumBoard" class="hide-sp">
+<div id="scrumBoard" class="mx-auto container-fluid px-4 py-4 hide-sp">
     <h1>Моя SCRUM доска</h1>
     <h3>Всего задач:
         <span class="scrum-board-info">
@@ -15,4 +15,4 @@
     <?php
         lpm_print_table_scrum_board($stickers, true, false);
     ?>
-</article>
+</div>
