@@ -1,5 +1,9 @@
 ## Next
 
+### Added
+- Эндпоинт статуса приложения (healthcheck) по пути `/api/status`.
+  - Возвращает JSON: `status`, `version`, `time`, `debug`, `db`, `request_time_ms`.
+
 ## 0.16.8 - 2025-09-05
 
 ### Fixed

@@ -21,6 +21,11 @@ class ExternalApiManager
         $this->register(
             new GitlabExternalApi($engine, defined('GITLAB_HOOK_TOKEN') ? GITLAB_HOOK_TOKEN : null)
         );
+
+        // Simple healthcheck/status endpoint
+        $this->register(
+            new StatusExternalApi($engine)
+        );
     }
 
     /**
