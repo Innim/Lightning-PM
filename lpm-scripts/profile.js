@@ -70,7 +70,7 @@ profilePage.saveNewPass = function () {
     else {
         preloader.show();
         srv.profile.newPass(
-            $("#changePass form input[name=curentPass]").val(),
+            $("#changePass form input[name=currentPass]").val(),
             $("#changePass form input[name=newPass]").val(),
             function (res) {
                 preloader.hide();
