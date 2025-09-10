@@ -27,6 +27,8 @@ class GitlabExternalApi extends ExternalApi
 
     const REPO_BRANCH_PREFIX = 'refs/heads/';
     const DEVELOP_BRANCH = 'develop';
+    const MASTER_BRANCH = 'master';
+    const MAIN_BRANCH = 'main';
 
     private $_token;
 
@@ -170,10 +172,13 @@ class GitlabExternalApi extends ExternalApi
 
         $user = $this->getUserById($data);
         if ($user) {
-            if ($ref == self::REPO_BRANCH_PREFIX . self::DEVELOP_BRANCH) {
-                $this->onDevelopPush($user, $repositoryId, $data);
+            $stableBranches = [self::DEVELOP_BRANCH, self::MASTER_BRANCH, self::MAIN_BRANCH];
+            $branchName = str_replace(self::REPO_BRANCH_PREFIX, '', $ref);
+
+            if (in_array($branchName, $stableBranches)) {
+                $this->onDevelopOrMainPush($user, $repositoryId, $data, $branchName);
             } elseif (!empty($data['commits'])) {
-                $this->updateLastCommit($user, $repositoryId, $ref, $data);
+                $this->updateLastCommit($user, $repositoryId, $branchName, $data);
             }
         }
     }
@@ -237,7 +242,7 @@ class GitlabExternalApi extends ExternalApi
         }
     }
 
-    private function onDevelopPush(User $user, $repositoryId, $data)
+    private function onDevelopOrMainPush(User $user, $repositoryId, $data, $branchName)
     {
         $commitIds = [];
         foreach ($data['commits'] as $commitData) {
@@ -284,7 +289,7 @@ class GitlabExternalApi extends ExternalApi
                 $commentTextArr = [];
                 foreach ($branches as $issueBranch) {
                     $commentTextArr[] = '*' . $repositoryName . '*: `' .
-                        $issueBranch->name . ' -> ' . self::DEVELOP_BRANCH . '`';
+                        $issueBranch->name . ' -> ' . $branchName . '`';
                 }
 
                 $commentText = implode("\n", $commentTextArr);
@@ -306,15 +311,14 @@ class GitlabExternalApi extends ExternalApi
         }
     }
 
-    private function updateLastCommit(User $user, $repositoryId, $ref, $data)
+    private function updateLastCommit(User $user, $repositoryId, $branchName, $data)
     {
-        $branchName = str_replace(self::REPO_BRANCH_PREFIX, '', $ref);
-
         // Надо сначала проверить, есть ли такая ветка на таске вообще
         if (IssueBranch::existIssuesWithBranch($repositoryId, $branchName)) {
             // Не надо обновлять, если ветка в том же состоянии, что develop
             $gitlab = GitlabIntegration::getInstance($user);
-            $commit = $gitlab->compareBranchesAndGetCommit($repositoryId, self::DEVELOP_BRANCH, $branchName);
+            $stableBranch = $this->findStableBranch($gitlab, $repositoryId);
+            $commit = $gitlab->compareBranchesAndGetCommit($repositoryId, $stableBranch, $branchName);
         
             if ($commit) {
                 // В ветке есть отличия от develop -
@@ -372,5 +376,19 @@ class GitlabExternalApi extends ExternalApi
             mkdir($dirPath, 0755, true);
         }
         file_put_contents($dirPath . $fileName, $message);
+    }
+
+    private function findStableBranch(GitlabIntegration $gitlab, $projectId)
+    {
+        $candidates = [self::DEVELOP_BRANCH, self::MASTER_BRANCH, self::MAIN_BRANCH];
+        foreach ($candidates as $branchName) {
+            $res = $gitlab->getBranches($projectId, '^' . $branchName . '$');
+            if (!empty($res)) {
+                return $branchName;
+            }
+        }
+
+        return null;
+
     }
 }
