@@ -568,6 +568,17 @@ lpm.toast = {
 }
 
 lpm.utils = {
+    copyRichToClipboard: function (html, plain) {
+        if (navigator.clipboard && window.isSecureContext) {
+            const item = new ClipboardItem({
+                "text/html": new Blob([html], { type: "text/html" }),
+                "text/plain": new Blob([plain], { type: "text/plain" })
+            });
+            return navigator.clipboard.write([item]);
+        } else {
+            return lpm.utils.copyToClipboard(plain);
+        }
+    },
     copyToClipboard: function (text) {
         // Modern clipboard API (works in HTTPS/localhost)
         if (navigator.clipboard && window.isSecureContext) {

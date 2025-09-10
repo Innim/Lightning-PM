@@ -76,6 +76,47 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     <li>
                         <a class="dropdown-item py-1 px-2" 
                             href="javascript:void(0);"
+                            onclick="issuePage.onClickCopyIssueName(event)"
+                            data-issue-name="<?=addslashes($issue->getName());?>">
+                            <i class="fa fa-copy me-1 fa-xs" aria-hidden="true"></i>
+                            <small>Копировать название</small>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-1 px-2" 
+                            href="javascript:void(0);"
+                            onclick="issuePage.onClickCopyIssueTitle(event)"
+                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                            data-issue-name="<?=addslashes($issue->getName());?>">
+                            <i class="fa fa-heading me-1 fa-xs" aria-hidden="true"></i>
+                            <small>Копировать заголовок</small>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-1 px-2" 
+                            href="javascript:void(0);"
+                            onclick="issuePage.onClickCopyLinkedIssueTitle(event)"
+                            data-issue-url="<?=$issue->getConstURL();?>"
+                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                            data-issue-name="<?=addslashes($issue->getName());?>">
+                            <i class="fa fa-arrow-up-right-from-square me-1 fa-xs"></i>
+                            <small>Копировать гиперссылку</small>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-1 px-2" 
+                            href="javascript:void(0);"
+                            onclick="issuePage.onClickCopyChangelogRecord(event)"
+                            data-issue-url="<?=$issue->getConstURL();?>"
+                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                            data-issue-name="<?=addslashes($issue->getName());?>">
+                            <i class="fa fa-file-lines me-1 fa-xs" aria-hidden="true"></i>
+                            <small>Копировать запись для changelog</small>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-1 px-2" 
+                            href="javascript:void(0);"
                             onclick="issuePage.onClickCopyCommitMessage(event)"
                             data-issue-id-in-project="<?=$issue->getIdInProject();?>"
                             data-issue-name="<?=addslashes($issue->getName());?>">

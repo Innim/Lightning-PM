@@ -519,6 +519,68 @@ issuePage.onClickCopyCommitMessage = function (event) {
     });
 };
 
+issuePage.onClickCopyIssueName = function (event) {
+    const link = event.target.closest('a');
+    const issueName = link.getAttribute('data-issue-name');
+    lpm.utils.copyToClipboard(issueName).then(() => {
+        lpm.toast.show('Название скопировано');
+    });
+};
+
+issuePage.onClickCopyIssueTitle = function (event) {
+    const link = event.target.closest('a');
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+    const issueName = link.getAttribute('data-issue-name');
+    const text = issueTitle(idInProject, issueName);
+    lpm.utils.copyToClipboard(text).then(() => {
+        lpm.toast.show('Заголовок скопирован');
+    });
+};
+
+issuePage.onClickCopyLinkedIssueTitle = function (event) {
+    const link = event.target.closest('a');
+    const url = link.getAttribute('data-issue-url');
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+    const issueName = link.getAttribute('data-issue-name');
+    
+    const text = issueTitle(idInProject, issueName);
+
+    const plain = `${text} (${url})`;
+    const html = `<a href="${url}">${text}</a>`;
+
+    lpm.utils.copyRichToClipboard(html, plain).then(() => {
+        lpm.toast.show('Кликабельная ссылка скопирована');
+    });
+};
+
+issuePage.onClickCopyChangelogRecord = function (event) {
+    const link = event.target.closest('a');
+    const url = link.getAttribute('data-issue-url');
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+    const issueName = link.getAttribute('data-issue-name');
+    const clearedName = removeLabelsFromIssueName(issueName);
+
+    const text = clearedName + ' ([#' + idInProject + '](' + url + '))';
+
+    lpm.utils.copyToClipboard(text).then(() => {
+        lpm.toast.show('Запись для changelog скопирована');
+    });
+};
+
+function issueTitle(idInProject, issueName) {
+    return idInProject + '. ' + issueName;
+}
+
+function removeLabelsFromIssueName(name) {
+    let s = name.trim();
+    while (s.charAt(0) === '[') {
+        const idx = s.indexOf(']');
+        if (idx < 0) break;
+        s = s.substring(idx + 1).trim();
+    }
+    return s;
+}
+
 function insertFormattingLink(input) {
     const text = getSelectedText(input);
     if (parser.findLinks(text)) {
