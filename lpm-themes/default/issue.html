@@ -330,22 +330,36 @@ HTML;
 ?>
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null, true); ?>
 
-<article id="createBranch" title="Создать ветку задачи">
-    <form class="create-branch" onsubmit="createBranch.save(); return false;">
-        <div class="mb-3">
-            <label for="repository" class="form-label">Репозиторий</label>
-            <select class="form-select" id="repository" name="repository"></select>
-        </div>
-        <div class="mb-3">
-            <label for="parentBranch" class="form-label">Из</label>
-            <select class="form-select" id="parentBranch" name="parentBranch"></select>
-        </div>
-        <div class="mb-3">
-            <label for="branchName" class="form-label">Название</label>
-            <input type="text" class="form-control" id="branchName" name="branchName">
-        </div>
-    </form>
-</article>
+<div class="modal fade" id="createBranch" tabindex="-1" aria-labelledby="createBranchLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createBranchLabel">Создать ветку задачи</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createBranchForm" class="create-branch" onsubmit="createBranch.save(); return false;">
+            <div class="mb-3">
+                <label for="repository" class="form-label">Репозиторий</label>
+                <select class="form-select" id="repository" name="repository"></select>
+            </div>
+            <div class="mb-3">
+                <label for="parentBranch" class="form-label">Из</label>
+                <select class="form-select" id="parentBranch" name="parentBranch"></select>
+            </div>
+            <div class="mb-3">
+                <label for="branchName" class="form-label">Название</label>
+                <input type="text" class="form-control" id="branchName" name="branchName">
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="submit" class="btn btn-primary" form="createBranchForm">Создать</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <article id="passTestDialog" title="Прошла тестирование">
     <form class="pass-test">

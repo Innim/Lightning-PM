@@ -1680,3 +1680,7 @@ form.pass-test #passTestComment textarea.comment-text-field {
 .img-wrapper img.loaded {
 	opacity: 1; /* fade in */
 }
+
+#preloader {
+	z-index: 2000;
+}
