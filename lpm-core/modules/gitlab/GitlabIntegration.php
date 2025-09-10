@@ -202,7 +202,7 @@ class GitlabIntegration
     /**
      * Возвращает список веток репозитория проекта.
      */
-    public function getBranches($projectId)
+    public function getBranches($projectId, $search = null)
     {
         $client = $this->client();
         if ($client == null) {
@@ -214,15 +214,17 @@ class GitlabIntegration
             $perPage = 100;
             $res = [];
 
+            $params = [
+                'per_page' => $perPage,
+            ];
+            if (!empty($search)) {
+                $params['search'] = $search;
+            }
+
             do {
                 $page++;
-                $list = $client->repositories()->branches(
-                    $projectId,
-                    [
-                        'per_page' => $perPage,
-                        'page' => $page,
-                    ]
-                );
+                $params['page'] = $page;
+                $list = $client->repositories()->branches($projectId, $params);
             
                 foreach ($list as $data) {
                     $res[] = new GitlabBranch($data);
