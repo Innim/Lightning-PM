@@ -147,21 +147,13 @@ let scrumBoard = {
 
             if (transferCols.some(col => $(columnsSelector + '.' + col + ' .scrum-board-sticker').size() > 0))
             {
-                const $dialog = $("#transferStickersConfirm");
-                const clearAndClose = (transfer) => {
-                    doClear(transfer);
-                    $dialog.dialog("close");
-                }
-
-                $dialog.dialog({
-                    resizable: false,
-                    height: "auto",
-                    width: 400,
-                    modal: true,
-                    buttons: {
-                        "Перенести": () => clearAndClose(true),
-                        "Не переносить": () => clearAndClose(false),
-                    },
+                lpm.dialog.show({
+                    title: 'Очистка SCRUM доски',
+                    text: 'Перенести задачи из колонок «TO DO» и «В работе» на новый спринт?',
+                    primaryBtn: 'Перенести',
+                    secondaryBtn: 'Не переносить',
+                    onPrimary: function () { doClear(true); },
+                    onSecondary: function () { doClear(false); },
                 });
             } else {
                 doClear(false);

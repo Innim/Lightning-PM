@@ -17,6 +17,16 @@ class LPMTables
      */
     const IMAGES = 'images';
     /**
+     * Таблица файлов
+     * @var string
+     */
+    const FILES = 'files';
+    /**
+     * Привязки файлов к сущностям
+     * @var string
+     */
+    const FILE_LINKS = 'file_links';
+    /**
      * Задачи
      * @var string
      */

@@ -1,5 +1,5 @@
 <article id="issuesExportToExcel" title="Экспорт в Excel" style="display: none;">
-	<form id="issuesExportForm" action="." onsubmit="issuesExport2Excel.export(); return false">
+	<form id="issuesExportForm" action="." onsubmit="return false">
 		<p>Экспортировать задачи, завершенные в период</p>
 		<label for="exportStartDate">с</label>
 		<input id="exportStartDate" name="fromDate" type="date"
@@ -7,8 +7,5 @@
 		<label for="exportEndDate">по</label>
 		<input id="exportEndDate" name="toDate" type="date"
 			value="<?=date('Y-m-d', strtotime('last day of last month'));?>">
-		<div class="buttons-line">
-			<button type="submit">Экспорт</button>
-		</div>
 	</form>
 </article>

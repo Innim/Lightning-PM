@@ -16,6 +16,7 @@ class LightningEngine
 
     const API_PATH = 'api';
     const BADGES_PATH = 'badges';
+    const FILES_PATH = 'file';
 
     /**
      * @return LightningEngine
@@ -142,6 +143,8 @@ class LightningEngine
             $this->apiCall();
         } elseif ($arg0 == self::BADGES_PATH) {
             $this->staticGenerator();
+        } elseif ($arg0 == self::FILES_PATH) {
+            $this->fileDownload();
         } else  {
             $this->createPage();
         }
@@ -213,6 +216,30 @@ class LightningEngine
         } catch (Exception $e) {
             $this->debugOnException($e);
             die('Fatal static generator call error');
+        }
+    }
+
+    private function fileDownload()
+    {
+        try {
+            $params = $this->_params;
+            $params->shiftArg();
+            $uid = $params->shiftArg();
+
+            $controller = new FileDownloadController($this);
+            $controller->handle($uid);
+        } catch (LPMException $e) {
+            http_response_code($e->getStatusCode());
+            
+            $output = $e->getLocalizedMessage();
+            if (LPMGlobals::isDebugMode()) {
+                $output .= "<pre>[DEBUG INFORMATION]\n" . $this->debugExceptionString($e, false) . '</pre>';
+            }
+
+            die($output);
+        } catch (Exception $e) {
+            $this->debugOnException($e);
+            die('Fatal file download error');
         }
     }
 
@@ -464,18 +491,25 @@ class LightningEngine
         if (!LPMGlobals::isDebugMode()) {
             return;
         }
-
-        $errLines =
-        [
-            '[' . get_class($e) . '] #' . $e->getCode() . ': ' . $e->getMessage(),
-            $e->getTraceAsString()
-        ];
-
-        $this->addError(implode("\n", $errLines));
+        $this->addError($this->debugExceptionString($e, true));
         echo '<h1>[DEBUG] ' . $title . '</h1>';
         echo '<pre>';
         var_dump($this->_errors);
         echo '</pre>';
         exit;
+    }
+
+    private function debugExceptionString(Exception $e, $addTrace = false)
+    {
+        $errLines =
+        [
+            '[' . get_class($e) . '] #' . $e->getCode() . ': ' . $e->getMessage(),
+        ];
+
+        if ($addTrace) {
+            $errLines[] = $e->getTraceAsString();
+        }
+
+        return implode("\n", $errLines);
     }
 }

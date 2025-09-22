@@ -33,6 +33,12 @@ define('FILES_DIR', 'lpm-files/');
 define('UPLOAD_IMGS_DIR', FILES_DIR . 'imgs/');
 
 /**
+ * Директория загруженных файлов
+ * @var string
+ */
+define('UPLOAD_FILES_DIR', FILES_DIR . 'files/');
+
+/**
  * Папка библиотек
  * @var string
  */

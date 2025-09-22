@@ -444,4 +444,37 @@ CREATE TABLE `lpm_user_locks` (
   KEY `userId` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица блокировок разных сущностей пользователями';
 
+-- 0.16.10
+
+-- Files storage
+
+DROP TABLE IF EXISTS `lpm_file_links`;
+CREATE TABLE `lpm_file_links` (
+  `linkId` bigint NOT NULL AUTO_INCREMENT COMMENT 'идентификатор связи',
+  `fileId` bigint NOT NULL COMMENT 'идентификатор файла',
+  `itemType` tinyint NOT NULL COMMENT 'тип сущности',
+  `itemId` bigint NOT NULL COMMENT 'идентификатор сущности',
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'дата добавления связи',
+  PRIMARY KEY (`linkId`),
+  UNIQUE KEY `file_instance` (`fileId`,`itemType`,`itemId`),
+  KEY `instance_lookup` (`itemType`,`itemId`),
+  CONSTRAINT `lpm_file_links_file_fk` FOREIGN KEY (`fileId`) REFERENCES `lpm_files` (`fileId`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='привязки файлов к сущностям';
+
+
+DROP TABLE IF EXISTS `lpm_files`;
+CREATE TABLE `lpm_files` (
+  `fileId` bigint NOT NULL AUTO_INCREMENT COMMENT 'идентификатор файла',
+  `uid` char(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'уникальный идентификатор файла',
+  `userId` bigint NOT NULL COMMENT 'идентификатор пользователя, загрузившего файл',
+  `path` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'путь к файлу относительно директории загрузок',
+  `origName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'оригинальное имя файла',
+  `mimeType` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'MIME тип файла',
+  `size` bigint NOT NULL COMMENT 'размер файла в байтах',
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'дата добавления',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'файл удалён',
+  PRIMARY KEY (`fileId`),
+  UNIQUE KEY `uid` (`uid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='загруженные файлы';
+
 --NEXT

@@ -788,6 +788,7 @@ SQL;
     const STATUS_COMPLETED 	= 2;
 
     const MAX_IMAGES_COUNT	= 10;
+    const MAX_FILES_COUNT     = 10;
     const DESC_MAX_LEN = 60000;
     const IMPORTANT_PRIORITY = 79;
     
@@ -874,6 +875,7 @@ SQL;
     private $_sticker = false;
     
     private $_images = null;
+    private $_files = null;
     private $_testers = null;
     private $_masters = null;
 
@@ -978,6 +980,11 @@ SQL;
         return self::MAX_IMAGES_COUNT;
     }
 
+    public function getMaxFilesCount()
+    {
+        return self::MAX_FILES_COUNT;
+    }
+
     /**
      * Загружает и возвращает объект проекта.
      * Этот метод достаточно тяжелый, он будет грузить данные из БД
@@ -1005,6 +1012,19 @@ SQL;
         }
 
         return $this->_images;
+    }
+
+    /**
+     * Возвращает массив файлов, прикрепленных к задаче.
+     * @return LPMFile[]
+     */
+    public function getFiles()
+    {
+        if ($this->_files === null) {
+            $this->_files = LPMFile::loadListByInstance(LPMInstanceTypes::ISSUE, $this->id);
+        }
+
+        return $this->_files;
     }
 
     /**

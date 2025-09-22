@@ -737,10 +737,6 @@ ul.panel-submenu li {
 }
 
 /* панелька с информацией */
-.info-list, .issue-info .linked-issues {
-	padding-left: 40px;
-	padding-right: 40px;
-}
 .info-list > .info-list-item {
 	margin: 10px 0px;
 }
@@ -1679,4 +1675,8 @@ form.pass-test #passTestComment textarea.comment-text-field {
 }
 .img-wrapper img.loaded {
 	opacity: 1; /* fade in */
+}
+
+#preloader {
+	z-index: 2000;
 }

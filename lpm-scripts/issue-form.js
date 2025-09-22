@@ -3,6 +3,13 @@ $(function ($) {
     $('.images-list').on('click', '.pasted-img .remove-img', function () {
         $(this).parent('.pasted-img').remove();
     });
+    $('.files-list').on('click', '.remove-file', function (e) {
+        e.preventDefault();
+        issueForm.removeFile(e);
+    });
+    $('#issueForm .files-list').on('change', "input[name='issueFiles[]']", function (e) {
+        issueForm.onFileUploadInputChange(e);
+    });
 
     function pasteClipboardImage(event) {
         var clipboard = event.clipboardData;
@@ -54,6 +61,8 @@ $(function ($) {
     issueForm.testers = getMembers("#addIssueTesters option");
     issueForm.masters = getMembers("#addIssueMasters option");
     issueForm.defaultMemberId = $('#addIssueMembers').data('defaultMemberId');
+
+    issueForm.ensureFileUploadSlot();
 });
 
 let issueForm = {
@@ -62,6 +71,7 @@ let issueForm = {
     defaultMemberId: null,
     testers: null,
     masters: null,
+    fileUploadTemplate: null,
     lockAcquired: false,
     acquireLock: function (issueId, revision, forced, onSuccess, onFail) {
         preloader.show();
@@ -175,6 +185,7 @@ let issueForm = {
                 issueId: issueId,
                 revision: revision,
                 imagesInfo: issueForm.getImagesFromPage(),
+                filesInfo: issueForm.getFilesFromPage(),
                 isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
             }, true);
         }
@@ -239,6 +250,8 @@ let issueForm = {
         // имя
         $("#issueForm form input[name=name]").val(value.name);
         issueFormLabels.issueNameChanged(value.name);
+        $("#issueForm form input[name=removedImages]").val('');
+        $("#issueForm form input[name=removedFiles]").val('');
         // часы
         $("#issueForm form input[name=hours]").val(value.hours);
 
@@ -305,6 +318,43 @@ let issueForm = {
             imgsCount += imgs.length;
         }
         imgsList.append(imgUploadLi);
+
+        const filesList = $('#issueForm form .files-list');
+        const fileUploadItems = filesList.find('.file-item-upload').detach();
+        filesList.empty();
+
+        const files = value.filesInfo || [];
+        if (files.length > 0) {
+            const fileTemplate = $('#issueFormTemplates .file-item');
+            files.forEach((file) => {
+                const fileItem = fileTemplate.clone();
+                const fileName = file.name || file.origName;
+                const link = $('a.issue-file-link', fileItem);
+                if (file.url) {
+                    link.attr('href', file.url).attr('download', fileName);
+                } else {
+                    link.removeAttr('href');
+                }
+                $('span.file-name', fileItem).text(fileName);
+                $('input.issue-file-id-input', fileItem).val(file.fileId);
+
+                const sizeEl = $('.issue-file-size', fileItem);
+                sizeEl.text(file.sizeFormatted ? '(' + file.sizeFormatted + ')' : '');
+
+                filesList.append(fileItem);
+            });
+        }
+
+        if (fileUploadItems.length > 0) {
+            const uploadItem = $(fileUploadItems[0]);
+            $('input[type=file]', uploadItem).val('');
+            uploadItem.show();
+            filesList.append(uploadItem);
+        } else {
+            issueForm.addFileUploadInput(filesList);
+        }
+
+        issueForm.ensureFileUploadSlot(filesList);
 
         // новые добавленные изображения
         let newImgs = value.newImagesUrls;
@@ -375,6 +425,7 @@ let issueForm = {
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
                         newImagesUrls: issue.getImagesUrl(),
+                        filesInfo: [],
                         isOnBoard: issue.isOnBoard,
                         baseIds: issue.getLinkedBaseIds(),
                         linkedIds: issue.getLinkedChildrenIds(),
@@ -438,6 +489,7 @@ let issueForm = {
                         testerIds: issue.getTesterIds(),
                         masterIds: issue.getMasterIds(),
                         newImagesUrls: issue.getImagesUrl(),
+                        filesInfo: [],
                         isOnBoard: issue.isOnBoard,
                         baseIds: [issue.id],
                     });
@@ -595,19 +647,127 @@ let issueForm = {
             $('#issueForm form input[name=removedImages]').val(val);
         }
     },
-    validateIssueForm: function () {
-        var errors = [];
-        var inputs = $("#issueForm input:file");
-        var len = 0;
+    removeFile: function (e) {
+        const li = $(e.currentTarget).closest('.file-item');
+        const fileId = $('.issue-file-id-input', li).val();
 
-        if (!$.isEmptyObject({ inputs })) {
-            inputs.each(function (i) {
-                len += inputs[i].files.length;
-            });
+        if (fileId && confirm('Вы действительно хотите удалить этот файл?')) {
+            li.remove();
+            let val = $('#issueForm form input[name=removedFiles]').val();
+            if (val !== '') val += ',';
+            val += fileId;
+            $('#issueForm form input[name=removedFiles]').val(val);
+            $('#issueForm .files-list .file-item-upload').show();
+            issueForm.ensureFileUploadSlot();
+        }
+    },
+    initFileUploadTemplate: function () {
+        if (issueForm.fileUploadTemplate) return;
+
+        const template = $('#issueForm .files-list .file-item-upload').first();
+        if (template.length) {
+            issueForm.fileUploadTemplate = template.clone();
+            $('input[type=file]', issueForm.fileUploadTemplate).val('');
+        }
+    },
+    getFileUploadTemplate: function () {
+        issueForm.initFileUploadTemplate();
+        return issueForm.fileUploadTemplate.clone();
+    },
+    addFileUploadInput: function (filesList) {
+        if (!filesList || filesList.length === 0) return;
+
+        const newItem = issueForm.getFileUploadTemplate();
+        if (filesList.children('.file-item-upload').length > 0) {
+            $('input[type=file]#issueFilesField', newItem).removeAttr('id');
+        }
+        $('input[type=file]', newItem).val('');
+        filesList.append(newItem);
+    },
+    onFileUploadInputChange: function () {
+        issueForm.ensureFileUploadSlot();
+    },
+    ensureFileUploadSlot: function (filesList) {
+        const list = filesList && filesList.length ? filesList : $('#issueForm .files-list');
+        if (!list.length) return;
+
+        const maxFiles = window.lpmOptions && window.lpmOptions.issueFilesCount
+            ? window.lpmOptions.issueFilesCount
+            : 0;
+        const existingFilesCount = list.children('.file-item').not('.file-item-upload').length;
+
+        const uploadItems = list.children('.file-item-upload');
+        let newFilesCount = 0;
+        const emptyItems = [];
+
+        uploadItems.each(function () {
+            const input = $('input[type=file]', this)[0];
+            if (!input) return;
+
+            const filesLength = input.files ? input.files.length : 0;
+            if (filesLength > 0) {
+                newFilesCount += filesLength;
+            } else {
+                emptyItems.push(this);
+            }
+        });
+
+        if (maxFiles && existingFilesCount + newFilesCount >= maxFiles) {
+            $(emptyItems).remove();
+            return;
         }
 
-        if (len > window.lpmOptions.issueImgsCount)
+        if (emptyItems.length === 0) {
+            issueForm.addFileUploadInput(list);
+        } else if (emptyItems.length > 1) {
+            $(emptyItems.slice(1)).remove();
+        }
+    },
+    validateIssueForm: function () {
+        var errors = [];
+
+        const imageInputs = $("#issueForm input[name='images[]']");
+        let newImagesCount = 0;
+        imageInputs.each(function () {
+            const files = this.files;
+            if (files) newImagesCount += files.length;
+        });
+
+        const existingImagesCount = $("#issueForm .images-list .image-item").length;
+        if (newImagesCount + existingImagesCount > window.lpmOptions.issueImgsCount) {
             errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений');
+        }
+
+        const attachmentInputs = $("#issueForm input[name='issueFiles[]']");
+        let newFilesCount = 0;
+        let oversizeFileMessage = '';
+        const maxFileSize = window.lpmOptions.issueFileMaxSizeMb;
+
+        attachmentInputs.each(function () {
+            if (!this.files) return;
+
+            if (this.files.length > 0) {
+                newFilesCount += this.files.length;
+            }
+
+            if (!oversizeFileMessage) {
+                for (let i = 0; i < this.files.length; i++) {
+                    if (this.files[i].size > maxFileSize * 1024 * 1024) {
+                        oversizeFileMessage = 'Размер файла "' + this.files[i].name + '" не должен превышать ' + maxFileSize + ' Мб';
+                        break;
+                    }
+                }
+            }
+        });
+
+        const existingFilesCount = $("#issueForm .files-list .file-item").not('.file-item-upload').length;
+        if (existingFilesCount + newFilesCount > window.lpmOptions.issueFilesCount) {
+            errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueFilesCount + ' файлов');
+        }
+
+        if (oversizeFileMessage) {
+            errors.push(oversizeFileMessage);
+        }
 
         if (errors.length == 0) {
             $('#issueForm > div.validateError').hide();
@@ -624,6 +784,18 @@ let issueForm = {
                 imgId: $('input[name=imgId]', img).val(),
                 source: $('a.image-link', img).attr('href'),
                 preview: $('img.image-preview', img).attr('src'),
+            };
+        });
+    },
+    getFilesFromPage: function () {
+        let files = $("#issueInfo .issue-files-list .issue-file-item");
+        return files.toArray().map((file) => {
+            const sizeText = $('.issue-file-size', file).text().trim();
+            return {
+                fileId: $('.issue-file-id-input', file).val(),
+                name: $('span.file-name', file).text(),
+                url: $('a.issue-file-link', file).attr('href'),
+                sizeFormatted: sizeText ? sizeText.replace(/[()]/g, '').trim() : '',
             };
         });
     },

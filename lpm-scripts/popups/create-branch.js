@@ -5,29 +5,12 @@ $(function () {
 const createBranch = {
     currentProjectId: null,
     currentIssueId: null,
+    modal: null,
     init: function () {
         const $el = $("#createBranch");
-        $el.dialog(
-            {
-                autoOpen: false,
-                modal: true,
-                resizable: false,
-                buttons: [
-                    {
-                        text: "Создать",
-                        click: function () {
-                            createBranch.save();
-                        }
-                    },
-                    {
-                        text: "Отмена",
-                        click: function () {
-                            createBranch.close();
-                        }
-                    }
-                ]
-            }
-        );
+        const el = document.getElementById('createBranch');
+        
+        createBranch.modal = new bootstrap.Modal(el);
 
         const $selectRepo = $('#repository', $el);
         const $selectBranch = $('#parentBranch', $el);
@@ -66,7 +49,7 @@ const createBranch = {
         srv.project.getRepositories(projectId, (res) => {
             preloader.hide();
             if (res.success) {
-                $el.dialog('open');
+                createBranch.modal.show();
                 createBranch.setRepositories(res.list, res.popularRepositoryId, res.myPopularRepositoryIds);
                 $("#branchName", $el).val(issueIdInProject + '.').trigger('focus');
             } else {
@@ -83,7 +66,7 @@ const createBranch = {
         $("#branchName", $el).val('');
         $("#repository", $el).empty();
         $("#parentBranch", $el).empty();
-        $el.dialog('close');
+        createBranch.modal.hide();
     },
     save: function () {
         const $el = $("#createBranch");
