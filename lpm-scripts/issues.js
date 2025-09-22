@@ -1259,6 +1259,7 @@ function Issue(obj) {
     this.testers = obj.testers;
     this.masters = obj.masters;
     this.images = obj.images;
+    this.files = obj.files || [];
     this.isOnBoard = obj.isOnBoard;
     this.url = obj.url;
     this.linked = obj.linked;
@@ -1331,6 +1332,10 @@ function Issue(obj) {
         return this.members.map(member => member.sp);
     };
 
+    this.getFiles = function () {
+        return this.files;
+    };
+
     this.getTesters = () => getUsersStr(this.testers);
 
     this.getTesterIds = function () {
@@ -1341,6 +1346,16 @@ function Issue(obj) {
 
     this.getMasterIds = function () {
         return this.masters.map(master => master.userId);
+    };
+
+    this.getFilesForForm = function () {
+        return (this.files || []).map(file => ({
+            fileId: file.fileId,
+            name: file.name || file.origName,
+            url: file.url,
+            size: file.size,
+            sizeFormatted: file.sizeFormatted,
+        }));
     };
 
     this.getLinkedBaseIds = function () {

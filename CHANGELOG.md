@@ -1,5 +1,9 @@
 ## Next
 
+### Added
+
+- Файлы (логи, архивы и другие вложения) теперь можно прикреплять к задаче при создании и редактировании ([#128](https://task.innim.ru/project/lightning-pm/issue/128)).
+
 ### Changed
 
 Диалоги переведены с jQuery UI на Bootstrap (единый стиль UI):

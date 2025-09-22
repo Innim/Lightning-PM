@@ -132,7 +132,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
     case 0: ?>active-issue <?break;?> 
     <? case 1: ?>verify-issue <?break;?> 
     <?case 2: ?>completed-issue<?break;?>
-    <?endswitch;?>">
+    <?endswitch;?> mx-4">
             <div class="info-list-item">
                 <span class="label">Статус</span>
                 <span class="value"><?=$issue->getStatus();?></span>
@@ -221,13 +221,43 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             <?php endif; ?>
         </div>
 
+        <?php $files = $issue->getFiles(); ?>
+        <?php if (!empty($files)): ?>
+        <div class="info-list-item files-row mx-4 mt-4">
+            <h6 class="label mb-3">Файлы</h6>
+            <div class="value w-100">
+                <ul class="issue-files-list list-group list-group-flush mb-4">
+                    <?php foreach ($files as $file): ?>
+                    <li class="issue-file-item list-group-item d-flex align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="text-secondary pt-1"><i class="fas fa-paperclip"></i></span>
+                            <div class="d-flex flex-column">
+                                <a href="<?=$file->getDownloadUrl();?>" class="issue-file-link fw-semibold" target="_blank" rel="noopener" download="<?=$file->origName;?>">
+                                    <span class="file-name"><?=$file->origName;?></span>
+                                </a>
+                                <span class="text-muted small issue-file-size"><?=FileSizeFormatter::format($file->size);?></span>
+                            </div>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$file->origName;?>">
+                                <i class="fas fa-download me-1"></i>Скачать
+                            </a>
+                        </div>
+                        <input type="hidden" name="fileId" class="issue-file-id-input" value="<?=$file->fileId;?>">
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <hr class="text-secondary opacity-50 my-4">    
 
         <?php
             $linkedIssues = $issue->getLinkedIssues();
             if (!empty($linkedIssues)):
         ?>
-        <div id="linkedIssues" class="linked-issues">
+        <div id="linkedIssues" class="linked-issues mx-4">
             <div class="card text-dark bg-light mb-3">
                 <div class="card-header">Связанные задачи</div>
                 <div class="card-body"><?php foreach ($linkedIssues as $item): ?>

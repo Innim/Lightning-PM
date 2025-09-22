@@ -18,7 +18,22 @@ class Link
      */
     public static function getUrl($pageUid, $args, $hash = '')
     {
-        $url = SITE_URL . $pageUid . '/' . implode('/', $args);
+        return self::buildUrl(array_merge((array) $pageUid, $args), $hash);
+    }
+
+    /**
+     * Возвращает URL для скачивания файла.
+     * @param string $uid Уникальный идентификатор файла.
+     * @return string
+     */
+    public static function getFileUrl($uid)
+    {
+        return self::buildUrl([LightningEngine::FILES_PATH, $uid]);
+    }
+
+    protected static function buildUrl($args, $hash = '')
+    {
+        $url = SITE_URL . implode('/', $args);
         if (!empty($hash)) {
             $url .= '#' . $hash;
         }

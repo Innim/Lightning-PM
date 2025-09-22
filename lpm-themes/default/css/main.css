@@ -737,10 +737,6 @@ ul.panel-submenu li {
 }
 
 /* панелька с информацией */
-.info-list, .issue-info .linked-issues {
-	padding-left: 40px;
-	padding-right: 40px;
-}
 .info-list > .info-list-item {
 	margin: 10px 0px;
 }

@@ -580,6 +580,10 @@ class ProjectPage extends LPMPage
             return;
         }
 
+        if (!$this->handleIssueFiles($issueId, $userId, $editMode)) {
+            return;
+        }
+
         // удаление старых изображений
         if (!empty($_POST["removedImages"])) {
             $this->removeImagesFromIssue($db, $issueId, $_POST["removedImages"]);
@@ -803,6 +807,48 @@ class ProjectPage extends LPMPage
         return $uploader;
     }
 
+    private function handleIssueFiles($issueId, $userId, $editMode)
+    {
+        if (!empty($_POST['removedFiles'])) {
+            $this->removeFilesFromIssue($issueId, $_POST['removedFiles']);
+        }
+
+        if (!isset($_FILES['issueFiles']) || !is_array($_FILES['issueFiles'])) {
+            return true;
+        }
+
+        $filesData = $_FILES['issueFiles'];
+        if (!isset($filesData['name']) || !is_array($filesData['name'])) {
+            return true;
+        }
+
+        $availableSlots = Issue::MAX_FILES_COUNT;
+        if ($editMode) {
+            $availableSlots -= LPMFile::countByInstance(LPMInstanceTypes::ISSUE, $issueId);
+        }
+        $availableSlots = max(0, $availableSlots);
+
+        if ($availableSlots === 0 && !FileUploadManager::hasUploads($filesData)) {
+            return true;
+        }
+
+        $result = FileUploadManager::upload(
+            LPMInstanceTypes::ISSUE,
+            $issueId,
+            $userId,
+            $filesData,
+            $availableSlots,
+            Issue::MAX_FILES_COUNT
+        );
+
+        if (!empty($result['errors'])) {
+            $this->_engine->addError($result['errors'][0]);
+            return false;
+        }
+
+        return true;
+    }
+
     private function removeImagesFromIssue(DBConnect $db, $issueId, $imagesIdsStr) 
     {
         $delImg = explode(',', $imagesIdsStr);
@@ -823,6 +869,16 @@ class ProjectPage extends LPMPage
                             "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
             $db->queryt($sql, LPMTables::IMAGES);
         }
+    }
+
+    private function removeFilesFromIssue($issueId, $filesIdsStr)
+    {
+        $fileIds = array_filter(array_map('intval', explode(',', (string)$filesIdsStr)));
+        if (empty($fileIds)) {
+            return;
+        }
+
+        LPMFile::delete(LPMInstanceTypes::ISSUE, $issueId, $fileIds);
     }
 
     private function saveMembers($db, $issueId, $memberIds, $editMode, $spByMembers = null)

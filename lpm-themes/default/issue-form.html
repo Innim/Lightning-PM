@@ -180,7 +180,7 @@ $isHidden = !empty($isHidden)
         </div>
 
         
-        <div class="col-auto">
+        <div class="col-12">
             <label for="imagesField" class="form-label">Изображения</label>
             <input type="hidden" name="removedImages" value="">
 
@@ -201,6 +201,21 @@ $isHidden = !empty($isHidden)
             </ul>
             <a name="imgByUrl" href="javascript:issueForm.addImageByUrl(undefined, true);">Добавить изображение по
                 URL</a> 
+        </div>
+
+        <div class="col-12">
+            <label for="issueFilesField" class="form-label">Файлы</label>
+            <input type="hidden" name="removedFiles" value="">
+
+            <ul class="files-list list-unstyled mb-0">
+                <li class="file-item-upload my-2">
+                    <input class="form-control" type="file" id="issueFilesField" name="issueFiles[]" multiple>
+                </li>
+            </ul>
+
+            <div class="form-text text-muted">
+                Можно загрузить до <?=Issue::MAX_FILES_COUNT;?> файлов (до <?=LPMFile::MAX_SIZE_MB;?> Мб каждый).
+            </div>
         </div>
 
         <?php if ($project->scrum): ?>
@@ -307,6 +322,14 @@ $isHidden = !empty($isHidden)
             <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview border border-1 rounded-3"></a>
             <input type="hidden" name="imgId" value="">
             <a href="javascript:;" class="remove-btn remove-img"></a>
+        </li>
+
+        <li class="file-item issue-file-item d-flex align-items-center gap-2 mb-2">
+            <i class="fas fa-paperclip text-muted"></i>
+            <a href="" class="issue-file-link" target="_blank" rel="noopener"><span class="file-name"></span></a>
+            <span class="text-muted small issue-file-size"></span>
+            <input type="hidden" name="fileId" class="issue-file-id-input" value="">
+            <a href="javascript:;" class="remove-btn remove-file"></a>
         </li>
 
         <li class="members-list-item hide-sp">

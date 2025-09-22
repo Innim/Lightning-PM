@@ -46,9 +46,24 @@ class LPMBaseObject extends StreamObject
         return $db->query($sql);
     }
 
+    protected static function buildAndExecuteSingle($sqlHash, $tables = null) {
+        $result = self::buildAndExecute($sqlHash, $tables);
+        if (!$result) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+        return $result->fetch_assoc();
+    }
+
     protected static function loadAndParse($hash, $class)
     {
         $res = self::loadFromDb($hash);
+        $list = StreamObject::parseListResult($res, $class);
+        return $list;
+    }
+
+    protected static function loadAndParseV2($hash, $class)
+    {
+        $res = self::loadFromDV2($hash);
         $list = StreamObject::parseListResult($res, $class);
         return $list;
     }
@@ -59,9 +74,24 @@ class LPMBaseObject extends StreamObject
         return empty($list) ? null : $list[0];
     }
 
+    protected static function loadAndParseSingleV2($hash, $class)
+    {
+        $list = self::loadAndParseV2($hash, $class);
+        return empty($list) ? null : $list[0];
+    }
+
     protected static function loadFromDb($hash, $tables = null)
     {
         $res = self::getDB()->queryb($hash, $tables);
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+        return $res;
+    }
+
+    protected static function loadFromDV2($hash, $tables = null)
+    {
+        $res = self::buildAndExecute($hash, $tables);
         if ($res === false) {
             throw new \GMFramework\ProviderLoadException();
         }

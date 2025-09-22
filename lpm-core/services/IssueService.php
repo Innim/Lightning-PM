@@ -834,6 +834,13 @@ class IssueService extends LPMBaseService
                 'preview' => $image->getPreview()));
         }
 
+        $files = $issue->getFiles();
+        $obj->files = [];
+
+        foreach ($files as $file) {
+            $obj->files[] = $file->getClientObject();
+        }
+
         $obj->isOnBoard = $issue->isOnBoard();
 
         if ($loadLinked) {
