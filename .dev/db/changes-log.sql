@@ -444,6 +444,8 @@ CREATE TABLE `lpm_user_locks` (
   KEY `userId` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица блокировок разных сущностей пользователями';
 
+-- 0.16.10
+
 -- Files storage
 
 DROP TABLE IF EXISTS `lpm_file_links`;
