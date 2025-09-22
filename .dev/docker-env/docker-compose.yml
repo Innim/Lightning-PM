@@ -2,6 +2,7 @@ version: "3"
 services:
   web:
     build: ./
+    image: lightning-pm-web:latest 
     container_name: "lightning-pm"
 #    user: "$USER_ID:$GROUP_ID"
     restart: unless-stopped
