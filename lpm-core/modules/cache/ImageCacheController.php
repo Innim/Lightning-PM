@@ -8,7 +8,6 @@
  */
 class ImageCacheController 
 {
-    const MAX_SIZE_MB = 10;
     const CACHE_SUBDIR = 'cache';
 
     const MAX_SIZE_PIXELS = 800;
@@ -37,7 +36,7 @@ class ImageCacheController
             $downloadedFile = $this->findDownloadedImage($filepathWithoutExt);
             if (empty($downloadedFile)) {
                 // скачиваем файл      
-                $filepath = DownloadHelper::downloadImage($url, $filepathWithoutExt, self::MAX_SIZE_MB, true);
+                $filepath = DownloadHelper::downloadImage($url, $filepathWithoutExt, MAX_IMAGE_SIZE_MB, true);
             } else {
                 // Используем скачанный 
                 // TODO: неплохо было бы предусмотреть механизм перезагрузки файла в случае чего

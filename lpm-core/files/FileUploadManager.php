@@ -70,8 +70,8 @@ class FileUploadManager
                 continue;
             }
 
-            if ($size > LPMFile::MAX_SIZE_MB * 1024 * 1024) {
-                $result['errors'][] = sprintf('Размер файла "%s" не должен превышать %d Мб', $originalName, LPMFile::MAX_SIZE_MB);
+            if ($size > MAX_FILE_SIZE_BYTES) {
+                $result['errors'][] = sprintf('Размер файла "%s" не должен превышать %d Мб', $originalName, MAX_FILE_SIZE_MB);
                 continue;
             }
 

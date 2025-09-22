@@ -58,7 +58,7 @@ class LPMFile extends LPMBaseObject
             if (empty($ids)) {
                 return [];
             }
-            
+
             $where['`f`.`fileId`'] = $ids;
         }
 
@@ -257,12 +257,6 @@ class LPMFile extends LPMBaseObject
 
         return $uid;
     }
-
-    /**
-     * Maximum allowed size for a single uploaded file (in megabytes).
-     * @var int
-     */
-    const MAX_SIZE_MB = 50;
 
     /**
      * Identifier of the file record.
