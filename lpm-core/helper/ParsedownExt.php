@@ -37,6 +37,47 @@ class ParsedownExt extends Parsedown
         $this->_taskLinkRegex = '/^\[([^\]]*)\]\((' . $issueUrlPattern . ')\)/';
     }
 
+    // Make Markdown tables look good with Bootstrap styles
+    // Adds Bootstrap table classes to generated <table> elements
+    protected function blockTable($Line, array $Block = null)
+    {
+        $Block = parent::blockTable($Line, $Block);
+
+        if ($Block && isset($Block['element']) && is_array($Block['element'])) {
+            if (!isset($Block['element']['attributes'])) {
+                $Block['element']['attributes'] = [];
+            }
+
+            // Apply Bootstrap table styles for better visibility
+            $tableClasses = 'table table-striped table-bordered';
+
+            if (isset($Block['element']['attributes']['class']) && $Block['element']['attributes']['class']) {
+                $Block['element']['attributes']['class'] .= ' ' . $tableClasses;
+            } else {
+                $Block['element']['attributes']['class'] = $tableClasses;
+            }
+
+            // Highlight table header with Bootstrap contextual color
+            if (isset($Block['element']['text'][0])
+                && isset($Block['element']['text'][0]['name'])
+                && $Block['element']['text'][0]['name'] === 'thead') {
+                if (!isset($Block['element']['text'][0]['attributes'])) {
+                    $Block['element']['text'][0]['attributes'] = [];
+                }
+
+                $theadClasses = 'table-secondary';
+                if (isset($Block['element']['text'][0]['attributes']['class'])
+                    && $Block['element']['text'][0]['attributes']['class']) {
+                    $Block['element']['text'][0]['attributes']['class'] .= ' ' . $theadClasses;
+                } else {
+                    $Block['element']['text'][0]['attributes']['class'] = $theadClasses;
+                }
+            }
+        }
+
+        return $Block;
+    }
+
     protected function inlineStrong($Excerpt)
     {
         return $this->inline($Excerpt, $this->_strongRegex, 'strong');

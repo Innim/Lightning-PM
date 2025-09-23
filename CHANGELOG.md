@@ -1,5 +1,9 @@
 ## Next
 
+### Changed
+
+- Внешний вид таблиц Markdown разметки ([#364](https://task.innim.ru/project/lightning-pm/issue/364)).
+
 ## 0.16.10 - 2025-09-22
 
 ### Added
