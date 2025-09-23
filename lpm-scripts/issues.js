@@ -495,6 +495,14 @@ issuePage.onClickCopyIssueUrl = function (event) {
     });
 };
 
+issuePage.onClickCopyIssueId = function (event) {
+    const link = event.target.closest('a');
+    const id = link.getAttribute('data-issue-id');
+    lpm.utils.copyToClipboard(String(id)).then(() => {
+        lpm.toast.show('Внутренний ID скопирован');
+    });
+};
+
 issuePage.onClickCopyMarkdownIssueLink = function (event) {
     const link = event.target.closest('a');
     const url = link.getAttribute('data-issue-url');
