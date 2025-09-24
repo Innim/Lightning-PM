@@ -127,6 +127,19 @@ class HTMLHelper
         return $markdownText;
     }
 
+    /**
+     * Строит строку атрибутов data-* для HTML элемента.
+     * @param  array $data Массив ключ-значение для атрибутов.
+     * @return string      Строка атрибутов data-*, готовая для вставки в HTML тег.
+     */
+    public static function buildDataAttributes(array $data)
+    {
+        $result = '';
+        foreach ($data as $key => $value) {
+            $result .= ' data-' . $key . '="' . htmlspecialchars($value) . '"';
+        }
+        return $result;
+    }
 
     private static function processCode($text, $func)
     {

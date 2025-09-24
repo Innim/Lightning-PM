@@ -97,12 +97,30 @@ $(document).ready(
             const id = $(this).data('commentId');
             const el = $(this);
             const result = confirm('Удалить комментарий?');
-            if (result) {
-                issuePage.deleteComment(id, function (res) {
+            if (!result) return;
+
+            const branchName = $(this).data('branchName');
+            const doDelete = (alsoDeleteBranch) => {
+                preloader.show();
+                issuePage.deleteComment(id, alsoDeleteBranch, function (res) {
+                    preloader.hide();
                     if (res) {
                         el.parents('div.comments-list-item').remove();
                     }
                 });
+            };
+
+            if (branchName) {
+                lpm.dialog.confirm({
+                    title: 'Удаление ветки',
+                    text: `Также удалить ветку <code>${branchName}</code> в репозитории?`,
+                    yesLabel: 'Да',
+                    noLabel: 'Нет',
+                    onYes: function () { doDelete(true); },
+                    onNo: function () { doDelete(false); }
+                });
+            } else {
+                doDelete(false);
             }
         });
 
@@ -1499,9 +1517,10 @@ jQuery(function ($) {
 
 });
 
-issuePage.deleteComment = (id, callback) => {
+issuePage.deleteComment = (id, deleteBranch, callback) => {
     srv.issue.deleteComment(
         id,
+        deleteBranch,
         function (res) {
             if (res.success) {
                 callback(true);

@@ -70,6 +70,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Networked commands, dependency installs, or destructive actions require explicit approval.
 - Prefer reading and patching files over shell mutations.
 - Never commit secrets. Do not hardcode tokens or passwords.
+- Commit messages must be in English; prefer a concise one-line summary, add detailed descriptions only for important or big changes.
 
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.
