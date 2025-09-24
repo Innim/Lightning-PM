@@ -261,6 +261,28 @@ class GitlabIntegration
     }
 
     /**
+     * Удаляет ветку на репозитории.
+     * @param int|string $projectId Идентификатор проекта на GitLab.
+     * @param string $name Имя удаляемой ветки.
+     * @return bool true в случае успеха, иначе false.
+     */
+    public function deleteBranch($projectId, $name)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return false;
+        }
+
+        try {
+            $client->repositories()->deleteBranch($projectId, $name);
+            return true;
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
      * Сравнивает два коммита/ветки/тега и возвращает
      * актуальный коммит в ветку $toShaOrBranch.
      * @param $projectId Идентификатор проекта на GitLab.

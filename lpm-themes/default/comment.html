@@ -12,6 +12,12 @@ $url = $issue ? $comment->getIssueCommentUrl($issue) : null;
 
 $isAutoComment = false;
 
+$deleteLinkDataAttributes = [
+  'comment-id' => $comment->id,
+  'user-id' => lpm_get_user()->getID(),
+  'time' => $comment->date,
+];
+
 $bgColorClass = '';
 $bgIconClass = '';
 if (!empty($issueComment)) {
@@ -28,7 +34,17 @@ if (!empty($issueComment)) {
   }
 
   $isAutoComment = $issueComment->isAutoComment();
+
+  if (!empty($issueComment) && $issueComment->isCreateBranch()) {
+    $branchData = $issueComment->getCreateBranchData();
+    if (!empty($branchData)) {
+      $deleteLinkDataAttributes['branch-name'] = $branchData->branchName;
+      $deleteLinkDataAttributes['branch-repo-id'] = $branchData->repositoryId;
+    }
+  }
 }
+
+$deleteLinkDataAttributesString = HTMLHelper::buildDataAttributes($deleteLinkDataAttributes);
 ?>
 
 <?php if ($isAutoComment): ?>
@@ -69,7 +85,7 @@ if (!empty($issueComment)) {
       <div class="position-absolute bottom-0 end-0">
         <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
         <a href="javascript:void(0);" id="<?='delete_comment_' . $comment->id?>" class="delete-comment" title="Удалить"
-           data-comment-id="<?=$comment->id?>" data-user-id="<?=lpm_get_user()->getID();?>" data-time="<?=$comment->date?>">
+          <?=$deleteLinkDataAttributesString?>>
           <i class="fas fa-trash-alt fa-sm"></i>
         </a>
         <?php endif; ?>
@@ -108,7 +124,7 @@ if (!empty($issueComment)) {
       <div class="position-absolute top-0 end-0">
         <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
         <a href="javascript:void(0);" id="<?='delete_comment_' . $comment->id?>" class="delete-comment" title="Удалить"
-           data-comment-id="<?=$comment->id?>" data-user-id="<?=lpm_get_user()->getID();?>" data-time="<?=$comment->date?>">
+           <?=$deleteLinkDataAttributesString?>>
           <i class="fas fa-trash-alt"></i>
         </a>
         <?php endif; ?>
