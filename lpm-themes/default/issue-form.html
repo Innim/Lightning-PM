@@ -184,23 +184,25 @@ $isHidden = !empty($isHidden)
             <label for="imagesField" class="form-label">Изображения</label>
             <input type="hidden" name="removedImages" value="">
 
-            <ul class="images-list">
-                <li>
-                    <input class="form-control" type="file" id="imagesField" name="images[]" accept="image/*"
-                            onchange="imgUpload.onSelect(event,window.lpmOptions.issueImgsCount);" multiple>
+            <ul class="images-list list-unstyled mb-0">
+                <li class="my-2 position-relative">
+                    <input class="form-control pe-5" type="file" id="imagesField" name="images[]" accept="image/*" multiple>
+                    <a href="javascript:void(0)" class="remove-upload-input position-absolute top-50 end-0 me-1 translate-middle-y text-muted d-none" title="Удалить">
+                        <i class="fa fa-times" aria-hidden="true"></i>
+                    </a>
                 </li>
             </ul>
                    
-            <ul class="images-url">
-                <li class="imgUrlTempl" style="display:none">
+            <ul class="images-url list-unstyled">
+                <li class="imgUrlTempl my-2" style="display:none">
                     <div class="input-group">
                         <input placeholder="Введите URL изображения" type="text" class="form-control" name="imgUrls[]"/>
                         <div class="input-group-text"><a class="remove-img" href="javascript:;"><i class="fas fa-trash-alt"></i></a></div>
                     </div>
                 </li>
             </ul>
-            <a name="imgByUrl" href="javascript:issueForm.addImageByUrl(undefined, true);">Добавить изображение по
-                URL</a> 
+
+            <a name="imgByUrl" href="javascript:issueForm.addImageByUrl(undefined, true);">Добавить изображение по URL</a> 
         </div>
 
         <div class="col-12">
@@ -208,8 +210,11 @@ $isHidden = !empty($isHidden)
             <input type="hidden" name="removedFiles" value="">
 
             <ul class="files-list list-unstyled mb-0">
-                <li class="file-item-upload my-2">
-                    <input class="form-control" type="file" id="issueFilesField" name="issueFiles[]" multiple>
+                <li class="file-item-upload my-2 position-relative">
+                    <input class="form-control pe-5" type="file" id="issueFilesField" name="issueFiles[]" multiple>
+                    <a href="javascript:void(0)" class="remove-upload-input position-absolute top-50 end-0 me-1 translate-middle-y text-muted d-none" title="Удалить">
+                        <i class="fa fa-times" aria-hidden="true"></i>
+                    </a>
                 </li>
             </ul>
 
@@ -318,10 +323,10 @@ $isHidden = !empty($isHidden)
     <?php endif;?>
 
     <div id="issueFormTemplates" style="display:none">
-        <li class="image-item">
+        <li class="image-item my-2 position-relative">
             <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview border border-1 rounded-3"></a>
             <input type="hidden" name="imgId" value="">
-            <a href="javascript:;" class="remove-btn remove-img"></a>
+            <a href="javascript:;" class="remove-btn remove-img align-top ms-1"></a>
         </li>
 
         <li class="file-item issue-file-item d-flex align-items-center gap-2 mb-2">

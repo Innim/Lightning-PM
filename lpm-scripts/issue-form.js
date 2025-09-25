@@ -3,12 +3,25 @@ $(function ($) {
     $('.images-list').on('click', '.pasted-img .remove-img', function () {
         $(this).parent('.pasted-img').remove();
     });
+    $('#issueForm').on('click', '.remove-upload-input', function (e) {
+        e.preventDefault();
+        issueForm.removeSelectedUploadInput(this);
+    });
     $('.files-list').on('click', '.remove-file', function (e) {
         e.preventDefault();
         issueForm.removeFile(e);
     });
     $('#issueForm .files-list').on('change', "input[name='issueFiles[]']", function (e) {
         issueForm.onFileUploadInputChange(e);
+        issueForm.toggleRemoveUploadBtn(this);
+    });
+    $('#issueForm .images-list').on('change', "input[name='images[]']", function (e) {
+        imgUpload.onSelect(e, window.lpmOptions.issueImgsCount);
+        
+        $('#issueForm .images-list li').each(function () {
+            var input = $('input[type=file]', this)[0];
+            if (input) issueForm.toggleRemoveUploadBtn(input);
+        });
     });
 
     function pasteClipboardImage(event) {
@@ -63,6 +76,7 @@ $(function ($) {
     issueForm.defaultMemberId = $('#addIssueMembers').data('defaultMemberId');
 
     issueForm.ensureFileUploadSlot();
+    issueForm.refreshUploadRemoveButtons();
 });
 
 let issueForm = {
@@ -524,7 +538,7 @@ let issueForm = {
     addImageByUrl: function (imageUrl, autofocus = false) {
         const urlLI = $("#issueForm ul.images-url > li.imgUrlTempl").clone().show();
         const imgInput = $("#issueForm ul.images-url");
-        urlLI.removeAttr('class');
+        urlLI.removeClass('imgUrlTempl');
         if (imageUrl) {
             $('input[name="imgUrls[]"]', urlLI).val(imageUrl);
         }
@@ -687,6 +701,16 @@ let issueForm = {
     onFileUploadInputChange: function () {
         issueForm.ensureFileUploadSlot();
     },
+    refreshUploadRemoveButtons: function () {
+        // Files list
+        $('#issueForm .files-list input[type=file]').each(function () {
+            issueForm.toggleRemoveUploadBtn(this);
+        });
+        // Images list
+        $('#issueForm .images-list input[type=file]').each(function () {
+            issueForm.toggleRemoveUploadBtn(this);
+        });
+    },
     ensureFileUploadSlot: function (filesList) {
         const list = filesList && filesList.length ? filesList : $('#issueForm .files-list');
         if (!list.length) return;
@@ -721,6 +745,31 @@ let issueForm = {
             issueForm.addFileUploadInput(list);
         } else if (emptyItems.length > 1) {
             $(emptyItems.slice(1)).remove();
+        }
+
+        list.children('.file-item-upload').each(function () {
+            const input = $('input[type=file]', this)[0];
+            if (input) issueForm.toggleRemoveUploadBtn(input);
+        });
+    },
+    toggleRemoveUploadBtn: function (inputEl) {
+        if (!inputEl) return;
+        var $li = $(inputEl).closest('li');
+        var $btn = $('.remove-upload-input', $li);
+        var hasFiles = inputEl.files && inputEl.files.length > 0;
+        $btn.toggleClass('d-none', !hasFiles);
+    },
+    removeSelectedUploadInput: function (btnEl) {
+        const $li = $(btnEl).closest('li');
+        const $ul = $li.closest('ul');
+
+        if ($('input[type=file]', $ul).length > 1) {
+            $(btnEl).closest('li').remove();
+            issueForm.ensureFileUploadSlot();
+        } else {
+            const input = $('input[type=file]', $li)[0];
+            input.value = '';
+            issueForm.toggleRemoveUploadBtn(input);
         }
     },
     validateIssueForm: function () {
