@@ -470,12 +470,6 @@ a.remove-btn {
     cursor             : pointer;
     display            : inline-block;
 }
-.images-list a.remove-btn
-{	
-    position           : absolute;
-    left 			   : -10px;
-	top 			   : 0px;
-}
 div.list-box {
 	overflow: scroll;
 }
@@ -535,44 +529,7 @@ ul.image-line > li {
 ul.image-line > li > img {
 	max-height: 500px;
 }
-/* список изображений */
-ul.images-list {
-	list-style: none;
-	padding: 0;
-	margin: 10px auto;
-}
-ul.images-list > li {
-	margin: 10px auto;
-	padding: 0;
-	position: relative;
-    left 	: 0px;
-	top 	: 0px;
-}
-ul.images-list > li > a {
-	display: inline-block;
-	margin: 0 5%;
-	position: relative;
-    left 	: 10px;
-	top 	: 0px;
-}
-.images-url a.remove-btn
-{	
-    position: absolute;
-    left: 300px;
-	top: 3px;
-}
-ul.images-url{
-	list-style: none;
-	margin: 10px auto;
-	margin-top: 1%;
-	padding: 0;
-}
-ul.images-url > li {
-	display: block;	
-	margin: 10px auto;
-	padding: 0px;
-	position: relative;
-}
+
 #issueForm li > a[name="imgByUrl"] {
 	margin-left: 50px;
 	font-size: small; 

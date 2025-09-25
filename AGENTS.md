@@ -44,6 +44,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - For icons FontAwesome 7 is used (free version).
 - Keep JS modular and colocated with related UI screens when possible.
 - Try to use Bootstrap 5 components and utilities before adding custom CSS.
+- Keep templates minimal: templates in `lpm-themes/` should only contain markup-related code. Move business logic and data shaping into PHP classes/services. For example, use model helpers like `LPMFile::isVideo()` to check file types instead of MIME checks in templates, and prefer rendering via `PagePrinter` methods.
 
 ## Validation
 - There is no project-wide automated test suite. Validate by:
@@ -71,6 +72,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Prefer reading and patching files over shell mutations.
 - Never commit secrets. Do not hardcode tokens or passwords.
 - Commit messages must be in English; prefer a concise one-line summary, add detailed descriptions only for important or big changes.
+   - Do not add description of meaningless changes like "update changelog" unless this is only committed change.
 
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.

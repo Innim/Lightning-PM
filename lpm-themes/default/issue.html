@@ -215,6 +215,26 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>
             </div>
             <div class="info-list-item attachments"></div>
+            <?php
+            // Render previews for uploaded video files before images
+            $videoFiles = [];
+            $filesForPreview = $issue->getFiles();
+            if (!empty($filesForPreview)) {
+                foreach ($filesForPreview as $file) {
+                    if ($file->isVideo()) {
+                        $videoFiles[] = (object) [
+                            'type' => 'video',
+                            'url'  => $file->getDownloadUrl(),
+                        ];
+                    }
+                }
+            }
+            if (!empty($videoFiles)):
+            ?>
+            <div class="info-list-item">
+                <?php lpm_print_video_list($videoFiles); ?>
+            </div>
+            <?php endif; ?>
             <?php if ($picture = $issue->getImages()): ?>
             <div class="info-list-item">
                 <ul class="images-line">
