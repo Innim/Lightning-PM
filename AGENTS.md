@@ -44,6 +44,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - For icons FontAwesome 7 is used (free version).
 - Keep JS modular and colocated with related UI screens when possible.
 - Try to use Bootstrap 5 components and utilities before adding custom CSS.
+- Keep templates minimal: templates in `lpm-themes/` should only contain markup-related code. Move business logic and data shaping into PHP classes/services. For example, use model helpers like `LPMFile::isVideo()` to check file types instead of MIME checks in templates, and prefer rendering via `PagePrinter` methods.
 
 ## Validation
 - There is no project-wide automated test suite. Validate by:

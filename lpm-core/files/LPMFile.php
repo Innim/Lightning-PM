@@ -348,4 +348,13 @@ class LPMFile extends LPMBaseObject
         $obj->sizeFormatted = FileSizeFormatter::format($this->size);
         return $obj;
     }
+
+    /**
+     * Checks if the uploaded file is a video by MIME type.
+     * @return bool
+     */
+    public function isVideo()
+    {
+        return !empty($this->mimeType) && strpos($this->mimeType, 'video/') === 0;
+    }
 }
