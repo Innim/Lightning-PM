@@ -593,6 +593,36 @@ issuePage.onClickCopyChangelogRecord = function (event) {
     });
 };
 
+issuePage.onClickCopyIssueForAI = function (event) {
+    const link = event.target.closest('a');
+    const url = link.getAttribute('data-issue-url') || window.location.href;
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+    const issueName = link.getAttribute('data-issue-name');
+    const clearedName = removeLabelsFromIssueName(issueName);
+
+    // Labels from data attribute (optional)
+    const labels = (issuePage.labels || [])
+        .filter(x => x && String(x).trim().length > 0)
+        .join(', ');
+
+    // Raw markdown description
+    const desc = $("#issueInfo .desc .raw-desc").val() || '';
+
+    let lines = [];
+    lines.push(`Issue #${idInProject}: ${clearedName}`);
+    lines.push(`URL: ${url}`);
+    if (labels) lines.push(`Метки: ${labels}`);
+    lines.push('');
+    lines.push('Описание (Markdown):');
+    lines.push(desc.trim());
+
+    const text = lines.join('\n');
+
+    lpm.utils.copyToClipboard(text).then(() => {
+        lpm.toast.show('Текст для AI скопирован');
+    });
+};
+
 function issueTitle(idInProject, issueName) {
     return idInProject + '. ' + issueName;
 }
