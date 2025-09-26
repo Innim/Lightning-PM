@@ -216,8 +216,20 @@ let issueForm = {
     },
     onShow: function () {
         window.addEventListener('beforeunload', issueForm.blockClose);
+        $("#issueForm form").off('submit.issueForm').on('submit.issueForm', function (e) {
+            const $form = $(this);
+            const $submitBtn = $(".save-line button[type=submit]", $form);
 
-        $("#issueForm form").on('submit', function() {
+            $submitBtn.prop('disabled', true);
+
+            if (!issueForm.validateIssueForm()) {
+                e.preventDefault();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                $submitBtn.prop('disabled', false);
+                return false;
+            }
+
+            // Allow navigation without unload warning on successful submit
             window.removeEventListener('beforeunload', issueForm.blockClose);
         });
     },
