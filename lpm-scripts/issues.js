@@ -296,7 +296,7 @@ function setupPasteTransformer(inputSelectors) {
         const textBefore = value.slice(0, start);
         const textAfter = value.slice(end);
 
-        // ignore if paste in link markdown
+        // ignore if paste in link markdown URL part
         const isInsideMarkdownLink = textBefore.endsWith('](') && textAfter.startsWith(')');
         if (isInsideMarkdownLink) return;
 
@@ -304,21 +304,61 @@ function setupPasteTransformer(inputSelectors) {
         const pastedText = clipboardData.getData('text');
         if (pastedText.length === 0) return;
 
-        const pattern = `^${lpmOptions.issueUrlPattern}$`;
 
         const trimmed = pastedText.trim();
-        const match = trimmed.match(pattern);
-        if (match) {
+        if (trimmed.length === 0) return;
+
+        const selectedText = value.substring(start, end);
+        
+        const issueUrlPattern = `^${lpmOptions.issueUrlPattern}$`;
+        const urlRegex = /^(https?:\/\/\S+)$/i;
+
+        // Heuristic: determine if selection is appropriate to turn into a link text
+        function selectionIsAppropriate() {
+            if (!selectedText || selectedText.trim().length === 0) return false;
+            // avoid if selection itself looks like a URL
+            if (urlRegex.test(selectedText.trim())) return false;
+            // avoid if selection contains markdown link special tokens
+            if (/[\[\]\(\)]/.test(selectedText)) return false;
+            // avoid if selection appears inside existing markdown link label or url
+            const leftCtx = textBefore.slice(-120);
+            const rightCtx = textAfter.slice(0, 120);
+            const insideLabel = /\[[^\]]*$/.test(leftCtx) && /^\][^\)]*\)/.test(rightCtx);
+            const insideUrl = /\]\([^\)]*$/.test(leftCtx) && /^\)/.test(rightCtx);
+            return !(insideLabel || insideUrl);
+        }
+
+        const issueUrlMatch = trimmed.match(issueUrlPattern);
+
+        // Special handling for issue URLs: auto-label with [#id] unless selection can be used
+        if (issueUrlMatch) {
             event.preventDefault();
 
             const s = pastedText.indexOf(trimmed);
             const preSpace = pastedText.substring(0, s);
             const postSpace = pastedText.substring(s + trimmed.length);
-            const markdownLink = `[#${match[2]}](${trimmed})`;
+            const label = selectionIsAppropriate() ? selectedText : `#${issueUrlMatch[2]}`;
+            const markdownLink = `[${label}](${trimmed})`;
 
             const text = preSpace + markdownLink + postSpace;
             target.value = textBefore + text + textAfter;
             target.selectionStart = target.selectionEnd = start + text.length;
+        } else {
+             // If a URL is pasted and there is an appropriate selection, wrap the selection as link text
+            const isGenericUrl = urlRegex.test(trimmed);
+            if (isGenericUrl && selectionIsAppropriate()) {
+                event.preventDefault();
+                const s = pastedText.indexOf(trimmed);
+                const preSpace = pastedText.substring(0, s);
+                const postSpace = pastedText.substring(s + trimmed.length);
+                const markdownLink = `[${selectedText}](${trimmed})`;
+                const text = preSpace + markdownLink + postSpace;
+                target.value = textBefore + text + textAfter;
+                // caret after the inserted link
+                const newCaret = (textBefore + text).length;
+                target.selectionStart = target.selectionEnd = newCaret;
+                return;
+            }
         }
     });
 }
