@@ -19,12 +19,24 @@ $(document).ready(function ($) {
 });
 
 const comments = {
-	saveableForm: null,
-	mrStateIcons: {
-		merged: 'fa-check-circle',
-		opened: 'fa-clock',
-		closed: 'fa-times-circle',
-	},
+    saveableForm: null,
+    mrStateIcons: {
+        merged: 'fa-check-circle',
+        opened: 'fa-clock',
+        closed: 'fa-times-circle',
+    },
+    pipelineStateIcons: {
+        success: 'fa-check-circle',
+        failed: 'fa-times-circle',
+        running: 'fa-spinner fa-spin',
+        pending: 'fa-clock',
+        canceled: 'fa-ban',
+        skipped: 'fa-forward',
+        manual: 'fa-hand-paper',
+        preparing: 'fa-cog fa-spin',
+        created: 'fa-clock',
+        scheduled: 'fa-calendar'
+    },
 	init: function () {
 		const storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
 		comments.saveableForm = new SaveableCommentForm(
@@ -83,21 +95,24 @@ const comments = {
 			$link.show();
 		}
 	},
-	updateAttachments: function ($item) {
-		let urls = parser.findLinks($item.text());
-		if (!urls) return;
+    updateAttachments: function ($item) {
+        let urls = parser.findLinks($item.text());
+        if (!urls) return;
 
-		let mrs = [];
+        let mrs = [];
+        let pipelines = [];
 
-		for (var i = 0; i < urls.length; i++) {
-			let url = urls[i];
-			if (parser.isMRUrl(url)) {
-				mrs.push(url);
-			}
-		}
+        for (var i = 0; i < urls.length; i++) {
+            let url = urls[i];
+            if (parser.isMRUrl(url)) {
+                mrs.push(url);
+            } else if (parser.isPipelineUrl(url)) {
+                pipelines.push(url);
+            }
+        }
 
-		if (mrs.length > 0) {
-			const $ul = $('.merge-requests', $item.parent('.formatted-desc'));
+        if (mrs.length > 0) {
+            const $ul = $('.merge-requests', $item.parent('.formatted-desc'));
 			mrs.forEach(function (url, i, arr) {
 				const $el = $(document.createElement('div'));
 				$ul.append($(document.createElement("li")).addClass('mt-2').append($el));
@@ -122,10 +137,61 @@ const comments = {
 						$el.empty().text(typeof res.error != 'undefined' ?
 							res.error : 'Не удалось получить данные MR.');
 					}
-				});
-			});
-		}
-	}
+                });
+            });
+        }
+
+        if (pipelines.length > 0) {
+            const $ul = $('.pipelines', $item.parent('.formatted-desc'));
+            pipelines.forEach(function (url) {
+                const $li = $(document.createElement('li')).addClass('list-group-item py-1 px-1 mt-2 rounded-2 d-flex align-items-center');
+                $ul.append($li);
+
+                $li.append(preloader.getNewIndicatorSmall());
+                srv.attachments.getPipelineInfo(url, function (res) {
+                    if (res.success) {
+                        if (res.data) {
+                            const p = res.data;
+                            const icon = comments.pipelineStateIcons[p.status] || 'fa-question-circle';
+
+                            // map status to contextual classes
+                            const ctxMap = {
+                                success: { item: 'list-group-item-success', icon: 'text-success', badge: 'badge bg-success' },
+                                failed: { item: 'list-group-item-danger', icon: 'text-danger', badge: 'badge bg-danger' },
+                                canceled: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
+                                skipped: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
+                                running: { item: 'list-group-item-info', icon: 'text-info', badge: 'badge bg-info text-dark' },
+                                pending: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                preparing: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                created: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                scheduled: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                manual: { item: 'list-group-item-primary', icon: 'text-primary', badge: 'badge bg-primary' },
+                            };
+                            const ctx = ctxMap[p.status] || { item: '', icon: 'text-muted', badge: 'badge bg-light text-dark' };
+                            const statusText = (p.status || '').replace(/_/g, ' ');
+
+                            $li.addClass(ctx.item)
+                                .empty()
+                                .append('<i class="fas ' + icon + ' me-2 ' + ctx.icon + '"></i>')
+                                .append('Pipeline <a href="' + p.url + '" class="ms-1">#' + p.id + '</a> ')
+                                .append('<span class="' + ctx.badge + ' ms-2">' + statusText + '</span>');
+                            if (p.ref) {
+                                $li.append(' <span class="small text-muted ms-2" title="Ветка/тег"><i class="fas fa-code-branch"></i> ' + p.ref + '</span>');
+                            }
+                            if (p.finishedAt) {
+                                $li.append(' <span class="small text-muted ms-2 fw-bold" title="Дата завершения">(<i class="far fa-calendar-check"></i> ' + lpm.format.date(p.finishedAt) + ')</span>');
+                            }
+                        } else {
+                            $li.remove();
+                        }
+                    } else {
+                        $li.empty().text(typeof res.error != 'undefined' ?
+                            res.error : 'Не удалось получить данные Pipeline.');
+                    }
+                });
+            });
+        }
+    }
 }
 
 function SaveableCommentForm(inputSelector, checkboxSelector, storeKey, checkboxStoreKey) {

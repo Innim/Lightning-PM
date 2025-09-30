@@ -156,6 +156,9 @@ let srv = {
         getMRInfo: function (url, onResult) {
             this.s._('getMRInfo');
         },
+        getPipelineInfo: function (url, onResult) {
+            this.s._('getPipelineInfo');
+        },
         getVideoInfo: function (url, onResult) {
             this.s._('getVideoInfo');
         },
@@ -842,6 +845,7 @@ function showError(error) {
 let parser = {
     urlRegex: /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig,
     urlMrSubpath: 'merge_requests/',
+    urlPipelineSubpath: 'pipelines/',
     isUrl: function (text) {
         return text.test(parser.urlRegex);
     },
@@ -852,6 +856,11 @@ let parser = {
         let baseUrl = lpmOptions.gitlabUrl;
         return url.indexOf(baseUrl) === 0 &&
             url.indexOf(parser.urlMrSubpath) !== -1;
+    },
+    isPipelineUrl: function (url) {
+        let baseUrl = lpmOptions.gitlabUrl;
+        return url.indexOf(baseUrl) === 0 &&
+            url.indexOf(parser.urlPipelineSubpath) !== -1;
     },
     isVideoUrl: function (url) {
         let patterns = lpmOptions.videoUrlPatterns;
