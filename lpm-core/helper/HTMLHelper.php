@@ -65,13 +65,15 @@ class HTMLHelper
      *
      * Текст внутри блока кода игнорируется (надо вызвать после codeIt()).
      * @param  string $text Текст для форматирования.
+     * @param  boolean $safeMode Включает безопасный режим, в котором запрещен сырой HTML.
      * @return string Текст с HTML разметкой форматирования.
      *
      */
-    public static function formatIt($text)
+    public static function formatIt($text, $safeMode = true)
     {
         $parsedown = new ParsedownExt();
         $parsedown->setBreaksEnabled(true);
+        $parsedown->setSafeMode($safeMode);
 
         return $parsedown->text($text);
     }
@@ -104,12 +106,11 @@ class HTMLHelper
      */
     public static function htmlTextForComment($text)
     {
-        $value = htmlspecialchars($text);
+        $value = HTMLHelper::codeIt($text, false);
+        $value = HTMLHelper::formatIt($value);
+
         // Для совместимости, чтобы старые комменты не поплыли
         $value = self::proceedBBCode($value);
-
-        $value = HTMLHelper::codeIt($value, false);
-        $value = HTMLHelper::formatIt($value, false);
 
         return $value;
     }
