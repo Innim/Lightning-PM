@@ -1525,30 +1525,6 @@ form.pass-test #passTestComment textarea.comment-text-field {
  * === end sprint targets ===
  */
 
- /* Окно выбора проекта */
-
- .select-project-popup .select-project-row {
-	margin: 10px 0;
- }
-
- /* Окно выбора проекта для создания задачи */
-
- .select-project-popup .copy-linked-issues-row {
-	display: none;
-}
-
- .select-project-popup .target-kind-row {
-	 display: none;
- }
-
- .select-project-popup.finished-mode .target-kind-row {
-	display: block;
- }
-
- .select-project-popup.copy-mode .copy-linked-issues-row {
-	display: block;
-}
-
 /**
  * Фильтры в списке задач
  */

@@ -449,28 +449,57 @@ HTML;
     </p>
 </article>
 
-<article id="selectProjectPopup" title="Выберите проект" class="select-project-popup" style="display: none;">
-    <div class="select-project-row">
+<!-- Create From Issue (Copy) Modal -->
+<div class="modal fade" id="createFromIssueCopyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Создать копию задачи</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
         <div class="mb-3">
-            <label for="projectField" class="form-label">Создать задачу в</label>
-            <select class="form-select" id="projectField"></select>
+          <label for="createFromIssueProjectCopy" class="form-label">Создать задачу в</label>
+          <select class="form-select" id="createFromIssueProjectCopy"></select>
         </div>
-    </div>
-    <div id="copyLinkedIssues" class="select-project-row copy-linked-issues-row">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="copyLinkedIssuesField">
-            <label class="form-check-label" for="copyLinkedIssuesField">
-              Копировать связи
-            </label>
-          </div>
-    </div>
-    <div id="targetKind" class="select-project-row target-kind-row">
-        <div class="mb-3">
-            <label for="targetKindField" class="form-label">Задача по</label>
-            <select class="form-select" id="targetKindField">
-                <option value="apply">реализации в другом проекте</option>
-                <option value="finished">доделкам</option>
-            </select>
+          <input class="form-check-input" type="checkbox" value="" id="createFromIssueCopyLinks">
+          <label class="form-check-label" for="createFromIssueCopyLinks">Копировать связи</label>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-primary" data-action="continue">Продолжить</button>
+      </div>
     </div>
-</article>
+  </div>
+  </div>
+
+<!-- Create From Issue (Follow-up) Modal -->
+<div class="modal fade" id="createFromIssueFinishedModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Добавить связанную задачу</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="createFromIssueProjectFinished" class="form-label">Создать задачу в</label>
+          <select class="form-select" id="createFromIssueProjectFinished"></select>
+        </div>
+        <div class="mb-3">
+          <label for="createFromIssueTargetKind" class="form-label">Задача по</label>
+          <select class="form-select" id="createFromIssueTargetKind">
+            <option value="apply">реализации в другом проекте</option>
+            <option value="finished">доделкам</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-primary" data-action="continue">Продолжить</button>
+      </div>
+    </div>
+  </div>
+</div>
