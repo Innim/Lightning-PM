@@ -688,7 +688,29 @@ function insertFormattingLink(input) {
 }
 
 function insertFormattingMarker(input, marker, single) {
-    insertFormatting(input, marker, single ? "" : marker)
+    // Special handling for blockquote: prefix every selected line with "> "
+    if (single && marker === '> ') {
+        const $input = $(input);
+        const el = $input[0];
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+
+        // Selected text only; do not auto-expand to full lines to keep behavior predictable
+        const selected = el.value.substring(start, end);
+
+        // Prefix every line (including empty) with marker
+        const transformed = selected.split('\n').map(function (line) { return marker + line; }).join('\n');
+
+        const newValue = el.value.substring(0, start) + transformed + el.value.substring(end);
+
+        $input.val(newValue).trigger('input');
+
+        // Place caret at the end of the inserted block
+        setCaretPosition(el, start + transformed.length);
+        return;
+    } else {
+        insertFormatting(input, marker, single ? "" : marker)
+    }
 }
 
 function getSelectedText(input) {
@@ -1165,28 +1187,16 @@ issuePage.merged = function () {
     if (issuePage.isCompleted()) {
         doMerge(false);
     } else {
-        $("#completeOnMergeConfirm").dialog({
-            resizable: false,
-            height: "auto",
-            width: 400,
-            modal: true,
-            buttons: {
-                Cancel: function () {
-                    $(this).dialog("close");
-                },
-                No: function () {
-                    doMerge(false);
-                    $(this).dialog("close");
-                },
-                Yes: function () {
-                    doMerge(true);
-                    $(this).dialog("close");
-                },
-            },
-            open: function () {
-                $(this).parent().find('.ui-dialog-buttonpane button:nth-child(3)').focus();
-            }
-        });
+        const $modal = $('#mergeInDevelopConfirmModal');
+        const modal = bootstrap.Modal.getOrCreateInstance($modal[0]);
+
+        $modal.off('click.merge');
+        $modal.on('click.merge', '[data-action="cancel"]', function () { modal.hide(); });
+        $modal.on('click.merge', '[data-action="no"]', function () { doMerge(false); modal.hide(); });
+        $modal.on('click.merge', '[data-action="yes"]', function () { doMerge(true); modal.hide(); });
+        $modal.one('hidden.bs.modal', function () { $modal.off('click.merge'); });
+
+        modal.show();
     }
 }
 

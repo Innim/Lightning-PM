@@ -23,6 +23,7 @@ class HTMLHelper
      * @param  boolean $htmlEncode Определяет, нужно ли заменять html символы на эквиваленты внутри
      *                             блоков кода.
      * @return string Текст, в котором уже подсвечен код.
+     * @Deprecated Используйте вместо этого ParsedownExt с включенным LpmCodeHighlight
      */
     public static function codeIt($text, $htmlEncode = true)
     {
@@ -58,22 +59,21 @@ class HTMLHelper
      * - ~зачеркнуто~
      * - __подчеркнуто__
      * - > цитаты
-     * - заменяет переносы строки на br
+     * - заменяет переносы строки на <br>
      * - преобразует url в ссылки
      * - поддержка задания списков через - (для вложенности следует использовать отступ)
      * - поддержка прочей Markdown разметки (https://ru.wikipedia.org/wiki/Markdown)
      *
-     * Текст внутри блока кода игнорируется (надо вызвать после codeIt()).
      * @param  string $text Текст для форматирования.
      * @param  boolean $safeMode Включает безопасный режим, в котором запрещен сырой HTML.
      * @return string Текст с HTML разметкой форматирования.
-     *
      */
     public static function formatIt($text, $safeMode = true)
     {
         $parsedown = new ParsedownExt();
         $parsedown->setBreaksEnabled(true);
         $parsedown->setSafeMode($safeMode);
+        $parsedown->setLpmCodeHighlight(true);
 
         return $parsedown->text($text);
     }
@@ -100,14 +100,27 @@ class HTMLHelper
     }
 
     /**
+     * Возвращает обработанный форматированный текст задачи,
+     * который можно выводить на html странице.
+     * @return string
+     */
+    public static function htmlTextForIssue($text)
+    {
+        $value = $text;
+        $value = self::getMarkdownText($value);
+        
+        return $value;
+    }
+
+    /**
      * Возвращает обработанный форматированный текст комментария,
      * который можно выводить на html странице.
      * @return string
      */
     public static function htmlTextForComment($text)
     {
-        $value = HTMLHelper::codeIt($text, false);
-        $value = HTMLHelper::formatIt($value);
+        $value = $text;
+        $value = self::getMarkdownText($value);
 
         // Для совместимости, чтобы старые комменты не поплыли
         $value = self::proceedBBCode($value);
@@ -122,10 +135,7 @@ class HTMLHelper
      */
     public static function getMarkdownText($textContent)
     {
-        $markdownText = self::codeIt($textContent);
-        $markdownText = self::formatIt($markdownText);
-
-        return $markdownText;
+        return self::formatIt($textContent);
     }
 
     /**

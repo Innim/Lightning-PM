@@ -1128,21 +1128,7 @@ SQL;
     public function getDesc()
     {
         if (empty($this->_htmlDesc)) {
-            $desc = $this->desc;
-
-            if (strpos($desc, '<ul>') !== false) {
-                // Предварительно порежем переносы в списках
-                $desc = str_replace("\r\n", "\n", $desc);
-                $desc = str_replace(array("</li>\n<li>","</li> \n<li>"), '</li><li>', $desc);
-                $desc = str_replace(array("<ul>\n<li>", "</li>\n</ul>"), array('<ul><li>', '</li></ul>'), $desc);
-            }
-
-            $desc = HTMLHelper::codeIt($desc);
-            $desc = HTMLHelper::formatIt($desc);
-            // $desc = nl2br($desc);
-            // $desc = HTMLHelper::linkIt($desc);
-
-            $this->_htmlDesc = $desc;
+            $this->_htmlDesc = HTMLHelper::htmlTextForIssue($this->desc);
         }
         
         return $this->_htmlDesc;

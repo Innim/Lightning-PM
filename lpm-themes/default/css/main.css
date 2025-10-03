@@ -970,7 +970,7 @@ table.issues-list tr.active-issue.tester {
 	position: relative;
 }
 #issueView .info-list .desc blockquote,
-.comments-list .comments-list-item .text blockquote {
+.comment-text blockquote {
 	font-size: .9em;
 	padding: 10px;
 	border:none;

@@ -442,12 +442,28 @@ HTML;
     </form>
 </article>
 
-<article id="completeOnMergeConfirm" title="Завершить задачу?" style="display: none;">
-    <p>
-        <span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>
-        Добавляется отметка о влитии в develop. Хотите также завершить задачу?
-    </p>
-</article>
+<!-- Merge In Develop Confirm Modal -->
+<div class="modal fade" id="mergeInDevelopConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Завершить задачу?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex align-items-start">
+          <i class="fas fa-triangle-exclamation text-warning me-2 mt-1" aria-hidden="true"></i>
+          <div>Добавляется отметка о влитии в develop. Хотите также завершить задачу?</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-warning" data-action="no">Нет</button>
+        <button type="button" class="btn btn-primary" data-action="yes">Да</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Create From Issue (Copy) Modal -->
 <div class="modal fade" id="createFromIssueCopyModal" tabindex="-1" aria-hidden="true">
