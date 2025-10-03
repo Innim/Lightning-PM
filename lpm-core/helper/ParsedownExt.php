@@ -13,6 +13,7 @@ class ParsedownExt extends Parsedown
     private $_underlineRegex;
     private $_userLinkRegex;
     private $_taskLinkRegex;
+    private $_useLpmCodeHighlight = false;
 
     public function __construct()
     {
@@ -35,6 +36,12 @@ class ParsedownExt extends Parsedown
 
         $issueUrlPattern = OwnUrlHelper::getIssueUrlPattern();
         $this->_taskLinkRegex = '/^\[([^\]]*)\]\((' . $issueUrlPattern . ')\)/';
+    }
+
+    public function setLpmCodeHighlight($enabled)
+    {
+        $this->_useLpmCodeHighlight = (bool)$enabled;
+        return $this;
     }
 
     // Make Markdown tables look good with Bootstrap styles
@@ -76,6 +83,58 @@ class ParsedownExt extends Parsedown
         }
 
         return $Block;
+    }
+
+    // Use LPM code highlight classes for fenced code opened by backticks
+    protected function blockFencedCode($Line)
+    {
+        $Block = parent::blockFencedCode($Line);
+
+        if (!$this->_useLpmCodeHighlight) {
+            return $Block;
+        }
+
+        // Apply only for backtick fences; leave tildes as default
+        if ($Block && isset($Line['text'][0]) && $Line['text'][0] === '`') {
+            if (isset($Block['element'])
+                && isset($Block['element']['text'])
+                && is_array($Block['element']['text'])) {
+                // Parsedown sets class as `language-<lang>` if present
+                if (!isset($Block['element']['text']['attributes'])) {
+                    $Block['element']['text']['attributes'] = array();
+                }
+
+                if (isset($Block['element']['text']['attributes']['class'])) {
+                    $cls = $Block['element']['text']['attributes']['class'];
+                    if (strpos($cls, 'language-') === 0) {
+                        $cls = substr($cls, strlen('language-'));
+                    }
+                    $cls = trim($cls);
+                    if ($cls === '') {
+                        $cls = 'no-highlight';
+                    }
+                    $Block['element']['text']['attributes']['class'] = $cls;
+                } else {
+                    // No language specified -> use explicit no-highlight
+                    $Block['element']['text']['attributes']['class'] = 'no-highlight';
+                }
+            }
+        }
+
+        return $Block;
+    }
+
+    protected function blockFencedCodeComplete($Block)
+    {
+        if ($this->_useLpmCodeHighlight
+            && isset($Block['char'])
+            && $Block['char'] === '`'
+            && isset($Block['element']['text']['text'])) {
+            // Trim leading/trailing newlines like our previous implementation
+            $Block['element']['text']['text'] = trim($Block['element']['text']['text'], "\n\r");
+        }
+
+        return parent::blockFencedCodeComplete($Block);
     }
 
     protected function inlineStrong($Excerpt)
