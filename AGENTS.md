@@ -71,8 +71,12 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Networked commands, dependency installs, or destructive actions require explicit approval.
 - Prefer reading and patching files over shell mutations.
 - Never commit secrets. Do not hardcode tokens or passwords.
-- Commit messages must be in English; prefer a concise one-line summary, add detailed descriptions only for important or big changes.
-   - Do not add description of meaningless changes like "update changelog" unless this is only committed change.
+
+## Commit Messages
+- Commit messages must be in English
+- Prefer a concise one-line summary, add detailed descriptions ONLY for important or big changes.
+- DO NOT add description of meaningless changes like "update changelog" unless this is ONLY committed change.
+- Again: do not mention changelog updates unless this is the only change.
 
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.

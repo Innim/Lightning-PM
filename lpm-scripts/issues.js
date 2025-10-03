@@ -393,14 +393,14 @@ const issuePage = {
     getIssueId: () => $('#issueView input[name=issueId]').val(),
     getRevision: () => $('#issueView input[name=revision]').val(),
     copyIssue: () => {
-        const $copyLinkedField = $("#copyLinkedIssuesField", selectProject.element);
+        const $copyLinkedField = $("#createFromIssueCopyLinks", createFromIssue.element);
         issuePage.createIssueBy(
             (issueId) => 'copy-issue:' + issueId + ':' + ($copyLinkedField.prop("checked") ? 1 : 0),
             'copy'
         );
     },
     finishedIssue: () => { 
-        const $kindField = $('#targetKindField', selectProject.element);
+        const $kindField = $('#createFromIssueTargetKind', createFromIssue.element);
         issuePage.createIssueBy(
             (issueId) => 'finished-issue:' + issueId + ':' + $kindField.val(), 
             'finished',
@@ -441,7 +441,7 @@ const issuePage = {
     },
     createIssueBy: function (hash, mode, onProjectChanged) {
         const issueId = this.getIssueId();
-        selectProject.show(this.projectId, issueId, (targetProject) => {
+        createFromIssue.show(this.projectId, issueId, (targetProject) => {
             const url = targetProject.url + '#' + (typeof hash === 'function' ? hash(issueId) : hash + ':' + issueId);
             window.open(url, '_blank');
         }, mode, onProjectChanged);

@@ -491,18 +491,19 @@ let issueForm = {
                     let desc = issue.desc;
 
                     switch (kind) {
+                        case 'related-copy':
+                            // Полная копия текста/заголовка + связь
+                            break;
                         case 'apply':
-                            desc = `Сделана в рамках другой [задачи](${issue.url}). 
-                            
-Нужно реализовать в проекте.
-                            `
+                            desc = `Сделана в рамках другой [задачи](${issue.url}). \n\nНужно реализовать в проекте.`;
                             break;
                         case 'finished':
                         default:
                             name = Issue.getCompletionName(issue.name);
+                            break;
                     }
 
-                    issueForm.setIssueBy({
+                    const data = {
                         name: name,
                         hours: issue.hours,
                         desc: desc,
@@ -518,7 +519,9 @@ let issueForm = {
                         filesInfo: [],
                         isOnBoard: issue.isOnBoard,
                         baseIds: [issue.id],
-                    });
+                    };
+
+                    issueForm.setIssueBy(data);
                 } else {
                     srv.err(res);
                 }

@@ -975,8 +975,6 @@ table.issues-list tr.active-issue.tester {
 	padding: 10px;
 	border:none;
 	border-left: solid 2px #cdcdcd;
-}
-#issueView .info-list .desc blockquote {
 	background-color: #f9f9f9;
 }
 .formatted-desc h1,
@@ -1017,9 +1015,6 @@ table.issues-list tr.active-issue.tester {
 .formatted-desc .user-link {
 	font-weight: bold;
 }
-.comments-list .comments-list-item .text blockquote {
-	background-color: #e9e9e9;
-}
 blockquote > p {
 	margin: 0;
 	padding: 0;
@@ -1031,8 +1026,6 @@ blockquote > p {
 	right: 0px;
 	margin-top: -15px;
 }
-
-
 
 /* Редактирование задачи */
 #issueForm .text-warning {
@@ -1531,30 +1524,6 @@ form.pass-test #passTestComment textarea.comment-text-field {
 /**
  * === end sprint targets ===
  */
-
- /* Окно выбора проекта */
-
- .select-project-popup .select-project-row {
-	margin: 10px 0;
- }
-
- /* Окно выбора проекта для создания задачи */
-
- .select-project-popup .copy-linked-issues-row {
-	display: none;
-}
-
- .select-project-popup .target-kind-row {
-	 display: none;
- }
-
- .select-project-popup.finished-mode .target-kind-row {
-	display: block;
- }
-
- .select-project-popup.copy-mode .copy-linked-issues-row {
-	display: block;
-}
 
 /**
  * Фильтры в списке задач
