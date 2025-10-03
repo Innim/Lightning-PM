@@ -100,14 +100,29 @@ class HTMLHelper
     }
 
     /**
+     * Возвращает обработанный форматированный текст задачи,
+     * который можно выводить на html странице.
+     * @return string
+     */
+    public static function htmlTextForIssue($text)
+    {
+        $value = $text;
+
+        $value = self::getMarkdownText($value);
+
+        return $value;
+    }
+
+    /**
      * Возвращает обработанный форматированный текст комментария,
      * который можно выводить на html странице.
      * @return string
      */
     public static function htmlTextForComment($text)
     {
-        $value = HTMLHelper::codeIt($text, false);
-        $value = HTMLHelper::formatIt($value);
+        $value = $text;
+
+        $value = self::getMarkdownText($value);
 
         // Для совместимости, чтобы старые комменты не поплыли
         $value = self::proceedBBCode($value);
