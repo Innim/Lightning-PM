@@ -688,7 +688,29 @@ function insertFormattingLink(input) {
 }
 
 function insertFormattingMarker(input, marker, single) {
-    insertFormatting(input, marker, single ? "" : marker)
+    // Special handling for blockquote: prefix every selected line with "> "
+    if (single && marker === '> ') {
+        const $input = $(input);
+        const el = $input[0];
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+
+        // Selected text only; do not auto-expand to full lines to keep behavior predictable
+        const selected = el.value.substring(start, end);
+
+        // Prefix every line (including empty) with marker
+        const transformed = selected.split('\n').map(function (line) { return marker + line; }).join('\n');
+
+        const newValue = el.value.substring(0, start) + transformed + el.value.substring(end);
+
+        $input.val(newValue).trigger('input');
+
+        // Place caret at the end of the inserted block
+        setCaretPosition(el, start + transformed.length);
+        return;
+    } else {
+        insertFormatting(input, marker, single ? "" : marker)
+    }
 }
 
 function getSelectedText(input) {
