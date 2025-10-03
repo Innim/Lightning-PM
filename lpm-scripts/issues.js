@@ -1187,28 +1187,16 @@ issuePage.merged = function () {
     if (issuePage.isCompleted()) {
         doMerge(false);
     } else {
-        $("#completeOnMergeConfirm").dialog({
-            resizable: false,
-            height: "auto",
-            width: 400,
-            modal: true,
-            buttons: {
-                Cancel: function () {
-                    $(this).dialog("close");
-                },
-                No: function () {
-                    doMerge(false);
-                    $(this).dialog("close");
-                },
-                Yes: function () {
-                    doMerge(true);
-                    $(this).dialog("close");
-                },
-            },
-            open: function () {
-                $(this).parent().find('.ui-dialog-buttonpane button:nth-child(3)').focus();
-            }
-        });
+        const $modal = $('#mergeInDevelopConfirmModal');
+        const modal = bootstrap.Modal.getOrCreateInstance($modal[0]);
+
+        $modal.off('click.merge');
+        $modal.on('click.merge', '[data-action="cancel"]', function () { modal.hide(); });
+        $modal.on('click.merge', '[data-action="no"]', function () { doMerge(false); modal.hide(); });
+        $modal.on('click.merge', '[data-action="yes"]', function () { doMerge(true); modal.hide(); });
+        $modal.one('hidden.bs.modal', function () { $modal.off('click.merge'); });
+
+        modal.show();
     }
 }
 
