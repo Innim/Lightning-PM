@@ -135,6 +135,7 @@ class HTMLHelper
      */
     public static function getMarkdownText($textContent)
     {
+        $textContent = self::normalizeLegacyFencedCode($textContent);
         return self::formatIt($textContent);
     }
 
@@ -166,5 +167,45 @@ class HTMLHelper
         $tags = implode('|', self::$bbTags);
         $value = preg_replace("/\[(" . $tags . ")\](.*?)\[\/\\1\]/", "<$1>$2</$1>", $value);
         return $value;
+    }
+
+    /**
+     * Backward compatibility for legacy fenced code format where opening and/or
+     * closing backticks (```) were on the same line as the code content.
+     *
+     * Transforms:
+     *  - "```<code"      -> "```\n<code" (only when not a language spec line)
+     *  - "...```\n"      -> "...\n```\n"
+     *
+     * Keeps standard Markdown intact, including language hints like "```js".
+     */
+    private static function normalizeLegacyFencedCode($text)
+    {
+        // Normalize legacy fenced code blocks where opening/closing ```
+        // were placed on the same line as code content.
+        // Example (legacy): ```<code...>\n...``` -> normalize to standard fences.
+        return self::processCode(
+            $text,
+            function ($matches) {
+                $res = $matches[0];
+
+                // support for legacy fenced code blocks where opening/closing ```
+                // could be placed on the same line as code content.
+                $isFencedCode = ($matches[2] === null || trim($matches[2]) === '');
+                if ($isFencedCode) {
+                    $lang = empty($matches[3]) ? '' : trim($matches[3]);
+                    if (empty($lang)) {
+                        $content = $matches[4];
+                        $trimmed = trim($content, "\s\r");
+                        $isStartAndEndWithNewline = !empty($trimmed) && mb_substr($trimmed, 0, 1) == "\n" && mb_substr($trimmed, -1) == "\n";
+                        if (!$isStartAndEndWithNewline) {
+                            $res = "```\n" . $content . "\n```";
+                        }
+                    }
+                }
+
+                return $res;
+            }
+        );
     }
 }
