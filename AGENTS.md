@@ -78,6 +78,9 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - DO NOT add description of meaningless changes like "update changelog" unless this is ONLY committed change.
 - Again: do not mention changelog updates unless this is the only change.
 
+## Changelog Language
+- All entries in `CHANGELOG.md` must be written in Russian.
+
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.
 - Wrap commands, paths, and identifiers in backticks.
