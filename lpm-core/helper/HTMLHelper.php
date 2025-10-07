@@ -23,6 +23,7 @@ class HTMLHelper
      * @param  boolean $htmlEncode Определяет, нужно ли заменять html символы на эквиваленты внутри
      *                             блоков кода.
      * @return string Текст, в котором уже подсвечен код.
+     * @Deprecated Используйте вместо этого ParsedownExt с включенным LpmCodeHighlight
      */
     public static function codeIt($text, $htmlEncode = true)
     {
@@ -58,20 +59,21 @@ class HTMLHelper
      * - ~зачеркнуто~
      * - __подчеркнуто__
      * - > цитаты
-     * - заменяет переносы строки на br
+     * - заменяет переносы строки на <br>
      * - преобразует url в ссылки
      * - поддержка задания списков через - (для вложенности следует использовать отступ)
      * - поддержка прочей Markdown разметки (https://ru.wikipedia.org/wiki/Markdown)
      *
-     * Текст внутри блока кода игнорируется (надо вызвать после codeIt()).
      * @param  string $text Текст для форматирования.
+     * @param  boolean $safeMode Включает безопасный режим, в котором запрещен сырой HTML.
      * @return string Текст с HTML разметкой форматирования.
-     *
      */
-    public static function formatIt($text)
+    public static function formatIt($text, $safeMode = true)
     {
         $parsedown = new ParsedownExt();
         $parsedown->setBreaksEnabled(true);
+        $parsedown->setSafeMode($safeMode);
+        $parsedown->setLpmCodeHighlight(true);
 
         return $parsedown->text($text);
     }
@@ -98,18 +100,30 @@ class HTMLHelper
     }
 
     /**
+     * Возвращает обработанный форматированный текст задачи,
+     * который можно выводить на html странице.
+     * @return string
+     */
+    public static function htmlTextForIssue($text)
+    {
+        $value = $text;
+        $value = self::getMarkdownText($value);
+        
+        return $value;
+    }
+
+    /**
      * Возвращает обработанный форматированный текст комментария,
      * который можно выводить на html странице.
      * @return string
      */
     public static function htmlTextForComment($text)
     {
-        $value = htmlspecialchars($text);
+        $value = $text;
+        $value = self::getMarkdownText($value);
+
         // Для совместимости, чтобы старые комменты не поплыли
         $value = self::proceedBBCode($value);
-
-        $value = HTMLHelper::codeIt($value, false);
-        $value = HTMLHelper::formatIt($value, false);
 
         return $value;
     }
@@ -121,12 +135,23 @@ class HTMLHelper
      */
     public static function getMarkdownText($textContent)
     {
-        $markdownText = self::codeIt($textContent);
-        $markdownText = self::formatIt($markdownText);
-
-        return $markdownText;
+        $textContent = self::normalizeLegacyFencedCode($textContent);
+        return self::formatIt($textContent);
     }
 
+    /**
+     * Строит строку атрибутов data-* для HTML элемента.
+     * @param  array $data Массив ключ-значение для атрибутов.
+     * @return string      Строка атрибутов data-*, готовая для вставки в HTML тег.
+     */
+    public static function buildDataAttributes(array $data)
+    {
+        $result = '';
+        foreach ($data as $key => $value) {
+            $result .= ' data-' . $key . '="' . htmlspecialchars($value) . '"';
+        }
+        return $result;
+    }
 
     private static function processCode($text, $func)
     {
@@ -142,5 +167,45 @@ class HTMLHelper
         $tags = implode('|', self::$bbTags);
         $value = preg_replace("/\[(" . $tags . ")\](.*?)\[\/\\1\]/", "<$1>$2</$1>", $value);
         return $value;
+    }
+
+    /**
+     * Backward compatibility for legacy fenced code format where opening and/or
+     * closing backticks (```) were on the same line as the code content.
+     *
+     * Transforms:
+     *  - "```<code"      -> "```\n<code" (only when not a language spec line)
+     *  - "...```\n"      -> "...\n```\n"
+     *
+     * Keeps standard Markdown intact, including language hints like "```js".
+     */
+    private static function normalizeLegacyFencedCode($text)
+    {
+        // Normalize legacy fenced code blocks where opening/closing ```
+        // were placed on the same line as code content.
+        // Example (legacy): ```<code...>\n...``` -> normalize to standard fences.
+        return self::processCode(
+            $text,
+            function ($matches) {
+                $res = $matches[0];
+
+                // support for legacy fenced code blocks where opening/closing ```
+                // could be placed on the same line as code content.
+                $isFencedCode = ($matches[2] === null || trim($matches[2]) === '');
+                if ($isFencedCode) {
+                    $lang = empty($matches[3]) ? '' : trim($matches[3]);
+                    if (empty($lang)) {
+                        $content = $matches[4];
+                        $trimmed = trim($content, "\s\r");
+                        $isStartAndEndWithNewline = !empty($trimmed) && mb_substr($trimmed, 0, 1) == "\n" && mb_substr($trimmed, -1) == "\n";
+                        if (!$isStartAndEndWithNewline) {
+                            $res = "```\n" . $content . "\n```";
+                        }
+                    }
+                }
+
+                return $res;
+            }
+        );
     }
 }

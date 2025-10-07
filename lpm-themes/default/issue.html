@@ -83,6 +83,15 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item py-1 px-2"
+                           href="javascript:void(0);"
+                           onclick="issuePage.onClickCopyIssueId(event)"
+                           data-issue-id="<?=$issue->getID();?>">
+                            <i class="fa fa-wrench me-1 fa-xs" aria-hidden="true"></i>
+                            <small>Копировать внутренний ID</small>
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item py-1 px-2" 
                             href="javascript:void(0);"
                             onclick="issuePage.onClickCopyIssueTitle(event)"
@@ -122,6 +131,17 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                             data-issue-name="<?=addslashes($issue->getName());?>">
                             <i class="fa fa-code-commit me-1 fa-xs" aria-hidden="true"></i>
                             <small>Копировать commit сообщение</small>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-1 px-2"
+                           href="javascript:void(0);"
+                           onclick="issuePage.onClickCopyIssueForAI(event)"
+                           data-issue-url="<?=$issue->getConstURL();?>"
+                           data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                           data-issue-name="<?=addslashes($issue->getName());?>">
+                            <i class="fa fa-robot me-1 fa-xs" aria-hidden="true"></i>
+                            <small>Копировать для AI</small>
                         </a>
                     </li>
                 </ul>
@@ -206,6 +226,26 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>
             </div>
             <div class="info-list-item attachments"></div>
+            <?php
+            // Render previews for uploaded video files before images
+            $videoFiles = [];
+            $filesForPreview = $issue->getFiles();
+            if (!empty($filesForPreview)) {
+                foreach ($filesForPreview as $file) {
+                    if ($file->isVideo()) {
+                        $videoFiles[] = (object) [
+                            'type' => 'video',
+                            'url'  => $file->getDownloadUrl(),
+                        ];
+                    }
+                }
+            }
+            if (!empty($videoFiles)):
+            ?>
+            <div class="info-list-item">
+                <?php lpm_print_video_list($videoFiles); ?>
+            </div>
+            <?php endif; ?>
             <?php if ($picture = $issue->getImages()): ?>
             <div class="info-list-item">
                 <ul class="images-line">
@@ -402,35 +442,81 @@ HTML;
     </form>
 </article>
 
-<article id="completeOnMergeConfirm" title="Завершить задачу?" style="display: none;">
-    <p>
-        <span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>
-        Добавляется отметка о влитии в develop. Хотите также завершить задачу?
-    </p>
-</article>
+<!-- Merge In Develop Confirm Modal -->
+<div class="modal fade" id="mergeInDevelopConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Завершить задачу?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex align-items-start">
+          <i class="fas fa-triangle-exclamation text-warning me-2 mt-1" aria-hidden="true"></i>
+          <div>Добавляется отметка о влитии в develop. Хотите также завершить задачу?</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-warning" data-action="no">Нет</button>
+        <button type="button" class="btn btn-primary" data-action="yes">Да</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-<article id="selectProjectPopup" title="Выберите проект" class="select-project-popup" style="display: none;">
-    <div class="select-project-row">
+<!-- Create From Issue (Copy) Modal -->
+<div class="modal fade" id="createFromIssueCopyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Создать копию задачи</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
         <div class="mb-3">
-            <label for="projectField" class="form-label">Создать задачу в</label>
-            <select class="form-select" id="projectField"></select>
+          <label for="createFromIssueProjectCopy" class="form-label">Создать задачу в</label>
+          <select class="form-select" id="createFromIssueProjectCopy"></select>
         </div>
-    </div>
-    <div id="copyLinkedIssues" class="select-project-row copy-linked-issues-row">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="copyLinkedIssuesField">
-            <label class="form-check-label" for="copyLinkedIssuesField">
-              Копировать связи
-            </label>
-          </div>
-    </div>
-    <div id="targetKind" class="select-project-row target-kind-row">
-        <div class="mb-3">
-            <label for="targetKindField" class="form-label">Задача по</label>
-            <select class="form-select" id="targetKindField">
-                <option value="apply">реализации в другом проекте</option>
-                <option value="finished">доделкам</option>
-            </select>
+          <input class="form-check-input" type="checkbox" value="" id="createFromIssueCopyLinks">
+          <label class="form-check-label" for="createFromIssueCopyLinks">Копировать связи</label>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-primary" data-action="continue">Продолжить</button>
+      </div>
     </div>
-</article>
+  </div>
+  </div>
+
+<!-- Create From Issue (Follow-up) Modal -->
+<div class="modal fade" id="createFromIssueFinishedModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Добавить связанную задачу</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="createFromIssueProjectFinished" class="form-label">Создать задачу в</label>
+          <select class="form-select" id="createFromIssueProjectFinished"></select>
+        </div>
+        <div class="mb-3">
+          <label for="createFromIssueTargetKind" class="form-label">Тип задачи</label>
+          <select class="form-select" id="createFromIssueTargetKind">
+            <option value="apply">Реализация в другом проекте</option>
+            <option value="finished">Доработки</option>
+            <option value="related-copy">Связанная копия</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-primary" data-action="continue">Продолжить</button>
+      </div>
+    </div>
+  </div>
+</div>

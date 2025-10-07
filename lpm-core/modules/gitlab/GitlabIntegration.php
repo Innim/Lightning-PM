@@ -5,6 +5,7 @@
 class GitlabIntegration
 {
     const URL_MR_SUBPATH = 'merge_requests/';
+    const URL_PIPELINE_SUBPATH = 'pipelines/';
 
     private static $_instance;
     /**
@@ -156,6 +157,42 @@ class GitlabIntegration
     }
 
     /**
+     * Возвращает данные Pipeline по URL.
+     * @param string $url URL пайплайна вида /group/project/-/pipelines/{id} или /group/project/pipelines/{id}
+     * @return GitlabPipeline|null
+     */
+    public function getPipeline($url)
+    {
+        $parts = parse_url($url);
+        if (empty($parts) || empty($parts['path'])) {
+            return null;
+        }
+
+        $path = $parts['path'];
+        $pos = strpos($path, self::URL_PIPELINE_SUBPATH);
+        if ($pos === false) {
+            return null;
+        }
+
+        // "-" сегмент в пути ("/-/") будет обрезан с обоих концов
+        $projectPath = trim(mb_substr($path, 0, $pos), ' -/');
+        $pipelineId = intval(mb_substr($path, $pos + mb_strlen(self::URL_PIPELINE_SUBPATH)));
+
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $res = $client->projects()->pipeline($projectPath, $pipelineId);
+            return $res === null ? null : new GitlabPipeline($res);
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return null;
+        }
+    }
+
+    /**
      * Возвращает данные проекта по идентификатору проекта.
      *
      * @return GitlabProject
@@ -254,6 +291,28 @@ class GitlabIntegration
         try {
             $res = $client->repositories()->createBranch($projectId, $name, $parent);
             return new GitlabBranch($res);
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * Удаляет ветку на репозитории.
+     * @param int|string $projectId Идентификатор проекта на GitLab.
+     * @param string $name Имя удаляемой ветки.
+     * @return bool true в случае успеха, иначе false.
+     */
+    public function deleteBranch($projectId, $name)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return false;
+        }
+
+        try {
+            $client->repositories()->deleteBranch($projectId, $name);
+            return true;
         } catch (Exception $e) {
             $this->onCallException(__METHOD__, $e);
             return false;

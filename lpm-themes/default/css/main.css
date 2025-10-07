@@ -470,12 +470,6 @@ a.remove-btn {
     cursor             : pointer;
     display            : inline-block;
 }
-.images-list a.remove-btn
-{	
-    position           : absolute;
-    left 			   : -10px;
-	top 			   : 0px;
-}
 div.list-box {
 	overflow: scroll;
 }
@@ -535,44 +529,7 @@ ul.image-line > li {
 ul.image-line > li > img {
 	max-height: 500px;
 }
-/* список изображений */
-ul.images-list {
-	list-style: none;
-	padding: 0;
-	margin: 10px auto;
-}
-ul.images-list > li {
-	margin: 10px auto;
-	padding: 0;
-	position: relative;
-    left 	: 0px;
-	top 	: 0px;
-}
-ul.images-list > li > a {
-	display: inline-block;
-	margin: 0 5%;
-	position: relative;
-    left 	: 10px;
-	top 	: 0px;
-}
-.images-url a.remove-btn
-{	
-    position: absolute;
-    left: 300px;
-	top: 3px;
-}
-ul.images-url{
-	list-style: none;
-	margin: 10px auto;
-	margin-top: 1%;
-	padding: 0;
-}
-ul.images-url > li {
-	display: block;	
-	margin: 10px auto;
-	padding: 0px;
-	position: relative;
-}
+
 #issueForm li > a[name="imgByUrl"] {
 	margin-left: 50px;
 	font-size: small; 
@@ -1013,13 +970,11 @@ table.issues-list tr.active-issue.tester {
 	position: relative;
 }
 #issueView .info-list .desc blockquote,
-.comments-list .comments-list-item .text blockquote {
+.comment-text blockquote {
 	font-size: .9em;
 	padding: 10px;
 	border:none;
 	border-left: solid 2px #cdcdcd;
-}
-#issueView .info-list .desc blockquote {
 	background-color: #f9f9f9;
 }
 .formatted-desc h1,
@@ -1060,9 +1015,6 @@ table.issues-list tr.active-issue.tester {
 .formatted-desc .user-link {
 	font-weight: bold;
 }
-.comments-list .comments-list-item .text blockquote {
-	background-color: #e9e9e9;
-}
 blockquote > p {
 	margin: 0;
 	padding: 0;
@@ -1074,8 +1026,6 @@ blockquote > p {
 	right: 0px;
 	margin-top: -15px;
 }
-
-
 
 /* Редактирование задачи */
 #issueForm .text-warning {
@@ -1574,30 +1524,6 @@ form.pass-test #passTestComment textarea.comment-text-field {
 /**
  * === end sprint targets ===
  */
-
- /* Окно выбора проекта */
-
- .select-project-popup .select-project-row {
-	margin: 10px 0;
- }
-
- /* Окно выбора проекта для создания задачи */
-
- .select-project-popup .copy-linked-issues-row {
-	display: none;
-}
-
- .select-project-popup .target-kind-row {
-	 display: none;
- }
-
- .select-project-popup.finished-mode .target-kind-row {
-	display: block;
- }
-
- .select-project-popup.copy-mode .copy-linked-issues-row {
-	display: block;
-}
 
 /**
  * Фильтры в списке задач

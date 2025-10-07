@@ -51,6 +51,18 @@ class GitlabPipeline extends \GMFramework\StreamObject
      */
     public $url;
 
+    /**
+     * Дата завершения пайплайна (если завершен).
+     * @var \GMFramework\Date
+     */
+    public $finishedAt;
+
+    /**
+     * Дата создания пайплайна.
+     * @var \GMFramework\Date
+     */
+    public $createdAt;
+
     private $_data;
 
     public function __construct($data)
@@ -68,7 +80,12 @@ class GitlabPipeline extends \GMFramework\StreamObject
 
         $this->_int('id', 'projectId');
 
+        $this->finishedAt = new \GMFramework\Date();
+        $this->createdAt = new \GMFramework\Date();
+
         $this->addAlias('web_url', 'url');
         $this->addAlias('project_id', 'projectId');
+        $this->addAlias('finished_at', 'finishedAt');
+        $this->addAlias('created_at', 'createdAt');
     }
 }

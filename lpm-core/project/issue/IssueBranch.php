@@ -294,6 +294,22 @@ SQL;
             'WHERE' => compact('repositoryId', 'name'),
         ]);
     }
+    
+    /**
+     * Удаляет связь ветки с задачей.
+     *
+     * @param  int    $issueId      Идентификатор задачи.
+     * @param  int    $repositoryId Идентификатор репозитория.
+     * @param  string $name         Имя ветки.
+     * @return bool Успех выполнения.
+     */
+    public static function remove($issueId, $repositoryId, $name)
+    {
+        return self::buildAndSaveToDbV2([
+            'DELETE' => LPMTables::ISSUE_BRANCH,
+            'WHERE'  => compact(['issueId', 'repositoryId', 'name'])
+        ]);
+    }
 
     /**
      * Issue::$id

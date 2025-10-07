@@ -239,7 +239,7 @@ class ProjectPage extends LPMPage
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
         $this->_js = array_merge(
-            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/select-project', 'goto-issue'],
+            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/create-from-issue', 'goto-issue'],
             $this->getIssueJs(),
             $this->getCommentJs()
         );

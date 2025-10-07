@@ -97,12 +97,30 @@ $(document).ready(
             const id = $(this).data('commentId');
             const el = $(this);
             const result = confirm('Удалить комментарий?');
-            if (result) {
-                issuePage.deleteComment(id, function (res) {
+            if (!result) return;
+
+            const branchName = $(this).data('branchName');
+            const doDelete = (alsoDeleteBranch) => {
+                preloader.show();
+                issuePage.deleteComment(id, alsoDeleteBranch, function (res) {
+                    preloader.hide();
                     if (res) {
                         el.parents('div.comments-list-item').remove();
                     }
                 });
+            };
+
+            if (branchName) {
+                lpm.dialog.confirm({
+                    title: 'Удаление ветки',
+                    text: `Также удалить ветку <code>${branchName}</code> в репозитории?`,
+                    yesLabel: 'Да',
+                    noLabel: 'Нет',
+                    onYes: function () { doDelete(true); },
+                    onNo: function () { doDelete(false); }
+                });
+            } else {
+                doDelete(false);
             }
         });
 
@@ -278,7 +296,7 @@ function setupPasteTransformer(inputSelectors) {
         const textBefore = value.slice(0, start);
         const textAfter = value.slice(end);
 
-        // ignore if paste in link markdown
+        // ignore if paste in link markdown URL part
         const isInsideMarkdownLink = textBefore.endsWith('](') && textAfter.startsWith(')');
         if (isInsideMarkdownLink) return;
 
@@ -286,21 +304,61 @@ function setupPasteTransformer(inputSelectors) {
         const pastedText = clipboardData.getData('text');
         if (pastedText.length === 0) return;
 
-        const pattern = `^${lpmOptions.issueUrlPattern}$`;
 
         const trimmed = pastedText.trim();
-        const match = trimmed.match(pattern);
-        if (match) {
+        if (trimmed.length === 0) return;
+
+        const selectedText = value.substring(start, end);
+        
+        const issueUrlPattern = `^${lpmOptions.issueUrlPattern}$`;
+        const urlRegex = /^(https?:\/\/\S+)$/i;
+
+        // Heuristic: determine if selection is appropriate to turn into a link text
+        function selectionIsAppropriate() {
+            if (!selectedText || selectedText.trim().length === 0) return false;
+            // avoid if selection itself looks like a URL
+            if (urlRegex.test(selectedText.trim())) return false;
+            // avoid if selection contains markdown link special tokens
+            if (/[\[\]\(\)]/.test(selectedText)) return false;
+            // avoid if selection appears inside existing markdown link label or url
+            const leftCtx = textBefore.slice(-120);
+            const rightCtx = textAfter.slice(0, 120);
+            const insideLabel = /\[[^\]]*$/.test(leftCtx) && /^\][^\)]*\)/.test(rightCtx);
+            const insideUrl = /\]\([^\)]*$/.test(leftCtx) && /^\)/.test(rightCtx);
+            return !(insideLabel || insideUrl);
+        }
+
+        const issueUrlMatch = trimmed.match(issueUrlPattern);
+
+        // Special handling for issue URLs: auto-label with [#id] unless selection can be used
+        if (issueUrlMatch) {
             event.preventDefault();
 
             const s = pastedText.indexOf(trimmed);
             const preSpace = pastedText.substring(0, s);
             const postSpace = pastedText.substring(s + trimmed.length);
-            const markdownLink = `[#${match[2]}](${trimmed})`;
+            const label = selectionIsAppropriate() ? selectedText : `#${issueUrlMatch[2]}`;
+            const markdownLink = `[${label}](${trimmed})`;
 
             const text = preSpace + markdownLink + postSpace;
             target.value = textBefore + text + textAfter;
             target.selectionStart = target.selectionEnd = start + text.length;
+        } else {
+             // If a URL is pasted and there is an appropriate selection, wrap the selection as link text
+            const isGenericUrl = urlRegex.test(trimmed);
+            if (isGenericUrl && selectionIsAppropriate()) {
+                event.preventDefault();
+                const s = pastedText.indexOf(trimmed);
+                const preSpace = pastedText.substring(0, s);
+                const postSpace = pastedText.substring(s + trimmed.length);
+                const markdownLink = `[${selectedText}](${trimmed})`;
+                const text = preSpace + markdownLink + postSpace;
+                target.value = textBefore + text + textAfter;
+                // caret after the inserted link
+                const newCaret = (textBefore + text).length;
+                target.selectionStart = target.selectionEnd = newCaret;
+                return;
+            }
         }
     });
 }
@@ -335,14 +393,14 @@ const issuePage = {
     getIssueId: () => $('#issueView input[name=issueId]').val(),
     getRevision: () => $('#issueView input[name=revision]').val(),
     copyIssue: () => {
-        const $copyLinkedField = $("#copyLinkedIssuesField", selectProject.element);
+        const $copyLinkedField = $("#createFromIssueCopyLinks", createFromIssue.element);
         issuePage.createIssueBy(
             (issueId) => 'copy-issue:' + issueId + ':' + ($copyLinkedField.prop("checked") ? 1 : 0),
             'copy'
         );
     },
     finishedIssue: () => { 
-        const $kindField = $('#targetKindField', selectProject.element);
+        const $kindField = $('#createFromIssueTargetKind', createFromIssue.element);
         issuePage.createIssueBy(
             (issueId) => 'finished-issue:' + issueId + ':' + $kindField.val(), 
             'finished',
@@ -383,7 +441,7 @@ const issuePage = {
     },
     createIssueBy: function (hash, mode, onProjectChanged) {
         const issueId = this.getIssueId();
-        selectProject.show(this.projectId, issueId, (targetProject) => {
+        createFromIssue.show(this.projectId, issueId, (targetProject) => {
             const url = targetProject.url + '#' + (typeof hash === 'function' ? hash(issueId) : hash + ':' + issueId);
             window.open(url, '_blank');
         }, mode, onProjectChanged);
@@ -495,6 +553,14 @@ issuePage.onClickCopyIssueUrl = function (event) {
     });
 };
 
+issuePage.onClickCopyIssueId = function (event) {
+    const link = event.target.closest('a');
+    const id = link.getAttribute('data-issue-id');
+    lpm.utils.copyToClipboard(String(id)).then(() => {
+        lpm.toast.show('Внутренний ID скопирован');
+    });
+};
+
 issuePage.onClickCopyMarkdownIssueLink = function (event) {
     const link = event.target.closest('a');
     const url = link.getAttribute('data-issue-url');
@@ -567,6 +633,36 @@ issuePage.onClickCopyChangelogRecord = function (event) {
     });
 };
 
+issuePage.onClickCopyIssueForAI = function (event) {
+    const link = event.target.closest('a');
+    const url = link.getAttribute('data-issue-url') || window.location.href;
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+    const issueName = link.getAttribute('data-issue-name');
+    const clearedName = removeLabelsFromIssueName(issueName);
+
+    // Labels from data attribute (optional)
+    const labels = (issuePage.labels || [])
+        .filter(x => x && String(x).trim().length > 0)
+        .join(', ');
+
+    // Raw markdown description
+    const desc = $("#issueInfo .desc .raw-desc").val() || '';
+
+    let lines = [];
+    lines.push(`Issue #${idInProject}: ${clearedName}`);
+    lines.push(`URL: ${url}`);
+    if (labels) lines.push(`Метки: ${labels}`);
+    lines.push('');
+    lines.push('Описание (Markdown):');
+    lines.push(desc.trim());
+
+    const text = lines.join('\n');
+
+    lpm.utils.copyToClipboard(text).then(() => {
+        lpm.toast.show('Текст для AI скопирован');
+    });
+};
+
 function issueTitle(idInProject, issueName) {
     return idInProject + '. ' + issueName;
 }
@@ -592,7 +688,29 @@ function insertFormattingLink(input) {
 }
 
 function insertFormattingMarker(input, marker, single) {
-    insertFormatting(input, marker, single ? "" : marker)
+    // Special handling for blockquote: prefix every selected line with "> "
+    if (single && marker === '> ') {
+        const $input = $(input);
+        const el = $input[0];
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+
+        // Selected text only; do not auto-expand to full lines to keep behavior predictable
+        const selected = el.value.substring(start, end);
+
+        // Prefix every line (including empty) with marker
+        const transformed = selected.split('\n').map(function (line) { return marker + line; }).join('\n');
+
+        const newValue = el.value.substring(0, start) + transformed + el.value.substring(end);
+
+        $input.val(newValue).trigger('input');
+
+        // Place caret at the end of the inserted block
+        setCaretPosition(el, start + transformed.length);
+        return;
+    } else {
+        insertFormatting(input, marker, single ? "" : marker)
+    }
 }
 
 function getSelectedText(input) {
@@ -1069,28 +1187,16 @@ issuePage.merged = function () {
     if (issuePage.isCompleted()) {
         doMerge(false);
     } else {
-        $("#completeOnMergeConfirm").dialog({
-            resizable: false,
-            height: "auto",
-            width: 400,
-            modal: true,
-            buttons: {
-                Cancel: function () {
-                    $(this).dialog("close");
-                },
-                No: function () {
-                    doMerge(false);
-                    $(this).dialog("close");
-                },
-                Yes: function () {
-                    doMerge(true);
-                    $(this).dialog("close");
-                },
-            },
-            open: function () {
-                $(this).parent().find('.ui-dialog-buttonpane button:nth-child(3)').focus();
-            }
-        });
+        const $modal = $('#mergeInDevelopConfirmModal');
+        const modal = bootstrap.Modal.getOrCreateInstance($modal[0]);
+
+        $modal.off('click.merge');
+        $modal.on('click.merge', '[data-action="cancel"]', function () { modal.hide(); });
+        $modal.on('click.merge', '[data-action="no"]', function () { doMerge(false); modal.hide(); });
+        $modal.on('click.merge', '[data-action="yes"]', function () { doMerge(true); modal.hide(); });
+        $modal.one('hidden.bs.modal', function () { $modal.off('click.merge'); });
+
+        modal.show();
     }
 }
 
@@ -1491,9 +1597,10 @@ jQuery(function ($) {
 
 });
 
-issuePage.deleteComment = (id, callback) => {
+issuePage.deleteComment = (id, deleteBranch, callback) => {
     srv.issue.deleteComment(
         id,
+        deleteBranch,
         function (res) {
             if (res.success) {
                 callback(true);

@@ -854,9 +854,10 @@ class IssueService extends LPMBaseService
         return $obj;
     }
 
-    public function deleteComment($id)
+    public function deleteComment($id, $deleteBranch = false)
     {
         $id = (int)$id;
+        $deleteBranch = (bool)$deleteBranch;
 
         $comment = Comment::load($id);
         if (!$comment) {
@@ -882,6 +883,25 @@ class IssueService extends LPMBaseService
             if ($comment->instanceType == LPMInstanceTypes::ISSUE) {
                 // обновляем счетчик комментариев для задачи
                 Issue::updateCommentsCounter($comment->instanceId);
+
+                // Если это коммент о создании ветки — удаляем связь и опционально саму ветку
+                if (!empty($comment->issueComment) && $comment->issueComment->isCreateBranch()) {
+                    $data = $comment->issueComment->getCreateBranchData();
+                    if ($data) {
+                        // Удаляем связь ветки с задачей
+                        IssueBranch::remove($comment->instanceId, $data->repositoryId, $data->branchName);
+
+                        // По доп. подтверждению — удаляем ветку на GitLab
+                        if ($deleteBranch) {
+                            $issue = Issue::load($comment->instanceId);
+                            if ($issue) {
+                                $project = $issue->getProject();
+                                $client = $this->requireGitlabIntegration($project);
+                                $client->deleteBranch($data->repositoryId, $data->branchName);
+                            }
+                        }
+                    }
+                }
             }
         } catch (Exception $e) {
             return $this->exception($e);

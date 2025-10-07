@@ -35,6 +35,30 @@ class AttachmentsService extends LPMBaseService
     }
 
     /**
+     * Возвращает информацию о Pipeline по URL.
+     * @param  String $url URL pipeline'а
+     * @return
+     */
+    public function getPipelineInfo($url)
+    {
+        $data = null;
+        if ($client = $this->getGitlabIfAvailable()) {
+            try {
+                $data = $client->getPipeline($url);
+            } catch (Gitlab\Exception\RuntimeException $e) {
+                // Игнорируем если не найдено - может нет прав, может удалили, может url кривой
+                if ($e->getCode() != 404) {
+                    return $this->exception($e);
+                }
+            }
+        }
+
+        $this->add2Answer('data', $data);
+
+        return $this->answer();
+    }
+
+    /**
      * Возвращает информацию о видео по ссылке.
      * @param String $url URL, ссылающийся не видео.
      * Поддерживаются ссылки на YouTube,

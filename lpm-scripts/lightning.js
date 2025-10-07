@@ -156,6 +156,9 @@ let srv = {
         getMRInfo: function (url, onResult) {
             this.s._('getMRInfo');
         },
+        getPipelineInfo: function (url, onResult) {
+            this.s._('getPipelineInfo');
+        },
         getVideoInfo: function (url, onResult) {
             this.s._('getVideoInfo');
         },
@@ -228,7 +231,7 @@ let srv = {
         exportCompletedIssuesToExcel: function (projectId, fromDate, toDate, onResult) {
             this.s._('exportCompletedIssuesToExcel');
         },
-        deleteComment: function (id, onResult) {
+        deleteComment: function (id, deleteBranch, onResult) {
             this.s._('deleteComment');
         }
     },
@@ -525,6 +528,34 @@ lpm.dialog = {
         });
 
         modal.show()
+    },
+    /**
+     * Показать диалог подтверждения.
+     * options: {
+     *   title?: string,
+     *   text: string,
+     *   yesLabel?: string, // default 'OK'
+     *   noLabel?: string,  // default 'Отмена'
+     *   centered?: boolean,
+     *   onYes?: function,
+     *   onNo?: function,
+     * }
+     */
+    confirm: function (options) {
+        const opts = options || {};
+        this.show({
+            title: opts.title || null,
+            text: opts.text || '',
+            centered: opts.centered !== false,
+            primaryBtn: opts.yesLabel || 'OK',
+            secondaryBtn: (typeof opts.noLabel === 'undefined') ? 'Отмена' : opts.noLabel,
+            onPrimary: function () {
+                if (typeof opts.onYes === 'function') opts.onYes();
+            },
+            onSecondary: function () {
+                if (typeof opts.onNo === 'function') opts.onNo();
+            }
+        });
     }
 }
 
@@ -814,6 +845,7 @@ function showError(error) {
 let parser = {
     urlRegex: /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig,
     urlMrSubpath: 'merge_requests/',
+    urlPipelineSubpath: 'pipelines/',
     isUrl: function (text) {
         return text.test(parser.urlRegex);
     },
@@ -824,6 +856,11 @@ let parser = {
         let baseUrl = lpmOptions.gitlabUrl;
         return url.indexOf(baseUrl) === 0 &&
             url.indexOf(parser.urlMrSubpath) !== -1;
+    },
+    isPipelineUrl: function (url) {
+        let baseUrl = lpmOptions.gitlabUrl;
+        return url.indexOf(baseUrl) === 0 &&
+            url.indexOf(parser.urlPipelineSubpath) !== -1;
     },
     isVideoUrl: function (url) {
         let patterns = lpmOptions.videoUrlPatterns;
