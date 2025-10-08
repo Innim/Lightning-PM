@@ -90,7 +90,102 @@ SQL;
         $sql .= " AND `i`.`authorId` = `u`.`userId` ORDER BY " . $orderBy;
 
         array_unshift($args, $sql);
+        
+        return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
+    }
 
+    /**
+     * Выборка происходит из таблиц:
+     * - задач - i
+     * - пользователей - u
+     * - проектов - p
+     * - счетчиков задачи - cnt
+     * - стикер на доске - st.
+     * @param  string $where       Условие выборки.
+     * @param  string $extraSelect Дополнительная строка полей для выборки.
+     * @param  array  $joinTables  Ассоциативный массив дополнительных таблиц для выборки
+     *                             [алиас => [таблица, условие ON]].
+     * @return array<Issue> Массив загруженных задач.
+     */
+    protected static function loadListV2($where, $extraSelect = '', $joinTables = null, $orderBy = null)
+    {
+        $instanceType = LPMInstanceTypes::ISSUE;
+
+        $passTestType = IssueCommentType::PASS_TEST;
+        $requestChangesType = IssueCommentType::REQUEST_CHANGES;
+        $mergeRequestType = IssueCommentType::MERGE_REQUEST;
+
+        $statusWait = Issue::STATUS_WAIT;
+        $statusCompleted = Issue::STATUS_COMPLETED;
+        $sql = <<<SQL
+SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
+    IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
+    `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
+    (SELECT `icm`.`type` 
+       FROM `%6\$s` `cm`
+ INNER JOIN `%7\$s` `icm` 
+         ON `icm`.`commentId` = `cm`.`id`
+      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
+        AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
+   ORDER BY `date` DESC
+      LIMIT 1) AS `t_testState`
+SQL;
+        if (!empty($extraSelect)) {
+            $sql .= ', ' . $extraSelect;
+        }
+
+        $sql .= <<<SQL
+       FROM `%1\$s` AS `i`
+ INNER JOIN `%2\$s` AS `u` ON `i`.`authorId` = `u`.`userId`
+ INNER JOIN `%4\$s` AS `p` ON `i`.`projectId` = `p`.`id`
+SQL;
+
+        $args = array(
+            LPMTables::ISSUES,
+            LPMTables::USERS,
+            LPMTables::ISSUE_COUNTERS,
+            LPMTables::PROJECTS,
+            LPMTables::SCRUM_STICKER,
+            LPMTables::COMMENTS,
+            LPMTables::ISSUE_COMMENT
+        );
+
+        if (!empty($joinTables)) {
+            $i = count($args);
+            foreach ($joinTables as $alias => $data) {
+                $table = $data[0];
+                $onCond = $data[1];
+                $sql .= ' INNER JOIN `%' . (++$i) . '$s` AS `' . $alias . '` ON ' . $onCond;
+                $args[] = $table;
+            }
+        }
+
+        $sql .= <<<SQL
+  LEFT JOIN `%3\$s` AS `cnt` ON `i`.`id` = `cnt`.`issueId` 
+  LEFT JOIN `%5\$s` AS `st` ON `i`.`id` = `st`.`issueId` 
+      WHERE `i`.`deleted` = '0'
+SQL;
+
+        if ($where != '') {
+            $sql  .= " AND " . $where;
+        }
+
+        if (empty($orderBy)) {
+            $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
+            $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
+            $orderBy = <<<SQL
+            FIELD(`i`.`status`, $statusesOrder),
+            `realCompleted` DESC, 
+            IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
+            `i`.`priority` DESC, 
+            `i`.`completeDate` ASC, `id` ASC
+            SQL;
+        }
+
+        $sql .= " ORDER BY " . $orderBy;
+
+        array_unshift($args, $sql);
+        
         return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
     }
 
@@ -225,14 +320,16 @@ WHERE;
      */
     public static function getListLinkedWith($issueId)
     {
-        $where = <<<SQL
-(
-    (`l`.`issueId` = $issueId AND `l`.`linkedIssueId` = `i`.`id`) 
-    OR
-    (`l`.`issueId` = `i`.`id` AND `l`.`linkedIssueId` = $issueId)
-)
-SQL;
-        return self::loadList($where, '(`l`.`issueId` = `i`.`id`) AS `isBaseLinked`', ['l' => LPMTables::ISSUE_LINKED]);
+        return self::loadListV2(
+            "`i`.`id` <> $issueId AND (`l`.`issueId` = $issueId OR `l`.`linkedIssueId` = $issueId)",
+            '(`l`.`issueId` = `i`.`id`) AS `isBaseLinked`', 
+            [
+                'l' => [
+                    LPMTables::ISSUE_LINKED, 
+                    '`l`.`issueId` = `i`.`id` OR `l`.`linkedIssueId` = `i`.`id`'
+                ]
+            ]
+        );
     }
 
     public static function getCurrentList()
