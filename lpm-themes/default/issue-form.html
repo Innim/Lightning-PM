@@ -331,10 +331,12 @@ $isHidden = !empty($isHidden)
 
         <li class="file-item issue-file-item d-flex align-items-center gap-2 mb-2">
             <i class="fas fa-paperclip text-muted"></i>
-            <a href="" class="issue-file-link" target="_blank" rel="noopener"><span class="file-name"></span></a>
-            <span class="text-muted small issue-file-size"></span>
+            <span class="file-name-and-size">
+                <a href="" class="issue-file-link" target="_blank" rel="noopener"><span class="file-name"></span></a>
+                <span class="text-muted small issue-file-size"></span>
+                <a href="javascript:;" class="remove-btn remove-file ms-1"></a>
+            </span>
             <input type="hidden" name="fileId" class="issue-file-id-input" value="">
-            <a href="javascript:;" class="remove-btn remove-file"></a>
         </li>
 
         <li class="members-list-item hide-sp">

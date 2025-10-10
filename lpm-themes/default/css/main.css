@@ -1198,6 +1198,60 @@ blockquote > p {
 .scrum-board-sticker.blue {
 	background-color: #cfe2ff;
 }
+
+/* Files list: handle long filenames gracefully */
+/* View mode (issue.html) */
+.issue-files-list .issue-file-item > .d-flex {
+    /* allow the left block to shrink so filename can wrap */
+    min-width: 0;
+}
+.issue-files-list .issue-file-link .file-name {
+    /* wrap long words and very long filenames */
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+.issue-files-list .issue-file-item .ms-auto,
+.issue-files-list .issue-file-item .btn {
+    /* keep download button stable and non-shrinking */
+    flex-shrink: 0;
+}
+.issue-files-list .issue-file-item .btn {
+    white-space: nowrap;
+}
+
+/* Edit mode (issue-form.html) */
+#issueForm .files-list .issue-file-item {
+    /* Use normal inline flow for edit form */
+    display: block;
+}
+#issueForm .files-list .issue-file-link .file-name {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+#issueForm .files-list .file-name-and-size {
+    /* keep name + size + delete together inline */
+    display: inline;
+}
+#issueForm .files-list .issue-file-size,
+#issueForm .files-list .remove-file,
+#issueForm .files-list .fa-paperclip {
+    /* inline flow, prevent breaking */
+    white-space: nowrap;
+}
+
+/* Small spacing between inline parts in edit form */
+#issueForm .files-list .fa-paperclip { margin-right: .5rem; }
+#issueForm .files-list .issue-file-size { margin-left: .5rem; }
+
+#issueForm .files-list .remove-file {
+    vertical-align: middle;
+}
+
+/* Ensure long names wrap but keep size inline with the last line */
+#issueForm .files-list .issue-file-link .file-name {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
 .scrum-board-sticker.red {
 	background-color: #FE3678;
 }
