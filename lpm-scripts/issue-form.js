@@ -160,7 +160,7 @@ let issueForm = {
         }
     },
     getIssueId: () => parseInt($("#issueForm input[name=issueId]").val()),
-    getRevision: () => parseInt($("#issueForm input[name=revision]").val()),
+    getRevision: () => $("#issueForm input[name=revision]").val(),
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
     handleEditState: function () {
         issueForm.onShow();  
