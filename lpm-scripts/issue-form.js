@@ -160,7 +160,7 @@ let issueForm = {
         }
     },
     getIssueId: () => parseInt($("#issueForm input[name=issueId]").val()),
-    getRevision: () => parseInt($("#issueForm input[name=revision]").val()),
+    getRevision: () => $("#issueForm input[name=revision]").val(),
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
     handleEditState: function () {
         issueForm.onShow();  
@@ -615,8 +615,7 @@ let issueForm = {
                 $('.member-sp', $item).attr('name', 'membersSp[]');
 
                 const spInt = parseInt(sp);
-                // TODO: удалить часть с проверкой на 0, тут должна быть NaN когда не надо показывать
-                if (Number.isInteger(spInt) && spInt > 0) $('.member-sp', $item).val(sp);
+                if (Number.isInteger(spInt) && spInt > 0 || sp === "0.5") $('.member-sp', $item).val(sp);
             }
         });
     },

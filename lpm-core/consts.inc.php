@@ -79,3 +79,21 @@ define('THEMES_DIR', 'lpm-themes/');
  * @var int
  */
 define('COPY_YEAR', 11);
+
+
+/**
+ * Максимальный размер загружаемого файла в мегабайтах
+ * @var int
+ */
+define('MAX_FILE_SIZE_MB', 50);
+
+/**
+ * Максимальный размер загружаемого изображения в мегабайтах
+ * @var int
+ */
+define('MAX_IMAGE_SIZE_MB', 10);
+
+// -- Вспомогательные константы --
+
+define('MAX_FILE_SIZE_BYTES', MAX_FILE_SIZE_MB * 1024 * 1024);
+define('MAX_IMAGE_SIZE_BYTES', MAX_IMAGE_SIZE_MB * 1024 * 1024);

@@ -34,7 +34,7 @@ $(document).ready(
 
         // BEGIN -- Настройка формы 
 
-        $('#issueForm .tags-line a.tag').on('click', function (e) {
+        $('#issueForm .tags-line a.tag, #issueForm .desc-toolbar .tag').on('click', function (e) {
             let a = $(e.currentTarget);
             let input = $('#issueForm textarea[name=desc]');
             let type = a.data('type');
@@ -46,10 +46,83 @@ $(document).ready(
                         break;
                 }
             } else {
-                let marker = a.data('marker')
-                if (marker) {
-                    insertFormattingMarker(input, marker, a.data('single'));
+                // Extended: allow custom before/after wrappers
+                const before = a.data('before');
+                const after = a.data('after');
+                if (before !== undefined || after !== undefined) {
+                    insertFormatting(input, before || '', after || '', 0);
+                } else {
+                    let marker = a.data('marker');
+                    if (marker) insertFormattingMarker(input, marker, a.data('single'));
                 }
+            }
+        });
+
+        // Insert standard description template
+        $('#issueForm .apply-desc-template').on('click', function () {
+            const $field = $('#issueForm textarea[name=desc]');
+            const el = $field[0];
+            const tmplStart = "### Проблема\n\n";
+            const tmplEndSection = "### Что сделать\n\n";
+
+            const current = $field.val() || '';
+            const hasTemplate = current.indexOf(tmplStart.trim()) !== -1 || current.indexOf(tmplEndSection.trim()) !== -1;
+
+            // Empty field: insert both parts and place caret after tmplStart
+            if (!current.trim()) {
+                const full = tmplStart + "\n\n" + tmplEndSection;
+                $field.val(full);
+                try {
+                    const caret = tmplStart.length;
+                    el.focus();
+                    if (typeof el.selectionStart === 'number') {
+                        el.selectionStart = el.selectionEnd = caret;
+                    }
+                } catch (_) { /* ignore caret errors */ }
+                return;
+            }
+
+            // If already has template anywhere, do not insert a second one
+            if (hasTemplate) {
+                el.focus();
+                return;
+            }
+
+            // Determine selection; if none, wrap whole content
+            let selStart = 0, selEnd = current.length;
+            if (typeof el.selectionStart === 'number') {
+                selStart = el.selectionStart;
+                selEnd = el.selectionEnd;
+                if (selEnd === selStart) {
+                    selStart = 0;
+                    selEnd = current.length;
+                }
+            }
+
+            const before = current.slice(0, selStart).trimEnd();
+            const middle = current.slice(selStart, selEnd).trim();
+            const after = current.slice(selEnd).trimStart();
+
+            const newValueStart = before + (before ? "\n\n" : "") + tmplStart + middle;
+            const newValueEnd = tmplEndSection + after;
+            const newValue = newValueStart + "\n\n" + newValueEnd;
+            const caretPos = newValueStart.length;
+
+            $field.val(newValue);
+            try {
+                el.focus();
+                if (typeof el.selectionStart === 'number') {
+                    el.selectionStart = el.selectionEnd = caretPos;
+                }
+            } catch (_) { /* ignore caret errors */ }
+        });
+
+        // Keyboard shortcut: Ctrl/Cmd + Shift + M
+        $('#issueForm textarea[name=desc]').on('keydown', function (e) {
+            const key = (e.key || '').toLowerCase();
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'm') {
+                e.preventDefault();
+                $('#issueForm .apply-desc-template').trigger('click');
             }
         });
 
@@ -153,36 +226,43 @@ $(document).ready(
 
 function bindFormattingHotkeys(selector) {
     $(selector).keydown(function (e) {
-        if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
-            return;
-
         if (e.ctrlKey || e.metaKey) {
             var code = e.originalEvent.code;
+            const hasSelection = !(typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd);
             switch (code) {
                 case 'KeyB':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '*');
                     break;
                 case 'KeyI':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '_');
                     break;
                 case 'KeyU':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '__');
                     break;
                 case 'KeyG':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '> ', true);
                     break;
                 case 'KeyH':
-                    insertFormattingMarker(this, '### ', true);
+                    if (hasSelection) {
+                        insertFormattingMarker(this, '### ', true);
+                    } else {
+                        insertHeaderAtLineStart(this, '### ');
+                    }
                     break;
                 case 'KeyK':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingLink(this);
                     break;
                 default:
                     return;
             }
 
-            event.stopImmediatePropagation();
-            event.preventDefault();
+            e.stopImmediatePropagation();
+            e.preventDefault();
         }
     });
 }
@@ -688,6 +768,11 @@ function insertFormattingLink(input) {
 }
 
 function insertFormattingMarker(input, marker, single) {
+    // For headers: insert marker at the start of the current line
+    if (single && typeof marker === 'string' && marker.indexOf('#') === 0) {
+        insertHeaderAtLineStart(input, marker);
+        return;
+    }
     // Special handling for blockquote: prefix every selected line with "> "
     if (single && marker === '> ') {
         const $input = $(input);
@@ -751,6 +836,24 @@ function insertFormatting(input, before, after, cursorShift) {
 
     //устанавливаем курсор на полученную позицию
     setCaretPosition(text, caretPos);
+}
+
+function insertHeaderAtLineStart(input, marker) {
+    const $input = $(input);
+    const el = $input[0];
+    const value = el.value;
+    const caret = el.selectionStart || 0;
+    const lineStart = value.lastIndexOf('\n', Math.max(0, caret - 1)) + 1; // 0 if not found
+
+    const before = value.substring(0, lineStart);
+    const after = value.substring(lineStart);
+    const newValue = before + marker + after;
+
+    $input.val(newValue).trigger('input');
+
+    // Move caret forward to keep it at the same logical position within the line
+    const newCaret = caret + marker.length;
+    setCaretPosition(el, newCaret);
 }
 
 function setCaretPosition(elem, pos) {
