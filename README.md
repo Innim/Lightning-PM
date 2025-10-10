@@ -98,7 +98,7 @@ php composer.phar install
 Если у вас не установлен PHP на машине, и вы используете Docker, то можно выполнить команду в контейнере:
 
 ```bash
-docker exec -w /var/www/lpm-libs/ lightning-pm php composer.phar install
+docker exec -w /var/www/html/lpm-libs/ lightning-pm php composer.phar install
 ```
 
 ### Frontend
