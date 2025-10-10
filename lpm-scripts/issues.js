@@ -34,7 +34,7 @@ $(document).ready(
 
         // BEGIN -- Настройка формы 
 
-        $('#issueForm .tags-line a.tag').on('click', function (e) {
+        $('#issueForm .tags-line a.tag, #issueForm .desc-toolbar .tag').on('click', function (e) {
             let a = $(e.currentTarget);
             let input = $('#issueForm textarea[name=desc]');
             let type = a.data('type');
@@ -46,15 +46,20 @@ $(document).ready(
                         break;
                 }
             } else {
-                let marker = a.data('marker')
-                if (marker) {
-                    insertFormattingMarker(input, marker, a.data('single'));
+                // Extended: allow custom before/after wrappers
+                const before = a.data('before');
+                const after = a.data('after');
+                if (before !== undefined || after !== undefined) {
+                    insertFormatting(input, before || '', after || '', 0);
+                } else {
+                    let marker = a.data('marker');
+                    if (marker) insertFormattingMarker(input, marker, a.data('single'));
                 }
             }
         });
 
         // Insert standard description template
-        $('#issueForm .tags-line a.apply-desc-template').on('click', function () {
+        $('#issueForm .apply-desc-template').on('click', function () {
             const $field = $('#issueForm textarea[name=desc]');
             const el = $field[0];
             const tmplStart = "### Проблема\n\n";
@@ -110,6 +115,15 @@ $(document).ready(
                     el.selectionStart = el.selectionEnd = caretPos;
                 }
             } catch (_) { /* ignore caret errors */ }
+        });
+
+        // Keyboard shortcut: Ctrl/Cmd + Shift + M
+        $('#issueForm textarea[name=desc]').on('keydown', function (e) {
+            const key = (e.key || '').toLowerCase();
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'm') {
+                e.preventDefault();
+                $('#issueForm .apply-desc-template').trigger('click');
+            }
         });
 
         $('#issueForm input[name=hours]').on('focus', function (e) {
