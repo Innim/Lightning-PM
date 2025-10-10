@@ -153,36 +153,43 @@ $(document).ready(
 
 function bindFormattingHotkeys(selector) {
     $(selector).keydown(function (e) {
-        if (typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd)
-            return;
-
         if (e.ctrlKey || e.metaKey) {
             var code = e.originalEvent.code;
+            const hasSelection = !(typeof this.selectionStart === 'undefined' || this.selectionStart == this.selectionEnd);
             switch (code) {
                 case 'KeyB':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '*');
                     break;
                 case 'KeyI':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '_');
                     break;
                 case 'KeyU':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '__');
                     break;
                 case 'KeyG':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '> ', true);
                     break;
                 case 'KeyH':
-                    insertFormattingMarker(this, '### ', true);
+                    if (hasSelection) {
+                        insertFormattingMarker(this, '### ', true);
+                    } else {
+                        insertHeaderAtLineStart(this, '### ');
+                    }
                     break;
                 case 'KeyK':
+                    if (!hasSelection) return; // requires selection
                     insertFormattingLink(this);
                     break;
                 default:
                     return;
             }
 
-            event.stopImmediatePropagation();
-            event.preventDefault();
+            e.stopImmediatePropagation();
+            e.preventDefault();
         }
     });
 }
@@ -688,6 +695,11 @@ function insertFormattingLink(input) {
 }
 
 function insertFormattingMarker(input, marker, single) {
+    // For headers: insert marker at the start of the current line
+    if (single && typeof marker === 'string' && marker.indexOf('#') === 0) {
+        insertHeaderAtLineStart(input, marker);
+        return;
+    }
     // Special handling for blockquote: prefix every selected line with "> "
     if (single && marker === '> ') {
         const $input = $(input);
@@ -751,6 +763,24 @@ function insertFormatting(input, before, after, cursorShift) {
 
     //устанавливаем курсор на полученную позицию
     setCaretPosition(text, caretPos);
+}
+
+function insertHeaderAtLineStart(input, marker) {
+    const $input = $(input);
+    const el = $input[0];
+    const value = el.value;
+    const caret = el.selectionStart || 0;
+    const lineStart = value.lastIndexOf('\n', Math.max(0, caret - 1)) + 1; // 0 if not found
+
+    const before = value.substring(0, lineStart);
+    const after = value.substring(lineStart);
+    const newValue = before + marker + after;
+
+    $input.val(newValue).trigger('input');
+
+    // Move caret forward to keep it at the same logical position within the line
+    const newCaret = caret + marker.length;
+    setCaretPosition(el, newCaret);
 }
 
 function setCaretPosition(elem, pos) {
