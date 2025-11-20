@@ -50,7 +50,9 @@ $(document).ready(
                 const before = a.data('before');
                 const after = a.data('after');
                 if (before !== undefined || after !== undefined) {
-                    insertFormatting(input, before || '', after || '', 0);
+                    const beforeStr = before !== undefined ? before.replace('\\n', '\n') : '';
+                    const afterStr = after !== undefined ? after.replace('\\n', '\n') : '';
+                    insertFormatting(input, beforeStr, afterStr, 0);
                 } else {
                     let marker = a.data('marker');
                     if (marker) insertFormattingMarker(input, marker, a.data('single'));
