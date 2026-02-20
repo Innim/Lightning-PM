@@ -675,6 +675,15 @@ issuePage.onClickCopyIssueName = function (event) {
     });
 };
 
+issuePage.onClickCopyIssueNameWithoutTags = function (event) {
+    const link = event.target.closest('a');
+    const issueName = link.getAttribute('data-issue-name');
+    const clearedName = removeLabelsFromIssueName(issueName);
+    lpm.utils.copyToClipboard(clearedName).then(() => {
+        lpm.toast.show('Название без тегов скопировано ');
+    });
+};
+
 issuePage.onClickCopyIssueTitle = function (event) {
     const link = event.target.closest('a');
     const idInProject = link.getAttribute('data-issue-id-in-project');
