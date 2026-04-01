@@ -77,8 +77,8 @@ deploy to wip:
     DEPLOY_PORT: "${WIP_SSH_PORT}"
     DEPLOY_USER: "${WIP_USER}"
     DEPLOY_PASSWORD: "${WIP_TASK_PASS}"
-    DEPLOY_UPLOAD_PATH: '/home/task/wip.task.innim.ru/upload/'
-    DEPLOY_APP_PATH: '/home/task/wip.task.innim.ru/http/'
+    DEPLOY_UPLOAD_PATH: '/srv/docker/task/wip.task.innim.ru/upload/'
+    DEPLOY_APP_PATH: '/srv/docker/task/wip.task.innim.ru/http/'
   environment:
     name: wip
     url: https://wip.task.innim.ru
