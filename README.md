@@ -32,7 +32,7 @@ TODO: Установка с помощью Docker
 1. Скопируйте все, кроме `.dev`, `_private`, `ci`, `README.md` и `CHANGELOG.md` на сервер.
 2. Переименуйте `lpm-config.inc.template.php` в `lpm-config.inc.php` и заполните его.
 3. Импортируйте БД из папки `.dev/db/dump.sql` (используется префикс таблиц по умолчанию).
-4. Убедитесь, что php имеет права на запись в папку `lpm-files` (рекурсивно).
+4. Убедитесь, что php (или пользователь, под которым работает php из Docker) имеет права на запись в папку `lpm-files` (рекурсивно).
 5. Если нужно писать логи, создайте пустую папку `_private` и дайте php права на запись в неё (логи по умолчанию пишутся в `/_private/logs/`). Не забудьте запретить к ней доступ снаружи.
 6. Обязательно задайте URL сайта заканчивающийся на `/` через глобальную константу `SITE_URL`
 
@@ -98,7 +98,7 @@ php composer.phar install
 Если у вас не установлен PHP на машине, и вы используете Docker, то можно выполнить команду в контейнере:
 
 ```bash
-docker exec -w /var/www/lpm-libs/ lightning-pm php composer.phar install
+docker exec -w /var/www/html/lpm-libs/ lightning-pm php composer.phar install
 ```
 
 ### Frontend

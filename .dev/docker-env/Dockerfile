@@ -1,57 +1,59 @@
-FROM debian:11.11-slim
-USER root
+FROM php:7.3-apache-bullseye
 
-ARG sshpass=secret
-ARG php_version=7.3
+# Image metadata
+LABEL version="1.0"
+LABEL description="Legacy PHP 7.3 application with Apache"
 
-WORKDIR /root
-ENV DEBIAN_FRONTEND noninteractive
+# Install required PHP extensions and system packages
+RUN apt-get update && apt-get install -y \
+    libicu-dev \
+    libldap2-dev \
+    libmemcached-dev \
+    libpq-dev \
+    libpspell-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libzip-dev \
+    zlib1g-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt -y update && \
-	apt -y upgrade
+# Fix LDAP library path issue
+RUN ln -fs /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
+    && ln -fs /usr/lib/x86_64-linux-gnu/liblber.so /usr/lib/liblber.so
 
-RUN apt -y install  wget mc vim openssh-server supervisor apt-transport-https lsb-release ca-certificates
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype-dir --with-jpeg-dir \
+    && docker-php-ext-configure ldap \
+    && docker-php-ext-install -j$(nproc) \
+        curl \
+        gd \
+        intl \
+        ldap \
+        mbstring \
+        mysqli \
+        pspell \
+        xml \
+        xsl \
+        zip
 
-RUN wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-RUN echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
+# Install memcached extension via PECL
+RUN pecl install memcached \
+    && docker-php-ext-enable memcached
 
-RUN apt update && apt -y install \
-  git apache2 \
-  libapache2-mod-php$php_version \
-  libapache2-mod-fcgid \
-  libapache2-mod-rpaf \
-  php$php_version \
-  php$php_version-curl \
-  php$php_version-gd \
-  php$php_version-intl \
-  php$php_version-ldap \
-  php$php_version-mcrypt \
-  php$php_version-memcached \
-  php$php_version-mysql \
-  php$php_version-pgsql \
-  php$php_version-pspell \
-  php$php_version-xsl \
-  php$php_version-mbstring \
-  php$php_version-xml \
-  php$php_version-zip
+# Enable required Apache modules
+RUN a2enmod rewrite headers
 
-RUN a2enmod actions authz_groupfile cgi headers rewrite socache_shmcb ssl
+# Copy custom configurations
+COPY config/etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf
+RUN ln -sf /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/000-default.conf
+COPY config/etc/php/7.3/php.ini /usr/local/etc/php/php.ini
 
-ADD config/etc/apache2/apache2.conf /etc/apache2/apache2.conf
-ADD config/etc/apache2/sites-available /etc/apache2/sites-available
-ADD config/etc/apache2/sites-enabled /etc/apache2/sites-enabled
+# Only expose port 80 (nginx handles HTTPS)
+EXPOSE 80
 
-ADD config/etc/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
-
-ADD config/etc/php/$php_version/apache2/php.ini /etc/php/$php_version/apache2/php.ini
-
-
-#RUN mkdir /var/run/sshd
-#RUN echo 'root:secret' | chpasswd
-#RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-#RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-
-CMD ["/usr/bin/supervisord"]
-
-EXPOSE 80 443 22
-
+# Use the default apache2-foreground command from the base image
+CMD ["apache2-foreground"]
