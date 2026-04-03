@@ -55,8 +55,8 @@ deploy to prod:
     DEPLOY_PORT: "${PROD_SSH_PORT}"
     DEPLOY_USER: "${PROD_USER}"
     DEPLOY_PASSWORD: "${VDS01_TASK_PASS}"
-    DEPLOY_UPLOAD_PATH: '/home/task/upload/'
-    DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
+    DEPLOY_UPLOAD_PATH: '/srv/docker/task/task.innim.ru/upload/'
+    DEPLOY_APP_PATH: '/srv/docker/task/task.innim.ru/http/'
   environment:
     name: prod
     url: https://task.innim.ru
