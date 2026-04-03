@@ -21,6 +21,9 @@ class SshWorker:
                               port=self.ssh_info.port,
                               user=self.ssh_info.user,
                               connect_kwargs={'password': self.ssh_info.password})
+        print(f'Connecting to {self.ssh_info.host}:{self.ssh_info.port} as {self.ssh_info.user}')
+        self.fab.open()
+        print('Connected.')
 
     def ssh_cmd(self, cmd: str, warn=False):
         print(f'[{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] >> {cmd}')

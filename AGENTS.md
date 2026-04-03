@@ -20,7 +20,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Docker compose lives in `.dev/docker-env/`.
   - Start: from `.dev/docker-env/` run `docker-compose up` (or `-d`).
   - Rebuild: `docker-compose up --build` if `Dockerfile` changes.
-  - Composer (inside container): `docker exec -w /var/www/lpm-libs/ lightning-pm php composer.phar install`.
+  - Composer (inside container): `docker exec -w /var/www/html/lpm-libs/ lightning-pm php composer.phar install`.
 - PHP settings: `short_open_tag = On` (see `README.md`).
 
 ## Editing Rules (for the assistant)

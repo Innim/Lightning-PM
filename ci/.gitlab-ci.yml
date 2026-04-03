@@ -54,9 +54,9 @@ deploy to prod:
     DEPLOY_HOST: "${PROD_HOST}"
     DEPLOY_PORT: "${PROD_SSH_PORT}"
     DEPLOY_USER: "${PROD_USER}"
-    DEPLOY_PASSWORD: "${VDS01_TASK_PASS}"
-    DEPLOY_UPLOAD_PATH: '/home/task/upload/'
-    DEPLOY_APP_PATH: '/home/task/www/task.innim.ru/http/'
+    DEPLOY_PASSWORD: "${PROD_TASK_PASS}"
+    DEPLOY_UPLOAD_PATH: '/srv/docker/task/task.innim.ru/upload/'
+    DEPLOY_APP_PATH: '/srv/docker/task/task.innim.ru/http/'
   environment:
     name: prod
     url: https://task.innim.ru
@@ -64,3 +64,25 @@ deploy to prod:
     - echo "start deploy to ${DEPLOY_HOST}"
     - python --version
     - python ./ci/main.py prod_deploy
+    
+deploy to wip:
+  image: python:3.8
+  stage: deploy
+  only:
+    - pipe/wip
+  tags:
+    - docker
+  variables:
+    DEPLOY_HOST: "${WIP_HOST}"
+    DEPLOY_PORT: "${WIP_SSH_PORT}"
+    DEPLOY_USER: "${WIP_USER}"
+    DEPLOY_PASSWORD: "${WIP_TASK_PASS}"
+    DEPLOY_UPLOAD_PATH: '/srv/docker/task/wip.task.innim.ru/upload/'
+    DEPLOY_APP_PATH: '/srv/docker/task/wip.task.innim.ru/http/'
+  environment:
+    name: wip
+    url: https://wip.task.innim.ru
+  script:
+    - echo "start deploy to ${DEPLOY_HOST}"
+    - python --version
+    - python ./ci/main.py test_deploy
