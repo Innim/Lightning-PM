@@ -2,7 +2,7 @@ services:
   web:
     build: ./
     image: lightning-pm-web:latest 
-    container_name: "lightning-pm"
+    container_name: "${COMPOSE_PROJECT_NAME}"
 #    user: "$USER_ID:$GROUP_ID"
     restart: unless-stopped
     ports:
