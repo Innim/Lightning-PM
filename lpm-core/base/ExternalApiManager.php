@@ -26,6 +26,8 @@ class ExternalApiManager
         $this->register(
             new StatusExternalApi($engine)
         );
+
+        $this->register(new LPMExternalApi($engine));
     }
 
     /**

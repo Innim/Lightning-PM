@@ -7,6 +7,19 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS `lpm_api_keys`;
+CREATE TABLE `lpm_api_keys` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор ключа',
+  `userId` bigint NOT NULL COMMENT 'Пользователь-владелец ключа',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT 'Название ключа',
+  `keyHash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Хэш ключа',
+  `keyPreview` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Маскированный вид ключа',
+  `created` datetime NOT NULL COMMENT 'Дата создания',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ключ отозван',
+  PRIMARY KEY (`id`),
+  KEY `userId_deleted` (`userId`,`deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Пользовательские API ключи';
+
 DROP TABLE IF EXISTS `lpm_badges`;
 CREATE TABLE `lpm_badges` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',

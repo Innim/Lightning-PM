@@ -477,4 +477,18 @@ CREATE TABLE `lpm_files` (
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='загруженные файлы';
 
---NEXT
+-- 0.18.1
+
+-- 2026-04-27 12:00:00
+
+CREATE TABLE `lpm_api_keys` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор ключа',
+  `userId` bigint NOT NULL COMMENT 'Пользователь-владелец ключа',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT 'Название ключа',
+  `keyHash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Хэш ключа',
+  `keyPreview` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Маскированный вид ключа',
+  `created` datetime NOT NULL COMMENT 'Дата создания',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ключ отозван',
+  PRIMARY KEY (`id`),
+  KEY `userId_deleted` (`userId`,`deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Пользовательские API ключи';

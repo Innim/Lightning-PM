@@ -10,7 +10,6 @@ class UserPref extends LPMBaseObject
     public $seEditIssueForPM = false;
     public $seIssueStateForPM = false;
     public $seIssueCommentForPM = false;
-    
     public function __construct()
     {
         parent::__construct();

@@ -3,6 +3,38 @@ require_once(dirname(__FILE__) . '/../init.inc.php');
 
 class ProfileService extends LPMBaseService
 {
+    public function createApiKey($name = '')
+    {
+        try {
+            $user = $this->getUser();
+            if (!$user) {
+                return $this->error('Пользователь не найден');
+            }
+
+            $this->extract2Answer(ApiKey::createForUser($user, $name));
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    public function revokeApiKey($keyId)
+    {
+        try {
+            $userId = $this->getUserId();
+            if (!$userId) {
+                return $this->error('Пользователь не найден');
+            }
+
+            ApiKey::revokeForUser((int)$keyId, $userId);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
     public function emailPref($data)
     {
         $allowed = [

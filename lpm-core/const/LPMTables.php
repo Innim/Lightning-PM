@@ -101,6 +101,11 @@ class LPMTables
      */
     const USERS_LOG = 'users_log';
     /**
+     * Таблица API ключей пользователей.
+     * @var string
+     */
+    const API_KEYS = 'api_keys';
+    /**
      * Таблица настроек пользователей
      * @var string
      */

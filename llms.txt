@@ -1,0 +1,14 @@
+# Lightning PM API
+
+Use the authenticated API instead of scraping HTML.
+
+- Base API: `/api/v1`
+- Auth: `Authorization: Bearer <api_key>` or `X-LPM-API-Key: <api_key>`
+- Resolve issue by pasted URL: `GET /api/v1/issues/resolve?url=<issue_url>`
+- Load issue by id: `GET /api/v1/issues/{issueId}`
+- Add comment: `POST /api/v1/issues/{issueId}/comments`
+- List repositories: `GET /api/v1/projects/{projectId}/repositories`
+- List branches: `GET /api/v1/projects/{projectId}/repositories/{repositoryId}/branches`
+- Create branch: `POST /api/v1/issues/{issueId}/branches`
+
+Comments should be high-signal only: use them for tester instructions, caveats, or implementation details not already clear from the issue. Do not post routine progress updates such as branch creation or "implementation started".

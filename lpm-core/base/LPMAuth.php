@@ -28,12 +28,13 @@ class LPMAuth
     private $_userId = 0;
     private $_email = '';
     private $_cookiePath = '//';
+    private $_isSessionAuth = false;
     /**
      * @var int
      */
     private $_hashId = 0;
 
-    public function __construct($sessionId = null)
+    public function __construct($sessionId = null, ?LPMParams $params = null)
     {
         Session::getInstance($sessionId);
         $siteURL = parse_url(SITE_URL);
@@ -43,7 +44,10 @@ class LPMAuth
             $this->_cookiePath = $siteURL['path'];
         }
 
-        $this->parseSession();
+        $externalAuthResult = $this->parseExternalAuth($params);
+        if ($externalAuthResult === null) {
+            $this->parseSession();
+        }
 
         self::$current = $this;
     }
@@ -60,6 +64,7 @@ class LPMAuth
         $this->_userId  = $userId;
         $this->_email   = $email;
         $this->_isLogin = true;
+        $this->_isSessionAuth = true;
         $this->_hashId = $hashId;
         $expire = DateTimeUtils::$currentDate + LPMOptions::getInstance()->cookieExpire; // на месяц
 
@@ -94,9 +99,12 @@ class LPMAuth
 
     public function destroy()
     {
-        // удаляем устаревшие
-        $this->removeExpiredHash($this->_hashId); // и текущую
+        if ($this->_isSessionAuth) {
+            // удаляем устаревшие
+            $this->removeExpiredHash($this->_hashId); // и текущую
+        }
         $this->_isLogin = false;
+        $this->_isSessionAuth = false;
         $this->setCookie(self::COOKIE_USER_ID, '');
         $this->setCookie(self::COOKIE_HASH, '');
         Session::getInstance()->unsetVar(self::SESSION_NAME);
@@ -149,6 +157,7 @@ class LPMAuth
             $this->_email   = $data['email'];
             $this->_hashId  = (float)$data['hashId'];
             $this->_isLogin = true;
+            $this->_isSessionAuth = true;
         } elseif (!empty($_COOKIE[self::COOKIE_USER_ID]) && !empty($_COOKIE[self::COOKIE_HASH])) {
             // иначе пытаемся авторизоваться по кукам
             $db = LPMGlobals::getInstance()->getDBConnect();
@@ -170,6 +179,42 @@ class LPMAuth
                 }
             }
         }
+    }
+
+    /**
+     * Пытается авторизовать пользователя по внешнему механизму запроса.
+     *
+     * @return bool|null true если авторизация успешно выполнена,
+     *                   false если был передан внешний токен, но он невалиден,
+     *                   null если внешний токен не передавался.
+     */
+    private function parseExternalAuth(?LPMParams $params = null)
+    {
+        if ($params === null) {
+            return null;
+        }
+
+        if ($params->getArg(0) !== LightningEngine::API_PATH &&
+                $params->getArg(0) !== LightningEngine::FILES_PATH) {
+            return null;
+        }
+
+        if (!ApiKey::hasAuthDataInRequest()) {
+            return null;
+        }
+
+        $user = ApiKey::authenticateUserFromRequest();
+        if (!$user) {
+            return false;
+        }
+
+        $this->_userId = $user->getID();
+        $this->_email = $user->email;
+        $this->_isLogin = true;
+        $this->_isSessionAuth = false;
+        $this->_hashId = 0;
+
+        return true;
     }
 
     private function updateSession()
