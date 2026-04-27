@@ -74,7 +74,9 @@ This file tells the coding assistant how to safely and efficiently work in this 
 
 ## Commit Messages
 - Commit messages must be in English
+- Use Conventional Commits style: `type: summary` or `type(scope): summary`.
 - Prefer a concise one-line summary, add detailed descriptions ONLY for important or big changes.
+- Common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `release`.
 - DO NOT add description of meaningless changes like "update changelog" unless this is ONLY committed change.
 - Again: do not mention changelog updates unless this is the only change.
 

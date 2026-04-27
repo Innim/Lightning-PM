@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lightning PM Issue"
+  short_description: "Implement work from Lightning PM issues"
+  default_prompt: "Use $lightning-pm-issue to start implementing this Lightning PM issue from its link, using the HTTP API as source of truth."
