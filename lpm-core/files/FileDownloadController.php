@@ -28,7 +28,8 @@ class FileDownloadController
             throw new ForbiddenException('Authentication required to download file');
         }
 
-        $access = $this->canDownload($file);
+        $user = $this->engine->getUser();
+        $access = $this->canDownload($file, $user->getID());
         if ($access === null) {
             throw new NotFoundException('Access check failed: related item not found');
         }
@@ -40,7 +41,7 @@ class FileDownloadController
         $this->streamFile($file);
     }
 
-    private function canDownload(LPMFile $file)
+    private function canDownload(LPMFile $file, $userId)
     {
         $links = LPMFile::loadInstanceLinks($file->fileId);
         if (empty($links)) {
@@ -58,7 +59,7 @@ class FileDownloadController
                     }
 
                     $hasExistingInstances = true;
-                    if ($issue->checkViewPermit($this->engine->getUserId())) {
+                    if ($issue->checkViewPermit($userId)) {
                         return true;
                     }
                     break;

@@ -40,6 +40,7 @@ class ProfilePage extends LPMPage
 
                 $this->addTmplVar('user', $user);
                 $this->addTmplVar('isPM', Member::isPMForAnyProject($user->getID()));
+                $this->addTmplVar('apiKeys', ApiKey::loadListByUserId($user->getID()));
             }
         }
         

@@ -317,6 +317,12 @@ let srv = {
         },
         newPass: function (currentPass, newPass, onResult) {
             this.s._('newPass');
+        },
+        createApiKey: function (name, onResult) {
+            this.s._('createApiKey');
+        },
+        revokeApiKey: function (keyId, onResult) {
+            this.s._('revokeApiKey');
         }
     },
     users: {

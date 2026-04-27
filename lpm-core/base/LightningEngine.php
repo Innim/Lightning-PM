@@ -126,7 +126,7 @@ class LightningEngine
 
         self::$_instance = $this;
         $this->_params       = new LPMParams();
-        $this->_auth         = new LPMAuth($this->_params->getQueryArg(LPMParams::QUERY_ARG_SID));
+        $this->_auth         = new LPMAuth($this->_params->getQueryArg(LPMParams::QUERY_ARG_SID), $this->_params);
         $this->_pagesManager = new PagesManager($this);
         $this->_constructor   = new PageConstructor($this->_pagesManager);
         $this->_apiManager   = new ExternalApiManager($this);

@@ -19,6 +19,7 @@
             <!-- 
         <li><a href="#" onclick="return false;">Изменить</a></li> -->
             <li><a href="#" onclick="return profilePage.changePass();">Сменить пароль</a></li>
+            <li><a href="#" onclick="return profilePage.showApiKeys();">API ключи</a></li>
             <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li>
         </ul>
         <ol id="profileInfo" class="info-list">
@@ -145,6 +146,53 @@
                     <button class="btn btn-secondary" type="reset">Отмена</button>
                 </p>
             </form>
+        </article>
+
+        <article id="apiKeysSettings" class="hidden-state">
+            <p class="text-muted mb-3">
+                Используются для внешнего API <code>/api/v1/...</code> и доступа к файлам задачи от имени текущего пользователя.
+            </p>
+
+            <p>
+                <button type="button" class="btn btn-primary" onclick="profilePage.createApiKey();">Создать ключ</button>
+            </p>
+
+            <div id="apiKeysEmpty" class="<?php if (!empty($apiKeys)): ?>d-none <?php endif; ?>text-muted mb-3">
+                Ключей пока нет.
+            </div>
+
+            <div id="apiKeysTable" class="<?php if (empty($apiKeys)): ?>d-none <?php endif; ?>table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Ключ</th>
+                            <th>Создан</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($apiKeys as $apiKey): ?>
+                        <tr id="apiKeyRow-<?=$apiKey->id;?>">
+                            <td><?=$apiKey->keyPreview;?></td>
+                            <td><?=$apiKey->getCreatedLabel();?></td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="profilePage.revokeApiKey(<?=$apiKey->id;?>);">Отозвать</button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="apiKeyResult" class="alert alert-warning mt-3 d-none" role="alert">
+                <div class="fw-bold mb-2">Скопируйте ключ сейчас: повторно он не показывается.</div>
+                <div class="input-group">
+                    <input id="apiKeyValue" type="text" class="form-control" readonly />
+                    <button type="button" class="btn btn-outline-secondary" onclick="return profilePage.copyApiKey();" title="Копировать" aria-label="Копировать">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
         </article>
     </article>
 </div>

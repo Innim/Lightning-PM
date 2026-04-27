@@ -6,6 +6,7 @@ $(document).ready(
         states.addState($("#changePass"), 'changepass', profilePage.onChangePass);
         //states.addState( $("#" ), 'edit', profilePage. );
         states.addState($("#userSettings"), 'settings', profilePage.onShowSettings);
+        states.addState($("#apiKeysSettings"), 'api-keys', profilePage.onShowApiKeys);
     }
 );
 
@@ -28,12 +29,22 @@ profilePage.changePass = function () {
     return false;
 }
 
+profilePage.showApiKeys = function () {
+    window.location.hash = 'api-keys';
+    states.updateView();
+    return false;
+};
+
 profilePage.onShowInfo = function () {
     $('#profilePanel > h3').text('Информация');
 };
 
 profilePage.onShowSettings = function () {
     $('#profilePanel > h3').text('Настройки');
+};
+
+profilePage.onShowApiKeys = function () {
+    $('#profilePanel > h3').text('API ключи');
 };
 
 profilePage.onChangePass = function () {
@@ -123,5 +134,88 @@ profilePage.saveEmailPref = function () {
             }
         }
     );
+    return false;
+};
+
+profilePage.createApiKey = function () {
+    preloader.show();
+    srv.profile.createApiKey('', function (res) {
+        preloader.hide();
+        if (!res.success) {
+            srv.err(res);
+            return;
+        }
+
+        profilePage.upsertApiKey(res.key);
+        $('#apiKeyValue').val(res.token).trigger('focus').trigger('select');
+        $('#apiKeyResult').removeClass('d-none');
+        messages.info('Сохранено');
+    });
+};
+
+profilePage.revokeApiKey = function (keyId) {
+    preloader.show();
+    srv.profile.revokeApiKey(keyId, function (res) {
+        preloader.hide();
+        if (!res.success) {
+            srv.err(res);
+            return;
+        }
+
+        profilePage.removeApiKey(keyId);
+        $('#apiKeyValue').val('');
+        $('#apiKeyResult').addClass('d-none');
+        messages.info('Сохранено');
+    });
+};
+
+profilePage.upsertApiKey = function (key) {
+    const id = parseInt(key.id, 10);
+    let $row = $('#apiKeyRow-' + id);
+    const html = `
+        <tr id="apiKeyRow-${id}">
+            <td>${key.preview}</td>
+            <td>${key.created}</td>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="profilePage.revokeApiKey(${id});">Отозвать</button>
+            </td>
+        </tr>
+    `;
+
+    if ($row.length > 0) {
+        $row.replaceWith(html);
+    } else {
+        $('#apiKeysEmpty').addClass('d-none');
+        $('#apiKeysTable').removeClass('d-none');
+        $('#apiKeysTable tbody').prepend(html);
+    }
+};
+
+profilePage.removeApiKey = function (keyId) {
+    $('#apiKeyRow-' + keyId).remove();
+    if ($('#apiKeysTable tbody tr').length === 0) {
+        $('#apiKeysTable').addClass('d-none');
+        $('#apiKeysEmpty').removeClass('d-none');
+    }
+};
+
+profilePage.copyApiKey = function () {
+    const $input = $('#apiKeyValue');
+    const value = $input.val();
+    if (!value) {
+        return false;
+    }
+
+    const input = $input[0];
+    input.focus();
+    input.select();
+
+    try {
+        document.execCommand('copy');
+        messages.info('Ключ скопирован');
+    } catch (e) {
+        console.error(e);
+    }
+
     return false;
 };
