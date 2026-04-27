@@ -477,7 +477,7 @@ CREATE TABLE `lpm_files` (
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='загруженные файлы';
 
---NEXT
+-- 0.18.1
 
 -- 2026-04-27 12:00:00
 
