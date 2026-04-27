@@ -1,6 +1,6 @@
 ---
 name: lightning-pm-issue
-description: Implement work described in a Lightning PM issue by using its HTTP API as the source of truth. Use when the user provides a Lightning PM issue link or asks the agent to start work from a Lightning PM issue: read the issue, comments, and attachments, choose a repository and base branch, create an issue branch, and then carry out the implementation in the local codebase without scraping HTML.
+description: Implement work described in a Lightning PM issue by using its HTTP API as the source of truth. Use when the user provides a Lightning PM issue link or asks the agent to start work from a Lightning PM issue - read the issue, comments, and attachments, choose a repository and base branch, create an issue branch, and then carry out the implementation in the local codebase without scraping HTML.
 ---
 
 # Lightning PM Issue
