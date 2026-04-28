@@ -17,8 +17,9 @@ class LPMExternalApi extends ExternalApi
     public function run($input)
     {
         try {
-            if (!$this->engine()->isAuth()) {
-                return ApiResponse::error('Authentication required', 401)->output();
+            $auth = $this->engine()->getAuth();
+            if (!$auth->isApiKeyAuth()) {
+                return ApiResponse::error('API key authentication required', 401)->output();
             }
 
             $request = new ApiRequest($this->engine(), $input);

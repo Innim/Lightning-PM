@@ -5,6 +5,7 @@ class ApiKey extends LPMBaseObject
     const TOKEN_PREFIX = 'lpm_u';
     const HEADER_API_KEY = 'HTTP_X_LPM_API_KEY';
     const HEADER_AUTHORIZATION = 'HTTP_AUTHORIZATION';
+    const HEADER_REDIRECT_AUTHORIZATION = 'REDIRECT_HTTP_AUTHORIZATION';
     const QUERY_ARG_API_KEY = 'apiKey';
 
     public static function loadListByUserId($userId)
@@ -132,16 +133,46 @@ class ApiKey extends LPMBaseObject
             return trim((string)$_SERVER[self::HEADER_API_KEY]);
         }
 
-        if (!empty($_SERVER[self::HEADER_AUTHORIZATION])) {
-            $value = trim((string)$_SERVER[self::HEADER_AUTHORIZATION]);
-            if (stripos($value, 'Bearer ') === 0) {
-                return trim(substr($value, 7));
-            }
+        $bearerToken = self::extractBearerToken();
+        if ($bearerToken !== null) {
+            return $bearerToken;
         }
 
         $query = self::getQueryArgs();
         if (!empty($query[self::QUERY_ARG_API_KEY])) {
             return trim((string)$query[self::QUERY_ARG_API_KEY]);
+        }
+
+        return null;
+    }
+
+    private static function extractBearerToken()
+    {
+        $headerCandidates = [];
+
+        if (!empty($_SERVER[self::HEADER_AUTHORIZATION])) {
+            $headerCandidates[] = $_SERVER[self::HEADER_AUTHORIZATION];
+        }
+
+        if (!empty($_SERVER[self::HEADER_REDIRECT_AUTHORIZATION])) {
+            $headerCandidates[] = $_SERVER[self::HEADER_REDIRECT_AUTHORIZATION];
+        }
+
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            if (!empty($headers['Authorization'])) {
+                $headerCandidates[] = $headers['Authorization'];
+            }
+            if (!empty($headers['authorization'])) {
+                $headerCandidates[] = $headers['authorization'];
+            }
+        }
+
+        foreach ($headerCandidates as $value) {
+            $value = trim((string)$value);
+            if (stripos($value, 'Bearer ') === 0) {
+                return trim(substr($value, 7));
+            }
         }
 
         return null;
