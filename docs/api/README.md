@@ -4,7 +4,7 @@ Lightning PM exposes version 1 of its authenticated API under `/api/v1`.
 
 ## Authentication
 
-Create or revoke user API keys in `Profile -> Settings`.
+Create or revoke user API keys in `Profile -> API Keys`.
 
 Use one of these headers:
 

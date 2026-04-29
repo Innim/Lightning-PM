@@ -12,6 +12,12 @@ Use this reference when exact endpoint names, auth headers, or payload shapes ma
 
 ## Authentication
 
+Set this environment variable before local shell calls when possible:
+
+```bash
+export LIGHTNING_PM_API_KEY='lpm_u123_...'
+```
+
 Send one of these headers:
 
 ```http
@@ -25,6 +31,12 @@ X-LPM-API-Key: <LIGHTNING_PM_API_KEY>
 ```
 
 ## Core Issue Workflow
+
+Prefer the bundled helper script for local calls:
+
+```bash
+bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' GET '/api/v1/issues/resolve?url=https://pm.example.com/project/demo/issue/891'
+```
 
 Resolve the pasted issue URL:
 
@@ -70,7 +82,7 @@ POST /api/v1/issues/{issueId}/branches
 Content-Type: application/json
 
 {
-  "name": "374-fix-duplicate-submit",
+  "name": "374.fix-duplicate-submit",
   "repositoryId": 123,
   "parentBranch": "develop"
 }
@@ -79,7 +91,10 @@ Content-Type: application/json
 Notes:
 
 - Prefer `develop` as the default parent branch unless the task or repository clearly requires another base.
-- Pass a concise branch name without a `feature/` prefix unless the project convention clearly requires one.
+- The backend prepends `feature/` automatically, so pass only the suffix in `name`.
+- Preferred format: `{issueNumber}.{short-kebab-slug}`.
+- Example: request name `891.inner-store-payment-method` becomes Git branch `feature/891.inner-store-payment-method`.
+- Do not send names like `feature/891-inner-store-payment-method`.
 - Ask the user for repository choice only when it cannot be inferred safely.
 
 ## Comment Workflow
@@ -102,6 +117,18 @@ Good comment content:
 - limitations
 - assumptions not obvious from the issue
 - rollout or recheck notes
+
+Comment text may use Markdown when it improves readability.
+
+Always append a signature that makes it clear the comment was posted by the agent on the user's behalf. Include the current agent name in the signature. Default signature template:
+
+```text
+[AI-assisted comment by <agent-name>, approved by user]
+```
+
+Replace `<agent-name>` with the actual agent name before showing the draft to the user.
+
+Before posting, show the exact final comment text to the user, including the signature, and get explicit approval.
 
 Do not post routine progress comments such as:
 
