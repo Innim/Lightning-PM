@@ -28,6 +28,18 @@ The same auth works for protected issue file URLs returned by the API.
 GET /api/v1/issues/resolve?url=https://example.com/project/demo/issue/123
 ```
 
+Note on ids:
+
+- the issue URL `/project/.../issue/123` contains `idInProject`, the project-local issue number
+- API endpoints `/api/v1/issues/{issueId}/...` expect the global unique issue `id`
+- save both values from `resolve` and use the global `id` for later `/issues/{issueId}/...` requests
+
+Example:
+
+- issue URL: `https://example.com/project/demo/issue/123`
+- resolve response: `{"id":4567,"idInProject":123,...}`
+- branch endpoint: `POST /api/v1/issues/4567/branches`
+
 2. Read the issue description, comments, images, and files from the JSON response.
 3. List repositories for the project:
 

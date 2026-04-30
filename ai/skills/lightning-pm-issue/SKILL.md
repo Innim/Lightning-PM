@@ -20,22 +20,26 @@ Prefer the bundled helper script `scripts/lpm-api.sh` over raw `curl` so API cal
 1. Ask for `LIGHTNING_PM_API_KEY` if it is not already available in the environment or task context.
 2. Use `scripts/lpm-api.sh` for API calls unless there is a specific reason not to.
 3. Resolve the pasted issue URL with `GET /api/v1/issues/resolve?url=<ISSUE_URL>`.
-4. Read the returned issue payload carefully:
+4. Save both identifiers from the resolve payload once at the start:
+   - `id`: global unique issue id for API endpoints such as `/api/v1/issues/{issueId}/...`
+   - `idInProject`: project-local issue number from the URL, used only for display, human references, and URL matching
+5. Read the returned issue payload carefully:
    - title and description
    - comments
    - images
    - attached files
    - project and issue ids
    - action URLs or repository hints when present
-5. Fetch `GET /api/v1/issues/{issueId}` if the resolve payload looks partial, stale, or omits fields you need.
-6. Download protected file URLs with the same auth headers when attachments matter for implementation or review.
-7. Infer what change needs to be implemented in the local codebase from the issue description, comments, and attachments. Use Lightning PM as the source of truth when local assumptions conflict with issue context.
-8. Infer the repository and base branch. Prefer `develop` unless the issue, repository structure, or branch list clearly indicates another parent.
-9. Ask the user for repository choice only when it cannot be inferred safely.
-10. Create the issue branch through `POST /api/v1/issues/{issueId}/branches` when implementation work is needed.
-11. Implement the described change in the local repository, using the issue context to guide scope, edge cases, and validation.
-12. Draft the exact comment text and get explicit user approval before posting any issue comment.
-13. Add a comment only when it provides value for humans, not as a progress log.
+6. Reuse the saved `id` and `idInProject` values in the rest of the workflow. Do not re-resolve before each request unless the issue URL itself changes.
+7. Fetch `GET /api/v1/issues/{issueId}` if the resolve payload looks partial, stale, or omits fields you need. Use only the saved global `id` as `{issueId}`.
+8. Download protected file URLs with the same auth headers when attachments matter for implementation or review.
+9. Infer what change needs to be implemented in the local codebase from the issue description, comments, and attachments. Use Lightning PM as the source of truth when local assumptions conflict with issue context.
+10. Infer the repository and base branch. Prefer `develop` unless the issue, repository structure, or branch list clearly indicates another parent.
+11. Ask the user for repository choice only when it cannot be inferred safely.
+12. Create the issue branch through `POST /api/v1/issues/{issueId}/branches` when implementation work is needed. Use only the saved global `id` as `{issueId}`.
+13. Implement the described change in the local repository, using the issue context to guide scope, edge cases, and validation.
+14. Draft the exact comment text and get explicit user approval before posting any issue comment.
+15. Add a comment only when it provides value for humans, not as a progress log.
 
 ## Implementation Expectation
 
@@ -106,10 +110,16 @@ bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/pro
 ```
 
 ```bash
-bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' POST /api/v1/issues/891/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
+bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
 ```
 
 The script derives the Lightning PM origin from the passed root or issue URL and always sends `X-LPM-API-Key`, which makes approval simpler than repeated direct `curl` invocations.
+
+Important id rule:
+
+- call `resolve` once at the start and keep both `id` and `idInProject`
+- use only global `id` in `/api/v1/issues/{issueId}/...` endpoints
+- use `idInProject` only for display, human-facing references, branch naming, and matching the issue URL
 
 ## Comment Policy
 

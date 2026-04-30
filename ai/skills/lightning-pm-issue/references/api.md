@@ -9,6 +9,7 @@ Use this reference when exact endpoint names, auth headers, or payload shapes ma
 - Reuse the same auth headers for protected attachment downloads.
 - Treat Lightning PM as the source of truth for issue context.
 - Treat a pasted issue link as implementation input by default, not as a read-only inspection request, unless the user explicitly asks only for analysis.
+- `idInProject` from the issue URL is not the same as the global `id` used by `/api/v1/issues/{issueId}/...` endpoints.
 
 ## Authentication
 
@@ -44,11 +45,24 @@ Resolve the pasted issue URL:
 GET /api/v1/issues/resolve?url=<ISSUE_URL>
 ```
 
+Save both ids from the resolve response once and reuse them:
+
+- `id`: global unique issue id for `/api/v1/issues/{issueId}/...`
+- `idInProject`: project-local issue number from `/project/.../issue/{idInProject}`
+
+Example:
+
+- issue URL: `https://pm.example.com/project/demo/issue/891`
+- resolve response: `{"id":43210,"idInProject":891,...}`
+- correct issue endpoint: `GET /api/v1/issues/43210`
+
 Read the issue by id when needed:
 
 ```http
 GET /api/v1/issues/{issueId}
 ```
+
+Use the resolved global `id` as `{issueId}`, not the number from the issue URL.
 
 Use the payload to inspect:
 
@@ -88,6 +102,8 @@ Content-Type: application/json
 }
 ```
 
+If the URL is `/project/demo/issue/374`, that `374` is usually `idInProject`. The `{issueId}` in this endpoint must be the resolved global `id`, for example `/api/v1/issues/43210/branches`.
+
 Notes:
 
 - Prefer `develop` as the default parent branch unless the task or repository clearly requires another base.
@@ -109,6 +125,8 @@ Content-Type: application/json
   "text": "Проверьте сценарий повторной оплаты с двойным кликом. Исправление не меняет серверную валидацию, только блокирует повторный клиентский запрос."
 }
 ```
+
+Use the same resolved global `id` here as well. Do not substitute `idInProject` from the issue URL into `/api/v1/issues/{issueId}/comments`.
 
 Good comment content:
 
