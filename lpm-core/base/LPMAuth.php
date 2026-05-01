@@ -17,6 +17,9 @@ class LPMAuth
     const SESSION_NAME   = 'lightning_auth';
     const COOKIE_USER_ID = 'uid';
     const COOKIE_HASH    = 'authHash';
+    const AUTH_TYPE_NONE = 'none';
+    const AUTH_TYPE_SESSION = 'session';
+    const AUTH_TYPE_API_KEY = 'api_key';
 
     /**
      * @var boolean
@@ -28,7 +31,7 @@ class LPMAuth
     private $_userId = 0;
     private $_email = '';
     private $_cookiePath = '//';
-    private $_isSessionAuth = false;
+    private $_authType = self::AUTH_TYPE_NONE;
     /**
      * @var int
      */
@@ -64,7 +67,7 @@ class LPMAuth
         $this->_userId  = $userId;
         $this->_email   = $email;
         $this->_isLogin = true;
-        $this->_isSessionAuth = true;
+        $this->_authType = self::AUTH_TYPE_SESSION;
         $this->_hashId = $hashId;
         $expire = DateTimeUtils::$currentDate + LPMOptions::getInstance()->cookieExpire; // на месяц
 
@@ -99,12 +102,12 @@ class LPMAuth
 
     public function destroy()
     {
-        if ($this->_isSessionAuth) {
+        if ($this->isSessionAuth()) {
             // удаляем устаревшие
             $this->removeExpiredHash($this->_hashId); // и текущую
         }
         $this->_isLogin = false;
-        $this->_isSessionAuth = false;
+        $this->_authType = self::AUTH_TYPE_NONE;
         $this->setCookie(self::COOKIE_USER_ID, '');
         $this->setCookie(self::COOKIE_HASH, '');
         Session::getInstance()->unsetVar(self::SESSION_NAME);
@@ -118,6 +121,21 @@ class LPMAuth
     public function isLogin()
     {
         return $this->_isLogin;
+    }
+
+    public function isSessionAuth()
+    {
+        return $this->_isLogin && $this->_authType === self::AUTH_TYPE_SESSION;
+    }
+
+    public function isApiKeyAuth()
+    {
+        return $this->_isLogin && $this->_authType === self::AUTH_TYPE_API_KEY;
+    }
+
+    public function getAuthType()
+    {
+        return $this->_authType;
     }
 
     /**
@@ -157,7 +175,7 @@ class LPMAuth
             $this->_email   = $data['email'];
             $this->_hashId  = (float)$data['hashId'];
             $this->_isLogin = true;
-            $this->_isSessionAuth = true;
+            $this->_authType = self::AUTH_TYPE_SESSION;
         } elseif (!empty($_COOKIE[self::COOKIE_USER_ID]) && !empty($_COOKIE[self::COOKIE_HASH])) {
             // иначе пытаемся авторизоваться по кукам
             $db = LPMGlobals::getInstance()->getDBConnect();
@@ -211,7 +229,7 @@ class LPMAuth
         $this->_userId = $user->getID();
         $this->_email = $user->email;
         $this->_isLogin = true;
-        $this->_isSessionAuth = false;
+        $this->_authType = self::AUTH_TYPE_API_KEY;
         $this->_hashId = 0;
 
         return true;
