@@ -101,6 +101,25 @@ Do not send names like `feature/891-inner-store-payment-method`, because that du
 
 Prefer a human-readable slug that includes the issue number or a short task cue when appropriate.
 
+After creating the issue branch in Lightning PM, also create or switch to the corresponding local Git branch before editing files or committing. Remote branch creation in Lightning PM is not sufficient by itself.
+
+Required local branch workflow:
+
+1. Create or switch the local branch successfully.
+2. Immediately verify the current local branch with `git branch --show-current`.
+3. If the local branch is not the intended issue branch, stop and fix branch state before making changes.
+4. Re-check the current branch again before `git add` or `git commit`.
+
+Treat local branch creation or checkout failure as a hard blocker. Do not continue implementation, staging, or committing on `develop`, `master`, or any other protected/base branch after a branch-switch failure.
+
+If local branch creation fails, inspect the cause first, for example:
+
+- conflicting refs under `.git/refs/heads`
+- packed refs that block the desired path
+- permissions or lock-file problems
+
+If the local branch cannot be created safely, stop and tell the user instead of continuing on the wrong branch.
+
 ## API Requests
 
 Prefer the bundled helper script for all Lightning PM requests:
