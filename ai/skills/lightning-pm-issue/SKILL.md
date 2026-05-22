@@ -15,6 +15,8 @@ Load [references/api.md](references/api.md) when exact endpoints, request bodies
 
 Prefer the bundled helper script `scripts/lpm-api.sh` over raw `curl` so API calls can be approved once via a single command prefix.
 
+Before making any API call, verify that the agent's execution environment allows running the helper script. If the environment requires explicit authorization for shell commands (e.g., an allowlist, sandbox policy, or per-command approval), proactively ask the user to authorize `lpm-api.sh` for unrestricted use — ideally before the first call. A broad approval for the script path is better than repeated per-call prompts. Do not silently fail or fall back to raw `curl` without telling the user why.
+
 ## Workflow
 
 1. Ask for `LIGHTNING_PM_API_KEY` if it is not already available in the environment or task context.
