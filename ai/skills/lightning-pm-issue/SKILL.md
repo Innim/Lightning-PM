@@ -140,6 +140,20 @@ Important id rule:
 - use only global `id` in `/api/v1/issues/{issueId}/...` endpoints
 - use `idInProject` only for display, human-facing references, branch naming, and matching the issue URL
 
+## Commit Policy
+
+Never create a git commit without explicit user approval.
+
+Before committing:
+
+1. Show the user the planned commit message.
+2. Summarize what files will be staged and why.
+3. Wait for the user to confirm before running `git add` + `git commit`.
+
+Do not assume approval from silence, a general "looks good", or acceptance of the implementation. The user must explicitly say to commit (e.g. "commit it", "go ahead", "yes commit").
+
+This applies to every commit, including fixup commits, test commits, and refactor commits.
+
 ## Comment Policy
 
 Never post routine status comments such as:
