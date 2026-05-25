@@ -175,6 +175,8 @@ Post a comment only when it helps humans later. Good examples:
 
 Comment text may use Markdown when it improves readability.
 
+Write the comment in the same language as the issue. If the issue is in Russian, write the comment in Russian; if in English, write in English; and so on.
+
 Keep the comment short, concrete, and action-oriented.
 
 Always append a signature that makes it clear the comment was posted by the agent on the user's behalf. Include the current agent name in the signature. Default signature template:
