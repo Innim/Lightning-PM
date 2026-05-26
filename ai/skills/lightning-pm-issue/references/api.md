@@ -36,7 +36,7 @@ X-LPM-API-Key: <LIGHTNING_PM_API_KEY>
 Prefer the bundled helper script for local calls:
 
 ```bash
-bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' GET '/api/v1/issues/resolve?url=https://pm.example.com/project/demo/issue/891'
+bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com' GET '/api/v1/issues/resolve?url=https://pm.example.com/project/demo/issue/891'
 ```
 
 Resolve the pasted issue URL:
@@ -153,3 +153,19 @@ Do not post routine progress comments such as:
 - branch created
 - started implementation
 - work in progress
+
+## File Download
+
+Attached files and images in the issue payload are served from protected URLs. Download a file using the URL from the payload:
+
+```http
+GET <file_url>
+```
+
+`<file_url>` comes from the issue payload (e.g. inside `images` or `attachments` fields). Save the result to `/tmp/` to keep it isolated from the working tree.
+
+To save with a specific name, pass `--output` through the helper script:
+
+```bash
+bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com' GET 'https://pm.example.com/lpm-files/protected/screenshot.png' -- --output /tmp/screenshot.png
+```

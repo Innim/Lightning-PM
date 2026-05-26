@@ -131,7 +131,7 @@ bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com/project/demo/iss
 ```
 
 ```bash
-bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
+bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
 ```
 
 The script derives the Lightning PM origin from the passed root or issue URL and always sends `X-LPM-API-Key`, which makes approval simpler than repeated direct `curl` invocations.
