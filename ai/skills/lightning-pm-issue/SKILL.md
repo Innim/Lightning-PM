@@ -19,7 +19,7 @@ Before making any API call, verify that the agent's execution environment allows
 
 ## Workflow
 
-1. Ask for `LIGHTNING_PM_API_KEY` if it is not already available in the environment or task context.
+1. Do not run a separate shell check for `LIGHTNING_PM_API_KEY`. The helper script validates the key before every API call and exits with a clear error message if it is missing — treat that failure as the signal to ask the user for the key.
 2. Use `scripts/lpm-api.sh` for API calls unless there is a specific reason not to.
 3. Resolve the pasted issue URL with `GET /api/v1/issues/resolve?url=<ISSUE_URL>`.
 4. Save both identifiers from the resolve payload once at the start:
