@@ -13,7 +13,7 @@ Treat a pasted Lightning PM issue link as an instruction to prepare and perform 
 
 Load [references/api.md](references/api.md) when exact endpoints, request bodies, or auth details matter.
 
-Prefer the bundled helper script `scripts/lpm-api.sh` over raw `curl` so API calls can be approved once via a single command prefix.
+Prefer the bundled helper script `scripts/lpm-api.sh` over raw `curl` so API calls can be approved once via a single command prefix. When the script is located under the user's home directory, call it using a `~/`-prefixed path (e.g. `bash ~/path/to/lpm-api.sh`) rather than the expanded absolute path — never substitute `~/` with `/Users/<name>/` or `/home/<name>/`.
 
 Before making any API call, verify that the agent's execution environment allows running the helper script. If the environment requires explicit authorization for shell commands (e.g., an allowlist, sandbox policy, or per-command approval), proactively ask the user to authorize `lpm-api.sh` for unrestricted use — ideally before the first call. A broad approval for the script path is better than repeated per-call prompts. Do not silently fail or fall back to raw `curl` without telling the user why.
 
@@ -68,7 +68,7 @@ Prefer `X-LPM-API-Key` for this skill and reuse the same auth when downloading p
 For the helper script:
 
 - set `LIGHTNING_PM_API_KEY`
-- call `bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh <ROOT_URL> ...`
+- call the script using a `~/`-prefixed path, e.g. `bash ~/path/to/lpm-api.sh <ROOT_URL> ...`
 
 Use the helper script for both JSON API requests and protected file downloads.
 
@@ -127,11 +127,11 @@ If the local branch cannot be created safely, stop and tell the user instead of 
 Prefer the bundled helper script for all Lightning PM requests:
 
 ```bash
-bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' GET '/api/v1/issues/resolve?url=https://pm.example.com/project/demo/issue/891'
+bash ~/path/to/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' GET '/api/v1/issues/resolve?url=https://pm.example.com/project/demo/issue/891'
 ```
 
 ```bash
-bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
+bash ~/path/to/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
 ```
 
 The script derives the Lightning PM origin from the passed root or issue URL and always sends `X-LPM-API-Key`, which makes approval simpler than repeated direct `curl` invocations.
