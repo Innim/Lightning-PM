@@ -31,6 +31,17 @@ class Link
         return self::buildUrl([LightningEngine::FILES_PATH, $uid]);
     }
 
+    /**
+     * Возвращает URL для отображения файла в браузере.
+     * @param string $uid Уникальный идентификатор файла.
+     * @param string $fileName Имя файла для определения формата в браузере.
+     * @return string
+     */
+    public static function getFileViewUrl($uid, $fileName)
+    {
+        return self::buildUrl([LightningEngine::FILES_PATH, $uid, 'view', rawurlencode($fileName)]);
+    }
+
     protected static function buildUrl($args, $hash = '')
     {
         $url = SITE_URL . implode('/', $args);

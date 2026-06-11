@@ -18,13 +18,42 @@ class CommentsManager
         $ignoreSlackNotification = false,
         $ignoreMr = false,
         string $type = null,
-        string $data = null
+        string $data = null,
+        array $filesData = null
     ) {
         $issueId = $issue->id;
-        if (!$comment = $this->addComment($user, LPMInstanceTypes::ISSUE, $issueId, $text)) {
+        $hasUploads = $filesData !== null && FileUploadManager::hasUploads($filesData);
+        if (!$comment = $this->addComment($user, LPMInstanceTypes::ISSUE, $issueId, $text, $hasUploads)) {
             throw new Exception("Не удалось добавить комментарий");
         }
         $comment->issue = $issue;
+
+        if ($filesData !== null) {
+            $result = FileUploadManager::upload(
+                LPMInstanceTypes::COMMENT,
+                $comment->id,
+                $user->userId,
+                $filesData,
+                Comment::MAX_FILES_COUNT,
+                Comment::MAX_FILES_COUNT
+            );
+
+            if (!empty($result['errors'])) {
+                Comment::discard($comment);
+                throw new Exception($result['errors'][0]);
+            }
+
+            $comment->setFiles($result['uploaded']);
+        } else {
+            $comment->setFiles([]);
+        }
+
+        UserLogEntry::create(
+            $user->userId,
+            DateTimeUtils::$currentDate,
+            UserLogEntryType::ADD_COMMENT,
+            $comment->id
+        );
 
         $memberIds = $issue->getMemberIds();
         if (!$ignoreMr && in_array($comment->authorId, $memberIds)) {
@@ -69,24 +98,17 @@ class CommentsManager
     /**
      * @return Comment
      */
-    protected function addComment(User $user, $instanceType, $instanceId, $text)
+    protected function addComment(User $user, $instanceType, $instanceId, $text, $allowEmpty = false)
     {
         // TODO: перенести в Comment
         $text = trim($text);
-        if ($text == '') {
+        if ($text == '' && !$allowEmpty) {
             throw new Exception('Недопустимый текст');
         }
 
         $comment = Comment::add($instanceType, $instanceId, $user->userId, $text);
         if ($comment) {
             $comment->author = $user;
-            // Записываем лог
-            UserLogEntry::create(
-                $user->userId,
-                DateTimeUtils::$currentDate,
-                UserLogEntryType::ADD_COMMENT,
-                $comment->id
-            );
         }
 
         return $comment;

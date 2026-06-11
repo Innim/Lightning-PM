@@ -13,11 +13,13 @@ Treat a pasted Lightning PM issue link as an instruction to prepare and perform 
 
 Load [references/api.md](references/api.md) when exact endpoints, request bodies, or auth details matter.
 
-Prefer the bundled helper script `scripts/lpm-api.sh` over raw `curl` so API calls can be approved once via a single command prefix.
+Prefer the bundled helper script `scripts/lpm-api.sh` over raw `curl` so API calls can be approved once via a single command prefix. The script is always at `scripts/lpm-api.sh` relative to this SKILL.md file — derive the path from the skill's own directory and express it with a `~/` prefix. Never expand `~/` to an absolute path like `/Users/<name>/...`, and never run `find` or any search to locate the script.
+
+Before making any API call, verify that the agent's execution environment allows running the helper script. If the environment requires explicit authorization for shell commands (e.g., an allowlist, sandbox policy, or per-command approval), proactively ask the user to authorize `lpm-api.sh` for unrestricted use — ideally before the first call. A broad approval for the script path is better than repeated per-call prompts. Do not silently fail or fall back to raw `curl` without telling the user why.
 
 ## Workflow
 
-1. Ask for `LIGHTNING_PM_API_KEY` if it is not already available in the environment or task context.
+1. Do not run a separate shell check for `LIGHTNING_PM_API_KEY`. The helper script validates the key before every API call and exits with a clear error message if it is missing — treat that failure as the signal to ask the user for the key.
 2. Use `scripts/lpm-api.sh` for API calls unless there is a specific reason not to.
 3. Resolve the pasted issue URL with `GET /api/v1/issues/resolve?url=<ISSUE_URL>`.
 4. Save both identifiers from the resolve payload once at the start:
@@ -66,7 +68,7 @@ Prefer `X-LPM-API-Key` for this skill and reuse the same auth when downloading p
 For the helper script:
 
 - set `LIGHTNING_PM_API_KEY`
-- call `bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh <ROOT_URL> ...`
+- call `bash ~/path/to/skill/scripts/lpm-api.sh <ROOT_URL> ...` where the path is derived from this skill's own directory
 
 Use the helper script for both JSON API requests and protected file downloads.
 
@@ -101,16 +103,35 @@ Do not send names like `feature/891-inner-store-payment-method`, because that du
 
 Prefer a human-readable slug that includes the issue number or a short task cue when appropriate.
 
+After creating the issue branch in Lightning PM, also create or switch to the corresponding local Git branch before editing files or committing. Remote branch creation in Lightning PM is not sufficient by itself.
+
+Required local branch workflow:
+
+1. Create or switch the local branch successfully.
+2. Immediately verify the current local branch with `git branch --show-current`.
+3. If the local branch is not the intended issue branch, stop and fix branch state before making changes.
+4. Re-check the current branch again before `git add` or `git commit`.
+
+Treat local branch creation or checkout failure as a hard blocker. Do not continue implementation, staging, or committing on `develop`, `master`, or any other protected/base branch after a branch-switch failure.
+
+If local branch creation fails, inspect the cause first, for example:
+
+- conflicting refs under `.git/refs/heads`
+- packed refs that block the desired path
+- permissions or lock-file problems
+
+If the local branch cannot be created safely, stop and tell the user instead of continuing on the wrong branch.
+
 ## API Requests
 
 Prefer the bundled helper script for all Lightning PM requests:
 
 ```bash
-bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' GET '/api/v1/issues/resolve?url=https://pm.example.com/project/demo/issue/891'
+bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' GET '/api/v1/issues/resolve?url=https://pm.example.com/project/demo/issue/891'
 ```
 
 ```bash
-bash ai/skills/lightning-pm-issue/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
+bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
 ```
 
 The script derives the Lightning PM origin from the passed root or issue URL and always sends `X-LPM-API-Key`, which makes approval simpler than repeated direct `curl` invocations.
@@ -120,6 +141,20 @@ Important id rule:
 - call `resolve` once at the start and keep both `id` and `idInProject`
 - use only global `id` in `/api/v1/issues/{issueId}/...` endpoints
 - use `idInProject` only for display, human-facing references, branch naming, and matching the issue URL
+
+## Commit Policy
+
+Never create a git commit without explicit user approval.
+
+Before committing:
+
+1. Show the user the planned commit message.
+2. Summarize what files will be staged and why.
+3. Wait for the user to confirm before running `git add` + `git commit`.
+
+Do not assume approval from silence, a general "looks good", or acceptance of the implementation. The user must explicitly say to commit (e.g. "commit it", "go ahead", "yes commit").
+
+This applies to every commit, including fixup commits, test commits, and refactor commits.
 
 ## Comment Policy
 
@@ -139,6 +174,8 @@ Post a comment only when it helps humans later. Good examples:
 - rollout or recheck notes
 
 Comment text may use Markdown when it improves readability.
+
+Write the comment in the same language as the issue. If the issue is in Russian, write the comment in Russian; if in English, write in English; and so on.
 
 Keep the comment short, concrete, and action-oriented.
 

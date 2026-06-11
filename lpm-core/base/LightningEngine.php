@@ -225,9 +225,10 @@ class LightningEngine
             $params = $this->_params;
             $params->shiftArg();
             $uid = $params->shiftArg();
+            $inline = $params->shiftArg() === 'view';
 
             $controller = new FileDownloadController($this);
-            $controller->handle($uid);
+            $controller->handle($uid, $inline);
         } catch (LPMException $e) {
             http_response_code($e->getStatusCode());
             

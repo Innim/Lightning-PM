@@ -4,6 +4,8 @@
  */
 class Comment extends LPMBaseObject
 {
+    const MAX_FILES_COUNT = 20;
+
     private const ISSUE_COMMENT_PREFIX = 'ic_';
 
     protected static function loadList($where)
@@ -24,11 +26,14 @@ INNER JOIN `%2\$s` `u`
   ORDER BY `c`.`date` DESC
 SQL;
 
-        return StreamObject::loadObjList(
+        $comments = StreamObject::loadObjList(
             self::getDB(),
             [$sql, LPMTables::COMMENTS, LPMTables::USERS, LPMTables::ISSUE_COMMENT],
             __CLASS__
         );
+
+        self::loadFilesForComments($comments);
+        return $comments;
     }
 
     public static function getIssuesListByProject($projectId, $from = 0, $limit = 0)
@@ -45,8 +50,10 @@ SQL;
 		  ORDER BY `c`.`date` DESC
 			{$limitStr}
 SQL;
-        return StreamObject::loadObjList(self::getDB(), array($sql, LPMTables::COMMENTS,
+        $comments = StreamObject::loadObjList(self::getDB(), array($sql, LPMTables::COMMENTS,
                 LPMTables::USERS, LPMTables::PROJECTS, LPMTables::ISSUES), __CLASS__);
+        self::loadFilesForComments($comments);
+        return $comments;
     }
 
     public static function getListByInstance($instanceType, $instanceId = null)
@@ -123,6 +130,30 @@ SQL;
             $comment->id
         );
     }
+
+    public static function discard(Comment $comment)
+    {
+        self::buildAndSaveToDbV2([
+            'DELETE' => LPMTables::COMMENTS,
+            'WHERE'  => ['id' => (int)$comment->id],
+        ]);
+    }
+
+    private static function loadFilesForComments(array $comments)
+    {
+        if (empty($comments)) {
+            return;
+        }
+
+        $commentIds = array_map(function (Comment $comment) {
+            return $comment->id;
+        }, $comments);
+        $filesByCommentId = LPMFile::loadGroupedByInstances(LPMInstanceTypes::COMMENT, $commentIds);
+
+        foreach ($comments as $comment) {
+            $comment->setFiles(isset($filesByCommentId[$comment->id]) ? $filesByCommentId[$comment->id] : []);
+        }
+    }
     
     public $id           = 0;
     public $instanceId   = 0;
@@ -154,6 +185,7 @@ SQL;
     public $issueComment;
 
     private $_mergeRequests;
+    private $_files;
     
     public function __construct()
     {
@@ -242,6 +274,23 @@ SQL;
     public function getDate()
     {
         return $this->dateLabel;
+    }
+
+    /**
+     * @return LPMFile[]
+     */
+    public function getFiles()
+    {
+        if ($this->_files === null) {
+            $this->_files = LPMFile::loadListByInstance(LPMInstanceTypes::COMMENT, $this->id);
+        }
+
+        return $this->_files;
+    }
+
+    public function setFiles(array $files)
+    {
+        $this->_files = $files;
     }
     
     public function loadStream($hash)

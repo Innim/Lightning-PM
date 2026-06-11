@@ -76,6 +76,42 @@ function BaseService(service, f2p) {
         f2p.request.apply(null, params);
     };
 
+    this.callWithFiles = function (method, params, files, onResult) {
+        const data = new FormData();
+        data.append('service', this._service);
+        data.append('method', method);
+        data.append('params', JSON.stringify(params));
+
+        Array.prototype.forEach.call(files || [], function (file) {
+            data.append('commentFiles[]', file);
+        });
+
+        $.ajax({
+            url: srv.gateway,
+            method: 'POST',
+            data: data,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function (obj) {
+                if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED) {
+                    window.location.reload();
+                    return;
+                }
+
+                try {
+                    onResult(obj);
+                } catch (e) {
+                    console && console.error(e);
+                    srv.err({ error: 'Ошибка при обработке ответа' });
+                }
+            },
+            error: function () {
+                onResult({ success: false, error: 'Ошибка при загрузке файлов' });
+            }
+        });
+    };
+
     this._ = function (name) {
         var func = arguments.callee.caller;
         //name = defaultValue( name, func.caller.name );    
@@ -186,8 +222,8 @@ let srv = {
         remove: function (issueId, onResult) {
             this.s._('remove');
         },
-        comment: function (issueId, text, requestChanges, onResult) {
-            this.s._('comment');
+        comment: function (issueId, text, requestChanges, files, onResult) {
+            this.s.callWithFiles('comment', [issueId, text, requestChanges], files, onResult);
         },
         previewComment: function (text, onResult) {
             this.s._('previewComment');
@@ -195,8 +231,8 @@ let srv = {
         merged: function (issueId, complete, onResult) {
             this.s._('merged');
         },
-        passTest: function (issueId, onResult) {
-            this.s._('passTest');
+        passTest: function (issueId, text, files, onResult) {
+            this.s.callWithFiles('passTest', [issueId, text], files, onResult);
         },
         createBranch: function (issueId, branchName, gitlabProjectId, parentBranch, onResult) {
             this.s._('createBranch');

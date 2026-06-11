@@ -47,7 +47,75 @@ const comments = {
 		);
 
 		comments.invalidateLinks();
+		comments.initFileInputs();
 		comments.initAddForm();
+	},
+	initFileInputs: function () {
+		$(document).on('change', '.comment-files-list input[name="commentFiles[]"]', function () {
+			comments.ensureFileInput($(this).closest('.comment-files-list'));
+		});
+		$(document).on('click', '.remove-comment-files', function (e) {
+			e.preventDefault();
+			const $list = $(this).closest('.comment-files-list');
+			const $item = $(this).closest('.comment-file-input');
+			if ($('.comment-file-input', $list).length > 1) {
+				$item.remove();
+			} else {
+				$('input[name="commentFiles[]"]', $item).val('');
+			}
+			comments.ensureFileInput($list);
+		});
+
+		$('.comment-files-list').each(function () {
+			comments.ensureFileInput($(this));
+		});
+	},
+	ensureFileInput: function ($list) {
+		if (!$list || !$list.length) return;
+
+		let filesCount = 0;
+		$('input[name="commentFiles[]"]', $list).each(function () {
+			const count = this.files ? this.files.length : 0;
+			filesCount += count;
+			$(this).siblings('.remove-comment-files').toggleClass('d-none', count === 0);
+		});
+
+		const $emptyItems = $('.comment-file-input', $list).filter(function () {
+			const input = $('input[name="commentFiles[]"]', this)[0];
+			return !input || !input.files || input.files.length === 0;
+		});
+		const maxFiles = parseInt($list.data('maxFiles'), 10) || 0;
+
+		if (maxFiles && filesCount >= maxFiles) {
+			$emptyItems.remove();
+			return;
+		}
+
+		if ($emptyItems.length === 0) {
+			const $newItem = $('.comment-file-input', $list).first().clone();
+			$('input[name="commentFiles[]"]', $newItem).val('').removeAttr('id');
+			$('.remove-comment-files', $newItem).addClass('d-none');
+			$list.append($newItem);
+		} else if ($emptyItems.length > 1) {
+			$emptyItems.slice(1).remove();
+		}
+	},
+	getFiles: function ($container) {
+		const files = [];
+		$('input[name="commentFiles[]"]', $container).each(function () {
+			Array.prototype.forEach.call(this.files || [], function (file) {
+				files.push(file);
+			});
+		});
+		return files;
+	},
+	clearFiles: function ($container) {
+		$('.comment-files-list', $container).each(function () {
+			const $list = $(this);
+			$('.comment-file-input', $list).slice(1).remove();
+			$('input[name="commentFiles[]"]', $list).val('');
+			comments.ensureFileInput($list);
+		});
 	},
 	initAddForm: function () {
 		comments.saveableForm.init((_, requestChanges) => {
@@ -56,6 +124,7 @@ const comments = {
 	},
 	clearForm: function () {
 		comments.saveableForm.clear();
+		comments.clearFiles($('#addCommentForm'));
 	},
 	showCommentForm: function (requestChanges = false) {
 		$('#comments form.add-comment').show();

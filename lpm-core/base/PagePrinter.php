@@ -118,6 +118,11 @@ class PagePrinter
     {
         PageConstructor::includePattern('comment-input-text', compact('id'));
     }
+
+    public static function commentFiles(Comment $comment)
+    {
+        PageConstructor::includePattern('comment-files', compact('comment'));
+    }
     
     /**
      * Распечатывает список видео.

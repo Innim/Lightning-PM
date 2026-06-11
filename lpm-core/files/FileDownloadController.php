@@ -2,6 +2,16 @@
 
 class FileDownloadController
 {
+    private const INLINE_MIME_TYPES = [
+        'image/gif',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'video/mp4',
+        'video/ogg',
+        'video/webm',
+    ];
+
     /**
      * @var LightningEngine
      */
@@ -12,7 +22,7 @@ class FileDownloadController
         $this->engine = $engine;
     }
 
-    public function handle($uid)
+    public function handle($uid, $inline = false)
     {
         $uid = trim((string)$uid);
         if ($uid === '') {
@@ -38,7 +48,7 @@ class FileDownloadController
             throw new ForbiddenException('You do not have permission to download this file');
         }
 
-        $this->streamFile($file);
+        $this->streamFile($file, $inline);
     }
 
     private function canDownload(LPMFile $file, $userId)
@@ -63,13 +73,29 @@ class FileDownloadController
                         return true;
                     }
                     break;
+                case LPMInstanceTypes::COMMENT:
+                    $comment = Comment::load($link['itemId']);
+                    if (!$comment || $comment->instanceType != LPMInstanceTypes::ISSUE) {
+                        continue 2;
+                    }
+
+                    $issue = Issue::load($comment->instanceId);
+                    if (!$issue) {
+                        continue 2;
+                    }
+
+                    $hasExistingInstances = true;
+                    if ($issue->checkViewPermit($userId)) {
+                        return true;
+                    }
+                    break;
             }
         }
 
         return $hasExistingInstances ? false : null;
     }
 
-    private function streamFile(LPMFile $file)
+    private function streamFile(LPMFile $file, $inline)
     {
         $absolutePath = FileUploadManager::getAbsolutePath($file->path);
         if (!is_file($absolutePath)) {
@@ -82,7 +108,10 @@ class FileDownloadController
 
         header('Content-Type: ' . $mimeType);
         header('Content-Length: ' . $file->size);
-        header('Content-Disposition: attachment; filename="' . $asciiName . '"; filename*=UTF-8\'' . '\'' . $utfName);
+        $disposition = $inline && in_array($mimeType, self::INLINE_MIME_TYPES, true)
+            ? 'inline'
+            : 'attachment';
+        header('Content-Disposition: ' . $disposition . '; filename="' . $asciiName . '"; filename*=UTF-8\'' . '\'' . $utfName);
         header('X-Content-Type-Options: nosniff');
 
         readfile($absolutePath);

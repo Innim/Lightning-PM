@@ -1,0 +1,79 @@
+<?php
+/*
+Требуются:
+    $comment - комментарий, файлы которого необходимо вывести
+*/
+$files = $comment->getFiles();
+$videos = [];
+$images = [];
+$downloads = [];
+
+foreach ($files as $file) {
+    if ($file->isVideo()) {
+        $videos[] = $file;
+    } elseif ($file->isImage()) {
+        $images[] = $file;
+    } else {
+        $downloads[] = $file;
+    }
+}
+
+if (!empty($files)):
+?>
+<div class="comment-files mt-3">
+    <?php if (!empty($videos)): ?>
+    <div class="comment-media-list d-flex flex-wrap justify-content-center align-items-start gap-3">
+        <?php foreach ($videos as $file): ?>
+        <?php
+        $fileName = htmlspecialchars($file->origName, ENT_QUOTES, 'UTF-8');
+        $mimeType = htmlspecialchars($file->mimeType, ENT_QUOTES, 'UTF-8');
+        ?>
+        <div class="comment-video-item text-center">
+            <video controls preload="metadata" class="comment-file-video rounded-2 border bg-dark">
+                <source src="<?=$file->getViewUrl();?>" type="<?=$mimeType;?>">
+            </video>
+            <div class="d-flex align-items-center justify-content-center gap-2 mt-1">
+                <span class="small text-truncate" title="<?=$fileName;?>"><?=$fileName;?></span>
+                <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm flex-shrink-0" download="<?=$fileName;?>" title="Скачать">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($images)): ?>
+    <div class="comment-media-list d-flex flex-wrap justify-content-center align-items-start gap-3 mt-3">
+        <?php foreach ($images as $file): ?>
+        <?php $fileName = htmlspecialchars($file->origName, ENT_QUOTES, 'UTF-8'); ?>
+        <div class="comment-image-item text-center">
+            <a href="<?=$file->getViewUrl();?>" class="image-link comment-file-image-link d-inline-flex rounded-2 border bg-white p-1" rel="iLoad|CommentFiles" title="<?=$fileName;?>">
+                <img src="<?=$file->getViewUrl();?>" class="comment-file-image rounded-1" alt="<?=$fileName;?>">
+            </a>
+            <div class="d-flex align-items-center justify-content-center gap-2 mt-1">
+                <span class="small text-truncate" title="<?=$fileName;?>"><?=$fileName;?></span>
+                <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm flex-shrink-0" download="<?=$fileName;?>" title="Скачать">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($downloads)): ?>
+    <div class="list-group mt-3">
+        <?php foreach ($downloads as $file): ?>
+        <?php $fileName = htmlspecialchars($file->origName, ENT_QUOTES, 'UTF-8'); ?>
+        <a href="<?=$file->getDownloadUrl();?>" class="list-group-item list-group-item-action d-flex align-items-center gap-3" download="<?=$fileName;?>">
+            <i class="fas fa-paperclip text-secondary"></i>
+            <span class="text-truncate"><?=$fileName;?></span>
+            <span class="small text-muted ms-auto flex-shrink-0"><?=FileSizeFormatter::format($file->size);?></span>
+            <i class="fas fa-download text-secondary"></i>
+        </a>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
