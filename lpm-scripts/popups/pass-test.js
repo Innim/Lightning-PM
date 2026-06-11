@@ -29,6 +29,7 @@ const passTest = {
                 close: function( event, ui ) {
                     passTest.saveableForm.clear();
                     passTest.currentIssueId = null;
+                    $('input[name="commentFiles[]"]', this).val('');
 
                     $('#passTestComment').tabs({
                         active: 0
@@ -70,8 +71,9 @@ const passTest = {
         const $el = $("#passTestDialog");
 
         const comment = $("#passTestComment .comment-text-field", $el).val();
+        const files = $('input[name="commentFiles[]"]', $el)[0].files;
         issuePage.doSomethingAndPostCommentForCurrentIssue(
-            (issueId, handler) => srv.issue.passTest(issueId, comment.trim(), handler),
+            (issueId, handler) => srv.issue.passTest(issueId, comment.trim(), files, handler),
             res => {
                 if (res.success)
                     passTest.close();

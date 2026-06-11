@@ -56,6 +56,7 @@ const comments = {
 	},
 	clearForm: function () {
 		comments.saveableForm.clear();
+		$('#addCommentForm input[name="commentFiles[]"]').val('');
 	},
 	showCommentForm: function (requestChanges = false) {
 		$('#comments form.add-comment').show();

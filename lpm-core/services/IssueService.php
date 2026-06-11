@@ -879,6 +879,13 @@ class IssueService extends LPMBaseService
 
         try {
             Comment::remove($user, $comment);
+            LPMFile::delete(
+                LPMInstanceTypes::COMMENT,
+                $comment->id,
+                array_map(function (LPMFile $file) {
+                    return $file->fileId;
+                }, $comment->getFiles())
+            );
 
             if ($comment->instanceType == LPMInstanceTypes::ISSUE) {
                 // обновляем счетчик комментариев для задачи
@@ -927,7 +934,10 @@ class IssueService extends LPMBaseService
             $ignoreSlackNotification,
             false,
             $type,
-            $data
+            $data,
+            isset($_FILES['commentFiles']) && is_array($_FILES['commentFiles'])
+                ? $_FILES['commentFiles']
+                : null
         );
     }
 

@@ -1235,9 +1235,11 @@ issuePage.commentMergeInDevelop = function () {
 };
 
 issuePage.postComment = function () {
-    const text = $('#issueView .comments form.add-comment textarea[name=commentText]').val();
-    const requestChanges = $('#issueView .comments form.add-comment input[name=requestChanges]').is(':checked');
-    issuePage.postCommentForCurrentIssue(text, requestChanges);
+    const $form = $('#issueView .comments form.add-comment');
+    const text = $('textarea[name=commentText]', $form).val();
+    const requestChanges = $('input[name=requestChanges]', $form).is(':checked');
+    const files = $('input[name="commentFiles[]"]', $form)[0].files;
+    issuePage.postCommentForCurrentIssue(text, requestChanges, files);
     return false;
 };
 
@@ -1280,11 +1282,11 @@ issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSucces
     }
 }
 
-issuePage.postCommentForCurrentIssue = function (text, requestChanges = false) {
-    if (text == '') return;
+issuePage.postCommentForCurrentIssue = function (text, requestChanges = false, files = []) {
+    if (text.trim() == '' && files.length == 0) return;
 
     issuePage.doSomethingAndPostCommentForCurrentIssue(
-        (issueId, handler) => srv.issue.comment(issueId, text, requestChanges, handler));
+        (issueId, handler) => srv.issue.comment(issueId, text, requestChanges, files, handler));
 }
 
 issuePage.merged = function () {
@@ -1322,6 +1324,7 @@ issuePage.addComment = function (comment, html) {
     let elementId = 'comment_' + comment.id;
     let commentTime = comment.date;
     $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
+    $('#issueView .comments form.add-comment input[name="commentFiles[]"]').val('');
     $('#issueView .comments .comments-list').prepend(
         '<div class="comments-list-item">' + html + '</div>'
     );

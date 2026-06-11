@@ -78,6 +78,41 @@ class LPMFile extends LPMBaseObject
         ], __CLASS__);
     }
 
+    public static function loadGroupedByInstances($itemType, array $itemIds)
+    {
+        $itemType = (int)$itemType;
+        $itemIds = array_values(array_unique(array_filter(array_map('intval', $itemIds))));
+        if ($itemType <= 0 || empty($itemIds)) {
+            return [];
+        }
+
+        $files = self::loadAndParseV2([
+            'SELECT' => '`f`.*, `fl`.`itemId` AS `linkedItemId`',
+            'FROM'   => LPMTables::FILES,
+            'AS'     => 'f',
+            'JOINS'  => [
+                [
+                    'INNER JOIN' => LPMTables::FILE_LINKS,
+                    'AS'         => 'fl',
+                    'ON'         => ['`fl`.`fileId`' => '`f`.`fileId`'],
+                ],
+            ],
+            'WHERE'  => [
+                '`f`.`deleted`' => 0,
+                '`fl`.`itemType`' => $itemType,
+                '`fl`.`itemId`' => $itemIds,
+            ],
+            'ORDER BY' => '`fl`.`created` ASC',
+        ], __CLASS__);
+
+        $grouped = [];
+        foreach ($files as $file) {
+            $grouped[$file->linkedItemId][] = $file;
+        }
+
+        return $grouped;
+    }
+
     public static function countByInstance($itemType, $itemId)
     {
         if ($itemType <= 0 || $itemId <= 0) {
@@ -312,13 +347,19 @@ class LPMFile extends LPMBaseObject
      */
     public $deleted;
 
+    /**
+     * Linked instance identifier, populated only by grouped instance loads.
+     * @var int
+     */
+    public $linkedItemId;
+
     public function __construct($id = 0)
     {
         parent::__construct();
 
         $this->fileId = $id;
 
-        $this->_typeConverter->addFloatVars('fileId', 'userId', 'size');
+        $this->_typeConverter->addFloatVars('fileId', 'userId', 'size', 'linkedItemId');
         $this->_typeConverter->addBoolVars('deleted');
         $this->addDateTimeFields('created');
         $this->addClientFields('fileId', 'uid', 'mimeType', 'size', 'created');
@@ -327,6 +368,11 @@ class LPMFile extends LPMBaseObject
     public function getDownloadUrl()
     {
         return Link::getFileUrl($this->uid);
+    }
+
+    public function getViewUrl()
+    {
+        return Link::getFileViewUrl($this->uid, $this->origName);
     }
 
     public function getAbsolutePath()
@@ -350,5 +396,14 @@ class LPMFile extends LPMBaseObject
     public function isVideo()
     {
         return !empty($this->mimeType) && strpos($this->mimeType, 'video/') === 0;
+    }
+
+    /**
+     * Checks if the uploaded file is an image by MIME type.
+     * @return bool
+     */
+    public function isImage()
+    {
+        return !empty($this->mimeType) && strpos($this->mimeType, 'image/') === 0;
     }
 }

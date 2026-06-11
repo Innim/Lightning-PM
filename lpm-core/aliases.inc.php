@@ -167,6 +167,11 @@ function lpm_print_comment_input_text($id)
     return PagePrinter::commentInputText($id);
 }
 
+function lpm_print_comment_files(Comment $comment)
+{
+    return PagePrinter::commentFiles($comment);
+}
+
 /**
 * Распечатывает задачу
 */

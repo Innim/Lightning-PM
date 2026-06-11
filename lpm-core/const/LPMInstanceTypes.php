@@ -70,4 +70,9 @@ class LPMInstanceTypes
      * Instance PM для проекта
      */
     const PM_FOR_PROJECT = 9;
+
+    /**
+     * Instance тип комментария.
+     */
+    const COMMENT = 10;
 }
