@@ -1238,7 +1238,7 @@ issuePage.postComment = function () {
     const $form = $('#issueView .comments form.add-comment');
     const text = $('textarea[name=commentText]', $form).val();
     const requestChanges = $('input[name=requestChanges]', $form).is(':checked');
-    const files = $('input[name="commentFiles[]"]', $form)[0].files;
+    const files = comments.getFiles($form);
     issuePage.postCommentForCurrentIssue(text, requestChanges, files);
     return false;
 };
@@ -1324,7 +1324,7 @@ issuePage.addComment = function (comment, html) {
     let elementId = 'comment_' + comment.id;
     let commentTime = comment.date;
     $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
-    $('#issueView .comments form.add-comment input[name="commentFiles[]"]').val('');
+    comments.clearFiles($('#issueView .comments form.add-comment'));
     $('#issueView .comments .comments-list').prepend(
         '<div class="comments-list-item">' + html + '</div>'
     );

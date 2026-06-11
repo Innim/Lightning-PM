@@ -28,7 +28,14 @@ $previewTabId = $id . 'PreviewTab';
 </div>
 <div class="mt-2">
     <label for="<?=$id;?>Files" class="form-label mb-1">Файлы</label>
-    <input class="form-control comment-files-field" type="file" id="<?=$id;?>Files" name="commentFiles[]" multiple>
+    <ul class="comment-files-list list-unstyled mb-0" data-max-files="<?=Comment::MAX_FILES_COUNT;?>">
+        <li class="comment-file-input my-2 position-relative">
+            <input class="form-control comment-files-field pe-5" type="file" id="<?=$id;?>Files" name="commentFiles[]" multiple>
+            <a href="javascript:void(0)" class="remove-comment-files position-absolute top-50 end-0 me-1 translate-middle-y text-muted d-none" title="Удалить">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
     <div class="form-text text-muted">
         Можно загрузить до <?=Comment::MAX_FILES_COUNT;?> файлов (до <?=MAX_FILE_SIZE_MB;?> Мб каждый).
     </div>
