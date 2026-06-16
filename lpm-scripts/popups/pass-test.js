@@ -4,49 +4,31 @@ $(document).ready(function () {
 
 const passTest = {
     currentIssueId: null,
-	saveableForm: null,
+    saveableForm: null,
     init: function () {
-        $("#passTestDialog").dialog(
-            {
-                autoOpen: false,
-                modal: true,
-                resizable: false,
-                width: 700,
-                buttons: [
-                    {
-                        text: "OK",
-                        click: function () {
-                            passTest.save();
-                        }
-                    },
-                    {
-                        text: "Отмена",
-                        click: function () {
-                            passTest.close();
-                        }
-                    }
-                ],
-                close: function( event, ui ) {
-                    passTest.saveableForm.clear();
-                    passTest.currentIssueId = null;
-                    comments.clearFiles($(this));
+        const $el = $("#passTestDialog");
 
-                    $('#passTestComment').tabs({
-                        active: 0
-                    });
-                    $('#addCommentForm .preview-comment').empty();
-                }
-            }
-        );
+        $('[data-action="ok"]', $el).on('click', () => {
+            passTest.save();
+        });
+
+        $el.on('hidden.bs.modal', () => {
+            passTest.saveableForm.clear();
+            passTest.currentIssueId = null;
+            comments.clearFiles($el);
+
+            $('#passTestComment').tabs({ active: 0 });
+            $('.preview-comment', $el).empty();
+        });
 
         const issueId = typeof issuePage !== 'undefined' ? issuePage.getIssueId() : null;
-		const storeKey = issueId ? 'pass-test-comment-' + issueId : 'pass-test-comment';
-		passTest.saveableForm = new SaveableCommentForm(
-			'#passTestComment .comment-text-field',
-			null,
-			storeKey,
-			null
-		);
+        const storeKey = issueId ? 'pass-test-comment-' + issueId : 'pass-test-comment';
+        passTest.saveableForm = new SaveableCommentForm(
+            '#passTestComment .comment-text-field',
+            null,
+            storeKey,
+            null
+        );
 
         passTest.saveableForm.init((_text, _checkboxVal) => {
             passTest.show(issueId, false);
@@ -61,11 +43,12 @@ const passTest = {
             $('#passTestComment .comment-text-field', $el).val('**Прошла тестирование**\n\n');
         }
 
-        $el.dialog('open');
+        bootstrap.Modal.getOrCreateInstance($el[0]).show();
     },
     close: function () {
         const $el = $("#passTestDialog");
-        $el.dialog('close');
+        const instance = bootstrap.Modal.getInstance($el[0]);
+        if (instance) instance.hide();
     },
     save: function () {
         const $el = $("#passTestDialog");

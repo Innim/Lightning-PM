@@ -163,8 +163,9 @@ let scrumBoard = {
 };
 
 const sprintTarget = {
-    init: function (modalParam) {
-        $('#addTarget').dialog({...sprintTarget.defaultParam, ...modalParam});
+    init: function () {
+        const $el = $('#addTarget');
+        $('[data-action="save"]', $el).on('click', () => sprintTarget.save());
         $('.target-btn').on('click', () => sprintTarget.open());
         this.updateVisibility();
     },
@@ -184,10 +185,11 @@ const sprintTarget = {
         }
     },
     open: function () {
-        $('#addTarget').dialog('open');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('addTarget')).show();
     },
     close: function () {
-        $('#addTarget').dialog('close');
+        const instance = bootstrap.Modal.getInstance(document.getElementById('addTarget'));
+        if (instance) instance.hide();
     },
     save: function () {
         const targetText = $('.input-target').val();
@@ -200,29 +202,6 @@ const sprintTarget = {
         });
         sprintTarget.close();
     },
-    defaultParam: {
-        dialogClass: 'modal-target-sprint',
-        autoOpen: false,
-        modal: true,
-        width: 540,
-        height: 394,
-        closeText: 'Закрыть',
-        resizable: false,
-        buttons: [
-            {
-                text: 'Сохранить',
-                click: function () {
-                    sprintTarget.save();
-                }
-            },
-            {
-                text: 'Отмена',
-                click: function () {
-                    sprintTarget.close();
-                }
-            }
-        ]
-    }
 }
 
 const ScrumStickerState = Object.freeze({

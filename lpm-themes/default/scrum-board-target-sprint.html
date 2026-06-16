@@ -4,11 +4,26 @@
     $project - проект
 */
 ?>
-<article id="addTarget" title="Цели спринта #<?=$project->getCurrentSprintNum();?>">
-    <form class="form-target">
-        <textarea class="input-target" placeholder="Укажите цели спринта"><?=$project->getSprintTarget();?></textarea>
-    </form>
-    <p class="target-note">Можете использовать <strong>*звёздочки*</strong>, <em>_подчеркивания_</em>,
-        <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
-    </p>
-</article>
+<!-- Sprint Target Modal -->
+<div class="modal fade" id="addTarget" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Цели спринта #<?=$project->getCurrentSprintNum();?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <form class="form-target">
+          <textarea class="input-target form-control" placeholder="Укажите цели спринта"><?=$project->getSprintTarget();?></textarea>
+        </form>
+        <p class="target-note mt-2 mb-0">Можете использовать <strong>*звёздочки*</strong>, <em>_подчеркивания_</em>,
+          <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-primary" data-action="save">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -66,9 +66,71 @@ const comments = {
 			comments.ensureFileInput($list);
 		});
 
+		$(document).on('paste', '.comment-input-text-tabs', function (e) {
+			comments.handlePaste(e);
+		});
+
 		$('.comment-files-list').each(function () {
 			comments.ensureFileInput($(this));
 		});
+	},
+	handlePaste: function (event) {
+		const orig = event.originalEvent || event;
+		const clipboard = orig.clipboardData;
+		if (!clipboard || !clipboard.items) return;
+
+		const files = [];
+		for (let i = 0; i < clipboard.items.length; i++) {
+			const item = clipboard.items[i];
+			if (item.kind === 'file' && item.type.indexOf('image/') === 0) {
+				const f = item.getAsFile();
+				if (f) files.push(f);
+			}
+		}
+		if (!files.length) return;
+
+		const $tabs = $(event.target).closest('.comment-input-text-tabs');
+		if (!$tabs.length) return;
+
+		const $list = $tabs.parent().find('.comment-files-list').first();
+		if (!$list.length) return;
+
+		event.preventDefault();
+		comments.addFiles($list, files);
+	},
+	addFiles: function ($list, files) {
+		if (!$list || !$list.length || !files || !files.length) return;
+		if (typeof DataTransfer === 'undefined') return;
+
+		const maxFiles = parseInt($list.data('maxFiles'), 10) || 0;
+
+		let filesCount = 0;
+		$('input[name="commentFiles[]"]', $list).each(function () {
+			filesCount += this.files ? this.files.length : 0;
+		});
+
+		const allowed = maxFiles ? Math.max(0, maxFiles - filesCount) : files.length;
+		if (allowed === 0) return;
+		const toAdd = files.slice(0, allowed);
+
+		let $targetInput = $('.comment-file-input input[name="commentFiles[]"]', $list).filter(function () {
+			return !this.files || this.files.length === 0;
+		}).first();
+
+		if (!$targetInput.length) {
+			const $newItem = $('.comment-file-input', $list).first().clone();
+			$('input[name="commentFiles[]"]', $newItem).val('').removeAttr('id');
+			$('.remove-comment-files', $newItem).addClass('d-none');
+			$list.append($newItem);
+			$targetInput = $('input[name="commentFiles[]"]', $newItem);
+		}
+
+		const input = $targetInput[0];
+		const dt = new DataTransfer();
+		toAdd.forEach(f => dt.items.add(f));
+		input.files = dt.files;
+
+		$targetInput.trigger('change');
 	},
 	ensureFileInput: function ($list) {
 		if (!$list || !$list.length) return;
