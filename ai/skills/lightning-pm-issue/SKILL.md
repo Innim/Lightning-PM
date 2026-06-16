@@ -173,7 +173,7 @@ Post a comment only when it helps humans later. Good examples:
 - assumptions that are not obvious from the issue
 - rollout or recheck notes
 
-Comment text may use Markdown when it improves readability.
+Comment text may use Markdown when it improves readability. For section structure use heading syntax (`###` and below — never `#` or `##`), not bold runs like `**Поведение:**` followed by a list. Bold is fine for in-paragraph emphasis.
 
 Write the comment in the same language as the issue. If the issue is in Russian, write the comment in Russian; if in English, write in English; and so on.
 
@@ -190,6 +190,44 @@ Replace `<agent-name>` with the actual agent name before showing the draft to th
 Before posting, show the exact final comment text to the user, including the signature, and wait for approval. Do not post a paraphrased or modified version after approval unless the user approves the updated text too.
 
 **ONLY** post a comment, when user already accepted implementation or review work.
+
+## Wrap-up After Implementation
+
+Implementation isn't done when the code change lands locally — there is still commit, push, and optionally an issue comment. Do not stop silently after the last edit and force the user to remember the remaining ship steps. Walk through them in two stages: a **commit-and-push proposal** first, then a **separate comment proposal**.
+
+### When to propose
+
+Trigger the commit-and-push proposal once the implementation reaches a verified-done state:
+
+- the change is in the working tree
+- build / lint / tests are green (or unaffected)
+- the user's most recent message did not request further changes (it was acceptance, neutral, or shifted focus to wrapping up)
+
+Do **not** re-propose on every iteration. While the user is still asking for edits — even small ones — finish the requested change, summarize it briefly, and wait. Each "verified-done" state only triggers the proposal once; further change requests reset it, and the next verified-done state may propose again.
+
+### Stage 1 — commit + push proposal
+
+Send one message that:
+
+1. Drafts the commit message.
+2. Lists files that will be staged and why.
+3. States explicitly that the branch will be pushed to its tracked remote immediately after the commit succeeds (no separate gate for push — push has nothing to discuss).
+
+Wait for the user to approve, edit the message, or stage selectively. After the commit lands successfully, push the branch in the same turn without re-asking.
+
+If push fails (no upstream, auth, etc.), surface the failure and ask before retrying or changing remotes.
+
+### Stage 2 — comment proposal (separate)
+
+After push succeeds, address the comment as a **separate** message. The two steps are intentionally split because commit/push has nothing to discuss while a comment's wording, structure, and language usually do.
+
+- If a comment provides value per the Comment Policy, draft the full final text (including signature) and ask for approval. Iterate on wording until the user accepts.
+- If no comment is warranted (routine bug fix, no caveats, no tester guidance, no rollout notes, etc.), say so explicitly in one sentence and skip the step instead of going silent.
+
+### Approval rules still apply
+
+- The Commit Policy still requires explicit approval before `git add` / `git commit`. The wrap-up draft is a proposal, not a pre-approval. Approval of the commit message implicitly authorizes the immediate push that follows it; nothing else.
+- The Comment Policy still requires the exact final text (including signature) to be shown and approved before posting; if the draft is later edited, re-show the updated version before posting.
 
 ## Attachment Handling
 
