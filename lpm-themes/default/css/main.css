@@ -1548,17 +1548,8 @@ form.pass-test #passTestComment textarea.comment-text-field {
 
 /* Модальное окно целей спринта */
 
-.modal-target-sprint .ui-dialog-titlebar {
-	color: #666666;
-}
-
-.modal-target-sprint .ui-dialog-titlebar-close {
-	display: none;
-}
-
 .input-target {
 	width: 100%;
-	max-width: 480px;
 	height: 160px;
 	resize: vertical;
 }
