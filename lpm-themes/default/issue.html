@@ -440,16 +440,31 @@ HTML;
   </div>
 </div>
 
-<article id="passTestDialog" title="Прошла тестирование">
-    <form class="pass-test">
-        <ul class="pass-test-items">
+<!-- Pass Test Modal -->
+<div class="modal fade" id="passTestDialog" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Прошла тестирование</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <form class="pass-test">
+          <ul class="pass-test-items list-unstyled mb-0">
             <li>
-                <label>Введите дополнительную информацию, если нужно</label>
-                <?php lpm_print_comment_input_text('passTestComment');?>
+              <label class="form-label">Введите дополнительную информацию, если нужно</label>
+              <?php lpm_print_comment_input_text('passTestComment');?>
             </li>
-        </ul>
-    </form>
-</article>
+          </ul>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-action="cancel">Отмена</button>
+        <button type="button" class="btn btn-primary" data-action="ok">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Merge In Develop Confirm Modal -->
 <div class="modal fade" id="mergeInDevelopConfirmModal" tabindex="-1" aria-hidden="true">
