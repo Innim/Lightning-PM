@@ -25,6 +25,9 @@ $(function ($) {
     });
 
     function pasteClipboardImage(event) {
+        // Только для формы задачи. Вставка в комментарии обрабатывается отдельно (см. comments.js).
+        if (!$(event.target).closest('#issueForm').length) return;
+
         var clipboard = event.clipboardData;
 
         if (clipboard && clipboard.items) {
@@ -42,7 +45,7 @@ $(function ($) {
                     reader.onload = function (event) {
                         var img = new Image(150, 100);
                         img.src = event.target.result;
-                        $('input[type=file]').last().parent().before("<li id='current'><a></a></li>");
+                        $('#issueForm .images-list input[type=file]').last().parent().before("<li id='current'><a></a></li>");
                         $('li#current a').append(img);
                         $('li#current').append("<a class='remove-btn remove-img' onclick='javascript: return false;'>");
                         var input = document.createElement('input');
