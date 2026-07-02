@@ -103,24 +103,32 @@ Do not send names like `feature/891-inner-store-payment-method`, because that du
 
 Prefer a human-readable slug that includes the issue number or a short task cue when appropriate.
 
-After creating the issue branch in Lightning PM, also create or switch to the corresponding local Git branch before editing files or committing. Remote branch creation in Lightning PM is not sufficient by itself.
+After the `POST .../branches` call succeeds, Lightning PM has already created the branch **on the remote git server, at the correct base commit**. That remote branch — not any local ref — is the source of truth for the base. Get the local branch by fetching and checking out that exact remote branch. Remote branch creation in Lightning PM is not sufficient by itself; you still need the local checkout, but it must come *from the remote branch*.
 
 Required local branch workflow:
 
-1. Create or switch the local branch successfully.
+1. Fetch the exact remote branch the API just created, then check it out:
+   ```bash
+   git fetch <remote> <feature/branch-name>
+   git checkout -B <feature/branch-name> <remote>/<feature/branch-name>
+   ```
+   (`<remote>` is usually `origin`; `<feature/branch-name>` is the full name from the API response, e.g. `feature/891.inner-store-payment-method`.)
 2. Immediately verify the current local branch with `git branch --show-current`.
 3. If the local branch is not the intended issue branch, stop and fix branch state before making changes.
 4. Re-check the current branch again before `git add` or `git commit`.
 
-Treat local branch creation or checkout failure as a hard blocker. Do not continue implementation, staging, or committing on `develop`, `master`, or any other protected/base branch after a branch-switch failure.
+**Never reconstruct the issue branch from a local base ref** (`git checkout -b <branch> master`/`develop`). Local integration refs are frequently **stale** — the local `master`/`develop` can sit far behind the server's real branch, so branching from it silently produces an issue branch missing recent commits. The API-created remote branch already encodes the right base; fetch it instead of guessing the base yourself.
 
-If local branch creation fails, inspect the cause first, for example:
+Equally, **never `git reset`/re-point the issue branch onto a different local branch** (a `pipe/*`, integration, or release branch) to "fix" a perceived wrong base. If the base looks wrong, re-fetch the remote issue branch and check it out again — do not graft it onto unrelated history.
 
-- conflicting refs under `.git/refs/heads`
-- packed refs that block the desired path
-- permissions or lock-file problems
+Treat local branch fetch/checkout failure as a hard blocker. Do not continue implementation, staging, or committing on `develop`, `master`, or any other protected/base branch after a branch-switch failure.
 
-If the local branch cannot be created safely, stop and tell the user instead of continuing on the wrong branch.
+If the fetch or checkout fails, inspect the cause first, for example:
+
+- the remote branch name differs from what you expect (re-read the API response `branch.name`)
+- conflicting local ref, packed refs, permissions, or lock-file problems
+
+If the local branch cannot be checked out from the remote safely, stop and tell the user instead of continuing on the wrong branch.
 
 ## API Requests
 
