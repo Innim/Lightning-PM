@@ -699,6 +699,52 @@ SQL;
     }
 
     /**
+     * Отправляет оповещение о создании новой задачи (автору, участникам и PM).
+     */
+    public static function notifyAdded(Issue $issue, User $author)
+    {
+        self::notifyByEmail(
+            $issue,
+            IssueEmailFormatter::issueAddedSubject($issue),
+            IssueEmailFormatter::issueAddedText($issue, $author),
+            EmailNotifier::PREF_ADD_ISSUE,
+            false
+        );
+    }
+
+    /**
+     * Создаёт новую задачу в проекте и возвращает её идентификатор.
+     * Значения передаются в «сыром» виде — экранирование выполняется внутри метода.
+     * @return int|null Идентификатор созданной задачи или null при ошибке записи.
+     */
+    public static function createNew(Project $project, $name, $desc, $type, $priority, $hours, $completeDate, $authorId)
+    {
+        $db = self::getDB();
+        $idInProject = (int)self::getLastIssueId($project->id);
+        $revision = self::getNewRevision();
+
+        // Экранируем строки и удваиваем `%`, т.к. queryt() пропускает запрос через sprintf.
+        $nameEsc = $db->real_escape_string(str_replace('%', '%%', (string)$name));
+        $descEsc = $db->real_escape_string(str_replace('%', '%%', (string)$desc));
+        $revisionEsc = $db->real_escape_string($revision);
+
+        $sql = "INSERT INTO `%s` (`projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
+                                    "`authorId`, `createDate`, `completeDate`, `priority`, `revision` ) " .
+                            "VALUES ('" . (int)$project->id . "', '" . $idInProject . "', " .
+                                        "'" . $nameEsc . "', '" . (float)$hours . "', '" . $descEsc . "', " .
+                                        "'" . (int)$type . "', '" . (int)$authorId . "', " .
+                                        "'" . DateTimeUtils::mysqlDate() . "', " .
+                                        (empty($completeDate) ? 'NULL' : "'" . $db->real_escape_string($completeDate) . "'") . ", " .
+                                        "'" . (int)$priority . "', '" . $revisionEsc . "' )";
+
+        if (!$db->queryt($sql, LPMTables::ISSUES)) {
+            return null;
+        }
+
+        return $db->insert_id;
+    }
+
+    /**
      * Устанавливает статус задачи.
      *
      * Также меняет статус стикера на доске и отправляет оповещения.
@@ -876,6 +922,40 @@ SQL;
         return uniqid();
     }
 
+    /**
+     * Разбирает значение оценки в SP. Из дробных допускается только `0.5`,
+     * остальные значения приводятся к целому (или к float при `$allowFloat`).
+     * @return int|float
+     */
+    public static function parseStoryPoints($value, $allowFloat = false)
+    {
+        return ($value == '0.5' || $value == '0,5' || $value == '1/2') ? 0.5 :
+            ($allowFloat ? floatval(str_replace(',', '.', (string)$value)) : (int)$value);
+    }
+
+    /**
+     * Разбирает дату завершения из строки формата `YYYY-MM-DD`.
+     * @return string|null|false Нормализованное `YYYY-MM-DD 00:00:00`,
+     *         null при пустом значении, false при неверном формате.
+     */
+    public static function parseCompleteDate($value)
+    {
+        $value = trim((string)$value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (!preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $value, $m)) {
+            return false;
+        }
+
+        if (!checkdate((int)$m[2], (int)$m[3], (int)$m[1])) {
+            return false;
+        }
+
+        return $value . ' 00:00:00';
+    }
+
     const TYPE_DEVELOP     	= 0;
     const TYPE_BUG         	= 1;
     const TYPE_SUPPORT     	= 2;
@@ -887,6 +967,7 @@ SQL;
     const MAX_IMAGES_COUNT	= 10;
     const MAX_FILES_COUNT     = 10;
     const DESC_MAX_LEN = 60000;
+    const DEFAULT_PRIORITY = 49;
     const IMPORTANT_PRIORITY = 79;
     
     public $id            =  0;

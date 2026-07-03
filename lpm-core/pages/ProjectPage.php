@@ -483,6 +483,10 @@ class ProjectPage extends LPMPage
             }
         }
 
+        // «Сырые» значения без экранирования — для создания задачи через Issue::createNew().
+        $rawName = trim((string)$_POST['name']);
+        $rawDesc = (string)$_POST['desc'];
+
         // TODO наверное нужен "белый список" тегов
         $_POST['desc'] = str_replace('%', '%%', $_POST['desc']);
         $_POST['hours']= str_replace('%', '%%', $_POST['hours']);
@@ -554,7 +558,14 @@ class ProjectPage extends LPMPage
         }
 
         // сохраняем задачу
-        $issueId = $this->saveIssue($db, $issueId, $idInProject, $_POST['name'], $_POST['desc'], $userId, $hours, $type, $completeDate, $priority);
+        if ($editMode) {
+            $issueId = $this->saveIssue($db, $issueId, $_POST['name'], $_POST['desc'], $hours, $type, $completeDate, $priority);
+        } else {
+            $issueId = Issue::createNew($this->_project, $rawName, $rawDesc, $type, $priority, $hours, $completeDate, $userId);
+            if (!$issueId) {
+                return $this->addError('Ошибка записи в базу');
+            }
+        }
         if (!$issueId) return;
 
         if (!$editMode) {
@@ -749,36 +760,24 @@ class ProjectPage extends LPMPage
         return true;
     }
 
-    private function saveIssue(DBConnect $db, $issueId, $idInProject, $name, $desc, $userId, $hours, $type, $completeDate, $priority) 
+    private function saveIssue(DBConnect $db, $issueId, $name, $desc, $hours, $type, $completeDate, $priority)
     {
-        $issueIdVal = $issueId === null ? 'NULL' : $issueId;
         $revision = Issue::getNewRevision();
-        $sql = "INSERT INTO `%s` (`id`, `projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
-                                    "`authorId`, `createDate`, `completeDate`, `priority`, `revision` ) " .
-                            "VALUES (". $issueIdVal . ", '" . $this->_project->id . "', '" . $idInProject . "', " .
-                                        "'" . $name . "', '" . $hours . "', '" . $desc . "', " .
-                                        "'" . $type . "', " .
-                                        "'" . $userId . "', " .
-                                    "'" . DateTimeUtils::mysqlDate() . "', " .
-                                    "" . (empty($completeDate) ? 'NULL' :  "'" . $completeDate  . "'") . ", " .
-                                    "'" . $priority . "', '" . $revision . "' ) " .
-        "ON DUPLICATE KEY UPDATE `name` = VALUES( `name` ), " .
-                                "`hours` = VALUES( `hours` ), " .
-                                "`desc` = VALUES( `desc` ), " .
-                                "`type` = VALUES( `type` ), " .
-                                "`completeDate` = VALUES( `completeDate` ), " .
-                                "`priority` = VALUES( `priority` ), " .
-                                "`revision` = VALUES( `revision` )";
+        $sql = "UPDATE `%s` SET " .
+                    "`name` = '" . $name . "', " .
+                    "`hours` = '" . $hours . "', " .
+                    "`desc` = '" . $desc . "', " .
+                    "`type` = '" . $type . "', " .
+                    "`completeDate` = " . (empty($completeDate) ? 'NULL' : "'" . $completeDate . "'") . ", " .
+                    "`priority` = '" . $priority . "', " .
+                    "`revision` = '" . $revision . "' " .
+                "WHERE `id` = '" . $issueId . "'";
 
-         if (!$db->queryt($sql, LPMTables::ISSUES)) {
+        if (!$db->queryt($sql, LPMTables::ISSUES)) {
             return $this->addError('Ошибка записи в базу');
-         }
+        }
 
-         if ($issueId === null) {
-             $issueId = $db->insert_id;
-         }
-
-         return $issueId;
+        return $issueId;
     }
 
     private function saveImages4Issue($issueId, $hasCnt = 0)
@@ -1050,13 +1049,7 @@ class ProjectPage extends LPMPage
                 EmailNotifier::PREF_EDIT_ISSUE
             );
         } else {
-            Issue::notifyByEmail(
-                $issue,
-                IssueEmailFormatter::issueAddedSubject($issue),
-                IssueEmailFormatter::issueAddedText($issue, $user),
-                EmailNotifier::PREF_ADD_ISSUE,
-                false
-            );
+            Issue::notifyAdded($issue, $user);
         }
     }
 
@@ -1067,8 +1060,6 @@ class ProjectPage extends LPMPage
 
     private function parseSP($value, $allowFloat = false)
     {
-        // из дробных разрешаем только 1/2
-        return ($value == "0.5" || $value == "0,5" || $value == "1/2") ? 0.5 :
-            ($allowFloat ? floatval(str_replace(',', '.', (string)$value)) : (int)$value);
+        return Issue::parseStoryPoints($value, $allowFloat);
     }
 }

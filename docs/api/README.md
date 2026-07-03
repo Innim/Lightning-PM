@@ -79,10 +79,42 @@ Content-Type: application/json
 
 Do not post routine progress comments such as branch creation or "implementation started". Use comments for handoff details, tester instructions, limitations, or clarifications that are not obvious from the issue itself.
 
+## Creating an issue
+
+Create a new issue in a project:
+
+```http
+POST /api/v1/issues
+Content-Type: application/json
+
+{
+  "projectId": "demo",
+  "name": "Payment retry duplicates the request",
+  "desc": "Double-clicking the pay button sends the purchase request twice.",
+  "type": 1,
+  "priority": 5,
+  "hours": 2,
+  "completeDate": "2026-07-15"
+}
+```
+
+Fields:
+
+- `projectId` (required) — project `id` or `uid`; the authenticated user must have access to it.
+- `name` (required) — issue title.
+- `desc` (optional) — issue description, up to 60000 characters.
+- `type` (optional, default `0`) — `0` develop, `1` bug, `2` support.
+- `priority` (optional, default `49` — normal) — integer clamped to `0..99`.
+- `hours` (optional, default `0`) — story points estimate; only `0.5` is accepted as a fraction, other values are treated as integers.
+- `completeDate` (optional) — target date in `YYYY-MM-DD` format.
+
+The response returns the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with HTTP status `201`. Read the global `id` and `idInProject` from it for later requests. The issue is created without members, testers, or a scrum-board sticker; assign those through the web UI if needed.
+
 ## Scope of v1
 
 - Read issue details by URL or issue id.
 - Read comments, images, and files.
 - List repositories and branches available to the user in GitLab integration.
+- Create an issue in a project.
 - Create a branch for an issue.
 - Add a comment to an issue.

@@ -75,6 +75,35 @@ Use the payload to inspect:
 - issue id
 - action URLs or repository hints if present
 
+## Creating an Issue
+
+Create a new issue in a project when the user asks to open/file a task rather than implement an existing one:
+
+```http
+POST /api/v1/issues
+Content-Type: application/json
+
+{
+  "projectId": "demo",
+  "name": "Payment retry duplicates the request",
+  "desc": "Double-clicking the pay button sends the purchase request twice.",
+  "type": 1,
+  "priority": 5,
+  "hours": 2,
+  "completeDate": "2026-07-15"
+}
+```
+
+- `projectId` (required): project `id` or `uid` the user can access.
+- `name` (required): issue title.
+- `desc` (optional): description (Markdown allowed), up to 60000 characters.
+- `type` (optional, default `0`): `0` develop, `1` bug, `2` support.
+- `priority` (optional, default `49` — normal): integer `0..99`.
+- `hours` (optional, default `0`): story points estimate; only `0.5` is a valid fraction.
+- `completeDate` (optional): target date as `YYYY-MM-DD`.
+
+The response is the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with status `201`. Save the returned global `id` and `idInProject` for follow-up calls (branches, comments). The new issue has no members, testers, or scrum sticker.
+
 ## Repository and Branch Workflow
 
 List repositories for the project:
