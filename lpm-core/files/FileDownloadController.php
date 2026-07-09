@@ -53,46 +53,7 @@ class FileDownloadController
 
     private function canDownload(LPMFile $file, $userId)
     {
-        $links = LPMFile::loadInstanceLinks($file->fileId);
-        if (empty($links)) {
-            return null;
-        }
-
-        $hasExistingInstances = false;
-
-        foreach ($links as $link) {
-            switch ($link['itemType']) {
-                case LPMInstanceTypes::ISSUE:
-                    $issue = Issue::load($link['itemId']);
-                    if (!$issue) {
-                        continue 2;
-                    }
-
-                    $hasExistingInstances = true;
-                    if ($issue->checkViewPermit($userId)) {
-                        return true;
-                    }
-                    break;
-                case LPMInstanceTypes::COMMENT:
-                    $comment = Comment::load($link['itemId']);
-                    if (!$comment || $comment->instanceType != LPMInstanceTypes::ISSUE) {
-                        continue 2;
-                    }
-
-                    $issue = Issue::load($comment->instanceId);
-                    if (!$issue) {
-                        continue 2;
-                    }
-
-                    $hasExistingInstances = true;
-                    if ($issue->checkViewPermit($userId)) {
-                        return true;
-                    }
-                    break;
-            }
-        }
-
-        return $hasExistingInstances ? false : null;
+        return $file->checkViewPermit($userId);
     }
 
     private function streamFile(LPMFile $file, $inline)

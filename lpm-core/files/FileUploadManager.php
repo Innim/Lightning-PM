@@ -126,6 +126,12 @@ class FileUploadManager
             $result['uploaded'] = [];
         }
 
+        // Ставим загруженные видео в очередь на фоновое сжатие.
+        // Делаем это после отката, чтобы не обрабатывать удалённые файлы.
+        foreach ($result['uploaded'] as $file) {
+            VideoCompressor::maybeCompress($file);
+        }
+
         return $result;
     }
 

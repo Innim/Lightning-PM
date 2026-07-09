@@ -171,6 +171,58 @@ class LPMFile extends LPMBaseObject
         return self::load($fileId);
     }
 
+    /**
+     * Обновляет статус сжатия видео.
+     * @param int $fileId
+     * @param int $status Одна из констант VideoCompressor::STATUS_*
+     */
+    public static function setCompressStatus($fileId, $status)
+    {
+        $fileId = (int)$fileId;
+        if ($fileId <= 0) {
+            return;
+        }
+
+        self::buildAndSaveToDbV2([
+            'UPDATE' => LPMTables::FILES,
+            'SET'    => [
+                'compressStatus' => (int)$status,
+            ],
+            'WHERE'  => ['`fileId` = ' . $fileId],
+        ]);
+    }
+
+    /**
+     * Сохраняет результат успешного сжатия видео: подменяет путь/имя/тип/размер
+     * и помечает файл как обработанный.
+     * @param int    $fileId
+     * @param string $relativePath Новый путь к сжатому файлу
+     * @param string $origName     Новое отображаемое имя файла
+     * @param string $mimeType     Новый MIME-тип
+     * @param int    $size         Размер сжатого файла в байтах
+     * @param int    $origSize     Исходный размер файла в байтах
+     */
+    public static function applyCompressionResult($fileId, $relativePath, $origName, $mimeType, $size, $origSize)
+    {
+        $fileId = (int)$fileId;
+        if ($fileId <= 0) {
+            return;
+        }
+
+        self::buildAndSaveToDbV2([
+            'UPDATE' => LPMTables::FILES,
+            'SET'    => [
+                'path'           => $relativePath,
+                'origName'       => $origName,
+                'mimeType'       => $mimeType,
+                'size'           => (int)$size,
+                'origSize'       => (int)$origSize,
+                'compressStatus' => VideoCompressor::STATUS_DONE,
+            ],
+            'WHERE'  => ['`fileId` = ' . $fileId],
+        ]);
+    }
+
     public static function delete($itemType, $itemId, array $fileIds)
     {
         $itemType = (int)$itemType;
@@ -336,6 +388,19 @@ class LPMFile extends LPMBaseObject
     public $size;
 
     /**
+     * Video compression status: null — N/A, otherwise one of
+     * {@see VideoCompressor}::STATUS_* constants.
+     * @var int|null
+     */
+    public $compressStatus;
+
+    /**
+     * Original file size in bytes before compression (null if not compressed).
+     * @var int|null
+     */
+    public $origSize;
+
+    /**
      * Upload date (unix timestamp).
      * @var float
      */
@@ -359,10 +424,10 @@ class LPMFile extends LPMBaseObject
 
         $this->fileId = $id;
 
-        $this->_typeConverter->addFloatVars('fileId', 'userId', 'size', 'linkedItemId');
+        $this->_typeConverter->addFloatVars('fileId', 'userId', 'size', 'origSize', 'compressStatus', 'linkedItemId');
         $this->_typeConverter->addBoolVars('deleted');
         $this->addDateTimeFields('created');
-        $this->addClientFields('fileId', 'uid', 'mimeType', 'size', 'created');
+        $this->addClientFields('fileId', 'uid', 'mimeType', 'size', 'created', 'compressStatus');
     }
 
     public function getDownloadUrl()
@@ -405,5 +470,74 @@ class LPMFile extends LPMBaseObject
     public function isImage()
     {
         return !empty($this->mimeType) && strpos($this->mimeType, 'image/') === 0;
+    }
+
+    /**
+     * Проверяет, может ли пользователь просматривать/скачивать файл,
+     * исходя из прав доступа к связанным сущностям (задача/комментарий).
+     * @param int $userId
+     * @return bool|null true — доступ разрешён; false — связанные сущности
+     *   есть, но доступа к ним нет; null — связанных сущностей не найдено
+     */
+    public function checkViewPermit($userId)
+    {
+        $links = self::loadInstanceLinks($this->fileId);
+        if (empty($links)) {
+            return null;
+        }
+
+        $hasExistingInstances = false;
+
+        foreach ($links as $link) {
+            switch ($link['itemType']) {
+                case LPMInstanceTypes::ISSUE:
+                    $issue = Issue::load($link['itemId']);
+                    if (!$issue) {
+                        continue 2;
+                    }
+
+                    $hasExistingInstances = true;
+                    if ($issue->checkViewPermit($userId)) {
+                        return true;
+                    }
+                    break;
+                case LPMInstanceTypes::COMMENT:
+                    $comment = Comment::load($link['itemId']);
+                    if (!$comment || $comment->instanceType != LPMInstanceTypes::ISSUE) {
+                        continue 2;
+                    }
+
+                    $issue = Issue::load($comment->instanceId);
+                    if (!$issue) {
+                        continue 2;
+                    }
+
+                    $hasExistingInstances = true;
+                    if ($issue->checkViewPermit($userId)) {
+                        return true;
+                    }
+                    break;
+            }
+        }
+
+        return $hasExistingInstances ? false : null;
+    }
+
+    /**
+     * Видео в процессе фонового сжатия.
+     * @return bool
+     */
+    public function isCompressing()
+    {
+        return (int)$this->compressStatus === VideoCompressor::STATUS_PROCESSING;
+    }
+
+    /**
+     * Сжатие видео завершилось ошибкой (используется оригинал).
+     * @return bool
+     */
+    public function isCompressFailed()
+    {
+        return (int)$this->compressStatus === VideoCompressor::STATUS_FAILED;
     }
 }

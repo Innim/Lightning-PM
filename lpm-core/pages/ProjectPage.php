@@ -392,6 +392,7 @@ class ProjectPage extends LPMPage
             'comments',
             'attachments',
             'formatting',
+            'video-compress-status',
         ];
     }
     

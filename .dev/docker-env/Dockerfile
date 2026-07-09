@@ -44,6 +44,10 @@ RUN docker-php-ext-configure gd --with-freetype-dir --with-jpeg-dir \
 RUN pecl install memcached \
     && docker-php-ext-enable memcached
 
+# Install ffmpeg for background video compression
+RUN apt-get update && apt-get install -y ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Enable required Apache modules
 RUN a2enmod rewrite headers
 
