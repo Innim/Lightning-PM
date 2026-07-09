@@ -492,3 +492,10 @@ CREATE TABLE `lpm_api_keys` (
   PRIMARY KEY (`id`),
   KEY `userId_deleted` (`userId`,`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Пользовательские API ключи';
+
+-- 0.19.0
+
+-- Асинхронное сжатие видео: статус обработки и исходный размер файла
+ALTER TABLE `lpm_files`
+  ADD COLUMN `compressStatus` tinyint(1) DEFAULT NULL COMMENT 'Статус сжатия видео: NULL — не применимо, 1 — в обработке, 2 — готово, 3 — ошибка' AFTER `size`,
+  ADD COLUMN `origSize` bigint DEFAULT NULL COMMENT 'Исходный размер файла в байтах до сжатия' AFTER `compressStatus`;

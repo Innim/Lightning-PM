@@ -1670,6 +1670,11 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	width: 420px;
 }
 
+.comment-file-video-compressing {
+	aspect-ratio: 16 / 9;
+	min-height: 160px;
+}
+
 .comment-file-image-link {
 	max-width: min(330px, 100%);
 	width: fit-content;

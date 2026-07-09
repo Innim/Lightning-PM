@@ -103,24 +103,32 @@ Do not send names like `feature/891-inner-store-payment-method`, because that du
 
 Prefer a human-readable slug that includes the issue number or a short task cue when appropriate.
 
-After creating the issue branch in Lightning PM, also create or switch to the corresponding local Git branch before editing files or committing. Remote branch creation in Lightning PM is not sufficient by itself.
+After the `POST .../branches` call succeeds, Lightning PM has already created the branch **on the remote git server, at the correct base commit**. That remote branch — not any local ref — is the source of truth for the base. Get the local branch by fetching and checking out that exact remote branch. Remote branch creation in Lightning PM is not sufficient by itself; you still need the local checkout, but it must come *from the remote branch*.
 
 Required local branch workflow:
 
-1. Create or switch the local branch successfully.
+1. Fetch the exact remote branch the API just created, then check it out:
+   ```bash
+   git fetch <remote> <feature/branch-name>
+   git checkout -B <feature/branch-name> <remote>/<feature/branch-name>
+   ```
+   (`<remote>` is usually `origin`; `<feature/branch-name>` is the full name from the API response, e.g. `feature/891.inner-store-payment-method`.)
 2. Immediately verify the current local branch with `git branch --show-current`.
 3. If the local branch is not the intended issue branch, stop and fix branch state before making changes.
 4. Re-check the current branch again before `git add` or `git commit`.
 
-Treat local branch creation or checkout failure as a hard blocker. Do not continue implementation, staging, or committing on `develop`, `master`, or any other protected/base branch after a branch-switch failure.
+**Never reconstruct the issue branch from a local base ref** (`git checkout -b <branch> master`/`develop`). Local integration refs are frequently **stale** — the local `master`/`develop` can sit far behind the server's real branch, so branching from it silently produces an issue branch missing recent commits. The API-created remote branch already encodes the right base; fetch it instead of guessing the base yourself.
 
-If local branch creation fails, inspect the cause first, for example:
+Equally, **never `git reset`/re-point the issue branch onto a different local branch** (a `pipe/*`, integration, or release branch) to "fix" a perceived wrong base. If the base looks wrong, re-fetch the remote issue branch and check it out again — do not graft it onto unrelated history.
 
-- conflicting refs under `.git/refs/heads`
-- packed refs that block the desired path
-- permissions or lock-file problems
+Treat local branch fetch/checkout failure as a hard blocker. Do not continue implementation, staging, or committing on `develop`, `master`, or any other protected/base branch after a branch-switch failure.
 
-If the local branch cannot be created safely, stop and tell the user instead of continuing on the wrong branch.
+If the fetch or checkout fails, inspect the cause first, for example:
+
+- the remote branch name differs from what you expect (re-read the API response `branch.name`)
+- conflicting local ref, packed refs, permissions, or lock-file problems
+
+If the local branch cannot be checked out from the remote safely, stop and tell the user instead of continuing on the wrong branch.
 
 ## API Requests
 
@@ -173,7 +181,7 @@ Post a comment only when it helps humans later. Good examples:
 - assumptions that are not obvious from the issue
 - rollout or recheck notes
 
-Comment text may use Markdown when it improves readability.
+Comment text may use Markdown when it improves readability. For section structure use heading syntax (`###` and below — never `#` or `##`), not bold runs like `**Поведение:**` followed by a list. Bold is fine for in-paragraph emphasis.
 
 Write the comment in the same language as the issue. If the issue is in Russian, write the comment in Russian; if in English, write in English; and so on.
 
@@ -190,6 +198,44 @@ Replace `<agent-name>` with the actual agent name before showing the draft to th
 Before posting, show the exact final comment text to the user, including the signature, and wait for approval. Do not post a paraphrased or modified version after approval unless the user approves the updated text too.
 
 **ONLY** post a comment, when user already accepted implementation or review work.
+
+## Wrap-up After Implementation
+
+Implementation isn't done when the code change lands locally — there is still commit, push, and optionally an issue comment. Do not stop silently after the last edit and force the user to remember the remaining ship steps. Walk through them in two stages: a **commit-and-push proposal** first, then a **separate comment proposal**.
+
+### When to propose
+
+Trigger the commit-and-push proposal once the implementation reaches a verified-done state:
+
+- the change is in the working tree
+- build / lint / tests are green (or unaffected)
+- the user's most recent message did not request further changes (it was acceptance, neutral, or shifted focus to wrapping up)
+
+Do **not** re-propose on every iteration. While the user is still asking for edits — even small ones — finish the requested change, summarize it briefly, and wait. Each "verified-done" state only triggers the proposal once; further change requests reset it, and the next verified-done state may propose again.
+
+### Stage 1 — commit + push proposal
+
+Send one message that:
+
+1. Drafts the commit message.
+2. Lists files that will be staged and why.
+3. States explicitly that the branch will be pushed to its tracked remote immediately after the commit succeeds (no separate gate for push — push has nothing to discuss).
+
+Wait for the user to approve, edit the message, or stage selectively. After the commit lands successfully, push the branch in the same turn without re-asking.
+
+If push fails (no upstream, auth, etc.), surface the failure and ask before retrying or changing remotes.
+
+### Stage 2 — comment proposal (separate)
+
+After push succeeds, address the comment as a **separate** message. The two steps are intentionally split because commit/push has nothing to discuss while a comment's wording, structure, and language usually do.
+
+- If a comment provides value per the Comment Policy, draft the full final text (including signature) and ask for approval. Iterate on wording until the user accepts.
+- If no comment is warranted (routine bug fix, no caveats, no tester guidance, no rollout notes, etc.), say so explicitly in one sentence and skip the step instead of going silent.
+
+### Approval rules still apply
+
+- The Commit Policy still requires explicit approval before `git add` / `git commit`. The wrap-up draft is a proposal, not a pre-approval. Approval of the commit message implicitly authorizes the immediate push that follows it; nothing else.
+- The Comment Policy still requires the exact final text (including signature) to be shown and approved before posting; if the draft is later edited, re-show the updated version before posting.
 
 ## Attachment Handling
 

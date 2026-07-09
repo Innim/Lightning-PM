@@ -69,6 +69,8 @@ CREATE TABLE `lpm_files` (
   `origName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'оригинальное имя файла',
   `mimeType` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'MIME тип файла',
   `size` bigint NOT NULL COMMENT 'размер файла в байтах',
+  `compressStatus` tinyint(1) DEFAULT NULL COMMENT 'Статус сжатия видео: NULL — не применимо, 1 — в обработке, 2 — готово, 3 — ошибка',
+  `origSize` bigint DEFAULT NULL COMMENT 'Исходный размер файла в байтах до сжатия',
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'дата добавления',
   `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'файл удалён',
   PRIMARY KEY (`fileId`),

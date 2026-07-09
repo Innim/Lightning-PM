@@ -202,6 +202,12 @@ let srv = {
             this.s._('getImageInfo');
         },
     },
+    files: {
+        s: new BaseService('FilesService'),
+        getCompressStatus: function (uids, onResult) {
+            this.s._('getCompressStatus');
+        },
+    },
     issue: {
         s: new BaseService('IssueService'),
         complete: function (issueId, onResult) {

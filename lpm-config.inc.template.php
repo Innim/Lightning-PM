@@ -115,3 +115,23 @@ define('MAILGUN_ENDPOINT', '');
 define('EMAIL_NOTIFY_ENABLED', true);
 // В дебаг-режиме не отправлять письма, а только писать в лог
 define('EMAIL_NOTIFY_LOG_ONLY_IN_DEBUG', false);
+
+
+// Сжатие видео
+
+// Асинхронное сжатие загруженных видео через ffmpeg.
+// После загрузки видео сжимается в фоне отдельным процессом,
+// оригинал заменяется на сжатую версию (для экономии места на сервере).
+define('VIDEO_COMPRESS_ENABLED', false);
+// Путь к бинарю ffmpeg (или имя команды, если он в PATH)
+define('VIDEO_COMPRESS_FFMPEG_BIN', 'ffmpeg');
+// Путь к бинарю PHP CLI для запуска фонового воркера
+define('VIDEO_COMPRESS_PHP_BIN', 'php');
+// Ограничение разрешения при сжатии (px), не зависит от ориентации:
+// длинная сторона видео не превысит MAX_LONG_SIDE, короткая — MAX_SHORT_SIDE.
+// Пропорции сохраняются, апскейла нет.
+define('VIDEO_COMPRESS_MAX_LONG_SIDE', 1920);
+define('VIDEO_COMPRESS_MAX_SHORT_SIDE', 1080);
+// Качество сжатия x264 (CRF): меньше — лучше качество и больше размер,
+// больше — сильнее сжатие. Разумный диапазон 18–30.
+define('VIDEO_COMPRESS_CRF', 28);

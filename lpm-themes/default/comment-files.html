@@ -29,9 +29,18 @@ if (!empty($files)):
         $mimeType = htmlspecialchars($file->mimeType, ENT_QUOTES, 'UTF-8');
         ?>
         <div class="comment-video-item text-center">
+            <?php if ($file->isCompressing()): ?>
+            <div class="comment-file-video comment-file-video-compressing rounded-2 border bg-dark d-flex flex-column align-items-center justify-content-center text-light"
+                 data-video-compress data-file-uid="<?=htmlspecialchars($file->uid, ENT_QUOTES, 'UTF-8');?>"
+                 data-mime-type="<?=$mimeType;?>">
+                <div class="spinner-border spinner-border-sm mb-2" role="status" aria-hidden="true"></div>
+                <span class="small">Сжатие видео…</span>
+            </div>
+            <?php else: ?>
             <video controls preload="metadata" class="comment-file-video rounded-2 border bg-dark">
                 <source src="<?=$file->getViewUrl();?>" type="<?=$mimeType;?>">
             </video>
+            <?php endif; ?>
             <div class="d-flex align-items-center justify-content-center gap-2 mt-1">
                 <span class="small text-truncate" title="<?=$fileName;?>"><?=$fileName;?></span>
                 <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm flex-shrink-0" download="<?=$fileName;?>" title="Скачать">

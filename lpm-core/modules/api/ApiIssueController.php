@@ -17,6 +17,10 @@ class ApiIssueController extends ApiControllerBase
             ]);
         }
 
+        if ($method === 'POST' && count($path) === 0) {
+            return $this->createIssue();
+        }
+
         if (count($path) < 1) {
             return ApiResponse::error('Route not found', 404);
         }
@@ -41,6 +45,68 @@ class ApiIssueController extends ApiControllerBase
         }
 
         return ApiResponse::error('Route not found', 404);
+    }
+
+    private function createIssue()
+    {
+        $projectId = $this->request()->getBody('projectId');
+        if ($projectId === null || $projectId === '') {
+            return ApiResponse::error('projectId is required', 400);
+        }
+
+        $project = $this->loadProject($projectId);
+        if (!$project) {
+            return ApiResponse::error('Project not found', 404);
+        }
+
+        $name = trim((string)$this->request()->getBody('name'));
+        if ($name === '') {
+            return ApiResponse::error('Issue name is required', 400);
+        }
+
+        $desc = (string)$this->request()->getBody('desc', '');
+        if (mb_strlen($desc) > Issue::DESC_MAX_LEN) {
+            return ApiResponse::error('Description is too long, max ' . Issue::DESC_MAX_LEN . ' characters', 400);
+        }
+
+        $type = (int)$this->request()->getBody('type', Issue::TYPE_DEVELOP);
+        if (!in_array($type, [Issue::TYPE_BUG, Issue::TYPE_DEVELOP, Issue::TYPE_SUPPORT], true)) {
+            return ApiResponse::error('Invalid issue type', 400);
+        }
+
+        $priority = min(99, max(0, (int)$this->request()->getBody('priority', Issue::DEFAULT_PRIORITY)));
+        $hours = Issue::parseStoryPoints($this->request()->getBody('hours', 0));
+
+        $completeDate = Issue::parseCompleteDate($this->request()->getBody('completeDate'));
+        if ($completeDate === false) {
+            return ApiResponse::error('Invalid completeDate, expected format YYYY-MM-DD', 400);
+        }
+
+        $user = $this->user();
+        $issueId = Issue::createNew($project, $name, $desc, $type, $priority, $hours, $completeDate, $user->getID());
+        if (!$issueId) {
+            throw new Exception('Failed to create issue');
+        }
+
+        $issue = Issue::load($issueId);
+        if (!$issue) {
+            throw new Exception('Failed to load created issue');
+        }
+
+        Project::updateIssuesCount($project->id);
+
+        UserLogEntry::create(
+            $user->getID(),
+            DateTimeUtils::$currentDate,
+            UserLogEntryType::ADD_ISSUE,
+            $issue->id
+        );
+
+        Issue::notifyAdded($issue, $user);
+
+        return ApiResponse::success([
+            'issue' => $this->serializer()->issue($issue),
+        ], 201);
     }
 
     private function createComment(Issue $issue)
