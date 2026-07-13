@@ -665,6 +665,8 @@ class IssueService extends LPMBaseService
         $labels = Issue::getLabelsByLabelText($label);
         $uses = 0;
         $id = 0;
+        // Id проектных меток, использования которых нужно перенести на целевую (общую) метку.
+        $mergeFromIds = [];
         if (!empty($labels)) {
             $count = count($labels);
             while ($count-- > 0) {
@@ -672,6 +674,7 @@ class IssueService extends LPMBaseService
                 if ($projectId == 0) {
                     if ($labelData['projectId'] != 0 && $labelData['deleted'] == LabelState::ACTIVE) {
                         $uses += $labelData['countUses'];
+                        $mergeFromIds[] = $labelData['id'];
                         Issue::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
                     } elseif ($labelData['projectId'] == 0) {
                         if ($labelData['deleted'] == LabelState::ACTIVE) {
@@ -693,10 +696,22 @@ class IssueService extends LPMBaseService
             }
         }
 
+        // Была ли общая метка переиспользована (существовала ранее, но была отключена).
+        $reuseId = (int) $id;
         $id = Issue::saveLabel($label, $projectId, $id, $uses, LabelState::ACTIVE);
         if ($id == null) {
             return $this->error($db->error);
         } else {
+            // Переносим накопленную статистику проектных меток только при создании НОВОЙ
+            // общей метки — чтобы её ранжирование по частоте в проектах не начиналось с нуля.
+            // Если общая метка переиспользуется, её строки использований уже поддерживаются
+            // актуальными в Issue::addLabelsUsing() (счётчик обновляется и для отключённых
+            // меток), поэтому повторный перенос привёл бы к двойному учёту.
+            if ($reuseId == 0) {
+                foreach ($mergeFromIds as $fromId) {
+                    Issue::mergeLabelUses($fromId, (int) $id);
+                }
+            }
             $this->add2Answer('id', $id);
             return $this->answer();
         }

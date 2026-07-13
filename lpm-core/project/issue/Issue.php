@@ -467,23 +467,32 @@ SQL;
     }
 
     /**
-     * Возвращает список стандартных меток для задачи отсортированных по количеству использований.
-     * @return array[{id, label, countUses, projectId}...n] Список меток для задачи.
+     * Возвращает список стандартных меток для задачи, отсортированных по количеству использований
+     * в рамках указанного проекта (общие метки ранжируются по использованиям именно в этом проекте,
+     * а не суммарно по всем проектам).
+     * @return array[{id, label, countUses, projectUses, projectId}...n] Список меток для задачи.
      */
     // TODO: перенести в IssueLabel
     public static function getLabels($projectId)
     {
+        $projectId = (int) $projectId;
         $labels = array();
-        $sql = "SELECT `id`, `label`, `countUses`, `projectId` FROM `%s` WHERE (`deleted` = " . LabelState::ACTIVE . ") AND ".
-            "(`projectId` = " . (int) $projectId . " OR `projectId` = 0)";
+        // countUses — суммарное количество использований по всем проектам (вторичный критерий),
+        // projectUses — количество использований метки в текущем проекте (основной критерий).
+        $sql = "SELECT `l`.`id`, `l`.`label`, `l`.`countUses`, `l`.`projectId`, " .
+            "COALESCE(`u`.`countUses`, 0) AS `projectUses` " .
+            "FROM `%1\$s` `l` " .
+            "LEFT JOIN `%2\$s` `u` ON `u`.`labelId` = `l`.`id` AND `u`.`projectId` = " . $projectId . " " .
+            "WHERE (`l`.`deleted` = " . LabelState::ACTIVE . ") AND " .
+            "(`l`.`projectId` = " . $projectId . " OR `l`.`projectId` = 0) " .
+            "ORDER BY `projectUses` DESC, `l`.`countUses` DESC";
 
         $db = LPMGlobals::getInstance()->getDBConnect();
-        $res = $db->queryt($sql, LPMTables::ISSUE_LABELS);
+        $res = $db->queryt($sql, LPMTables::ISSUE_LABELS, LPMTables::ISSUE_LABEL_USES);
         if ($res) {
             while ($array = $res->fetch_assoc()) {
                 $labels[] = $array;
             }
-            uasort($labels, "Issue::labelsSort");
         }
         return $labels;
     }
@@ -524,14 +533,10 @@ SQL;
         return ($res) ? $res->fetch_assoc() : null;
     }
 
-    // TODO: перенести в IssueLabel
-    public static function labelsSort($label1, $label2)
-    {
-        return $label2['countUses'] - $label1['countUses'];
-    }
-
     /**
      * Добавить метками количество использований.
+     * Увеличивает как суммарный счётчик метки (`countUses`), так и счётчик использований
+     * метки в рамках указанного проекта (таблица использований по проектам).
      * @param $labelNames Список имен меток, которым нужно добавить использование.
      * @param $projectId Идентификатор проекта приоритет метки которого нужно изменить, либо 0,
      * если нужно изменить приоритет только общей для проектов метки.
@@ -540,14 +545,64 @@ SQL;
     public static function addLabelsUsing($labelNames, $projectId = 0)
     {
         $projectId = (int) $projectId;
+        if (empty($labelNames)) {
+            return;
+        }
+
         $db = LPMGlobals::getInstance()->getDBConnect();
         foreach ($labelNames as $key => $value) {
             $labelNames[$key] = $db->escape_string($value);
         }
+        $inList = "'" . implode("','", $labelNames) . "'";
 
-        $sql = "UPDATE `%s` SET `countUses` = `countUses` + 1 WHERE `label` IN('" . implode("','", $labelNames). "')" .
-            " AND (`projectId` = 0 OR `projectId` = " . (int) $projectId . ")";
+        // Суммарный счётчик использований по всем проектам (вторичный критерий сортировки).
+        $sql = "UPDATE `%s` SET `countUses` = `countUses` + 1 WHERE `label` IN(" . $inList . ")" .
+            " AND (`projectId` = 0 OR `projectId` = " . $projectId . ")";
         $db->queryt($sql, LPMTables::ISSUE_LABELS);
+
+        // Счётчик использований метки в рамках конкретного проекта (основной критерий сортировки).
+        // Область совпадает с обновлением суммарного счётчика выше (без фильтра по `deleted`):
+        // отключённые проектные метки, замещённые общими, продолжают накапливать статистику,
+        // чтобы при их восстановлении (removeLabel) значение projectUses не оказалось устаревшим.
+        // Источник обёрнут в подзапрос, выбирающий только `id`: иначе колонка `countUses` есть
+        // и в таблице-источнике, и в целевой, из-за чего ссылка в ON DUPLICATE KEY UPDATE
+        // становится неоднозначной (ERROR 1052) и запрос молча не выполняется.
+        $sql = "INSERT INTO `%1\$s` (`labelId`, `projectId`, `countUses`) " .
+            "SELECT `src`.`id`, " . $projectId . ", 1 " .
+            "FROM (SELECT `id` FROM `%2\$s` " .
+            "WHERE `label` IN(" . $inList . ") " .
+            "AND (`projectId` = 0 OR `projectId` = " . $projectId . ")) `src` " .
+            "ON DUPLICATE KEY UPDATE `countUses` = `countUses` + 1";
+        $db->queryt($sql, LPMTables::ISSUE_LABEL_USES, LPMTables::ISSUE_LABELS);
+    }
+
+    /**
+     * Переносит (суммирует) использования по проектам с метки-источника на целевую метку.
+     * Применяется при слиянии меток (например, повышение проектной метки до общей), чтобы
+     * накопленная статистика использований в проектах сохранилась за целевой (активной) меткой.
+     * Строки метки-источника не удаляются — так же, как при слиянии не обнуляется её `countUses`,
+     * что позволяет корректно вернуть статистику при обратной операции (removeLabel).
+     * @param $fromLabelId int Идентификатор метки-источника.
+     * @param $toLabelId int Идентификатор целевой метки.
+     */
+    // TODO: перенести в IssueLabel
+    public static function mergeLabelUses($fromLabelId, $toLabelId)
+    {
+        $fromLabelId = (int) $fromLabelId;
+        $toLabelId = (int) $toLabelId;
+        if ($fromLabelId <= 0 || $toLabelId <= 0 || $fromLabelId === $toLabelId) {
+            return;
+        }
+
+        // Источник оборачиваем в подзапрос и переименовываем `countUses` в `uses`: иначе
+        // одноимённая колонка есть и в источнике, и в целевой таблице, из-за чего ссылка
+        // на `countUses` в ON DUPLICATE KEY UPDATE становится неоднозначной (ERROR 1052).
+        $sql = "INSERT INTO `%1\$s` (`labelId`, `projectId`, `countUses`) " .
+            "SELECT " . $toLabelId . ", `src`.`projectId`, `src`.`uses` " .
+            "FROM (SELECT `projectId`, `countUses` AS `uses` FROM `%1\$s` WHERE `labelId` = " . $fromLabelId . ") `src` " .
+            "ON DUPLICATE KEY UPDATE `countUses` = `countUses` + VALUES(`countUses`)";
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $db->queryt($sql, LPMTables::ISSUE_LABEL_USES);
     }
 
     /**

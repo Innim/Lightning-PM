@@ -308,7 +308,10 @@ $isHidden = !empty($isHidden)
                     Метка
                 </div>
                 <div class="table-cell">
-                    Использования
+                    В проекте
+                </div>
+                <div class="table-cell">
+                    Всего
                 </div>
                 <div class="table-cell">
                     Общая
@@ -331,6 +334,9 @@ $isHidden = !empty($isHidden)
                     <?=$label['label'];?>
                 </div>
                 <div class="table-cell">
+                    <?=$label['projectUses'];?>
+                </div>
+                <div class="table-cell">
                     <?=$label['countUses'];?>
                 </div>
                 <div class="table-cell">
@@ -349,6 +355,7 @@ $isHidden = !empty($isHidden)
             <?php foreach ($issueLabels as $label): ?>
             <div class="table-row">
                 <div class="table-cell label-name"><?=$label?></div>
+                <div class="table-cell">0</div>
                 <div class="table-cell">0</div>
                 <div class="table-cell"></div>
                 <div class="table-cell">
