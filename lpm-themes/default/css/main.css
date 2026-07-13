@@ -1410,20 +1410,31 @@ blockquote > p {
 	margin: -1px;
 }
 
-#removeIssuesLabelContainer .table {
-	border: 1px solid #CCCCCC;
-	padding: 0;
-	margin: 0;
+/* Убираем только верхний отступ: залипающая шапка прилипает к верху без
+   зазора (иначе строки видны над шапкой). Боковые отступы оставляем, чтобы
+   overlay-скроллбар (macOS) не перекрывал кнопки удаления */
+#removeIssuesLabelContainer .modal-body {
+	padding-top: 0;
 }
 
-#removeIssuesLabelContainer .table-cell {
-	padding: 5px 10px;
-	text-align: center;
-	border: 1px solid #FFFFFF;
+/* separate + border-spacing: 0 — нижняя граница шапки принадлежит ячейке и
+   «прилипает» вместе с ней, а не прокручивается, как при border-collapse */
+.remove-issue-labels-table {
+	border-collapse: separate;
+	border-spacing: 0;
+	/* Отступ от шапки диалога: виден в покое, при прокрутке уезжает под
+	   залипающую шапку (padding контейнера тут дал бы просвет над шапкой) */
+	margin-top: 0.75rem;
 }
 
-#removeIssuesLabelContainer .table-row:nth-child(even) {
-	background: #FFFFFF;
+.remove-issue-labels-table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	/* Сплошной фон, чтобы прокручиваемые строки не просвечивали сквозь шапку */
+	background-color: #f8f9fa;
+	/* Более тёмная и толстая линия — отделяет шапку от разделителей строк */
+	border-bottom: 2px solid #adb5bd;
 }
 
 .table {

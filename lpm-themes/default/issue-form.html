@@ -283,88 +283,105 @@ $isHidden = !empty($isHidden)
         </div>
     </form>
 
-    <div id="addIssueLabelFormContainer" style="display: none;">
-        <form id="addIssueLabelForm">
-            <div class="mb-3">
-                <label for="issueLabelText" class="form-label">Метка:</label>
-                <input type="text" class="form-control" id="issueLabelText" name="labelText">
-            </div>
-            <?php if (lpm_is_moderator()):?>
-            <div class="mb-3">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="isAllProjects" id="isAllProjectsCheckbox">
-                    <label class="form-check-label" for="isAllProjectsCheckbox">для всех проектов</label>
+    <div class="modal fade" id="addIssueLabelFormContainer" tabindex="-1" aria-labelledby="addIssueLabelLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addIssueLabelLabel">Добавление новой метки</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addIssueLabelForm" onsubmit="issueFormLabels.saveNew(); return false;">
+                        <div class="mb-3">
+                            <label for="issueLabelText" class="form-label">Метка:</label>
+                            <input type="text" class="form-control" id="issueLabelText" name="labelText">
+                        </div>
+                        <?php if (lpm_is_moderator()):?>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isAllProjects" id="isAllProjectsCheckbox">
+                                <label class="form-check-label" for="isAllProjectsCheckbox">для всех проектов</label>
+                            </div>
+                        </div>
+                        <?php endif;?>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary" form="addIssueLabelForm">Сохранить</button>
                 </div>
             </div>
-            <?php endif;?>
-        </form>
+        </div>
     </div>
 
     <?php if (lpm_is_moderator()):?>
-    <div id="removeIssuesLabelContainer" style="display: none;">
-        <div class="table">
-            <div class="table-header">
-                <div class="table-cell">
-                    Метка
+    <div class="modal fade" id="removeIssuesLabelContainer" tabindex="-1" aria-labelledby="removeIssuesLabelLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeIssuesLabelLabel">Удаление меток</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                 </div>
-                <div class="table-cell">
-                    В проекте
-                </div>
-                <div class="table-cell">
-                    Всего
-                </div>
-                <div class="table-cell">
-                    Общая
-                </div>
-                <div class="table-cell">
+                <div class="modal-body">
+                    <table class="table table-striped table-hover align-middle mb-0 remove-issue-labels-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Метка</th>
+                                <th scope="col" class="text-center" title="Число задач с этой меткой в текущем проекте">В проекте</th>
+                                <th scope="col" class="text-center" title="Общее число задач с этой меткой во всех проектах">Всего</th>
+                                <th scope="col" class="text-center" title="Метка доступна во всех проектах">Общая</th>
+                                <th scope="col" class="text-end"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="remove-issue-labels-empty d-none">
+                                <td colspan="5" class="text-center text-muted py-3">Меток нет</td>
+                            </tr>
+                            <?php
+                                $allLabels = lpm_get_issue_labels();
+                                $issueLabels = $issue ? $issue->getLabelNames() : array();
+                            ?>
+                            <?php foreach( $allLabels as $label): ?>
+                            <?php
+                                $index = array_search($label['label'], $issueLabels);
+                                if ($index !== false)
+                                    unset($issueLabels[$index]);
+                            ?>
+                            <tr>
+                                <td class="label-name"><?=$label['label'];?></td>
+                                <td class="text-center"><?=$label['projectUses'];?></td>
+                                <td class="text-center"><?=$label['countUses'];?></td>
+                                <td class="text-center">
+                                    <?php if($label['projectId'] == 0): ?>
+                                    <i class="fas fa-check text-success" aria-hidden="true" title="Общая метка"></i>
+                                    <?php endif;?>
+                                </td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Удалить метку"
+                                        onclick="issueFormLabels.confirmRemove('<?=$label['label'];?>', <?=$label['id'];?>);">
+                                        <i class="far fa-trash-can" aria-hidden="true"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                            <?php foreach ($issueLabels as $label): ?>
+                            <tr>
+                                <td class="label-name"><?=$label?></td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center"></td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Удалить метку"
+                                        onclick="issueFormLabels.confirmRemove('<?=$label;?>');">
+                                        <i class="far fa-trash-can" aria-hidden="true"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <?php
-                $allLabels = lpm_get_issue_labels();
-                $issueLabels = $issue ? $issue->getLabelNames() : array();
-            ?>
-            <?php foreach( $allLabels as $label): ?>
-            <?php
-                    $index = array_search($label['label'], $issueLabels);
-                    if ($index !== false)
-                        unset($issueLabels[$index]);
-                ?>
-            <div class="table-row">
-                <div class="table-cell label-name">
-                    <?=$label['label'];?>
-                </div>
-                <div class="table-cell">
-                    <?=$label['projectUses'];?>
-                </div>
-                <div class="table-cell">
-                    <?=$label['countUses'];?>
-                </div>
-                <div class="table-cell">
-                    <?php if($label['projectId'] == 0): ?>
-                    <i class="far fa-check-square" aria-hidden="true"></i>
-                    <?php endif;?>
-                </div>
-                <div class="table-cell">
-                    <a href="javascript:void(0)"
-                        onclick="issueFormLabels.remove('<?=$label['label'];?>', <?=$label['id'];?>);">
-                        <i class="far fa-minus-square" aria-hidden="true"></i>
-                    </a>
-                </div>
-            </div>
-            <?php endforeach; ?>
-            <?php foreach ($issueLabels as $label): ?>
-            <div class="table-row">
-                <div class="table-cell label-name"><?=$label?></div>
-                <div class="table-cell">0</div>
-                <div class="table-cell">0</div>
-                <div class="table-cell"></div>
-                <div class="table-cell">
-                    <a href="javascript:void(0)" onclick="issueFormLabels.remove('<?=$label;?>');">
-                        <i class="far fa-minus-square" aria-hidden="true"></i>
-                    </a>
-                </div>
-            </div>
-            <?php endforeach; ?>
         </div>
     </div>
     <?php endif;?>

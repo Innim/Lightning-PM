@@ -869,59 +869,45 @@ let issueForm = {
 
 let issueFormLabels = {
     openAdd: function () {
-        $("#addIssueLabelFormContainer").dialog({
-            resizable: false,
-            width: 400,
-            modal: true,
-            draggable: false,
-            title: "Добавление новой метки",
-            buttons: [{
-                text: "Сохранить",
-                click: function (e) {
-                    var label = $("#issueLabelText").val();
-                    var checked = $("#isAllProjectsCheckbox").is(':checked');
-                    var projectId = $("#issueProjectID").val();
-                    if (label.length > 0) {
-                        preloader.show();
-                        srv.issue.addLabel(label, checked, projectId, function (res) {
-                            preloader.hide();
-                            if (res.success) {
-                                issueFormLabels.clear(label);
-                                issueFormLabels.create(label, (checked ? 0 : projectId), res.id);
-                                issueFormLabels.addToName(label);
-                            } else {
-                                srv.err(res);
-                            }
-                        });
-                    }
-                    $("#addIssueLabelForm")[0].reset();
-                    $("#addIssueLabelFormContainer").dialog('close');
+        $("#addIssueLabelForm")[0].reset();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('addIssueLabelFormContainer')).show();
+    },
+    saveNew: function () {
+        var label = $("#issueLabelText").val();
+        var checked = $("#isAllProjectsCheckbox").is(':checked');
+        var projectId = $("#issueProjectID").val();
+        if (label.length > 0) {
+            preloader.show();
+            srv.issue.addLabel(label, checked, projectId, function (res) {
+                preloader.hide();
+                if (res.success) {
+                    issueFormLabels.clear(label);
+                    issueFormLabels.create(label, (checked ? 0 : projectId), res.id);
+                    issueFormLabels.addToName(label);
+                } else {
+                    srv.err(res);
                 }
-            }, {
-                text: "Отмена",
-                click: function (e) {
-                    $("#addIssueLabelForm")[0].reset();
-                    $("#addIssueLabelFormContainer").dialog('close');
-                }
-            }],
-            open: function () {
-                $("#addIssueLabelFormContainer").keypress(function (e) {
-                    if (e.keyCode == $.ui.keyCode.ENTER) {
-                        $(this).parent().find("button:eq(0)").trigger("click");
-                        return false;
-                    }
-                });
-            }
-        });
+            });
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('addIssueLabelFormContainer')).hide();
     },
     openRemove: function () {
-        $("#removeIssuesLabelContainer").dialog({
-            resizable: false,
-            width: 'auto',
-            modal: true,
-            draggable: false,
-            title: "Удаление меток"
-        });
+        issueFormLabels.updateEmptyState();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('removeIssuesLabelContainer')).show();
+    },
+    updateEmptyState: function () {
+        var $rows = $("#removeIssuesLabelContainer tbody tr").not(".remove-issue-labels-empty");
+        $("#removeIssuesLabelContainer .remove-issue-labels-empty").toggleClass('d-none', $rows.length > 0);
+    },
+    confirmRemove: function (name, id) {
+        // Нативный confirm вместо модалки: Bootstrap 5.1.3 не поддерживает вложенные
+        // модальные окна, а диалог удаления меток сам является модальным окном.
+        var text = (id === undefined)
+            ? 'Убрать метку «' + name + '» из этой задачи?'
+            : 'Удалить метку «' + name + '»?\nОна будет удалена из списка меток проекта.';
+        if (confirm(text)) {
+            issueFormLabels.remove(name, id);
+        }
     },
     remove: function (name, id) {
         if (typeof issueLabels === 'undefined')
@@ -949,16 +935,18 @@ let issueFormLabels = {
             "<a href=\"javascript:void(0)\" class=\"issue-label\" onclick=\"issueFormLabels.addToName('"
             + label + "');\">" + label + "</a>");
 
-        $("#removeIssuesLabelContainer .table").append("<div class=\"table-row\">" +
-            "<div class=\"table-cell label-name\">" + label + "</div>" +
-            "<div class=\"table-cell\">0</div>" +
-            "<div class=\"table-cell\">" + (projectId == 0 ? "<i class=\"far fa-check-square\" aria-hidden=\"true\"></i>" : "") + "</div>" +
-            "<div class=\"table-cell\">" +
-            "<a href=\"javascript:void(0)\" onclick=\"issueFormLabels.remove('" + label + (id != 0 ? "', " + id : "") + ");\">" +
-            "<i class=\"far fa-minus-square\" aria-hidden=\"true\"></i>" +
-            "</a>" +
-            "</div>" +
-            "</div>");
+        $("#removeIssuesLabelContainer tbody").append("<tr>" +
+            "<td class=\"label-name\">" + label + "</td>" +
+            "<td class=\"text-center\">0</td>" +
+            "<td class=\"text-center\">0</td>" +
+            "<td class=\"text-center\">" + (projectId == 0 ? "<i class=\"fas fa-check text-success\" aria-hidden=\"true\" title=\"Общая метка\"></i>" : "") + "</td>" +
+            "<td class=\"text-end\">" +
+            "<button type=\"button\" class=\"btn btn-sm btn-outline-danger\" title=\"Удалить метку\" onclick=\"issueFormLabels.confirmRemove('" + label + (id != 0 ? "', " + id : "") + ");\">" +
+            "<i class=\"far fa-trash-can\" aria-hidden=\"true\"></i>" +
+            "</button>" +
+            "</td>" +
+            "</tr>");
+        issueFormLabels.updateEmptyState();
     },
     clear: function (labelName) {
         if (typeof issueLabels === 'undefined')
@@ -966,7 +954,7 @@ let issueFormLabels = {
         if (issueLabels.indexOf(labelName) != -1)
             issueFormLabels.addToName(labelName);
 
-        $("#removeIssuesLabelContainer .table-row").each(function () {
+        $("#removeIssuesLabelContainer tbody tr").each(function () {
             var item = $.trim($(this).find(".label-name").text());
             if (item == labelName) {
                 $(this).remove();
@@ -979,6 +967,8 @@ let issueFormLabels = {
                 $(this).remove();
             }
         });
+
+        issueFormLabels.updateEmptyState();
     },
     addToName: function (labelName) {
         if (typeof issueLabels === 'undefined')
