@@ -17,7 +17,8 @@ const passTest = {
             passTest.currentIssueId = null;
             comments.clearFiles($el);
 
-            $('#passTestComment').tabs({ active: 0 });
+            const firstTab = document.querySelector('#passTestComment .nav-link');
+            if (firstTab) bootstrap.Tab.getOrCreateInstance(firstTab).show();
             $('.preview-comment', $el).empty();
         });
 

@@ -24,12 +24,11 @@ $(document).ready(
             issuePage.showIssuesByUser(memberId);
         });
 
-        $(".comment-input-text-tabs").tabs({
-            activate: function (_, ui) {
-                if (ui.newPanel.hasClass('preview-tab')) {
-                    issuePage.previewComment(ui.newPanel.parent('.comment-input-text-tabs'));
-                }
-            },
+        $(document).on('shown.bs.tab', '.comment-input-text-tabs [data-bs-toggle="tab"]', function (e) {
+            const $panel = $(e.target.getAttribute('data-bs-target'));
+            if ($panel.hasClass('preview-tab')) {
+                issuePage.previewComment($panel.closest('.comment-input-text-tabs'));
+            }
         });
 
         // BEGIN -- Настройка формы 

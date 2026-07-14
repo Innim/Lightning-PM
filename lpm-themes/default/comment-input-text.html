@@ -9,21 +9,27 @@ $editorTabId = $id . 'EditTab';
 $previewTabId = $id . 'PreviewTab';
 ?>
 <div id="<?=$id;?>" class="comment-input-text-tabs">
-    <ul>
-      <li><a href="#<?=$editorTabId;?>">Редактор</a></li>
-      <li><a href="#<?=$previewTabId;?>">Предпросмотр</a></li>
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#<?=$editorTabId;?>">Редактор</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#<?=$previewTabId;?>">Предпросмотр</button>
+      </li>
     </ul>
-    <div id="<?=$editorTabId;?>" class="editor-tab">
-        <textarea id="commentText" class="form-control comment-text-field" name="commentText"
-         rows="5" aria-describedby="descFieldHelp"></textarea>
+    <div class="tab-content">
+        <div id="<?=$editorTabId;?>" class="editor-tab tab-pane fade show active" role="tabpanel">
+            <textarea id="commentText" class="form-control comment-text-field" name="commentText"
+             rows="5" aria-describedby="descFieldHelp"></textarea>
 
-         <div id="descFieldHelp" class="form-text">
-            Можете использовать <strong>*звёздочки*</strong>, <em>_подчеркивания_</em>,
-            <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
+             <div id="descFieldHelp" class="form-text">
+                Можете использовать <strong>*звёздочки*</strong>, <em>_подчеркивания_</em>,
+                <del>~тильды~</del> для форматирования, а <code>`</code> и <code>```</code> для кода.
+            </div>
         </div>
-    </div>
-    <div id="<?=$previewTabId;?>" class="preview-tab">
-        <div class="preview-comment comments-list-item p-3"></div>
+        <div id="<?=$previewTabId;?>" class="preview-tab tab-pane fade" role="tabpanel">
+            <div class="preview-comment comments-list-item p-3"></div>
+        </div>
     </div>
 </div>
 <div class="mt-2">

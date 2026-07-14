@@ -784,24 +784,6 @@ window.onload = function () {
 
 $(document).ready(
     function () {
-        $("input.date").datepicker({
-            dateFormat: 'dd/mm/yy',
-            dayNames: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда',
-                'Четверг', 'Пятница', 'Суббота'],
-            dayNamesMin: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-            dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-            currentText: 'Сегодня',
-            weekHeader: 'Нед',
-            prevText: 'Предыдущий',
-            nextText: 'Следующий',
-            monthNames: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль',
-                'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
-            monthNamesShort: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл',
-                'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
-            firstDay: 1,
-            closeText: 'Готово'
-        });
-
         if (hljs) hljs.initHighlightingOnLoad();
 
         $.widget.bridge('uitooltip', $.ui.tooltip);
@@ -874,6 +856,15 @@ $(document).ready(
         $('body').on('hidden.bs.dropdown', function(e) {
             // Force element to stay visible - some sort of bug in Bootstrap in conflict with jQuery
             e.target.style.display = '';
+        });
+
+        // Same conflict for tabs: jQuery invokes the Element.prototype.hide polyfill when Bootstrap
+        // fires hide.bs.tab, hiding the deselected tab button. Restore its display in a microtask so
+        // the change is reverted before the browser paints (waiting for hidden.bs.tab would flicker,
+        // as that only fires after the ~150ms fade transition).
+        $('body').on('hide.bs.tab', function(e) {
+            const el = e.target;
+            Promise.resolve().then(function() { el.style.display = ''; });
         });
 
         window.lpInfo.userId = $('#curUserId').val();

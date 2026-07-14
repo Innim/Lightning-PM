@@ -500,9 +500,9 @@ class ProjectPage extends LPMPage
         }
 
         $type = (int)$_POST['type'];
-        $completeDate = empty($completeDateArr) ? null : $completeDateArr[3] . '-' .
+        $completeDate = empty($completeDateArr) ? null : $completeDateArr[1] . '-' .
                         $completeDateArr[2] . '-' .
-                        $completeDateArr[1] . ' ' .
+                        $completeDateArr[3] . ' ' .
                         '00:00:00';
         $priority = min(99, max(0, (int)$_POST['priority']));
 
@@ -712,13 +712,13 @@ class ProjectPage extends LPMPage
         $inputCompleteDate = $input['completeDate'];
         if (!empty($inputCompleteDate)) {
             $res = preg_match(
-                "/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/",
+                "/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/",
                 $inputCompleteDate,
                 $completeDateMatches
             );
-            if (!$res) 
+            if (!$res || !checkdate((int)$completeDateMatches[2], (int)$completeDateMatches[3], (int)$completeDateMatches[1]))
             {
-                 return $this->addError('Недопустимый формат даты. Требуется формат ДД/ММ/ГГГГ');
+                 return $this->addError('Недопустимый формат даты. Требуется формат ГГГГ-ММ-ДД');
             }
         }
 
