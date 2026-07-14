@@ -89,6 +89,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Use Conventional Commits style: `type: summary` or `type(scope): summary`.
 - Prefer a concise one-line summary, add detailed descriptions ONLY for important or big changes.
 - Common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `release`.
+- Use `refactor` ONLY for behavior-preserving changes (pure code rearrangement, no change to UI, appearance, or behavior). Replacing one UI component with another (e.g. jQuery UI → Bootstrap) changes appearance/behavior and adds logic — that is a `feat` (or `fix` if it repairs broken behavior), not a `refactor`.
 - DO NOT add description of meaningless changes like "update changelog" unless this is ONLY committed change.
 - Again: do not mention changelog updates unless this is the only change.
 
