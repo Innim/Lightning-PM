@@ -50,6 +50,8 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - For icons FontAwesome 7 is used (free version).
 - Keep JS modular and colocated with related UI screens when possible.
 - Try to use Bootstrap 5 components and utilities before adding custom CSS.
+- For dialogs/modals, prefer the `lpm.dialog` wrapper in `lpm-scripts/lightning.js`: `lpm.dialog.show({title, text|content, primaryBtn, onPrimary, secondaryBtn, onSecondary, ...})` and `lpm.dialog.confirm({...})`. It clones the base `#dynamicModal` template in `lpm-themes/default/page.html`. Do not add jQuery UI dialogs or hand-rolled modals.
+- jQuery UI is being retired in favor of Bootstrap 5. Dialogs are already migrated; only the Tabs widget (`lpm-scripts/issues.js`, `lpm-scripts/comments.js`) still depends on it, which is why the lib is still loaded via `PageConstructor.php`/`PagePrinter.php`. Don't introduce new jQuery UI usage.
 - Keep templates minimal: templates in `lpm-themes/` should only contain markup-related code. Move business logic and data shaping into PHP classes/services. For example, use model helpers like `LPMFile::isVideo()` to check file types instead of MIME checks in templates, and prefer rendering via `PagePrinter` methods.
 - At the top of each template, document all required external variables in a `Требуются:` PHP comment, following the pattern used in `lpm-themes/default/comment-text.html`.
 
