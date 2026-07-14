@@ -500,7 +500,7 @@ ALTER TABLE `lpm_files`
   ADD COLUMN `compressStatus` tinyint(1) DEFAULT NULL COMMENT 'Статус сжатия видео: NULL — не применимо, 1 — в обработке, 2 — готово, 3 — ошибка' AFTER `size`,
   ADD COLUMN `origSize` bigint DEFAULT NULL COMMENT 'Исходный размер файла в байтах до сжатия' AFTER `compressStatus`;
 
---NEXT
+-- 0.20.0
 
 -- Использования меток задач в разрезе проектов.
 -- Общие метки (projectId = 0) ранжируются по использованиям именно в текущем проекте,
