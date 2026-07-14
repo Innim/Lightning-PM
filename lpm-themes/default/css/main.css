@@ -1070,7 +1070,7 @@ blockquote > p {
 #usersChooser .list-box table td:first-child {
 	text-align: left;
 }
-#usersChooser button {  
+#usersChooser .modal-body button {
     margin-top: 10px;
 }
 
