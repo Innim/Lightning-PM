@@ -51,7 +51,8 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Keep JS modular and colocated with related UI screens when possible.
 - Try to use Bootstrap 5 components and utilities before adding custom CSS.
 - For dialogs/modals, prefer the `lpm.dialog` wrapper in `lpm-scripts/lightning.js`: `lpm.dialog.show({title, text|content, primaryBtn, onPrimary, secondaryBtn, onSecondary, ...})` and `lpm.dialog.confirm({...})`. It clones the base `#dynamicModal` template in `lpm-themes/default/page.html`. Do not add jQuery UI dialogs or hand-rolled modals.
-- jQuery UI is being retired in favor of Bootstrap 5. Dialogs are already migrated; only the Tabs widget (`lpm-scripts/issues.js`, `lpm-scripts/comments.js`) still depends on it, which is why the lib is still loaded via `PageConstructor.php`/`PagePrinter.php`. Don't introduce new jQuery UI usage.
+- jQuery UI is being retired in favor of Bootstrap 5. Dialogs, the comment editor/preview Tabs, and the completion-date picker are already migrated; only the global tooltip (`uitooltip` bridge + `$(document).uitooltip(...)` in `lpm-scripts/lightning.js`, read in `lpm-scripts/issues.js`) still depends on it, which is why the lib is still loaded via `PageConstructor.php`/`PagePrinter.php`. Don't introduce new jQuery UI usage.
+- Bootstrap+jQuery gotcha: `lpm-scripts/lightning.js` polyfills `Element.prototype.hide()`/`show()` to set `style.display`. Because jQuery invokes an element's native method matching a triggered event's base type, Bootstrap's `hide.bs.*`/`show.bs.*` events make jQuery call `.hide()`/`.show()` on the event target — unexpectedly hiding deselected tabs, dropdown toggles, etc. Fix by restoring `display` on the paired `hidden.bs.*` event, or in a microtask on `hide.bs.*` to avoid flicker with fade transitions (see the `hidden.bs.dropdown` and `hide.bs.tab` handlers in `lightning.js`).
 - Keep templates minimal: templates in `lpm-themes/` should only contain markup-related code. Move business logic and data shaping into PHP classes/services. For example, use model helpers like `LPMFile::isVideo()` to check file types instead of MIME checks in templates, and prefer rendering via `PagePrinter` methods.
 - At the top of each template, document all required external variables in a `Требуются:` PHP comment, following the pattern used in `lpm-themes/default/comment-text.html`.
 
@@ -59,6 +60,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - There is no project-wide automated test suite. Validate by:
   - Static review and targeted runtime checks where feasible.
   - Running the app in Docker when requested to verify critical paths.
+  - For frontend behavior/appearance, a fast check is a headless Chrome/Chromium screenshot: `<chrome> --headless=new --disable-gpu --screenshot=out.png --virtual-time-budget=2500 file://<repro>.html`, then read the PNG. Build a minimal repro whose `<base href>` points at `lpm-themes/default/css/` and that loads the real `lpm-scripts/libs/*` (jQuery, `bootstrap.bundle.min.js`) so the real CSS cascade and JS behavior are reproduced without the running app.
 - Run PHP checks (e.g. `php -l`) inside the running Docker container, not host PHP. The host may run a newer PHP (e.g. 8.x) that flags PHP 7.3-valid syntax (like `$str{...}` offsets) as errors — false positives. Lint via `.dev/bin/lpm lint <repo-relative-path>` (container `lightning-pm`, PHP 7.3, repo mounted at `/var/www/html`).
 - Run composer only within the container if needed and approved.
 
