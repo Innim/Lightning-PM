@@ -535,9 +535,12 @@ class ProjectPage extends LPMPage
             }
 
             if (!empty($labels)) {
+                // Создаём новые метки без использований, затем через addLabelsUsing
+                // начисляем использование и в общий счётчик, и в счётчик по проекту.
                 foreach ($labels as $newLabel) {
-                    Issue::saveLabel($newLabel, $this->_project->id, 0, 1);
+                    Issue::saveLabel($newLabel, $this->_project->id, 0, 0);
                 }
+                Issue::addLabelsUsing($labels, $this->_project->id);
             }
         }
 

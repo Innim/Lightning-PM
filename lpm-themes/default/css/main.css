@@ -1394,13 +1394,16 @@ blockquote > p {
 
 .issue-labels-container {
 	font-size: 0.9em;
-	display: block;
-	margin: auto;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 5px 3px;
 }
 
-.issue-labels-container a {
+.issue-labels-container a.issue-label {
 	display: inline-block;
 	padding: 2px 5px;
+	text-decoration: none;
 }
 
 .issue-labels-container a.selected {
@@ -1410,20 +1413,102 @@ blockquote > p {
 	margin: -1px;
 }
 
-#removeIssuesLabelContainer .table {
-	border: 1px solid #CCCCCC;
+/* Свёрнутый список: прячем метки сверх лимита (кроме выбранных — их показываем
+   всегда), а также кнопки добавления/удаления — они доступны, когда виден весь
+   список. */
+.issue-labels-container.labels-collapsed .issue-label-collapsed:not(.selected),
+.issue-labels-container.labels-collapsed .add-issue-label,
+.issue-labels-container.labels-collapsed .remove-issue-labels {
+	display: none;
+}
+
+/* Текст раскрытия: «ещё N» в свёрнутом виде, «свернуть» — в развёрнутом. */
+.issue-labels-container.labels-collapsed .toggle-less,
+.issue-labels-container:not(.labels-collapsed) .toggle-more {
+	display: none;
+}
+
+/* Тихие кнопки-иконки добавления/удаления: отдельный тип от текст-меток,
+   нормальной высоты, с мягкой подсветкой при наведении. */
+.issue-labels-container .issue-label-ctl {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
 	padding: 0;
-	margin: 0;
+	border: 0;
+	background: transparent;
+	color: #98a2b3;
+	border-radius: 6px;
+	cursor: pointer;
+	font: inherit;
 }
 
-#removeIssuesLabelContainer .table-cell {
-	padding: 5px 10px;
-	text-align: center;
-	border: 1px solid #FFFFFF;
+.issue-labels-container .issue-label-ctl:hover {
+	background: #eef0f4;
+	color: #475467;
 }
 
-#removeIssuesLabelContainer .table-row:nth-child(even) {
-	background: #FFFFFF;
+.issue-labels-container .issue-label-ctl-remove:hover {
+	background: #fdecec;
+	color: #d92d20;
+}
+
+/* Раскрытие/сворачивание — текст-ссылка (не метка, не кнопка-коробка),
+   отделённая тонким разделителем слева. */
+.issue-labels-container .toggle-issue-labels {
+	border: 0;
+	border-left: 1px solid #e4e7ec;
+	background: transparent;
+	font: inherit;
+	color: #667085;
+	cursor: pointer;
+	padding: 0 0 0 8px;
+	margin-left: 4px;
+	white-space: nowrap;
+}
+
+.issue-labels-container .toggle-issue-labels:hover {
+	color: #1d4ed8;
+	text-decoration: underline;
+}
+
+.issue-labels-container .toggle-issue-labels i {
+	margin-right: 2px;
+	font-size: 0.85em;
+	color: #98a2b3;
+}
+
+.issue-labels-container .toggle-issue-labels:hover i {
+	color: #1d4ed8;
+}
+
+/* Убираем только верхний отступ: залипающая шапка прилипает к верху без
+   зазора (иначе строки видны над шапкой). Боковые отступы оставляем, чтобы
+   overlay-скроллбар (macOS) не перекрывал кнопки удаления */
+#removeIssuesLabelContainer .modal-body {
+	padding-top: 0;
+}
+
+/* separate + border-spacing: 0 — нижняя граница шапки принадлежит ячейке и
+   «прилипает» вместе с ней, а не прокручивается, как при border-collapse */
+.remove-issue-labels-table {
+	border-collapse: separate;
+	border-spacing: 0;
+	/* Отступ от шапки диалога: виден в покое, при прокрутке уезжает под
+	   залипающую шапку (padding контейнера тут дал бы просвет над шапкой) */
+	margin-top: 0.75rem;
+}
+
+.remove-issue-labels-table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	/* Сплошной фон, чтобы прокручиваемые строки не просвечивали сквозь шапку */
+	background-color: #f8f9fa;
+	/* Более тёмная и толстая линия — отделяет шапку от разделителей строк */
+	border-bottom: 2px solid #adb5bd;
 }
 
 .table {

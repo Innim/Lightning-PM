@@ -499,3 +499,34 @@ CREATE TABLE `lpm_api_keys` (
 ALTER TABLE `lpm_files`
   ADD COLUMN `compressStatus` tinyint(1) DEFAULT NULL COMMENT 'Статус сжатия видео: NULL — не применимо, 1 — в обработке, 2 — готово, 3 — ошибка' AFTER `size`,
   ADD COLUMN `origSize` bigint DEFAULT NULL COMMENT 'Исходный размер файла в байтах до сжатия' AFTER `compressStatus`;
+
+-- 0.20.0
+
+-- Использования меток задач в разрезе проектов.
+-- Общие метки (projectId = 0) ранжируются по использованиям именно в текущем проекте,
+-- а не суммарно по всем проектам, что убирает завышение их позиции в списке.
+CREATE TABLE `lpm_issue_label_uses` (
+  `labelId` int NOT NULL COMMENT 'Идентификатор метки (lpm_issue_labels.id)',
+  `projectId` int NOT NULL COMMENT 'Проект, в котором использовалась метка',
+  `countUses` int unsigned NOT NULL DEFAULT '0' COMMENT 'Количество использований метки в проекте',
+  PRIMARY KEY (`labelId`,`projectId`),
+  KEY `projectId` (`projectId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Использования меток задач по проектам';
+
+-- Бэкфилл: считаем использования по существующим задачам.
+-- Метки распознаются только в ведущей цепочке блоков [метка] в начале имени задачи —
+-- так же, как это делает Issue::getLabelsByName() (метка в середине имени не считается).
+-- REGEXP: ^([\w: -]+в скобках)* затем [метка]; т.е. перед меткой допустимы только
+-- полноценные блоки-метки, без произвольного текста.
+-- Фильтры по `deleted` намеренно отсутствуют, чтобы совпасть с семантикой рантайма
+-- (Issue::addLabelsUsing): суммарный счётчик не уменьшается при удалении задач и
+-- продолжает обновлять отключённые (замещённые общими) метки. Поэтому учитываем
+-- удалённые задачи и наполняем строки в т.ч. для неактивных меток — иначе projectUses
+-- стартовал бы ниже накопленного countUses и такие метки сортировались бы слишком низко.
+INSERT INTO `lpm_issue_label_uses` (`labelId`, `projectId`, `countUses`)
+SELECT `l`.`id`, `i`.`projectId`, COUNT(*)
+FROM `lpm_issue_labels` `l`
+JOIN `lpm_issues` `i`
+  ON `i`.`name` REGEXP CONCAT('^(\\[[\\w: -]+\\])*\\[', `l`.`label`, '\\]')
+  AND (`l`.`projectId` = 0 OR `l`.`projectId` = `i`.`projectId`)
+GROUP BY `l`.`id`, `i`.`projectId`;

@@ -93,6 +93,13 @@ define('MAX_FILE_SIZE_MB', 50);
  */
 define('MAX_IMAGE_SIZE_MB', 10);
 
+/**
+ * Сколько меток показывать в форме задачи сразу; если меток заметно больше —
+ * остальные сворачиваются под ссылку «ещё N». Настройка отображения.
+ * @var int
+ */
+define('ISSUE_LABELS_DISPLAY_LIMIT', 10);
+
 // -- Вспомогательные константы --
 
 define('MAX_FILE_SIZE_BYTES', MAX_FILE_SIZE_MB * 1024 * 1024);

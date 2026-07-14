@@ -127,6 +127,10 @@ class LPMTables
      */
     const ISSUE_LABELS = 'issue_labels';
     /**
+     * Использования меток задач в разрезе проектов.
+     */
+    const ISSUE_LABEL_USES = 'issue_label_uses';
+    /**
      * Таблица зафиксированных проектов.
      */
     const FIXED_INSTANCE = 'fixed_instance';

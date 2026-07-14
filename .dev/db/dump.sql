@@ -148,6 +148,16 @@ CREATE TABLE `lpm_issue_counters` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COMMENT='счетчики для задачи';
 
 
+DROP TABLE IF EXISTS `lpm_issue_label_uses`;
+CREATE TABLE `lpm_issue_label_uses` (
+  `labelId` int NOT NULL COMMENT 'Идентификатор метки (lpm_issue_labels.id)',
+  `projectId` int NOT NULL COMMENT 'Проект, в котором использовалась метка',
+  `countUses` int unsigned NOT NULL DEFAULT '0' COMMENT 'Количество использований метки в проекте',
+  PRIMARY KEY (`labelId`,`projectId`),
+  KEY `projectId` (`projectId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Использования меток задач по проектам';
+
+
 DROP TABLE IF EXISTS `lpm_issue_labels`;
 CREATE TABLE `lpm_issue_labels` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор',
