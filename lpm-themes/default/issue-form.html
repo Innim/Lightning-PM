@@ -31,25 +31,69 @@ $isHidden = !empty($isHidden)
         </div>
 
         <div class="col-12">
-            <span class="issue-labels-container">
-                <?php 
-                    $issueLabels = $issue ? $issue->getLabelNames() : [];
-                    $projectLabels = array_map(function ($item) {
-                        return $item['label'];
-                    }, lpm_get_issue_labels());
-                    $labels = array_unique(array_merge($projectLabels, $issueLabels));
-                ?>    
-                <?php foreach ($labels as $label): ?>
-                <a href="javascript:void(0)" class="issue-label"
-                    onclick="issueFormLabels.addToName('<?=$label;?>');"><?=$label;?></a>
+            <?php
+                $issueLabels = $issue ? $issue->getLabelNames() : [];
+                $projectLabels = array_map(function ($item) {
+                    return $item['label'];
+                }, lpm_get_issue_labels());
+                $labels = array_unique(array_merge($projectLabels, $issueLabels));
+
+                // Сворачиваем список, только если меток заметно больше лимита показа.
+                $selectedLabels = array_flip($issueLabels);
+                $collapseLabels = count($labels) > ISSUE_LABELS_DISPLAY_LIMIT;
+
+                // Заранее считаем состояние меток, чтобы знать про сворачивание до
+                // открытия контейнера (нужно для класса-модификатора и счётчика).
+                $labelStates = [];
+                $labelIndex = 0;
+                $collapsedCount = 0;
+                foreach ($labels as $label) {
+                    // Всегда показываем выбранные метки и первые ISSUE_LABELS_DISPLAY_LIMIT,
+                    // остальные скрываем до раскрытия списка.
+                    $isCollapsed = $collapseLabels
+                        && !isset($selectedLabels[$label])
+                        && $labelIndex >= ISSUE_LABELS_DISPLAY_LIMIT;
+                    $labelStates[] = ['label' => $label, 'collapsed' => $isCollapsed];
+                    if ($isCollapsed) {
+                        $collapsedCount++;
+                    }
+                    $labelIndex++;
+                }
+
+                // Нет смысла прятать одну метку под ссылку «ещё 1» — она заняла бы
+                // столько же места. Сворачиваем только при двух и более скрытых.
+                $hasCollapsedLabels = $collapsedCount > 1;
+                if (!$hasCollapsedLabels) {
+                    foreach ($labelStates as &$state) {
+                        $state['collapsed'] = false;
+                    }
+                    unset($state);
+                }
+            ?>
+            <span class="issue-labels-container<?=$hasCollapsedLabels ? ' labels-collapsed' : '';?>">
+                <?php foreach ($labelStates as $labelState): ?>
+                <a href="javascript:void(0)" class="issue-label<?=$labelState['collapsed'] ? ' issue-label-collapsed' : '';?>"
+                    onclick="issueFormLabels.addToName('<?=$labelState['label'];?>');"><?=$labelState['label'];?></a>
                 <?php endforeach; ?>
-                <a href="javascript:void(0)" class="add-issue-label" onclick="issueFormLabels.openAdd()">
-                    <i class="far fa-plus-square" aria-hidden="true"></i>
-                </a>
+                <button type="button" class="issue-label-ctl add-issue-label"
+                    title="Добавить метку" onclick="issueFormLabels.openAdd()">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                </button>
                 <?php if (lpm_is_moderator()):?>
-                <a href="javascript:void(0)" class="remove-issue-labels" onclick="issueFormLabels.openRemove()">
-                    <i class="far fa-minus-square" aria-hidden="true"></i>
-                </a>
+                <button type="button" class="issue-label-ctl issue-label-ctl-remove remove-issue-labels"
+                    title="Удалить метки" onclick="issueFormLabels.openRemove()">
+                    <i class="fas fa-minus" aria-hidden="true"></i>
+                </button>
+                <?php endif; ?>
+                <?php if ($hasCollapsedLabels): ?>
+                <!-- Раскрытие идёт последним: оно ограничивает список с конца,
+                     включая скрываемые кнопки добавления/удаления. Оформлено
+                     текст-ссылкой с разделителем — читается не как метка. -->
+                <button type="button" class="toggle-issue-labels"
+                    title="Показать все метки" onclick="issueFormLabels.toggleCollapse(this)">
+                    <span class="toggle-more">ещё <span class="toggle-count"><?=$collapsedCount;?></span></span>
+                    <span class="toggle-less"><i class="fas fa-angle-left" aria-hidden="true"></i> свернуть</span>
+                </button>
                 <?php endif; ?>
             </span>
         </div>

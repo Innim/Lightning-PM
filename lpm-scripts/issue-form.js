@@ -969,6 +969,8 @@ let issueFormLabels = {
         });
 
         issueFormLabels.updateEmptyState();
+        // Удалённая метка могла быть среди скрытых — пересчитываем «ещё N».
+        issueFormLabels.updateCollapsedCount();
     },
     addToName: function (labelName) {
         if (typeof issueLabels === 'undefined')
@@ -1045,6 +1047,27 @@ let issueFormLabels = {
                 issueFormLabels.update();
         }
     },
+    toggleCollapse: function (el) {
+        var $container = $(el).closest('.issue-labels-container');
+        var collapsed = $container.toggleClass('labels-collapsed').hasClass('labels-collapsed');
+        $(el).attr('title', collapsed ? 'Показать все метки' : 'Свернуть метки');
+    },
+    updateCollapsedCount: function () {
+        var $toggle = $('.issue-labels-container .toggle-issue-labels');
+        if (!$toggle.length) return;
+        var $container = $toggle.closest('.issue-labels-container');
+        // Скрытыми считаются свёрнутые метки, которые не выбраны (выбранные видны всегда).
+        var count = $container.find('.issue-label-collapsed:not(.selected)').length;
+        $container.find('.toggle-count').text(count);
+        // Одну метку прятать нет смысла: «ещё 1» займёт столько же места. Прячем
+        // ссылку и показываем список целиком, если скрытых меньше двух.
+        if (count <= 1) {
+            $toggle.addClass('d-none');
+            $container.removeClass('labels-collapsed');
+        } else {
+            $toggle.removeClass('d-none');
+        }
+    },
     update: function () {
         if (typeof issueLabels !== 'undefined') {
             var subclass = 'selected';
@@ -1056,6 +1079,7 @@ let issueFormLabels = {
                 if (issueLabels.indexOf(item) != -1)
                     $(this).addClass(subclass);
             });
+            issueFormLabels.updateCollapsedCount();
         }
     },
 };
