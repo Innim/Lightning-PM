@@ -83,8 +83,6 @@ function ucOpen(checked, onComplete) {
     if (checked && checked.length > 0) {
         var j = 0;
         for (var i = 0; i < checkboxes.length; i++) {
-            if (checkboxes.eq(i).prop('checked'))
-                userIds.push(checkboxes.eq(i).val());
             for (j = 0; j < checked.length; j++) {
                 if (checked[j].toString() == checkboxes.eq(i).val()) {
                     checkboxes.eq(i).attr('_hidden', true);

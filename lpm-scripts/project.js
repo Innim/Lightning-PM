@@ -8,7 +8,7 @@ function showMain() {
 
 function openMembersChooser() {
     var memberIds = [];
-    var members = $("#projectMembers > ul.users-list > li > input[type=hidden][name=userId]");
+    var members = $("#projectMembers ul.users-list > li > input[type=hidden][name=userId]");
     for (var i = 0; i < members.length; i++) {
         memberIds.push(members.eq(i).val());
     }
@@ -26,12 +26,12 @@ function addMembers(arr) {
             preloader.hide();
 
             if (res.success) {
-                $("#projectMembers > ul.users-list > li").remove();
+                $("#projectMembers ul.users-list > li").remove();
                 var j = 0;
                 var ok = false;
                 var userId = 0;
                 var count = res.members.length;
-                var members = $("#projectMembers > ul.users-list > li");
+                var members = $("#projectMembers ul.users-list > li");
                 for (var i = 0; i < members.length; i++) {
                     ok = false;
                     userId = members.eq(i).find('input[type=hidden][name=userId]').val();
@@ -46,7 +46,7 @@ function addMembers(arr) {
                     if (!ok) members.eq(i).remove();
                 }
 
-                var ul = $("#projectMembers > ul.users-list");
+                var ul = $("#projectMembers ul.users-list");
                 var user;
                 for (j = 0; j < count; j++) {
                     user = new User(res.members[j]);

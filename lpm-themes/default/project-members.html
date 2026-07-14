@@ -31,7 +31,7 @@ foreach ($labels as $label) {
         <div class="card-header">Участники проекта</div>
         <div class="card-body">
             <div class="alert alert-success info-message" role="alert" style="display: none;">Сохранено</div>
-            <ul class="list-group mb-3">
+            <ul class="users-list list-group mb-3">
         <?php foreach ($projectMembers as $member): ?>
         <li class="list-group-item d-flex justify-content-between align-items-center">
             <span class="user-name"><?=$member->getLinkedName();?></span>
