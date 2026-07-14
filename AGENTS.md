@@ -22,7 +22,11 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Docker compose lives in `.dev/docker-env/`.
   - Start: from `.dev/docker-env/` run `docker-compose up` (or `-d`).
   - Rebuild: `docker-compose up --build` if `Dockerfile` changes.
-  - Composer (inside container): `docker exec -w /var/www/html/lpm-libs/ lightning-pm php composer.phar install`.
+- Dev helper `.dev/bin/lpm` wraps common container commands (composer, lint, php, exec, shell) so they run against the app's PHP 7.3 with one approval instead of per-command. Prefer it over raw `docker exec`:
+  - Composer: `.dev/bin/lpm composer install` (runs bundled `composer.phar` in `lpm-libs/`).
+  - Lint: `.dev/bin/lpm lint <repo-relative-path> [...]`.
+  - Arbitrary: `.dev/bin/lpm exec <cmd>` / `.dev/bin/lpm php <args>` / `.dev/bin/lpm shell`.
+  - Override container/mount via `LPM_CONTAINER` / `LPM_MOUNT` env vars (defaults: `lightning-pm`, `/var/www/html`).
 - PHP settings: `short_open_tag = On` (see `README.md`).
 
 ## Editing Rules (for the assistant)
@@ -53,7 +57,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - There is no project-wide automated test suite. Validate by:
   - Static review and targeted runtime checks where feasible.
   - Running the app in Docker when requested to verify critical paths.
-- Run PHP checks (e.g. `php -l`) inside the running Docker container, not host PHP. The host may run a newer PHP (e.g. 8.x) that flags PHP 7.3-valid syntax (like `$str{...}` offsets) as errors — false positives. Lint via `docker exec lightning-pm php -l /var/www/html/<repo-relative-path>` (container `lightning-pm`, PHP 7.3, repo mounted at `/var/www/html`).
+- Run PHP checks (e.g. `php -l`) inside the running Docker container, not host PHP. The host may run a newer PHP (e.g. 8.x) that flags PHP 7.3-valid syntax (like `$str{...}` offsets) as errors — false positives. Lint via `.dev/bin/lpm lint <repo-relative-path>` (container `lightning-pm`, PHP 7.3, repo mounted at `/var/www/html`).
 - Run composer only within the container if needed and approved.
 
 ## Common Tasks Cheat Sheet

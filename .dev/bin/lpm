@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# Dev helper — run common commands inside the Lightning PM Docker container.
+#
+# Why: the app targets PHP 7.3, which lives only in the container. Running host
+# PHP (often 8.x) gives false lint errors, and composer must use the bundled
+# composer.phar. This wraps those calls behind one script so it can be approved
+# once (instead of per docker-exec command) and works the same on any machine.
+#
+# Usage (run from anywhere in the repo):
+#   .dev/bin/lpm composer <args...>   Run bundled composer.phar in lpm-libs/
+#   .dev/bin/lpm lint <path...>       php -l on repo-relative (or absolute) PHP files
+#   .dev/bin/lpm php <args...>        Run php in the container (cwd = repo root)
+#   .dev/bin/lpm exec <cmd...>        Run an arbitrary command in the container
+#   .dev/bin/lpm shell                Open an interactive shell in the container
+#
+# Container name and mount point are overridable via env:
+#   LPM_CONTAINER (default: lightning-pm)   LPM_MOUNT (default: /var/www/html)
+#
+set -euo pipefail
+
+CONTAINER="${LPM_CONTAINER:-lightning-pm}"
+MOUNT="${LPM_MOUNT:-/var/www/html}"
+
+# Repo root: this script lives at .dev/bin/lpm, so root is two levels up.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+die() { echo "lpm: $*" >&2; exit 1; }
+
+# Translate a host path (absolute or repo-relative) to its path in the container.
+to_container_path() {
+  local p="$1" abs
+  if [[ "$p" = /* ]]; then abs="$p"; else abs="$REPO_ROOT/$p"; fi
+  case "$abs" in
+    "$REPO_ROOT") echo "$MOUNT" ;;
+    "$REPO_ROOT"/*) echo "$MOUNT/${abs#"$REPO_ROOT"/}" ;;
+    *) die "path is outside the repo: $p" ;;
+  esac
+}
+
+[[ $# -ge 1 ]] || die "no command given (try: composer | lint | php | exec | shell)"
+cmd="$1"; shift
+
+case "$cmd" in
+  composer)
+    exec docker exec -w "$MOUNT/lpm-libs" "$CONTAINER" php composer.phar "$@"
+    ;;
+  lint)
+    [[ $# -ge 1 ]] || die "lint needs at least one file"
+    status=0
+    for f in "$@"; do
+      docker exec "$CONTAINER" php -l "$(to_container_path "$f")" || status=1
+    done
+    exit "$status"
+    ;;
+  php)
+    exec docker exec -w "$MOUNT" "$CONTAINER" php "$@"
+    ;;
+  exec)
+    [[ $# -ge 1 ]] || die "exec needs a command"
+    exec docker exec -w "$MOUNT" "$CONTAINER" "$@"
+    ;;
+  shell|sh)
+    exec docker exec -it -w "$MOUNT" "$CONTAINER" bash
+    ;;
+  *)
+    die "unknown command: $cmd (try: composer | lint | php | exec | shell)"
+    ;;
+esac
