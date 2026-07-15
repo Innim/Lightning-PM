@@ -516,17 +516,58 @@ CREATE TABLE `lpm_issue_label_uses` (
 -- Бэкфилл: считаем использования по существующим задачам.
 -- Метки распознаются только в ведущей цепочке блоков [метка] в начале имени задачи —
 -- так же, как это делает Issue::getLabelsByName() (метка в середине имени не считается).
--- REGEXP: ^([\w: -]+в скобках)* затем [метка]; т.е. перед меткой допустимы только
--- полноценные блоки-метки, без произвольного текста.
 -- Фильтры по `deleted` намеренно отсутствуют, чтобы совпасть с семантикой рантайма
 -- (Issue::addLabelsUsing): суммарный счётчик не уменьшается при удалении задач и
 -- продолжает обновлять отключённые (замещённые общими) метки. Поэтому учитываем
 -- удалённые задачи и наполняем строки в т.ч. для неактивных меток — иначе projectUses
 -- стартовал бы ниже накопленного countUses и такие метки сортировались бы слишком низко.
+--
+-- Реализация: вместо перебора всех пар (метка × задача) с построением REGEXP на каждую
+-- пару (O(меток × задач) компиляций регэкспа — на реальных данных это ~12M и десятки минут,
+-- из-за чего запрос обрывался по таймауту на VDS) сначала рекурсивным CTE один раз
+-- вытаскиваем из имени каждой задачи ведущую цепочку блоков `[метка]` (класс `[\w: -]`,
+-- как в Issue::getLabelsByName()), а затем джойним токены к меткам по равенству
+-- `label = токен`. Это превращает задачу в проход по задачам + индексируемое равенство
+-- и выполняется за доли секунды.
+-- Побочный эффект — устранение инъекции метасимволов регэкспа: старый вариант подставлял
+-- текст метки в шаблон как есть, поэтому метки с `.`/`[`/`]` (например `Pub.Innim`)
+-- матчились как шаблон, а не буквально. Такие метки рантайм всё равно распознать не может
+-- (символы вне `[\w: -]`), поэтому точное совпадение по токену — корректное поведение.
+-- CHAR_LENGTH (а не LENGTH) обязателен: имена в utf8mb4, а `\w` матчит и кириллицу.
 INSERT INTO `lpm_issue_label_uses` (`labelId`, `projectId`, `countUses`)
-SELECT `l`.`id`, `i`.`projectId`, COUNT(*)
-FROM `lpm_issue_labels` `l`
-JOIN `lpm_issues` `i`
-  ON `i`.`name` REGEXP CONCAT('^(\\[[\\w: -]+\\])*\\[', `l`.`label`, '\\]')
-  AND (`l`.`projectId` = 0 OR `l`.`projectId` = `i`.`projectId`)
-GROUP BY `l`.`id`, `i`.`projectId`;
+WITH RECURSIVE `label_tokens` AS (
+    -- Затравка: первый ведущий блок `[..]` в начале имени задачи
+    SELECT
+        `i`.`id`        AS `issueId`,
+        `i`.`projectId` AS `projectId`,
+        REGEXP_SUBSTR(`i`.`name`, '^\\[[\\w: -]+\\]') AS `block`,
+        SUBSTRING(`i`.`name`,
+                  CHAR_LENGTH(REGEXP_SUBSTR(`i`.`name`, '^\\[[\\w: -]+\\]')) + 1) AS `rest`
+    FROM `lpm_issues` `i`
+    WHERE `i`.`name` REGEXP '^\\[[\\w: -]+\\]'
+    UNION ALL
+    -- Рекурсия: следующий блок, пока остаток начинается с валидного блока
+    SELECT
+        `t`.`issueId`,
+        `t`.`projectId`,
+        REGEXP_SUBSTR(`t`.`rest`, '^\\[[\\w: -]+\\]'),
+        SUBSTRING(`t`.`rest`,
+                  CHAR_LENGTH(REGEXP_SUBSTR(`t`.`rest`, '^\\[[\\w: -]+\\]')) + 1)
+    FROM `label_tokens` `t`
+    WHERE `t`.`rest` REGEXP '^\\[[\\w: -]+\\]'
+)
+SELECT
+    `l`.`id`,
+    `u`.`projectId`,
+    COUNT(DISTINCT `u`.`issueId`)
+FROM (
+    SELECT DISTINCT
+        `issueId`,
+        `projectId`,
+        SUBSTRING(`block`, 2, CHAR_LENGTH(`block`) - 2) AS `label`
+    FROM `label_tokens`
+) `u`
+JOIN `lpm_issue_labels` `l`
+  ON `l`.`label` = `u`.`label`
+  AND (`l`.`projectId` = 0 OR `l`.`projectId` = `u`.`projectId`)
+GROUP BY `l`.`id`, `u`.`projectId`;
