@@ -46,9 +46,10 @@ a:hover {
     color: inherit;
 }
 
-.tooltip {
+/* Homegrown hover widget on the issue-id cell (see issues.html / issues.js);
+   renamed off `.tooltip` so it no longer collides with real Bootstrap tooltips. */
+.copy-tooltip {
     position: relative;
-    opacity: 1;
 }
 
 /* hide toggle button for collapsed elements */

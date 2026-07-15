@@ -51,7 +51,6 @@ class PagePrinter
     
     public static function cssLinks()
     {
-        self::cssLink('jquery-ui-1.12.1.min');
         self::cssLink('highlightjs-styles/default');
         self::cssLink('font-awesome7/css/all.min');
         self::cssLink('tribute');

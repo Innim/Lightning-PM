@@ -5,8 +5,10 @@
 $pid = $project->getID();
 ?>
 <div class="goto-issue-component">
-    <a class="btn btn-outline-secondary btn-sm hide-me" data-bs-toggle="collapse" href="#gotoIssueCollapse" role="button" aria-expanded="false" aria-controls="gotoIssueCollapse" title="Перейти к задаче по номеру">
-        <i class="fa-regular fa-compass" aria-hidden="true"></i>
+    <?php /* title is on the icon, not the toggle: a Bootstrap tooltip can't attach to an element
+             that already hosts a Collapse (Bootstrap allows one component instance per element) */ ?>
+    <a class="btn btn-outline-secondary btn-sm hide-me" data-bs-toggle="collapse" href="#gotoIssueCollapse" role="button" aria-expanded="false" aria-controls="gotoIssueCollapse" aria-label="Перейти к задаче по номеру">
+        <i class="fa-regular fa-compass" aria-hidden="true" title="Перейти к задаче по номеру"></i>
     </a>
     <div class="collapse collapse-horizontal" id="gotoIssueCollapse">
         <div class="d-flex flex-nowrap" style="width: 210px;">
