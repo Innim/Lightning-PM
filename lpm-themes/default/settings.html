@@ -1,0 +1,29 @@
+<?php
+/*
+Требуются:
+    LPMOptions $options - настройки приложения
+*/
+?>
+<div class="mx-auto container container-main px-4 py-4">
+  <h1>Настройки</h1>
+
+  <form id="settingsForm">
+    <div class="card mb-3">
+      <div class="card-header">Регистрация и доступ</div>
+      <div class="card-body">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch"
+                 id="allowRegistration" name="allowRegistration"
+                 <?=$options->allowRegistration ? 'checked' : '';?>>
+          <label class="form-check-label" for="allowRegistration">
+            Разрешить регистрацию новых пользователей
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+  </form>
+</div>

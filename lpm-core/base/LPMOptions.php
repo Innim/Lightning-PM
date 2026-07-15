@@ -18,7 +18,49 @@ class LPMOptions extends Options
         return self::$_instance;
         //return Options::getInstance( __CLASS__ );
     }
-    
+
+    /**
+     * Сохраняет переданные настройки.
+     *
+     * @param array $values ассоциативный массив `имя_опции => значение`
+     * @throws Exception если передано несуществующее имя опции
+     * @throws \GMFramework\ProviderSaveException при ошибке записи в БД
+     */
+    public static function save(array $values)
+    {
+        if (empty($values)) {
+            return;
+        }
+
+        $options = self::getInstance();
+
+        foreach ($values as $name => $value) {
+            if (!property_exists($options, $name)) {
+                throw new Exception('Неизвестная опция: ' . $name);
+            }
+        }
+
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $builder = new \GMFramework\DBQueryBuilder($db, $db->prefix);
+        $table = $options->getTableName();
+
+        foreach ($values as $name => $value) {
+            $dbValue = is_bool($value) ? ($value ? '1' : '0') : (string)$value;
+
+            $sql = $builder->buildQuery([
+                'INSERT' => ['option' => $name, 'value' => $dbValue],
+                'INTO'   => $table,
+                'ODKU'   => ['value'],
+            ]);
+
+            if (!$db->query($sql)) {
+                throw new \GMFramework\ProviderSaveException();
+            }
+
+            $options->$name = $value;
+        }
+    }
+
     /**
      * Время хранения куков для авторизации
      * в секундах (в базе хранятся в днях)
@@ -65,7 +107,14 @@ class LPMOptions extends Options
      * @var string
      */
     public $emailSubscript = '';
-    
+
+    /**
+     * Разрешена ли регистрация новых пользователей.
+     * Если false — форма регистрации скрыта, а попытки регистрации отклоняются.
+     * @var bool
+     */
+    public $allowRegistration = true;
+
     public function __construct()
     {
         self::$_instance = $this;
@@ -75,8 +124,9 @@ class LPMOptions extends Options
     protected function initialization()
     {
         parent::initialization();
-        
+
         $this->_typeConverter->addIntVars('cookieExpire');
+        $this->_typeConverter->addBoolVars('allowRegistration');
     }
 
     protected function initOptions()

@@ -4,6 +4,15 @@
 // по открытию страницы сразу убираем форму регистрации
 $(document).ready(
 	function () {
+		// Регистрация может быть отключена в настройках - тогда формы нет
+		if ($("#registrationForm").length === 0) {
+			$("#authForm").show();
+			if ($('#authForm > div.validateError').html() != '') {
+				$('#authForm > div.validateError').show();
+			}
+			return;
+		}
+
 		if ((/#reg/i).test(window.location)) {
 			$("#authForm").hide();
 			$('#authForm > div.validateError').html('');

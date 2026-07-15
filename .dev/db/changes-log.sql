@@ -571,3 +571,8 @@ JOIN `lpm_issue_labels` `l`
   ON `l`.`label` = `u`.`label`
   AND (`l`.`projectId` = 0 OR `l`.`projectId` = `u`.`projectId`)
 GROUP BY `l`.`id`, `u`.`projectId`;
+
+--NEXT
+
+-- Глобальный переключатель регистрации новых пользователей (1 — разрешена, 0 — отключена).
+INSERT INTO `lpm_options` (`option`, `value`) VALUES ('allowRegistration', '1');
