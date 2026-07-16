@@ -39,9 +39,12 @@ Before making any API call, verify that the agent's execution environment allows
 10. Infer the repository and base branch. Prefer `develop` unless the issue, repository structure, or branch list clearly indicates another parent.
 11. Ask the user for repository choice only when it cannot be inferred safely.
 12. Create the issue branch through `POST /api/v1/issues/{issueId}/branches` when implementation work is needed. Use only the saved global `id` as `{issueId}`.
-13. Implement the described change in the local repository, using the issue context to guide scope, edge cases, and validation.
-14. Draft the exact comment text and get explicit user approval before posting any issue comment.
-15. Add a comment only when it provides value for humans, not as a progress log.
+13. Check out the issue branch locally (see [Branch Creation](#branch-creation)) before planning or editing, so any plan is made against the correct base code and not an unknown local state.
+14. For non-trivial changes, propose a short plan and get user confirmation before editing code (see [Implementation Expectation](#implementation-expectation)).
+15. Implement the described change in the local repository, using the issue context to guide scope, edge cases, and validation.
+16. Validate the change with the target project's own tooling before proposing a commit (see [Validation](#validation)).
+17. Draft the exact comment text and get explicit user approval before posting any issue comment.
+18. Add a comment only when it provides value for humans, not as a progress log.
 
 ## Implementation Expectation
 
@@ -55,6 +58,12 @@ Do not stop after:
 - creating the branch
 
 Use the issue context to drive the actual code changes and only ask follow-up questions when a blocking ambiguity cannot be resolved safely from the issue, attachments, repository structure, or local code.
+
+For **non-trivial changes**, first check out the issue branch, then propose a short plan and get user confirmation before editing code. "Non-trivial" means multi-file changes, anything touching the DB schema, public API, or user-visible behavior, or where more than one reasonable approach exists. The plan is a brief list of steps and files to touch, not a full analysis. For an obvious, single-spot fix, skip the plan and proceed.
+
+Always plan against the **checked-out issue branch**, never the pre-switch working tree — before switching, the local tree may sit on an unknown or stale code version, so a plan made there can be wrong.
+
+Pausing for plan approval on a non-trivial task is the one expected exception to the "continue into implementation" rule above — it is not a violation of it.
 
 ## Authentication
 
@@ -149,6 +158,14 @@ Important id rule:
 - call `resolve` once at the start and keep both `id` and `idInProject`
 - use only global `id` in `/api/v1/issues/{issueId}/...` endpoints
 - use `idInProject` only for display, human-facing references, branch naming, and matching the issue URL
+
+## Validation
+
+Before proposing a commit, validate the change with the **target project's own tooling** — lint, tests, or a build as appropriate — not host defaults. Host tooling often disagrees with the project's real runtime (language version, containerized toolchain) and produces false positives or negatives.
+
+Find the correct commands in the target project's contributor docs (`AGENTS.md` / `CLAUDE.md` / `README`) and run them there. Reach the "verified-done" state in [Wrap-up After Implementation](#wrap-up-after-implementation) only after validation passes or is confirmed not applicable to the change.
+
+If validation cannot be run (no tooling, environment not available), say so explicitly instead of implying the change is green.
 
 ## Commit Policy
 
