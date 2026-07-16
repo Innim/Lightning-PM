@@ -65,6 +65,8 @@ Always plan against the **checked-out issue branch**, never the pre-switch worki
 
 Pausing for plan approval on a non-trivial task is the one expected exception to the "continue into implementation" rule above — it is not a violation of it.
 
+Changing the issue's status or assignee/membership is **out of scope**: the API surface used by this skill does not expose it. Do not try to move the ticket "in progress", assign it, or otherwise mutate issue metadata by guessing endpoints or scraping HTML — leave those actions to the user.
+
 ## Authentication
 
 Send either:
@@ -210,7 +212,7 @@ Always append a signature that makes it clear the comment was posted by the agen
 [AI-assisted comment by <agent-name>, approved by user]
 ```
 
-Replace `<agent-name>` with the actual agent name before showing the draft to the user.
+Replace `<agent-name>` with the actual agent name before showing the draft to the user. Use the name the agent is known by in the current environment (e.g. "Claude Code", "Codex"). If no specific agent name is available, fall back to the underlying model name, or to the generic `AI assistant` — never invent a name or leave the `<agent-name>` placeholder in the posted text.
 
 Before posting, show the exact final comment text to the user, including the signature, and wait for approval. Do not post a paraphrased or modified version after approval unless the user approves the updated text too.
 
@@ -241,6 +243,12 @@ After the commit lands, push the branch in the same turn without re-asking. If p
 After push succeeds, address the comment as a **separate** message — commit/push has nothing to discuss, while a comment's wording, structure, and language usually do.
 
 Follow the [Comment Policy](#comment-policy): if a comment provides value, draft the full final text (including signature), get approval, and iterate on wording until accepted. If no comment is warranted (routine bug fix, no caveats, no tester guidance, no rollout notes), say so explicitly in one sentence and skip the step instead of going silent.
+
+### Pull requests
+
+Opening a pull request is **out of scope by default** — stop after push. Target projects differ in review process (some merge integration branches manually rather than a PR per issue), so do not create a PR automatically.
+
+Propose a PR only when there is a clear signal that the target repo expects one — the user asks, or the project's docs/branch conventions make PR-per-issue the norm. Even then, draft the PR title and body and get explicit approval before creating it, the same as for a commit or comment.
 
 ## Attachment Handling
 
