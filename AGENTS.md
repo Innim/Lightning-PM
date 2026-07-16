@@ -18,6 +18,13 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Formatting: PHP uses php-cs-fixer with `@PSR1,@PSR2` (see `README.md`).
 - `CLAUDE.md` is a symlink to this `AGENTS.md` — edit `AGENTS.md` directly; writes through the `CLAUDE.md` symlink are refused.
 
+## Architecture Notes
+- Two frameworks coexist: a legacy one bundled in `lpm-libs/gm-framework-v1.1.1.phar` and the newer `GMFramework\*` under `lpm-libs/framework/`. The project is migrating off the legacy one. Watch for classes that still extend legacy bases (e.g. `LPMOptions extends Options` resolves to the phar's `Options`, which has no `saveOptions()`/`change()`).
+- DB access: new code uses the V2 query builder `\GMFramework\DBQueryBuilder` via `LPMBaseObject` helpers `buildAndSaveToDbV2($sqlHash)` and `loadFromDV2()`/`loadAndParseV2()`. Do NOT hand-write SQL strings or use the legacy `DBConnect::queryt()`/`preparet()`. Hash form: `['INSERT' => $assoc, 'INTO' => LPMTables::X, 'ODKU' => ['field']]` (upsert), `['UPDATE' => ..., 'SET' => [...], 'WHERE' => [...]]`, `['DELETE' => ..., 'WHERE' => [...]]`. The builder backticks table/column names (reserved words like `option`/`value` are safe) and escapes values; throw `\GMFramework\ProviderSaveException` on failure. Canonical connection: `LPMGlobals::getInstance()->getDBConnect()`.
+- Service layer (AJAX): JS calls `srv.<service>.<method>(args, onResult)` — `BaseService` is defined in `lpm-scripts/lightning.js`, per-screen bindings live in their own JS (e.g. `srv.admin` in `lpm-scripts/admin.js`). Requests hit `lpm-libs/flash2php/gateway.php` and dispatch to a PHP service extending `LPMBaseService` that returns `$this->answer()` / `$this->error('msg')`; the client sees `res.success` and `res.error`. Admin-only services override `beforeFilter()` to also require `checkRole(User::ROLE_ADMIN)` (see `lpm-core/services/AdminService.php`).
+- Page routing: pages extend `LPMPage` (base `BasePage`); constructor is `(uid, title, needAuth, notInMenu, pattern, label, reqRole)`, and are registered manually in `PagesManager::__construct`. Restrict a page to admins with `reqRole = User::ROLE_ADMIN`; the menu auto-filters by `checkUserRole()`. Page/model classes are autoloaded via `lpm-core/classes.dump` (auto-regenerated on cache miss, not git-tracked), so new classes are picked up without manual registration in the autoloader. Render a template by setting `$this->_pattern` and passing data with `addTmplVar()`.
+- App options: `LPMOptions` is a singleton over the `lpm_options` table (`option`/`value`). Read with `LPMOptions::getInstance()->prop`, persist with the static `LPMOptions::save(['name' => $value, ...])`. Note `cookieExpire` is stored in days but exposed in seconds in memory (×86400 on load) — edit it in days and write days back.
+
 ## Local Dev Environment
 - Docker compose lives in `.dev/docker-env/`.
   - Start: from `.dev/docker-env/` run `docker-compose up` (or `-d`).
@@ -34,6 +41,8 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Do not modify `lpm-libs/vendor/` or introduce new dependencies without explicit request.
 - Keep PHP 7.3 compatibility; avoid newer language features.
 - Match existing style and structure; follow patterns present in nearby files.
+- Member order in classes: static methods come first — before properties/constants and the constructor. Place a new static method up top with the others, not after the constructor.
+- Docblocks describe the contract (params, return, thrown exceptions, observable behavior), NOT internal implementation (which query builder is used, upsert/ODKU mechanics, storage details, casting tricks). The same applies to field docblocks — document what the field means, not how it is stored.
 - When changing behavior, update inline PHPDoc/comments and, if user asks, `CHANGELOG.md`.
 - In frontend JS within project pages, assume shared globals (`srv`, `showError`, `redirectTo`, `bootstrap`) are present; avoid redundant existence checks unless adding code outside the app context.
  - For UI components, prefer adding a `PagePrinter` method that includes the template and expose it via an alias in `lpm-core/aliases.inc.php` (e.g., `lpm_print_goto_issue($project)`), then call the alias in templates instead of `includePattern()` directly.
@@ -98,6 +107,8 @@ This file tells the coding assistant how to safely and efficiently work in this 
 
 ## Changelog Language
 - All entries in `CHANGELOG.md` must be written in Russian.
+- Entries describe the user-facing change/behavior only — no implementation details (CSS selectors, class names, function names, root-cause internals). Put the "how" in the commit message/code.
+- Be terse — no filler. Don't pad an entry by contrasting against the old state (e.g. avoid "вместо прежнего широкого блока …"); just state the change.
 
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.
