@@ -232,27 +232,15 @@ Do **not** re-propose on every iteration. While the user is still asking for edi
 
 ### Stage 1 — commit + push proposal
 
-Send one message that:
+Make the commit proposal per the [Commit Policy](#commit-policy): draft the message, list the files to stage and why, and wait for explicit approval. Add one push-specific point: state that the branch will be pushed to its tracked remote immediately after the commit succeeds — push has no separate gate, nothing to discuss. Approving the commit message authorizes only that immediate push, nothing else.
 
-1. Drafts the commit message.
-2. Lists files that will be staged and why.
-3. States explicitly that the branch will be pushed to its tracked remote immediately after the commit succeeds (no separate gate for push — push has nothing to discuss).
-
-Wait for the user to approve, edit the message, or stage selectively. After the commit lands successfully, push the branch in the same turn without re-asking.
-
-If push fails (no upstream, auth, etc.), surface the failure and ask before retrying or changing remotes.
+After the commit lands, push the branch in the same turn without re-asking. If push fails (no upstream, auth, etc.), surface the failure and ask before retrying or changing remotes.
 
 ### Stage 2 — comment proposal (separate)
 
-After push succeeds, address the comment as a **separate** message. The two steps are intentionally split because commit/push has nothing to discuss while a comment's wording, structure, and language usually do.
+After push succeeds, address the comment as a **separate** message — commit/push has nothing to discuss, while a comment's wording, structure, and language usually do.
 
-- If a comment provides value per the Comment Policy, draft the full final text (including signature) and ask for approval. Iterate on wording until the user accepts.
-- If no comment is warranted (routine bug fix, no caveats, no tester guidance, no rollout notes, etc.), say so explicitly in one sentence and skip the step instead of going silent.
-
-### Approval rules still apply
-
-- The Commit Policy still requires explicit approval before `git add` / `git commit`. The wrap-up draft is a proposal, not a pre-approval. Approval of the commit message implicitly authorizes the immediate push that follows it; nothing else.
-- The Comment Policy still requires the exact final text (including signature) to be shown and approved before posting; if the draft is later edited, re-show the updated version before posting.
+Follow the [Comment Policy](#comment-policy): if a comment provides value, draft the full final text (including signature), get approval, and iterate on wording until accepted. If no comment is warranted (routine bug fix, no caveats, no tester guidance, no rollout notes), say so explicitly in one sentence and skip the step instead of going silent.
 
 ## Attachment Handling
 
