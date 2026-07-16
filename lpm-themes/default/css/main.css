@@ -18,11 +18,8 @@ article {
     /*padding-left: 20px;*/
 }
 /* Bootstrap extend -- start */
-.x-small { 
+.x-small {
 	font-size: .75em;
-}
-.xx-small { 
-	font-size: .5em;
 }
 /* Bootstrap extend -- end */
 
@@ -148,23 +145,6 @@ code.no-highlight {
 	-moz-tab-size: 4;
 	-o-tab-size: 4;
 	-webkit-tab-size: 4
-}
-.flip-vertical {
-	-moz-transform: scale(1,-1);
-	-webkit-transform: scale(1, -1);
-	-o-transform: scale(1, -1);
-	transform: scale(1, -1);
-	filter: FlipV;
-	-ms-filter: "FlipV"; 
-}
-
-.flip-horizontal{
-	-moz-transform: scale(-1, 1);
-	-webkit-transform: scale(-1, 1);
-	-o-transform: scale(-1, 1);
-	transform: scale(-1, 1);
-	filter: FlipH;
-	-ms-filter: "FlipH"; 
 }
 .copyright {
 	font-size: 7pt;
@@ -571,9 +551,6 @@ a.create-branch-icon .plus-icon {
 #passTestComment .tab-pane {
 	padding: 0;
 }
-.comments form.add-comment .preview-comment .lds-spinner div:after {
-	background: #333;
-}
 .comments form.add-comment .preview-comment.comments-list-item .text,
 #passTestComment .preview-comment.comments-list-item .text {
 	margin: 0;
@@ -661,19 +638,6 @@ a.create-branch-icon .plus-icon {
 .project-stat .project-opened-issue-hours
 {
 	font-size: smaller;
-}
-
-/* подменюшка панели */
-.container-legacy ul.panel-submenu {
-	list-style: none;
-    padding: 0px;
-    margin: -15px 0px 10px;
-    font-size: smaller;
-}
-ul.panel-submenu li {
-    min-width: 100px;
-    display: inline-block;
-    text-align: center;
 }
 
 .container-legacy.issue-info {
@@ -1498,22 +1462,6 @@ blockquote > p {
 	border-bottom: 2px solid #adb5bd;
 }
 
-.table {
-	display: table;
-}
-
-.table-header {
-	display: table-header-group;
-}
-
-.table-row {
-	display: table-row;
-}
-
-.table-cell {
-	display: table-cell;
-}
-
 .copy-tooltip div {
 	display: none;
 	position: absolute;
@@ -1538,26 +1486,6 @@ blockquote > p {
 
 form.create-branch {
 	padding: 10px;
-}
-
-form.create-branch ul.create-branch-items {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-}
-
-form.create-branch ul.create-branch-items > li {
-	padding: 5px 0;
-}
-
-form.create-branch ul.create-branch-items label {
-	margin-bottom: 3px;
-	display: block;
-}
-
-form.create-branch ul.create-branch-items select,
-form.create-branch ul.create-branch-items input {
-	width: 100%;
 }
 
 /* Форма отправки сообщения о том, что тест пройден */
