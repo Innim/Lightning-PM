@@ -1,198 +1,203 @@
 <?php
-/* 
-Требуются: 
-	$user - пользователь, для которого отображается профиль
-    $isPM - является ли пользователь PM хотя бы одного проекта
+/*
+Требуются:
+    User $user - пользователь, для которого отображается профиль
+    bool $isPM - является ли пользователь PM хотя бы одного проекта
+    ApiKey[] $apiKeys - список API-ключей пользователя
 */
-
-
-// TODO: Bootstrap формы и стиль
+$pref = $user->pref;
 ?>
-<div id="profileView"  class="mx-auto container container-main px-4 py-4">
-    <h1>
-        <?lpm_print_header();?>
-    </h1>
-    <article id="profilePanel" class="container-legacy">
-        <h3><?=$user->getName();?></h3>
-        <ul class="panel-submenu">
-            <li><a href="#" onclick="return profilePage.showInfo();">Информация</a></li>
-            <!-- 
-        <li><a href="#" onclick="return false;">Изменить</a></li> -->
-            <li><a href="#" onclick="return profilePage.changePass();">Сменить пароль</a></li>
-            <li><a href="#" onclick="return profilePage.showApiKeys();">API ключи</a></li>
-            <li><a href="#" onclick="return profilePage.showSetting();">Настройки</a></li>
-        </ul>
-        <ol id="profileInfo" class="info-list">
-            <li class="info-list-item">
-                <span class="label">Имя</span>
-                <span class="value"><?=$user->firstName;?></span>
-            </li>
-            <li class="info-list-item">
-                <span class="label">Фамилия</span>
-                <span class="value"><?=$user->lastName;?></span>
-            </li>
-            <li class="info-list-item">
-                <span class="label">Ник</span>
-                <span class="value"><?=$user->nick;?></span>
-            </li>
-            <li class="info-list-item">
-                <span class="label">Регистрация</span>
-                <span class="value"><?=$user->getRegDate();?></span>
-            </li>
-        </ol>
+<div id="profileView" class="mx-auto container container-main px-4 py-4">
+    <h1><?lpm_print_header();?></h1>
 
-        <article id="changePass" class="hidden-state">
-            <div class="alert alert-danger validateError" role="alert"></div>
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="profileTabs">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-state="info" onclick="return profilePage.showInfo();">Информация</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-state="changepass" onclick="return profilePage.changePass();">Сменить пароль</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-state="api-keys" onclick="return profilePage.showApiKeys();">API ключи</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-state="settings" onclick="return profilePage.showSetting();">Настройки</a>
+                </li>
+            </ul>
+        </div>
 
-            <form method="post" action="" onsubmit="profilePage.saveNewPass(); return false;">
+        <div class="card-body" id="profilePanel">
+            <div id="profileInfo">
+                <div class="d-flex align-items-center mb-4">
+                    <img src="<?=$user->getAvatarUrl();?>" alt="Аватар" width="64" height="64"
+                        class="rounded-circle border me-3" />
+                    <h5 class="card-title mb-0"><?=$user->getName();?></h5>
+                </div>
+                <dl class="row mb-0">
+                    <dt class="col-sm-3 text-muted fw-normal">Имя</dt>
+                    <dd class="col-sm-9"><?=$user->firstName;?></dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Фамилия</dt>
+                    <dd class="col-sm-9"><?=$user->lastName;?></dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Ник</dt>
+                    <dd class="col-sm-9"><?=$user->nick;?></dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Регистрация</dt>
+                    <dd class="col-sm-9 mb-0"><?=$user->getRegDate();?></dd>
+                </dl>
+            </div>
+
+            <div id="changePass" class="hidden-state">
+                <div class="alert alert-danger validateError" role="alert"></div>
                 <div class="alert alert-success info-message" role="alert"></div>
-                <ol class="form-fields">
-                    <li>
-                        <!-- <label for="currentPass">Текущий пароль</label> -->
-                        <input id="currentPass" placeholder="Текущий пароль" type="password" name="currentPass"
-                            maxlength="24" required />
-                    </li>
-                    <li>
-                        <!-- <label for="newPass">Новый пароль</label> -->
-                        <input id="newPass" placeholder="Новый пароль" type="password" name="newPass" maxlength="24"
-                            required />
-                    </li>
-                    <li>
-                        <!-- <label for="repeatPass">Подтверждение пароля</label> -->
-                        <input id="repeatPass" placeholder="Подтверждение пароля" type="password" name="repeatPass"
-                            maxlength="24" required />
-                    </li>
-                </ol>
-                <p class="save-line">
-                    <button class="btn btn-primary" type="submit">Сохранить</button>
-                </p>
-            </form>
-        </article>
 
-        <article id="userSettings" class="hidden-state">
-            <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
-                <h4>Настройки оповещений по email</h4>
+                <form method="post" action="" onsubmit="profilePage.saveNewPass(); return false;">
+                    <div class="mb-3">
+                        <label for="currentPass" class="form-label">Текущий пароль</label>
+                        <input id="currentPass" type="password" class="form-control" name="currentPass"
+                            maxlength="24" required autocomplete="current-password" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPass" class="form-label">Новый пароль</label>
+                        <input id="newPass" type="password" class="form-control" name="newPass"
+                            maxlength="24" required autocomplete="new-password" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="repeatPass" class="form-label">Подтверждение пароля</label>
+                        <input id="repeatPass" type="password" class="form-control" name="repeatPass"
+                            maxlength="24" required autocomplete="new-password" />
+                    </div>
+                    <div class="text-end">
+                        <button class="btn btn-primary" type="submit">Сохранить</button>
+                    </div>
+                </form>
+            </div>
 
-                <h5 class="mt-4">
-                    Оповещения по связанным задачам
-
-                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Присылаются для задач, в которых Вы фигурируете как исполнитель, тестировщик, мастер или были её автором." class="ms-1">
-                        <i class="fa-solid fa-circle-info"></i>
-                    </span>
-                </h5>
-
+            <div id="userSettings" class="hidden-state">
                 <div class="alert alert-success info-message" role="alert"></div>
-                <?php
-                $pref = $user->pref;
-                ?>
 
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seAddIssue" name="seAddIssue" 
-                        <?php if($pref->seAddIssue):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seAddIssue">Добавление задачи для меня</label>
-                </div>
+                <form method="post" action="" onsubmit="profilePage.saveEmailPref(); return false;">
+                    <h6 class="d-flex align-items-center">
+                        <span>Оповещения по связанным задачам</span>
+                        <span data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Присылаются для задач, в которых Вы фигурируете как исполнитель, тестировщик, мастер или были её автором."
+                            class="ms-2 text-muted">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </span>
+                    </h6>
 
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seEditIssue" name="seEditIssue" 
-                        <?php if($pref->seEditIssue):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seEditIssue">Изменение задачи, в которой я участвую</label>
-                </div>  
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seAddIssue" name="seAddIssue"
+                            <?php if ($pref->seAddIssue): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seAddIssue">Добавление задачи для меня</label>
+                    </div>
 
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueState" name="seIssueState" 
-                        <?php if($pref->seIssueState):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seIssueState">Изменение статуса, удаление задачи, в которой я участвую</label>
-                </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seEditIssue" name="seEditIssue"
+                            <?php if ($pref->seEditIssue): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seEditIssue">Изменение задачи, в которой я участвую</label>
+                    </div>
 
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueComment" name="seIssueComment" 
-                        <?php if($pref->seIssueComment):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seIssueComment">Добавление комментария к задаче, в которой я участвую</label>
-                </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seIssueState" name="seIssueState"
+                            <?php if ($pref->seIssueState): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seIssueState">Изменение статуса, удаление задачи, в которой я участвую</label>
+                    </div>
 
-                <?php if ($isPM): ?>
-                <h5 class="mt-4">
-                    Оповещения по задачам проекта для PM
-                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Присылаются для проектов, в которых Вы назначены как PM" class="ms-1">
-                        <i class="fa-solid fa-circle-info"></i>
-                    </span>
-                </h5>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seIssueComment" name="seIssueComment"
+                            <?php if ($pref->seIssueComment): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seIssueComment">Добавление комментария к задаче, в которой я участвую</label>
+                    </div>
 
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seAddIssueForPM" name="seAddIssueForPM" 
-                        <?php if($pref->seAddIssueForPM):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seAddIssueForPM">Добавление задачи в проекте</label>
-                </div>
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seEditIssueForPM" name="seEditIssueForPM" 
-                        <?php if($pref->seEditIssueForPM):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seEditIssueForPM">Изменение задачи в проекте</label>
-                </div>
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueStateForPM" name="seIssueStateForPM" 
-                        <?php if($pref->seIssueStateForPM):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seIssueStateForPM">Изменение статуса, удаление задачи в проекте</label>
-                </div>
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="seIssueCommentForPM" name="seIssueCommentForPM" 
-                        <?php if($pref->seIssueCommentForPM):?>checked="checked"<?php endif;?>>
-                    <label class="form-check-label" for="seIssueCommentForPM">Добавление комментария к задаче в проекте</label>
-                </div>
-                <?php endif; ?>
+                    <?php if ($isPM): ?>
+                    <h6 class="d-flex align-items-center mt-4">
+                        <span>Оповещения по задачам проекта для PM</span>
+                        <span data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Присылаются для проектов, в которых Вы назначены как PM" class="ms-2 text-muted">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </span>
+                    </h6>
 
-                <input type="hidden" name="form" value="emailPref" />
-                <p class="save-line mt-4">
-                    <button class="btn btn-primary" type="submit">Сохранить</button>
-                    <button class="btn btn-secondary" type="reset">Отмена</button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seAddIssueForPM" name="seAddIssueForPM"
+                            <?php if ($pref->seAddIssueForPM): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seAddIssueForPM">Добавление задачи в проекте</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seEditIssueForPM" name="seEditIssueForPM"
+                            <?php if ($pref->seEditIssueForPM): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seEditIssueForPM">Изменение задачи в проекте</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seIssueStateForPM" name="seIssueStateForPM"
+                            <?php if ($pref->seIssueStateForPM): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seIssueStateForPM">Изменение статуса, удаление задачи в проекте</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="seIssueCommentForPM" name="seIssueCommentForPM"
+                            <?php if ($pref->seIssueCommentForPM): ?>checked="checked"<?php endif; ?>>
+                        <label class="form-check-label" for="seIssueCommentForPM">Добавление комментария к задаче в проекте</label>
+                    </div>
+                    <?php endif; ?>
+
+                    <input type="hidden" name="form" value="emailPref" />
+                    <div class="text-end mt-4">
+                        <button class="btn btn-secondary" type="reset">Отмена</button>
+                        <button class="btn btn-primary" type="submit">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="apiKeysSettings" class="hidden-state">
+                <p class="text-muted">
+                    Используются для внешнего API <code>/api/v1/...</code> и доступа к файлам задачи от имени текущего пользователя.
                 </p>
-            </form>
-        </article>
 
-        <article id="apiKeysSettings" class="hidden-state">
-            <p class="text-muted mb-3">
-                Используются для внешнего API <code>/api/v1/...</code> и доступа к файлам задачи от имени текущего пользователя.
-            </p>
+                <p>
+                    <button type="button" class="btn btn-primary" onclick="profilePage.createApiKey();">Создать ключ</button>
+                </p>
 
-            <p>
-                <button type="button" class="btn btn-primary" onclick="profilePage.createApiKey();">Создать ключ</button>
-            </p>
+                <div id="apiKeysEmpty" class="<?php if (!empty($apiKeys)): ?>d-none <?php endif; ?>text-muted mb-0">
+                    Ключей пока нет.
+                </div>
 
-            <div id="apiKeysEmpty" class="<?php if (!empty($apiKeys)): ?>d-none <?php endif; ?>text-muted mb-3">
-                Ключей пока нет.
-            </div>
+                <div id="apiKeysTable" class="<?php if (empty($apiKeys)): ?>d-none <?php endif; ?>table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ключ</th>
+                                <th>Создан</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($apiKeys as $apiKey): ?>
+                            <tr id="apiKeyRow-<?=$apiKey->id;?>">
+                                <td><?=$apiKey->keyPreview;?></td>
+                                <td><?=$apiKey->getCreatedLabel();?></td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="profilePage.revokeApiKey(<?=$apiKey->id;?>);">Отозвать</button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
 
-            <div id="apiKeysTable" class="<?php if (empty($apiKeys)): ?>d-none <?php endif; ?>table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th>Ключ</th>
-                            <th>Создан</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($apiKeys as $apiKey): ?>
-                        <tr id="apiKeyRow-<?=$apiKey->id;?>">
-                            <td><?=$apiKey->keyPreview;?></td>
-                            <td><?=$apiKey->getCreatedLabel();?></td>
-                            <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="profilePage.revokeApiKey(<?=$apiKey->id;?>);">Отозвать</button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="apiKeyResult" class="alert alert-warning mt-3 d-none" role="alert">
-                <div class="fw-bold mb-2">Скопируйте ключ сейчас: повторно он не показывается.</div>
-                <div class="input-group">
-                    <input id="apiKeyValue" type="text" class="form-control" readonly />
-                    <button type="button" class="btn btn-outline-secondary" onclick="return profilePage.copyApiKey();" title="Копировать" aria-label="Копировать">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
+                <div id="apiKeyResult" class="alert alert-warning mt-3 d-none" role="alert">
+                    <div class="fw-bold mb-2">Скопируйте ключ сейчас: повторно он не показывается.</div>
+                    <div class="input-group">
+                        <input id="apiKeyValue" type="text" class="form-control" readonly />
+                        <button type="button" class="btn btn-outline-secondary" onclick="return profilePage.copyApiKey();" title="Копировать" aria-label="Копировать">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </article>
-    </article>
+        </div>
+    </div>
 </div>

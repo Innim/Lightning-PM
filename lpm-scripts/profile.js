@@ -35,20 +35,25 @@ profilePage.showApiKeys = function () {
     return false;
 };
 
+profilePage.setActiveTab = function (state) {
+    $('#profileTabs .nav-link').removeClass('active');
+    $('#profileTabs .nav-link[data-state="' + state + '"]').addClass('active');
+};
+
 profilePage.onShowInfo = function () {
-    $('#profilePanel > h3').text('Информация');
+    profilePage.setActiveTab('info');
 };
 
 profilePage.onShowSettings = function () {
-    $('#profilePanel > h3').text('Настройки');
+    profilePage.setActiveTab('settings');
 };
 
 profilePage.onShowApiKeys = function () {
-    $('#profilePanel > h3').text('API ключи');
+    profilePage.setActiveTab('api-keys');
 };
 
 profilePage.onChangePass = function () {
-    $('#profilePanel > h3').text('Смена пароля');
+    profilePage.setActiveTab('changepass');
 };
 
 

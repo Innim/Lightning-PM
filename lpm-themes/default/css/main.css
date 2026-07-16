@@ -283,21 +283,6 @@ div.container-legacy > h3 {
 
 /* Страница профиля */
 
-ol#profileInfo.info-list {
-	list-style: none;
-}
-
-#changePass form label {
-    line-height: 30px;
-    width: 180px;
-    display: inline-block;
-}
-
-#profileView form{
-    width           : 90%;
-	margin          : 10px auto 10px;
-}
-
 .validateError:empty{
     display: none;
 }
