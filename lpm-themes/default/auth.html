@@ -6,68 +6,81 @@ $lastName = isset($_POST['lastName']) ? $_POST['lastName'] : '';
 $nick = isset($_POST['nick']) ? $_POST['nick'] : '';
 $allowRegistration = LPMOptions::getInstance()->allowRegistration;
 ?>
-<article id="authForm" class="container-legacy">
-	<h3>Авторизация</h3>
-	<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signIn'])) lpm_print_errors();?></div>
+<div class="container py-4">
+	<div class="row justify-content-center">
+		<div class="col-12 col-sm-9 col-md-7 col-lg-5 col-xl-4">
 
-	<form method="post">
-		<div class="mb-3">
-		  <label for="emailInput" class="form-label">Email</label>
-		  <input type="email" class="form-control" id="emailInput" name="aemail" required="required" value="<?=$aemail?>">
-		</div>
-		<div class="mb-3">
-		  <label for="passwordInput" class="form-label">Пароль</label>
-		  <input type="password" class="form-control" id="passwordInput" name="apass" required="required">
-		</div>
-		<div class="mb-3 text-end">
-			<button type="submit" name="signIn" class="btn btn-primary">Вход</button>
-		</div>
-		<div class="mb-3 text-center">
-			<?php if ($allowRegistration):?>
-			<a href="javascript:showRegistration();">Регистрация</a>
-			&nbsp&nbsp&nbsp
-			<?php endif;?>
-			<a href="pass-recovery">Забыли пароль?</a>
-		</div>
-	</form>
-</article>
+			<div id="authForm" class="card shadow-sm">
+				<div class="card-body p-4">
+					<h1 class="h4 fw-normal text-center mb-4">Вход</h1>
+					<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signIn'])) lpm_print_errors();?></div>
+
+					<form method="post">
+						<div class="mb-3">
+							<label for="loginEmail" class="form-label">Email</label>
+							<input type="email" class="form-control" id="loginEmail" name="aemail" required="required" value="<?=$aemail?>">
+						</div>
+						<div class="mb-3">
+							<label for="loginPassword" class="form-label">Пароль</label>
+							<input type="password" class="form-control" id="loginPassword" name="apass" required="required">
+						</div>
+						<div class="d-grid mb-3">
+							<button type="submit" name="signIn" class="btn btn-primary">Войти</button>
+						</div>
+						<div class="text-center small">
+							<?php if ($allowRegistration):?>
+							<a href="javascript:showRegistration();">Регистрация</a>
+							<span class="text-muted mx-2">·</span>
+							<?php endif;?>
+							<a href="pass-recovery">Забыли пароль?</a>
+						</div>
+					</form>
+				</div>
+			</div>
+
 <?php if ($allowRegistration):?>
-<article id="registrationForm" class="container-legacy">
-	<h3>Регистрация</h3>
-	<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
+			<div id="registrationForm" class="card shadow-sm">
+				<div class="card-body p-4">
+					<h1 class="h4 fw-normal text-center mb-4">Регистрация</h1>
+					<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
 
-	<form onsubmit="return validateReg();" action="#reg" method="post">
-		<div class="mb-3">
-		  <label for="emailInput" class="form-label">Email</label>
-		  <input type="email" class="form-control" id="emailInput" name="email" required="required" value="<?=$email?>">
-		</div>
-		<div class="mb-3">
-		  <label for="passwordInput" class="form-label">Пароль</label>
-		  <input type="password" class="form-control" id="passwordInput" name="pass" required="required" maxlength="24">
-		</div>
-		<div class="mb-3">
-		  <label for="password2Input" class="form-label">Подтверждение пароля</label>
-		  <input type="password" class="form-control" id="password2Input" name="repass" required="required" maxlength="24">
-		</div>
-		<div class="mb-3">
-		  <label for="firstNameInput" class="form-label">Имя</label>
-		  <input type="text" class="form-control" id="firstNameInput" name="firstName" required="required" maxlength="128" value="<?=$firstName;?>">
-		</div>
-		<div class="mb-3">
-		  <label for="lastNameInput" class="form-label">Фамилия</label>
-		  <input type="text" class="form-control" id="lastNameInput" name="lastName" required="required" maxlength="128" value="<?=$lastName;?>">
-		</div>
-		<div class="mb-3">
-		  <label for="nickInput" class="form-label">Ник</label>
-		  <input type="text" class="form-control" id="nickInput" name="nick" maxlength="64" aria-describedby="nickInputHelp" value="<?=$nick;?>">
-		  <div id="nickInputHelp" class="form-text">Без пробелов, не менее 3-х символов. Не должно совпадать с именем.</div>		  
-		</div>
-		<div class="mb-3 text-end">
-			<button name="signUp" type="submit" class="btn btn-primary">Регистрация</button>
-		</div>
-		<div class="mb-3 text-start">
-			<a href="javascript:showAuth();">Назад</a>
-		</div>
-	</form>
-</article>
+					<form onsubmit="return validateReg();" action="#reg" method="post">
+						<div class="mb-3">
+							<label for="regEmail" class="form-label">Email</label>
+							<input type="email" class="form-control" id="regEmail" name="email" required="required" value="<?=$email?>">
+						</div>
+						<div class="mb-3">
+							<label for="regPassword" class="form-label">Пароль</label>
+							<input type="password" class="form-control" id="regPassword" name="pass" required="required" maxlength="24">
+						</div>
+						<div class="mb-3">
+							<label for="regPassword2" class="form-label">Подтверждение пароля</label>
+							<input type="password" class="form-control" id="regPassword2" name="repass" required="required" maxlength="24">
+						</div>
+						<div class="mb-3">
+							<label for="regFirstName" class="form-label">Имя</label>
+							<input type="text" class="form-control" id="regFirstName" name="firstName" required="required" maxlength="128" value="<?=$firstName;?>">
+						</div>
+						<div class="mb-3">
+							<label for="regLastName" class="form-label">Фамилия</label>
+							<input type="text" class="form-control" id="regLastName" name="lastName" required="required" maxlength="128" value="<?=$lastName;?>">
+						</div>
+						<div class="mb-3">
+							<label for="regNick" class="form-label">Ник</label>
+							<input type="text" class="form-control" id="regNick" name="nick" maxlength="64" aria-describedby="regNickHelp" value="<?=$nick;?>">
+							<div id="regNickHelp" class="form-text">Без пробелов, не менее 3-х символов. Не должно совпадать с именем.</div>
+						</div>
+						<div class="d-grid mb-3">
+							<button name="signUp" type="submit" class="btn btn-primary">Зарегистрироваться</button>
+						</div>
+						<div class="text-center small">
+							<a href="javascript:showAuth();">Назад ко входу</a>
+						</div>
+					</form>
+				</div>
+			</div>
 <?php endif;?>
+
+		</div>
+	</div>
+</div>
