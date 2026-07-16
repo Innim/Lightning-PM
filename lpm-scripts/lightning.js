@@ -784,96 +784,100 @@ window.onload = function () {
 
 $(document).ready(
     function () {
-        $("input.date").datepicker({
-            dateFormat: 'dd/mm/yy',
-            dayNames: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда',
-                'Четверг', 'Пятница', 'Суббота'],
-            dayNamesMin: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-            dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-            currentText: 'Сегодня',
-            weekHeader: 'Нед',
-            prevText: 'Предыдущий',
-            nextText: 'Следующий',
-            monthNames: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль',
-                'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
-            monthNamesShort: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл',
-                'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
-            firstDay: 1,
-            closeText: 'Готово'
-        });
-
         if (hljs) hljs.initHighlightingOnLoad();
 
-        $.widget.bridge('uitooltip', $.ui.tooltip);
+        // Global tooltip: a single delegated Bootstrap tooltip on <body> covers every current
+        // and dynamically added [title] element (replaces the former jQuery UI global tooltip).
+        // Exclusions:
+        //  - [data-tooltip]: issue-link elements have their own popover (see formatting.js).
+        //  - structural [data-bs-toggle] toggles (dropdown/collapse/modal/tab/offcanvas/…): Bootstrap
+        //    allows only ONE component instance per element (Data.set), so a Tooltip can't attach to an
+        //    element that already hosts a Dropdown/Collapse/… — the instance silently isn't stored and
+        //    its tip never hides (stays stuck open). Those keep their native `title` tooltip instead.
+        //    The second selector clause re-includes data-bs-toggle="tooltip", which IS a tooltip (no
+        //    conflicting component), e.g. the notification hints in profile.html.
+        new bootstrap.Tooltip(document.body, {
+            selector: '[title]:not([data-tooltip]):not([data-bs-toggle]), [data-bs-toggle="tooltip"][title]:not([data-tooltip])',
+            container: 'body',
+        });
 
-        (function () {
-            const activeObservers = new WeakMap();
-
-            const clearObserver = function (target) {
-                const observer = activeObservers.get(target);
-                if (observer) {
+        // Bootstrap only hides a tooltip in response to pointer/focus events on its trigger, so a
+        // titled control that removes or hides its own DOM node while the tooltip is open (e.g. the
+        // SCRUM board "Убрать с доски" action removes the sticker on AJAX success — no mouseleave
+        // fires) leaves the tooltip stuck in <body>. While a tooltip is shown, watch for its trigger
+        // being removed or hidden and dispose the tooltip so it isn't left orphaned. Disposing (not
+        // hide()) avoids re-firing hide.bs.tooltip, whose guard below would otherwise un-hide the
+        // trigger the app deliberately hid.
+        $('body').on('shown.bs.tooltip', function(e) {
+            const trigger = e.target;
+            const observer = new MutationObserver(function() {
+                if (!document.body.contains(trigger) || !$(trigger).is(':visible')) {
                     observer.disconnect();
-                    activeObservers.delete(target);
-                }
-            };
-
-            $(document).uitooltip({
-                open: function (event, ui) {
-                    const target = event.originalEvent?.target;
-                    if (!target) return;
-
-                    const $target = $(target);
-                    if (activeObservers.has(target)) return;
-
-                    // hack to fix bug with tooltip is staying open when element is removed by click on it
-                    const observer = new MutationObserver(() => {
-                        if (!document.body.contains(target) || !$target.is(':visible')) {
-                            const tooltips = $(document).uitooltip('instance').tooltips;
-                            for (var prop in tooltips) {
-                                const item = tooltips[prop];
-
-                                if (item.element[0] === target) {
-                                    item.tooltip[0].remove();
-                                }
-                            }
-                            
-                            clearObserver(target);
-                        }
-                    });
-                    
-                    observer.observe(document.body, {
-                        attributes: true,
-                        childList: true,
-                        subtree: true,
-                        attributeFilter: ['style', 'class', 'hidden'],
-                    });
-
-                    activeObservers.set(target, observer);
-                },
-                close: function(event, ui) {
-                    const target = event.originalEvent?.target;
-                    if (!target) return;
-                    clearObserver(target);
-                },
-                position: {
-                    my: "center bottom-20",
-                    at: "center top",
-                    using: function (position, feedback) {
-                        $(this).css(position);
-                        $("<div>")
-                            .addClass("arrow")
-                            .addClass(feedback.vertical)
-                            .addClass(feedback.horizontal)
-                            .appendTo(this);
-                    }
+                    $(trigger).removeData('lpmTooltipCleanup');
+                    const instance = bootstrap.Tooltip.getInstance(trigger);
+                    if (instance) instance.dispose();
                 }
             });
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class', 'hidden'],
+            });
+            $(trigger).data('lpmTooltipCleanup', observer);
+        });
+        $('body').on('hidden.bs.tooltip', function(e) {
+            const observer = $(e.target).data('lpmTooltipCleanup');
+            if (observer) {
+                observer.disconnect();
+                $(e.target).removeData('lpmTooltipCleanup');
+            }
+        });
 
-        })();
+        // The "..." issue-actions dropdown and the goto-issue collapse toggle can't carry a Bootstrap
+        // tooltip on the toggle itself (one component instance per element), so their title lives on the
+        // inner icon and the delegated tooltip attaches there. Hide that tooltip when the control opens
+        // so it doesn't linger over the revealed menu/panel.
+        const toggleIconTooltip = function(toggle) {
+            const icon = toggle && toggle.querySelector('[title], [data-bs-original-title]');
+            return icon ? bootstrap.Tooltip.getInstance(icon) : null;
+        };
+        $('body').on('show.bs.dropdown', function(e) {
+            const instance = toggleIconTooltip(e.target);
+            // Disable too: the toggle stays visible while open, so a re-hover would otherwise re-show it.
+            if (instance) { instance.hide(); instance.disable(); }
+        });
+        $('body').on('show.bs.collapse', function(e) {
+            // Collapse events fire on the target panel; hide the tooltip on the toggle(s) that control it.
+            if (!e.target.id) return;
+            const instance = toggleIconTooltip(document.querySelector(
+                '[data-bs-toggle="collapse"][href="#' + e.target.id + '"], ' +
+                '[data-bs-toggle="collapse"][data-bs-target="#' + e.target.id + '"]'));
+            if (instance) instance.hide();
+        });
 
         $('body').on('hidden.bs.dropdown', function(e) {
             // Force element to stay visible - some sort of bug in Bootstrap in conflict with jQuery
             e.target.style.display = '';
+            const instance = toggleIconTooltip(e.target);
+            if (instance) instance.enable();
+        });
+
+        // Same conflict for tabs: jQuery invokes the Element.prototype.hide polyfill when Bootstrap
+        // fires hide.bs.tab, hiding the deselected tab button. Restore its display in a microtask so
+        // the change is reverted before the browser paints (waiting for hidden.bs.tab would flicker,
+        // as that only fires after the ~150ms fade transition).
+        $('body').on('hide.bs.tab', function(e) {
+            const el = e.target;
+            Promise.resolve().then(function() { el.style.display = ''; });
+        });
+
+        // Same conflict for tooltips: when hide.bs.tooltip fires, jQuery's default action calls the
+        // Element.prototype.hide polyfill on the tooltip's trigger element, hiding it. Restore its
+        // display in a microtask (after the trigger's default action runs) to keep the target visible.
+        $('body').on('hide.bs.tooltip', function(e) {
+            const el = e.target;
+            Promise.resolve().then(function() { el.style.display = ''; });
         });
 
         window.lpInfo.userId = $('#curUserId').val();

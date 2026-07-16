@@ -63,14 +63,16 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             </a>
             
             <div class="dropdown">
-                <a href="javascript:void(0);" 
-                    class="dropdown-toggle-no-caret" 
-                    title="Дополнительные действия"
-                    id="issueActionsDropdown" 
-                    data-bs-toggle="dropdown" 
+                <a href="javascript:void(0);"
+                    class="dropdown-toggle-no-caret"
+                    aria-label="Дополнительные действия"
+                    id="issueActionsDropdown"
+                    data-bs-toggle="dropdown"
                     aria-expanded="false"
                     class="me-1 link-secondary">
-                    <i class="fa fa-ellipsis-h fa-xs" aria-hidden="true"></i>
+                    <?php /* title is on the icon, not the toggle: a Bootstrap tooltip can't attach to
+                             an element that already hosts a Dropdown (one component instance per element) */ ?>
+                    <i class="fa fa-ellipsis-h fa-xs" aria-hidden="true" title="Дополнительные действия"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-sm" aria-labelledby="issueActionsDropdown">
                     <li>

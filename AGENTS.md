@@ -18,11 +18,22 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Formatting: PHP uses php-cs-fixer with `@PSR1,@PSR2` (see `README.md`).
 - `CLAUDE.md` is a symlink to this `AGENTS.md` — edit `AGENTS.md` directly; writes through the `CLAUDE.md` symlink are refused.
 
+## Architecture Notes
+- Two frameworks coexist: a legacy one bundled in `lpm-libs/gm-framework-v1.1.1.phar` and the newer `GMFramework\*` under `lpm-libs/framework/`. The project is migrating off the legacy one. Watch for classes that still extend legacy bases (e.g. `LPMOptions extends Options` resolves to the phar's `Options`, which has no `saveOptions()`/`change()`).
+- DB access: new code uses the V2 query builder `\GMFramework\DBQueryBuilder` via `LPMBaseObject` helpers `buildAndSaveToDbV2($sqlHash)` and `loadFromDV2()`/`loadAndParseV2()`. Do NOT hand-write SQL strings or use the legacy `DBConnect::queryt()`/`preparet()`. Hash form: `['INSERT' => $assoc, 'INTO' => LPMTables::X, 'ODKU' => ['field']]` (upsert), `['UPDATE' => ..., 'SET' => [...], 'WHERE' => [...]]`, `['DELETE' => ..., 'WHERE' => [...]]`. The builder backticks table/column names (reserved words like `option`/`value` are safe) and escapes values; throw `\GMFramework\ProviderSaveException` on failure. Canonical connection: `LPMGlobals::getInstance()->getDBConnect()`.
+- Service layer (AJAX): JS calls `srv.<service>.<method>(args, onResult)` — `BaseService` is defined in `lpm-scripts/lightning.js`, per-screen bindings live in their own JS (e.g. `srv.admin` in `lpm-scripts/admin.js`). Requests hit `lpm-libs/flash2php/gateway.php` and dispatch to a PHP service extending `LPMBaseService` that returns `$this->answer()` / `$this->error('msg')`; the client sees `res.success` and `res.error`. Admin-only services override `beforeFilter()` to also require `checkRole(User::ROLE_ADMIN)` (see `lpm-core/services/AdminService.php`).
+- Page routing: pages extend `LPMPage` (base `BasePage`); constructor is `(uid, title, needAuth, notInMenu, pattern, label, reqRole)`, and are registered manually in `PagesManager::__construct`. Restrict a page to admins with `reqRole = User::ROLE_ADMIN`; the menu auto-filters by `checkUserRole()`. Page/model classes are autoloaded via `lpm-core/classes.dump` (auto-regenerated on cache miss, not git-tracked), so new classes are picked up without manual registration in the autoloader. Render a template by setting `$this->_pattern` and passing data with `addTmplVar()`.
+- App options: `LPMOptions` is a singleton over the `lpm_options` table (`option`/`value`). Read with `LPMOptions::getInstance()->prop`, persist with the static `LPMOptions::save(['name' => $value, ...])`. Note `cookieExpire` is stored in days but exposed in seconds in memory (×86400 on load) — edit it in days and write days back.
+
 ## Local Dev Environment
 - Docker compose lives in `.dev/docker-env/`.
   - Start: from `.dev/docker-env/` run `docker-compose up` (or `-d`).
   - Rebuild: `docker-compose up --build` if `Dockerfile` changes.
-  - Composer (inside container): `docker exec -w /var/www/html/lpm-libs/ lightning-pm php composer.phar install`.
+- Dev helper `.dev/bin/lpm` wraps common container commands (composer, lint, php, exec, shell) so they run against the app's PHP 7.3 with one approval instead of per-command. Prefer it over raw `docker exec`:
+  - Composer: `.dev/bin/lpm composer install` (runs bundled `composer.phar` in `lpm-libs/`).
+  - Lint: `.dev/bin/lpm lint <repo-relative-path> [...]`.
+  - Arbitrary: `.dev/bin/lpm exec <cmd>` / `.dev/bin/lpm php <args>` / `.dev/bin/lpm shell`.
+  - Override container/mount via `LPM_CONTAINER` / `LPM_MOUNT` env vars (defaults: `lightning-pm`, `/var/www/html`).
 - PHP settings: `short_open_tag = On` (see `README.md`).
 
 ## Editing Rules (for the assistant)
@@ -30,6 +41,8 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Do not modify `lpm-libs/vendor/` or introduce new dependencies without explicit request.
 - Keep PHP 7.3 compatibility; avoid newer language features.
 - Match existing style and structure; follow patterns present in nearby files.
+- Member order in classes: static methods come first — before properties/constants and the constructor. Place a new static method up top with the others, not after the constructor.
+- Docblocks describe the contract (params, return, thrown exceptions, observable behavior), NOT internal implementation (which query builder is used, upsert/ODKU mechanics, storage details, casting tricks). The same applies to field docblocks — document what the field means, not how it is stored.
 - When changing behavior, update inline PHPDoc/comments and, if user asks, `CHANGELOG.md`.
 - In frontend JS within project pages, assume shared globals (`srv`, `showError`, `redirectTo`, `bootstrap`) are present; avoid redundant existence checks unless adding code outside the app context.
  - For UI components, prefer adding a `PagePrinter` method that includes the template and expose it via an alias in `lpm-core/aliases.inc.php` (e.g., `lpm_print_goto_issue($project)`), then call the alias in templates instead of `includePattern()` directly.
@@ -46,6 +59,12 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - For icons FontAwesome 7 is used (free version).
 - Keep JS modular and colocated with related UI screens when possible.
 - Try to use Bootstrap 5 components and utilities before adding custom CSS.
+- For dialogs/modals, prefer the `lpm.dialog` wrapper in `lpm-scripts/lightning.js`: `lpm.dialog.show({title, text|content, primaryBtn, onPrimary, secondaryBtn, onSecondary, ...})` and `lpm.dialog.confirm({...})`. It clones the base `#dynamicModal` template in `lpm-themes/default/page.html`. Do not add jQuery UI dialogs or hand-rolled modals.
+- jQuery UI is not used — the project is fully on Bootstrap 5 for dialogs, tabs, the completion-date picker, and tooltips. Don't add it back.
+- The global tooltip is one delegated Bootstrap tooltip on `<body>` in `lpm-scripts/lightning.js` (selector `[title]:not([data-tooltip]):not([data-bs-toggle]), [data-bs-toggle="tooltip"][title]:not([data-tooltip])`, `container: 'body'`), so any `[title]` element (including dynamically added ones) gets a tooltip. Its priority-change refresh lives in `lpm-scripts/issues.js`.
+- Bootstrap 5 allows only ONE component instance per element (`Data.set`). A `[title]` element that also hosts another Bootstrap component (a `data-bs-toggle="dropdown"`/`"collapse"`/`"modal"`/… toggle) therefore CANNOT also get a Tooltip — the instance is silently not stored and the tip never hides (stays stuck open). Such toggles are excluded from the global tooltip (hence the selector above; `data-bs-toggle="tooltip"` is re-included because it hosts no conflicting component). To give such a toggle a styled tooltip anyway, put the `title` on an inner icon (no component there) and keep an `aria-label` on the toggle for its accessible name — see the `.` menu in `issue.html` and `goto-issue.html`; `lightning.js` hides that icon tooltip on `show.bs.dropdown`/`show.bs.collapse` so it doesn't linger over the opened menu/panel.
+- Don't use the `.tooltip` class for custom widgets — Bootstrap's tooltip element owns it. The homegrown hover widget on the issue-id cell uses `.copy-tooltip` for this reason.
+- Bootstrap+jQuery gotcha: `lpm-scripts/lightning.js` polyfills `Element.prototype.hide()`/`show()` to set `style.display`. Because jQuery invokes an element's native method matching a triggered event's base type, Bootstrap's `hide.bs.*`/`show.bs.*` events make jQuery call `.hide()`/`.show()` on the event target — unexpectedly hiding deselected tabs, dropdown toggles, etc. Fix by restoring `display` on the paired `hidden.bs.*` event, or in a microtask on `hide.bs.*` to avoid flicker with fade transitions (see the `hidden.bs.dropdown` and `hide.bs.tab` handlers in `lightning.js`).
 - Keep templates minimal: templates in `lpm-themes/` should only contain markup-related code. Move business logic and data shaping into PHP classes/services. For example, use model helpers like `LPMFile::isVideo()` to check file types instead of MIME checks in templates, and prefer rendering via `PagePrinter` methods.
 - At the top of each template, document all required external variables in a `Требуются:` PHP comment, following the pattern used in `lpm-themes/default/comment-text.html`.
 
@@ -53,7 +72,8 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - There is no project-wide automated test suite. Validate by:
   - Static review and targeted runtime checks where feasible.
   - Running the app in Docker when requested to verify critical paths.
-- Run PHP checks (e.g. `php -l`) inside the running Docker container, not host PHP. The host may run a newer PHP (e.g. 8.x) that flags PHP 7.3-valid syntax (like `$str{...}` offsets) as errors — false positives. Lint via `docker exec lightning-pm php -l /var/www/html/<repo-relative-path>` (container `lightning-pm`, PHP 7.3, repo mounted at `/var/www/html`).
+  - For frontend behavior/appearance, a fast check is a headless Chrome/Chromium screenshot: `<chrome> --headless=new --disable-gpu --screenshot=out.png --virtual-time-budget=2500 file://<repro>.html`, then read the PNG. Build a minimal repro whose `<base href>` points at `lpm-themes/default/css/` and that loads the real `lpm-scripts/libs/*` (jQuery, `bootstrap.bundle.min.js`) so the real CSS cascade and JS behavior are reproduced without the running app.
+- Run PHP checks (e.g. `php -l`) inside the running Docker container, not host PHP. The host may run a newer PHP (e.g. 8.x) that flags PHP 7.3-valid syntax (like `$str{...}` offsets) as errors — false positives. Lint via `.dev/bin/lpm lint <repo-relative-path>` (container `lightning-pm`, PHP 7.3, repo mounted at `/var/www/html`).
 - Run composer only within the container if needed and approved.
 
 ## Common Tasks Cheat Sheet
@@ -81,11 +101,14 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Use Conventional Commits style: `type: summary` or `type(scope): summary`.
 - Prefer a concise one-line summary, add detailed descriptions ONLY for important or big changes.
 - Common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `release`.
+- Use `refactor` ONLY for behavior-preserving changes (pure code rearrangement, no change to UI, appearance, or behavior). Replacing one UI component with another (e.g. jQuery UI → Bootstrap) changes appearance/behavior and adds logic — that is a `feat` (or `fix` if it repairs broken behavior), not a `refactor`.
 - DO NOT add description of meaningless changes like "update changelog" unless this is ONLY committed change.
 - Again: do not mention changelog updates unless this is the only change.
 
 ## Changelog Language
 - All entries in `CHANGELOG.md` must be written in Russian.
+- Entries describe the user-facing change/behavior only — no implementation details (CSS selectors, class names, function names, root-cause internals). Put the "how" in the commit message/code.
+- Be terse — no filler. Don't pad an entry by contrasting against the old state (e.g. avoid "вместо прежнего широкого блока …"); just state the change.
 
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.

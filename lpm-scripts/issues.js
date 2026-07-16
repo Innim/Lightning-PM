@@ -24,12 +24,11 @@ $(document).ready(
             issuePage.showIssuesByUser(memberId);
         });
 
-        $(".comment-input-text-tabs").tabs({
-            activate: function (_, ui) {
-                if (ui.newPanel.hasClass('preview-tab')) {
-                    issuePage.previewComment(ui.newPanel.parent('.comment-input-text-tabs'));
-                }
-            },
+        $(document).on('shown.bs.tab', '.comment-input-text-tabs [data-bs-toggle="tab"]', function (e) {
+            const $panel = $(e.target.getAttribute('data-bs-target'));
+            if ($panel.hasClass('preview-tab')) {
+                issuePage.previewComment($panel.closest('.comment-input-text-tabs'));
+            }
         });
 
         // BEGIN -- Настройка формы 
@@ -209,7 +208,7 @@ $(document).ready(
             });
         }
 
-        $('div.tooltip').hover(
+        $('div.copy-tooltip').hover(
             function () {
                 $(this).find('div').clearQueue().show();
             },
@@ -912,19 +911,19 @@ issuePage.changePriority = function (e) {
                 let priority = res.priority;
                 let priorityStr = Issue.getPriorityStr(priority);
                 let priorityVal = Issue.getPriorityDisplayVal(priority);
-                let tooltipHost = $('.priority-title-owner', $row);
-                tooltipHost.attr('title', 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)');
-                let tooltips = $(document).uitooltip('instance').tooltips;
-                for (var prop in tooltips) {
-                    let item = tooltips[prop];
-                    let element = item.element;
-                    if (element[0] == tooltipHost[0]) {
-                        let tooltip = item.tooltip;
-                        // TODO: кривой способ, ломает следующее открытие
-                        // но так и не получилось адекватно закрыть тултипы
-                        // надо еще разбираться
-                        tooltip.remove();
+                let tooltipHost = $('.priority-title-owner', $row)[0];
+                if (tooltipHost) {
+                    let newTitle = 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)';
+                    // Drop the per-element tooltip instance (and any tip shown for the old value);
+                    // the delegated body tooltip rebuilds it from the fresh title on next hover.
+                    let tooltipInstance = bootstrap.Tooltip.getInstance(tooltipHost);
+                    if (tooltipInstance) {
+                        tooltipInstance.dispose();
                     }
+                    // Bootstrap caches the title in data-bs-original-title after the first hover,
+                    // so reset both attributes to the new value.
+                    tooltipHost.setAttribute('title', newTitle);
+                    tooltipHost.removeAttribute('data-bs-original-title');
                 }
 
                 $('.priority-val', $row).data("value", priority);

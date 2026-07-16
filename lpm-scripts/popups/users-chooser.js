@@ -10,8 +10,6 @@ $(document).ready(
             }
         }
 
-        $("#usersChooser").dialog({ autoOpen: false, modal: true, resizable: false });
-
         $('#saveMaster').click(function (event) {
             let masterId = $('#selectMaster').val();
 
@@ -77,7 +75,7 @@ $(document).ready(
  * @returns {openUsersChooser}
  */
 function ucOpen(checked, onComplete) {
-    $("#usersChooser").dialog('open');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('usersChooser')).show();
     var checkboxes = $("#usersChooser input[type=checkbox][name=userId]")
         .removeAttr('checked')
         .removeAttr('_hidden');
@@ -85,8 +83,6 @@ function ucOpen(checked, onComplete) {
     if (checked && checked.length > 0) {
         var j = 0;
         for (var i = 0; i < checkboxes.length; i++) {
-            if (checkboxes.eq(i).prop('checked'))
-                userIds.push(checkboxes.eq(i).val());
             for (j = 0; j < checked.length; j++) {
                 if (checked[j].toString() == checkboxes.eq(i).val()) {
                     checkboxes.eq(i).attr('_hidden', true);
@@ -127,5 +123,5 @@ function ucDone() {
             ucOpen.onComplete(userIds);
     }
 
-    $("#usersChooser").dialog('close');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('usersChooser')).hide();
 }

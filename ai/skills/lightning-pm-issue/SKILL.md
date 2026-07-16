@@ -39,9 +39,12 @@ Before making any API call, verify that the agent's execution environment allows
 10. Infer the repository and base branch. Prefer `develop` unless the issue, repository structure, or branch list clearly indicates another parent.
 11. Ask the user for repository choice only when it cannot be inferred safely.
 12. Create the issue branch through `POST /api/v1/issues/{issueId}/branches` when implementation work is needed. Use only the saved global `id` as `{issueId}`.
-13. Implement the described change in the local repository, using the issue context to guide scope, edge cases, and validation.
-14. Draft the exact comment text and get explicit user approval before posting any issue comment.
-15. Add a comment only when it provides value for humans, not as a progress log.
+13. Check out the issue branch locally (see [Branch Creation](#branch-creation)) before planning or editing, so any plan is made against the correct base code and not an unknown local state.
+14. For non-trivial changes, propose a short plan and get user confirmation before editing code (see [Implementation Expectation](#implementation-expectation)).
+15. Implement the described change in the local repository, using the issue context to guide scope, edge cases, and validation.
+16. Validate the change with the target project's own tooling before proposing a commit (see [Validation](#validation)).
+17. Draft the exact comment text and get explicit user approval before posting any issue comment.
+18. Add a comment only when it provides value for humans, not as a progress log.
 
 ## Implementation Expectation
 
@@ -55,6 +58,14 @@ Do not stop after:
 - creating the branch
 
 Use the issue context to drive the actual code changes and only ask follow-up questions when a blocking ambiguity cannot be resolved safely from the issue, attachments, repository structure, or local code.
+
+For **non-trivial changes**, first check out the issue branch, then propose a short plan and get user confirmation before editing code. "Non-trivial" means multi-file changes, anything touching the DB schema, public API, or user-visible behavior, or where more than one reasonable approach exists. The plan is a brief list of steps and files to touch, not a full analysis. For an obvious, single-spot fix, skip the plan and proceed.
+
+Always plan against the **checked-out issue branch**, never the pre-switch working tree — before switching, the local tree may sit on an unknown or stale code version, so a plan made there can be wrong.
+
+Pausing for plan approval on a non-trivial task is the one expected exception to the "continue into implementation" rule above — it is not a violation of it.
+
+Changing the issue's status or assignee/membership is **out of scope**: the API surface used by this skill does not expose it. Do not try to move the ticket "in progress", assign it, or otherwise mutate issue metadata by guessing endpoints or scraping HTML — leave those actions to the user.
 
 ## Authentication
 
@@ -150,6 +161,14 @@ Important id rule:
 - use only global `id` in `/api/v1/issues/{issueId}/...` endpoints
 - use `idInProject` only for display, human-facing references, branch naming, and matching the issue URL
 
+## Validation
+
+Before proposing a commit, validate the change with the **target project's own tooling** — lint, tests, or a build as appropriate — not host defaults. Host tooling often disagrees with the project's real runtime (language version, containerized toolchain) and produces false positives or negatives.
+
+Find the correct commands in the target project's contributor docs (`AGENTS.md` / `CLAUDE.md` / `README`) and run them there. Reach the "verified-done" state in [Wrap-up After Implementation](#wrap-up-after-implementation) only after validation passes or is confirmed not applicable to the change.
+
+If validation cannot be run (no tooling, environment not available), say so explicitly instead of implying the change is green.
+
 ## Commit Policy
 
 Never create a git commit without explicit user approval.
@@ -193,7 +212,7 @@ Always append a signature that makes it clear the comment was posted by the agen
 [AI-assisted comment by <agent-name>, approved by user]
 ```
 
-Replace `<agent-name>` with the actual agent name before showing the draft to the user.
+Replace `<agent-name>` with the actual agent name before showing the draft to the user. Use the name the agent is known by in the current environment (e.g. "Claude Code", "Codex"). If no specific agent name is available, fall back to the underlying model name, or to the generic `AI assistant` — never invent a name or leave the `<agent-name>` placeholder in the posted text.
 
 Before posting, show the exact final comment text to the user, including the signature, and wait for approval. Do not post a paraphrased or modified version after approval unless the user approves the updated text too.
 
@@ -215,27 +234,21 @@ Do **not** re-propose on every iteration. While the user is still asking for edi
 
 ### Stage 1 — commit + push proposal
 
-Send one message that:
+Make the commit proposal per the [Commit Policy](#commit-policy): draft the message, list the files to stage and why, and wait for explicit approval. Add one push-specific point: state that the branch will be pushed to its tracked remote immediately after the commit succeeds — push has no separate gate, nothing to discuss. Approving the commit message authorizes only that immediate push, nothing else.
 
-1. Drafts the commit message.
-2. Lists files that will be staged and why.
-3. States explicitly that the branch will be pushed to its tracked remote immediately after the commit succeeds (no separate gate for push — push has nothing to discuss).
-
-Wait for the user to approve, edit the message, or stage selectively. After the commit lands successfully, push the branch in the same turn without re-asking.
-
-If push fails (no upstream, auth, etc.), surface the failure and ask before retrying or changing remotes.
+After the commit lands, push the branch in the same turn without re-asking. If push fails (no upstream, auth, etc.), surface the failure and ask before retrying or changing remotes.
 
 ### Stage 2 — comment proposal (separate)
 
-After push succeeds, address the comment as a **separate** message. The two steps are intentionally split because commit/push has nothing to discuss while a comment's wording, structure, and language usually do.
+After push succeeds, address the comment as a **separate** message — commit/push has nothing to discuss, while a comment's wording, structure, and language usually do.
 
-- If a comment provides value per the Comment Policy, draft the full final text (including signature) and ask for approval. Iterate on wording until the user accepts.
-- If no comment is warranted (routine bug fix, no caveats, no tester guidance, no rollout notes, etc.), say so explicitly in one sentence and skip the step instead of going silent.
+Follow the [Comment Policy](#comment-policy): if a comment provides value, draft the full final text (including signature), get approval, and iterate on wording until accepted. If no comment is warranted (routine bug fix, no caveats, no tester guidance, no rollout notes), say so explicitly in one sentence and skip the step instead of going silent.
 
-### Approval rules still apply
+### Pull requests
 
-- The Commit Policy still requires explicit approval before `git add` / `git commit`. The wrap-up draft is a proposal, not a pre-approval. Approval of the commit message implicitly authorizes the immediate push that follows it; nothing else.
-- The Comment Policy still requires the exact final text (including signature) to be shown and approved before posting; if the draft is later edited, re-show the updated version before posting.
+Opening a pull request is **out of scope by default** — stop after push. Target projects differ in review process (some merge integration branches manually rather than a PR per issue), so do not create a PR automatically.
+
+Propose a PR only when there is a clear signal that the target repo expects one — the user asks, or the project's docs/branch conventions make PR-per-issue the norm. Even then, draft the PR title and body and get explicit approval before creating it, the same as for a commit or comment.
 
 ## Attachment Handling
 

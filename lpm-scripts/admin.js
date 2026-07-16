@@ -4,5 +4,8 @@ $(function ($) {
         flushCache: function () {
             this.s._('flushCache');
         },
+        saveSettings: function (data, onResult) {
+            this.s._('saveSettings');
+        },
     };
 });

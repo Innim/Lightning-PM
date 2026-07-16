@@ -67,25 +67,16 @@ let scrumBoard = {
         });
     },
     takeIssue: function (e) {
-        $dialog = $("#takeIssueConfirm");
         const $control = $(e.currentTarget);
         const $sticker = $control.parents('.scrum-board-sticker');
 
         if ($('.sticker-issue-members', $sticker).children().length > 0) {
-            const takeAndClose = (replace) => {
-                scrumBoard.takeIssueBy($sticker, replace);
-                $dialog.dialog("close");
-            }
-
-            $dialog.dialog({
-                resizable: false,
-                height: "auto",
-                width: 400,
-                modal: true,
-                buttons: {
-                    "Добавить": () => takeAndClose(false),
-                    "Заменить": () => takeAndClose(true),
-                },
+            lpm.dialog.show({
+                content: $("#takeIssueConfirm").html(),
+                primaryBtn: "Добавить",
+                onPrimary: () => scrumBoard.takeIssueBy($sticker, false),
+                secondaryBtn: "Заменить",
+                onSecondary: () => scrumBoard.takeIssueBy($sticker, true),
             });
         } else {
             scrumBoard.takeIssueBy($sticker);

@@ -1,63 +1,67 @@
 <?php
 $remail = isset($_POST['remail']) ? $_POST['remail'] : '';
 ?>
+<div class="container py-4">
+	<div class="row justify-content-center">
+		<div class="col-12 col-sm-9 col-md-7 col-lg-5 col-xl-4">
 
-<article id="recPassForm" class="container-legacy">
-    <h3>Восстановление пароля</h3>
-    <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
-    <?php switch(lpm_get_current_page()->getShow()) {
-        case 'emailForm': ?>
-    <form method="post" class="row row-cols-lg-auto g-3 align-items-center">
-        <div class="col-12">
-            <label for="emailInput" class="visually-hidden">Email</label>
-            <input type="email" placeholder="Email" class="form-control" id="emailInput" name="remail" required="required" value="<?=$remail?>">
-        </div>
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">Восстановить</button>
-        </div>
-		<div class="mb-3 text-center">
-            <a href="/">Назад</a>
-        </div>
-    </form>
+			<div id="recPassForm" class="card shadow-sm">
+				<div class="card-body p-4">
+					<h1 class="h4 fw-normal text-center mb-4">Восстановление пароля</h1>
+					<div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
 
-    <?php break; case 'successEmail': ?>
-    
-	<div class="alert alert-success info-message" role="alert" style="display: block;">
-        На ваш email было отправлено письмо с инструкциями.
-    </div>
+					<?php switch (lpm_get_current_page()->getShow()) {
+						case 'emailForm': ?>
+					<form method="post">
+						<div class="mb-3">
+							<label for="recEmail" class="form-label">Email</label>
+							<input type="email" class="form-control" id="recEmail" name="remail" required="required" value="<?=$remail?>">
+						</div>
+						<div class="d-grid mb-3">
+							<button type="submit" class="btn btn-primary">Восстановить</button>
+						</div>
+						<div class="text-center small">
+							<a href="/">Назад ко входу</a>
+						</div>
+					</form>
 
-    <p class="links-line">
-        <a href="/">На главную</a>
-    </p>
+					<?php break; case 'successEmail': ?>
+					<div class="alert alert-success" role="alert">
+						На ваш email отправлено письмо с инструкциями.
+					</div>
+					<div class="text-center small">
+						<a href="/">На главную</a>
+					</div>
 
-    <?php break; case 'recoverySuccess': ?>
-    <div class="alert alert-success info-message" role="alert" style="display: block;">
-        Пароль успешно изменен.
-    </div>
-    <p class="links-line">
-        <a href="/">На главную</a>
-    </p>
+					<?php break; case 'recoverySuccess': ?>
+					<div class="alert alert-success" role="alert">
+						Пароль успешно изменён.
+					</div>
+					<div class="text-center small">
+						<a href="/">На главную</a>
+					</div>
 
-    <?php break; case 'changePassForm': ?>
-    <form method="post" action="">
-        <div class="alert alert-success info-message" role="alert"></div>
-        
-        <form method="post">
-            <div class="mb-3">
-                <label for="newPass" class="form-label">Пароль</label>
-                <input type="password" class="form-control" id="newPass" name="newPass" required="required" maxlength="24">
-            </div>
-            <div class="mb-3">
-                <label for="repeatPass" class="form-label">Подтверждение пароля</label>
-                <input type="password" class="form-control" id="repeatPass" name="rePass" required="required" maxlength="24">
-            </div>
-            <input type="hidden" name="userId" value="<?=lpm_get_current_page()->getUserId(); ?>" />
-            <input type="hidden" name="key" value="<?=lpm_get_current_page()->getKey(); ?>" />
-            <div class="mb-3 text-end">
-                <button type="submit" class="btn btn-primary">Сохранить</button>
-            </div>
-        </form>
-    </form>
-    <?php break; } ?>
+					<?php break; case 'changePassForm': ?>
+					<form method="post" action="">
+						<div class="mb-3">
+							<label for="newPass" class="form-label">Новый пароль</label>
+							<input type="password" class="form-control" id="newPass" name="newPass" required="required" maxlength="24">
+						</div>
+						<div class="mb-3">
+							<label for="repeatPass" class="form-label">Подтверждение пароля</label>
+							<input type="password" class="form-control" id="repeatPass" name="rePass" required="required" maxlength="24">
+						</div>
+						<input type="hidden" name="userId" value="<?=lpm_get_current_page()->getUserId(); ?>" />
+						<input type="hidden" name="key" value="<?=lpm_get_current_page()->getKey(); ?>" />
+						<div class="d-grid mb-3">
+							<button type="submit" class="btn btn-primary">Сохранить</button>
+						</div>
+					</form>
+					<?php break; } ?>
 
-</article>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>

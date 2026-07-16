@@ -198,9 +198,8 @@ const comments = {
 		if (clear) comments.clearForm();
 		$('#comments form.add-comment').hide();
 		$('#comments .links-bar').show();
-		$('#addCommentTabs').tabs({
-			active: 0
-		});
+		const firstCommentTab = document.querySelector('#addCommentTabs .nav-link');
+		if (firstCommentTab) bootstrap.Tab.getOrCreateInstance(firstCommentTab).show();
 		$('#addCommentForm .preview-comment').empty();
 
 		comments.invalidateLinks();

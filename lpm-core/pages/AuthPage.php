@@ -39,7 +39,9 @@ class AuthPage extends BasePage
 
             if (isset($input['email'])) {
                 // регистрация
-                if ($this->validateSignUp($engine, $input)) {
+                if (!LPMOptions::getInstance()->allowRegistration) {
+                    $engine->addError('Регистрация новых пользователей отключена');
+                } elseif ($this->validateSignUp($engine, $input)) {
                     $pass = User::passwordHash($input['pass']);
                     $cookieHash = LPMAuth::createCookieHash();
                     

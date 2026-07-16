@@ -162,10 +162,11 @@ class LPMBaseObject extends StreamObject
             return  '';
         }
 
+        // Формат ISO (ГГГГ-ММ-ДД) — значение для нативного поля <input type="date">.
         return DateTimeUtils::date(
-            DateTimeFormat::DAY_OF_MONTH_2 . '/' .
-            DateTimeFormat::MONTH_NUMBER_2_DIGITS . '/' .
-            DateTimeFormat::YEAR_NUMBER_4_DIGITS,
+            DateTimeFormat::YEAR_NUMBER_4_DIGITS . '-' .
+            DateTimeFormat::MONTH_NUMBER_2_DIGITS . '-' .
+            DateTimeFormat::DAY_OF_MONTH_2,
             $date
         );
     }
