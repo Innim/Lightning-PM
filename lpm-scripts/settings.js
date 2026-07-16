@@ -15,7 +15,13 @@ $(function () {
 
 function saveSettings(form) {
     const data = {
+        title: form.querySelector('#title').value,
+        subtitle: form.querySelector('#subtitle').value,
         allowRegistration: form.querySelector('#allowRegistration').checked ? 1 : 0,
+        cookieExpire: form.querySelector('#cookieExpire').value,
+        fromEmail: form.querySelector('#fromEmail').value,
+        fromName: form.querySelector('#fromName').value,
+        emailSubscript: form.querySelector('#emailSubscript').value,
     };
 
     const submitBtn = form.querySelector('button[type=submit]');

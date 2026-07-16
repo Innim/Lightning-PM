@@ -40,6 +40,26 @@ class AdminService extends LPMBaseService
                 case 'allowRegistration':
                     $values[$field] = (bool)$value;
                     break;
+                case 'title':
+                case 'subtitle':
+                case 'fromName':
+                case 'emailSubscript':
+                    $values[$field] = trim((string)$value);
+                    break;
+                case 'fromEmail':
+                    $email = trim((string)$value);
+                    if ($email !== '' && !Validation::checkEmail($email)) {
+                        return $this->error('Некорректный email отправителя');
+                    }
+                    $values[$field] = $email;
+                    break;
+                case 'cookieExpire':
+                    $days = (int)$value;
+                    if ($days < 1) {
+                        return $this->error('Срок действия сессии должен быть не менее 1 дня');
+                    }
+                    $values[$field] = $days;
+                    break;
                 default:
                     return $this->error('Недопустимая настройка: ' . $field);
             }
