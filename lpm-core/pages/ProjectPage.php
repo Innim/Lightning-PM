@@ -37,7 +37,10 @@ class ProjectPage extends LPMPage
     public function __construct()
     {
         parent::__construct(self::UID, '', true, true);
-        
+
+        // Просмотр проекта (и задачи — его подстраница) относится к разделу «Проекты»
+        $this->_menuSectionUid = ProjectsPage::UID;
+
         $this->_js[] = 'project';
 
         $this->_pattern = 'project';

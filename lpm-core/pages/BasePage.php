@@ -12,6 +12,15 @@ class BasePage extends LPMBaseObject
     public $uid;
     public $needAuth  = true;
     public $notInMenu = false;
+    /**
+     * UID пункта главного меню (раздела), к которому относится страница.
+     * Задаётся вложенными страницами без собственного пункта меню (например,
+     * просмотр проекта относится к разделу «Проекты»). Если не задан —
+     * используется собственный uid страницы.
+     *
+     * @var string
+     */
+    protected $_menuSectionUid;
     protected $_title;
     protected $_header   = '';
     protected $_label    = '';
@@ -78,6 +87,7 @@ class BasePage extends LPMBaseObject
         $subMenu = [];
         foreach ($this->_subPages as /*@var $subpage SubPage */ $subpage) {
             if ($subpage->showInMenu) {
+                $subpage->link->setCurrent($subpage === $this->_curSubpage);
                 $subMenu[] = $subpage->link;
             }
         }
@@ -118,7 +128,18 @@ class BasePage extends LPMBaseObject
     {
         return $this->_isCurrent;
     }
-    
+
+    /**
+     * UID пункта главного меню, который должен подсвечиваться активным,
+     * когда открыта эта страница.
+     *
+     * @return string
+     */
+    public function getMenuSectionUid()
+    {
+        return $this->_menuSectionUid !== null ? $this->_menuSectionUid : $this->uid;
+    }
+
     public function getTitle()
     {
         return $this->_title;

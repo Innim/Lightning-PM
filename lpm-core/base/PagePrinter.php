@@ -48,6 +48,13 @@ class PagePrinter
     {
         echo LPMBase::PRODUCT_NAME;
     }
+
+    public static function githubLink()
+    {
+        echo '<a href="' . LPMBase::GITHUB_URL . '" target="_blank" rel="noopener" ' .
+                  'class="text-muted" title="Исходный код на GitHub" aria-label="GitHub">' .
+                  '<i class="fa-brands fa-github"></i></a>';
+    }
     
     public static function cssLinks()
     {

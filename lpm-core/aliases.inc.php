@@ -61,6 +61,14 @@ function lpm_print_product_name()
 }
 
 /**
+ * Распечатывает ссылку на репозиторий проекта на GitHub
+ */
+function lpm_print_github_link()
+{
+    PagePrinter::githubLink();
+}
+
+/**
  * Распечатывает основной стиль
  */
 function lpm_print_css_links()

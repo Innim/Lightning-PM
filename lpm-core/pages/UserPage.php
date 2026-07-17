@@ -21,6 +21,9 @@ class UserPage extends LPMPage
     {
         parent::__construct(self::UID, '', true, true);
 
+        // Просмотр пользователя относится к разделу «Пользователи»
+        $this->_menuSectionUid = UsersPage::UID;
+
         $this->_js[] = 'user';
         $this->_pattern = 'user';
 
