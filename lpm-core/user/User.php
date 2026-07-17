@@ -261,10 +261,35 @@ class User extends LPMBaseObject
     {
         return self::getDateStr($this->lastVisit);
     }
+
+    /**
+     * Возвращает относительное время последнего входа («N единиц назад»).
+     * @return string Пустая строка, если вход ещё не выполнялся.
+     */
+    public function getLastVisitAgo()
+    {
+        return TimeAgoHelper::format($this->lastVisit);
+    }
     
     public function getRegDate()
     {
         return self::getDateStr($this->regDate);
+    }
+
+    /**
+     * Возвращает читаемое название роли пользователя.
+     * @return string
+     */
+    public function getRoleName()
+    {
+        switch ($this->role) {
+            case self::ROLE_ADMIN:
+                return 'Администратор';
+            case self::ROLE_MODERATOR:
+                return 'Модератор';
+            default:
+                return 'Пользователь';
+        }
     }
     
     public function canCreateProject()

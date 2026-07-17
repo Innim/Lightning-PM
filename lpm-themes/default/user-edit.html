@@ -1,31 +1,42 @@
 <?php
-/* 
-Требуются: 
-    $user - отображаемый пользователь
-	$viewUrl - URL просмотра профиля пользователя
+/*
+Требуются:
+    User $user - отображаемый пользователь
+    string $viewUrl - URL просмотра профиля пользователя
 */
 ?>
-<article id="user" class="container-legacy">
-	<h3>
-		<span><a href="<?=$viewUrl;?>"><i class="fas fa-arrow-left"></i></a></span>
-		<?lpm_print_header();?>
-	</h3>	
-	<div class="alert alert-danger validateError" role="alert"></div>
-	<div class="alert alert-success info-message" role="alert"></div>
-	<div>
-		<form id="editUser" action="">
-			<input type="hidden" name="userId" value="<?=$user->userId;?>">
-			<div class="mb-3">
-				<label for="slackName" class="form-label">Slack Member ID</label>
-				<input type="text" class="form-control" id="slackName" name="slackName" value="<?=$user->slackName;?>">
-				<div class="form-text"><a
-						href="https://medium.com/@moshfeu/how-to-find-my-member-id-in-slack-workspace-d4bba942e38c"
-						target="_blank">Как найти Member ID</a></div>
-			</div>
-			<div class="mt-4">
-				<button class="btn btn-primary" type="submit">Сохранить</button>
-				<button class="btn btn-secondary" type="reset">Отменить</button>
-			</div>
-		</form>
-	</div>
-</article>
+<div id="userView" class="mx-auto container container-main px-4 py-4">
+    <div class="d-flex align-items-center mb-3">
+        <a href="<?=$viewUrl;?>" class="btn btn-outline-secondary me-3" title="Назад" aria-label="Назад">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 class="mb-0"><?lpm_print_header();?></h1>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-center mb-4">
+                <img src="<?=$user->getAvatarUrl();?>" alt="Аватар" width="64" height="64"
+                    class="rounded-circle border me-3" />
+                <h5 class="card-title mb-0"><?=$user->getName();?></h5>
+            </div>
+
+            <div class="alert alert-danger validateError" role="alert"></div>
+
+            <form id="editUser" action="">
+                <input type="hidden" name="userId" value="<?=$user->userId;?>">
+                <div class="mb-3">
+                    <label for="slackName" class="form-label">Slack Member ID</label>
+                    <input type="text" class="form-control" id="slackName" name="slackName" value="<?=$user->slackName;?>">
+                    <div class="form-text"><a
+                            href="https://medium.com/@moshfeu/how-to-find-my-member-id-in-slack-workspace-d4bba942e38c"
+                            target="_blank">Как найти Member ID</a></div>
+                </div>
+                <div class="text-end mt-4">
+                    <button class="btn btn-secondary" type="reset">Отменить</button>
+                    <button class="btn btn-primary" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

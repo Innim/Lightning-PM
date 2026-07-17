@@ -1,20 +1,84 @@
 <?php
-/* 
-Требуются: 
-    $user - отображаемый пользователь
-	$editUrl - URL страницы редактирования пользователя
+/*
+Требуются:
+    User $user - отображаемый пользователь
+    string $editUrl - URL страницы редактирования пользователя
 */
-
 $isModerator = lpm_is_moderator();
+$roleBadge = $user->isAdmin() ? 'bg-danger' : ($user->isModerator() ? 'bg-primary' : 'bg-secondary');
+$regDate = $user->getRegDate();
+$lastVisit = $user->getLastVisit();
+$lastVisitAgo = $user->getLastVisitAgo();
 ?>
-<article id="user" class="container-legacy">
-	<h3>
-		<?lpm_print_header();?>
-		<?php if ($isModerator): ?>
-		<small class="text-muted"><a href="<?=$editUrl;?>"><i class="fas fa-user-edit"></i></a></small>
-		<?php endif; ?>
-	</h3>
-	<div>
-		<img class="user-avatar x-middle img-thumbnail" src="<?=$user->getAvatarUrl();?>" />
-	</div>
-</article>
+<div id="userView" class="mx-auto container container-main px-4 py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="mb-0"><?lpm_print_header();?></h1>
+        <?php if ($isModerator): ?>
+        <a href="<?=$editUrl;?>" class="btn btn-outline-secondary" title="Редактировать" aria-label="Редактировать">
+            <i class="fas fa-user-edit"></i>
+        </a>
+        <?php endif; ?>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-center mb-4">
+                <img src="<?=$user->getAvatarUrl();?>" alt="Аватар" width="96" height="96"
+                    class="rounded-circle border me-3" />
+                <div>
+                    <h5 class="card-title mb-2"><?=$user->getName();?></h5>
+                    <span class="badge <?=$roleBadge;?> text-white"><?=$user->getRoleName();?></span>
+                    <?php if ($user->isLocked()): ?>
+                    <span class="badge bg-danger text-white">Заблокирован</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <dl class="row mb-0">
+                <?php if ($user->nick != ''): ?>
+                <dt class="col-sm-3 text-muted fw-normal">Ник</dt>
+                <dd class="col-sm-9"><?=$user->nick;?></dd>
+                <?php endif; ?>
+
+                <?php if ($isModerator): ?>
+                <dt class="col-sm-3 text-muted fw-normal">Email</dt>
+                <dd class="col-sm-9 d-flex align-items-center gap-2">
+                    <span><?=$user->email;?></span>
+                    <?lpm_print_copy_button($user->email, 'Email скопирован');?>
+                </dd>
+
+                <dt class="col-sm-3 text-muted fw-normal">Slack Member ID</dt>
+                <dd class="col-sm-9 d-flex align-items-center gap-2">
+                    <?php if ($user->slackName != ''): ?>
+                    <code><?=$user->slackName;?></code>
+                    <?lpm_print_copy_button($user->slackName, 'Slack Member ID скопирован');?>
+                    <?php else: ?>
+                    <span class="text-muted">—</span>
+                    <?php endif; ?>
+                </dd>
+
+                <?php if (!empty($user->gitlabId)): ?>
+                <dt class="col-sm-3 text-muted fw-normal">GitLab ID</dt>
+                <dd class="col-sm-9 d-flex align-items-center gap-2">
+                    <code><?=$user->gitlabId;?></code>
+                    <?lpm_print_copy_button((string)$user->gitlabId, 'GitLab ID скопирован');?>
+                </dd>
+                <?php endif; ?>
+                <?php endif; ?>
+
+                <dt class="col-sm-3 text-muted fw-normal">Регистрация</dt>
+                <dd class="col-sm-9"><?=$regDate != '' ? $regDate : '<span class="text-muted">—</span>';?></dd>
+
+                <dt class="col-sm-3 text-muted fw-normal">Последний вход</dt>
+                <dd class="col-sm-9 mb-0">
+                    <?php if ($lastVisit != ''): ?>
+                    <?=$lastVisit;?>
+                    <span class="text-muted small ms-2"><i class="fa-regular fa-clock me-1"></i><?=$lastVisitAgo;?></span>
+                    <?php else: ?>
+                    <span class="text-muted">—</span>
+                    <?php endif; ?>
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div>

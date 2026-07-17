@@ -55,15 +55,16 @@ class UserPage extends LPMPage
         }
 
         $this->_title  = "Пользователь " . $user->getName();
-        $this->_header = $user->getName();
+        $this->_header = 'Профиль пользователя';
 
         $this->addTmplVar('user', $user);
-        
+
         if (empty($this->_curSubpage)) {
             $this->addTmplVar('editUrl', $this->getEditUrl($userId));
         } else {
             switch ($this->_curSubpage->uid) {
                 case self::PUID_EDIT:
+                    $this->_header = 'Редактирование профиля';
                     $this->addTmplVar('viewUrl', $this->getBaseUrl());
                     break;
             }
