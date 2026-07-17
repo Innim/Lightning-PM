@@ -177,6 +177,16 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает кнопку копирования значения в буфер обмена.
+     * @param string $value Значение, копируемое в буфер обмена.
+     * @param string $toast Текст уведомления, показываемого после копирования.
+     */
+    public static function copyButton($value, $toast = 'Скопировано')
+    {
+        PageConstructor::includePattern('components/copy-button', compact('value', 'toast'));
+    }
+
+    /**
      * Распечатывает таблицу Scrum доски.
      * @param $stickers
      * @param bool $addProjectName

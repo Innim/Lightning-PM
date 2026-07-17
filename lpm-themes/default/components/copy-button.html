@@ -1,0 +1,14 @@
+<?php
+/*
+Требуются:
+    string $value - значение, копируемое в буфер обмена
+    string $toast - (опционально) текст уведомления после копирования
+*/
+$toast = isset($toast) ? $toast : 'Скопировано';
+?>
+<button type="button" class="btn btn-sm btn-link p-0 text-muted copy-btn"
+    data-copy="<?=htmlspecialchars($value, ENT_QUOTES);?>"
+    data-copy-toast="<?=htmlspecialchars($toast, ENT_QUOTES);?>"
+    title="Копировать" aria-label="Копировать">
+    <i class="fa-regular fa-copy" aria-hidden="true"></i>
+</button>

@@ -271,6 +271,14 @@ function lpm_print_goto_issue($project)
 }
 
 /**
+ * Печатает кнопку копирования значения в буфер обмена.
+ */
+function lpm_print_copy_button($value, $toast = 'Скопировано')
+{
+    return PagePrinter::copyButton($value, $toast);
+}
+
+/**
  * Распечатывает вывод таблицы Scrum доски.
  * @param $stickers
  * @param bool $addProjectName
