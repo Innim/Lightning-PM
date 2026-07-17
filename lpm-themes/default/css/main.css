@@ -292,29 +292,6 @@ fieldset > ol.members-list {
     margin-bottom: 10px;
     padding-top: 5px;
 }
-form > ol {
-	padding: 0px;
-}
-form > ol > li {   
-    list-style   : none;	
-    /*margin-bottom: 5px;
-    margin-right : 10px;*/
-    margin: 10px auto;
-}
-form > ol > li label {
-	margin-right : 20px;
-	margin-bottom: 5px;
-}
-form > ol > li p {
-    text-align: center;
-}
-form > ol > li div.hint {
-    display: block;
-    font-size: .8em;
-}
-form ol.form-fields > li.buttons-line{
-	margin-top: 25px;
-}
 .priority-val {
 	padding: 3px;
 	color: #000000;
@@ -1004,11 +981,6 @@ blockquote > p {
 /* экспорт задач в Excel */
 #issuesExportToExcel {
 	text-align: center;
-}
-
-#issuesExportToExcel .buttons-line {
-	text-align: center;
-	margin-top: 20px;
 }
 
 /* выбор пользователей */

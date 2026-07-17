@@ -4,7 +4,6 @@
     $user - отображаемый пользователь
 	$viewUrl - URL просмотра профиля пользователя
 */
-// TODO: Bootstrap формы
 ?>
 <article id="user" class="container-legacy">
 	<h3>
@@ -16,19 +15,17 @@
 	<div>
 		<form id="editUser" action="">
 			<input type="hidden" name="userId" value="<?=$user->userId;?>">
-			<ol class="form-fields">
-				<li>
-					<label for="slackName">Slack Member ID</label>
-					<input type="text" id="slackName" name="slackName" value="<?=$user->slackName;?>">
-					<div class="hint"><a
-							href="https://medium.com/@moshfeu/how-to-find-my-member-id-in-slack-workspace-d4bba942e38c"
-							target="_black">Как найти Member ID</a></div>
-				</li>
-				<li class="buttons-line">
-					<button class="btn btn-primary" type="submit">Сохранить</button>
-					<button class="btn btn-secondary" type="reset">Отменить</button>
-				</li>
-				</ul>
+			<div class="mb-3">
+				<label for="slackName" class="form-label">Slack Member ID</label>
+				<input type="text" class="form-control" id="slackName" name="slackName" value="<?=$user->slackName;?>">
+				<div class="form-text"><a
+						href="https://medium.com/@moshfeu/how-to-find-my-member-id-in-slack-workspace-d4bba942e38c"
+						target="_blank">Как найти Member ID</a></div>
+			</div>
+			<div class="mt-4">
+				<button class="btn btn-primary" type="submit">Сохранить</button>
+				<button class="btn btn-secondary" type="reset">Отменить</button>
+			</div>
 		</form>
 	</div>
 </article>
