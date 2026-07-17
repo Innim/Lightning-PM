@@ -375,6 +375,9 @@ let srv = {
         setSlackName: function (userId, slackName) {
             this.s._('setSlackName');
         },
+        setRole: function (userId, role) {
+            this.s._('setRole');
+        },
     },
 
     err: function (res) {

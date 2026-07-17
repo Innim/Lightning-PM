@@ -93,6 +93,14 @@ class PageConstructor
         }
         return $user->isModerator();
     }
+
+    public static function isAdmin()
+    {
+        if (!$user = LightningEngine::getInstance()->getUser()) {
+            return false;
+        }
+        return $user->isAdmin();
+    }
     
     public static function getCurrentPage()
     {
