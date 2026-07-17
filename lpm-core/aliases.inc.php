@@ -61,6 +61,14 @@ function lpm_print_product_name()
 }
 
 /**
+ * Распечатывает ссылку на репозиторий проекта на GitHub
+ */
+function lpm_print_github_link()
+{
+    PagePrinter::githubLink();
+}
+
+/**
  * Распечатывает основной стиль
  */
 function lpm_print_css_links()
@@ -268,6 +276,14 @@ function lpm_print_issues_export_to_excel()
 function lpm_print_goto_issue($project)
 {
     return PagePrinter::gotoIssue($project);
+}
+
+/**
+ * Печатает кнопку копирования значения в буфер обмена.
+ */
+function lpm_print_copy_button($value, $toast = 'Скопировано')
+{
+    return PagePrinter::copyButton($value, $toast);
 }
 
 /**

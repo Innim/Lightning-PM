@@ -21,6 +21,9 @@ class UserPage extends LPMPage
     {
         parent::__construct(self::UID, '', true, true);
 
+        // Просмотр пользователя относится к разделу «Пользователи»
+        $this->_menuSectionUid = UsersPage::UID;
+
         $this->_js[] = 'user';
         $this->_pattern = 'user';
 
@@ -55,15 +58,16 @@ class UserPage extends LPMPage
         }
 
         $this->_title  = "Пользователь " . $user->getName();
-        $this->_header = $user->getName();
+        $this->_header = 'Профиль пользователя';
 
         $this->addTmplVar('user', $user);
-        
+
         if (empty($this->_curSubpage)) {
             $this->addTmplVar('editUrl', $this->getEditUrl($userId));
         } else {
             switch ($this->_curSubpage->uid) {
                 case self::PUID_EDIT:
+                    $this->_header = 'Редактирование профиля';
                     $this->addTmplVar('viewUrl', $this->getBaseUrl());
                     break;
             }

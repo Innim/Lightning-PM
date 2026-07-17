@@ -801,6 +801,16 @@ $(document).ready(
             container: 'body',
         });
 
+        // Global copy-to-clipboard: any current or dynamically added [data-copy] element copies its
+        // value and shows a confirmation toast (optional custom text via data-copy-toast).
+        $(document).on('click', '[data-copy]', function () {
+            const value = this.getAttribute('data-copy');
+            const toast = this.getAttribute('data-copy-toast') || 'Скопировано';
+            lpm.utils.copyToClipboard(value).then(function () {
+                lpm.toast.show(toast);
+            });
+        });
+
         // Bootstrap only hides a tooltip in response to pointer/focus events on its trigger, so a
         // titled control that removes or hides its own DOM node while the tooltip is open (e.g. the
         // SCRUM board "Убрать с доски" action removes the sticker on AJAX success — no mouseleave

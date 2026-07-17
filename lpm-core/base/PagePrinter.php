@@ -48,6 +48,13 @@ class PagePrinter
     {
         echo LPMBase::PRODUCT_NAME;
     }
+
+    public static function githubLink()
+    {
+        echo '<a href="' . LPMBase::GITHUB_URL . '" target="_blank" rel="noopener" ' .
+                  'class="text-muted" title="Исходный код на GitHub" aria-label="GitHub">' .
+                  '<i class="fa-brands fa-github"></i></a>';
+    }
     
     public static function cssLinks()
     {
@@ -174,6 +181,16 @@ class PagePrinter
     public static function gotoIssue(Project $project)
     {
         PageConstructor::includePattern('components/goto-issue', compact('project'));
+    }
+
+    /**
+     * Распечатывает кнопку копирования значения в буфер обмена.
+     * @param string $value Значение, копируемое в буфер обмена.
+     * @param string $toast Текст уведомления, показываемого после копирования.
+     */
+    public static function copyButton($value, $toast = 'Скопировано')
+    {
+        PageConstructor::includePattern('components/copy-button', compact('value', 'toast'));
     }
 
     /**

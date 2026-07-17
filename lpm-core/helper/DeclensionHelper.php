@@ -1,9 +1,34 @@
 <?php
 class DeclensionHelper
 {
+    public static function minutes($count)
+    {
+        return self::getDeclension(['минуту', 'минуты', 'минут'], $count);
+    }
+
     public static function hours($count)
     {
         return self::getDeclension(['час', 'часа', 'часов'], $count);
+    }
+
+    public static function days($count)
+    {
+        return self::getDeclension(['день', 'дня', 'дней'], $count);
+    }
+
+    public static function weeks($count)
+    {
+        return self::getDeclension(['неделю', 'недели', 'недель'], $count);
+    }
+
+    public static function months($count)
+    {
+        return self::getDeclension(['месяц', 'месяца', 'месяцев'], $count);
+    }
+
+    public static function years($count)
+    {
+        return self::getDeclension(['год', 'года', 'лет'], $count);
     }
 
     public static function storyPoints($count, $short = false)

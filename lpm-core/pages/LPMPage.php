@@ -22,6 +22,16 @@ abstract class LPMPage
      */
     public $notInMenu = false;
 
+    /**
+     * UID пункта главного меню (раздела), к которому относится страница.
+     * Задаётся вложенными страницами без собственного пункта меню (например,
+     * просмотр проекта относится к разделу «Проекты»). Если не задан —
+     * используется собственный uid страницы.
+     *
+     * @var string
+     */
+    protected $_menuSectionUid;
+
     protected $_title;
     protected $_header   = '';
     protected $_label    = '';
@@ -107,6 +117,7 @@ abstract class LPMPage
         $subMenu = [];
         foreach ($this->_subPages as $subpage) {
             if ($subpage->showInMenu) {
+                $subpage->link->setCurrent($subpage === $this->_curSubpage);
                 $subMenu[] = $subpage->link;
             }
         }
@@ -116,6 +127,17 @@ abstract class LPMPage
     public function isCurrentPage()
     {
         return $this->_isCurrent;
+    }
+
+    /**
+     * UID пункта главного меню, который должен подсвечиваться активным,
+     * когда открыта эта страница.
+     *
+     * @return string
+     */
+    public function getMenuSectionUid()
+    {
+        return $this->_menuSectionUid !== null ? $this->_menuSectionUid : $this->uid;
     }
     
     public function printContent()

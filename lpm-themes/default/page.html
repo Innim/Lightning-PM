@@ -14,40 +14,61 @@
 <body>
 	<?php if (lpm_is_auth()):?>
 	<input id="curUserId" value="<?=lpm_get_user()->getID();?>" type="hidden" />
-	<div id="userMenuLine">
-		<p>Добро пожаловать, <span class="user-name"><?=lpm_get_user()->getName();?></span>!</p>
-		<div id="userMenu">
-			<?php foreach (lpm_get_user_menu() as $link):?>
-			<a href="<?=$link->href;?>"><?=$link->label;?></a>
-			<?php endforeach;?>
-		</div>
-	</div>
 	<?php endif;?>
 	<header>
-		<div id="siteLogo">
-			<a href="<?=lpm_get_site_url();?>">
-				<? lpm_print_logo_img(); ?>
-			</a>
-		</div>
-		<div id="siteTitle">
-			<h1>
-				<? lpm_print_site_title(); ?>
-			</h1>
-			<h2>
-				<? lpm_print_site_subtitle(); ?>
-			</h2>
-		</div>
+		<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+			<div class="container-fluid">
+				<a class="site-brand navbar-brand d-flex align-items-center gap-2" href="<?=lpm_get_site_url();?>">
+					<? lpm_print_logo_img(); ?>
+					<span class="d-flex flex-column lh-1">
+						<span class="fw-semibold"><? lpm_print_site_title(); ?></span>
+						<small class="text-white-50"><? lpm_print_site_subtitle(); ?></small>
+					</span>
+				</a>
+				<button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+					data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Меню">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="mainNav">
+					<ul class="navbar-nav mx-auto gap-md-4">
+						<?php foreach (lpm_get_main_menu() as $link):?>
+						<li class="nav-item">
+							<a class="nav-link px-0 text-uppercase fw-semibold<?=$link->isCurrent() ? ' active' : '';?>" href="<?=$link->href;?>"><?=$link->label;?></a>
+						</li>
+						<?php endforeach;?>
+					</ul>
+					<?php if (lpm_is_auth()):?>
+					<ul class="navbar-nav">
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#"
+								role="button" data-bs-toggle="dropdown" aria-expanded="false">
+								<i class="fa-solid fa-circle-user"></i><?=lpm_get_user()->getName();?>
+							</a>
+							<ul class="dropdown-menu dropdown-menu-end">
+								<?php foreach (lpm_get_user_menu() as $link):?>
+								<li><a class="dropdown-item" href="<?=$link->href;?>"><?=$link->label;?></a></li>
+								<?php endforeach;?>
+							</ul>
+						</li>
+					</ul>
+					<?php endif;?>
+				</div>
+			</div>
+		</nav>
+		<?php $subMenu = lpm_get_sub_menu(); if (!empty($subMenu)):?>
+		<nav class="navbar navbar-expand bg-light border-bottom p-0">
+			<div class="container-fluid">
+				<ul class="navbar-nav gap-3">
+					<?php foreach ($subMenu as $link):?>
+					<li class="nav-item">
+						<a class="nav-link px-0 py-1 small<?=$link->isCurrent() ? ' active fw-semibold' : '';?>" href="<?=$link->href;?>"><?=$link->label;?></a>
+					</li>
+					<?php endforeach;?>
+				</ul>
+			</div>
+		</nav>
+		<?php endif;?>
 	</header>
-	<nav id="mainMenu">
-		<? foreach (lpm_get_main_menu() as $link) {?>
-		<a href="<?=$link->href;?>"><?=$link->label;?></a>
-		<? }?>
-	</nav>
-    <nav id="subMenu">
-        <?php foreach (lpm_get_sub_menu() as $link):?>
-        <a href="<?=$link->href;?>"><?=$link->label;?></a>
-        <?php endforeach;?>
-    </nav>
 	<div id="content">
 		<?php lpm_print_page_content(); ?>
 	</div>
@@ -68,15 +89,15 @@
 			</p>
 		</div>
 	</article>
-	<footer>
-		<span class="copyright">
-			<?php lpm_print_copyrights(); ?></span><br />
-		<span class="version">
-			<?php lpm_print_product_name(); ?> v.
-			<?php lpm_print_version(); ?></span>
-		<div class="generation-time">
-			Время генерации: <?=round(lpm_get_execution_time(), 3);?> сек
-		</div>
+	<footer class="container-fluid border-top mt-4 py-3 text-muted small d-flex flex-wrap justify-content-between align-items-center gap-1">
+		<span>
+			<?php lpm_print_copyrights(); ?>
+			<span class="ms-1"><?php lpm_print_github_link(); ?></span>
+		</span>
+		<span>
+			<?php lpm_print_product_name(); ?> v<?php lpm_print_version(); ?>
+			<span class="x-small ms-2" style="opacity:.5">Время генерации: <?=round(lpm_get_execution_time(), 3);?> сек</span>
+		</span>
 	</footer>
 	<div id="preloader" class="d-flex justify-content-center align-items-center fixed-top fixed-bottom bg-light bg-gradient invisible" style="--bs-bg-opacity: .25;">
 		<div class="spinner-grow text-secondary" role="status">

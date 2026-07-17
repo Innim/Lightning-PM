@@ -13,7 +13,7 @@ class PagesManager
     private $_defaultPage;
     
     private $_userMenu = array();
-    
+
     public function __construct(LightningEngine $engine)
     {
         $this->_engine = $engine;
@@ -48,13 +48,17 @@ class PagesManager
     public function getLinks4Menu()
     {
         $list = array();
+        $currentPage = $this->_engine->getCurrentPage();
+        $activeUid = $currentPage ? $currentPage->getMenuSectionUid() : null;
         foreach ($this->_pages as /*@var $page BasePage */ $page) {
             if (!$page->notInMenu && (!$page->needAuth || $this->_engine->isAuth())
                     && $page->checkUserRole()) {
-                array_push($list, $page->getLink());
+                $link = $page->getLink();
+                $link->setCurrent($page->uid === $activeUid);
+                array_push($list, $link);
             }
         }
-        
+
         return $list;
     }
     

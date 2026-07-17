@@ -1,11 +1,17 @@
 @charset "UTF-8";
 
 body {
-	padding    : 0px;  
+	padding    : 0px;
 	margin     : 0px;
-	min-height : 100%; 
-	color      : #666666; 
+	min-height : 100vh;
+	display    : flex;
+	flex-direction: column;
+	color      : #666666;
 	background-color: #f9f9f9;
+}
+/* Прижимаем футер к низу экрана на коротких страницах */
+#content {
+	flex: 1 0 auto;
 }
 a {
 	color      : #000000;
@@ -18,11 +24,8 @@ article {
     /*padding-left: 20px;*/
 }
 /* Bootstrap extend -- start */
-.x-small { 
+.x-small {
 	font-size: .75em;
-}
-.xx-small { 
-	font-size: .5em;
 }
 /* Bootstrap extend -- end */
 
@@ -47,74 +50,20 @@ table.backward-capability td {
 	padding: 5px;
 	border: 1px solid #cccccc;
 }
-nav {
-	width           : 100%;
-	margin-bottom   : 5px;	
+/* Логотип в шапке: ограничиваем высоту, ширина по пропорции */
+header .site-brand img {
+	max-height: 40px;
+	width     : auto;
 }
-nav a {
-	color: inherit;
-	margin: 5px 10px;
-	font-size: inherit;
-	font-weight: bold;
-	text-transform: uppercase;
+/* Активный пункт главного меню — белая акцентная линия снизу (на тёмном фоне) */
+header .navbar-dark .nav-link.active {
+	color      : #ffffff;
+	box-shadow : inset 0 -3px 0 #ffffff;
 }
-nav#mainMenu {	
-    background-color: #666666; 
-    color           : #ffffff;
-    font-size       : 10pt; 
-}
-nav#subMenu {  
-    color           : #333333;
-    background-color: #cccccc;
-    margin-top      : -5px; 
-    font-size       : 8pt; 
-    padding-top     : 3px; 
-}
-nav#subMenu:empty {
-    display: none;
-}
-header {
-	height        : 100px;
-	background    : -moz-linear-gradient(top,#ffffff,#eeeeee);
-    background    : -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#eeeeee));    
-	border-bottom : solid 1px #666666;
-}
-header #siteLogo {
-	display: inline-block;
-}
-header #siteLogo img { 
-	max-width  : 160px;
-	max-height : 80px;
-	margin     : 10px;	  
-}
-header #siteTitle {
-	display       : inline-block;
-	vertical-align: top; 
-}
-header #siteTitle h1,
-header #siteTitle h2 {
-	margin     : 0px;
-	padding    : 0px  
-}
-header #siteTitle h1 {
-	margin-top    : 20px;
-	letter-spacing: 3px;
-	color         : #666666;
-}
-header #siteTitle h2 {
-	font-size  : 16pt; 
-}
-footer {
-	text-align : right;
-	line-height: 60%;
-	border-top : solid 1px #666666; 
-	color      : #cccccc;  
-}
-footer a {
-	color : inherit;
-}
-footer:HOVER {
-	color      : #666666; 
+/* Активный пункт подменю */
+header .bg-light .nav-link.active {
+	color      : var(--bs-primary);
+	box-shadow : inset 0 -2px 0 var(--bs-primary);
 }
 code {
 	color: #CB335E;
@@ -149,32 +98,6 @@ code.no-highlight {
 	-o-tab-size: 4;
 	-webkit-tab-size: 4
 }
-.flip-vertical {
-	-moz-transform: scale(1,-1);
-	-webkit-transform: scale(1, -1);
-	-o-transform: scale(1, -1);
-	transform: scale(1, -1);
-	filter: FlipV;
-	-ms-filter: "FlipV"; 
-}
-
-.flip-horizontal{
-	-moz-transform: scale(-1, 1);
-	-webkit-transform: scale(-1, 1);
-	-o-transform: scale(-1, 1);
-	transform: scale(-1, 1);
-	filter: FlipH;
-	-ms-filter: "FlipH"; 
-}
-.copyright {
-	font-size: 7pt;
-}
-.version {
-	font-size: 7pt;
-}
-.generation-time {
-	font-size: 0.6em;
-}
 a.back-link {
 	margin    : 0px;
 	text-align: left;
@@ -197,25 +120,6 @@ p.header-back-link a.back-link {
 } */
 .buttons-bar {
 	text-align: center;
-}
-#userMenuLine {
-	font-size: 10px;
-	background-color: rgba(0,0,0,0.1);
-}
-#userMenuLine .user-name {
-	font-weight: bold;
-	position: relative;
-
-}
-#userMenuLine > p {
-	display    : inline-block;
-	margin     : 0px;
-	padding    : 0px;
-	margin-left: 10px;
-}
-#userMenuLine #userMenu {
-	float       : right;
-	margin-right: 10px;
 }
 #noway {
 	display: none;
@@ -283,21 +187,6 @@ div.container-legacy > h3 {
 
 /* Страница профиля */
 
-ol#profileInfo.info-list {
-	list-style: none;
-}
-
-#changePass form label {
-    line-height: 30px;
-    width: 180px;
-    display: inline-block;
-}
-
-#profileView form{
-    width           : 90%;
-	margin          : 10px auto 10px;
-}
-
 .validateError:empty{
     display: none;
 }
@@ -326,29 +215,6 @@ ol.members-list {
 fieldset > ol.members-list {
     margin-bottom: 10px;
     padding-top: 5px;
-}
-form > ol {
-	padding: 0px;
-}
-form > ol > li {   
-    list-style   : none;	
-    /*margin-bottom: 5px;
-    margin-right : 10px;*/
-    margin: 10px auto;
-}
-form > ol > li label {
-	margin-right : 20px;
-	margin-bottom: 5px;
-}
-form > ol > li p {
-    text-align: center;
-}
-form > ol > li div.hint {
-    display: block;
-    font-size: .8em;
-}
-form ol.form-fields > li.buttons-line{
-	margin-top: 25px;
 }
 .priority-val {
 	padding: 3px;
@@ -586,9 +452,6 @@ a.create-branch-icon .plus-icon {
 #passTestComment .tab-pane {
 	padding: 0;
 }
-.comments form.add-comment .preview-comment .lds-spinner div:after {
-	background: #333;
-}
 .comments form.add-comment .preview-comment.comments-list-item .text,
 #passTestComment .preview-comment.comments-list-item .text {
 	margin: 0;
@@ -676,19 +539,6 @@ a.create-branch-icon .plus-icon {
 .project-stat .project-opened-issue-hours
 {
 	font-size: smaller;
-}
-
-/* подменюшка панели */
-.container-legacy ul.panel-submenu {
-	list-style: none;
-    padding: 0px;
-    margin: -15px 0px 10px;
-    font-size: smaller;
-}
-ul.panel-submenu li {
-    min-width: 100px;
-    display: inline-block;
-    text-align: center;
 }
 
 .container-legacy.issue-info {
@@ -1057,11 +907,6 @@ blockquote > p {
 	text-align: center;
 }
 
-#issuesExportToExcel .buttons-line {
-	text-align: center;
-	margin-top: 20px;
-}
-
 /* выбор пользователей */
 #usersChooser {
 	text-align: center;
@@ -1119,9 +964,6 @@ blockquote > p {
 .issue_copy a:hover, .issue_copy a.hover{
     color: #999;
    
-}
-.hidden {
-	display: none;
 }
 .scrum-board-header {
 	float: left;
@@ -1513,22 +1355,6 @@ blockquote > p {
 	border-bottom: 2px solid #adb5bd;
 }
 
-.table {
-	display: table;
-}
-
-.table-header {
-	display: table-header-group;
-}
-
-.table-row {
-	display: table-row;
-}
-
-.table-cell {
-	display: table-cell;
-}
-
 .copy-tooltip div {
 	display: none;
 	position: absolute;
@@ -1553,26 +1379,6 @@ blockquote > p {
 
 form.create-branch {
 	padding: 10px;
-}
-
-form.create-branch ul.create-branch-items {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-}
-
-form.create-branch ul.create-branch-items > li {
-	padding: 5px 0;
-}
-
-form.create-branch ul.create-branch-items label {
-	margin-bottom: 3px;
-	display: block;
-}
-
-form.create-branch ul.create-branch-items select,
-form.create-branch ul.create-branch-items input {
-	width: 100%;
 }
 
 /* Форма отправки сообщения о том, что тест пройден */
