@@ -496,6 +496,14 @@ function lpm_is_moderator()
 }
 
 /**
+ * Определяет, является ли текущий пользователь администратором
+ */
+function lpm_is_admin()
+{
+    return PageConstructor::isAdmin();
+}
+
+/**
  * Определяет, авторизован ли в данный момент пользователь
  */
 function lpm_is_auth()

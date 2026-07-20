@@ -81,9 +81,14 @@ class IssueEmailFormatter
         return self::formatSubject($subject, $issue);
     }
 
-    public static function issueChangedText(Issue $issue, User $user)
+    public static function issueChangedText(Issue $issue, User $user, IssueChangeSet $changes = null)
     {
         $text = '{user} изменил задачу "{issue}" в проекте "{project}".';
+
+        if ($changes !== null && !$changes->isEmpty()) {
+            $text .= "\n\nЧто изменилось:\n" . $changes->asText();
+        }
+
         return self::formatTextDefault($text, $issue, $user);
     }
 

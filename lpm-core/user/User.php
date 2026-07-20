@@ -108,6 +108,29 @@ class User extends LPMBaseObject
     {
         return self::updateFields($userId, compact('gitlabToken', 'gitlabId'));
     }
+
+    /**
+     * Обновляет роль пользователя.
+     * @param int $userId
+     * @param int $role Одна из констант User::ROLE_*.
+     */
+    public static function updateRole($userId, $role)
+    {
+        return self::updateField($userId, 'role', $role);
+    }
+
+    /**
+     * Возвращает список доступных ролей в виде «роль => читаемое название».
+     * @return array
+     */
+    public static function getRolesMap()
+    {
+        return [
+            self::ROLE_USER      => 'Пользователь',
+            self::ROLE_MODERATOR => 'Модератор',
+            self::ROLE_ADMIN     => 'Администратор',
+        ];
+    }
     
     /**
      * Обновляет указанное поле пользователя.
@@ -282,14 +305,8 @@ class User extends LPMBaseObject
      */
     public function getRoleName()
     {
-        switch ($this->role) {
-            case self::ROLE_ADMIN:
-                return 'Администратор';
-            case self::ROLE_MODERATOR:
-                return 'Модератор';
-            default:
-                return 'Пользователь';
-        }
+        $map = self::getRolesMap();
+        return isset($map[$this->role]) ? $map[$this->role] : $map[self::ROLE_USER];
     }
     
     public function canCreateProject()

@@ -580,6 +580,15 @@ class ProjectPage extends LPMPage
             $this->saveLinkedIssues($userId, $issueId, $_POST['linkedIds'], true);
         }
 
+        // Снимок состава участников до сохранения — для детализации оповещения об изменениях.
+        // Снять нужно до записи в БД: списки грузятся лениво и кешируются в объекте.
+        $oldMemberIds = $oldTesterIds = $oldMasterIds = [];
+        if ($editMode && isset($curIssue)) {
+            $oldMemberIds = $curIssue->getMemberIds();
+            $oldTesterIds = $curIssue->getTesterIds();
+            $oldMasterIds = $curIssue->getMasterIds();
+        }
+
         // Сохраняем участников
         $memberIds = empty($_POST['members']) || !is_array($_POST['members']) ? [] : $_POST['members'];
         if (!$this->saveMembers($db, $issueId, $memberIds, $editMode, $membersSp)) {
@@ -642,17 +651,34 @@ class ProjectPage extends LPMPage
         }
         
         // отсылаем оповещения
-        $this->notifyAboutIssueChange($issue, $editMode);
+        $changes = null;
+        if ($editMode && isset($curIssue)) {
+            $changes = IssueChangeSet::build(
+                $curIssue,
+                $oldMemberIds,
+                $oldTesterIds,
+                $oldMasterIds,
+                $issue
+            );
+        }
+        $this->notifyAboutIssueChange($issue, $editMode, $changes);
 
         Project::updateIssuesCount($issue->projectId);
 
         // Записываем лог
+        $logComment = '';
+        if ($editMode) {
+            $logComment = 'Full edit';
+            if ($changes !== null && !$changes->isEmpty()) {
+                $logComment .= ":\n" . $changes->asText();
+            }
+        }
         UserLogEntry::create(
             $userId,
             DateTimeUtils::$currentDate,
             $editMode ? UserLogEntryType::EDIT_ISSUE : UserLogEntryType::ADD_ISSUE,
             $issue->id,
-            $editMode ? 'Full edit' : ''
+            $logComment
         );
 
         // Очищаем сохраненные данные
@@ -1044,7 +1070,7 @@ class ProjectPage extends LPMPage
         return true;
     }
 
-    private function notifyAboutIssueChange(Issue $issue, $editMode)
+    private function notifyAboutIssueChange(Issue $issue, $editMode, IssueChangeSet $changes = null)
     {
         $engine = $this->_engine;
         $user = $engine->getUser();
@@ -1052,7 +1078,7 @@ class ProjectPage extends LPMPage
             Issue::notifyByEmail(
                 $issue,
                 IssueEmailFormatter::issueChangedSubject($issue),
-                IssueEmailFormatter::issueChangedText($issue, $user),
+                IssueEmailFormatter::issueChangedText($issue, $user, $changes),
                 EmailNotifier::PREF_EDIT_ISSUE
             );
         } else {
