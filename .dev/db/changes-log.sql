@@ -576,3 +576,9 @@ GROUP BY `l`.`id`, `u`.`projectId`;
 
 -- Глобальный переключатель регистрации новых пользователей (1 — разрешена, 0 — отключена).
 INSERT INTO `lpm_options` (`option`, `value`) VALUES ('allowRegistration', '1');
+
+--NEXT
+
+-- Расширяем поле комментария лога действий до TEXT — для подробной записи изменений задачи.
+ALTER TABLE `lpm_users_log`
+    MODIFY `comment` TEXT CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Комментарий действия';
