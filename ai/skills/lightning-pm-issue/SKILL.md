@@ -192,6 +192,8 @@ Never post routine status comments such as:
 - working on this
 - ready for review, unless accompanied by concrete tester guidance or a meaningful caveat
 
+Never write the branch name in a comment. Lightning PM already tracks the issue branch, so naming it in a comment is redundant noise — reference the work by what changed, not by the git branch it landed on.
+
 Post a comment only when it helps humans later. Good examples:
 
 - tester instructions
