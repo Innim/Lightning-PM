@@ -1742,7 +1742,10 @@ function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds
 
 
 function highlightIssueRow($row) {
-    $row
-        .css("backgroundColor", "#e0cffc")
-        .animate({ backgroundColor: "#ffffff" }, 3000);
+    $row.removeClass('highlight-fade');
+    // Форсируем reflow, чтобы повторное добавление класса перезапускало анимацию.
+    void $row[0].offsetWidth;
+    $row.addClass('highlight-fade').one('animationend', function () {
+        $(this).removeClass('highlight-fade');
+    });
 }

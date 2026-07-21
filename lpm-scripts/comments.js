@@ -8,9 +8,14 @@ $(document).ready(function ($) {
 	function highlightComment() {
 		let hash = window.location.hash;
 		if (hash.substr(0, 9) === '#comment-') {
-			$(".comments-list .comments-list-item").has("a.anchor[id=" + hash.substr(1) + "]")
-				.find(".card").css("backgroundColor", "#e0cffc")
-				.animate({ backgroundColor: "#ffffff" }, 1200);
+			let $card = $(".comments-list .comments-list-item")
+				.has("a.anchor[id=" + hash.substr(1) + "]").find(".card");
+			$card.removeClass('highlight-fade');
+			// Форсируем reflow, чтобы повторное добавление класса перезапускало анимацию.
+			if ($card[0]) void $card[0].offsetWidth;
+			$card.addClass('highlight-fade').one('animationend', function () {
+				$(this).removeClass('highlight-fade');
+			});
 		}
 	}
 
