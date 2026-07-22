@@ -13,6 +13,10 @@ class LightningEngine
      * Сообщения об ошибках, которые надо показать после смены страницы.
      */
     const SESSION_NEXT_ERRORS = 'lightning_next_errors';
+    /**
+     * Время (unix) последней отметки визита пользователя — для троттлинга записи в базу.
+     */
+    const SESSION_LAST_VISIT_REG = 'lightning_last_visit_reg';
 
     const API_PATH = 'api';
     const BADGES_PATH = 'badges';
@@ -132,6 +136,30 @@ class LightningEngine
         $this->_apiManager   = new ExternalApiManager($this);
 
         $this->_startTime = microtime(true);
+
+        $this->registerUserVisit();
+    }
+
+    /**
+     * Отмечает визит авторизованного пользователя (заходом считается любой запрос,
+     * в том числе авторизация по кукам). Чтобы не писать в базу на каждый запрос,
+     * время визита обновляется не чаще раза в VISIT_THROTTLE_SECONDS.
+     */
+    private function registerUserVisit()
+    {
+        if (!$this->_auth->isSessionAuth()) {
+            return;
+        }
+
+        $now = (int) DateTimeUtils::$currentDate;
+        $session = Session::getInstance();
+        $lastRegistered = (int) $session->get(self::SESSION_LAST_VISIT_REG);
+        if ($now - $lastRegistered < VISIT_THROTTLE_SECONDS) {
+            return;
+        }
+
+        User::updateLastVisit($this->_auth->getUserId());
+        $session->set(self::SESSION_LAST_VISIT_REG, $now);
     }
 
     public function run()
