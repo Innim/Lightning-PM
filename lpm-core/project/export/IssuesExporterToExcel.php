@@ -14,7 +14,7 @@ class IssuesExporterToExcel extends IssuesExporter
 
         $sheet->setCellValue('A1', 'Дата завершения');
         $sheet->setCellValue('B1', 'Задача');
-        $sheet->setCellValue('C1', 'SP'); // TODO: по идее надо проверять на scrum/не scrum
+        $sheet->setCellValue('C1', $this->_scrum ? 'SP' : 'Часы');
 
         $row = 2;
         foreach ($list as $issue) {

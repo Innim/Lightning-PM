@@ -804,7 +804,7 @@ class IssueService extends LPMBaseService
             $filename = $project->uid . '_completed_issues_' .
                 DTU::date('ymd', $fromDateU) . '-' . DTU::date('ymd', $toDateU) . '_' .
                 DTU::date('YmdHis');
-            $exporter = new IssuesExporterToExcel($list, $filename);
+            $exporter = new IssuesExporterToExcel($list, $filename, $project->scrum);
             $fileUrl = $exporter->export();
 
             $this->add2Answer('fileUrl', $fileUrl);

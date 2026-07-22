@@ -67,6 +67,23 @@ SQL;
     }
     
     /**
+     * Валидирует и нормализует текст комментария.
+     * @param string $text Исходный текст.
+     * @param bool $allowEmpty Разрешён ли пустой текст.
+     * @return string Текст без крайних пробелов.
+     * @throws Exception Если текст пуст и это не разрешено.
+     */
+    public static function normalizeText($text, $allowEmpty = false)
+    {
+        $text = trim($text);
+        if ($text === '' && !$allowEmpty) {
+            throw new Exception('Недопустимый текст');
+        }
+
+        return $text;
+    }
+
+    /**
      * @return Comment
      */
     public static function add($instanceType, $instanceId, $userId, $text)

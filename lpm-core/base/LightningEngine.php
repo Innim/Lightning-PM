@@ -241,6 +241,10 @@ class LightningEngine
             }
 
             echo $result;
+        } catch (LPMException $e) {
+            http_response_code($e->getStatusCode());
+            $this->debugOnException($e);
+            die($e->getLocalizedMessage());
         } catch (Exception $e) {
             $this->debugOnException($e);
             die('Fatal static generator call error');

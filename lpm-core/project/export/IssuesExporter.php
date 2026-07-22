@@ -6,16 +6,19 @@ abstract class IssuesExporter
 {
     private $_list;
     private $_filename;
-    
+    protected $_scrum = false;
+
     /**
      * Создает экземпляр класса.
      * @param array<Issue> $list     Список задач.
      * @param string|null $filename Имя файла, без расширения.
+     * @param bool $scrum Является ли проект scrum-проектом (влияет на подписи оценок).
      */
-    public function __construct($list, $filename = null)
+    public function __construct($list, $filename = null, $scrum = false)
     {
         $this->_list = $list;
         $this->_filename = $filename;
+        $this->_scrum = $scrum;
     }
 
     /**

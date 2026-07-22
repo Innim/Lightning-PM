@@ -611,12 +611,13 @@ issuePage.updateStat = function () {
     $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
 
     // Перезапрашиваем сумму часов
+    const isScrum = $("#projectView").data('scrum') == 1;
     srv.project.getSumOpenedIssuesHours($("#projectView").data('projectId'), function (r) {
         if (r.success) {
             if (r.count > 0) {
                 $(".project-stat .project-opened-issue-hours").show();
                 $(".project-stat .issue-hours.value").text(r.count);
-                // TODO склонения лейбла?
+                $(".project-stat .issue-hours-label").text(normHoursLabel(r.count, isScrum));
             }
             else {
                 $(".project-stat .project-opened-issue-hours").hide();
@@ -624,6 +625,26 @@ issuePage.updateStat = function () {
         }
     });
 };
+
+// Склонение (порт DeclensionHelper): variants = [1, 2-4, 5+].
+function declension(variants, count) {
+    count = Math.abs(count);
+    if (count < 1) return variants[1];
+    if (count > 10 && count < 15) return variants[2];
+    switch (Math.floor(count) % 10) {
+        case 1: return variants[0];
+        case 2:
+        case 3:
+        case 4: return variants[1];
+        default: return variants[2];
+    }
+}
+
+// Подпись к сумме оценок: SP для scrum-проекта, иначе склонение «час».
+function normHoursLabel(count, isScrum) {
+    if (isScrum) return count > 1 ? 'story points' : 'story point';
+    return declension(['час', 'часа', 'часов'], count);
+}
 
 issuePage.onClickCopyIssueUrl = function (event) {
     const link = event.target.closest('a');

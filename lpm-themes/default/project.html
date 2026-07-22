@@ -12,7 +12,7 @@ $project = lpm_get_project();
 		<h1><?php lpm_print_header();?></h1>
 		<?php lpm_print_goto_issue($project); ?>
 	</div>
-	<div id="projectView" data-project-id="<?=$project->getID();?>">
+	<div id="projectView" data-project-id="<?=$project->getID();?>" data-scrum="<?=$project->scrum ? 1 : 0;?>">
         <h3>Список задач
             <span class="issues-operations">
                 <a href="#" onclick="return issuePage.showExportXls(event);" title="Экспорт в Excel"><i
@@ -26,7 +26,7 @@ $project = lpm_get_project();
 			<span class="project-opened-issue-hours">
 				<?php if (($hours=$project->getSumOpenedIssuesHours()) == 0):?>style="display:none;"
 				<?php endif;?>>(<span
-					class="issue-hours value"><?=$hours;?></span>&nbsp;<?=$project->getNormHoursLabel($hours);?>)</span>
+					class="issue-hours value"><?=$hours;?></span>&nbsp;<span class="issue-hours-label"><?=$project->getNormHoursLabel($hours);?></span>)</span>
 			из <span class="issues-total value"><?=$project->getTotalIssuesCount()?></span>
 		</div>
 		<div class="filters-line mb-1">
