@@ -82,16 +82,16 @@ class GitlabExternalApi extends ExternalApi
 
     private function onException(Exception $e)
     {
-        $logEntry = $e->getMessage();
+        $context = [];
 
         if ($e instanceof \GMFramework\ProviderException) {
             $dbError = $this->engine()->getDebugDbError();
             if ($dbError) {
-                $logEntry .= "\n\n" . $dbError;
+                $context['dbError'] = $dbError;
             }
         }
 
-        $this->log($logEntry, '-error');
+        LPMLog::exception($e, LPMLog::CH_GITLAB, $context);
         // TODO: формат ошибки
         return $e->getMessage();
     }
@@ -106,7 +106,7 @@ class GitlabExternalApi extends ExternalApi
             throw new Exception("Invalid object kind: " . $data[self::FIELD_OBJECT_KIND]);
         }
 
-        // $this->log(json_encode($data));
+        LPMLog::debug('MR event received', LPMLog::CH_GITLAB, ['payload' => $data]);
 
         $objectAttributes = $data[self::FIELD_OBJECT_ATTRIBUTES];
         $mr = new GitlabMergeRequest($data[self::FIELD_OBJECT_ATTRIBUTES]);
@@ -365,17 +365,6 @@ class GitlabExternalApi extends ExternalApi
         }
 
         return null;
-    }
-
-    private function log($message, $suffix = '')
-    {
-        $fileName = DateTimeUtils::mysqlDate(null, false) . '-' .
-            DateTimeUtils::date('H-i-s') . '.log';
-        $dirPath = LOGS_PATH . '/api/gitlab-hook' . $suffix . '/';
-        if (!is_dir($dirPath)) {
-            mkdir($dirPath, 0755, true);
-        }
-        file_put_contents($dirPath . $fileName, $message);
     }
 
     private function findStableBranch(GitlabIntegration $gitlab, $projectId)
