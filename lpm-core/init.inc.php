@@ -20,10 +20,6 @@ function init()
 {
     // подключаем фреймворк
     GMFramework::useFramework();
-    // инициализируем логи
-    if (Globals::isDebugMode()) {
-        GMLog::getInstance()->init(LOGS_PATH);
-    }
     // инициализация времени
     DateTimeUtils::setTimeAdjust(TIMEADJUST * 3600);
 
