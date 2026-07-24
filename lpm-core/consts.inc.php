@@ -108,6 +108,19 @@ define('ISSUE_LABELS_DISPLAY_LIMIT', 10);
  */
 define('VISIT_THROTTLE_SECONDS', 5 * 60);
 
+/**
+ * Предельный размер одного файла лога (в мегабайтах). При достижении
+ * файл уходит в архив (см. LOG_ARCHIVE_COUNT), запись продолжается в новый.
+ * @var int
+ */
+define('LOG_FILE_MAX_SIZE_MB', 5);
+
+/**
+ * Сколько архивных файлов лога хранить при ротации.
+ * @var int
+ */
+define('LOG_ARCHIVE_COUNT', 3);
+
 // -- Вспомогательные константы --
 
 define('MAX_FILE_SIZE_BYTES', MAX_FILE_SIZE_MB * 1024 * 1024);
