@@ -1,7 +1,24 @@
-$(function ($) {
-    $('[data-tooltip="issue"]').each(function () {
+/**
+ * Attach the rich issue-link hover preview (Bootstrap popover) to every
+ * [data-tooltip="issue"] element inside `root` that does not have one yet.
+ *
+ * Call this on dynamically inserted content (a newly posted comment, the
+ * comment preview pane) so its issue links get the preview too: the delegated
+ * global tooltip in lightning.js skips [data-tooltip] elements, so without an
+ * explicit popover such links would show nothing at all.
+ *
+ * @param {Element|Document|jQuery} [root=document] container to scan
+ */
+function initIssueLinkPreviews(root) {
+    $(root || document).find('[data-tooltip="issue"]').each(function () {
         const el = this;
         const $el = $(el);
+
+        // Already initialized (e.g. re-scanned container) — skip.
+        if (bootstrap.Popover.getInstance(el)) {
+            return;
+        }
+
         const idInProject = $el.data('id-in-project');
         const title = $el.attr('title');
         const imageUrl = $el.data('img');
@@ -37,4 +54,8 @@ $(function ($) {
             this.style.display = '';
         });
     });
+}
+
+$(function ($) {
+    initIssueLinkPreviews(document);
 });

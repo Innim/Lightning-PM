@@ -70,9 +70,11 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                     class="me-1 link-secondary">
-                    <?php /* title is on the icon, not the toggle: a Bootstrap tooltip can't attach to
-                             an element that already hosts a Dropdown (one component instance per element) */ ?>
-                    <i class="fa fa-ellipsis-h fa-xs" aria-hidden="true" title="Дополнительные действия"></i>
+                    <?php /* title is on an inner span, not the toggle: a Bootstrap tooltip can't attach to
+                             an element that already hosts a Dropdown (one component instance per element).
+                             The span (not the .fa icon) carries the title so the tooltip anchors to a normal
+                             line-box aligned with the sibling links above — the .fa box collapses lower. */ ?>
+                    <span title="Дополнительные действия"><i class="fa fa-ellipsis-h fa-xs" aria-hidden="true"></i></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-sm" aria-labelledby="issueActionsDropdown">
                     <li>

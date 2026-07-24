@@ -1275,6 +1275,7 @@ issuePage.previewComment = function (tabs) {
 
             comments.updateAttachments($('.comment-text', previewItem));
             attachments.update($('.block-with-attachments', previewItem));
+            initIssueLinkPreviews(previewItem);
         } else {
             srv.err(res);
         }
@@ -1352,6 +1353,7 @@ issuePage.addComment = function (comment, html) {
     let newItem = $('#issueView .comments .comments-list .comments-list-item').first()
     comments.updateAttachments($('.comment-text', newItem));
     attachments.update($('.block-with-attachments', newItem));
+    initIssueLinkPreviews(newItem);
 
     comments.hideCommentForm();
 
