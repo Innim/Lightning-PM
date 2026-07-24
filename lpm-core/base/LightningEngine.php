@@ -521,6 +521,8 @@ class LightningEngine
 
     private function debugOnException(Exception $e, $title = 'Fatal Error')
     {
+        LPMLog::exception($e, LPMLog::CH_APP, ['title' => $title]);
+
         if (!LPMGlobals::isDebugMode()) {
             return;
         }
