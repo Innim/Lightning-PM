@@ -48,7 +48,7 @@ class ImageCacheController
 
             return $this->getCompressedImage($img);
         } catch (Exception $e) {
-            // TODO: запись ошибки в лог
+            LPMLog::exception($e, LPMLog::CH_CACHE, ['url' => $url]);
             return null;
         }
     }

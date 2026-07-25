@@ -54,11 +54,15 @@ class MailgunSender
         }
 
         try {
-            $this->getClient()->messages()->send($this->_domain, $builder->getMessage());
-            // TODO: записать debug лог с ответом
+            $response = $this->getClient()->messages()->send($this->_domain, $builder->getMessage());
+            LPMLog::debug('Письмо принято Mailgun', LPMLog::CH_MAIL, [
+                'to' => $toEmail,
+                'id' => method_exists($response, 'getId') ? $response->getId() : null,
+                'message' => method_exists($response, 'getMessage') ? $response->getMessage() : null,
+            ]);
             return true;
         } catch (Exception $e) {
-            // TODO: записать лог ошибки
+            LPMLog::exception($e, LPMLog::CH_MAIL, ['to' => $toEmail]);
             return false;
         }
     }

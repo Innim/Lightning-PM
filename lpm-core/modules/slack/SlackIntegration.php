@@ -189,11 +189,12 @@ class SlackIntegration
                     break;
                 }
             }
+        } else {
+            LPMLog::error('Не удалось получить историю канала Slack', LPMLog::CH_SLACK, [
+                'channel' => $channel,
+                'error' => method_exists($res, 'getError') ? $res->getError() : null,
+            ]);
         }
-        // else
-        // {
-        // 	// TODO: обработка ошибки
-        // }
 
         $this->postMessage($channel, $text, $attachments, $threadTs);
     }
@@ -210,7 +211,10 @@ class SlackIntegration
         }
         $res = $client->chatPostMessage($args);
         if (!$res->getOk()) {
-            // TODO: обработка ошибки
+            LPMLog::error('Не удалось отправить сообщение в Slack', LPMLog::CH_SLACK, [
+                'channel' => $channel,
+                'error' => method_exists($res, 'getError') ? $res->getError() : null,
+            ]);
         }
     }
 
