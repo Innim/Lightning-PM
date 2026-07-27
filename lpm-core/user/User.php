@@ -398,7 +398,7 @@ class User extends LPMBaseObject
         $slack = SlackIntegration::getInstance();
         try {
             $profile = $slack->getProfile($this->slackName);
-            $url = $profile->getImage192();
+            $url = $profile ? $profile->getImage192() : '';
         } catch (Exception $e) {
             $url = '';
         }
