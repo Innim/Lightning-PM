@@ -6,6 +6,11 @@
  */
 class StatHelper
 {
+    /**
+     * День месяца, законченный до которого спринт относим к предыдущему месяцу.
+     */
+    const SPRINT_START_DAY = 5;
+
     public static function parseMonthYearFromArg($arg)
     {
         $nowYear = (int)date('Y');
@@ -47,9 +52,7 @@ class StatHelper
 
     public static function getStatDaysRange($month, $year)
     {
-        // День в месяце, законченный до которого спринт относим к предыдущему
-        // TODO: вынести в опции? или просто константу?
-        $dayInMonthForSprint = 5;
+        $dayInMonthForSprint = self::SPRINT_START_DAY;
         list($nextMonth, $nextYear) = StatHelper::getNextMonthYear($month, $year);
 
         $startDate = strtotime(sprintf('%02d.%02d.%04d', $dayInMonthForSprint + 1, $month, $year));

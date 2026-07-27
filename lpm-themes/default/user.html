@@ -8,6 +8,7 @@ $isModerator = lpm_is_moderator();
 $roleBadge = $user->isAdmin() ? 'bg-danger' : ($user->isModerator() ? 'bg-primary' : 'bg-secondary');
 $regDate = $user->getRegDate();
 $lastVisit = $user->getLastVisit();
+$lastVisitFull = $user->getLastVisitFull();
 $lastVisitAgo = $user->getLastVisitAgo();
 ?>
 <div id="userView" class="mx-auto container container-main px-4 py-4">
@@ -69,10 +70,10 @@ $lastVisitAgo = $user->getLastVisitAgo();
                 <dt class="col-sm-3 text-muted fw-normal">Регистрация</dt>
                 <dd class="col-sm-9"><?=$regDate != '' ? $regDate : '<span class="text-muted">—</span>';?></dd>
 
-                <dt class="col-sm-3 text-muted fw-normal">Последний вход</dt>
+                <dt class="col-sm-3 text-muted fw-normal">Последний визит</dt>
                 <dd class="col-sm-9 mb-0">
                     <?php if ($lastVisit != ''): ?>
-                    <?=$lastVisit;?>
+                    <span title="<?=$lastVisitFull;?>"><?=$lastVisit;?></span>
                     <span class="text-muted small ms-2"><i class="fa-regular fa-clock me-1"></i><?=$lastVisitAgo;?></span>
                     <?php else: ?>
                     <span class="text-muted">—</span>

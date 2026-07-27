@@ -66,7 +66,7 @@ class VideoCompressor
         }
 
         if (!function_exists('exec')) {
-            self::log('exec() недоступна, фоновое сжатие невозможно (fileId=' . $fileId . ')');
+            LPMLog::error('exec() недоступна, фоновое сжатие невозможно', LPMLog::CH_VIDEO, ['fileId' => $fileId]);
             return false;
         }
 
@@ -74,7 +74,7 @@ class VideoCompressor
         $worker = __DIR__ . '/video-compress-worker.php';
 
         if (!is_file($worker)) {
-            self::log('Скрипт воркера не найден: ' . $worker);
+            LPMLog::error('Скрипт воркера не найден: ' . $worker, LPMLog::CH_VIDEO);
             return false;
         }
 
@@ -83,7 +83,7 @@ class VideoCompressor
         // нет (или он недоступен для записи), редирект упадёт в shell до
         // старта PHP, а файл навсегда останется в статусе "в обработке".
         if (!self::ensureLogDir()) {
-            self::log('Каталог логов недоступен для записи: ' . LOGS_PATH);
+            LPMLog::error('Каталог логов недоступен для записи: ' . LOGS_PATH, LPMLog::CH_VIDEO);
             return false;
         }
 
@@ -96,7 +96,7 @@ class VideoCompressor
         $probeCode = 1;
         exec(escapeshellcmd($php) . ' -v 2>/dev/null', $probeOutput, $probeCode);
         if ($probeCode !== 0) {
-            self::log('PHP CLI недоступен (' . $php . '), фоновое сжатие невозможно (fileId=' . $fileId . ')');
+            LPMLog::error('PHP CLI недоступен (' . $php . '), фоновое сжатие невозможно', LPMLog::CH_VIDEO, ['fileId' => $fileId]);
             return false;
         }
 
@@ -123,7 +123,7 @@ class VideoCompressor
     {
         $file = LPMFile::load($fileId);
         if (!$file) {
-            self::log('Файл не найден (fileId=' . (int)$fileId . ')');
+            LPMLog::warning('Файл не найден', LPMLog::CH_VIDEO, ['fileId' => (int)$fileId]);
             return;
         }
 
@@ -133,7 +133,7 @@ class VideoCompressor
 
         $sourcePath = $file->getAbsolutePath();
         if (!is_file($sourcePath)) {
-            self::log('Исходный файл отсутствует: ' . $sourcePath);
+            LPMLog::warning('Исходный файл отсутствует: ' . $sourcePath, LPMLog::CH_VIDEO, ['fileId' => $file->fileId]);
             LPMFile::setCompressStatus($file->fileId, self::STATUS_FAILED);
             return;
         }
@@ -151,7 +151,7 @@ class VideoCompressor
             $file = LPMFile::load($file->fileId);
             if (!$file || $file->deleted) {
                 @unlink($targetPath);
-                self::log('Файл удалён во время сжатия (fileId=' . (int)$fileId . ') — результат отброшен');
+                LPMLog::info('Файл удалён во время сжатия — результат отброшен', LPMLog::CH_VIDEO, ['fileId' => (int)$fileId]);
                 return;
             }
 
@@ -162,28 +162,26 @@ class VideoCompressor
             if ($newSize <= 0 || $newSize >= $origSize) {
                 @unlink($targetPath);
                 LPMFile::setCompressStatus($file->fileId, self::STATUS_DONE);
-                self::log(sprintf(
-                    'Сжатие не уменьшило размер (fileId=%d, было=%d, стало=%d) — оставлен оригинал',
-                    $file->fileId,
-                    $origSize,
-                    $newSize
-                ));
+                LPMLog::info('Сжатие не уменьшило размер — оставлен оригинал', LPMLog::CH_VIDEO, [
+                    'fileId' => $file->fileId,
+                    'origSize' => $origSize,
+                    'newSize' => $newSize,
+                ]);
                 return;
             }
 
             self::swapFile($file, $sourcePath, $targetPath, $origSize, $newSize);
-            self::log(sprintf(
-                'Видео сжато (fileId=%d): %d -> %d байт',
-                $file->fileId,
-                $origSize,
-                $newSize
-            ));
+            LPMLog::info('Видео сжато', LPMLog::CH_VIDEO, [
+                'fileId' => $file->fileId,
+                'origSize' => $origSize,
+                'newSize' => $newSize,
+            ]);
         } catch (\Throwable $e) {
             if (is_file($targetPath)) {
                 @unlink($targetPath);
             }
             LPMFile::setCompressStatus($file->fileId, self::STATUS_FAILED);
-            self::log('Ошибка сжатия (fileId=' . $file->fileId . '): ' . $e->getMessage());
+            LPMLog::exception($e, LPMLog::CH_VIDEO, ['fileId' => $file->fileId]);
         }
     }
 
@@ -222,7 +220,9 @@ class VideoCompressor
         exec($cmd, $output, $exitCode);
 
         if ($exitCode !== 0) {
-            self::log('ffmpeg завершился с кодом ' . $exitCode . ': ' . implode("\n", array_slice($output, -5)));
+            LPMLog::error('ffmpeg завершился с кодом ' . $exitCode, LPMLog::CH_VIDEO, [
+                'output' => array_slice($output, -5),
+            ]);
             return false;
         }
 
@@ -285,6 +285,11 @@ class VideoCompressor
         return defined($name) ? (int)constant($name) : $default;
     }
 
+    /**
+     * Файл для сырого вывода фонового воркера (stdout/stderr процесса ffmpeg
+     * и возможных фатальных ошибок PHP). Пишется shell-редиректом в
+     * {@see spawnWorker()}, отдельно от структурного лога канала LPMLog::CH_VIDEO.
+     */
     private static function getLogPath()
     {
         return LOGS_PATH . 'video-compress.log';
@@ -301,13 +306,5 @@ class VideoCompressor
         }
 
         return is_dir(LOGS_PATH) && is_writable(LOGS_PATH);
-    }
-
-    private static function log($message)
-    {
-        self::ensureLogDir();
-
-        $line = '[' . date('Y-m-d H:i:s') . '] ' . $message . "\n";
-        @file_put_contents(self::getLogPath(), $line, FILE_APPEND);
     }
 }

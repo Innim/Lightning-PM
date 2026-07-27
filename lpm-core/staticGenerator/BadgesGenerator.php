@@ -25,8 +25,7 @@ class BadgesGenerator extends StaticGenerator
     {
         $badge = Badge::load($this->_id);
         if (empty($badge)) {
-            // TODO: status 404
-            throw new Exception('Badge not found');
+            throw new LPMException('Badge not found', null, 'Badge not found', 404);
         }
 
         switch ($badge->type) {

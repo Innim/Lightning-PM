@@ -156,7 +156,16 @@ class User extends LPMBaseObject
             'WHERE' => ['userId' => $userId]
         ]);
     }
-    
+
+    /**
+     * Обновляет время последнего визита пользователя текущим моментом.
+     * @param int $userId
+     */
+    public static function updateLastVisit($userId)
+    {
+        return self::updateField($userId, 'lastVisit', DateTimeUtils::mysqlDate());
+    }
+
     public static function checkCurRole($curRole, $reqRole)
     {
         if ($reqRole == self::ROLE_USER) {
@@ -232,8 +241,6 @@ class User extends LPMBaseObject
         $this->addDateTimeFields('lastVisit', 'regDate');
         
         $this->addClientFields('userId', 'firstName', 'lastName', 'nick', 'avatarUrl');
-        
-        // TODO обновлять последний вход
     }
     
     public function getID()
@@ -286,8 +293,17 @@ class User extends LPMBaseObject
     }
 
     /**
-     * Возвращает относительное время последнего входа («N единиц назад»).
-     * @return string Пустая строка, если вход ещё не выполнялся.
+     * Возвращает полную дату и время последнего визита (с часами и минутами).
+     * @return string Пустая строка, если визитов ещё не было.
+     */
+    public function getLastVisitFull()
+    {
+        return self::getDateTimeStr($this->lastVisit);
+    }
+
+    /**
+     * Возвращает относительное время последнего визита («N единиц назад»).
+     * @return string Пустая строка, если визитов ещё не было.
      */
     public function getLastVisitAgo()
     {
@@ -382,7 +398,7 @@ class User extends LPMBaseObject
         $slack = SlackIntegration::getInstance();
         try {
             $profile = $slack->getProfile($this->slackName);
-            $url = $profile->getImage192();
+            $url = $profile ? $profile->getImage192() : '';
         } catch (Exception $e) {
             $url = '';
         }

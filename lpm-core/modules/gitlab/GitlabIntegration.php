@@ -456,24 +456,7 @@ class GitlabIntegration
 
     private function logException(Exception $e, $message = '')
     {
-        $arr = [];
-        if (!empty($message)) {
-            $arr[] = $message;
-        }
-        $arr[] = $e->getMessage();
-        $arr[] = $e->getTraceAsString();
-
-        $this->logError(implode("\n", $arr));
-    }
-
-    private function logError($message)
-    {
-        $fileName = DateTimeUtils::mysqlDate(null, false) . '-' .
-            DateTimeUtils::date('H-i-s') . '.log';
-        $dirPath = LOGS_PATH . '/api/gitlab-error/';
-        if (!is_dir($dirPath)) {
-            mkdir($dirPath, 0755, true);
-        }
-        file_put_contents($dirPath . $fileName, $message);
+        $context = empty($message) ? [] : ['context' => $message];
+        LPMLog::exception($e, LPMLog::CH_GITLAB, $context);
     }
 }

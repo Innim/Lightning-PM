@@ -100,11 +100,7 @@ class CommentsManager
      */
     protected function addComment(User $user, $instanceType, $instanceId, $text, $allowEmpty = false)
     {
-        // TODO: перенести в Comment
-        $text = trim($text);
-        if ($text == '' && !$allowEmpty) {
-            throw new Exception('Недопустимый текст');
-        }
+        $text = Comment::normalizeText($text, $allowEmpty);
 
         $comment = Comment::add($instanceType, $instanceId, $user->userId, $text);
         if ($comment) {

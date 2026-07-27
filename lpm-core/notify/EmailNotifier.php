@@ -136,16 +136,11 @@ class EmailNotifier extends LPMBaseObject
             false
         );
         if (LPMGlobals::isDebugMode()) {
-            GMLog::getInstance()->logIt(
-                GMLog::getInstance()->logsPath . '/emails/' .
-                DateTimeUtils::mysqlDate(null, false) . '-' .
-                DateTimeUtils::date('H-i-s') . '.html',
-                "Send email\r\n" .
-                'To: ' . $mess->getToName() . ' <' . $mess->getToEmail() . ">\r\n" .
-                'Subject: ' . $mess->getSubject() . "\r\n\r\n" .
-                $mess->getMessage(),
-                'email'
-            );
+            LPMLog::debug('Send email', LPMLog::CH_EMAIL, [
+                'to' => $mess->getToName() . ' <' . $mess->getToEmail() . '>',
+                'subject' => $mess->getSubject(),
+                'body' => $mess->getMessage(),
+            ]);
 
             if (defined('EMAIL_NOTIFY_LOG_ONLY_IN_DEBUG') && EMAIL_NOTIFY_LOG_ONLY_IN_DEBUG) {
                 // в дебаге не отправляем, а только логируем

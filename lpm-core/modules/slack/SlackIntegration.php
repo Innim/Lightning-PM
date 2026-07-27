@@ -16,8 +16,10 @@ class SlackIntegration
     public static function getInstance()
     {
         if (self::$_instance === null) {
-            // TODO: проверка на пустоту и существование?
-            self::$_instance = new SlackIntegration(SLACK_TOKEN, !defined('SLACK_NOTIFICATION_ENABLED') || SLACK_NOTIFICATION_ENABLED);
+            $token = defined('SLACK_TOKEN') ? SLACK_TOKEN : '';
+            $notificationEnabled = $token !== ''
+                && (!defined('SLACK_NOTIFICATION_ENABLED') || SLACK_NOTIFICATION_ENABLED);
+            self::$_instance = new SlackIntegration($token, $notificationEnabled);
         }
 
         return self::$_instance;
@@ -32,6 +34,16 @@ class SlackIntegration
     {
         $this->_token = $token;
         $this->_notificationEnabled = $notificationEnabled;
+    }
+
+    /**
+     * Настроена ли интеграция, т.е. задан ли токен доступа.
+     * Пока интеграция не настроена, обращения к Slack API не выполняются.
+     * @return bool
+     */
+    public function isConfigured()
+    {
+        return $this->_token !== '';
     }
 
     public function notifyIssueForTest(Issue $issue)
@@ -123,11 +135,15 @@ class SlackIntegration
      * 
      * @param String $memberId Идентификатор участника в Slack. Хранится в User::$slackName. 
      *                         Здесь нужно передавать именно ID, имя не подходит.
-     * @return JoliCode\Slack\Api\Model\ObjsUserProfile
+     * @return JoliCode\Slack\Api\Model\ObjsUserProfile|null null, если интеграция не настроена.
      * @throws JoliCode\Slack\Exception\SlackErrorResponse В случае ошибки в ответ на запрос.
      */
     public function getProfile(string $memberId)
     {
+        if (!$this->isConfigured()) {
+            return null;
+        }
+
         $client = $this->getClient();
         $res = $client->usersProfileGet([
             'user' => $memberId
@@ -189,11 +205,12 @@ class SlackIntegration
                     break;
                 }
             }
+        } else {
+            LPMLog::error('Не удалось получить историю канала Slack', LPMLog::CH_SLACK, [
+                'channel' => $channel,
+                'error' => method_exists($res, 'getError') ? $res->getError() : null,
+            ]);
         }
-        // else
-        // {
-        // 	// TODO: обработка ошибки
-        // }
 
         $this->postMessage($channel, $text, $attachments, $threadTs);
     }
@@ -210,7 +227,10 @@ class SlackIntegration
         }
         $res = $client->chatPostMessage($args);
         if (!$res->getOk()) {
-            // TODO: обработка ошибки
+            LPMLog::error('Не удалось отправить сообщение в Slack', LPMLog::CH_SLACK, [
+                'channel' => $channel,
+                'error' => method_exists($res, 'getError') ? $res->getError() : null,
+            ]);
         }
     }
 

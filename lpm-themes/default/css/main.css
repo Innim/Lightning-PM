@@ -780,6 +780,14 @@ table.issues-list td .priority-change-animation {
 	position: absolute;
 	user-select: none;
 }
+/* Кратковременная подсветка строки/блока для привлечения внимания (гаснет). */
+@keyframes highlight-fade {
+	from { background-color: #e0cffc; }
+	to   { background-color: #fff; }
+}
+.highlight-fade {
+	animation: highlight-fade 3s ease;
+}
 table.issues-list tr.verify-issue.tester {
 	background: #FFEC80 !important;
 }
