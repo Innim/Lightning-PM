@@ -27,6 +27,7 @@
 		<?php endforeach; ?>
 	</section>
 	<input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
+	<input id='is-moderator' type="hidden" value="<?=lpm_get_user()->isModerator();?>">
 
 	<?php if (!empty($nextPageUrl)):?>
 	<div class="pages-nav-bar"><a href="<?=$nextPageUrl;?>">Раньше</a></div>

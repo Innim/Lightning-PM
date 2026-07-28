@@ -200,7 +200,7 @@ $(document).ready(
 
         // Комментарии -- END
 
-        if (!$('#is-admin').val()) {
+        if (!$('#is-moderator').val()) {
             $('.delete-comment').each(function (index) {
                 const elementId = $(this).attr('id');
                 const startTime = $(this).data('time');

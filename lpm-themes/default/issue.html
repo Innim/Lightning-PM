@@ -400,6 +400,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             <?php endforeach; ?>
         </section>
         <input id='is-admin' type="hidden" value="<?=lpm_get_user()->isAdmin();?>">
+	    <input id='is-moderator' type="hidden" value="<?=lpm_get_user()->isModerator();?>">
     </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=$userId;?>">
