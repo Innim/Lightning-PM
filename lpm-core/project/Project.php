@@ -297,7 +297,7 @@ SQL;
     {
         $user = LightningEngine::getInstance()->getUser();
 
-        return $user->isAdmin() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
+        return $user->isModerator() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
     }
     
     /**
