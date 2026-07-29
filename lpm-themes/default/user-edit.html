@@ -28,7 +28,8 @@
                 <?php if (lpm_is_admin() && lpm_get_user()->userId != $user->userId): ?>
                 <div class="mb-3">
                     <label for="role" class="form-label">Роль</label>
-                    <select class="form-select" id="role" name="role" data-current="<?=$user->role;?>">
+                    <select class="form-select" id="role" name="role" data-current="<?=$user->role;?>"
+                        data-username="<?=htmlspecialchars($user->getName());?>">
                         <?php foreach (User::getRolesMap() as $roleValue => $roleTitle): ?>
                         <option value="<?=$roleValue;?>"<?=$roleValue == $user->role ? ' selected' : '';?>><?=$roleTitle;?></option>
                         <?php endforeach; ?>
