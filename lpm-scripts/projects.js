@@ -61,7 +61,7 @@ function validateAddProj() {
 		errors.push('Нужно дать описание проекта');
 
 	let uid = $('input[name=uid]', form).val();
-	if (!(/^(([a-zA-Z0-9]){1}([a-zA-Z0-9\-]){0,254})$/u).test(uid))
+	if (!lpm.validators.projectUid(uid))
 		errors.push('В идентификаторе допустимы строчные буквы (a-z), цифры и дефис');
 
 	let errorDisplay = $('div.validateError', form);

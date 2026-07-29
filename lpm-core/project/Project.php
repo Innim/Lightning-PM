@@ -92,6 +92,60 @@ class Project extends MembersInstance
         return $db->queryb($hash);
     }
 
+    /**
+     * Обновляет основную информацию о проекте: идентификатор, название и описание.
+     *
+     * @param  int    $projectId Идентификатор проекта.
+     * @param  string $uid       Новый строковый идентификатор проекта.
+     * @param  string $name      Новое название.
+     * @param  string $desc      Новое описание.
+     * @return bool `true` при успешном обновлении.
+     */
+    public static function updateProjectInfo($projectId, $uid, $name, $desc)
+    {
+        $db = self::getDB();
+
+        $hash = [
+            'UPDATE' => LPMTables::PROJECTS,
+            'SET' => [
+                'uid'  => $uid,
+                'name' => $name,
+                'desc' => $desc,
+            ],
+            'WHERE' => [
+                'id' => $projectId
+            ]
+        ];
+
+        return $db->queryb($hash);
+    }
+
+    /**
+     * Проверяет, что строка является допустимым идентификатором проекта:
+     * латинские буквы, цифры и дефис, длиной от 1 до 255 символов.
+     *
+     * @param  string $uid Проверяемый идентификатор.
+     * @return bool `true`, если идентификатор допустим.
+     */
+    public static function isValidUid($uid)
+    {
+        return \GMFramework\Validation::checkStr($uid, 255, 1, false, false, true);
+    }
+
+    /**
+     * Проверяет, свободен ли идентификатор проекта — то есть не занят другим проектом.
+     *
+     * @param  string $uid      Проверяемый идентификатор.
+     * @param  int    $exceptId Идентификатор проекта, который надо исключить из проверки
+     * (обычно — редактируемый проект).
+     * @return bool `true`, если идентификатор не используется другим проектом.
+     */
+    public static function isUidAvailable($uid, $exceptId = 0)
+    {
+        $project = self::load($uid);
+        return !$project || (int)$project->id === (int)$exceptId;
+    }
+
     public static function updateIssueMemberDefault($projectId, $memberByDefaultId)
     {
         $db = self::getDB();
