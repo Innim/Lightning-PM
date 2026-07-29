@@ -15,4 +15,9 @@ window.lpmOptions = {
 	videoUrlPatterns: <?=json_encode(AttachmentVideoHelper::URL_PATTERNS);?>,
 	imageUrlPatterns: <?=json_encode(AttachmentImageHelper::URL_PATTERNS);?>,
 	issueUrlPattern: <?=json_encode(OwnUrlHelper::getIssueUrlPattern());?>,
+	roles: {
+		user: <?=User::ROLE_USER;?>,
+		admin: <?=User::ROLE_ADMIN;?>,
+		moderator: <?=User::ROLE_MODERATOR;?>,
+	},
 };
