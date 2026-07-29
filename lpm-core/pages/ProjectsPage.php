@@ -108,16 +108,16 @@ class ProjectsPage extends LPMPage
         }
 
         $uid  = strtolower($input['uid']);
-        $name = mb_substr($input['name'], 0, 255);
-        $desc = mb_substr($input['desc'], 0, 65535);
+        $name = mb_substr($input['name'], 0, PROJECT_NAME_MAX_LENGTH);
+        $desc = mb_substr($input['desc'], 0, PROJECT_DESC_MAX_LENGTH);
 
-        if (!$this->validateProjectUid($uid)) {
+        if (!Project::isValidUid($uid)) {
             return $this->error(
                 'Введён недопустимый идентификатор - используйте латинские буквы, цифры и тире'
             );
         }
 
-        if (Project::load($uid)) {
+        if (!Project::isUidAvailable($uid)) {
             return $this->error('Проект с таким uid уже существует');
         }
 
@@ -128,11 +128,6 @@ class ProjectsPage extends LPMPage
             LightningEngine::go2URL($this->getUrl());
         }
         return true;
-    }
-
-    private function validateProjectUid($value)
-    {
-        return \GMFramework\Validation::checkStr($value, 255, 1, false, false, true);
     }
 
     private function statByProjects(): ProjectsPage

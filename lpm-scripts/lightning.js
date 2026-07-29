@@ -324,8 +324,10 @@ let srv = {
         getSumOpenedIssuesHours: function (projectId, onResult) {
             this.s._('getSumOpenedIssuesHours');
         },
-        setProjectSettings: function (projectId, scrum, slackNotifyChannel, onResult) {
-            this.s._('setProjectSettings');
+        saveProject: function (
+            projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds, onResult
+        ) {
+            this.s._('saveProject');
         },
         searchIssueNames: function (projectId, idInProjectPart, onResult) {
             this.s._('searchIssueNames');
@@ -648,6 +650,13 @@ lpm.toast = {
         });
     }
 }
+
+lpm.validators = {
+    // Допустимый идентификатор проекта: латинские буквы, цифры и дефис (1–255 символов).
+    projectUid: function (uid) {
+        return /^(([a-zA-Z0-9]){1}([a-zA-Z0-9\-]){0,254})$/u.test(uid);
+    },
+};
 
 lpm.utils = {
     copyRichToClipboard: function (html, plain) {

@@ -121,6 +121,18 @@ define('LOG_FILE_MAX_SIZE_MB', 5);
  */
 define('LOG_ARCHIVE_COUNT', 3);
 
+/**
+ * Максимальная длина названия проекта (ограничение колонки в БД).
+ * @var int
+ */
+define('PROJECT_NAME_MAX_LENGTH', 255);
+
+/**
+ * Максимальная длина описания проекта (ограничение колонки в БД).
+ * @var int
+ */
+define('PROJECT_DESC_MAX_LENGTH', 65535);
+
 // -- Вспомогательные константы --
 
 define('MAX_FILE_SIZE_BYTES', MAX_FILE_SIZE_MB * 1024 * 1024);

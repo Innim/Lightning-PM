@@ -470,11 +470,31 @@ class ProjectService extends LPMBaseService
         return $this->answer();
     }
 
-    public function setProjectSettings($projectId, $scrum, $slackNotifyChannel, $gitlabGroupId, $gitlabProjectIds)
-    {
+    /**
+     * Сохраняет проект: основную информацию (идентификатор, название, описание)
+     * и настройки (Scrum, канал Slack, привязки к GitLab) — всё за один вызов.
+     *
+     * При изменении идентификатора проверяет его на допустимость и уникальность
+     * (исключая сам редактируемый проект). В ответе возвращает новый URL страницы
+     * настроек — идентификатор мог измениться.
+     */
+    public function saveProject(
+        $projectId,
+        $uid,
+        $name,
+        $desc,
+        $scrum,
+        $slackNotifyChannel,
+        $gitlabGroupId,
+        $gitlabProjectIds
+    ) {
         $projectId = (int)$projectId;
+        $uid  = strtolower(trim((string)$uid));
+        $name = trim((string)$name);
+        $desc = trim((string)$desc);
         $slackNotifyChannel = (string)$slackNotifyChannel;
         $gitlabGroupId = (int)$gitlabGroupId;
+        $gitlabProjectIds = (string)$gitlabProjectIds;
 
         if ($scrum !== 0 && $scrum !== 1) {
             return $this->error('Неверные входные параметры');
@@ -487,27 +507,60 @@ class ProjectService extends LPMBaseService
             return $this->error('Недостаточно прав');
         }
 
+        if ($uid === '' || $name === '' || $desc === '') {
+            return $this->error('Заполнены не все поля');
+        }
+
+        $name = mb_substr($name, 0, PROJECT_NAME_MAX_LENGTH);
+        $desc = mb_substr($desc, 0, PROJECT_DESC_MAX_LENGTH);
+
+        if (!Project::isValidUid($uid)) {
+            return $this->error(
+                'Введён недопустимый идентификатор - используйте латинские буквы, цифры и тире'
+            );
+        }
+
         // проверим, что существует такой проект
-        if (!Project::loadById($projectId)) {
+        $project = Project::loadById($projectId);
+        if (!$project) {
             return $this->error('Проект не найден');
         }
 
-        $result = Project::updateProjectSettings(
-            $projectId,
-            $scrum,
-            $slackNotifyChannel,
-            $gitlabGroupId,
-            $gitlabProjectIds,
-        );
+        // обновляем основную информацию только если она действительно изменилась
+        if ($uid !== $project->uid || $name !== $project->name || $desc !== $project->desc) {
+            // идентификатор должен быть уникальным (исключая сам редактируемый проект)
+            if ($uid !== $project->uid && !Project::isUidAvailable($uid, $projectId)) {
+                return $this->error('Проект с таким uid уже существует');
+            }
 
-        if (!$result) {
-            return $this->error('Ошибка обновления таблицы');
+            if (!Project::updateProjectInfo($projectId, $uid, $name, $desc)) {
+                return $this->error('Ошибка обновления таблицы');
+            }
+        }
+
+        // обновляем настройки только если они действительно изменились
+        if ($scrum !== $project->scrum
+            || $slackNotifyChannel !== $project->slackNotifyChannel
+            || $gitlabGroupId !== $project->gitlabGroupId
+            || $gitlabProjectIds !== $project->gitlabProjectIds
+        ) {
+            $result = Project::updateProjectSettings(
+                $projectId,
+                $scrum,
+                $slackNotifyChannel,
+                $gitlabGroupId,
+                $gitlabProjectIds
+            );
+
+            if (!$result) {
+                return $this->error('Ошибка обновления таблицы');
+            }
         }
 
         $this->add2Answer('projectId', $projectId);
-        $this->add2Answer('scrum', $scrum);
-        $this->add2Answer('slackNotifyChannel', $slackNotifyChannel);
-        $this->add2Answer('gitlabGroupId', $gitlabGroupId);
+        $this->add2Answer('uid', $uid);
+        $this->add2Answer('name', $name);
+        $this->add2Answer('url', Link::getUrl(ProjectPage::UID, [$uid, ProjectPage::PUID_SETTINGS]));
 
         return $this->answer();
     }
