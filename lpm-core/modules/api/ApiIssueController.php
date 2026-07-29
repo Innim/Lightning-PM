@@ -76,6 +76,9 @@ class ApiIssueController extends ApiControllerBase
 
         $priority = min(99, max(0, (int)$this->request()->getBody('priority', Issue::DEFAULT_PRIORITY)));
         $hours = Issue::parseStoryPoints($this->request()->getBody('hours', 0));
+        if (!Issue::isValidStoryPoints($hours)) {
+            return ApiResponse::error('Invalid hours, expected a non-negative integer or 0.5', 400);
+        }
 
         $completeDate = Issue::parseCompleteDate($this->request()->getBody('completeDate'));
         if ($completeDate === false) {

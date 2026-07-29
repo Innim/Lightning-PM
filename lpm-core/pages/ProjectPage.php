@@ -550,18 +550,34 @@ class ProjectPage extends LPMPage
         // Считаем SP
         $hours = $this->parseSP($_POST['hours']);
         $membersSp = null;
+        $spTotal = 0;
+        $spMembersCount = 0;
         if (isset($_POST['membersSp']) && is_array($_POST['membersSp'])) {
             $membersSp = [];
-            $spTotal = 0;
             foreach ($_POST['membersSp'] as $sp) {
-                $sp = $this->parseSP($sp, true);
+                $sp = $this->parseSP($sp);
+                if (!Issue::isValidStoryPoints($sp)) {
+                    return $engine->addError('Оценка исполнителя в SP должна быть целой или 0.5');
+                }
                 $membersSp[] = $sp;
                 $spTotal += $sp;
+                if ($sp > 0) {
+                    $spMembersCount++;
+                }
             }
 
             if ($spTotal > 0 && $spTotal != $hours) {
                 return $engine->addError('Количество SP по исполнителям не совпадает с общим');
             }
+        }
+
+        // Дробная общая оценка (кроме 0.5) допускается только как сумма
+        // оценок нескольких исполнителей.
+        if (!Issue::isValidStoryPoints($hours) && !($spMembersCount > 1 && $spTotal == $hours)) {
+            return $engine->addError(
+                'Дробная оценка (кроме 0.5) допускается только когда исполнителей несколько ' .
+                'и она равна сумме их оценок'
+            );
         }
 
         // сохраняем задачу
@@ -1091,8 +1107,8 @@ class ProjectPage extends LPMPage
         return '#' . $issue->idInProject . '. ' . $issue->name . ' - ' . $this->_project->name;
     }
 
-    private function parseSP($value, $allowFloat = false)
+    private function parseSP($value)
     {
-        return Issue::parseStoryPoints($value, $allowFloat);
+        return Issue::parseStoryPoints($value);
     }
 }
