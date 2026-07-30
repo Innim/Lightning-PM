@@ -95,7 +95,7 @@
 			<span class="ms-1"><?php lpm_print_github_link(); ?></span>
 		</span>
 		<span>
-			<?php lpm_print_product_name(); ?> v<?php lpm_print_version(); ?>
+			<?php lpm_print_product_name(); ?> <a href="<?=lpm_get_changelog_url();?>" class="link-secondary" title="Что нового">v<?php lpm_print_version(); ?></a>
 			<span class="x-small ms-2" style="opacity:.5">Время генерации: <?=round(lpm_get_execution_time(), 3);?> сек</span>
 		</span>
 	</footer>

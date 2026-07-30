@@ -5,7 +5,12 @@ class PageConstructor
     {
         return SITE_URL;
     }
-    
+
+    public static function getChangelogUrl()
+    {
+        return ChangelogPage::getPageUrl();
+    }
+
     public static function getUsingScripts()
     {
         return self::$_usingScripts;
