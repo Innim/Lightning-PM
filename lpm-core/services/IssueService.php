@@ -178,6 +178,61 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Помечает отмеченный в комментарии баг как решённый без внесения правок.
+     *
+     * Снимает с задачи статус наличия бага, сохраняя текст комментария.
+     * @param int $commentId Идентификатор комментария с отметкой о баге.
+     * @return {
+     *     object comment Обновлённый комментарий.
+     *     string html HTML обновлённого комментария.
+     * }
+     */
+    public function resolveComment($commentId)
+    {
+        $commentId = (int)$commentId;
+
+        try {
+            $comment = Comment::load($commentId);
+            if (!$comment || $comment->instanceType != LPMInstanceTypes::ISSUE) {
+                return $this->error('Комментария не существует');
+            }
+
+            if (empty($comment->issueComment) || !$comment->issueComment->isRequestChanges()) {
+                return $this->error('Этот комментарий нельзя отметить решённым');
+            }
+
+            $issue = Issue::load($comment->instanceId);
+            if (!$issue) {
+                return $this->error('Нет такой задачи');
+            }
+
+            if (!$issue->checkEditPermit($this->getUserId())) {
+                return $this->error('У Вас нет прав на редактирование этой задачи');
+            }
+
+            $comment->issue = $issue;
+            $comment->issueComment = IssueComment::create(
+                $comment->id,
+                IssueCommentType::REQUEST_CHANGES_RESOLVED,
+                $comment->issueComment->data
+            );
+
+            UserLogEntry::create(
+                $this->getUserId(),
+                DateTimeUtils::$currentDate,
+                UserLogEntryType::RESOLVE_BUG_COMMENT,
+                $comment->id
+            );
+
+            $this->setupCommentAnswer($comment);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Возвращает текст комментария для предпросмотра.
      *
      * Комментарий не сохраняется в БД.
