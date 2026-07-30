@@ -75,6 +75,16 @@ Use the payload to inspect:
 - issue id
 - action URLs or repository hints if present
 
+## Listing Projects
+
+List projects available to the authenticated user, e.g. to pick a `projectId` for creating an issue:
+
+```http
+GET /api/v1/projects
+```
+
+Add `?archive=1` to list archived projects instead of active ones. Each item has the shape `{id, uid, name, url, scrum}`; use `id` or `uid` as `projectId` in later calls. The list is scoped to the user's access (moderators see all projects, others see only their own).
+
 ## Creating an Issue
 
 Create a new issue in a project when the user asks to open/file a task rather than implement an existing one:
