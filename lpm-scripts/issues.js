@@ -1491,6 +1491,7 @@ function Issue(obj) {
     this.id = obj.id;
     this.author = obj.author;
     this.completeDate = obj.completeDate;
+    this.completeDateInput = obj.completeDateInput;
     this.completedDate = obj.completedDate;
     this.createDate = obj.createDate;
     this.desc = obj.desc;
@@ -1528,12 +1529,9 @@ function Issue(obj) {
     };
 
     this.getCompleteDateInput = function () {
-        var d = this.getCompleteDate();
-
-        if (d)
-            d = d.replace(/-/g, '/');
-
-        return d;
+        // Дата в ISO (YYYY-MM-DD), сформированная сервером: клиент не пересчитывает
+        // её из таймстампа, чтобы не было сдвига на день из-за часового пояса.
+        return this.completeDateInput || '';
     };
 
     this.getCompletedDate = function () {

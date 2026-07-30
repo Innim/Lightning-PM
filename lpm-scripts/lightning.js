@@ -181,7 +181,12 @@ const lpm = {
     dialog: null,
     toast: null,
     utils: null,
+    datePicker: null,
 }
+
+// Экспортируем неймспейс в window, чтобы он был доступен из ES-модулей
+// (top-level const классического скрипта не становится свойством window).
+window.lpm = lpm;
 
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
 let srv = {

@@ -64,6 +64,7 @@ class PagePrinter
         self::cssLink('bootstrap.min');
         self::cssLink('bootstrap-reset');
         self::cssLink('vue-multiselect.min');
+        self::cssLink('vanilla-calendar');
         self::cssLink('main');
     }
     

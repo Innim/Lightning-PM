@@ -1544,3 +1544,15 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	max-height: 500px;
 	max-width: min(320px, 100%);
 }
+
+/* Кастомный date picker (Vanilla Calendar Pro) */
+
+/* Клик по иконке-аддону открывает календарь. */
+.lpm-date-picker__toggle {
+	cursor: pointer;
+}
+
+/* Календарь поверх модального окна (диалог экспорта). */
+.vc[data-vc-input] {
+	z-index: 1060;
+}

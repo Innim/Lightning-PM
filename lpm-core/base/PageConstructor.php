@@ -158,7 +158,8 @@ class PageConstructor
     ];
 
     private static $_usingJSModules = [
-        'filters/index'
+        'filters/index',
+        'date-picker'
     ];
     
     public $_title    = '';

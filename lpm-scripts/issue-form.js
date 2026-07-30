@@ -291,7 +291,7 @@ let issueForm = {
         $("#issueForm form input[name=priority]").val(value.priority);
         issuePage.setPriorityVal(value.priority);
         // дата окончания
-        $("#issueForm form input[name=completeDate]").val(value.completeDate);
+        lpm.datePicker.setValue($("#issueForm form input[name=completeDate]")[0], value.completeDate);
         // исполнители
         issueForm.resetUsers('issueMembers', 'addIssueMembers');
         const memberIds = value.memberIds;
