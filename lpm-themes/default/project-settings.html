@@ -6,13 +6,43 @@
 ?>
 <div id="projectSettings" class="mx-auto container container-main px-4 py-4">
     <h1><?php lpm_print_header(); ?></h1>
-    <div class="card my-3">
-        <div class="card-header">Настройки проекта</div>
-        <div class="card-body">
-            <form method="post" action="" onsubmit="return false;">
-                <div class="alert alert-success info-message" role="alert" style="display: none;"></div>
-                <input type="hidden" id="projectId" value="<?=$project->getID();?>" />
+    <form method="post" action="" onsubmit="return false;">
+        <input type="hidden" id="projectId" value="<?=$project->getID();?>" />
+        <div class="alert alert-danger d-none" id="projectError" role="alert"></div>
 
+        <div class="card my-3">
+            <div class="card-header">Информация о проекте</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="projectName" class="form-label">Название</label>
+                    <input id="projectName" type="text" maxlength="255" class="form-control"
+                        value="<?=htmlspecialchars($project->name, ENT_QUOTES);?>">
+                </div>
+
+                <div class="mb-3">
+                    <label for="projectDesc" class="form-label">Описание</label>
+                    <textarea id="projectDesc" rows="4" maxlength="65535"
+                        class="form-control"><?=htmlspecialchars($project->desc, ENT_QUOTES);?></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <label for="projectUid" class="form-label mb-0">Идентификатор (uid)</label>
+                        <a href="#" id="editProjectUid"
+                            class="small link-secondary text-decoration-none d-inline-flex align-items-center gap-1">
+                            <i class="fas fa-pen fa-xs"></i>редактировать
+                        </a>
+                    </div>
+                    <input id="projectUid" type="text" maxlength="255" class="form-control" disabled
+                        value="<?=htmlspecialchars($project->uid, ENT_QUOTES);?>">
+                    <div class="form-text">Латинские буквы, цифры и дефис.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card my-3">
+            <div class="card-header">Настройки проекта</div>
+            <div class="card-body">
                 <div class="mb-3">
                     <label id="gitlabGroupIdLabel" for="gitlabGroupId" class="form-label"
                         title="Перейдите на страницу группы в интерфейсе GitLab, там под именем группы будет указан 'Group ID'">
@@ -43,13 +73,12 @@
                     <input id="scrumCheckbox" class="form-check-input" type="checkbox" <?=$project->scrum ? 'checked' : '' ?>>
                     <label class="form-check-label" for="scrumCheckbox">Проект использует Scrum</label>
                 </div>
-
-                <div class="d-flex gap-2 mt-2">
-                    <button class="btn btn-success" id="setProjectSettings" type="submit">Сохранить</button>
-                    <button class="btn btn-secondary" type="reset">Отмена</button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
-    
+
+        <div class="d-flex justify-content-end gap-2 mt-2">
+            <button class="btn btn-secondary" type="reset">Сбросить</button>
+            <button class="btn btn-primary" id="saveProject" type="submit">Сохранить</button>
+        </div>
+    </form>
 </div>

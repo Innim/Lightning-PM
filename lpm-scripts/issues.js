@@ -198,6 +198,23 @@ $(document).ready(
             }
         });
 
+        $(document).on('click', '.resolve-comment', function () {
+            const id = $(this).data('commentId');
+            const item = $(this).parents('div.comments-list-item');
+            if (!confirm('Отметить баг решённым? Задача перестанет считаться содержащей баг.')) return;
+
+            preloader.show();
+            issuePage.resolveComment(id, function (res) {
+                preloader.hide();
+                if (res) {
+                    item.html(res.html);
+                    comments.updateAttachments($('.comment-text', item));
+                    attachments.update($('.block-with-attachments', item));
+                    initIssueLinkPreviews(item);
+                }
+            });
+        });
+
         // Комментарии -- END
 
         if (!$('#is-moderator').val()) {
@@ -1491,6 +1508,7 @@ function Issue(obj) {
     this.id = obj.id;
     this.author = obj.author;
     this.completeDate = obj.completeDate;
+    this.completeDateInput = obj.completeDateInput;
     this.completedDate = obj.completedDate;
     this.createDate = obj.createDate;
     this.desc = obj.desc;
@@ -1528,12 +1546,9 @@ function Issue(obj) {
     };
 
     this.getCompleteDateInput = function () {
-        var d = this.getCompleteDate();
-
-        if (d)
-            d = d.replace(/-/g, '/');
-
-        return d;
+        // Дата в ISO (YYYY-MM-DD), сформированная сервером: клиент не пересчитывает
+        // её из таймстампа, чтобы не было сдвига на день из-за часового пояса.
+        return this.completeDateInput || '';
     };
 
     this.getCompletedDate = function () {
@@ -1743,6 +1758,19 @@ issuePage.deleteComment = (id, deleteBranch, callback) => {
         function (res) {
             if (res.success) {
                 callback(true);
+            } else {
+                srv.err(res);
+            }
+        }
+    )
+};
+
+issuePage.resolveComment = (id, callback) => {
+    srv.issue.resolveComment(
+        id,
+        function (res) {
+            if (res.success) {
+                callback(res);
             } else {
                 srv.err(res);
             }

@@ -45,6 +45,14 @@ function lpm_print_version()
 }
 
 /**
+ * Возвращает URL страницы изменений
+ */
+function lpm_get_changelog_url()
+{
+    return PageConstructor::getChangelogUrl();
+}
+
+/**
  * Распечатывает копирайты
  */
 function lpm_print_copyrights()

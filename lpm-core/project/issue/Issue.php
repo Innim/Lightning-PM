@@ -978,14 +978,27 @@ SQL;
     }
 
     /**
-     * Разбирает значение оценки в SP. Из дробных допускается только `0.5`,
-     * остальные значения приводятся к целому (или к float при `$allowFloat`).
-     * @return int|float
+     * Разбирает введённое значение оценки в SP в число.
+     * Запись `0.5`, `0,5` или `1/2` трактуется как `0.5`; в остальных
+     * значениях запятая приводится к точке.
+     * @return float
      */
-    public static function parseStoryPoints($value, $allowFloat = false)
+    public static function parseStoryPoints($value)
     {
         return ($value == '0.5' || $value == '0,5' || $value == '1/2') ? 0.5 :
-            ($allowFloat ? floatval(str_replace(',', '.', (string)$value)) : (int)$value);
+            floatval(str_replace(',', '.', (string)$value));
+    }
+
+    /**
+     * Проверяет, что значение — допустимая индивидуальная оценка в SP:
+     * неотрицательное целое или `0.5`. Дробные значения крупнее `0.5`
+     * (например, `1.5`) индивидуальной оценкой не считаются — они возможны
+     * только как сумма оценок нескольких исполнителей.
+     * @return bool
+     */
+    public static function isValidStoryPoints($value)
+    {
+        return $value >= 0 && ($value == (int)$value || $value == 0.5);
     }
 
     /**
@@ -1170,6 +1183,10 @@ SQL;
 
         $obj->url = $this->getConstURL();
         $obj->formattedDesc = $this->getDesc();
+        // Дата завершения в ISO (ГГГГ-ММ-ДД) для подстановки в поле формы —
+        // форматируется на сервере, чтобы клиент не пересчитывал её из таймстампа
+        // (иначе возможен сдвиг на день из-за часового пояса браузера).
+        $obj->completeDateInput = $this->getCompleteDate4Input();
 
         return $obj;
     }

@@ -28,6 +28,10 @@ class UserLogEntryType extends \GMFramework\Enum
      * Удаление комментария.
      */
     const DELETE_COMMENT = 5;
+    /**
+     * Отметка бага в комментарии как решённого без внесения правок.
+     */
+    const RESOLVE_BUG_COMMENT = 14;
     // TODO: добавить лог, перечисленный ниже
     /**
      * Добавление проекта.

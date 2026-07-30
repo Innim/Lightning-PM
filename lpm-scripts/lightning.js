@@ -181,7 +181,12 @@ const lpm = {
     dialog: null,
     toast: null,
     utils: null,
+    datePicker: null,
 }
+
+// Экспортируем неймспейс в window, чтобы он был доступен из ES-модулей
+// (top-level const классического скрипта не становится свойством window).
+window.lpm = lpm;
 
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
 let srv = {
@@ -275,6 +280,9 @@ let srv = {
         },
         deleteComment: function (id, deleteBranch, onResult) {
             this.s._('deleteComment');
+        },
+        resolveComment: function (commentId, onResult) {
+            this.s._('resolveComment');
         }
     },
     project: {
@@ -324,8 +332,10 @@ let srv = {
         getSumOpenedIssuesHours: function (projectId, onResult) {
             this.s._('getSumOpenedIssuesHours');
         },
-        setProjectSettings: function (projectId, scrum, slackNotifyChannel, onResult) {
-            this.s._('setProjectSettings');
+        saveProject: function (
+            projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds, onResult
+        ) {
+            this.s._('saveProject');
         },
         searchIssueNames: function (projectId, idInProjectPart, onResult) {
             this.s._('searchIssueNames');
@@ -648,6 +658,13 @@ lpm.toast = {
         });
     }
 }
+
+lpm.validators = {
+    // Допустимый идентификатор проекта: латинские буквы, цифры и дефис (1–255 символов).
+    projectUid: function (uid) {
+        return /^(([a-zA-Z0-9]){1}([a-zA-Z0-9\-]){0,254})$/u.test(uid);
+    },
+};
 
 lpm.utils = {
     copyRichToClipboard: function (html, plain) {

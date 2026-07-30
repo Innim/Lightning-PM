@@ -5,7 +5,12 @@ class PageConstructor
     {
         return SITE_URL;
     }
-    
+
+    public static function getChangelogUrl()
+    {
+        return ChangelogPage::getPageUrl();
+    }
+
     public static function getUsingScripts()
     {
         return self::$_usingScripts;
@@ -158,7 +163,8 @@ class PageConstructor
     ];
 
     private static $_usingJSModules = [
-        'filters/index'
+        'filters/index',
+        'date-picker'
     ];
     
     public $_title    = '';
@@ -217,6 +223,12 @@ class PageConstructor
         if ($file !== '' && $file{mb_strlen($file)-1} === '$') {
             $file = mb_substr($file, 0, -1);
         } else {
+            // В режиме отладки предпочитаем неминифицированную версию,
+            // если рядом с *.min лежит читаемый исходник (удобно для DevTools).
+            if (Globals::isDebugMode() && mb_substr($file, -4) === '.min'
+                    && is_file(ROOT . SCRIPTS_DIR . mb_substr($file, 0, -4) . '.js')) {
+                $file = mb_substr($file, 0, -4);
+            }
             $file = $file . '.js?' . $this->_versionParam;
         }
         return SITE_URL . SCRIPTS_DIR . $file;

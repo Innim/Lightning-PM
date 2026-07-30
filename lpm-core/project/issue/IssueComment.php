@@ -67,6 +67,15 @@ class IssueComment extends LPMBaseObject
     }
 
     /**
+     * Определяет, является ли комментарий отмеченным багом, который
+     * пометили решённым без внесения правок.
+     * @return bool
+     */
+    public function isRequestChangesResolved() {
+        return $this->type == IssueCommentType::REQUEST_CHANGES_RESOLVED;
+    }
+
+    /**
      * Определяет, является ли комментарий отметкой о прохождении теста.
      * @return bool
      */

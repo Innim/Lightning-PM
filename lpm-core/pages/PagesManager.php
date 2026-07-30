@@ -35,7 +35,8 @@ class PagesManager
             new UserPage(),
             new ProfilePage(),
             new StatusPage(),
-            new SettingsPage()
+            new SettingsPage(),
+            new ChangelogPage()
         );
         
         $this->addLink2UserMenu('Выход', ProfilePage::SUID_EXIT);

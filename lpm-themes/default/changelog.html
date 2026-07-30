@@ -1,0 +1,49 @@
+<?php
+/*
+Требуются:
+    array $entries - список выпущенных версий, каждая:
+        string version  - номер версии
+        string date     - дата выпуска (может быть пустой)
+        string slug      - идентификатор якоря
+        array  sections  - секции версии, каждая:
+            string title - заголовок секции (может быть пустым)
+            string badge - Bootstrap-классы бейджа
+            string html  - содержимое секции в виде готового HTML
+*/
+?>
+<div class="mx-auto container container-main px-4 py-4">
+  <header class="mb-4">
+    <h1 class="mb-1">Что нового</h1>
+    <p class="text-muted mb-0">История изменений приложения по версиям</p>
+  </header>
+
+  <?php if (empty($entries)): ?>
+    <div class="alert alert-secondary" role="alert">История изменений недоступна.</div>
+  <?php else: ?>
+    <?php foreach ($entries as $entry): ?>
+      <article id="<?=htmlspecialchars($entry['slug']);?>" class="card shadow-sm mb-3">
+        <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <h2 class="h5 mb-0">Версия <?=htmlspecialchars($entry['version']);?></h2>
+            <?php if ($entry['version'] === VERSION): ?>
+              <span class="badge bg-success">текущая</span>
+            <?php endif; ?>
+          </div>
+          <?php if ($entry['date'] !== ''): ?>
+            <time class="text-muted small"><i class="fa-regular fa-calendar me-1"></i><?=htmlspecialchars($entry['date']);?></time>
+          <?php endif; ?>
+        </div>
+        <div class="card-body pb-2">
+          <?php foreach ($entry['sections'] as $i => $section): ?>
+            <?php if ($section['title'] !== ''): ?>
+              <p class="mb-2<?=$i > 0 ? ' mt-3' : '';?>">
+                <span class="badge <?=$section['badge'];?>"><?=htmlspecialchars($section['title']);?></span>
+              </p>
+            <?php endif; ?>
+            <?=$section['html'];?>
+          <?php endforeach; ?>
+        </div>
+      </article>
+    <?php endforeach; ?>
+  <?php endif; ?>
+</div>

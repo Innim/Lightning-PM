@@ -5,6 +5,11 @@ class ApiProjectController extends ApiControllerBase
     public function dispatch(array $path)
     {
         $method = $this->request()->getMethod();
+
+        if ($method === 'GET' && count($path) === 0) {
+            return $this->listProjects();
+        }
+
         if ($method !== 'GET' || count($path) < 2) {
             return ApiResponse::error('Route not found', 404);
         }
@@ -29,6 +34,20 @@ class ApiProjectController extends ApiControllerBase
         }
 
         return ApiResponse::error('Route not found', 404);
+    }
+
+    private function listProjects()
+    {
+        $isArchive = filter_var($this->request()->getQuery('archive', false), FILTER_VALIDATE_BOOLEAN);
+
+        $result = [];
+        foreach (Project::getAvailList($isArchive) as $project) {
+            $result[] = $this->serializer()->project($project);
+        }
+
+        return ApiResponse::success([
+            'projects' => $result,
+        ]);
     }
 
     private function loadRepositories(Project $project)

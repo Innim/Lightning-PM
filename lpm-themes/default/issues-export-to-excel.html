@@ -1,11 +1,19 @@
-<article id="issuesExportToExcel" title="Экспорт в Excel" style="display: none;">
+<article id="issuesExportToExcel" title="Экспорт в Excel" style="display: none;" data-lpm-picker-template>
 	<form id="issuesExportForm" action="." onsubmit="return false">
-		<p>Экспортировать задачи, завершенные в период</p>
-		<label for="exportStartDate">с</label>
-		<input id="exportStartDate" name="fromDate" type="date"
-			value="<?=date('Y-m-d', strtotime('first day of last month'));?>">
-		<label for="exportEndDate">по</label>
-		<input id="exportEndDate" name="toDate" type="date"
-			value="<?=date('Y-m-d', strtotime('last day of last month'));?>">
+		<p class="mb-3">Экспортировать задачи, завершённые в период:</p>
+		<div class="row g-3">
+			<div class="col-sm-6">
+				<label for="exportStartDate" class="form-label">С</label>
+				<input id="exportStartDate" name="fromDate" type="text" class="form-control js-date-picker"
+					value="<?=date('Y-m-d', strtotime('first day of last month'));?>"
+					placeholder="дд.мм.гггг" autocomplete="off">
+			</div>
+			<div class="col-sm-6">
+				<label for="exportEndDate" class="form-label">По</label>
+				<input id="exportEndDate" name="toDate" type="text" class="form-control js-date-picker"
+					value="<?=date('Y-m-d', strtotime('last day of last month'));?>"
+					placeholder="дд.мм.гггг" autocomplete="off">
+			</div>
+		</div>
 	</form>
 </article>
