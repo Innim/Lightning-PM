@@ -16,6 +16,15 @@ class IssueCommentType
     const REQUEST_CHANGES = 'request_changes';
 
     /**
+     * Отмеченный баг ({@see REQUEST_CHANGES}), помеченный как решённый
+     * без внесения правок.
+     *
+     * Такой комментарий больше не удерживает за задачей статус наличия бага,
+     * но сохраняет своё описание для истории.
+     */
+    const REQUEST_CHANGES_RESOLVED = 'request_changes_resolved';
+
+    /**
      * Комментарий с MR.
      *
      * Так отмечается любой комментарий, который содержит MR

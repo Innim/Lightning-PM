@@ -198,6 +198,23 @@ $(document).ready(
             }
         });
 
+        $(document).on('click', '.resolve-comment', function () {
+            const id = $(this).data('commentId');
+            const item = $(this).parents('div.comments-list-item');
+            if (!confirm('Отметить баг решённым? Задача перестанет считаться содержащей баг.')) return;
+
+            preloader.show();
+            issuePage.resolveComment(id, function (res) {
+                preloader.hide();
+                if (res) {
+                    item.html(res.html);
+                    comments.updateAttachments($('.comment-text', item));
+                    attachments.update($('.block-with-attachments', item));
+                    initIssueLinkPreviews(item);
+                }
+            });
+        });
+
         // Комментарии -- END
 
         if (!$('#is-moderator').val()) {
@@ -1741,6 +1758,19 @@ issuePage.deleteComment = (id, deleteBranch, callback) => {
         function (res) {
             if (res.success) {
                 callback(true);
+            } else {
+                srv.err(res);
+            }
+        }
+    )
+};
+
+issuePage.resolveComment = (id, callback) => {
+    srv.issue.resolveComment(
+        id,
+        function (res) {
+            if (res.success) {
+                callback(res);
             } else {
                 srv.err(res);
             }

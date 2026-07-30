@@ -280,6 +280,9 @@ let srv = {
         },
         deleteComment: function (id, deleteBranch, onResult) {
             this.s._('deleteComment');
+        },
+        resolveComment: function (commentId, onResult) {
+            this.s._('resolveComment');
         }
     },
     project: {
