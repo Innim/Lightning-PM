@@ -1183,6 +1183,10 @@ SQL;
 
         $obj->url = $this->getConstURL();
         $obj->formattedDesc = $this->getDesc();
+        // Дата завершения в ISO (ГГГГ-ММ-ДД) для подстановки в поле формы —
+        // форматируется на сервере, чтобы клиент не пересчитывал её из таймстампа
+        // (иначе возможен сдвиг на день из-за часового пояса браузера).
+        $obj->completeDateInput = $this->getCompleteDate4Input();
 
         return $obj;
     }
