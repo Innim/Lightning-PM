@@ -20,6 +20,16 @@ X-LPM-API-Key: lpm_u123_...
 
 The same auth works for protected issue file URLs returned by the API.
 
+## Listing projects
+
+List projects available to the authenticated user:
+
+```http
+GET /api/v1/projects
+```
+
+Add `?archive=1` to list archived projects instead of active ones. Each item has the shape `{id, uid, name, url, scrum}`. Moderators receive every project; other users receive only the projects they are members of.
+
 ## Core workflow
 
 1. Resolve a pasted issue URL:
@@ -112,6 +122,7 @@ The response returns the created issue payload (same shape as `GET /api/v1/issue
 
 ## Scope of v1
 
+- List projects available to the user.
 - Read issue details by URL or issue id.
 - Read comments, images, and files.
 - List repositories and branches available to the user in GitLab integration.
