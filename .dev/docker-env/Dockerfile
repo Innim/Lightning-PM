@@ -35,6 +35,7 @@ RUN docker-php-ext-configure gd --with-freetype-dir --with-jpeg-dir \
         ldap \
         mbstring \
         mysqli \
+        opcache \
         pspell \
         xml \
         xsl \
