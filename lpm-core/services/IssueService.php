@@ -253,6 +253,26 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Возвращает текст описания задачи для предпросмотра.
+     *
+     * Описание не сохраняется в БД.
+     */
+    public function previewIssueDesc($text)
+    {
+        try {
+            $html = $this->getHtml(function () use ($text) {
+                echo HTMLHelper::htmlTextForIssue($text);
+            });
+
+            $this->add2Answer('html', $html);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Отмечает что задача влита в develop.
      * @param  int $issueId Идентификатор задачи.
      * @param  bool $complete true если надо также завершить задачу.

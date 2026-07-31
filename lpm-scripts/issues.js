@@ -57,6 +57,9 @@ $(document).ready(
                     if (marker) insertFormattingMarker(input, marker, a.data('single'));
                 }
             }
+
+            // Programmatic edits don't fire a native input event — notify listeners.
+            input.trigger('input');
         });
 
         // Insert standard description template
@@ -80,6 +83,7 @@ $(document).ready(
                         el.selectionStart = el.selectionEnd = caret;
                     }
                 } catch (_) { /* ignore caret errors */ }
+                $field.trigger('input');
                 return;
             }
 
@@ -116,7 +120,20 @@ $(document).ready(
                     el.selectionStart = el.selectionEnd = caretPos;
                 }
             } catch (_) { /* ignore caret errors */ }
+            $field.trigger('input');
         });
+
+        // Toggle between description editor and rendered Markdown preview
+        $('#issueForm .toggle-desc-preview').on('click', function () {
+            issuePage.toggleDescPreview($('#issueForm'));
+            this.blur();
+        });
+
+        // Live character counter in the editor status bar
+        $('#issueForm').on('input', 'textarea[name=desc]', function () {
+            issuePage.updateDescCounter($('#issueForm'));
+        });
+        issuePage.updateDescCounter($('#issueForm'));
 
         // Keyboard shortcut: Ctrl/Cmd + Shift + M
         $('#issueForm textarea[name=desc]').on('keydown', function (e) {
@@ -1297,6 +1314,80 @@ issuePage.previewComment = function (tabs) {
             srv.err(res);
         }
     });
+};
+
+// Switches the issue description field between the editor and a rendered
+// Markdown preview, requesting the HTML from the server on each switch.
+issuePage.toggleDescPreview = function ($form) {
+    const $editor = $('.desc-editor', $form);
+    const $preview = $('.preview-desc', $form);
+    const $toggleBtn = $('.toggle-desc-preview', $form);
+    // Formatting controls make no sense while previewing — hide them.
+    const $editControls = $('.desc-toolbar .btn-group, .apply-desc-template', $form);
+
+    if (!$preview.hasClass('d-none')) {
+        issuePage.resetDescPreview($form);
+        return;
+    }
+
+    const text = $('textarea[name=desc]', $editor).val();
+    // Keep the card height stable across the swap so the page doesn't jump.
+    const editorHeight = $editor.outerHeight();
+    $editor.addClass('d-none');
+    $editControls.addClass('d-none');
+    $('.desc-preview-title', $form).removeClass('d-none');
+    $preview.css('min-height', editorHeight + 'px').removeClass('d-none').empty().append(preloader.getNewIndicatorMedium());
+    $toggleBtn.html('<i class="fas fa-pen me-1"></i>Редактор').attr('title', 'Вернуться к редактированию');
+
+    srv.issue.previewIssueDesc(text, (res) => {
+        if (res.success) {
+            $preview.html(res.html);
+            initIssueLinkPreviews($preview);
+        } else {
+            srv.err(res);
+        }
+    });
+};
+
+// Returns the description field to the editor state (used on toggle back and
+// whenever the form is (re)populated).
+issuePage.resetDescPreview = function ($form) {
+    $('.preview-desc', $form).css('min-height', '').addClass('d-none').empty();
+    $('.desc-editor', $form).removeClass('d-none');
+    $('.desc-preview-title', $form).addClass('d-none');
+    $('.desc-toolbar .btn-group, .apply-desc-template', $form).removeClass('d-none');
+    $('.toggle-desc-preview', $form)
+        .html('<i class="fas fa-eye me-1"></i>Предпросмотр')
+        .attr('title', 'Предпросмотр');
+};
+
+// Refreshes the editor status bar: word count and character counter
+// (used / total), tinting the latter as the description nears the limit.
+issuePage.updateDescCounter = function ($form) {
+    const $field = $('textarea[name=desc]', $form);
+    if (!$field.length) {
+        return;
+    }
+
+    const value = $field.val() || '';
+    const max = parseInt($field.attr('maxlength'), 10) || 0;
+    const used = value.length;
+    const words = (value.match(/\S+/g) || []).length;
+    // Rough silent-reading estimate at ~200 words per minute.
+    const readMinutes = words === 0 ? 0 : Math.ceil(words / 200);
+
+    $('.desc-words-counter .words', $form).text(words.toLocaleString('ru-RU'));
+    $('.desc-read-time .value', $form).text(words === 0 ? '0 мин' : '~' + readMinutes + ' мин');
+
+    const $counter = $('.desc-chars-counter', $form);
+    $('.used', $counter).text(used.toLocaleString('ru-RU'));
+
+    $counter.removeClass('text-warning text-danger');
+    if (max && used >= max) {
+        $counter.addClass('text-danger');
+    } else if (max && max - used <= 1000) {
+        $counter.addClass('text-warning');
+    }
 };
 
 issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSuccess) {

@@ -239,6 +239,9 @@ let srv = {
         previewComment: function (text, onResult) {
             this.s._('previewComment');
         },
+        previewIssueDesc: function (text, onResult) {
+            this.s._('previewIssueDesc');
+        },
         merged: function (issueId, complete, onResult) {
             this.s._('merged');
         },

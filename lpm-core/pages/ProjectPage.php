@@ -385,7 +385,6 @@ class ProjectPage extends LPMPage
             'issue-form',
             'formatting',
             'libs/tribute',
-            'libs/character-counter',
         ];
     }
 
