@@ -18,3 +18,4 @@ lpm-libs/test/
 jsconfig.json
 .dev-env
 .env
+.claude/worktrees
