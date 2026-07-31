@@ -228,6 +228,7 @@ $(document).ready(
                     comments.updateAttachments($('.comment-text', item));
                     attachments.update($('.block-with-attachments', item));
                     initIssueLinkPreviews(item);
+                    highlightCodeBlocks(item);
                 }
             });
         });
@@ -1310,6 +1311,7 @@ issuePage.previewComment = function (tabs) {
             comments.updateAttachments($('.comment-text', previewItem));
             attachments.update($('.block-with-attachments', previewItem));
             initIssueLinkPreviews(previewItem);
+            highlightCodeBlocks(previewItem);
         } else {
             srv.err(res);
         }
@@ -1343,6 +1345,7 @@ issuePage.toggleDescPreview = function ($form) {
         if (res.success) {
             $preview.html(res.html);
             initIssueLinkPreviews($preview);
+            highlightCodeBlocks($preview);
         } else {
             srv.err(res);
         }
@@ -1462,6 +1465,7 @@ issuePage.addComment = function (comment, html) {
     comments.updateAttachments($('.comment-text', newItem));
     attachments.update($('.block-with-attachments', newItem));
     initIssueLinkPreviews(newItem);
+    highlightCodeBlocks(newItem);
 
     comments.hideCommentForm();
 

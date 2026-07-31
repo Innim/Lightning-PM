@@ -56,6 +56,26 @@ function initIssueLinkPreviews(root) {
     });
 }
 
+/**
+ * Apply highlight.js to every code block inside `root`.
+ *
+ * hljs.initHighlightingOnLoad() (see lightning.js) only runs once at page load,
+ * so code blocks in dynamically inserted content (e.g. the comment / description
+ * Markdown preview) are never highlighted. Call this on such content so fenced
+ * code with a language (```dart) is highlighted the same as saved text.
+ *
+ * @param {Element|Document|jQuery} [root=document] container to scan
+ */
+function highlightCodeBlocks(root) {
+    if (typeof hljs === 'undefined' || !hljs) {
+        return;
+    }
+
+    $(root || document).find('pre code').each(function () {
+        hljs.highlightBlock(this);
+    });
+}
+
 $(function ($) {
     initIssueLinkPreviews(document);
 });
