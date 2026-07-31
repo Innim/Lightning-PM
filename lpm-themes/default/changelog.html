@@ -5,6 +5,7 @@
         string version  - номер версии
         string date     - дата выпуска (может быть пустой)
         string slug      - идентификатор якоря
+        string url       - абсолютная ссылка на версию с якорем
         array  sections  - секции версии, каждая:
             string title - заголовок секции (может быть пустым)
             string badge - Bootstrap-классы бейджа
@@ -25,6 +26,14 @@
         <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2 py-3">
           <div class="d-flex align-items-center gap-2">
             <h2 class="h5 mb-0">Версия <?=htmlspecialchars($entry['version']);?></h2>
+            <a href="#<?=htmlspecialchars($entry['slug']);?>"
+               class="text-muted opacity-50 lh-1 text-decoration-none"
+               data-copy="<?=htmlspecialchars($entry['url']);?>"
+               data-copy-toast="Ссылка на версию скопирована"
+               aria-label="Скопировать ссылку на версию и перейти к ней"
+               title="Скопировать ссылку на версию">
+              <i class="fa-solid fa-link"></i>
+            </a>
             <?php if ($entry['version'] === VERSION): ?>
               <span class="badge bg-success">текущая</span>
             <?php endif; ?>

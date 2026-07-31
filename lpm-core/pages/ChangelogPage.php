@@ -29,7 +29,13 @@ class ChangelogPage extends LPMPage
             return false;
         }
 
-        $this->addTmplVar('entries', ChangelogParser::parse());
+        $entries = ChangelogParser::parse();
+        foreach ($entries as &$entry) {
+            $entry['url'] = Link::getUrl(self::UID, [], $entry['slug']);
+        }
+        unset($entry);
+
+        $this->addTmplVar('entries', $entries);
 
         return $this;
     }
