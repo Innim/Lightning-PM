@@ -14,5 +14,40 @@ RewriteRule ^([a-zA-Z_0-9\-/]+)?(/.*)?$ index.php?route=$1&%{QUERY_STRING}
 RewriteRule ^[a-zA-Z/\_0-9/\-]{0,}(lpm\-libs/flash2php/gateway\.php){1}$ $1
 #RewriteRule ^[a-zA-Z/\_0-9/\-]{0,}(_private/.*)$ $1
 
-SetEnv force-no-vary
-SetEnv downgrade-1.0
+# --- Static asset compression & caching ---
+# CSS/JS are versioned via a ?<hash> query param (PageConstructor::_versionParam),
+# so they are safe to cache far-future; the hash changes on each release.
+
+<IfModule mod_mime.c>
+	# Serve JS (incl. ES modules) with a JS MIME type so module loading works
+	AddType text/javascript .js .mjs
+	AddType image/svg+xml .svg
+</IfModule>
+
+<IfModule mod_deflate.c>
+	AddOutputFilterByType DEFLATE \
+		text/html text/plain text/xml text/css \
+		text/javascript application/javascript application/x-javascript \
+		application/json application/xml image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+	ExpiresActive On
+	# Versioned assets (cache-busted on release)
+	ExpiresByType text/css               "access plus 1 year"
+	ExpiresByType text/javascript        "access plus 1 year"
+	ExpiresByType application/javascript "access plus 1 year"
+	# Fonts
+	ExpiresByType font/woff2             "access plus 1 year"
+	ExpiresByType font/woff              "access plus 1 year"
+	ExpiresByType application/font-woff  "access plus 1 year"
+	ExpiresByType font/ttf               "access plus 1 year"
+	ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
+	# Images (not query-versioned) — shorter horizon
+	ExpiresByType image/svg+xml          "access plus 1 month"
+	ExpiresByType image/png              "access plus 1 month"
+	ExpiresByType image/jpeg             "access plus 1 month"
+	ExpiresByType image/gif              "access plus 1 month"
+	ExpiresByType image/webp             "access plus 1 month"
+	ExpiresByType image/x-icon           "access plus 1 week"
+</IfModule>

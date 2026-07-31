@@ -325,6 +325,8 @@ let issueForm = {
         }
 
         $("#issueForm form textarea[name=desc]").val(value.desc);
+        issuePage.resetDescPreview($("#issueForm"));
+        issuePage.updateDescCounter($("#issueForm"));
 
         var imgsCount = 0
 

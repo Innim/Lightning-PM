@@ -148,7 +148,7 @@ class GitlabExternalApi extends ExternalApi
             $user = $this->getUser($data);
             if (!empty($user)) {
                 if ($objectAttributes['action'] == 'open') {
-                    $this->onMROpen($user, $mr);
+                    $this->onMROpen($user, $mr, $data['project']['name'] ?? null);
                 }
             }
         }
@@ -183,7 +183,7 @@ class GitlabExternalApi extends ExternalApi
         }
     }
 
-    private function onMROpen(User $user, GitlabMergeRequest $mr)
+    private function onMROpen(User $user, GitlabMergeRequest $mr, $repositoryName = null)
     {
         // Открыли новый MR - попробуем найти задачи, которые привязаны
         $issueIds = IssueBranch::loadIssueIdsForBranch($mr->sourceProjectId, $mr->sourceBranch);
@@ -211,12 +211,23 @@ class GitlabExternalApi extends ExternalApi
                     // Связываем
                     IssueMR::createByMr($issueId, $mr);
 
-                    // Добавляем коммент со ссылкой на MR в задачу
-                    $commentText = $mr->url;
+                    // Добавляем коммент со ссылкой на MR в задачу:
+                    // заголовок с репозиторием, ветки, описание MR и ссылка
+                    $commentParts = [];
+
+                    if (!empty($repositoryName)) {
+                        $commentParts[] = '### ' . $repositoryName;
+                    }
+
+                    $commentParts[] = '`' . $mr->sourceBranch . ' → ' . $mr->targetBranch . '`';
 
                     if (!empty($mr->description)) {
-                        $commentText = $mr->description . "\n\n" . $commentText;
+                        $commentParts[] = $mr->description;
                     }
+
+                    $commentParts[] = $mr->url;
+
+                    $commentText = implode("\n\n", $commentParts);
 
                     $engine->comments()->postComment(
                         $user,
