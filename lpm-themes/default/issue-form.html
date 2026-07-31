@@ -228,37 +228,52 @@ $isHidden = !empty($isHidden)
                             <i class="fas fa-code"></i><span class="ms-1">{ }</span>
                         </button>
                     </div>
-                    <div>
+                    <h6 class="desc-preview-title d-none mb-0">Предпросмотр описания</h6>
+                    <div class="d-flex gap-2 ms-auto">
                         <button type="button" class="btn btn-sm btn-outline-secondary apply-desc-template" title="Вставить стандартный шаблон описания (Ctrl + Shift + M)">
                             <i class="fas fa-file-lines me-1"></i>Шаблон описания
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary toggle-desc-preview" title="Предпросмотр">
+                            <i class="fas fa-eye me-1"></i>Предпросмотр
                         </button>
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <textarea id="descField" placeholder="Описание" class="form-control desc count-chars rounded-0 border-0 border-bottom" name="desc"
-                            maxlength="<?=$descMaxLen;?>" rows="10" aria-describedby="descFieldHelp"
-                            data-chars-max="<?=$descMaxLen;?>" data-msg-color="warning"></textarea>
+                    <div class="desc-editor">
+                        <textarea id="descField" placeholder="Описание" class="form-control desc rounded-0 border-0 border-bottom" name="desc"
+                                maxlength="<?=$descMaxLen;?>" rows="10" aria-describedby="descFieldHelp"></textarea>
 
-                    <div id="descFieldHelp" class="form-text tags-line mt-2 px-2 pb-2 text-muted">
-                        <p class="pt-0 mt-0">Вы можете использовать <a
-                                href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи:
-                            <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*"
-                                title="Ctrl + B">*жирный*</a>,
-                            <a class="tag" href="javascript:void(0)" style="font-style: italic;" data-marker="_"
-                                title="Ctrl + I">_курсив_</a>,
-                            <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-marker="__"
-                                title="Ctrl + U">__подчеркнутый__</a>, 
-                            <a class="tag" href="javascript:void(0)"
-                                style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>, 
-                            <a class="tag h6 small" href="javascript:void(0)" title="Ctrl + H"
-                                data-single="1" data-marker="### ">### Заголовок</a>, 
-                            <span class="tag quote" title="Ctrl + G">&gt; цитата</span>, 
-                            <a class="tag" href="javascript:void(0)"
-                        style="text-decoration:underline;" data-type="link" title="Ctrl + K">[ссылка](url)</a>.</p>
-                    <p class="pb-0 mb-0">Также используйте <kbd>`</kbd> для строчного кода и <kbd>```</kbd> для
-                        многострочного (можно указать язык: dart, js, php и тд, добавляется сразу после открывающих кавычек,
-                        требуется перенос строки).</p>
+                        <div id="descFieldHelp" class="form-text tags-line px-2 py-2 mt-0 mb-0 text-muted">
+                            <p class="pt-0 mt-0">Вы можете использовать <a
+                                    href="https://ru.wikipedia.org/wiki/Markdown">Markdown</a> и Slack разметку в описании задачи:
+                                <a class="tag" href="javascript:void(0)" style="font-weight: bold;" data-marker="*"
+                                    title="Ctrl + B">*жирный*</a>,
+                                <a class="tag" href="javascript:void(0)" style="font-style: italic;" data-marker="_"
+                                    title="Ctrl + I">_курсив_</a>,
+                                <a class="tag" href="javascript:void(0)" style="text-decoration:underline;" data-marker="__"
+                                    title="Ctrl + U">__подчеркнутый__</a>,
+                                <a class="tag" href="javascript:void(0)"
+                                    style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>,
+                                <a class="tag h6 small" href="javascript:void(0)" title="Ctrl + H"
+                                    data-single="1" data-marker="### ">### Заголовок</a>,
+                                <span class="tag quote" title="Ctrl + G">&gt; цитата</span>,
+                                <a class="tag" href="javascript:void(0)"
+                            style="text-decoration:underline;" data-type="link" title="Ctrl + K">[ссылка](url)</a>.</p>
+                            <p class="pb-0 mb-0">Также используйте <kbd>`</kbd> для строчного кода и <kbd>```</kbd> для
+                                многострочного (можно указать язык: dart, js, php и тд, добавляется сразу после открывающих кавычек,
+                                требуется перенос строки).</p>
+                        </div>
+
+                        <div class="desc-editor-status d-flex justify-content-between align-items-center bg-light border-top px-2 py-1 small text-muted">
+                            <span class="d-flex gap-3">
+                                <span class="desc-words-counter">Слов: <span class="words">0</span></span>
+                                <span class="desc-read-time">Чтение: <span class="value">0 мин</span></span>
+                            </span>
+                            <span class="desc-chars-counter">Символов: <span class="used">0</span> / <?=number_format($descMaxLen, 0, '', ' ');?></span>
+                        </div>
                     </div>
+
+                    <div class="preview-desc formatted-desc text-with-attachments p-3 d-none"></div>
                 </div>
             </div>
         </div>
