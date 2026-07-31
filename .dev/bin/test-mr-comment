@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+#
+# Local end-to-end test for the GitLab merge_request "open" webhook handler
+# (GitlabExternalApi::onMROpen) — the code that auto-adds an MR-link comment
+# to a linked issue.
+#
+# It fires a crafted webhook at /api/gitlab/, prints the auto-generated issue
+# comment, and leaves it on the issue so you can also view it in the UI. Each
+# run first clears the previous run's rows, so it never accumulates and stays
+# fully repeatable — re-run after any change to the comment format.
+#
+# Usage:
+#   .dev/bin/test-mr-comment              # auto-pick a target, add + show the comment (kept for the UI)
+#   .dev/bin/test-mr-comment --clean      # remove the test comment afterwards, leaving the DB pristine
+#   .dev/bin/test-mr-comment --issue 25445  # target a specific (linked, in-work) issue
+#
+# Reads local settings at runtime from .dev/docker-env/.env and lpm-config.inc.php,
+# so no secrets are stored here. Override the DB container via LPM_DB_CONTAINER.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ENV_FILE="$REPO_ROOT/.dev/docker-env/.env"
+CONFIG_FILE="$REPO_ROOT/lpm-config.inc.php"
+DB_CONTAINER="${LPM_DB_CONTAINER:-lightning-pm-db-1}"
+
+# Fixed markers for this test — used to find and clean up our own rows.
+MR_ID=999999999
+MR_IID=999999
+MR_URL="https://gitlab.example.com/group/repo/-/merge_requests/$MR_IID"
+
+cfg()  { grep -m1 "^define('$1'" "$CONFIG_FILE" | sed -E "s/.*,[[:space:]]*'([^']*)'.*/\1/"; }
+envv() { grep -m1 "^$1=" "$ENV_FILE" | cut -d'"' -f2; }
+
+APP_PORT="$(envv APP_PORT)"
+DB_PASS="$(envv MYSQL_ROOT_PASSWORD)"
+DB_NAME="$(cfg DB_NAME)"
+HOOK_TOKEN="$(cfg GITLAB_HOOK_TOKEN)"
+SITE_URL="$(cfg SITE_URL)"
+
+db() { docker exec -i "$DB_CONTAINER" mysql -uroot -p"$DB_PASS" "$DB_NAME" -N --default-character-set=utf8mb4 2>/dev/null; }
+# Raw variant (-r): no backslash-escaping, so newlines in the comment print literally.
+dbraw() { docker exec -i "$DB_CONTAINER" mysql -uroot -p"$DB_PASS" "$DB_NAME" -N -r --default-character-set=utf8mb4 2>/dev/null; }
+
+CLEAN=0; ISSUE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --clean) CLEAN=1; shift;;
+    --issue) ISSUE="$2"; shift 2;;
+    *) echo "unknown arg: $1" >&2; exit 1;;
+  esac
+done
+
+cleanup() {
+  db <<SQL
+DELETE ic FROM lpm_issue_comment ic JOIN lpm_comments c ON c.id = ic.commentId WHERE c.text LIKE '%/merge_requests/$MR_IID%';
+DELETE FROM lpm_comments WHERE text LIKE '%/merge_requests/$MR_IID%';
+DELETE FROM lpm_issue_mr WHERE mrId = $MR_ID;
+SQL
+}
+
+# Remove leftovers from a previous run first, so the MR is not seen as "already added".
+cleanup
+
+# Pick a target: an in-work (0) or in-test (1) issue that already has a linked branch.
+if [[ -z "$ISSUE" ]]; then
+  read -r ISSUE REPO BRANCH < <(db <<SQL
+SELECT b.issueId, b.repositoryId, b.name
+FROM lpm_issue_branch b JOIN lpm_issues i ON i.id = b.issueId
+WHERE i.status IN (0, 1)
+ORDER BY b.issueId DESC LIMIT 1;
+SQL
+) || true
+else
+  read -r REPO BRANCH < <(db <<SQL
+SELECT b.repositoryId, b.name FROM lpm_issue_branch b WHERE b.issueId = $ISSUE LIMIT 1;
+SQL
+) || true
+fi
+
+if [[ -z "${ISSUE:-}" || -z "${BRANCH:-}" ]]; then
+  echo "No suitable linked in-work/in-test issue found. Pass --issue <id> for one that has a row in lpm_issue_branch." >&2
+  exit 1
+fi
+
+# Author must be a user with a gitlab token, otherwise getUser() returns null and nothing happens.
+AUTHOR_EMAIL="$(db <<SQL
+SELECT email FROM lpm_users WHERE gitlabToken IS NOT NULL AND gitlabToken <> '' LIMIT 1;
+SQL
+)"
+
+# Real issue page URL is project-scoped and uses idInProject, not the global id
+# (mirrors Issue::getConstURLBy: SITE_URL + project/<projectUID>/issue/<idInProject>).
+read -r PROJECT_UID ID_IN_PROJECT < <(db <<SQL
+SELECT p.uid, i.idInProject FROM lpm_issues i JOIN lpm_projects p ON p.id = i.projectId WHERE i.id = $ISSUE LIMIT 1;
+SQL
+) || true
+ISSUE_URL="${SITE_URL%/}/project/$PROJECT_UID/issue/$ID_IN_PROJECT"
+
+echo "Target : issue #$ISSUE ($ISSUE_URL), repo $REPO, branch '$BRANCH'"
+echo "Author : $AUTHOR_EMAIL"
+
+PAYLOAD=$(cat <<JSON
+{
+  "event_type": "merge_request",
+  "object_kind": "merge_request",
+  "user": { "id": 0, "email": "$AUTHOR_EMAIL" },
+  "project": { "id": $REPO, "name": "My Cool Repo" },
+  "object_attributes": {
+    "id": $MR_ID, "iid": $MR_IID, "action": "open", "state": "opened",
+    "web_url": "$MR_URL",
+    "source_branch": "$BRANCH", "target_branch": "develop",
+    "source_project_id": $REPO, "target_project_id": 999999999,
+    "description": "Тестовое описание MR для проверки формата комментария."
+  }
+}
+JSON
+)
+
+echo "POST     http://localhost:$APP_PORT/api/gitlab/"
+RESP="$(curl -sS -X POST "http://localhost:$APP_PORT/api/gitlab/" \
+  -H 'Content-Type: application/json' \
+  -H "X-Gitlab-Token: $HOOK_TOKEN" \
+  --data-binary "$PAYLOAD")"
+echo "Response: ${RESP:-<empty>}  (empty = OK; a GitLab 404 for the back-note is expected — target_project_id is deliberately nonexistent)"
+
+echo
+echo "----- generated comment -----"
+dbraw <<SQL
+SELECT text FROM lpm_comments WHERE text LIKE '%/merge_requests/$MR_IID%' ORDER BY id DESC LIMIT 1;
+SQL
+echo "-----------------------------"
+
+if [[ "$CLEAN" -eq 1 ]]; then
+  cleanup
+  echo "(removed test rows — drop --clean to keep the comment for the UI)"
+else
+  echo "(kept in the DB — open $ISSUE_URL  (the next run replaces it) )"
+fi
