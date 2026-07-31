@@ -335,7 +335,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
             <input type="hidden" name="revision" value="<?=$issue->revision;?>" />
             <button class="btn btn-secondary restore-btn" onclick="restoreIssue(event);">Открыть</button>
-            <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true)): ?>
+            <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true) || lpm_get_user()->isModerator()): ?>
             <button class="btn btn-primary verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
             <?php endif ?>
             <button class="btn btn-success complete-btn" onclick="completeIssue(event);">Завершить</button>
