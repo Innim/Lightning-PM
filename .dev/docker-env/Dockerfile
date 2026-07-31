@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable required Apache modules
-RUN a2enmod rewrite headers
+RUN a2enmod rewrite headers deflate expires
 
 # Copy custom configurations
 COPY config/etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf
