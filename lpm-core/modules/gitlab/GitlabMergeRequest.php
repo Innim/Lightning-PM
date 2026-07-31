@@ -71,6 +71,15 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
      */
     public $mergedAt;
 
+    /**
+     * Является ли MR черновиком (Draft).
+     *
+     * У черновика состояние остаётся {@see self::STATE_OPENED},
+     * это отдельный признак незавершённости.
+     * @var bool
+     */
+    public $draft;
+
     private $_data;
 
     public function __construct($data)
@@ -87,6 +96,7 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
         parent::initTypes();
 
         $this->_int('id', 'internalId');
+        $this->_bool('draft');
 
         $this->mergedAt = new \GMFramework\Date();
 
@@ -112,5 +122,10 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
     public function isClosed()
     {
         return $this->state === self::STATE_CLOSED;
+    }
+
+    public function isDraft()
+    {
+        return $this->isOpened() && $this->draft;
     }
 }

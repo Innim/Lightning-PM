@@ -257,11 +257,15 @@ const comments = {
 					if (res.success) {
 						if (res.data) {
 							const mr = res.data;
-							const icon = comments.mrStateIcons[mr.state];
-							$el.attr('class', `merge-request ${mr.state}`)
+							const isDraft = mr.draft && mr.state === 'opened';
+							const icon = isDraft ? 'fa-pencil' : comments.mrStateIcons[mr.state];
+							$el.attr('class', `merge-request ${mr.state}` + (isDraft ? ' draft' : ''))
 								.empty()
 								.append('<i class="state-icon fas ' + icon + '"></i>')
 								.append('MR <a href="' + mr.url + '">!' + mr.internalId + '</a>');
+							if (isDraft) {
+								$el.append(' <span class="badge bg-secondary text-white ms-1">Draft</span>');
+							}
 							if (mr.mergedAt) {
 								$el.append(' <span class="merged-at small" title="Дата влития">(<i class="fas fa-code-pull-request" ></i> ' + lpm.format.date(mr.mergedAt) + ')</span>');
 							}
