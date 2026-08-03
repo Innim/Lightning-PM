@@ -500,12 +500,40 @@ var messages = {
         }
     },
     alert: function (text) {
-        alert(text);
+        lpm.dialog.show({
+            // Экранируем: text вставляется как HTML, а сообщение может содержать
+            // произвольные (в т.ч. серверные) данные.
+            text: $('<span>').text(text == null ? '' : text).html(),
+            primaryBtn: 'OK',
+            secondaryBtn: null,
+        });
     }
 };
 
 lpm.dialog = {
+    // Открыто ли сейчас модальное окно (в т.ч. в процессе закрытия).
+    _isOpen: false,
+    // Окна, запрошенные пока открыто другое: покажем их по очереди.
+    _queue: [],
     show: function (options) {
+        // Шаблон #dynamicModal выводится в конце body. Если show вызван из inline-скрипта
+        // во время парсинга страницы (например, showError с серверной ошибкой), шаблона
+        // ещё нет в DOM — откладываем показ до готовности документа.
+        if (document.readyState === 'loading' && document.getElementById('dynamicModal') === null) {
+            $(function () { lpm.dialog.show(options); });
+            return;
+        }
+
+        // Bootstrap 5.1.3 не поддерживает одновременно открытые модальные окна
+        // (у второго ломается блокировка прокрутки фона). Поэтому показываем окна
+        // строго по одному: если уже открыто — ставим в очередь и покажем следующее
+        // по событию закрытия текущего.
+        if (lpm.dialog._isOpen) {
+            lpm.dialog._queue.push(options);
+            return;
+        }
+        lpm.dialog._isOpen = true;
+
         const defaultOptions = {
             title: null,
             text: null,
@@ -588,9 +616,15 @@ lpm.dialog = {
 
         $modalTemplate.on('hidden.bs.modal', function () {
             $modalTemplate.remove();
+            lpm.dialog._isOpen = false;
 
             if (onHidden) {
                 onHidden();
+            }
+
+            // Показать следующее окно из очереди (если onHidden не открыл своё).
+            if (!lpm.dialog._isOpen && lpm.dialog._queue.length > 0) {
+                lpm.dialog.show(lpm.dialog._queue.shift());
             }
         });
 
@@ -927,7 +961,14 @@ function redirectTo(url) {
 }
 
 function showError(error) {
-    alert(error)
+    lpm.dialog.show({
+        title: 'Ошибка',
+        // Текст ошибки может приходить с сервера/из внешних сервисов, поэтому
+        // экранируем его: text вставляется как HTML.
+        text: $('<span>').text(error == null ? '' : error).html(),
+        primaryBtn: 'OK',
+        secondaryBtn: null,
+    });
 }
 
 let parser = {

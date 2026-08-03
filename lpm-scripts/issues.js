@@ -187,9 +187,6 @@ $(document).ready(
         $(document).on('click', '.delete-comment', function () {
             const id = $(this).data('commentId');
             const el = $(this);
-            const result = confirm('Удалить комментарий?');
-            if (!result) return;
-
             const branchName = $(this).data('branchName');
             const doDelete = (alsoDeleteBranch) => {
                 preloader.show();
@@ -201,34 +198,46 @@ $(document).ready(
                 });
             };
 
-            if (branchName) {
-                lpm.dialog.confirm({
-                    title: 'Удаление ветки',
-                    text: `Также удалить ветку <code>${branchName}</code> в репозитории?`,
-                    yesLabel: 'Да',
-                    noLabel: 'Нет',
-                    onYes: function () { doDelete(true); },
-                    onNo: function () { doDelete(false); }
-                });
-            } else {
-                doDelete(false);
-            }
+            lpm.dialog.confirm({
+                text: 'Удалить комментарий?',
+                yesLabel: 'Удалить',
+                onYes: function () {
+                    // Если у комментария есть ветка — отдельным окном уточняем, удалять
+                    // ли и её. Окно откроется после закрытия предыдущего.
+                    if (branchName) {
+                        lpm.dialog.confirm({
+                            title: 'Удаление ветки',
+                            text: `Также удалить ветку <code>${branchName}</code> в репозитории?`,
+                            yesLabel: 'Да',
+                            noLabel: 'Нет',
+                            onYes: function () { doDelete(true); },
+                            onNo: function () { doDelete(false); }
+                        });
+                    } else {
+                        doDelete(false);
+                    }
+                }
+            });
         });
 
         $(document).on('click', '.resolve-comment', function () {
             const id = $(this).data('commentId');
             const item = $(this).parents('div.comments-list-item');
-            if (!confirm('Отметить баг решённым? Задача перестанет считаться содержащей баг.')) return;
-
-            preloader.show();
-            issuePage.resolveComment(id, function (res) {
-                preloader.hide();
-                if (res) {
-                    item.html(res.html);
-                    comments.updateAttachments($('.comment-text', item));
-                    attachments.update($('.block-with-attachments', item));
-                    initIssueLinkPreviews(item);
-                    highlightCodeBlocks(item);
+            lpm.dialog.confirm({
+                text: 'Отметить баг решённым? Задача перестанет считаться содержащей баг.',
+                yesLabel: 'Отметить',
+                onYes: function () {
+                    preloader.show();
+                    issuePage.resolveComment(id, function (res) {
+                        preloader.hide();
+                        if (res) {
+                            item.html(res.html);
+                            comments.updateAttachments($('.comment-text', item));
+                            attachments.update($('.block-with-attachments', item));
+                            initIssueLinkPreviews(item);
+                            highlightCodeBlocks(item);
+                        }
+                    });
                 }
             });
         });
@@ -932,27 +941,31 @@ function completeIssue(e) {
     var issueId = $('input[name=issueId]', parent).val();
     if (issueId <= 0) return
 
-    if (!confirm('Задача будет отмечена как завершенная. Продолжить?')) return;
-
-    preloader.show();
-    srv.issue.complete(
-        issueId,
-        function (res) {
-            //btn.disabled = false;
-            preloader.hide();
-            if (res.success) {
-                if ($('#issuesList').length > 0) {
-                    $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
-                    showMain();
-                } else if ($('#issueView').length > 0) {
-                    setIssueInfo(new Issue(res.issue));
+    lpm.dialog.confirm({
+        text: 'Отметить задачу как завершённую?',
+        yesLabel: 'Завершить',
+        onYes: function () {
+            preloader.show();
+            srv.issue.complete(
+                issueId,
+                function (res) {
+                    //btn.disabled = false;
+                    preloader.hide();
+                    if (res.success) {
+                        if ($('#issuesList').length > 0) {
+                            $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
+                            showMain();
+                        } else if ($('#issueView').length > 0) {
+                            setIssueInfo(new Issue(res.issue));
+                        }
+                        issuePage.updateStat();
+                    } else {
+                        srv.err(res);
+                    }
                 }
-                issuePage.updateStat();
-            } else {
-                srv.err(res);
-            }
+            );
         }
-    );
+    });
 }
 
 issuePage.changePriority = function (e) {
@@ -1098,26 +1111,30 @@ function verifyIssue(e) {
 };
 
 issuePage.removeIssue = function (e) {
-    if (confirm('Вы действительно хотите удалить эту задачу?')) {
-        var btn = e.currentTarget;
-        var issueId = $('input[type=hidden][name=issueId]', btn.parentElement).val();
+    var btn = e.currentTarget;
+    lpm.dialog.confirm({
+        text: 'Вы действительно хотите удалить эту задачу?',
+        yesLabel: 'Удалить',
+        onYes: function () {
+            var issueId = $('input[type=hidden][name=issueId]', btn.parentElement).val();
 
-        preloader.show();
+            preloader.show();
 
-        srv.issue.remove(
-            issueId,
-            function (res) {
-                preloader.hide();
-                if (res.success) {
-                    //window.location.hash = '';
-                    window.location.href = $("#issueView a.back-link").attr('href');
-                    //window.location.reload();
-                } else {
-                    srv.err(res);
+            srv.issue.remove(
+                issueId,
+                function (res) {
+                    preloader.hide();
+                    if (res.success) {
+                        //window.location.hash = '';
+                        window.location.href = $("#issueView a.back-link").attr('href');
+                        //window.location.reload();
+                    } else {
+                        srv.err(res);
+                    }
                 }
-            }
-        );
-    }
+            );
+        }
+    });
 };
 
 issuePage.putStickerOnBoard = function () {
