@@ -85,6 +85,14 @@ function lpm_print_css_links()
 }
 
 /**
+ * Распечатывает inline-скрипт с глобальными настройками клиента (`window.lpmOptions`).
+ */
+function lpm_print_js_options()
+{
+    PagePrinter::jsOptions();
+}
+
+/**
  * Распечатывает ссылки на js файлы
  */
 function lpm_print_scripts()
