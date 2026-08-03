@@ -120,13 +120,20 @@ let issueForm = {
                             secondaryBtn: 'Принудительно перехватить',
                             secondaryBtnClass: 'btn-warning',
                             onSecondary: function () {
-                                setTimeout(function() {
-                                    if (confirm('Вы уверены, что хотите принудительно перехватить задачу? Это может привести к потере данных.')) {
+                                // Дополнительное подтверждение показываем отдельным окном —
+                                // оно откроется после закрытия текущего (см. очередь в lpm.dialog).
+                                // Любой отказ (кнопка «Отмена» или закрытие) вызывает onFail.
+                                lpm.dialog.show({
+                                    title: 'Принудительный перехват',
+                                    text: 'Вы уверены, что хотите принудительно перехватить задачу? Это может привести к потере данных.',
+                                    primaryBtn: 'Перехватить',
+                                    onPrimary: function () {
                                         issueForm.acquireLock(issueId, revision, true, onSuccess, onFail);
-                                    } else {
-                                        if (onFail) onFail();
-                                    }
-                                }, 0);
+                                    },
+                                    secondaryBtn: 'Отмена',
+                                    onSecondary: function () { if (onFail) onFail(); },
+                                    onCancel: function () { if (onFail) onFail(); },
+                                });
                             },
                             onCancel: onFail,
                         });
@@ -672,27 +679,36 @@ let issueForm = {
         var li = $(e.currentTarget).parent('.image-item');
         var imageId = $('input[name=imgId]', li).val();
 
-        if (confirm('Вы действительно хотите удалить это изображение?')) {
-            li.remove();
-            var val = $('#issueForm form input[name=removedImages]').val();
-            if (val != '') val += ',';
-            val += imageId;
-            $('#issueForm form input[name=removedImages]').val(val);
-        }
+        lpm.dialog.confirm({
+            text: 'Вы действительно хотите удалить это изображение?',
+            yesLabel: 'Удалить',
+            onYes: function () {
+                li.remove();
+                var val = $('#issueForm form input[name=removedImages]').val();
+                if (val != '') val += ',';
+                val += imageId;
+                $('#issueForm form input[name=removedImages]').val(val);
+            }
+        });
     },
     removeFile: function (e) {
         const li = $(e.currentTarget).closest('.file-item');
         const fileId = $('.issue-file-id-input', li).val();
+        if (!fileId) return;
 
-        if (fileId && confirm('Вы действительно хотите удалить этот файл?')) {
-            li.remove();
-            let val = $('#issueForm form input[name=removedFiles]').val();
-            if (val !== '') val += ',';
-            val += fileId;
-            $('#issueForm form input[name=removedFiles]').val(val);
-            $('#issueForm .files-list .file-item-upload').show();
-            issueForm.ensureFileUploadSlot();
-        }
+        lpm.dialog.confirm({
+            text: 'Вы действительно хотите удалить этот файл?',
+            yesLabel: 'Удалить',
+            onYes: function () {
+                li.remove();
+                let val = $('#issueForm form input[name=removedFiles]').val();
+                if (val !== '') val += ',';
+                val += fileId;
+                $('#issueForm form input[name=removedFiles]').val(val);
+                $('#issueForm .files-list .file-item-upload').show();
+                issueForm.ensureFileUploadSlot();
+            }
+        });
     },
     initFileUploadTemplate: function () {
         if (issueForm.fileUploadTemplate) return;
