@@ -101,6 +101,8 @@ php composer.phar install
 docker exec -w /var/www/html/lpm-libs/ lightning-pm php composer.phar install
 ```
 
+> **Автозагрузчик работает в авторитетном режиме.** В `composer.json` включены `optimize-autoloader` и `classmap-authoritative`: vendor-классы резолвятся по полной classmap **без обращения к файловой системе**. Команды `install` / `update` / `dump-autoload` автоматически перегенерируют оптимизированную classmap. После любого изменения зависимостей не забудьте **закоммитить** изменённые файлы `lpm-libs/vendor/composer/autoload_*.php` (каталог `vendor/` хранится в репозитории, деплой — вручную из git). Если добавляете vendor-класс вручную, обязательно выполните `php composer.phar dump-autoload` — иначе класс не будет найден.
+
 ### Frontend
 
 В качестве библиотеки стилей используется Bootstrap 5. 

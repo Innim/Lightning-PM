@@ -33,7 +33,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
   - Start: from `.dev/docker-env/` run `docker-compose up` (or `-d`).
   - Rebuild: `docker-compose up --build` if `Dockerfile` changes.
 - Dev helper `.dev/bin/lpm` wraps common container commands (composer, lint, php, exec, shell) so they run against the app's PHP 7.3 with one approval instead of per-command. Prefer it over raw `docker exec`:
-  - Composer: `.dev/bin/lpm composer install` (runs bundled `composer.phar` in `lpm-libs/`).
+  - Composer: `.dev/bin/lpm composer install` (runs bundled `composer.phar` in `lpm-libs/`). The autoloader is **authoritative** (`optimize-autoloader` + `classmap-authoritative` in `composer.json`): vendor classes resolve via a full classmap with NO runtime filesystem fallback. After ANY dependency change (add/update/remove) you MUST regenerate it — `.dev/bin/lpm composer dump-autoload -o -a` — and commit the updated `lpm-libs/vendor/composer/autoload_*.php`; otherwise newly referenced vendor classes silently fail to load. `vendor/` is committed and deploy is manual from git, so the optimized files must be in the commit.
   - Lint: `.dev/bin/lpm lint <repo-relative-path> [...]`.
   - Arbitrary: `.dev/bin/lpm exec <cmd>` / `.dev/bin/lpm php <args>` / `.dev/bin/lpm shell`.
   - Override container/mount via `LPM_CONTAINER` / `LPM_MOUNT` env vars (defaults: `lightning-pm`, `/var/www/html`).
