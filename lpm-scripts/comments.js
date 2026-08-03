@@ -30,17 +30,114 @@ const comments = {
         opened: 'fa-clock',
         closed: 'fa-times-circle',
     },
-    pipelineStateIcons: {
+    // Интервал автообновления незавершенных статусов pipeline/job, мс.
+    gitlabStatusPollMs: 10000,
+    // Базовый набор классов элемента статуса pipeline/job.
+    gitlabStatusItemClass: 'list-group-item py-1 px-1 mt-2 rounded-2 d-flex align-items-center',
+    // Финальные статусы: по их достижении опрос прекращается.
+    finalGitlabStatuses: ['success', 'failed', 'canceled', 'skipped'],
+    // Иконки статусов pipeline/job (наборы статусов у них совпадают).
+    gitlabStateIcons: {
         success: 'fa-check-circle',
         failed: 'fa-times-circle',
         running: 'fa-spinner fa-spin',
         pending: 'fa-clock',
+        waiting_for_resource: 'fa-hourglass-half',
         canceled: 'fa-ban',
         skipped: 'fa-forward',
         manual: 'fa-hand-paper',
         preparing: 'fa-cog fa-spin',
         created: 'fa-clock',
         scheduled: 'fa-calendar'
+    },
+    // Контекстные классы (цвет фона, иконки и бейджа) по статусу pipeline/job.
+    gitlabStatusContexts: {
+        success: { item: 'list-group-item-success', icon: 'text-success', badge: 'badge bg-success' },
+        failed: { item: 'list-group-item-danger', icon: 'text-danger', badge: 'badge bg-danger' },
+        canceled: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
+        skipped: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
+        running: { item: 'list-group-item-info', icon: 'text-info', badge: 'badge bg-info text-dark' },
+        pending: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+        waiting_for_resource: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+        preparing: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+        created: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+        scheduled: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+        manual: { item: 'list-group-item-primary', icon: 'text-primary', badge: 'badge bg-primary' },
+    },
+    isFinalGitlabStatus: function (status) {
+        return comments.finalGitlabStatuses.indexOf(status) !== -1;
+    },
+    // Возвращает иконку, контекстные классы и текст для статуса pipeline/job.
+    gitlabStatusView: function (status) {
+        return {
+            icon: comments.gitlabStateIcons[status] || 'fa-question-circle',
+            ctx: comments.gitlabStatusContexts[status] || { item: '', icon: 'text-muted', badge: 'badge bg-light text-dark' },
+            text: (status || '').replace(/_/g, ' ')
+        };
+    },
+    // Отрисовывает статус Pipeline в элемент $li (перерисовка на месте безопасна).
+    renderPipeline: function ($li, p) {
+        const view = comments.gitlabStatusView(p.status);
+        $li.attr('class', comments.gitlabStatusItemClass).addClass(view.ctx.item)
+            .empty()
+            .append('<i class="fas ' + view.icon + ' me-2 ' + view.ctx.icon + '"></i>')
+            .append('Pipeline <a href="' + p.url + '" class="ms-1">#' + p.id + '</a> ')
+            .append('<span class="' + view.ctx.badge + ' ms-2">' + view.text + '</span>');
+        if (p.ref) {
+            $li.append(' <span class="small text-muted ms-2" title="Ветка/тег"><i class="fas fa-code-branch"></i> ' + p.ref + '</span>');
+        }
+        if (p.finishedAt) {
+            $li.append(' <span class="small text-muted ms-2 fw-bold" title="Дата завершения">(<i class="far fa-calendar-check"></i> ' + lpm.format.date(p.finishedAt) + ')</span>');
+        }
+    },
+    // Отрисовывает статус Job в элемент $li (перерисовка на месте безопасна).
+    renderJob: function ($li, j) {
+        const view = comments.gitlabStatusView(j.status);
+        const name = j.name ? ' <strong>' + $('<span>').text(j.name).html() + '</strong>' : '';
+        // Ведущая иконка-«кубик» отличает джобу от пайплайна с первого взгляда.
+        $li.attr('class', comments.gitlabStatusItemClass).addClass(view.ctx.item)
+            .empty()
+            .append('<i class="fas fa-cube me-2 text-muted" title="Job"></i>')
+            .append('<i class="fas ' + view.icon + ' me-2 ' + view.ctx.icon + '"></i>')
+            .append('<span>Job' + name + '</span>')
+            .append('<a href="' + j.url + '" class="ms-1">#' + j.id + '</a> ')
+            .append('<span class="' + view.ctx.badge + ' ms-2">' + view.text + '</span>');
+        if (j.stage) {
+            $li.append(' <span class="small text-muted ms-2" title="Стадия"><i class="fas fa-layer-group"></i> ' + $('<span>').text(j.stage).html() + '</span>');
+        }
+        if (j.finishedAt) {
+            $li.append(' <span class="small text-muted ms-2 fw-bold" title="Дата завершения">(<i class="far fa-calendar-check"></i> ' + lpm.format.date(j.finishedAt) + ')</span>');
+        }
+    },
+    // Загружает статус pipeline/job в $li и, пока он не финальный, периодически
+    // обновляет его на месте (без перезагрузки страницы). fetch(onResult) выполняет
+    // запрос, render($li, data) отрисовывает результат.
+    watchGitlabStatus: function ($li, fetch, render, notFoundText) {
+        let rendered = false;
+        const poll = function () {
+            fetch(function (res) {
+                // Блок удален из DOM (комментарии перерисованы) — прекращаем опрос.
+                if (!$li.closest('body').length) return;
+
+                if (res.success) {
+                    if (res.data) {
+                        render($li, res.data);
+                        rendered = true;
+                        if (!comments.isFinalGitlabStatus(res.data.status)) {
+                            setTimeout(poll, comments.gitlabStatusPollMs);
+                        }
+                    } else {
+                        $li.remove();
+                    }
+                } else if (rendered) {
+                    // Временная ошибка при обновлении — оставляем прошлые данные, пробуем снова.
+                    setTimeout(poll, comments.gitlabStatusPollMs);
+                } else {
+                    $li.empty().text(typeof res.error != 'undefined' ? res.error : notFoundText);
+                }
+            });
+        };
+        poll();
     },
 	init: function () {
 		const storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
@@ -236,6 +333,7 @@ const comments = {
 
         let mrs = [];
         let pipelines = [];
+        let jobs = [];
 
         for (var i = 0; i < urls.length; i++) {
             let url = urls[i];
@@ -243,6 +341,8 @@ const comments = {
                 mrs.push(url);
             } else if (parser.isPipelineUrl(url)) {
                 pipelines.push(url);
+            } else if (parser.isJobUrl(url)) {
+                jobs.push(url);
             }
         }
 
@@ -283,51 +383,26 @@ const comments = {
         if (pipelines.length > 0) {
             const $ul = $('.pipelines', $item.parent('.formatted-desc'));
             pipelines.forEach(function (url) {
-                const $li = $(document.createElement('li')).addClass('list-group-item py-1 px-1 mt-2 rounded-2 d-flex align-items-center');
+                const $li = $(document.createElement('li')).addClass(comments.gitlabStatusItemClass);
                 $ul.append($li);
 
                 $li.append(preloader.getNewIndicatorSmall());
-                srv.attachments.getPipelineInfo(url, function (res) {
-                    if (res.success) {
-                        if (res.data) {
-                            const p = res.data;
-                            const icon = comments.pipelineStateIcons[p.status] || 'fa-question-circle';
+                comments.watchGitlabStatus($li, function (onResult) {
+                    srv.attachments.getPipelineInfo(url, onResult);
+                }, comments.renderPipeline, 'Не удалось получить данные Pipeline.');
+            });
+        }
 
-                            // map status to contextual classes
-                            const ctxMap = {
-                                success: { item: 'list-group-item-success', icon: 'text-success', badge: 'badge bg-success' },
-                                failed: { item: 'list-group-item-danger', icon: 'text-danger', badge: 'badge bg-danger' },
-                                canceled: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
-                                skipped: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
-                                running: { item: 'list-group-item-info', icon: 'text-info', badge: 'badge bg-info text-dark' },
-                                pending: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
-                                preparing: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
-                                created: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
-                                scheduled: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
-                                manual: { item: 'list-group-item-primary', icon: 'text-primary', badge: 'badge bg-primary' },
-                            };
-                            const ctx = ctxMap[p.status] || { item: '', icon: 'text-muted', badge: 'badge bg-light text-dark' };
-                            const statusText = (p.status || '').replace(/_/g, ' ');
+        if (jobs.length > 0) {
+            const $ul = $('.jobs', $item.parent('.formatted-desc'));
+            jobs.forEach(function (url) {
+                const $li = $(document.createElement('li')).addClass(comments.gitlabStatusItemClass);
+                $ul.append($li);
 
-                            $li.addClass(ctx.item)
-                                .empty()
-                                .append('<i class="fas ' + icon + ' me-2 ' + ctx.icon + '"></i>')
-                                .append('Pipeline <a href="' + p.url + '" class="ms-1">#' + p.id + '</a> ')
-                                .append('<span class="' + ctx.badge + ' ms-2">' + statusText + '</span>');
-                            if (p.ref) {
-                                $li.append(' <span class="small text-muted ms-2" title="Ветка/тег"><i class="fas fa-code-branch"></i> ' + p.ref + '</span>');
-                            }
-                            if (p.finishedAt) {
-                                $li.append(' <span class="small text-muted ms-2 fw-bold" title="Дата завершения">(<i class="far fa-calendar-check"></i> ' + lpm.format.date(p.finishedAt) + ')</span>');
-                            }
-                        } else {
-                            $li.remove();
-                        }
-                    } else {
-                        $li.empty().text(typeof res.error != 'undefined' ?
-                            res.error : 'Не удалось получить данные Pipeline.');
-                    }
-                });
+                $li.append(preloader.getNewIndicatorSmall());
+                comments.watchGitlabStatus($li, function (onResult) {
+                    srv.attachments.getJobInfo(url, onResult);
+                }, comments.renderJob, 'Не удалось получить данные Job.');
             });
         }
     }

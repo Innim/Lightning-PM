@@ -6,6 +6,7 @@ class GitlabIntegration
 {
     const URL_MR_SUBPATH = 'merge_requests/';
     const URL_PIPELINE_SUBPATH = 'pipelines/';
+    const URL_JOB_SUBPATH = 'jobs/';
 
     private static $_instance;
     /**
@@ -186,6 +187,44 @@ class GitlabIntegration
         try {
             $res = $client->projects()->pipeline($projectPath, $pipelineId);
             return $res === null ? null : new GitlabPipeline($res);
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return null;
+        }
+    }
+
+    /**
+     * Возвращает данные Job по URL.
+     * @param string $url URL джобы вида /group/project/-/jobs/{id}
+     * @return GitlabJob|null
+     */
+    public function getJob($url)
+    {
+        $parts = parse_url($url);
+        if (empty($parts) || empty($parts['path'])) {
+            return null;
+        }
+
+        $path = $parts['path'];
+        // Берем последнее вхождение маркера: идентификатор джобы всегда следует
+        // за ним, а сегмент проекта/группы выше по пути может называться "jobs".
+        $pos = strrpos($path, self::URL_JOB_SUBPATH);
+        if ($pos === false) {
+            return null;
+        }
+
+        // "-" сегмент в пути ("/-/") будет обрезан с обоих концов
+        $projectPath = trim(mb_substr($path, 0, $pos), ' -/');
+        $jobId = intval(mb_substr($path, $pos + mb_strlen(self::URL_JOB_SUBPATH)));
+
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $res = $client->jobs()->show($projectPath, $jobId);
+            return $res === null ? null : new GitlabJob($res);
         } catch (Exception $e) {
             $this->onCallException(__METHOD__, $e);
             return null;
