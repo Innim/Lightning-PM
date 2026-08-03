@@ -42,6 +42,20 @@ const comments = {
         created: 'fa-clock',
         scheduled: 'fa-calendar'
     },
+    // Статусы джоб совпадают с пайплайновыми, иконки те же.
+    jobStateIcons: {
+        success: 'fa-check-circle',
+        failed: 'fa-times-circle',
+        running: 'fa-spinner fa-spin',
+        pending: 'fa-clock',
+        waiting_for_resource: 'fa-hourglass-half',
+        canceled: 'fa-ban',
+        skipped: 'fa-forward',
+        manual: 'fa-hand-paper',
+        preparing: 'fa-cog fa-spin',
+        created: 'fa-clock',
+        scheduled: 'fa-calendar'
+    },
 	init: function () {
 		const storeKey = typeof issuePage !== 'undefined' ? 'comment-' + issuePage.getIssueId() : 'comment';
 		comments.saveableForm = new SaveableCommentForm(
@@ -236,6 +250,7 @@ const comments = {
 
         let mrs = [];
         let pipelines = [];
+        let jobs = [];
 
         for (var i = 0; i < urls.length; i++) {
             let url = urls[i];
@@ -243,6 +258,8 @@ const comments = {
                 mrs.push(url);
             } else if (parser.isPipelineUrl(url)) {
                 pipelines.push(url);
+            } else if (parser.isJobUrl(url)) {
+                jobs.push(url);
             }
         }
 
@@ -326,6 +343,62 @@ const comments = {
                     } else {
                         $li.empty().text(typeof res.error != 'undefined' ?
                             res.error : 'Не удалось получить данные Pipeline.');
+                    }
+                });
+            });
+        }
+
+        if (jobs.length > 0) {
+            const $ul = $('.jobs', $item.parent('.formatted-desc'));
+            jobs.forEach(function (url) {
+                const $li = $(document.createElement('li')).addClass('list-group-item py-1 px-1 mt-2 rounded-2 d-flex align-items-center');
+                $ul.append($li);
+
+                $li.append(preloader.getNewIndicatorSmall());
+                srv.attachments.getJobInfo(url, function (res) {
+                    if (res.success) {
+                        if (res.data) {
+                            const j = res.data;
+                            const icon = comments.jobStateIcons[j.status] || 'fa-question-circle';
+
+                            // map status to contextual classes
+                            const ctxMap = {
+                                success: { item: 'list-group-item-success', icon: 'text-success', badge: 'badge bg-success' },
+                                failed: { item: 'list-group-item-danger', icon: 'text-danger', badge: 'badge bg-danger' },
+                                canceled: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
+                                skipped: { item: 'list-group-item-secondary', icon: 'text-secondary', badge: 'badge bg-secondary' },
+                                running: { item: 'list-group-item-info', icon: 'text-info', badge: 'badge bg-info text-dark' },
+                                pending: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                waiting_for_resource: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                preparing: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                created: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                scheduled: { item: 'list-group-item-warning', icon: 'text-warning', badge: 'badge bg-warning text-dark' },
+                                manual: { item: 'list-group-item-primary', icon: 'text-primary', badge: 'badge bg-primary' },
+                            };
+                            const ctx = ctxMap[j.status] || { item: '', icon: 'text-muted', badge: 'badge bg-light text-dark' };
+                            const statusText = (j.status || '').replace(/_/g, ' ');
+                            const name = j.name ? ' <strong>' + $('<span>').text(j.name).html() + '</strong>' : '';
+
+                            // Ведущая иконка-«кубик» отличает джобу от пайплайна с первого взгляда.
+                            $li.addClass(ctx.item)
+                                .empty()
+                                .append('<i class="fas fa-cube me-2 text-muted" title="Job"></i>')
+                                .append('<i class="fas ' + icon + ' me-2 ' + ctx.icon + '"></i>')
+                                .append('<span>Job' + name + '</span>')
+                                .append('<a href="' + j.url + '" class="ms-1">#' + j.id + '</a> ')
+                                .append('<span class="' + ctx.badge + ' ms-2">' + statusText + '</span>');
+                            if (j.stage) {
+                                $li.append(' <span class="small text-muted ms-2" title="Стадия"><i class="fas fa-layer-group"></i> ' + $('<span>').text(j.stage).html() + '</span>');
+                            }
+                            if (j.finishedAt) {
+                                $li.append(' <span class="small text-muted ms-2 fw-bold" title="Дата завершения">(<i class="far fa-calendar-check"></i> ' + lpm.format.date(j.finishedAt) + ')</span>');
+                            }
+                        } else {
+                            $li.remove();
+                        }
+                    } else {
+                        $li.empty().text(typeof res.error != 'undefined' ?
+                            res.error : 'Не удалось получить данные Job.');
                     }
                 });
             });

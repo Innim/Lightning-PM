@@ -59,6 +59,30 @@ class AttachmentsService extends LPMBaseService
     }
 
     /**
+     * Возвращает информацию о Job по URL.
+     * @param  String $url URL джобы
+     * @return
+     */
+    public function getJobInfo($url)
+    {
+        $data = null;
+        if ($client = $this->getGitlabIfAvailable()) {
+            try {
+                $data = $client->getJob($url);
+            } catch (Gitlab\Exception\RuntimeException $e) {
+                // Игнорируем если не найдено - может нет прав, может удалили, может url кривой
+                if ($e->getCode() != 404) {
+                    return $this->exception($e);
+                }
+            }
+        }
+
+        $this->add2Answer('data', $data);
+
+        return $this->answer();
+    }
+
+    /**
      * Возвращает информацию о видео по ссылке.
      * @param String $url URL, ссылающийся не видео.
      * Поддерживаются ссылки на YouTube,
