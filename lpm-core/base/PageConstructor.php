@@ -153,7 +153,6 @@ class PageConstructor
         'libs/jquery.validate.min',
         'libs/F2PInvoker',
         'libs/iLoad',
-        'libs/highlight.pack',
         'libs/clipboard.min',
         'libs/vue@2',
         'libs/vue-multiselect.min',

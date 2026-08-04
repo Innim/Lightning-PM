@@ -383,6 +383,7 @@ class ProjectPage extends LPMPage
             'issues',
             'filters/issues-filter',
             'issue-form',
+            'libs/highlight.pack',
             'formatting',
             'libs/tribute',
         ];
@@ -393,6 +394,7 @@ class ProjectPage extends LPMPage
         return [
             'comments',
             'attachments',
+            'libs/highlight.pack',
             'formatting',
             'video-compress-status',
         ];

@@ -853,7 +853,9 @@ window.onload = function () {
 
 $(document).ready(
     function () {
-        if (hljs) hljs.initHighlightingOnLoad();
+        // highlight.js is loaded only on pages that render code (see ProjectPage),
+        // so guard with typeof — it is undefined elsewhere.
+        if (typeof hljs !== 'undefined' && hljs) hljs.initHighlightingOnLoad();
 
         // Global tooltip: a single delegated Bootstrap tooltip on <body> covers every current
         // and dynamically added [title] element (replaces the former jQuery UI global tooltip).
