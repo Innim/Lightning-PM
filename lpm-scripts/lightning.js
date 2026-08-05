@@ -236,6 +236,15 @@ let srv = {
         remove: function (issueId, onResult) {
             this.s._('remove');
         },
+        addLink: function (issueId, linkedIssueId, onResult) {
+            this.s._('addLink');
+        },
+        addLinkByUrl: function (issueId, url, onResult) {
+            this.s._('addLinkByUrl');
+        },
+        removeLink: function (issueId, linkedIssueId, onResult) {
+            this.s._('removeLink');
+        },
         comment: function (issueId, text, requestChanges, files, onResult) {
             this.s.callWithFiles('comment', [issueId, text, requestChanges], files, onResult);
         },

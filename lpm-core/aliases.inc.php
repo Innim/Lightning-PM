@@ -287,6 +287,14 @@ function lpm_print_goto_issue($project)
 }
 
 /**
+ * Печатает блок связанных задач для страницы задачи.
+ */
+function lpm_print_issue_linked($issue)
+{
+    return PagePrinter::issueLinked($issue);
+}
+
+/**
  * Печатает кнопку копирования значения в буфер обмена.
  */
 function lpm_print_copy_button($value, $toast = 'Скопировано')
