@@ -85,6 +85,14 @@ function lpm_print_css_links()
 }
 
 /**
+ * Распечатывает inline-скрипт с глобальными настройками клиента (`window.lpmOptions`).
+ */
+function lpm_print_js_options()
+{
+    PagePrinter::jsOptions();
+}
+
+/**
  * Распечатывает ссылки на js файлы
  */
 function lpm_print_scripts()
@@ -284,6 +292,14 @@ function lpm_print_issues_export_to_excel()
 function lpm_print_goto_issue($project)
 {
     return PagePrinter::gotoIssue($project);
+}
+
+/**
+ * Печатает блок связанных задач для страницы задачи.
+ */
+function lpm_print_issue_linked($issue)
+{
+    return PagePrinter::issueLinked($issue);
 }
 
 /**

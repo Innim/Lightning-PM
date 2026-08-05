@@ -242,7 +242,7 @@ class ProjectPage extends LPMPage
         $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
         $this->_js = array_merge(
-            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/create-from-issue', 'goto-issue'],
+            ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/create-from-issue', 'popups/add-issue-link', 'goto-issue'],
             $this->getIssueJs(),
             $this->getCommentJs()
         );
@@ -383,6 +383,7 @@ class ProjectPage extends LPMPage
             'issues',
             'filters/issues-filter',
             'issue-form',
+            'libs/highlight.pack',
             'formatting',
             'libs/tribute',
         ];
@@ -393,6 +394,7 @@ class ProjectPage extends LPMPage
         return [
             'comments',
             'attachments',
+            'libs/highlight.pack',
             'formatting',
             'video-compress-status',
         ];
@@ -653,6 +655,9 @@ class ProjectPage extends LPMPage
             $engine->addError('Не удалось загрузить данные задачи');
             return;
         }
+
+        // автоматически связываем задачу с упомянутыми в описании задачами
+        IssueLinked::syncFromText($issue, $rawDesc, $userId);
 
         // Если это SCRUM проект
         if ($this->_project->scrum) {

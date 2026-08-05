@@ -581,6 +581,7 @@ class ProjectService extends LPMBaseService
             $res = [];
             foreach ($list as $issue) {
                 $res[] = [
+                    'id' => $issue->getID(),
                     'idInProject' => $issue->idInProject,
                     'name' => $issue->name,
                     'url' => $issue->getConstURL(),

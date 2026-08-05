@@ -37,34 +37,44 @@ let scrumBoard = {
         else
             return;
 
-        if (state == 4 && !confirm('Завершить задачу?')) return;
+        const applyState = function () {
+            preloader.show();
+            srv.issue.changeScrumState(issueId, state, function (res) {
+                preloader.hide();
+                if (res.success) {
+                    $sticker.attr('data-sticker-state', state);
+                    // Перевешиваем стикер
+                    $sticker.remove();
+                    var colName;
+                    switch (state) {
+                        case ScrumStickerState.todo: colName = 'todo'; break;
+                        case ScrumStickerState.inProgress: colName = 'in_progress'; break;
+                        case ScrumStickerState.testing: colName = 'testing'; break;
+                        case ScrumStickerState.done: colName = 'done'; break;
+                    }
 
-        preloader.show();
-        srv.issue.changeScrumState(issueId, state, function (res) {
-            preloader.hide();
-            if (res.success) {
-                $sticker.attr('data-sticker-state', state);
-                // Перевешиваем стикер
-                $sticker.remove();
-                var colName;
-                switch (state) {
-                    case ScrumStickerState.todo: colName = 'todo'; break;
-                    case ScrumStickerState.inProgress: colName = 'in_progress'; break;
-                    case ScrumStickerState.testing: colName = 'testing'; break;
-                    case ScrumStickerState.done: colName = 'done'; break;
+                    if (colName) {
+                        $('.scrum-board-col.col-' + colName).append($sticker);
+                    }
+
+                    issuePage.scrumColUpdateInfo();
+
+                    if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
+                        scrumBoard.takeIssueBy($sticker);
+                    }
                 }
+            });
+        };
 
-                if (colName) {
-                    $('.scrum-board-col.col-' + colName).append($sticker);
-                }
-
-                issuePage.scrumColUpdateInfo();
-
-                if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
-                    scrumBoard.takeIssueBy($sticker);
-                }
-            }
-        });
+        if (state == 4) {
+            lpm.dialog.confirm({
+                text: 'Завершить задачу?',
+                yesLabel: 'Завершить',
+                onYes: applyState
+            });
+        } else {
+            applyState();
+        }
     },
     takeIssue: function (e) {
         const $control = $(e.currentTarget);
@@ -107,49 +117,51 @@ let scrumBoard = {
             $('#scrumBoard').addClass('hide-sp');
     },
     clearBoard: function () {
-        if (confirm('Убрать все стикеры с доски?')) {
-            const projectId = $('#scrumBoard').data('projectId');
+        const projectId = $('#scrumBoard').data('projectId');
 
-            const transferCols = ['col-todo', 'col-in_progress'];
-            const columnsSelector = '#scrumBoard .scrum-board-table .scrum-board-col';
+        const transferCols = ['col-todo', 'col-in_progress'];
+        const columnsSelector = '#scrumBoard .scrum-board-table .scrum-board-col';
 
-            const doClear = function (transfer) {
-                preloader.show();
-                srv.issue.removeStickersFromBoard(projectId, transfer, function (res) {
-                    preloader.hide();
-                    if (res.success) {
-                        let $elements = $(columnsSelector);
-                        console.log(0, $elements);
-                        if (transfer) { 
-                            transferCols.forEach(col => $elements = $elements.not('.' + col));
-                            console.log(1, $elements);
-                        }
-                        $elements = $elements.find('.scrum-board-sticker');
-                        console.log(2,$elements);
-
-                        $elements.remove();
-                        sprintTarget.setValue('', '');
-                        issuePage.scrumColUpdateInfo();
-                    } else {
-                        srv.err(res);
+        const doClear = function (transfer) {
+            preloader.show();
+            srv.issue.removeStickersFromBoard(projectId, transfer, function (res) {
+                preloader.hide();
+                if (res.success) {
+                    let $elements = $(columnsSelector);
+                    if (transfer) {
+                        transferCols.forEach(col => $elements = $elements.not('.' + col));
                     }
-                });
-            }
+                    $elements = $elements.find('.scrum-board-sticker');
 
-            if (transferCols.some(col => $(columnsSelector + '.' + col + ' .scrum-board-sticker').size() > 0))
-            {
-                lpm.dialog.show({
-                    title: 'Очистка SCRUM доски',
-                    text: 'Перенести задачи из колонок «TO DO» и «В работе» на новый спринт?',
-                    primaryBtn: 'Перенести',
-                    secondaryBtn: 'Не переносить',
-                    onPrimary: function () { doClear(true); },
-                    onSecondary: function () { doClear(false); },
-                });
-            } else {
-                doClear(false);
-            }
+                    $elements.remove();
+                    sprintTarget.setValue('', '');
+                    issuePage.scrumColUpdateInfo();
+                } else {
+                    srv.err(res);
+                }
+            });
         }
+
+        lpm.dialog.confirm({
+            text: 'Убрать все стикеры с доски?',
+            yesLabel: 'Убрать',
+            onYes: function () {
+                // Если в «TO DO»/«В работе» есть задачи — уточняем, переносить ли их
+                // на новый спринт. Окно откроется после закрытия предыдущего.
+                if (transferCols.some(col => $(columnsSelector + '.' + col + ' .scrum-board-sticker').size() > 0)) {
+                    lpm.dialog.show({
+                        title: 'Очистка SCRUM доски',
+                        text: 'Перенести задачи из колонок «TO DO» и «В работе» на новый спринт?',
+                        primaryBtn: 'Перенести',
+                        secondaryBtn: 'Не переносить',
+                        onPrimary: function () { doClear(true); },
+                        onSecondary: function () { doClear(false); },
+                    });
+                } else {
+                    doClear(false);
+                }
+            }
+        });
     },
 };
 

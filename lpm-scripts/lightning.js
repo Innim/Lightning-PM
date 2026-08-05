@@ -200,6 +200,9 @@ let srv = {
         getPipelineInfo: function (url, onResult) {
             this.s._('getPipelineInfo');
         },
+        getJobInfo: function (url, onResult) {
+            this.s._('getJobInfo');
+        },
         getVideoInfo: function (url, onResult) {
             this.s._('getVideoInfo');
         },
@@ -232,6 +235,15 @@ let srv = {
         },
         remove: function (issueId, onResult) {
             this.s._('remove');
+        },
+        addLink: function (issueId, linkedIssueId, onResult) {
+            this.s._('addLink');
+        },
+        addLinkByUrl: function (issueId, url, onResult) {
+            this.s._('addLinkByUrl');
+        },
+        removeLink: function (issueId, linkedIssueId, onResult) {
+            this.s._('removeLink');
         },
         comment: function (issueId, text, requestChanges, files, onResult) {
             this.s.callWithFiles('comment', [issueId, text, requestChanges], files, onResult);
@@ -497,12 +509,40 @@ var messages = {
         }
     },
     alert: function (text) {
-        alert(text);
+        lpm.dialog.show({
+            // Экранируем: text вставляется как HTML, а сообщение может содержать
+            // произвольные (в т.ч. серверные) данные.
+            text: $('<span>').text(text == null ? '' : text).html(),
+            primaryBtn: 'OK',
+            secondaryBtn: null,
+        });
     }
 };
 
 lpm.dialog = {
+    // Открыто ли сейчас модальное окно (в т.ч. в процессе закрытия).
+    _isOpen: false,
+    // Окна, запрошенные пока открыто другое: покажем их по очереди.
+    _queue: [],
     show: function (options) {
+        // Шаблон #dynamicModal выводится в конце body. Если show вызван из inline-скрипта
+        // во время парсинга страницы (например, showError с серверной ошибкой), шаблона
+        // ещё нет в DOM — откладываем показ до готовности документа.
+        if (document.readyState === 'loading' && document.getElementById('dynamicModal') === null) {
+            $(function () { lpm.dialog.show(options); });
+            return;
+        }
+
+        // Bootstrap 5.1.3 не поддерживает одновременно открытые модальные окна
+        // (у второго ломается блокировка прокрутки фона). Поэтому показываем окна
+        // строго по одному: если уже открыто — ставим в очередь и покажем следующее
+        // по событию закрытия текущего.
+        if (lpm.dialog._isOpen) {
+            lpm.dialog._queue.push(options);
+            return;
+        }
+        lpm.dialog._isOpen = true;
+
         const defaultOptions = {
             title: null,
             text: null,
@@ -585,9 +625,15 @@ lpm.dialog = {
 
         $modalTemplate.on('hidden.bs.modal', function () {
             $modalTemplate.remove();
+            lpm.dialog._isOpen = false;
 
             if (onHidden) {
                 onHidden();
+            }
+
+            // Показать следующее окно из очереди (если onHidden не открыл своё).
+            if (!lpm.dialog._isOpen && lpm.dialog._queue.length > 0) {
+                lpm.dialog.show(lpm.dialog._queue.shift());
             }
         });
 
@@ -807,7 +853,9 @@ window.onload = function () {
 
 $(document).ready(
     function () {
-        if (hljs) hljs.initHighlightingOnLoad();
+        // highlight.js is loaded only on pages that render code (see ProjectPage),
+        // so guard with typeof — it is undefined elsewhere.
+        if (typeof hljs !== 'undefined' && hljs) hljs.initHighlightingOnLoad();
 
         // Global tooltip: a single delegated Bootstrap tooltip on <body> covers every current
         // and dynamically added [title] element (replaces the former jQuery UI global tooltip).
@@ -924,13 +972,21 @@ function redirectTo(url) {
 }
 
 function showError(error) {
-    alert(error)
+    lpm.dialog.show({
+        title: 'Ошибка',
+        // Текст ошибки может приходить с сервера/из внешних сервисов, поэтому
+        // экранируем его: text вставляется как HTML.
+        text: $('<span>').text(error == null ? '' : error).html(),
+        primaryBtn: 'OK',
+        secondaryBtn: null,
+    });
 }
 
 let parser = {
     urlRegex: /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig,
     urlMrSubpath: 'merge_requests/',
     urlPipelineSubpath: 'pipelines/',
+    urlJobSubpath: 'jobs/',
     isUrl: function (text) {
         return text.test(parser.urlRegex);
     },
@@ -946,6 +1002,11 @@ let parser = {
         let baseUrl = lpmOptions.gitlabUrl;
         return url.indexOf(baseUrl) === 0 &&
             url.indexOf(parser.urlPipelineSubpath) !== -1;
+    },
+    isJobUrl: function (url) {
+        let baseUrl = lpmOptions.gitlabUrl;
+        return url.indexOf(baseUrl) === 0 &&
+            url.indexOf(parser.urlJobSubpath) !== -1;
     },
     isVideoUrl: function (url) {
         let patterns = lpmOptions.videoUrlPatterns;

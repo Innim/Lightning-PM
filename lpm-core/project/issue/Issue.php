@@ -985,8 +985,9 @@ SQL;
      */
     public static function parseStoryPoints($value)
     {
-        return ($value == '0.5' || $value == '0,5' || $value == '1/2') ? 0.5 :
-            floatval(str_replace(',', '.', (string)$value));
+        $str = trim((string)$value);
+        return ($str === '0.5' || $str === '0,5' || $str === '1/2') ? 0.5 :
+            floatval(str_replace(',', '.', $str));
     }
 
     /**

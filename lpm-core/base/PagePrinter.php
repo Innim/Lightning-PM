@@ -87,7 +87,17 @@ class PagePrinter
     {
         PageConstructor::includePattern('issue');
     }
-    
+
+    /**
+     * Печатает блок связанных задач для страницы задачи.
+     * @param Issue $issue Задача, для которой выводятся связи.
+     */
+    public static function issueLinked(Issue $issue)
+    {
+        $linkedIssues = $issue->getLinkedIssues();
+        PageConstructor::includePattern('components/issue-linked', compact('issue', 'linkedIssues'));
+    }
+
     public static function projectsList($list, $isArchive = false)
     {
         PageConstructor::includePattern('projects-list', compact('list', 'isArchive'));
@@ -260,6 +270,32 @@ class PagePrinter
         self::cssLink( 'main' );
     }*/
     
+    /**
+     * Распечатывает inline-скрипт с глобальными настройками клиента
+     * (`window.lpmOptions`), которые читают JS-скрипты приложения.
+     * Печатать нужно до подключения скриптов приложения.
+     */
+    public static function jsOptions()
+    {
+        $data = [
+            'url' => SITE_URL,
+            'themeUrl' => self::getPC()->getThemeUrl(),
+            'issueImgsCount' => Issue::MAX_IMAGES_COUNT,
+            'issueFilesCount' => Issue::MAX_FILES_COUNT,
+            'issueFileMaxSizeMb' => MAX_FILE_SIZE_MB,
+            'gitlabUrl' => defined('GITLAB_URL') ? GITLAB_URL : '',
+            'videoUrlPatterns' => AttachmentVideoHelper::URL_PATTERNS,
+            'imageUrlPatterns' => AttachmentImageHelper::URL_PATTERNS,
+            'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
+            'roles' => [
+                'user' => User::ROLE_USER,
+                'admin' => User::ROLE_ADMIN,
+                'moderator' => User::ROLE_MODERATOR,
+            ],
+        ];
+        self::printJSObject('window.lpmOptions', $data, true, false);
+    }
+
     public static function jsScripts()
     {
         $scripts = array_unique(PageConstructor::getUsingScripts());

@@ -42,10 +42,10 @@
             <time class="text-muted small"><i class="fa-regular fa-calendar me-1"></i><?=htmlspecialchars($entry['date']);?></time>
           <?php endif; ?>
         </div>
-        <div class="card-body pb-2">
+        <div class="card-body pb-0">
           <?php foreach ($entry['sections'] as $i => $section): ?>
             <?php if ($section['title'] !== ''): ?>
-              <p class="mb-2<?=$i > 0 ? ' mt-3' : '';?>">
+              <p class="mb-2 <?=$i > 0 ? 'mt-3' : 'mt-0';?>">
                 <span class="badge <?=$section['badge'];?>"><?=htmlspecialchars($section['title']);?></span>
               </p>
             <?php endif; ?>

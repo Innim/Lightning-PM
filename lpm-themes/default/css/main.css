@@ -865,6 +865,18 @@ table.issues-list tr.active-issue.tester {
 .formatted-desc h6 {
 	font-size: 0.8em;
 }
+/* Если форматированный текст (комментарий, превью коммента/задачи) начинается
+   с заголовка, его верхний margin складывается с padding контейнера и даёт
+   двойной отступ сверху. Убираем margin только у первого заголовка — заголовки
+   внутри текста сохраняют отступ от предыдущей строки. */
+.text-with-attachments > h1:first-child,
+.text-with-attachments > h2:first-child,
+.text-with-attachments > h3:first-child,
+.text-with-attachments > h4:first-child,
+.text-with-attachments > h5:first-child,
+.text-with-attachments > h6:first-child {
+	margin-block-start: 0;
+}
 .formatted-desc p {
 	margin-block-start: 0.5em;
 	margin-block-end: 0.5em;
