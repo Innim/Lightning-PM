@@ -1298,6 +1298,39 @@ issuePage.createBranch = function () {
     createBranch.show(issuePage.projectId, issuePage.getIssueId(), issuePage.idInProject);
 }
 
+issuePage.showAddLinkForm = function () {
+    addIssueLink.show(issuePage.projectId, issuePage.getIssueId(), function (res) {
+        issuePage.updateLinkedIssues(res.html);
+    });
+};
+
+issuePage.removeLink = function (linkedIssueId, linkedLabel) {
+    const target = linkedLabel
+        ? ('задачей «' + $('<span>').text(linkedLabel).html() + '»')
+        : 'этой задачей';
+    lpm.dialog.confirm({
+        title: 'Удаление связи',
+        text: 'Удалить связь с ' + target + '?',
+        yesLabel: 'Удалить',
+        onYes: function () {
+            preloader.show();
+            srv.issue.removeLink(issuePage.getIssueId(), linkedIssueId, function (res) {
+                preloader.hide();
+                if (res.success) {
+                    issuePage.updateLinkedIssues(res.html);
+                    lpm.toast.show('Связь удалена');
+                } else {
+                    srv.err(res);
+                }
+            });
+        },
+    });
+};
+
+issuePage.updateLinkedIssues = function (html) {
+    $('#linkedIssues').html(html);
+};
+
 issuePage.commentPassTesting = function () {
     issuePage.passTest();
 };
@@ -1422,6 +1455,7 @@ issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSucces
                 preloader.hide();
                 if (res.success) {
                     issuePage.addComment(res.comment, res.html);
+                    if (res.linkedHtml) issuePage.updateLinkedIssues(res.linkedHtml);
                     if (onSuccess) onSuccess(res);
                 } else {
                     srv.err(res);

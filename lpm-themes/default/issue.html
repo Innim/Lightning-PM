@@ -304,29 +304,11 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
         </div>
         <?php endif; ?>
 
-        <hr class="text-secondary opacity-50 my-4">    
+        <hr class="text-secondary opacity-50 mt-4 mb-0">
 
-        <?php
-            $linkedIssues = $issue->getLinkedIssues();
-            if (!empty($linkedIssues)):
-        ?>
         <div id="linkedIssues" class="linked-issues mx-4">
-            <div class="card text-dark bg-light mb-3">
-                <div class="card-header">Связанные задачи</div>
-                <div class="card-body"><?php foreach ($linkedIssues as $item): ?>
-                    <div class="linked-issue-item card-text">
-                        <a href="<?=$item->getConstURL();?>">
-                            <?php if ($item->projectId != $issue->projectId):?>
-                            <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
-                            <?php endif;?>
-                            <?=$item->getIdInProject();?>. <?=$item->getName();?>
-                        </a>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+            <?php lpm_print_issue_linked($issue); ?>
         </div>
-        <?php endif;?>
         <p class="buttons-bar my-4 <? switch($issue->status): 
     case 0: ?>active-issue<?break;?> 
     <?case 1: ?>verify-issue<?break;?> 
@@ -347,7 +329,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
         </a>
         <a href="#" onclick="issuePage.finishedIssue(); return false;" class="finished-issue-link">
-            <i class="fa fa-plus-square" aria-hidden="true" title="Добавить связанную задачу"></i>
+            <i class="fa fa-plus-square" aria-hidden="true" title="Создать связанную задачу"></i>
         </a>
     </article>
     <article id="comments" class="comments px-4">
@@ -525,7 +507,7 @@ HTML;
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Добавить связанную задачу</h5>
+        <h5 class="modal-title">Создать связанную задачу</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
       <div class="modal-body">
@@ -548,4 +530,14 @@ HTML;
       </div>
     </div>
   </div>
+</div>
+
+<!-- Add Linked Issue dialog content (rendered through lpm.dialog) -->
+<div id="addIssueLinkContent" style="display:none">
+  <div class="add-issue-link-error alert alert-danger py-2" style="display:none" role="alert"></div>
+  <label for="addIssueLinkInput" class="form-label">Задача для связывания</label>
+  <input type="text" class="form-control" id="addIssueLinkInput" autocomplete="off"
+    placeholder="Номер, название или ссылка на задачу">
+  <div class="list-group mt-2 add-issue-link-results" style="display:none;"></div>
+  <div class="form-text">По названию — поиск в текущем проекте; <code>#</code> и номер (<code>#12</code>) — точный поиск по номеру. Чтобы связать задачу из другого проекта, вставьте ссылку на неё.</div>
 </div>

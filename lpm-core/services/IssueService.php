@@ -169,12 +169,86 @@ class IssueService extends LPMBaseService
                 $requestChanges ? IssueCommentType::REQUEST_CHANGES : null
             );
 
+            $addedLinks = IssueLinked::syncFromText($issue, $text, $this->getUserId());
+
             $this->setupCommentAnswer($comment);
+
+            // если из комментария добавились связи — вернём обновлённый блок связанных задач
+            if ($addedLinks > 0) {
+                $linkedHtml = $this->getHtml(function () use ($issue) {
+                    PagePrinter::issueLinked(Issue::load($issue->getID()));
+                });
+                $this->add2Answer('linkedHtml', $linkedHtml);
+            }
         } catch (\Exception $e) {
             return $this->exception($e);
         }
 
         return $this->answer();
+    }
+
+    /**
+     * Связывает текущую задачу с другой задачей, выбранной по идентификатору.
+     *
+     * @param int $issueId       Идентификатор текущей задачи.
+     * @param int $linkedIssueId Идентификатор связываемой задачи.
+     * @return {
+     *     string html HTML блока связанных задач.
+     * }
+     */
+    public function addLink($issueId, $linkedIssueId)
+    {
+        try {
+            $issue = $this->getIssueForEdit((int)$issueId);
+            return $this->addIssueLink($issue, Issue::load((int)$linkedIssueId));
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+    }
+
+    /**
+     * Связывает текущую задачу с задачей, заданной ссылкой на неё.
+     *
+     * Позволяет связывать задачи из других проектов, доступных пользователю.
+     *
+     * @param int    $issueId Идентификатор текущей задачи.
+     * @param string $url     Ссылка на связываемую задачу.
+     * @return {
+     *     string html HTML блока связанных задач.
+     * }
+     */
+    public function addLinkByUrl($issueId, $url)
+    {
+        try {
+            $issue = $this->getIssueForEdit((int)$issueId);
+            $target = OwnUrlHelper::loadIssueByUrl($url);
+            if ($target === null) {
+                return $this->error('Не удалось распознать ссылку на задачу');
+            }
+            return $this->addIssueLink($issue, $target);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+    }
+
+    /**
+     * Удаляет связь текущей задачи с другой задачей.
+     *
+     * @param int $issueId       Идентификатор текущей задачи.
+     * @param int $linkedIssueId Идентификатор связанной задачи.
+     * @return {
+     *     string html HTML блока связанных задач.
+     * }
+     */
+    public function removeLink($issueId, $linkedIssueId)
+    {
+        try {
+            $issue = $this->getIssueForEdit((int)$issueId);
+            IssueLinked::remove($issue->getID(), (int)$linkedIssueId);
+            return $this->answerLinkedIssues($issue->getID());
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
     }
 
     /**
@@ -1057,7 +1131,53 @@ class IssueService extends LPMBaseService
         return \GMFramework\Validation::checkStr($value, 255, 1, false, false, true, '\/\._');
     }
 
-    private function getIssueForEdit($issueId) 
+    /**
+     * Создаёт связь задачи с целевой задачей после проверки прав и дубликатов.
+     *
+     * @param Issue      $issue  Текущая задача.
+     * @param Issue|null $target Связываемая задача.
+     */
+    private function addIssueLink(Issue $issue, $target)
+    {
+        if (empty($target)) {
+            return $this->error('Нет такой задачи');
+        }
+        if ($target->getID() == $issue->getID()) {
+            return $this->error('Нельзя связать задачу с самой собой');
+        }
+        if (!$target->checkViewPermit($this->getUserId())) {
+            return $this->error('У Вас нет прав на просмотр связываемой задачи');
+        }
+        foreach ($issue->getLinkedIssues() as $linked) {
+            if ($linked->getID() == $target->getID()) {
+                return $this->error('Задачи уже связаны');
+            }
+        }
+
+        IssueLinked::create($issue->getID(), $target->getID(), DateTimeUtils::$currentDate);
+
+        return $this->answerLinkedIssues($issue->getID());
+    }
+
+    /**
+     * Формирует ответ с обновлённым HTML блока связанных задач.
+     *
+     * @param int $issueId Идентификатор задачи.
+     */
+    private function answerLinkedIssues($issueId)
+    {
+        $issue = Issue::load((int)$issueId);
+
+        $html = $this->getHtml(function () use ($issue) {
+            PagePrinter::issueLinked($issue);
+        });
+
+        $this->add2Answer('html', $html);
+
+        return $this->answer();
+    }
+
+    private function getIssueForEdit($issueId)
     {
         $issue = Issue::load($issueId);
         if (!$issue) {

@@ -1,0 +1,43 @@
+<?php
+/* Requires:
+ *  $issue        - current issue (Issue)
+ *  $linkedIssues - list of linked issues (Issue[])
+ */
+?>
+<?php if (!empty($linkedIssues)): ?>
+<div class="card text-dark bg-light mt-4 mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Связанные задачи</span>
+        <a href="#" class="link-secondary add-linked-issue"
+            onclick="issuePage.showAddLinkForm(); return false;"
+            title="Добавить связанную задачу" aria-label="Добавить связанную задачу">
+            <i class="fa fa-plus fa-xs" aria-hidden="true"></i>
+        </a>
+    </div>
+    <div class="card-body"><?php foreach ($linkedIssues as $item):
+        $linkLabel = ($item->projectId != $issue->projectId ? $item->getProject()->name . ': ' : '')
+            . $item->getIdInProject() . '. ' . $item->getName();
+    ?>
+        <div class="linked-issue-item card-text d-flex justify-content-between align-items-start">
+            <a href="<?=$item->getConstURL();?>">
+                <?php if ($item->projectId != $issue->projectId):?>
+                <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
+                <?php endif;?>
+                <?=$item->getIdInProject();?>. <?=$item->getName();?>
+            </a>
+            <a href="#" class="link-secondary remove-linked-issue ms-2"
+                onclick="issuePage.removeLink(<?=$item->getID();?>, <?=htmlspecialchars(json_encode($linkLabel), ENT_QUOTES);?>); return false;"
+                title="Удалить связь" aria-label="Удалить связь">
+                <i class="fa fa-times fa-xs" aria-hidden="true"></i>
+            </a>
+        </div>
+    <?php endforeach; ?>
+    </div>
+</div>
+<?php else: ?>
+<div class="text-end mt-2">
+    <a href="#" class="link-secondary small add-linked-issue" onclick="issuePage.showAddLinkForm(); return false;">
+        <i class="fa fa-link fa-xs" aria-hidden="true"></i> Добавить связанную задачу
+    </a>
+</div>
+<?php endif; ?>

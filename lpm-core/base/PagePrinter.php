@@ -87,7 +87,17 @@ class PagePrinter
     {
         PageConstructor::includePattern('issue');
     }
-    
+
+    /**
+     * Печатает блок связанных задач для страницы задачи.
+     * @param Issue $issue Задача, для которой выводятся связи.
+     */
+    public static function issueLinked(Issue $issue)
+    {
+        $linkedIssues = $issue->getLinkedIssues();
+        PageConstructor::includePattern('components/issue-linked', compact('issue', 'linkedIssues'));
+    }
+
     public static function projectsList($list, $isArchive = false)
     {
         PageConstructor::includePattern('projects-list', compact('list', 'isArchive'));
