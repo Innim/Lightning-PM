@@ -95,6 +95,28 @@ class SlackIntegration
         );
     }
 
+    /**
+     * Оповещает упомянутых в комментарии пользователей.
+     *
+     * @param User[] $mentionedUsers Упомянутые пользователи.
+     */
+    public function notifyCommentMentioned(Issue $issue, Comment $comment, array $mentionedUsers)
+    {
+        if (!$this->_notificationEnabled) return;
+
+        $slackUsers = array_filter($mentionedUsers, function ($user) {
+            return !empty($user->slackName);
+        });
+        if (empty($slackUsers)) return;
+
+        $this->postMessageForIssueComment(
+            $issue,
+            $comment,
+            $slackUsers,
+            'Вас упомянули в комментарии'
+        );
+    }
+
     public function notifyMRMergedToTester(Issue $issue, GitlabMergeRequest $mr)
     {
         if (!$this->_notificationEnabled) return;
@@ -175,9 +197,23 @@ class SlackIntegration
             'fallback' => $issue->getName(),
             //'title' => $issue->getName(),
             'title' => $comment->author->getShortName() . ' написал:',
-            'text' => $comment->getCleanText(),
+            'text' => $this->formatCommentTextForSlack($comment->getCleanText()),
             'title_link' => $commentUrl
         ]]);
+    }
+
+    /**
+     * Приводит markdown-разметку текста комментария к виду, понятному Slack.
+     *
+     * Упоминания пользователей `[@имя](user:id)` заменяются на `@имя`,
+     * а markdown-ссылки `[текст](url)` - на формат ссылок Slack `<url|текст>`.
+     */
+    private function formatCommentTextForSlack($text)
+    {
+        $text = preg_replace('/\[(@[^\]]*?)]\(user:[0-9]+\)/', '$1', $text);
+        $text = preg_replace('/\[([^\]]*)]\(([^)\s]+)\)/', '<$2|$1>', $text);
+
+        return $text;
     }
 
     private function postMessageForIssue(Issue $issue, $text, $attachments = null)
