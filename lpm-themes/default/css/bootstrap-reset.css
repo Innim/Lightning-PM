@@ -30,14 +30,6 @@ h5 {
     font-size: 1em;
 }
 
-p {
-    display: block;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0;
-    margin-inline-end: 0;
-}
-
 legend {
     font-size: inherit;
 }
