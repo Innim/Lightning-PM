@@ -557,13 +557,23 @@ class ProjectPage extends LPMPage
             $membersSp = [];
             foreach ($_POST['membersSp'] as $sp) {
                 $sp = $this->parseSP($sp);
-                if (!Issue::isValidStoryPoints($sp)) {
-                    return $engine->addError('Оценка исполнителя в SP должна быть целой или 0.5');
+                if (!Issue::isValidStoryPoints($sp, true)) {
+                    return $engine->addError('Оценка исполнителя в SP должна быть кратна 0.5');
                 }
                 $membersSp[] = $sp;
                 $spTotal += $sp;
                 if ($sp > 0) {
                     $spMembersCount++;
+                }
+            }
+
+            // Дробные (кроме 0.5) оценки исполнителей допускаются только когда
+            // SP распределяются между несколькими исполнителями.
+            if ($spMembersCount < 2) {
+                foreach ($membersSp as $sp) {
+                    if (!Issue::isValidStoryPoints($sp)) {
+                        return $engine->addError('Оценка исполнителя в SP должна быть целой или 0.5');
+                    }
                 }
             }
 
