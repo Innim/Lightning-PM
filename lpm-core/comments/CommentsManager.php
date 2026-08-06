@@ -77,7 +77,8 @@ class CommentsManager
         // отправка оповещений
         if (!$ignoreSlackNotification) {
             // TODO: учесть тип request_changes - особое оповещение
-            $this->slackNotificationCommentTesterOrMembers($issue, $comment);
+            $notifiedIds = $this->slackNotificationCommentTesterOrMembers($issue, $comment);
+            $this->slackNotificationMentionedUsers($issue, $comment, $notifiedIds);
         }
 
         Issue::notifyByEmail(
@@ -110,6 +111,9 @@ class CommentsManager
         return $comment;
     }
 
+    /**
+     * @return int[] Идентификаторы пользователей, которым отправлено оповещение.
+     */
     private function slackNotificationCommentTesterOrMembers(Issue $issue, Comment $comment)
     {
         if ($issue->status == Issue::STATUS_WAIT) {
@@ -120,9 +124,47 @@ class CommentsManager
 
             if (in_array($userSendMessage, $testerIssue)) {
                 $slack->notifyCommentTesterToMember($issue, $comment);
+                return $membersIssue;
             } elseif (in_array($userSendMessage, $membersIssue)) {
                 $slack->notifyCommentMemberToTester($issue, $comment);
+                return $testerIssue;
             }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param int[] $excludeUserIds Идентификаторы пользователей, которых не надо
+     *                              оповещать (например, уже получивших оповещение).
+     */
+    private function slackNotificationMentionedUsers(Issue $issue, Comment $comment, array $excludeUserIds = [])
+    {
+        $userIds = UserMentionHelper::extractMentionedUserIds($comment->text);
+        if (empty($userIds)) {
+            return;
+        }
+
+        // оповещаем только участников проекта (без заблокированных): в тексте
+        // может быть указан произвольный id, но пинговать посторонних не нужно
+        $userIds = array_intersect($userIds, $issue->getProject()->getMemberIds(true));
+
+        // не оповещаем автора комментария и тех, кому оповещение уже отправлено
+        $userIds = array_diff($userIds, array_merge([$comment->authorId], $excludeUserIds));
+        if (empty($userIds)) {
+            return;
+        }
+
+        $users = [];
+        foreach ($userIds as $userId) {
+            $user = User::load($userId);
+            if (!empty($user)) {
+                $users[] = $user;
+            }
+        }
+
+        if (!empty($users)) {
+            SlackIntegration::getInstance()->notifyCommentMentioned($issue, $comment, $users);
         }
     }
 }
