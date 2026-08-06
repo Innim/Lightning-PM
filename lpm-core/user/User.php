@@ -6,6 +6,13 @@
  */
 class User extends LPMBaseObject
 {
+    /**
+     * Кэш загруженных по id пользователей в рамках запроса (userId => User).
+     * Сбрасывается для пользователя при изменении его полей (см. {@see updateFields()}).
+     * @var User[]
+     */
+    private static $_usersById = [];
+
     public static function loadList($where, $onlyNotLocked = false)
     {
         $whereArr = ['`%1$s`.`userId` = `%2$s`.`userId`'];
@@ -30,12 +37,21 @@ class User extends LPMBaseObject
     
     /**
      * @param int $userId
+     * @param bool $forceReload Загрузить из БД, игнорируя кэш.
      * @return User
      */
-    public static function load($userId)
+    public static function load($userId, $forceReload = false)
     {
-        //return StreamObject::loadListDefault( $where, LPMTables::USERS, __CLASS__ );
-        return StreamObject::singleLoad($userId, __CLASS__, '', '%1$s`.`userId');
+        $key = (int) $userId;
+        if (!$forceReload && isset(self::$_usersById[$key])) {
+            return self::$_usersById[$key];
+        }
+
+        $user = StreamObject::singleLoad($userId, __CLASS__, '', '%1$s`.`userId');
+        if ($user !== false) {
+            self::$_usersById[$key] = $user;
+        }
+        return $user;
     }
     
     /**
@@ -149,6 +165,9 @@ class User extends LPMBaseObject
      */
     private static function updateFields($userId, $keyValues)
     {
+        // Сбрасываем кэш — загруженный объект пользователя мог устареть.
+        unset(self::$_usersById[(int) $userId]);
+
         $db = self::getDB();
         return $db->queryb([
             'UPDATE' => LPMTables::USERS,
