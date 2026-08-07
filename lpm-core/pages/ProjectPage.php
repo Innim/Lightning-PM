@@ -15,6 +15,16 @@
  */
 class ProjectPage extends LPMPage
 {
+    /**
+     * Разбирает список идентификаторов файлов, переданный формой.
+     * @param  string $fileIdsStr Идентификаторы, разделённые запятой.
+     * @return array Массив идентификаторов.
+     */
+    private static function parseFileIds($fileIdsStr)
+    {
+        return array_filter(array_map('intval', explode(',', (string)$fileIdsStr)));
+    }
+
     const UID = 'project';
     const PUID_MEMBERS = 'members';
     const PUID_ISSUES = 'issues';
@@ -33,6 +43,12 @@ class ProjectPage extends LPMPage
     private $_project;
 
     private $_issueInput;
+
+    /**
+     * Изображения из буфера обмена и по URL, полученные до сохранения задачи.
+     * @var array
+     */
+    private $_preparedImages;
 
     public function __construct()
     {
@@ -166,6 +182,9 @@ class ProjectPage extends LPMPage
         }
 
         if (!empty($this->_issueInput)) {
+            // Ошибка могла возникнуть до снятия блокировки - тогда восстановленная
+            // форма всё ещё владеет ей и не должна захватывать её повторно.
+            $this->_issueInput['hasLock'] = $this->isIssueLockedByCurrentUser();
             $this->addTmplVar('input', $this->_issueInput);
         }
         
@@ -438,6 +457,17 @@ class ProjectPage extends LPMPage
     
     private function handleFormAction($editMode = false)
     {
+        try {
+            $this->handleIssueForm($editMode);
+        } finally {
+            // Если сохранение не дошло до загрузки изображений - подготовленные
+            // файлы уже не нужны.
+            $this->clearPreparedImages();
+        }
+    }
+
+    private function handleIssueForm($editMode)
+    {
         $engine = $this->_engine;
         $userId = $engine->getAuth()->getUserId();
 
@@ -481,8 +511,39 @@ class ProjectPage extends LPMPage
             return;
         }
 
+        // Вложения проверяем до любых изменений: иначе задача будет сохранена,
+        // а пользователь увидит только ошибку загрузки.
+        if (!$this->validateAttachments($issueId, $editMode)) {
+            return;
+        }
+
+        $revision = isset($_POST['revision']) ? trim($_POST['revision']) : null;
+
+        // Убеждаемся, что сохранение вообще разрешено, прежде чем тратить время
+        // на скачивание изображений по ссылкам. Блокировку при этом не снимаем.
+        if (isset($curIssue) && !$this->checkIssueEditable($curIssue, $userId, $revision)) {
+            return;
+        }
+
+        // Изображения из буфера обмена и по URL получаем во временные файлы
+        // тоже до сохранения - по той же причине, что и проверку вложений.
+        // Загрузка по URL может быть долгой, поэтому делаем её, пока задача
+        // ещё заблокирована за нами - иначе за это время её может изменить
+        // другой пользователь, и его правки будут затёрты.
+        if (!$this->prepareImages()) {
+            return;
+        }
+
         if (isset($curIssue)) {
-            $revision = isset($_POST['revision']) ? trim($_POST['revision']) : null;
+            // Пока обрабатывался запрос (в том числе скачивались изображения по URL),
+            // задачу мог изменить кто-то другой, поэтому сверяем ревизию
+            // с актуальными данными, а не с загруженными в начале запроса.
+            $curIssue = Issue::load($issueId);
+            if (empty($curIssue)) {
+                return $engine->addError('Нет такой задачи для текущего проекта');
+            }
+            $issueName = $curIssue->name;
+
             if (!$this->unlockIssue($curIssue, $userId, $revision)) {
                 return;
             }
@@ -656,7 +717,8 @@ class ProjectPage extends LPMPage
         $uploader = $this->saveImages4Issue($issueId, $loadedImgs);
 
         if ($uploader === false) {
-            return $engine->addError('Не удалось загрузить изображение');
+            // Причина уже добавлена к ошибкам в saveImages4Issue
+            return;
         }
 
         // перезагружаем данные задачи
@@ -797,7 +859,135 @@ class ProjectPage extends LPMPage
         return !$this->hasErrors();
     }
 
-    private function unlockIssue(Issue $issue, $userId,  $revision)
+    /**
+     * Проверяет выбранные в форме изображения и файлы задачи.
+     * Все обнаруженные ошибки добавляются к ошибкам страницы.
+     * @param  float $issueId  Идентификатор задачи (при редактировании).
+     * @param  bool  $editMode Задача редактируется, а не создаётся.
+     * @return bool false, если хотя бы одно вложение не может быть загружено.
+     */
+    private function validateAttachments($issueId, $editMode)
+    {
+        $errors = LPMImgUpload::validateUploadedFiles('images');
+
+        if (isset($_FILES['issueFiles']) && is_array($_FILES['issueFiles'])) {
+            $errors = array_merge($errors, FileUploadManager::validateUploads(
+                $_FILES['issueFiles'],
+                $this->getAvailableFileSlots($issueId, $editMode),
+                Issue::MAX_FILES_COUNT
+            ));
+        }
+
+        foreach ($errors as $error) {
+            $this->addError($error);
+        }
+
+        return empty($errors);
+    }
+
+    /**
+     * Определяет, сколько файлов ещё можно прикрепить к задаче.
+     * Файлы, удаляемые этим же запросом, освобождают места.
+     * @param  float $issueId  Идентификатор задачи (при редактировании).
+     * @param  bool  $editMode Задача редактируется, а не создаётся.
+     * @return int
+     */
+    private function getAvailableFileSlots($issueId, $editMode)
+    {
+        $availableSlots = Issue::MAX_FILES_COUNT;
+
+        if ($editMode) {
+            $filesCount = LPMFile::countByInstance(LPMInstanceTypes::ISSUE, $issueId);
+            $availableSlots -= max(0, $filesCount - $this->countRemovedFiles($issueId));
+        }
+
+        return max(0, $availableSlots);
+    }
+
+    /**
+     * Считает файлы задачи, которые удаляются текущим запросом.
+     * @param  float $issueId Идентификатор задачи.
+     * @return int
+     */
+    private function countRemovedFiles($issueId)
+    {
+        if (empty($_POST['removedFiles'])) {
+            return 0;
+        }
+
+        $fileIds = self::parseFileIds($_POST['removedFiles']);
+        if (empty($fileIds)) {
+            return 0;
+        }
+
+        return count(LPMFile::loadListByInstance(LPMInstanceTypes::ISSUE, $issueId, $fileIds));
+    }
+
+    /**
+     * Определяет, принадлежит ли текущему пользователю блокировка задачи,
+     * ввод по которой сохранён для восстановления формы.
+     * @return bool
+     */
+    private function isIssueLockedByCurrentUser()
+    {
+        $issueId = empty($this->_issueInput['data']['issueId'])
+            ? 0 : (float)$this->_issueInput['data']['issueId'];
+        if ($issueId <= 0) {
+            return false;
+        }
+
+        $lock = UserLock::getIssueLock($issueId);
+
+        return !empty($lock) && $lock->userId == $this->_engine->getAuth()->getUserId();
+    }
+
+    /**
+     * Получает во временные файлы изображения, вставленные из буфера обмена
+     * и добавленные по URL, и проверяет их.
+     * Все обнаруженные ошибки добавляются к ошибкам страницы.
+     * @return bool false, если хотя бы одно изображение не может быть загружено.
+     */
+    private function prepareImages()
+    {
+        $errors = [];
+
+        $clipboard = isset($_POST['clipboardImg']) && is_array($_POST['clipboardImg'])
+            ? $_POST['clipboardImg'] : [];
+        $urls = isset($_POST['imgUrls']) && is_array($_POST['imgUrls'])
+            ? $_POST['imgUrls'] : [];
+
+        $this->_preparedImages = LPMImgUpload::prepareImages($clipboard, $urls, $errors);
+
+        foreach ($errors as $error) {
+            $this->addError($error);
+        }
+
+        return empty($errors);
+    }
+
+    /**
+     * Удаляет временные файлы подготовленных изображений.
+     * Уже загруженные (перенесённые из временной директории) изображения
+     * при этом не затрагиваются.
+     */
+    private function clearPreparedImages()
+    {
+        if (!empty($this->_preparedImages)) {
+            LPMImgUpload::removeTempFiles($this->_preparedImages);
+            $this->_preparedImages = null;
+        }
+    }
+
+    /**
+     * Проверяет, что изменения задачи можно сохранить: указана актуальная ревизия
+     * и задача не заблокирована другим пользователем.
+     * Все обнаруженные ошибки добавляются к ошибкам страницы.
+     * @param  Issue  $issue    Задача с актуальными данными.
+     * @param  int    $userId   Идентификатор сохраняющего пользователя.
+     * @param  String $revision Ревизия задачи, полученная от формы.
+     * @return bool
+     */
+    private function checkIssueEditable(Issue $issue, $userId, $revision)
     {
         if ($revision === null) {
             return $this->addError('Требуется указать ревизию задачи для разблокировки');
@@ -808,21 +998,39 @@ class ProjectPage extends LPMPage
             return $this->addError('Задача была изменена кем-то другим. Невозможно сохранить изменения');
         }
 
-        $issueId = $issue->getId();
-        $lock = UserLock::getIssueLock($issueId);
-        if (empty($lock)) return true;
+        $lock = UserLock::getIssueLock($issue->getId());
 
-        if ($userId != $lock->userId) {
+        if (!empty($lock) && $userId != $lock->userId) {
             // TODO: опцию перехватить блокировку
             // TODO: данные о блокировке для отображения
             return $this->addError('Задача заблокирована другим пользователем. Невозможно сохранить изменения');
         }
 
-        UserLock::removeIssueLocks($issueId);
+        return true;
+    }
+
+    /**
+     * Проверяет возможность сохранения изменений задачи и снимает её блокировку.
+     * @param  Issue  $issue    Задача с актуальными данными.
+     * @param  int    $userId   Идентификатор сохраняющего пользователя.
+     * @param  String $revision Ревизия задачи, полученная от формы.
+     * @return bool
+     */
+    private function unlockIssue(Issue $issue, $userId, $revision)
+    {
+        if (!$this->checkIssueEditable($issue, $userId, $revision)) {
+            return false;
+        }
+
+        UserLock::removeIssueLocks($issue->getId());
 
         return true;
     }
 
+    /**
+     * Сохраняет изменения задачи и присваивает ей новую ревизию.
+     * @return float|bool Идентификатор задачи или false, если сохранить не удалось.
+     */
     private function saveIssue(DBConnect $db, $issueId, $name, $desc, $hours, $type, $completeDate, $priority)
     {
         $revision = Issue::getNewRevision();
@@ -838,6 +1046,13 @@ class ProjectPage extends LPMPage
 
         if (!$db->queryt($sql, LPMTables::ISSUES)) {
             return $this->addError('Ошибка записи в базу');
+        }
+
+        // Если дальше возникнет ошибка, форма будет восстановлена из введённых данных.
+        // Ревизия в ней должна быть актуальной, иначе повторное сохранение
+        // будет отклонено как изменение задачи другим пользователем.
+        if (isset($this->_issueInput['data'])) {
+            $this->_issueInput['data']['revision'] = $revision;
         }
 
         return $issueId;
@@ -857,13 +1072,10 @@ class ProjectPage extends LPMPage
         );
 
         // Выполняем загрузку для изображений из поля загрузки
-        // Вставленных из буфера
-        // И добавленных по URL
-        if (!$uploader->uploadViaFiles('images') ||
-            isset($_POST['clipboardImg']) && !$uploader->uploadFromBase64($_POST['clipboardImg']) ||
-            isset($_POST['imgUrls']) && !$uploader->uploadFromUrls($_POST['imgUrls'])) {
+        // и подготовленных заранее (вставленных из буфера и добавленных по URL)
+        if (!$uploader->uploadViaFiles('images') || !$uploader->uploadPrepared($this->_preparedImages)) {
             $errors = $uploader->getErrors();
-            $this->_engine->addError($errors[0]);
+            $this->addError(empty($errors) ? 'Не удалось загрузить изображение' : $errors[0]);
             return false;
         }
         return $uploader;
@@ -884,11 +1096,8 @@ class ProjectPage extends LPMPage
             return true;
         }
 
-        $availableSlots = Issue::MAX_FILES_COUNT;
-        if ($editMode) {
-            $availableSlots -= LPMFile::countByInstance(LPMInstanceTypes::ISSUE, $issueId);
-        }
-        $availableSlots = max(0, $availableSlots);
+        // Удаляемые файлы уже сняты выше, поэтому места они больше не занимают
+        $availableSlots = $this->getAvailableFileSlots($issueId, $editMode);
 
         if ($availableSlots === 0 && !FileUploadManager::hasUploads($filesData)) {
             return true;
@@ -935,7 +1144,7 @@ class ProjectPage extends LPMPage
 
     private function removeFilesFromIssue($issueId, $filesIdsStr)
     {
-        $fileIds = array_filter(array_map('intval', explode(',', (string)$filesIdsStr)));
+        $fileIds = self::parseFileIds($filesIdsStr);
         if (empty($fileIds)) {
             return;
         }

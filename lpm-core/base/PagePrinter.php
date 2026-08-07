@@ -70,7 +70,13 @@ class PagePrinter
     
     public static function errors()
     {
-        echo implode(', ', LightningEngine::getInstance()->getErrors());
+        // Текст ошибки может содержать пользовательские данные (например,
+        // имя загружаемого файла), поэтому разметкой остаётся только разделитель.
+        $errors = array_map(function ($error) {
+            return htmlspecialchars($error, ENT_QUOTES, 'UTF-8');
+        }, LightningEngine::getInstance()->getErrors());
+
+        echo implode('<br>', $errors);
     }
     
     public static function issues($list)

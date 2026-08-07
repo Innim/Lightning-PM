@@ -173,8 +173,20 @@ let issueForm = {
     getRevision: () => $("#issueForm input[name=revision]").val(),
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
     handleEditState: function () {
-        issueForm.onShow();  
-        if (!issueForm.restoreInput(true)) {
+        issueForm.onShow();
+        if (issueForm.restoreInput()) {
+            // Отправка формы снимает блокировку задачи: после ошибки сохранения
+            // забираем её обратно, пока пользователь продолжает редактирование.
+            if (!issueForm.lockAcquired) {
+                issueForm.acquireLock(
+                    issueForm.getIssueId(),
+                    issueForm.getRevision(),
+                    false,
+                    () => {},
+                    () => {},
+                );
+            }
+        } else {
             const getVal = (fieldName) => $("#issueInfo input[name=" + fieldName + "]").val();
             const getArrVal = (fieldName) => {
                 let val = getVal(fieldName);
@@ -184,7 +196,7 @@ let issueForm = {
             const issueId = getVal("issueId");
             const revision = getVal("revision");
 
-            // don't acquire lock when restoring input or already have lock
+            // don't acquire lock when already have lock
             if (!issueForm.lockAcquired) {
                 issueForm.acquireLock(
                     issueId, 
@@ -216,7 +228,7 @@ let issueForm = {
     },
     handleAddState: function () {
         issueForm.onShow();  
-        if (!issueForm.restoreInput(false)) {
+        if (!issueForm.restoreInput()) {
             issueForm.updateHeader(false);
 
             if (issueForm.defaultMemberId) {
@@ -251,12 +263,21 @@ let issueForm = {
         e.preventDefault();
         e.returnValue = '';
     },
-    restoreInput: function (isEdit) {
+    restoreInput: function () {
         if (!issueForm.inputForRestore) return false;
         let input = issueForm.inputForRestore;
         let data = input.data;
 
         issueForm.inputForRestore = null;
+
+        // Если блокировка задачи осталась за нами, форма должна знать об этом:
+        // иначе она попробует захватить её повторно и не снимет при отмене.
+        if (input.hasLock) issueForm.lockAcquired = true;
+
+        // Режим берём из самого ввода, а не из состояния страницы: иначе
+        // редактирование, восстановленное после ошибки, может превратиться
+        // в создание новой задачи.
+        const isEdit = data.actionType === 'editIssue' && parseInt(data.issueId) > 0;
 
         // TODO: обработать удаленные изображения
         issueForm.setIssueBy({
@@ -283,6 +304,14 @@ let issueForm = {
         // заполняем всю информацию
         // меняем заголовок
         issueForm.updateHeader(isEdit);
+
+        // Идентификатор задачи и тип действия выставляем в первую очередь:
+        // если заполнение формы прервётся ошибкой, форма не должна остаться
+        // в режиме добавления и создать новую задачу вместо редактирования.
+        $("#issueForm form input[name=issueId]").val(isEdit ? value.issueId : 0);
+        $("#issueForm form input[name=revision]").val(isEdit ? value.revision : '');
+        $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
+
         // имя
         $("#issueForm form input[name=name]").val(value.name);
         issueFormLabels.issueNameChanged(value.name);
@@ -410,13 +439,6 @@ let issueForm = {
             $("#issueForm form li a[name=imgByUrl]").hide();
         }
 
-        // идентификатор задачи
-        if (isEdit) {
-            $("#issueForm form input[name=issueId]").val(value.issueId);
-            $("#issueForm form input[name=revision]").val(value.revision);
-        }
-        // действие меняем на редактирование
-        $("#issueForm form input[name=actionType]").val(isEdit ? 'editIssue' : 'addIssue');
         $("#issueForm form input[name=baseIds]").val(value.baseIds?.join(',') ?? '');
         $("#issueForm form input[name=linkedIds]").val(value.linkedIds?.join(',') ?? '');
         // меняем заголовок кнопки сохранения
@@ -430,7 +452,7 @@ let issueForm = {
         issueFormLabels.update();
     },
     handleAddIssueByState: function (issueId, copyLinked) {
-        if (issueForm.restoreInput(false)) return;
+        if (issueForm.restoreInput()) return;
 
         issueId = parseInt(issueId);
         const projectId = parseInt($('#issueProjectID').val());
@@ -476,7 +498,7 @@ let issueForm = {
         );
     },
     handleAddFinishedIssueByState: function (issueId, kind) {
-        if (issueForm.restoreInput(false)) return;
+        if (issueForm.restoreInput()) return;
 
         issueId = parseInt(issueId);
         const projectId = parseInt($('#issueProjectID').val());
