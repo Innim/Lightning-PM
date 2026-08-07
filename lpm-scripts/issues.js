@@ -589,6 +589,79 @@ issuePage.loadMembers = function (handler) {
     }
 }
 
+/**
+ * Роли, в которые можно быстро добавить себя на странице задачи:
+ * row - строка с составом участников,
+ * field - скрытое поле с идентификаторами участников (оно же поле в данных задачи).
+ */
+issuePage.addMeRoles = {
+    member: { row: '.members-row', field: 'members' },
+    tester: { row: '.testers-row', field: 'testers' },
+    master: { row: '.masters-row', field: 'masters' },
+};
+
+/**
+ * Добавляет текущего пользователя к участникам задачи в указанной роли.
+ * @param {string} role member|tester|master
+ */
+issuePage.addMeToIssue = function (role) {
+    const roleInfo = issuePage.addMeRoles[role];
+    if (!roleInfo) return;
+
+    preloader.show();
+    srv.issue.addMeToIssue(issuePage.getIssueId(), role, function (res) {
+        preloader.hide();
+
+        if (!res.success) {
+            srv.err(res);
+            return;
+        }
+
+        const $row = $('#issueInfo ' + roleInfo.row);
+        const $input = $('input[name=' + roleInfo.field + ']', $row);
+        const ids = $input.val();
+        const hasParticipants = ids.length > 0;
+
+        const $participants = $('.value .participants', $row);
+        if (hasParticipants) {
+            // Отступы разметки схлопнулись бы в пробел перед запятой,
+            // поэтому обрезаем хвостовые пробелы
+            $participants.html($participants.html().replace(/\s+$/, '') + ', ' + res.memberHtml);
+        } else {
+            $participants.html(res.memberHtml);
+        }
+
+        // Скрытые поля используются для заполнения формы редактирования,
+        // поэтому их состав должен соответствовать отображаемому
+        $input.val(hasParticipants ? ids + ',' + res.userId : String(res.userId));
+        if (role === 'member') {
+            const $spInput = $('input[name=membersSp]', $row);
+            const sp = $spInput.val();
+            $spInput.val(sp.length > 0 ? sp + ',0' : '0');
+        }
+
+        $('.add-me-to-issue', $row).hide();
+    });
+};
+
+/**
+ * Обновляет видимость ссылок быстрого добавления себя в участники задачи.
+ * @param {Issue} issue
+ */
+issuePage.updateAddMeLinks = function (issue) {
+    Object.keys(issuePage.addMeRoles).forEach(function (role) {
+        const list = issue[issuePage.addMeRoles[role].field];
+        if (!list) return;
+
+        const $link = $('#issueInfo ' + issuePage.addMeRoles[role].row + ' .add-me-to-issue');
+        if (list.some(user => user.userId == lpInfo.userId)) {
+            $link.hide();
+        } else {
+            $link.show();
+        }
+    });
+};
+
 issuePage.updatePriorityVals = function () {
     issuePage.setPriorityVal($('input[type=range]#priority').val());
     //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
@@ -1219,7 +1292,11 @@ issuePage.showEditForm = function () {
  */
 function setIssueInfo(issue) {
     $("#issueInfo > h3 .issue-name").text(issue.name);
-    const fields = $("#issueInfo > .info-list > div > .value");
+    // В строках участников имена лежат во вложенном блоке,
+    // чтобы ссылка быстрого добавления себя не затиралась при обновлении
+    const fields = $("#issueInfo > .info-list > div > .value").map(function () {
+        return $(this).children('.participants')[0] || this;
+    }).get();
 
     //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
     //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
@@ -1278,15 +1355,7 @@ function setIssueInfo(issue) {
     else 
         $completedDate.hide();
 
-    if (testers)
-        $('#issueInfo .testers-row').show();
-    else
-        $('#issueInfo .testers-row').hide();
-
-    if (masters)
-        $('#issueInfo .masters-row').show();
-    else
-        $('#issueInfo .masters-row').hide();
+    issuePage.updateAddMeLinks(issue);
 
     issuePage.updatePriorityVals();
 
@@ -1742,13 +1811,13 @@ function Issue(obj) {
         return this.files;
     };
 
-    this.getTesters = () => getUsersStr(this.testers);
+    this.getTesters = () => getUsersStr(this.testers) || 'Не назначены';
 
     this.getTesterIds = function () {
         return this.testers.map(tester => tester.userId);
     };
 
-    this.getMasters = () => getUsersStr(this.masters);
+    this.getMasters = () => getUsersStr(this.masters) || 'Не назначены';
 
     this.getMasterIds = function () {
         return this.masters.map(master => master.userId);

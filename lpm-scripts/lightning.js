@@ -278,6 +278,9 @@ let srv = {
         takeIssue: function (issueId, replace, onResult) {
             this.s._('takeIssue');
         },
+        addMeToIssue: function (issueId, role, onResult) {
+            this.s._('addMeToIssue');
+        },
         lockIssue: function (issueId, revision, forced, onResult) {
             this.s._('lockIssue');
         },

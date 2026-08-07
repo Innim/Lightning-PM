@@ -1,0 +1,17 @@
+<?php
+/*
+Требуются:
+    string $role - роль, в которую добавляется текущий пользователь (member|tester|master)
+    string $icon - классы иконки роли
+    string $title - подсказка и подпись для скринридера
+    bool $hidden - true, если пользователь уже назначен в этой роли
+*/
+?>
+<a href="javascript:void(0);"
+    class="add-me-to-issue link-secondary ms-2"
+    onclick="issuePage.addMeToIssue('<?=$role;?>')"
+    title="<?=$title;?>"
+    aria-label="<?=$title;?>"
+    <?php if ($hidden): ?>style="display: none;"<?php endif;?>>
+    <i class="<?=$icon;?> fa-xs" aria-hidden="true"></i>
+</a>

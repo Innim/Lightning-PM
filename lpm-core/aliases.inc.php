@@ -303,6 +303,15 @@ function lpm_print_issue_linked($issue)
 }
 
 /**
+ * Печатает ссылку быстрого добавления текущего пользователя
+ * к участникам задачи в указанной роли (member|tester|master).
+ */
+function lpm_print_issue_add_me($issue, $userId, $role)
+{
+    return PagePrinter::issueAddMe($issue, $userId, $role);
+}
+
+/**
  * Печатает кнопку копирования значения в буфер обмена.
  */
 function lpm_print_copy_button($value, $toast = 'Скопировано')

@@ -710,6 +710,64 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Добавляет текущего пользователя к участникам задачи в указанной роли.
+     *
+     * Уже назначенные участники сохраняются.
+     *
+     * @param int $issueId Идентификатор задачи.
+     * @param string $role Роль: `member` - исполнитель, `tester` - тестировщик,
+     * `master` - мастер.
+     */
+    public function addMeToIssue($issueId, $role)
+    {
+        $issueId = (int)$issueId;
+
+        try {
+            $issue = $this->getIssueForEdit($issueId);
+
+            $user = $this->getUser();
+            $userId = $user->userId;
+
+            switch ($role) {
+                case 'member':
+                    if ($issue->isMember($userId)) {
+                        return $this->error('Вы уже являетесь исполнителем этой задачи');
+                    }
+                    $saved = Member::saveIssueMembers($issueId, [$userId]);
+                    break;
+                case 'tester':
+                    if ($issue->isTester($userId)) {
+                        return $this->error('Вы уже являетесь тестировщиком этой задачи');
+                    }
+                    $saved = Member::saveIssueTesters($issueId, [$userId]);
+                    break;
+                case 'master':
+                    if ($issue->isMaster($userId)) {
+                        return $this->error('Вы уже являетесь мастером этой задачи');
+                    }
+                    $saved = Member::saveIssueMasters($issueId, [$userId]);
+                    break;
+                default:
+                    return $this->error('Неизвестная роль');
+            }
+
+            if (!$saved) {
+                return $this->errorDBSave();
+            }
+
+            // Записываем лог
+            UserLogEntry::issueEdit($userId, $issue->id, 'Add self as ' . $role);
+
+            $this->add2Answer('userId', $userId);
+            $this->add2Answer('memberHtml', $user->getLinkedName());
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Блокирует задачу на момент редактирования.
      * @param int $issueId Идентификатор задачи.
      * @param String $revision Ревизия задачи, которая будет заблокирована.

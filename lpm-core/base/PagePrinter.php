@@ -211,6 +211,45 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает ссылку быстрого добавления текущего пользователя
+     * к участникам задачи в указанной роли.
+     *
+     * Ссылка печатается всегда, но скрывается, если пользователь уже назначен в этой роли.
+     *
+     * @param Issue $issue Задача.
+     * @param int $userId Идентификатор текущего пользователя.
+     * @param string $role Роль: `member` - исполнитель, `tester` - тестировщик,
+     * `master` - мастер.
+     */
+    public static function issueAddMe(Issue $issue, $userId, $role)
+    {
+        switch ($role) {
+            case 'tester':
+                $icon = 'fa-solid fa-flask';
+                $title = 'Добавить себя в тестировщики';
+                $hidden = $issue->isTester($userId);
+                break;
+            case 'master':
+                $icon = 'fa-solid fa-user-tie';
+                $title = 'Добавить себя в мастеры';
+                $hidden = $issue->isMaster($userId);
+                break;
+            case 'member':
+            default:
+                $role = 'member';
+                $icon = 'fa-regular fa-hand-paper';
+                $title = 'Добавить себя в исполнители';
+                $hidden = $issue->isMember($userId);
+                break;
+        }
+
+        PageConstructor::includePattern(
+            'components/issue-add-me',
+            compact('role', 'icon', 'title', 'hidden')
+        );
+    }
+
+    /**
      * Распечатывает таблицу Scrum доски.
      * @param $stickers
      * @param bool $addProjectName
