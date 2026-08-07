@@ -593,3 +593,20 @@ ALTER TABLE `lpm_issues` ADD KEY `projectId_completedDate` (`projectId`, `comple
 -- Сортировка/пагинация комментариев по дате и подзапрос последнего состояния теста
 -- (был индекс (instanceType, instanceId) без даты — приводил к filesort на каждой строке списка задач).
 ALTER TABLE `lpm_comments` ADD KEY `instanceType_instanceId_date` (`instanceType`, `instanceId`, `date`);
+
+-- Признак того, что для задач проекта доступна ИИ-сводка обсуждения.
+ALTER TABLE `lpm_projects`
+    ADD `aiSummary` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Для задач проекта доступна ИИ-сводка' AFTER `scrum`;
+
+-- Кэш ИИ-сводок: одна актуальная сводка на задачу, общая для всех пользователей.
+CREATE TABLE `lpm_ai_issue_summary` (
+  `issueId` bigint NOT NULL COMMENT 'Идентификатор задачи',
+  `sourceHash` char(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Слепок данных задачи, по которым составлена сводка',
+  `summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Разделы сводки в формате JSON',
+  `model` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Модель, составившая сводку',
+  `promptTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов в запросе',
+  `completionTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов в ответе',
+  `totalTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов всего',
+  `createdAt` datetime NOT NULL COMMENT 'Дата составления сводки',
+  PRIMARY KEY (`issueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ИИ-сводки обсуждения задач';

@@ -49,6 +49,16 @@ class AiIntegration
         return [self::PROVIDER_GEMINI];
     }
 
+    /**
+     * Настроенный таймаут обращения к модели в секундах
+     * или 0, если он не задан и используется значение адаптера.
+     * @return int
+     */
+    public static function getRequestTimeout()
+    {
+        return defined('AI_REQUEST_TIMEOUT') ? max(0, (int)AI_REQUEST_TIMEOUT) : 0;
+    }
+
     private $_defaultProvider;
     /** @var AiAdapter[] */
     private $_adapters = [];

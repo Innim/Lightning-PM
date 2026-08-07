@@ -266,8 +266,35 @@ class ProjectPage extends LPMPage
             $this->getCommentJs()
         );
 
+        $this->initIssueSummary($issue, $comments);
+
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
+    }
+
+    /**
+     * Готовит данные блока ИИ-сводки задачи: доступность блока и уже
+     * составленную сводку, если она есть. К модели при этом не обращается —
+     * сводка составляется только по запросу пользователя.
+     */
+    private function initIssueSummary(Issue $issue, array $comments)
+    {
+        $available = IssueSummaryBuilder::isAvailableFor(
+            $issue,
+            $comments,
+            $this->_engine->getUserId()
+        );
+
+        $this->addTmplVar('aiSummaryAvailable', $available);
+        $this->addTmplVar('aiSummary', $available ? IssueSummary::loadByIssue($issue->getID()) : null);
+        $this->addTmplVar('aiSummarySourceHash', $available
+            ? IssueSummaryBuilder::sourceHash($issue, $comments) : '');
+        $this->addTmplVar('aiSummaryCommentsCount', $available
+            ? IssueSummaryBuilder::countMeaningful($comments) : 0);
+
+        if ($available) {
+            $this->_js[] = 'issue-summary';
+        }
     }
 
     private function initCompletedIssues()
@@ -386,6 +413,7 @@ class ProjectPage extends LPMPage
     private function initSettings()
     {
         $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('aiSummaryAvailable', AiIntegration::getInstance()->isAvailable());
     }
 
     private function getIssuesListJs()

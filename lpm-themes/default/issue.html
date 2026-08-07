@@ -1,8 +1,12 @@
 <?php
 /* 
-Требуются: 
+Требуются:
     $issue - текущая задача
     $comments - комментарии к задаче
+    $aiSummaryAvailable - доступен ли блок ИИ-сводки задачи
+    $aiSummary - сохранённая ИИ-сводка (IssueSummary) или null, если её ещё нет
+    $aiSummarySourceHash - слепок текущего состояния задачи
+    $aiSummaryCommentsCount - количество содержательных комментариев задачи
 Необязательные:
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
@@ -251,6 +255,9 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 </span>
                 <input type="hidden" name="masters" value="<?=$issue->getMasterIdsStr();?>" />
             </div>
+            <?php if (!empty($aiSummaryAvailable)): ?>
+            <?php lpm_print_ai_issue_summary($issue, $aiSummary, $aiSummarySourceHash, $aiSummaryCommentsCount); ?>
+            <?php endif; ?>
             <div class="desc info-list-item">
                 <div class="value formatted-desc text-with-attachments"><?=$issue->getDesc();?></div>
                 <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>

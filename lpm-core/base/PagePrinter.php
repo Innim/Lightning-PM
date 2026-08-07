@@ -104,6 +104,22 @@ class PagePrinter
         PageConstructor::includePattern('components/issue-linked', compact('issue', 'linkedIssues'));
     }
 
+    /**
+     * Печатает блок ИИ-сводки обсуждения задачи.
+     * @param Issue $issue Задача.
+     * @param IssueSummary $summary Сохранённая сводка или null, если её ещё нет.
+     * @param string $sourceHash Слепок текущего состояния задачи.
+     * @param int $commentsCount Количество содержательных комментариев.
+     */
+    public static function aiIssueSummary(Issue $issue, $summary, $sourceHash, $commentsCount)
+    {
+        $isActual = !empty($summary) && $summary->isActualFor($sourceHash);
+        PageConstructor::includePattern(
+            'components/ai-issue-summary',
+            compact('issue', 'summary', 'commentsCount', 'isActual')
+        );
+    }
+
     public static function projectsList($list, $isArchive = false)
     {
         PageConstructor::includePattern('projects-list', compact('list', 'isArchive'));
@@ -338,6 +354,7 @@ class PagePrinter
             'videoUrlPatterns' => AttachmentVideoHelper::URL_PATTERNS,
             'imageUrlPatterns' => AttachmentImageHelper::URL_PATTERNS,
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
+            'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
             'roles' => [
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,

@@ -189,6 +189,13 @@ const lpm = {
 window.lpm = lpm;
 
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
+
+// Сборка ИИ-сводки — это запрос к внешней модели, он идёт дольше обычного:
+// сервер ждёт ответа до aiRequestTimeout секунд, поэтому у ИИ-сервиса
+// собственный инвокер с запасом сверху (у общего таймаут 30 секунд).
+let aiInvoker = new ru.vbinc.net.F2PInvoker(gateway);
+aiInvoker.setTimeout((window.lpmOptions.aiRequestTimeout || 60) + 30);
+
 let srv = {
     gateway: gateway,
     f2p: new ru.vbinc.net.F2PInvoker(gateway),
@@ -208,6 +215,12 @@ let srv = {
         },
         getImageInfo: function (url, onResult) {
             this.s._('getImageInfo');
+        },
+    },
+    ai: {
+        s: new BaseService('AiService', aiInvoker),
+        issueSummary: function (issueId, onResult) {
+            this.s._('issueSummary');
         },
     },
     files: {
@@ -351,7 +364,8 @@ let srv = {
             this.s._('getSumOpenedIssuesHours');
         },
         saveProject: function (
-            projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds, onResult
+            projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds,
+            aiSummary, onResult
         ) {
             this.s._('saveProject');
         },
