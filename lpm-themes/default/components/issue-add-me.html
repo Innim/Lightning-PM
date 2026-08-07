@@ -5,6 +5,7 @@
     string $icon - классы иконки роли
     string $title - подсказка и подпись для скринридера
     bool $hidden - true, если пользователь уже назначен в этой роли
+    bool $withPlus - true, если к иконке роли нужно добавить значок плюса
 */
 ?>
 <a href="javascript:void(0);"
@@ -13,5 +14,6 @@
     title="<?=$title;?>"
     aria-label="<?=$title;?>"
     <?php if ($hidden): ?>style="display: none;"<?php endif;?>>
-    <i class="<?=$icon;?> fa-xs" aria-hidden="true"></i>
+    <i class="<?=$icon;?> fa-xs" aria-hidden="true"></i><?php if ($withPlus): ?><i
+        class="fas fa-plus plus-icon" aria-hidden="true"></i><?php endif;?>
 </a>

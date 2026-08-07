@@ -223,6 +223,11 @@ class PagePrinter
      */
     public static function issueAddMe(Issue $issue, $userId, $role)
     {
+        // Иконки ролей сами по себе читаются как обозначение, поэтому дополняются
+        // значком плюса. Исключение - «лапка» исполнителя: она уже означает действие
+        // «взять задачу себе» (тот же жест используется на Scrum доске)
+        $withPlus = true;
+
         switch ($role) {
             case 'tester':
                 $icon = 'fa-solid fa-flask';
@@ -240,12 +245,13 @@ class PagePrinter
                 $icon = 'fa-regular fa-hand-paper';
                 $title = 'Добавить себя в исполнители';
                 $hidden = $issue->isMember($userId);
+                $withPlus = false;
                 break;
         }
 
         PageConstructor::includePattern(
             'components/issue-add-me',
-            compact('role', 'icon', 'title', 'hidden')
+            compact('role', 'icon', 'title', 'hidden', 'withPlus')
         );
     }
 

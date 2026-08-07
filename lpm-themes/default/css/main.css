@@ -429,6 +429,27 @@ a.create-branch-icon .plus-icon {
   	justify-content: center;
 }
 
+/* Иконка добавления себя в участники задачи: плюс поверх иконки роли,
+   тем же приёмом, что и у иконки создания ветки */
+a.add-me-to-issue {
+	position: relative;
+	padding-right: 4px;
+	text-decoration: none;
+}
+a.add-me-to-issue .plus-icon {
+	position: absolute;
+	right: 0;
+	bottom: -1px;
+	font-size: 0.4em;
+	color: white;
+	background: black;
+	border-radius: 50%;
+	aspect-ratio: 1 / 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .comments .links-bar .comments-controls {
 	float: right;
 }
