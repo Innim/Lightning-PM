@@ -28,7 +28,7 @@ class IssueChangeSet
 
         self::addMembersLine($lines, 'Исполнители', $oldMemberIds, $new->getMemberIds());
         self::addMembersLine($lines, 'Тестировщики', $oldTesterIds, $new->getTesterIds());
-        self::addMembersLine($lines, 'Мастера', $oldMasterIds, $new->getMasterIds());
+        self::addMembersLine($lines, 'Мастеры', $oldMasterIds, $new->getMasterIds());
 
         if ($old->getType() !== $new->getType()) {
             $lines[] = 'Тип: ' . $old->getType() . ' → ' . $new->getType();

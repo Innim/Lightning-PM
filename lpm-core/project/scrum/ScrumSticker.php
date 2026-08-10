@@ -17,7 +17,21 @@ class ScrumSticker extends LPMBaseObject
 `i`.`projectId` = ${projectId} AND `s`.`state` IN (${states})
 SQL;
 
-        return self::loadList($where);
+        $list = self::loadList($where);
+
+        // Заранее загружаем участников (исполнителей и тестировщиков) всех задач доски
+        // одним запросом, чтобы шаблон не делал по запросу на каждый стикер
+        // (getMembers/isMember/isTester).
+        $issueIds = [];
+        foreach ($list as $sticker) {
+            $issueIds[] = $sticker->issueId;
+        }
+        $participants = Member::loadListAnyForIssues($issueIds, true, true, false);
+        foreach ($list as $sticker) {
+            $sticker->getIssue()->extractParticipantsFrom($participants, true, true, false);
+        }
+
+        return $list;
     }
 
     protected static function loadList($where, $extraSelect = '', $extraTables = null, $extraTablesOn = null, $orderBy = null)

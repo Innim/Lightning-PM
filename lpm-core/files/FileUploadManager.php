@@ -21,6 +21,97 @@ class FileUploadManager
         return false;
     }
 
+    /**
+     * Проверяет выбранные в форме файлы, не сохраняя их.
+     * Позволяет отсечь некорректные файлы до записи каких-либо данных.
+     * @param  array $filesData      Данные поля из $_FILES.
+     * @param  int   $availableSlots Количество файлов, которые ещё можно прикрепить.
+     * @param  int   $totalLimit     Максимальное количество файлов.
+     * @return array Массив сообщений об ошибках. Пустой, если всё в порядке.
+     */
+    public static function validateUploads(array $filesData, $availableSlots, $totalLimit)
+    {
+        $errors = [];
+
+        if (!self::hasUploads($filesData)) {
+            return $errors;
+        }
+
+        $newCount = 0;
+        $count = count($filesData['name']);
+        for ($index = 0; $index < $count; $index++) {
+            $originalName = $filesData['name'][$index];
+            $tmpName = $filesData['tmp_name'][$index];
+            $errorCode = isset($filesData['error'][$index]) ? $filesData['error'][$index] : UPLOAD_ERR_OK;
+            $size = isset($filesData['size'][$index]) ? (int)$filesData['size'][$index] : 0;
+
+            if (self::isEmptyUpload($tmpName, $errorCode)) {
+                continue;
+            }
+
+            $newCount++;
+
+            $error = self::checkUploadedFile($originalName, $errorCode, $size);
+            if (null !== $error) {
+                $errors[] = $error;
+            }
+        }
+
+        if ($newCount > max(0, (int)$availableSlots)) {
+            $errors[] = sprintf('Вы не можете прикрепить больше %d файлов', self::getFilesLimit($availableSlots, $totalLimit));
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Определяет количество файлов для сообщения о превышении лимита.
+     * @param  int $availableSlots Количество файлов, которые ещё можно прикрепить.
+     * @param  int $totalLimit     Максимальное количество файлов.
+     * @return int
+     */
+    private static function getFilesLimit($availableSlots, $totalLimit)
+    {
+        $limit = $totalLimit > 0 ? (int)$totalLimit : (int)$availableSlots;
+
+        return $limit > 0 ? $limit : 1;
+    }
+
+    /**
+     * Определяет, что в поле не выбран файл.
+     * @param  string $tmpName   Путь до временного файла.
+     * @param  int    $errorCode Код ошибки загрузки (одна из констант UPLOAD_ERR_*).
+     * @return bool
+     */
+    private static function isEmptyUpload($tmpName, $errorCode)
+    {
+        return $errorCode === UPLOAD_ERR_NO_FILE || (empty($tmpName) && $errorCode === UPLOAD_ERR_OK);
+    }
+
+    /**
+     * Проверяет, что выбранный файл может быть загружен.
+     * @param  string $originalName Оригинальное имя файла.
+     * @param  int    $errorCode    Код ошибки загрузки (одна из констант UPLOAD_ERR_*).
+     * @param  int    $size         Размер файла в байтах.
+     * @return string|null Текст ошибки или null, если файл может быть загружен.
+     */
+    private static function checkUploadedFile($originalName, $errorCode, $size)
+    {
+        if ($errorCode !== UPLOAD_ERR_OK) {
+            return self::translateUploadError($errorCode, $originalName);
+        }
+
+        if ($size <= 0) {
+            return sprintf('Файл "%s" пустой или поврежден', $originalName);
+        }
+
+        if ($size > MAX_FILE_SIZE_BYTES) {
+            return sprintf('Размер файла "%s" не должен превышать %d Мб', $originalName, MAX_FILE_SIZE_MB);
+        }
+
+        return null;
+    }
+
     public static function upload($itemType, $itemId, $userId, array $filesData, $availableSlots, $totalLimit)
     {
         $result = [
@@ -47,31 +138,21 @@ class FileUploadManager
             $errorCode = isset($filesData['error'][$index]) ? $filesData['error'][$index] : UPLOAD_ERR_OK;
             $size = isset($filesData['size'][$index]) ? (int)$filesData['size'][$index] : 0;
 
-            if ($errorCode === UPLOAD_ERR_NO_FILE || (empty($tmpName) && $errorCode === UPLOAD_ERR_OK)) {
+            if (self::isEmptyUpload($tmpName, $errorCode)) {
                 continue;
             }
 
             if ($availableSlots <= 0) {
-                $limitValue = $totalLimit > 0 ? $totalLimit : $availableSlots;
-                if ($limitValue <= 0) {
-                    $limitValue = 1;
-                }
-                $result['errors'][] = sprintf('Вы не можете прикрепить больше %d файлов', $limitValue);
+                $result['errors'][] = sprintf(
+                    'Вы не можете прикрепить больше %d файлов',
+                    self::getFilesLimit($availableSlots, $totalLimit)
+                );
                 break;
             }
 
-            if ($errorCode !== UPLOAD_ERR_OK) {
-                $result['errors'][] = self::translateUploadError($errorCode, $originalName);
-                continue;
-            }
-
-            if ($size <= 0) {
-                $result['errors'][] = sprintf('Файл "%s" пустой или поврежден', $originalName);
-                continue;
-            }
-
-            if ($size > MAX_FILE_SIZE_BYTES) {
-                $result['errors'][] = sprintf('Размер файла "%s" не должен превышать %d Мб', $originalName, MAX_FILE_SIZE_MB);
+            $checkError = self::checkUploadedFile($originalName, $errorCode, $size);
+            if (null !== $checkError) {
+                $result['errors'][] = $checkError;
                 continue;
             }
 
@@ -205,7 +286,13 @@ class FileUploadManager
         return mb_substr($name, 0, 255);
     }
 
-    private static function translateUploadError($errorCode, $fileName)
+    /**
+     * Возвращает текст ошибки загрузки файла.
+     * @param  int    $errorCode Код ошибки (одна из констант UPLOAD_ERR_*).
+     * @param  string $fileName  Имя файла.
+     * @return string
+     */
+    public static function translateUploadError($errorCode, $fileName)
     {
         switch ($errorCode) {
             case UPLOAD_ERR_INI_SIZE:

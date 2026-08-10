@@ -1,8 +1,12 @@
 <?php
 /* 
-Требуются: 
+Требуются:
     $issue - текущая задача
     $comments - комментарии к задаче
+    $aiSummaryAvailable - доступен ли блок ИИ-сводки задачи
+    $aiSummary - сохранённая ИИ-сводка (IssueSummary) или null, если её ещё нет
+    $aiSummarySourceHash - слепок текущего состояния задачи
+    $aiSummaryCommentsCount - количество содержательных комментариев задачи
 Необязательные:
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
@@ -200,9 +204,10 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <span class="label">Создал</span>
                 <span class="value"><?=$issue->getAuthorLinkedName();?></span>
             </div>
-            <div class="info-list-item">
+            <div class="members-row info-list-item">
                 <span class="label">Исполнители</span>
                 <span class="value">
+                    <span class="participants">
                     <?php if ($issue->hasMembers()):?>
                     <?php foreach ($issue->getMembers() as $i => $member):
                 ?><?=$i>0?',':''
@@ -212,28 +217,47 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     <?php else: ?>
                     Не назначены
                     <?php endif; ?>
+                    </span>
+                    <?php lpm_print_issue_add_me($issue, $userId, 'member'); ?>
                 </span>
                 <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>" />
                 <input type="hidden" name="membersSp" value="<?=$issue->getMembersSpStr();?>" />
             </div>
             <?php $testers = $issue->getTesters(); ?>
-            <div class="testers-row info-list-item" <?php if (empty($testers)): ?>style="display: none;" <?php endif;?>>
+            <div class="testers-row info-list-item">
                 <span class="label">Тестеры</span>
                 <span class="value">
+                    <span class="participants">
+                    <?php if (empty($testers)): ?>
+                    Не назначены
+                    <?php else: ?>
                     <?php foreach ($testers as $i => $tester) {?><?=$i>0?', ':''?>
                     <?=$tester->getLinkedName();?><?php }?>
+                    <?php endif; ?>
+                    </span>
+                    <?php lpm_print_issue_add_me($issue, $userId, 'tester'); ?>
                 </span>
                 <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>" />
             </div>
             <?php $masters = $issue->getMasters(); ?>
-            <div class="masters-row info-list-item" <?php if (empty($masters)): ?>style="display: none;" <?php endif;?>>
+            <div class="masters-row info-list-item">
                 <span class="label">Мастеры</span>
                 <span class="value">
+                    <span class="participants">
+                    <?php if (empty($masters)): ?>
+                    Не назначены
+                    <?php else: ?>
                     <?php foreach ($masters as $i => $master) {?><?=$i>0?', ':''?>
                     <?=$master->getLinkedName();?><?php }?>
+                    <?php endif; ?>
+                    </span>
+                    <?php lpm_print_issue_add_me($issue, $userId, 'master'); ?>
                 </span>
                 <input type="hidden" name="masters" value="<?=$issue->getMasterIdsStr();?>" />
             </div>
+            <?php if (!empty($aiSummaryAvailable)): ?>
+            <?php lpm_print_ai_issue_summary($issue, $aiSummary, $aiSummarySourceHash, $aiSummaryCommentsCount); ?>
+            <?php endif; ?>
             <div class="desc info-list-item">
                 <div class="value formatted-desc text-with-attachments"><?=$issue->getDesc();?></div>
                 <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>

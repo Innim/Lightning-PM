@@ -2,6 +2,7 @@
 /*
  Требуются:
      $project - Проект
+     $aiSummaryAvailable - настроена ли интеграция с ИИ
 */
 ?>
 <div id="projectSettings" class="mx-auto container container-main px-4 py-4">
@@ -73,6 +74,14 @@
                     <input id="scrumCheckbox" class="form-check-input" type="checkbox" <?=$project->scrum ? 'checked' : '' ?>>
                     <label class="form-check-label" for="scrumCheckbox">Проект использует Scrum</label>
                 </div>
+
+                <?php if (!empty($aiSummaryAvailable)): ?>
+                <div class="form-check mb-3">
+                    <input id="aiSummaryCheckbox" class="form-check-input" type="checkbox" <?=$project->aiSummary ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="aiSummaryCheckbox">ИИ-сводка задач</label>
+                    <div class="form-text">Краткая сводка обсуждения задачи, которую можно собрать на её странице.</div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 

@@ -47,6 +47,8 @@ class LPMLog
     const CH_EMAIL = 'email';
     /** Канал кэша изображений */
     const CH_CACHE = 'cache';
+    /** Канал интеграции с ИИ-моделями */
+    const CH_AI = 'ai';
 
     /**
      * Записать отладочное сообщение (уровень DEBUG).

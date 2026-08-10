@@ -89,6 +89,37 @@ class Member extends User
 
         return self::loadListForIssue($types, $projectId, $issueStatus);
     }
+
+    /**
+     * Загружает участников (исполнителей/тестировщиков/мастеров) сразу для нескольких задач
+     * одним запросом — для устранения N+1 при выводе списков задач/стикеров.
+     * @param int[] $issueIds Идентификаторы задач.
+     * @return IssueMember[] Плоский список участников всех указанных задач.
+     */
+    public static function loadListAnyForIssues(array $issueIds, $loadMembers = true, $loadTesters = true, $loadMasters = true)
+    {
+        if (empty($issueIds)) return [];
+
+        $types = [];
+        if ($loadMembers) $types[] = LPMInstanceTypes::ISSUE;
+        if ($loadTesters) $types[] = LPMInstanceTypes::ISSUE_FOR_TEST;
+        if ($loadMasters) $types[] = LPMInstanceTypes::ISSUE_FOR_MASTER;
+        if (empty($types)) return [];
+
+        $ids = implode(', ', array_map('intval', $issueIds));
+
+        return self::loadListByInstance(
+            $types,
+            null,
+            false,
+            [
+                LPMTables::ISSUE_MEMBER_INFO => self::getIssueMemberInfoJoin(),
+            ],
+            'IssueMember',
+            null,
+            "`m`.`instanceId` IN ($ids)"
+        );
+    }
     
     public static function loadListByIssue($issueId, $onlyNotLocked = false)
     {

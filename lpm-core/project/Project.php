@@ -71,7 +71,8 @@ class Project extends MembersInstance
         $scrum,
         $slackNotifyChannel,
         $gitlabGroupId,
-        $gitlabProjectIds
+        $gitlabProjectIds,
+        $aiSummary
     )
     {
         $db = self::getDB();
@@ -83,6 +84,7 @@ class Project extends MembersInstance
                 'slackNotifyChannel' => $slackNotifyChannel,
                 'gitlabGroupId' => $gitlabGroupId,
                 'gitlabProjectIds' => $gitlabProjectIds,
+                'aiSummary' => $aiSummary,
             ],
             'WHERE' => [
                 'id' => $projectId
@@ -406,6 +408,12 @@ SQL;
     public $scrum = false;
 
     /**
+     * Для задач проекта доступна ИИ-сводка обсуждения.
+     * @var Boolean
+     */
+    public $aiSummary = false;
+
+    /**
      * Имя канала для оповещений в Slack (без решетки).
      * @var string
      */
@@ -490,7 +498,7 @@ SQL;
     {
         parent::__construct();
         $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId', 'gitlabGroupId');
-        $this->_typeConverter->addBoolVars('scrum', 'fixedInstance');
+        $this->_typeConverter->addBoolVars('scrum', 'fixedInstance', 'aiSummary');
 
         $this->addClientFields('id', 'uid', 'name', 'desc', 'scrum');
     }

@@ -73,6 +73,9 @@ $(function () {
         }
 
         const scrum = $('#scrumCheckbox').prop('checked') ? 1 : 0;
+        // Чекбокса нет, если интеграция с ИИ не настроена — сервер в этом случае
+        // оставляет текущее значение настройки.
+        const aiSummary = $('#aiSummaryCheckbox').prop('checked') ? 1 : 0;
 
         const gitlabProjectIds = $('#gitlabProjectIds').val();
         if (gitlabProjectIds) {
@@ -92,6 +95,7 @@ $(function () {
             $('#slackСhannel').val(),
             $('#gitlabGroupId').val(),
             gitlabProjectIds,
+            aiSummary,
             function (res) {
                 if (!res.success) {
                     showError(res.error || 'Ошибка при запросе к серверу');

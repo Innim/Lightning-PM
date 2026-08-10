@@ -45,7 +45,7 @@
         <div class="card-body pb-0">
           <?php foreach ($entry['sections'] as $i => $section): ?>
             <?php if ($section['title'] !== ''): ?>
-              <p class="mb-2 <?=$i > 0 ? 'mt-3' : 'mt-0';?>">
+              <p class="mb-2<?=$i > 0 ? ' mt-3' : '';?>">
                 <span class="badge <?=$section['badge'];?>"><?=htmlspecialchars($section['title']);?></span>
               </p>
             <?php endif; ?>

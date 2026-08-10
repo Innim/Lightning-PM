@@ -24,14 +24,67 @@ SQL;
         /* @var $items ScrumStickerSnapshotItem[] */
         $items = StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT], __CLASS__);
 
-        // TODO: можно ли и нужно ли объединить с запросом выше?
-        // TODO: нужно ли грузить одним запросом?
-        // грузим всех пользователей по задачам
+        // Заранее загружаем исполнителей и тестировщиков всех стикеров снапшота
+        // двумя запросами (вместо запроса на каждый стикер при отрисовке).
+        $itemIds = [];
         foreach ($items as $item) {
-            $item->loadMembers();
+            $itemIds[] = $item->id;
+        }
+        $membersById = self::groupByInstanceId(
+            self::loadSnapshotParticipants(LPMInstanceTypes::SNAPSHOT_ISSUE_MEMBERS, $itemIds)
+        );
+        $testersById = self::groupByInstanceId(
+            self::loadSnapshotParticipants(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $itemIds)
+        );
+        foreach ($items as $item) {
+            $id = (int) $item->id;
+            $item->setParticipants(
+                isset($membersById[$id]) ? $membersById[$id] : [],
+                isset($testersById[$id]) ? $testersById[$id] : []
+            );
         }
 
         return $items;
+    }
+
+    /**
+     * Загружает участников снапшота указанного типа сразу для нескольких стикеров одним запросом.
+     * @param int $instanceType Тип участия (SNAPSHOT_ISSUE_MEMBERS / SNAPSHOT_ISSUE_FOR_TEST).
+     * @param int[] $itemIds Идентификаторы стикеров снапшота.
+     * @return Member[]
+     */
+    private static function loadSnapshotParticipants($instanceType, array $itemIds)
+    {
+        if (empty($itemIds)) {
+            return [];
+        }
+
+        $ids = implode(', ', array_map('intval', $itemIds));
+        $list = Member::loadListByInstance(
+            $instanceType,
+            null,
+            false,
+            null,
+            null,
+            null,
+            "`m`.`instanceId` IN ($ids)"
+        );
+
+        return $list === false ? [] : $list;
+    }
+
+    /**
+     * Группирует список участников по идентификатору стикера (`instanceId`).
+     * @param Member[] $members
+     * @return array<int, Member[]>
+     */
+    private static function groupByInstanceId($members)
+    {
+        $byId = [];
+        foreach ($members as $member) {
+            $byId[(int) $member->instanceId][] = $member;
+        }
+        return $byId;
     }
 
     /**
@@ -90,6 +143,12 @@ SQL;
 
     // userId => sp
     private $_spByMemberId;
+
+    /**
+     * Кэш тестировщиков стикера (заполняется batch-загрузкой в {@see loadList()}).
+     * @var Member[]|null
+     */
+    private $_testers = null;
 
     public function __construct($id = 0)
     {
@@ -160,18 +219,39 @@ SQL;
         }
     }
 
+    /**
+     * Устанавливает предварительно загруженных исполнителей и тестировщиков стикера.
+     *
+     * Используется batch-загрузкой в {@see loadList()}, чтобы отрисовка снапшота
+     * не делала запрос на каждый стикер.
+     * @param Member[] $members
+     * @param Member[] $testers
+     */
+    public function setParticipants($members, $testers)
+    {
+        $this->_members = $members;
+        $this->_testers = $testers;
+    }
+
     public function isTester($userId)
     {
-        return Member::hasMember(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $this->id, $userId);
+        foreach ($this->getTesters() as $tester) {
+            if ($userId == $tester->userId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function getTesters()
     {
-        $testers = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $this->id);
-        if ($testers === false) {
-            $testers = array();
+        if ($this->_testers === null) {
+            $this->_testers = Member::loadListByInstance(LPMInstanceTypes::SNAPSHOT_ISSUE_FOR_TEST, $this->id);
+            if ($this->_testers === false) {
+                $this->_testers = array();
+            }
         }
-        return $testers;
+        return $this->_testers;
     }
 
     /**

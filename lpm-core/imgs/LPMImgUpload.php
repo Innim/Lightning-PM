@@ -10,6 +10,281 @@
 class LPMImgUpload
 {
     /**
+     * Проверяет файлы, выбранные в форме, не сохраняя их.
+     * Позволяет отсечь некорректные изображения до записи каких-либо данных.
+     * @param  string $name Имя поля с файлами для загрузки.
+     * @return array Массив сообщений об ошибках. Пустой, если всё в порядке.
+     */
+    public static function validateUploadedFiles($name)
+    {
+        $errors = [];
+
+        if (!isset($_FILES[$name]) || !isset($_FILES[$name]['tmp_name'])
+                || !is_array($_FILES[$name]['tmp_name'])) {
+            return $errors;
+        }
+
+        $files = $_FILES[$name];
+        foreach ($files['tmp_name'] as $i => $tmpName) {
+            $originalName = isset($files['name'][$i]) ? $files['name'][$i] : null;
+            $errorCode = isset($files['error'][$i]) ? $files['error'][$i] : UPLOAD_ERR_OK;
+
+            if ($errorCode === UPLOAD_ERR_NO_FILE || (empty($tmpName) && $errorCode === UPLOAD_ERR_OK)) {
+                continue;
+            }
+
+            if ($errorCode !== UPLOAD_ERR_OK) {
+                $errors[] = FileUploadManager::translateUploadError($errorCode, $originalName);
+                continue;
+            }
+
+            $error = self::checkImageFile($tmpName, $originalName);
+            if ($error !== null) {
+                $errors[] = $error;
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Готовит к загрузке изображения, вставленные из буфера обмена и добавленные
+     * по URL: сохраняет их во временные файлы и проверяет.
+     *
+     * Загрузить подготовленные изображения можно через uploadPrepared(),
+     * а отказаться от них - через removeTempFiles().
+     * @param  array $base64Items Массив изображений в виде строк base64.
+     * @param  array $urls        Массив URL адресов изображений.
+     * @param  array $errors      Сюда добавляются сообщения об ошибках.
+     * @return array Подготовленные изображения. Пусто, если были ошибки.
+     */
+    public static function prepareImages($base64Items, $urls, array &$errors)
+    {
+        $prepared = self::prepareFromBase64($base64Items, $errors);
+        if (!empty($errors)) {
+            return $prepared;
+        }
+
+        $fromUrls = self::prepareFromUrls($urls, $errors);
+        if (!empty($errors)) {
+            self::removeTempFiles($prepared);
+            return self::emptyPrepared();
+        }
+
+        return [
+            'files' => array_merge($prepared['files'], $fromUrls['files']),
+            'names' => array_merge($prepared['names'], $fromUrls['names']),
+        ];
+    }
+
+    /**
+     * Удаляет временные файлы подготовленных изображений.
+     * @param array $prepared Подготовленные изображения.
+     */
+    public static function removeTempFiles($prepared)
+    {
+        if (!empty($prepared['files'])) {
+            self::clearTmpImages($prepared['files']);
+        }
+    }
+
+    /**
+     * Готовит изображения, переданные строками base64
+     * (используется для вставки из буфера обмена).
+     * @param  array $items  Массив изображений в виде строк base64.
+     * @param  array $errors Сюда добавляются сообщения об ошибках.
+     * @return array Подготовленные изображения. Пусто, если были ошибки.
+     */
+    private static function prepareFromBase64($items, array &$errors)
+    {
+        $prepared = self::emptyPrepared();
+
+        if (empty($items)) {
+            return $prepared;
+        }
+
+        $dirTempPath = self::prepareTempDir($errors);
+        if (null === $dirTempPath) {
+            return $prepared;
+        }
+
+        foreach ($items as $value) {
+            if (empty($value)) {
+                continue;
+            }
+
+            $value = str_replace(['data:image/png;base64,', ' '], ['', '+'], $value);
+            $filepath = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.jpeg';
+
+            if (!file_put_contents($filepath, base64_decode($value))) {
+                $errors[] = 'Ошибка при записи в файл';
+                break;
+            }
+
+            $prepared['files'][] = $filepath;
+            $prepared['names'][] = 'clb_paste_' . date('YmdHis_u') . '.jpg';
+
+            $error = self::checkImageFile($filepath);
+            if (null !== $error) {
+                $errors[] = $error;
+                break;
+            }
+        }
+
+        return self::finishPrepare($prepared, $errors);
+    }
+
+    /**
+     * Готовит изображения, которые нужно получить по url.
+     * @param  array $urls   Массив URL адресов.
+     * @param  array $errors Сюда добавляются сообщения об ошибках.
+     * @return array Подготовленные изображения. Пусто, если были ошибки.
+     */
+    private static function prepareFromUrls($urls, array &$errors)
+    {
+        $prepared = self::emptyPrepared();
+
+        if (empty($urls)) {
+            return $prepared;
+        }
+
+        $dirTempPath = self::prepareTempDir($errors);
+        if (null === $dirTempPath) {
+            return $prepared;
+        }
+
+        // перебираем все ссылки
+        foreach ($urls as $url) {
+            // если ссылка не пустая
+            $value = trim($url);
+            if (empty($value)) {
+                continue;
+            }
+
+            // получаем из нее картинку и сохраняем ее
+            $filepath = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.png';
+
+            $value = AttachmentImageHelper::getDirectUrl($value);
+
+            try {
+                DownloadHelper::downloadImage($value, $filepath, self::MAX_SIZE);
+            } catch (Exception $e) {
+                $errors[] = $e->getMessage();
+                continue;
+            }
+
+            $prepared['files'][] = $filepath;
+            $prepared['names'][] = 'url_' . date('YmdHis_u') . '.png'; // тут бы настоящее имя выделить из url
+
+            $error = self::checkImageFile($filepath, $url);
+            if (null !== $error) {
+                $errors[] = $error;
+            }
+        }
+
+        return self::finishPrepare($prepared, $errors);
+    }
+
+    /**
+     * Создаёт директорию для временных файлов.
+     * @param  array $errors Сюда добавляется сообщение об ошибке.
+     * @return string|null Путь до директории или null, если создать не удалось.
+     */
+    private static function prepareTempDir(array &$errors)
+    {
+        $dirTempPath = LPMImg::getSrcImgPath('temp');
+
+        if (!is_dir($dirTempPath) && !mkdir($dirTempPath, 0777, true)) {
+            $msg = 'Ошибка при создании директории';
+            if (DefaultGlobals::isDebugMode()) {
+                $msg .= ' "' . $dirTempPath . '" - ';
+                $error = error_get_last();
+                if (!empty($error) && isset($error['message'])) {
+                    $msg .= $error['message'];
+                } else {
+                    $msg .= 'unknown error';
+                }
+            }
+
+            $errors[] = $msg;
+            return null;
+        }
+
+        return $dirTempPath;
+    }
+
+    /**
+     * Если при подготовке были ошибки - удаляет всё, что успели сохранить.
+     * @param  array $prepared Подготовленные изображения.
+     * @param  array $errors   Сообщения об ошибках.
+     * @return array Подготовленные изображения. Пусто, если были ошибки.
+     */
+    private static function finishPrepare(array $prepared, array $errors)
+    {
+        if (empty($errors)) {
+            return $prepared;
+        }
+
+        self::removeTempFiles($prepared);
+
+        return self::emptyPrepared();
+    }
+
+    private static function emptyPrepared()
+    {
+        return ['files' => [], 'names' => []];
+    }
+
+    /**
+     * Проверяет, что файл может быть загружен как изображение.
+     * @param  string $filepath     Путь до файла.
+     * @param  string $originalName Оригинальное имя файла - для сообщения об ошибке.
+     * @param  int    $type         Тип изображения (одна из констант IMAGETYPE_*),
+     *                              заполняется, если файл корректен.
+     * @return string|null Текст ошибки или null, если файл может быть загружен.
+     */
+    public static function checkImageFile($filepath, $originalName = null, &$type = null)
+    {
+        $label = empty($originalName) ? '' : ' "' . $originalName . '"';
+
+        if (!file_exists($filepath)) {
+            return 'Не удалось загрузить файл' . $label;
+        }
+
+        if (filesize($filepath) > self::MAX_SIZE * 1024 * 1024) {
+            return sprintf('Размер изображения%s не должен превышать %d Мб', $label, self::MAX_SIZE);
+        }
+
+        $info = @getimagesize($filepath);
+        $type = false === $info ? null : $info[2];
+        $allowedTypes = self::getAllowedTypes();
+        if (null === $type || !isset($allowedTypes[$type])) {
+            $type = null;
+            return sprintf(
+                'Файл%s не является изображением. Допустимые форматы: %s',
+                $label,
+                implode(', ', array_unique(array_values($allowedTypes)))
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Допустимые типы изображений.
+     * @return array Ассоциативный массив [тип изображения => расширение файла].
+     */
+    public static function getAllowedTypes()
+    {
+        return [
+            IMAGETYPE_JPEG          => 'jpg',
+            IMAGETYPE_JPEG2000      => 'jpeg',
+            IMAGETYPE_PNG           => 'png',
+            IMG_GIF                 => 'gif',
+        ];
+    }
+
+    /**
      * Максимальный размер (в Мб)
      * @var int
      */
@@ -150,107 +425,20 @@ class LPMImgUpload
     }
 
     /**
-     * Загружает изображения из массива строк base64
-     * (используется для загрузки из буфера обмена)
-     * @param  array $array
+     * Загружает изображения, подготовленные через prepareImages().
+     * @param  array $prepared Подготовленные изображения.
      * @return boolean
      */
-    public function uploadFromBase64($array)
+    public function uploadPrepared($prepared)
     {
-        // Создадим временную директорию
-        $dirTempPath = LPMImg::getSrcImgPath('temp');
-
-        if (!is_dir($dirTempPath) && !mkdir($dirTempPath)) {
-            return $this->error('Ошибка при создании директории');
+        if (empty($prepared['files'])) {
+            return true;
         }
 
-        // Перебираем массив и записываем в файлы
-        $files = array();
-        $names = array();
-        foreach ($array as $value) {
-            if (!empty($value)) {
-                $value = str_replace(array('data:image/png;base64,', ' '), array('', '+'), $value);
-                $filename = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.jpeg';
-
-                if (!file_put_contents($filename, base64_decode($value))) {
-                    $this->error('Ошибка при записи в файл');
-                    break;
-                } else {
-                    $files[] = $filename;
-                    $names[] = 'clb_paste_' . date('YmdHis_u') . '.jpg';
-                }
-            }
-        }
-        
-        // Если были ошибки - то удаляем все, что сохранили
-        if ($this->isErrorsExist()) {
-            $this->clearTmpImages($files);
-            return false;
-        } else {
-            return $this->addImages($files, false, $names);
-        }
-    }
-    
-    /**
-     * Загружает изображения по url
-     * @param  array $urls Массив URL адресов
-     * @return boolean
-     */
-    public function uploadFromUrls($urls)
-    {
-        // Создадим временную директорию
-        $dirTempPath = LPMImg::getSrcImgPath('temp');
-
-        if (!is_dir($dirTempPath) && !mkdir($dirTempPath, 0777, true)) {
-            $msg = 'Ошибка при создании директории';
-            if (DefaultGlobals::isDebugMode()) {
-                $msg .= ' "' . $dirTempPath . '" - ';
-                $error = error_get_last();
-                if (!empty($error) && isset($error['message'])) {
-                    $msg .= $error['message'];
-                } else {
-                    $msg .= 'unknown error';
-                }
-            }
-
-            return $this->error($msg);
-        }
-
-        $files = array();
-        $names = array();
-
-        // перебираем все ссылки
-        foreach ($urls as $url) {
-            // если ссылка не пустая
-            $value = trim($url);
-            if (!empty($value)) {
-                // получаем из нее картинку и сохраняем ее
-                $srcFileName = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.png';
-                
-                $value = AttachmentImageHelper::getDirectUrl($value);
-
-                try {
-                    DownloadHelper::downloadImage($value, $srcFileName, LPMImgUpload::MAX_SIZE);
-
-                    //устанавливаем параметры для записи файла в базу
-                    $files[] = $srcFileName;
-                    $names[] = 'url_' . date('YmdHis_u') . '.png'; // тут бы настоящее имя выделить из url
-                } catch (Exception $e) {
-                    $this->error($e->getMessage());
-                }
-            }
-        }
-
-        // Если были ошибки - то удаляем все, что сохранили
-        if ($this->isErrorsExist()) {
-            $this->clearTmpImages($files);
-            return false;
-        } else {
-            return empty($files) ? true : $this->addImages($files, false, $names);
-        }
+        return $this->addImages($prepared['files'], false, $prepared['names']);
     }
 
-    private function clearTmpImages($files)
+    private static function clearTmpImages($files)
     {
         foreach ($files as $filename) {
             if (file_exists($filename)) {
@@ -278,7 +466,7 @@ class LPMImgUpload
             foreach ($files as $i => $file) {
                 if ($this->getLoadedCount() + 1 > $this->_maxPhotos) {
                     if ($clearTmp) {
-                        $this->clearTmpImages($files);
+                        self::clearTmpImages($files);
                     }
                     break;
                 }
@@ -305,7 +493,7 @@ class LPMImgUpload
         if ($this->isErrorsExist()) {
             $this->removeImgs();
             if ($clearTmp) {
-                $this->clearTmpImages($files);
+                self::clearTmpImages($files);
             }
             return false;
         } else {
@@ -315,39 +503,16 @@ class LPMImgUpload
 
     private function loadImage($filepath, $uploaded = false, $originalName = null)
     {
-        if (!file_exists($filepath)) {
-            return $this->error('Не удалось загрузить файл');
-        }
-
         // Директория сохранения
         $dir = $this->_dir;
 
-        // Максимальный размер
-        $maxSize = LPMImgUpload::MAX_SIZE * 1024 * 1024;
-        $allowedTypes = array(//'jpg', /*'jpeg',*/ 'png');
-            // тип => расширение
-            IMAGETYPE_JPEG        	=> 'jpg',
-            IMAGETYPE_PNG         	=> 'png',
-            IMAGETYPE_JPEG2000		=> 'jpeg',
-            IMG_GIF                 => 'gif',
-        );
-        
-        // Проверяем вес файла
-        $size = filesize($filepath);
-        if ($size > $maxSize) {
-            return $this->error(sprintf(
-                'Размер файла не должен превышать %d Мб',
-                LPMImgUpload::MAX_SIZE
-            ));
+        // Проверяем вес и тип файла, получаем расширение
+        $checkError = self::checkImageFile($filepath, $originalName, $type);
+        if (null !== $checkError) {
+            return $this->error($checkError);
         }
 
-        // Проверяем тип файла и получаем расширение
-        list($width, $height, $type, $attr) = getimagesize($filepath);
-        if (!isset($allowedTypes[$type])) {
-            return $this->error(
-                'Вы можете загружать только файлы типов ' . implode(', ', array_unique((array_values($allowedTypes))))
-            );
-        }
+        $allowedTypes = self::getAllowedTypes();
         $ext = $allowedTypes[$type];
 
         // Проверяем, существует ли директория

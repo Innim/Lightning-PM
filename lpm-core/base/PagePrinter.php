@@ -70,7 +70,13 @@ class PagePrinter
     
     public static function errors()
     {
-        echo implode(', ', LightningEngine::getInstance()->getErrors());
+        // Текст ошибки может содержать пользовательские данные (например,
+        // имя загружаемого файла), поэтому разметкой остаётся только разделитель.
+        $errors = array_map(function ($error) {
+            return htmlspecialchars($error, ENT_QUOTES, 'UTF-8');
+        }, LightningEngine::getInstance()->getErrors());
+
+        echo implode('<br>', $errors);
     }
     
     public static function issues($list)
@@ -96,6 +102,22 @@ class PagePrinter
     {
         $linkedIssues = $issue->getLinkedIssues();
         PageConstructor::includePattern('components/issue-linked', compact('issue', 'linkedIssues'));
+    }
+
+    /**
+     * Печатает блок ИИ-сводки обсуждения задачи.
+     * @param Issue $issue Задача.
+     * @param IssueSummary $summary Сохранённая сводка или null, если её ещё нет.
+     * @param string $sourceHash Слепок текущего состояния задачи.
+     * @param int $commentsCount Количество содержательных комментариев.
+     */
+    public static function aiIssueSummary(Issue $issue, $summary, $sourceHash, $commentsCount)
+    {
+        $isActual = !empty($summary) && $summary->isActualFor($sourceHash);
+        PageConstructor::includePattern(
+            'components/ai-issue-summary',
+            compact('issue', 'summary', 'commentsCount', 'isActual')
+        );
     }
 
     public static function projectsList($list, $isArchive = false)
@@ -205,6 +227,51 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает ссылку быстрого добавления текущего пользователя
+     * к участникам задачи в указанной роли.
+     *
+     * Ссылка печатается всегда, но скрывается, если пользователь уже назначен в этой роли.
+     *
+     * @param Issue $issue Задача.
+     * @param int $userId Идентификатор текущего пользователя.
+     * @param string $role Роль: `member` - исполнитель, `tester` - тестировщик,
+     * `master` - мастер.
+     */
+    public static function issueAddMe(Issue $issue, $userId, $role)
+    {
+        // Иконки ролей сами по себе читаются как обозначение, поэтому дополняются
+        // значком плюса. Исключение - «лапка» исполнителя: она уже означает действие
+        // «взять задачу себе» (тот же жест используется на Scrum доске)
+        $withPlus = true;
+
+        switch ($role) {
+            case 'tester':
+                $icon = 'fa-solid fa-flask';
+                $title = 'Добавить себя в тестировщики';
+                $hidden = $issue->isTester($userId);
+                break;
+            case 'master':
+                $icon = 'fa-solid fa-user-tie';
+                $title = 'Добавить себя в мастеры';
+                $hidden = $issue->isMaster($userId);
+                break;
+            case 'member':
+            default:
+                $role = 'member';
+                $icon = 'fa-regular fa-hand-paper';
+                $title = 'Добавить себя в исполнители';
+                $hidden = $issue->isMember($userId);
+                $withPlus = false;
+                break;
+        }
+
+        PageConstructor::includePattern(
+            'components/issue-add-me',
+            compact('role', 'icon', 'title', 'hidden', 'withPlus')
+        );
+    }
+
+    /**
      * Распечатывает таблицу Scrum доски.
      * @param $stickers
      * @param bool $addProjectName
@@ -287,6 +354,7 @@ class PagePrinter
             'videoUrlPatterns' => AttachmentVideoHelper::URL_PATTERNS,
             'imageUrlPatterns' => AttachmentImageHelper::URL_PATTERNS,
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
+            'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
             'roles' => [
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,

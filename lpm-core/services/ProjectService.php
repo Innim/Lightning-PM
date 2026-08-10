@@ -472,7 +472,11 @@ class ProjectService extends LPMBaseService
 
     /**
      * Сохраняет проект: основную информацию (идентификатор, название, описание)
-     * и настройки (Scrum, канал Slack, привязки к GitLab) — всё за один вызов.
+     * и настройки (Scrum, ИИ-сводка задач, канал Slack, привязки к GitLab) —
+     * всё за один вызов.
+     *
+     * Настройка ИИ-сводки применяется только если интеграция с ИИ настроена,
+     * в ином случае сохраняется текущее значение.
      *
      * При изменении идентификатора проверяет его на допустимость и уникальность
      * (исключая сам редактируемый проект). В ответе возвращает новый URL страницы
@@ -486,7 +490,8 @@ class ProjectService extends LPMBaseService
         $scrum,
         $slackNotifyChannel,
         $gitlabGroupId,
-        $gitlabProjectIds
+        $gitlabProjectIds,
+        $aiSummary
     ) {
         $projectId = (int)$projectId;
         $uid  = strtolower(trim((string)$uid));
@@ -496,11 +501,12 @@ class ProjectService extends LPMBaseService
         $gitlabGroupId = (int)$gitlabGroupId;
         $gitlabProjectIds = (string)$gitlabProjectIds;
 
-        if ($scrum !== 0 && $scrum !== 1) {
+        if (($scrum !== 0 && $scrum !== 1) || ($aiSummary !== 0 && $aiSummary !== 1)) {
             return $this->error('Неверные входные параметры');
         }
 
         $scrum = (bool)$scrum;
+        $aiSummary = (bool)$aiSummary;
 
         // проверяем права пользователя
         if (!$this->checkRole(User::ROLE_MODERATOR)) {
@@ -538,18 +544,26 @@ class ProjectService extends LPMBaseService
             }
         }
 
+        // без настроенной интеграции с ИИ настройка сводки не отображается
+        // и не редактируется
+        if (!AiIntegration::getInstance()->isAvailable()) {
+            $aiSummary = $project->aiSummary;
+        }
+
         // обновляем настройки только если они действительно изменились
         if ($scrum !== $project->scrum
             || $slackNotifyChannel !== $project->slackNotifyChannel
             || $gitlabGroupId !== $project->gitlabGroupId
             || $gitlabProjectIds !== $project->gitlabProjectIds
+            || $aiSummary !== $project->aiSummary
         ) {
             $result = Project::updateProjectSettings(
                 $projectId,
                 $scrum,
                 $slackNotifyChannel,
                 $gitlabGroupId,
-                $gitlabProjectIds
+                $gitlabProjectIds,
+                $aiSummary
             );
 
             if (!$result) {

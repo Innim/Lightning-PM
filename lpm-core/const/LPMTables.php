@@ -146,4 +146,8 @@ class LPMTables
      * Таблица блокировок сущностей пользователями.
      */
     const USER_LOCKS = 'user_locks';
+    /**
+     * ИИ-сводки обсуждения задач.
+     */
+    const AI_ISSUE_SUMMARY = 'ai_issue_summary';
 }
