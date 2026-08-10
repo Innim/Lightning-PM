@@ -583,7 +583,7 @@ INSERT INTO `lpm_options` (`option`, `value`) VALUES ('allowRegistration', '1');
 ALTER TABLE `lpm_users_log`
     MODIFY `comment` TEXT CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Комментарий действия';
 
---NEXT
+-- 0.26.0
 
 -- Индексы для ускорения выборок.
 -- Списки задач проекта фильтруются по projectId + deleted + status (был индекс только по projectId).
