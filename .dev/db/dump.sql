@@ -7,6 +7,20 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS `lpm_ai_issue_summary`;
+CREATE TABLE `lpm_ai_issue_summary` (
+  `issueId` bigint NOT NULL COMMENT 'Идентификатор задачи',
+  `sourceHash` char(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Слепок данных задачи, по которым составлена сводка',
+  `summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Разделы сводки в формате JSON',
+  `model` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Модель, составившая сводку',
+  `promptTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов в запросе',
+  `completionTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов в ответе',
+  `totalTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов всего',
+  `createdAt` datetime NOT NULL COMMENT 'Дата составления сводки',
+  PRIMARY KEY (`issueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ИИ-сводки обсуждения задач';
+
+
 DROP TABLE IF EXISTS `lpm_api_keys`;
 CREATE TABLE `lpm_api_keys` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор ключа',
@@ -42,7 +56,8 @@ CREATE TABLE `lpm_comments` (
   `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'текст',
   `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'комментарий удалён',
   PRIMARY KEY (`id`),
-  KEY `instanceType` (`instanceType`,`instanceId`)
+  KEY `instanceType` (`instanceType`,`instanceId`),
+  KEY `instanceType_instanceId_date` (`instanceType`,`instanceId`,`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COMMENT='таблица комментариев';
 
 
@@ -222,7 +237,9 @@ CREATE TABLE `lpm_issues` (
   `status` tinyint(1) NOT NULL DEFAULT '0',
   `revision` varchar(48) NOT NULL COMMENT 'ревизия задачи',
   PRIMARY KEY (`id`),
-  KEY `projectId` (`projectId`)
+  KEY `projectId` (`projectId`),
+  KEY `projectId_deleted_status` (`projectId`,`deleted`,`status`),
+  KEY `projectId_completedDate` (`projectId`,`completedDate`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
 
 
@@ -265,6 +282,7 @@ CREATE TABLE `lpm_projects` (
   `lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'время последнего обновления проекта',
   `issuesCount` int NOT NULL DEFAULT '0' COMMENT 'количество созданных задач',
   `scrum` tinyint NOT NULL DEFAULT '0' COMMENT 'Проект использует Scrum',
+  `aiSummary` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Для задач проекта доступна ИИ-сводка',
   `isArchive` tinyint(1) NOT NULL DEFAULT '0',
   `slackNotifyChannel` varchar(255) NOT NULL COMMENT 'имя канала для оповещений в Slack',
   `masterId` bigint NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте',
