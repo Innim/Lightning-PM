@@ -1,0 +1,12 @@
+<?php
+/*
+Требуются:
+    Issue $issue - задача в тесте
+    int $days - количество дней без активности
+    string $classes - классы оформления бейджа
+    string $label - подпись бейджа
+    string $hint - подсказка с датой последней активности
+*/
+?>
+<span class="badge rounded-pill fw-normal <?=$classes;?>"
+    title="<?=htmlspecialchars($hint, ENT_QUOTES);?>"><?=$label;?></span>

@@ -295,6 +295,14 @@ function lpm_print_goto_issue($project)
 }
 
 /**
+ * Печатает бейдж с давностью последней активности по задаче в тесте.
+ */
+function lpm_print_issue_test_age($issue)
+{
+    return PagePrinter::issueTestAge($issue);
+}
+
+/**
  * Печатает блок связанных задач для страницы задачи.
  */
 function lpm_print_issue_linked($issue)

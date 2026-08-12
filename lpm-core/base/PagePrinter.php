@@ -95,6 +95,31 @@ class PagePrinter
     }
 
     /**
+     * Печатает бейдж с давностью последней активности по задаче в тесте.
+     *
+     * Ничего не печатает для задач не в тесте и для тех, по которым
+     * активность была сегодня.
+     * @param Issue $issue Задача.
+     */
+    public static function issueTestAge(Issue $issue)
+    {
+        $days = $issue->daysWithoutTestActivity();
+        if (empty($days)) {
+            return;
+        }
+
+        $isBug = $issue->isChangesRequested;
+        $classes = $days >= ISSUE_TEST_STALE_DAYS ? 'bg-secondary text-white' : 'bg-light text-muted';
+        $label = ($isBug ? 'баг ' : 'без активности ') . $days . ' дн';
+        $hint = ($isBug ? 'Последний баг: ' : 'Последняя активность: ') . $issue->getTestActivityDate();
+
+        PageConstructor::includePattern(
+            'components/issue-test-age',
+            compact('issue', 'days', 'classes', 'label', 'hint')
+        );
+    }
+
+    /**
      * Печатает блок связанных задач для страницы задачи.
      * @param Issue $issue Задача, для которой выводятся связи.
      */

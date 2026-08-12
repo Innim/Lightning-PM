@@ -1141,6 +1141,16 @@ SQL;
     public $commentsCount = 0;
 
     /**
+     * Дата последней активности по задаче в тесте.
+     *
+     * Для задачи с активным багом это дата последнего бага, иначе - дата
+     * последнего комментария; если комментариев нет - дата изменения задачи.
+     * Заполняется только для задач в тесте, для остальных 0.
+     * @var float
+     */
+    public $testActivityDate = 0;
+
+    /**
      *
      * @var User
      */
@@ -1537,6 +1547,32 @@ SQL;
         return $diff / 86400;
     }
     
+    /**
+     * Возвращает количество полных дней без активности по задаче в тесте.
+     *
+     * Если задача не в тесте или дата активности неизвестна - вернет null.
+     * @return int|null
+     */
+    public function daysWithoutTestActivity()
+    {
+        if (!$this->isTesting() || empty($this->testActivityDate)) {
+            return null;
+        }
+
+        // Считаем по календарным дням, чтобы сегодняшняя активность давала 0 дней
+        $diff = DateTimeUtils::dayStart() - DateTimeUtils::dayStart('U', $this->testActivityDate);
+        return $diff > 0 ? (int)round($diff / 86400) : 0;
+    }
+
+    /**
+     * Возвращает дату последней активности по задаче в тесте.
+     * @return string
+     */
+    public function getTestActivityDate()
+    {
+        return self::getDateTimeStr($this->testActivityDate);
+    }
+
     public function getCompletedDate()
     {
         return self::getDateStr($this->completedDate);
@@ -1606,6 +1642,13 @@ SQL;
             $testState = $hash['t_testState'];
             $this->isPassTest = $testState == IssueCommentType::PASS_TEST;
             $this->isChangesRequested = $this->isTesting() && $testState == IssueCommentType::REQUEST_CHANGES;
+        }
+
+        if ($this->isTesting() && array_key_exists('t_lastCommentDate', $hash)) {
+            $date = $this->isChangesRequested ? $hash['t_lastBugDate'] : $hash['t_lastCommentDate'];
+            $this->testActivityDate = empty($date)
+                ? max($this->createDate, $this->modifiedDate)
+                : (float)DateTimeUtils::convertMysqlDate($date);
         }
 
         return $res;

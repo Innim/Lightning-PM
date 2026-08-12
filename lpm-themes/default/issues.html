@@ -110,6 +110,7 @@ $userId = lpm_get_user()->userId;
 				<?if ($issue->commentsCount > 0):?>
 				&nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
 				<?php endif; ?>
+				<?php lpm_print_issue_test_age($issue); ?>
 			</td>
 			<td>
 				<?php if ($issue->hasMembers()): ?>
