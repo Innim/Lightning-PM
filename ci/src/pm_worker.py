@@ -23,6 +23,8 @@ class PMWorker(CIWorker):
                               git_branch=self.info.git_branch,
                               git_user=self.info.deploy_git_user,
                               git_passwd=self.info.deploy_git_passwd,
-                              git_project=self.info.project_url)
+                              git_project=self.info.project_url,
+                              run_migrations=self.info.deploy_run_migrations,
+                              migrate_cmd=self.info.deploy_migrate_cmd)
 
         deployer.deploy()
