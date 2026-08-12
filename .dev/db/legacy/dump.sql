@@ -1,3 +1,7 @@
+-- УСТАРЕЛО. Схема на версии 0.26.0; файл больше не пополняется.
+-- Начиная с 0.27.0 схему создают и меняют миграции — см. docs/db-migrations.md
+-- и соседний README.md. Для новой установки этот дамп не нужен.
+
 -- Adminer 4.8.1 MySQL 8.0.43 dump
 
 SET NAMES utf8;
@@ -302,7 +306,7 @@ CREATE TABLE `lpm_recovery_emails` (
   `expDate` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `userId` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
 DROP TABLE IF EXISTS `lpm_scrum_snapshot`;
