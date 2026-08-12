@@ -10,6 +10,7 @@
 # Usage (run from anywhere in the repo):
 #   .dev/bin/lpm composer <args...>   Run bundled composer.phar in lpm-libs/
 #   .dev/bin/lpm lint <path...>       php -l on repo-relative (or absolute) PHP files
+#   .dev/bin/lpm migrate <args...>    Run DB migrations (lpm-cli/migrate.php)
 #   .dev/bin/lpm php <args...>        Run php in the container (cwd = repo root)
 #   .dev/bin/lpm exec <cmd...>        Run an arbitrary command in the container
 #   .dev/bin/lpm shell                Open an interactive shell in the container
@@ -39,7 +40,7 @@ to_container_path() {
   esac
 }
 
-[[ $# -ge 1 ]] || die "no command given (try: composer | lint | php | exec | shell)"
+[[ $# -ge 1 ]] || die "no command given (try: composer | lint | migrate | php | exec | shell)"
 cmd="$1"; shift
 
 case "$cmd" in
@@ -54,6 +55,9 @@ case "$cmd" in
     done
     exit "$status"
     ;;
+  migrate)
+    exec docker exec -w "$MOUNT" "$CONTAINER" php lpm-cli/migrate.php "$@"
+    ;;
   php)
     exec docker exec -w "$MOUNT" "$CONTAINER" php "$@"
     ;;
@@ -65,6 +69,6 @@ case "$cmd" in
     exec docker exec -it -w "$MOUNT" "$CONTAINER" bash
     ;;
   *)
-    die "unknown command: $cmd (try: composer | lint | php | exec | shell)"
+    die "unknown command: $cmd (try: composer | lint | migrate | php | exec | shell)"
     ;;
 esac

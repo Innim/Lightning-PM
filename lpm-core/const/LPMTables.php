@@ -150,4 +150,8 @@ class LPMTables
      * ИИ-сводки обсуждения задач.
      */
     const AI_ISSUE_SUMMARY = 'ai_issue_summary';
+    /**
+     * Журнал применённых миграций схемы БД.
+     */
+    const DB_MIGRATIONS = 'db_migrations';
 }
