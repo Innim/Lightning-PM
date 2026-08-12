@@ -27,6 +27,9 @@ class Issue extends MembersInstance
 
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
+        // Даты последней активности нужны только для сортировки задач в тесте,
+        // поэтому считаются лишь для них: в больших проектах задач в тесте единицы,
+        // а подзапрос по комментариям выполняется для каждой строки выборки.
         $sql = <<<SQL
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
@@ -38,7 +41,20 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
       WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
    ORDER BY `date` DESC
-      LIMIT 1) AS `t_testState`
+      LIMIT 1) AS `t_testState`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+      ), NULL) AS `t_lastCommentDate`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+   INNER JOIN `%7\$s` `icm`
+           ON `icm`.`commentId` = `cm`.`id`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+          AND `icm`.`type` = '$requestChangesType'
+      ), NULL) AS `t_lastBugDate`
 SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
@@ -78,11 +94,21 @@ SQL;
         if (empty($orderBy)) {
             $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
             $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
+            // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
+            // сортируются по давности последней активности - наверх те, которыми дольше
+            // всего не занимались. Для задач с багом активность - это дата последнего бага.
+            // Если комментариев нет вообще - берем дату изменения самой задачи
+            // (в том числе перевода в тест), чтобы только что отправленная в тест
+            // старая задача не оказалась наверху как самая застоявшаяся.
             $orderBy = <<<SQL
             FIELD(`i`.`status`, $statusesOrder),
-            `realCompleted` DESC, 
+            `realCompleted` DESC,
             IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
-            `i`.`priority` DESC, 
+            IF(`i`.`status` = $statusWait,
+               COALESCE(IF(`t_testState` = '$requestChangesType', `t_lastBugDate`, `t_lastCommentDate`),
+                        GREATEST(`i`.`createDate`, `i`.`modifiedDate`)),
+               NULL) ASC,
+            `i`.`priority` DESC,
             `i`.`completeDate` ASC, `id` ASC
             SQL;
         }
@@ -117,6 +143,9 @@ SQL;
 
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
+        // Даты последней активности нужны только для сортировки задач в тесте,
+        // поэтому считаются лишь для них: в больших проектах задач в тесте единицы,
+        // а подзапрос по комментариям выполняется для каждой строки выборки.
         $sql = <<<SQL
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
@@ -128,7 +157,20 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
       WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
    ORDER BY `date` DESC
-      LIMIT 1) AS `t_testState`
+      LIMIT 1) AS `t_testState`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+      ), NULL) AS `t_lastCommentDate`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+   INNER JOIN `%7\$s` `icm`
+           ON `icm`.`commentId` = `cm`.`id`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+          AND `icm`.`type` = '$requestChangesType'
+      ), NULL) AS `t_lastBugDate`
 SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
@@ -173,11 +215,21 @@ SQL;
         if (empty($orderBy)) {
             $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
             $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
+            // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
+            // сортируются по давности последней активности - наверх те, которыми дольше
+            // всего не занимались. Для задач с багом активность - это дата последнего бага.
+            // Если комментариев нет вообще - берем дату изменения самой задачи
+            // (в том числе перевода в тест), чтобы только что отправленная в тест
+            // старая задача не оказалась наверху как самая застоявшаяся.
             $orderBy = <<<SQL
             FIELD(`i`.`status`, $statusesOrder),
-            `realCompleted` DESC, 
+            `realCompleted` DESC,
             IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
-            `i`.`priority` DESC, 
+            IF(`i`.`status` = $statusWait,
+               COALESCE(IF(`t_testState` = '$requestChangesType', `t_lastBugDate`, `t_lastCommentDate`),
+                        GREATEST(`i`.`createDate`, `i`.`modifiedDate`)),
+               NULL) ASC,
+            `i`.`priority` DESC,
             `i`.`completeDate` ASC, `id` ASC
             SQL;
         }
