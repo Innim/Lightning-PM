@@ -1,0 +1,85 @@
+<?php
+/*
+Требуются:
+    $migrations - состояние миграций схемы БД (DbMigrationState[])
+    $orphans - имена миграций, о которых есть запись в журнале, но нет файла (string[])
+    $pendingCount - сколько миграций ожидают применения
+*/
+?>
+<div class="card mb-3" id="dbMigrations">
+  <div class="card-header d-flex justify-content-between align-items-center gap-2">
+    <span>База данных</span>
+    <?php if ($pendingCount > 0): ?>
+    <span class="badge bg-warning text-dark">Ожидают применения: <?=$pendingCount;?></span>
+    <?php else: ?>
+    <span class="badge bg-success">Схема актуальна</span>
+    <?php endif; ?>
+  </div>
+
+  <?php if (empty($migrations)): ?>
+  <div class="card-body">
+    <p class="mb-0 text-muted">Миграций нет.</p>
+  </div>
+  <?php else: ?>
+  <ul class="list-group list-group-flush">
+    <?php foreach ($migrations as $migration): ?>
+    <li class="list-group-item">
+      <div class="d-flex align-items-start gap-2">
+        <?php if ($migration->isFailed()): ?>
+        <i class="fa-solid fa-circle-exclamation text-danger mt-1" aria-hidden="true"></i>
+        <?php elseif ($migration->isInterrupted()): ?>
+        <i class="fa-solid fa-circle-pause text-warning mt-1" aria-hidden="true"></i>
+        <?php elseif ($migration->isApplied()): ?>
+        <i class="fa-solid fa-circle-check text-success mt-1" aria-hidden="true"></i>
+        <?php else: ?>
+        <i class="fa-regular fa-circle text-muted mt-1" aria-hidden="true"></i>
+        <?php endif; ?>
+
+        <div class="flex-grow-1">
+          <div class="font-monospace"><?=htmlspecialchars($migration->name, ENT_QUOTES);?></div>
+          <div class="small text-muted"><?=htmlspecialchars($migration->getStatusText(), ENT_QUOTES);?></div>
+
+          <?php if ($migration->getError() !== ''): ?>
+          <div class="small text-danger"><?=htmlspecialchars($migration->getError(), ENT_QUOTES);?></div>
+          <?php endif; ?>
+
+          <?php if ($migration->isChanged()): ?>
+          <div class="small text-muted">
+            <i class="fa-solid fa-triangle-exclamation text-warning me-1" aria-hidden="true"></i>Файл изменён после применения
+          </div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </li>
+    <?php endforeach; ?>
+  </ul>
+  <?php endif; ?>
+
+  <div class="card-body">
+    <?php if (!empty($orphans)): ?>
+    <div class="alert alert-warning" role="alert">
+      <div class="fw-bold">В журнале есть записи без файлов миграций</div>
+      <div class="small">Файл удалён или переименован после применения — откатить такую миграцию нечем.</div>
+      <ul class="small font-monospace mb-0">
+        <?php foreach ($orphans as $orphan): ?>
+        <li><?=htmlspecialchars($orphan, ENT_QUOTES);?></li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+    <?php endif; ?>
+
+    <div class="alert alert-danger d-none" role="alert" id="dbMigrationsError"></div>
+
+    <?php if ($pendingCount > 0): ?>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <button type="button" class="btn btn-primary" id="applyDbMigrations">Применить миграции</button>
+      <span class="small text-muted">
+        Изменение схемы может занять много времени — большие изменения надёжнее
+        применять из консоли: <span class="font-monospace">php lpm-cli/migrate.php apply</span>
+      </span>
+    </div>
+    <?php else: ?>
+    <p class="mb-0 text-muted">Все миграции применены — схема соответствует текущей версии.</p>
+    <?php endif; ?>
+  </div>
+</div>

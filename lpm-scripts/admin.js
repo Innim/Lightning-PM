@@ -7,5 +7,8 @@ $(function ($) {
         saveSettings: function (data, onResult) {
             this.s._('saveSettings');
         },
+        applyDbMigrations: function (onResult) {
+            this.s._('applyDbMigrations');
+        },
     };
 });

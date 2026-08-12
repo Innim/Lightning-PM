@@ -189,7 +189,29 @@ class PagePrinter
     {
         PageConstructor::includePattern('users-chooser');
     }
-    
+
+    /**
+     * Печатает блок состояния миграций схемы БД.
+     */
+    public static function dbMigrations()
+    {
+        $migrator = new DbMigrator();
+        $migrations = $migrator->getStatus();
+        $orphans = $migrator->getOrphanNames();
+
+        $pendingCount = 0;
+        foreach ($migrations as $migration) {
+            if ($migration->isPending()) {
+                $pendingCount++;
+            }
+        }
+
+        PageConstructor::includePattern(
+            'settings-db',
+            compact('migrations', 'orphans', 'pendingCount')
+        );
+    }
+
     public static function comment(Comment $comment, $showIssueLink = false)
     {
         PageConstructor::includePattern('comment', compact('comment', 'showIssueLink'));

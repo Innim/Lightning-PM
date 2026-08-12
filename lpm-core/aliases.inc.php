@@ -247,6 +247,14 @@ function lpm_print_users_chooser()
 }
 
 /**
+ * Распечатывает блок состояния миграций схемы БД.
+ */
+function lpm_print_db_migrations()
+{
+    return PagePrinter::dbMigrations();
+}
+
+/**
  * Распечатывает список видео.
  */
 function lpm_print_video_list($videoLinks)
