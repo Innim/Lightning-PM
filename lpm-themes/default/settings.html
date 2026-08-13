@@ -64,6 +64,20 @@ $cookieExpireDays = (int)($options->cookieExpire / 86400);
       </div>
     </div>
 
+    <div class="card mb-3">
+      <div class="card-header">Эксперименты</div>
+      <div class="card-body">
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" role="switch"
+                 id="newIssueView" name="newIssueView"
+                 <?=$options->newIssueView ? 'checked' : '';?>>
+          <label class="form-check-label" for="newIssueView">
+            Обновлённый вид страницы задачи
+          </label>
+        </div>
+      </div>
+    </div>
+
     <div class="text-end">
       <button type="submit" class="btn btn-primary">Сохранить</button>
     </div>

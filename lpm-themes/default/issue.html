@@ -1,5 +1,9 @@
 <?php
-/* 
+/*
+Обновлённый вид страницы задачи. Показывается, когда в настройках включён
+экспериментальный флаг «Обновлённый вид страницы задачи» (LPMOptions::newIssueView).
+Прежний вид живёт отдельно в issue-legacy.html.
+
 Требуются:
     $issue - текущая задача
     $comments - комментарии к задаче
@@ -35,7 +39,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
     </div>
 
     <article id="issueInfo"
-        class="issue-info card shadow-sm block-with-attachments <?=IssueViewHelper::statusStateClass($issue->status);?>"
+        class="issue-info issue-card card shadow-sm block-with-attachments <?=IssueViewHelper::statusStateClass($issue->status);?>"
         data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
         data-labels="<?=implode(',', $issue->getLabelNames());?>" data-issue-id="<?=$issue->id;?>">

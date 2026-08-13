@@ -22,6 +22,7 @@ function saveSettings(form) {
         fromEmail: form.querySelector('#fromEmail').value,
         fromName: form.querySelector('#fromName').value,
         emailSubscript: form.querySelector('#emailSubscript').value,
+        newIssueView: form.querySelector('#newIssueView').checked ? 1 : 0,
     };
 
     const submitBtn = form.querySelector('button[type=submit]');

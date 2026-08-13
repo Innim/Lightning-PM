@@ -38,6 +38,7 @@ class AdminService extends LPMBaseService
         foreach ($data as $field => $value) {
             switch ($field) {
                 case 'allowRegistration':
+                case 'newIssueView':
                     $values[$field] = (bool)$value;
                     break;
                 case 'title':

@@ -115,6 +115,13 @@ class LPMOptions extends Options
      */
     public $allowRegistration = true;
 
+    /**
+     * Показывать ли обновлённый вид страницы задачи.
+     * Экспериментальная настройка: пока выключена, страница отдаётся в прежнем виде.
+     * @var bool
+     */
+    public $newIssueView = false;
+
     public function __construct()
     {
         self::$_instance = $this;
@@ -126,7 +133,7 @@ class LPMOptions extends Options
         parent::initialization();
 
         $this->_typeConverter->addIntVars('cookieExpire');
-        $this->_typeConverter->addBoolVars('allowRegistration');
+        $this->_typeConverter->addBoolVars('allowRegistration', 'newIssueView');
     }
 
     protected function initOptions()
