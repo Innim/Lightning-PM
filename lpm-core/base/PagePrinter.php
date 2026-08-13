@@ -83,6 +83,32 @@ class PagePrinter
     {
         PageConstructor::includePattern('issues', compact('list'));
     }
+
+    /**
+     * Печатает меню выбора сортировки списка задач.
+     *
+     * Пункты для задач в тесте печатаются, только если такие задачи
+     * в списке есть.
+     * @param array<Issue> $list Список задач, который будет выведен на странице.
+     */
+    public static function issuesSort($list)
+    {
+        $items = [
+            ['sort' => '', 'label' => 'По умолчанию'],
+            ['sort' => 'last-created', 'label' => 'Последние добавленные'],
+        ];
+
+        foreach ($list as $issue) {
+            if ($issue->isTesting()) {
+                $items[] = ['header' => 'Задачи в тесте'];
+                $items[] = ['sort' => 'test-priority', 'label' => 'По приоритету'];
+                $items[] = ['sort' => 'test-stale', 'label' => 'Давно без активности'];
+                break;
+            }
+        }
+
+        PageConstructor::includePattern('components/issues-sort', compact('items'));
+    }
     
     public static function issueForm($project, $issue, $input, $isHidden)
     {
@@ -98,13 +124,13 @@ class PagePrinter
      * Печатает бейдж с давностью последней активности по задаче в тесте.
      *
      * Ничего не печатает для задач не в тесте и для тех, по которым
-     * активность была сегодня.
+     * активность была недавно.
      * @param Issue $issue Задача.
      */
     public static function issueTestAge(Issue $issue)
     {
         $days = $issue->daysWithoutTestActivity();
-        if (empty($days)) {
+        if ($days < ISSUE_TEST_AGE_MIN_DAYS) {
             return;
         }
 
@@ -384,6 +410,11 @@ class PagePrinter
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,
                 'moderator' => User::ROLE_MODERATOR,
+            ],
+            'issueStatuses' => [
+                'inWork' => Issue::STATUS_IN_WORK,
+                'test' => Issue::STATUS_WAIT,
+                'completed' => Issue::STATUS_COMPLETED,
             ],
         ];
         self::printJSObject('window.lpmOptions', $data, true, false);

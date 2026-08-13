@@ -1,0 +1,30 @@
+<?php
+/*
+Требуются:
+    array $items - пункты меню сортировки: либо ['header' => 'Заголовок секции'],
+                   либо ['sort' => 'ключ состояния', 'label' => 'Название']
+*/
+?>
+<div class="dropdown">
+    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+        id="issuesSortMenu" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="issues-sort-title">Сортировка</span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-sm" aria-labelledby="issuesSortMenu">
+        <?php foreach ($items as $item): ?>
+            <?php if (isset($item['header'])): ?>
+        <li><hr class="dropdown-divider"></li>
+        <li><h6 class="dropdown-header py-1 px-2"><?=$item['header'];?></h6></li>
+            <?php else: ?>
+                <?php $isCurrent = $item['sort'] === ''; ?>
+        <li>
+            <a class="dropdown-item py-1 px-2<?=$isCurrent ? ' fw-bold' : '';?>"
+                href="javascript:void(0);" data-sort="<?=$item['sort'];?>">
+                <i class="fa-solid fa-check fa-xs me-1<?=$isCurrent ? '' : ' invisible';?>"
+                    aria-hidden="true"></i><small><?=$item['label'];?></small>
+            </a>
+        </li>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </ul>
+</div>

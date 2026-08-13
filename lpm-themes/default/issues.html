@@ -63,6 +63,8 @@ $userId = lpm_get_user()->userId;
 		<tr class="<?=implode(' ', $classes);?>" data-id="<?=$issue->id;?>"
 			data-status="<?=$issue->status;?>" data-complete-date="<?=$issue->completeDate;?>"
 			data-create-date="<?=$issue->createDate;?>"
+			data-priority="<?=$issue->priority;?>"
+			data-test-activity="<?=$issue->testActivityDate;?>"
 			data-labels="<?=implode(',', $issue->getLabelNames());?>">
 			<td>
 				<?php if ($issue->isOnBoard()):?>

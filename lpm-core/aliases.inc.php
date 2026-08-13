@@ -295,6 +295,14 @@ function lpm_print_goto_issue($project)
 }
 
 /**
+ * Печатает меню выбора сортировки списка задач.
+ */
+function lpm_print_issues_sort($list)
+{
+    return PagePrinter::issuesSort($list);
+}
+
+/**
  * Печатает бейдж с давностью последней активности по задаче в тесте.
  */
 function lpm_print_issue_test_age($issue)

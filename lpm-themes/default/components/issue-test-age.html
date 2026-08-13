@@ -8,5 +8,7 @@
     string $hint - подсказка с датой последней активности
 */
 ?>
-<span class="badge rounded-pill fw-normal <?=$classes;?>"
-    title="<?=htmlspecialchars($hint, ENT_QUOTES);?>"><?=$label;?></span>
+<div class="mt-1">
+    <span class="badge rounded-pill fw-normal <?=$classes;?>"
+        title="<?=htmlspecialchars($hint, ENT_QUOTES);?>"><?=$label;?></span>
+</div>
