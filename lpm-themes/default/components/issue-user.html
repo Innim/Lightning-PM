@@ -1,0 +1,15 @@
+<?php
+/*
+Требуются:
+    $user   - участник (User)
+Необязательные:
+    $withSp - выводить оценку участника в story points
+*/
+?>
+<span class="issue-user d-inline-flex align-items-start gap-1">
+    <?php if ($avatarUrl = $user->getAvatarUrl()): ?>
+    <img class="rounded-circle" src="<?=$avatarUrl;?>" alt="" width="22" height="22" loading="lazy" />
+    <?php endif; ?>
+    <?=$user->getLinkedName();?><?php if (!empty($withSp) && $user->sp > 0): ?><span
+        class="text-muted x-small"><?=$user->sp;?>&nbsp;SP</span><?php endif;?>
+</span>

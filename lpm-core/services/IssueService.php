@@ -758,8 +758,12 @@ class IssueService extends LPMBaseService
             // Записываем лог
             UserLogEntry::issueEdit($userId, $issue->id, 'Add self as ' . $role);
 
+            $memberHtml = $this->getHtml(function () use ($user) {
+                PagePrinter::issueUser($user);
+            });
+
             $this->add2Answer('userId', $userId);
-            $this->add2Answer('memberHtml', $user->getLinkedName());
+            $this->add2Answer('memberHtml', $memberHtml);
         } catch (\Exception $e) {
             return $this->exception($e);
         }

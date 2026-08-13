@@ -303,6 +303,22 @@ function lpm_print_issue_linked($issue)
 }
 
 /**
+ * Печатает участника задачи: аватар и ссылку на его страницу.
+ */
+function lpm_print_issue_user($user, $withSp = false)
+{
+    return PagePrinter::issueUser($user, $withSp);
+}
+
+/**
+ * Печатает группу участников задачи (исполнители, тестеры, мастеры).
+ */
+function lpm_print_issue_participants($issue, $userId, $role, $label)
+{
+    return PagePrinter::issueParticipants($issue, $userId, $role, $label);
+}
+
+/**
  * Печатает ссылку быстрого добавления текущего пользователя
  * к участникам задачи в указанной роли (member|tester|master).
  */

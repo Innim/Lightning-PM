@@ -39,17 +39,8 @@ $userId = lpm_get_user()->userId;
 				$classes[] = 'tester';
 			}
 
-			if (!$issue->isCompleted() && $issue->hasCompleteDate()) {
-				$daysTillComplete = $issue->daysTillComplete();
-				if ($daysTillComplete < 0) {
-					$classes[] = 'deadline-outdated-issue';
-				} else if ($daysTillComplete < 2) {
-					$classes[] = 'deadline-urgent-issue';
-				} else if ($daysTillComplete < 7) {
-					$classes[] = 'deadline-medium-issue';
-				} else {
-					$classes[] = 'deadline-low-issue';
-				} 
+			if ($deadlineLevel = IssueViewHelper::deadlineLevel($issue)) {
+				$classes[] = 'deadline-' . $deadlineLevel . '-issue';
 			}
 
 			if ($issue->isPassTest) {

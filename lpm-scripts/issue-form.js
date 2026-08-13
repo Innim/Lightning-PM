@@ -208,8 +208,8 @@ let issueForm = {
             }
 
             issueForm.setIssueBy({
-                name: $("#issueInfo > h3 > .issue-name").text(),
-                hours: $("#issueInfo > h3 .issue-hours").text(),
+                name: $("#issueInfo .issue-name").text(),
+                hours: $("#issueInfo .issue-hours").text(),
                 desc: $("#issueInfo .desc .raw-desc").text(),
                 priority: getVal("priority"),
                 completeDate: getVal("completeDate"),
