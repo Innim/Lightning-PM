@@ -82,10 +82,11 @@ define('COPY_YEAR', 11);
 
 
 /**
- * Максимальный размер загружаемого файла в мегабайтах
+ * Максимальный суммарный размер вложений (файлов) в одном запросе, в мегабайтах.
+ * Ограничения на размер отдельного файла нет — учитывается только общий объём.
  * @var int
  */
-define('MAX_FILE_SIZE_MB', 50);
+define('MAX_ATTACHMENTS_TOTAL_SIZE_MB', 128);
 
 /**
  * Максимальный размер загружаемого изображения в мегабайтах
@@ -135,5 +136,5 @@ define('PROJECT_DESC_MAX_LENGTH', 65535);
 
 // -- Вспомогательные константы --
 
-define('MAX_FILE_SIZE_BYTES', MAX_FILE_SIZE_MB * 1024 * 1024);
+define('MAX_ATTACHMENTS_TOTAL_SIZE_BYTES', MAX_ATTACHMENTS_TOTAL_SIZE_MB * 1024 * 1024);
 define('MAX_IMAGE_SIZE_BYTES', MAX_IMAGE_SIZE_MB * 1024 * 1024);

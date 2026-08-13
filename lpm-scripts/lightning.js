@@ -77,6 +77,20 @@ function BaseService(service, f2p) {
     };
 
     this.callWithFiles = function (method, params, files, onResult) {
+        // Проверяем суммарный объём вложений до отправки, чтобы сразу показать
+        // причину и не гонять большой запрос на сервер впустую.
+        const maxTotalMb = window.lpmOptions && window.lpmOptions.attachmentsTotalSizeMb;
+        if (maxTotalMb) {
+            let totalSize = 0;
+            Array.prototype.forEach.call(files || [], function (file) {
+                totalSize += file.size || 0;
+            });
+            if (totalSize > maxTotalMb * 1024 * 1024) {
+                onResult({ success: false, error: 'Суммарный размер файлов не должен превышать ' + maxTotalMb + ' Мб (сейчас ' + lpm.format.sizeMb(totalSize) + ')' });
+                return;
+            }
+        }
+
         const data = new FormData();
         data.append('service', this._service);
         data.append('method', method);
@@ -151,6 +165,11 @@ function ParallelService(service) {
 
 const lpm = {
     format: {
+        // Размер в мегабайтах с одним знаком после запятой, напр. "156,2 Мб".
+        sizeMb: function (bytes) {
+            const mb = (bytes || 0) / (1024 * 1024);
+            return mb.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' Мб';
+        },
         date: function (unixTimeSec, addTimeZone = true) {
             const date = new Date(unixTimeSec * 1000);
 

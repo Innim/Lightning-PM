@@ -41,9 +41,68 @@ class Flash2PHP
 		}
 	}
 	
+	/**
+	 * Определяет, что тело POST-запроса превысило post_max_size.
+	 * В этом случае PHP отбрасывает тело целиком ($_POST и $_FILES пусты),
+	 * поэтому надёжный признак — размер тела (Content-Length) больше лимита.
+	 * @return bool
+	 */
+	private function isPostSizeExceeded()
+	{
+		// Дешёвые отсечки в первую очередь: у нормального запроса тело разобрано,
+		// поэтому подавляющее большинство отсеивается здесь, не доходя до парсинга ini.
+		if ( ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST'
+			|| !empty( $_POST ) || !empty( $_FILES ) ) {
+			return false;
+		}
+
+		$contentLength = (int)( $_SERVER['CONTENT_LENGTH'] ?? 0 );
+		if ( $contentLength <= 0 ) {
+			return false;
+		}
+
+		// Есть конкретное подозрение (POST с телом, но $_POST/$_FILES пусты) —
+		// только теперь сверяемся с лимитом. Лимит 0 означает «без ограничения».
+		$maxBytes = $this->parseIniSize( ini_get( 'post_max_size' ) );
+
+		return $maxBytes > 0 && $contentLength > $maxBytes;
+	}
+
+	/**
+	 * Переводит значение размера из php.ini (например, "512M") в байты.
+	 * @param string $value Значение вида "512M", "64K", "1G" или число байт.
+	 * @return int Размер в байтах (0, если значение пустое).
+	 */
+	private function parseIniSize( $value )
+	{
+		$value = trim( (string)$value );
+		if ( $value === '' ) {
+			return 0;
+		}
+
+		$number = (int)$value;
+		switch ( strtolower( substr( $value, -1 ) ) ) {
+			case 'g': $number *= 1024;
+			// no break
+			case 'm': $number *= 1024;
+			// no break
+			case 'k': $number *= 1024;
+		}
+
+		return $number;
+	}
+
 	public function init( $request )
 	{
-        // пришел сжатый запрос 
+        // тело запроса превысило post_max_size и было отброшено PHP
+        if ( $this->isPostSizeExceeded() ) {
+            throw new F2PException(
+                'Слишком большой размер запроса. Уменьшите размер или количество вложений.',
+                F2PException::ERRNO_REQUEST_TOO_LARGE
+            );
+        }
+
+        // пришел сжатый запрос
         if (isset($request['z'])) {
         	if (!function_exists( 'gzuncompress' )) {
         		 throw new F2PException( 'Can\'t uncompress request' , F2PException::ERRNO_COMPRESS_UNAVAILABLE );

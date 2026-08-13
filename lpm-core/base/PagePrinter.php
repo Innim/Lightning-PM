@@ -349,7 +349,7 @@ class PagePrinter
             'themeUrl' => self::getPC()->getThemeUrl(),
             'issueImgsCount' => Issue::MAX_IMAGES_COUNT,
             'issueFilesCount' => Issue::MAX_FILES_COUNT,
-            'issueFileMaxSizeMb' => MAX_FILE_SIZE_MB,
+            'attachmentsTotalSizeMb' => MAX_ATTACHMENTS_TOTAL_SIZE_MB,
             'gitlabUrl' => defined('GITLAB_URL') ? GITLAB_URL : '',
             'videoUrlPatterns' => AttachmentVideoHelper::URL_PATTERNS,
             'imageUrlPatterns' => AttachmentImageHelper::URL_PATTERNS,
