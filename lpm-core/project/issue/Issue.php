@@ -94,20 +94,31 @@ SQL;
         if (empty($orderBy)) {
             $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
             $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
+            // Дата последней активности по задаче в тесте. Для задачи с багом это дата
+            // последнего бага. Если комментариев нет вообще - берем дату изменения самой
+            // задачи (в том числе перевода в тест), чтобы только что отправленная в тест
+            // старая задача не считалась застоявшейся.
+            $testActivity = "COALESCE(IF(`t_testState` = '$requestChangesType', "
+                . "`t_lastBugDate`, `t_lastCommentDate`), "
+                . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
+
             // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
-            // сортируются по давности последней активности - наверх те, которыми дольше
-            // всего не занимались. Для задач с багом активность - это дата последнего бага.
-            // Если комментариев нет вообще - берем дату изменения самой задачи
-            // (в том числе перевода в тест), чтобы только что отправленная в тест
-            // старая задача не оказалась наверху как самая застоявшаяся.
+            // сортируются по стареющему приоритету: каждые N дней простоя добавляют
+            // задаче пункт приоритета, но не больше потолка. Так важные задачи остаются
+            // выше, а забытые постепенно всплывают и не тонут навсегда.
+            // Неизвестная дата активности считается максимальным простоем.
+            $agingDays = ISSUE_TEST_AGING_DAYS_PER_POINT;
+            $agingMax = ISSUE_TEST_AGING_MAX_BONUS;
+            $agingUnknown = $agingMax * $agingDays;
             $orderBy = <<<SQL
             FIELD(`i`.`status`, $statusesOrder),
             `realCompleted` DESC,
             IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
             IF(`i`.`status` = $statusWait,
-               COALESCE(IF(`t_testState` = '$requestChangesType', `t_lastBugDate`, `t_lastCommentDate`),
-                        GREATEST(`i`.`createDate`, `i`.`modifiedDate`)),
-               NULL) ASC,
+               `i`.`priority` + LEAST(GREATEST(COALESCE(DATEDIFF(NOW(), $testActivity),
+                                                        $agingUnknown), 0) DIV $agingDays, $agingMax),
+               NULL) DESC,
+            IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC,
             `i`.`priority` DESC,
             `i`.`completeDate` ASC, `id` ASC
             SQL;
@@ -215,20 +226,31 @@ SQL;
         if (empty($orderBy)) {
             $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
             $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
+            // Дата последней активности по задаче в тесте. Для задачи с багом это дата
+            // последнего бага. Если комментариев нет вообще - берем дату изменения самой
+            // задачи (в том числе перевода в тест), чтобы только что отправленная в тест
+            // старая задача не считалась застоявшейся.
+            $testActivity = "COALESCE(IF(`t_testState` = '$requestChangesType', "
+                . "`t_lastBugDate`, `t_lastCommentDate`), "
+                . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
+
             // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
-            // сортируются по давности последней активности - наверх те, которыми дольше
-            // всего не занимались. Для задач с багом активность - это дата последнего бага.
-            // Если комментариев нет вообще - берем дату изменения самой задачи
-            // (в том числе перевода в тест), чтобы только что отправленная в тест
-            // старая задача не оказалась наверху как самая застоявшаяся.
+            // сортируются по стареющему приоритету: каждые N дней простоя добавляют
+            // задаче пункт приоритета, но не больше потолка. Так важные задачи остаются
+            // выше, а забытые постепенно всплывают и не тонут навсегда.
+            // Неизвестная дата активности считается максимальным простоем.
+            $agingDays = ISSUE_TEST_AGING_DAYS_PER_POINT;
+            $agingMax = ISSUE_TEST_AGING_MAX_BONUS;
+            $agingUnknown = $agingMax * $agingDays;
             $orderBy = <<<SQL
             FIELD(`i`.`status`, $statusesOrder),
             `realCompleted` DESC,
             IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
             IF(`i`.`status` = $statusWait,
-               COALESCE(IF(`t_testState` = '$requestChangesType', `t_lastBugDate`, `t_lastCommentDate`),
-                        GREATEST(`i`.`createDate`, `i`.`modifiedDate`)),
-               NULL) ASC,
+               `i`.`priority` + LEAST(GREATEST(COALESCE(DATEDIFF(NOW(), $testActivity),
+                                                        $agingUnknown), 0) DIV $agingDays, $agingMax),
+               NULL) DESC,
+            IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC,
             `i`.`priority` DESC,
             `i`.`completeDate` ASC, `id` ASC
             SQL;
