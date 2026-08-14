@@ -1334,6 +1334,11 @@ function setIssueInfoCard(issue, $issueInfo) {
         $('[data-field="' + field + '"]', $issueInfo).html(values[field]);
     });
 
+    // У задачи без описания вместо него показывается заглушка
+    const hasDesc = (issue.desc || '').trim() !== '';
+    $('.desc .formatted-desc', $issueInfo).toggleClass('d-none', !hasDesc);
+    $('.desc .desc-placeholder', $issueInfo).toggleClass('d-none', hasDesc);
+
     $(".issue-status-badge", $issueInfo)
         .removeClass(Issue.STATUS_BADGE_CLASSES)
         .addClass(Issue.getStatusBadgeClass(issue.status));
