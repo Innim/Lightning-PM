@@ -29,21 +29,9 @@ $project = lpm_get_project();
 					class="issue-hours value"><?=$hours;?></span>&nbsp;<span class="issue-hours-label"><?=$project->getNormHoursLabel($hours);?></span>)</span>
 			из <span class="issues-total value"><?=$project->getTotalIssuesCount()?></span>
 		</div>
-		<div class="filters-line mb-1">
-			<div class="me-1">
-				<button
-						type="button"
-						class="btn btn-outline-secondary btn-sm mx-1"
-						id="showLastCreated">
-					Последние добавленные
-				</button>
-				<button
-						type="button"
-						class="btn btn-outline-secondary btn-sm mx-1"
-						id="sortDefault"
-						style="display: none;">
-					Сортировать по умолчанию
-				</button>
+		<div class="filters-line flex-wrap gap-3 mb-1">
+			<div>
+				<?php lpm_print_issues_sort($issues); ?>
 			</div>
 			<?php lpm_print_issue_list_filters(); ?>
 		</div>

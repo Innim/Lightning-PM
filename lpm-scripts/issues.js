@@ -10,13 +10,8 @@ $(document).ready(
         issuePage.scrumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
 
-        $(document).on('click', '#showLastCreated', function () {
-            states.setState('last-created');
-        });
-
-        $(document).on('click', '#sortDefault', function () {
-            // TODO: should remake this one
-            issuePage.sortDefault();
+        $(document).on('click', '#issuesSortMenu ~ .dropdown-menu [data-sort]', function () {
+            states.setState($(this).data('sort'));
         });
 
         $(document).on('click', '#issuesList .member-list a', function (e) {
@@ -1673,26 +1668,116 @@ issuePage.addComment = function (comment, html) {
 };
 
 issuePage.handleLastCreatedSort = function () {
-    issuePage.showLastCreated();
+    issuePage.sortIssues('last-created');
 }
 
-issuePage.showLastCreated = function () {
-    var table = $('#issuesList');
-    window.defaultIssues = table.html();
-    table.find('tr:not(:first)').sort(function (a, b) {
+issuePage.handleTestPrioritySort = function () {
+    issuePage.sortIssues('test-priority');
+}
+
+issuePage.handleTestStaleSort = function () {
+    issuePage.sortIssues('test-stale');
+}
+
+/**
+ * Компараторы строк списка задач по ключу сортировки.
+ * Режимы «в тесте» переставляют только задачи в тесте, порядок остальных
+ * задач при этом сохраняется (компаратор возвращает для них 0).
+ */
+issuePage.sortComparators = {
+    'last-created': function (a, b) {
         return $(b).data('createDate') - $(a).data('createDate');
-    }).appendTo(table);
-    $('#showLastCreated').hide();
-    $('#sortDefault').show();
-    return false;
+    },
+    'test-priority': function (a, b) {
+        return issuePage.compareTestIssues(a, b, function ($a, $b) {
+            return $b.data('priority') - $a.data('priority')
+                || issuePage.testActivity($a) - issuePage.testActivity($b);
+        });
+    },
+    'test-stale': function (a, b) {
+        return issuePage.compareTestIssues(a, b, function ($a, $b) {
+            return issuePage.testActivity($a) - issuePage.testActivity($b)
+                || $b.data('priority') - $a.data('priority');
+        });
+    }
+};
+
+/**
+ * Сравнивает две строки списка для режимов сортировки задач в тесте:
+ * задачи в тесте поднимаются выше остальных и упорядочиваются переданной
+ * функцией, порядок остальных задач не меняется.
+ */
+issuePage.compareTestIssues = function (a, b, compare) {
+    var $a = $(a);
+    var $b = $(b);
+    var aInTest = $a.data('status') === lpmOptions.issueStatuses.test;
+    var bInTest = $b.data('status') === lpmOptions.issueStatuses.test;
+
+    if (!aInTest && !bInTest) return 0;
+    if (aInTest != bInTest) return aInTest ? -1 : 1;
+
+    return compare($a, $b);
+};
+
+// Дата последней активности по задаче в тесте (для задачи с багом - дата бага).
+// Если активность неизвестна - считаем ей дату создания задачи.
+issuePage.testActivity = function ($row) {
+    return $row.data('testActivity') || $row.data('createDate');
+};
+
+/**
+ * Сортирует список задач заданным режимом.
+ * Порядок по умолчанию запоминается, чтобы к нему можно было вернуться,
+ * и любая сортировка выполняется именно от него.
+ */
+issuePage.sortIssues = function (sortKey) {
+    var table = $('#issuesList');
+    if (window.defaultIssues === undefined) {
+        window.defaultIssues = table.html();
+    } else {
+        table.html(window.defaultIssues);
+    }
+
+    table.find('tr:not(:first)').sort(issuePage.sortComparators[sortKey]).appendTo(table);
+    issuePage.updateSortMenu(sortKey);
 };
 
 issuePage.sortDefault = function () {
-    window.location.hash = '';
-    var table = $('#issuesList');
-    table.html(window.defaultIssues);
-    $('#sortDefault').hide();
-    $('#showLastCreated').show();
+    if (window.defaultIssues !== undefined) {
+        $('#issuesList').html(window.defaultIssues);
+        window.defaultIssues = undefined;
+    }
+    issuePage.updateSortMenu('');
+};
+
+// Отмечает выбранный режим в меню сортировки. В заголовок кнопки режим
+// выносится, только если он отличается от сортировки по умолчанию.
+issuePage.updateSortMenu = function (sortKey) {
+    var items = $('#issuesSortMenu').siblings('.dropdown-menu').find('[data-sort]');
+    items.removeClass('fw-bold').find('.fa-check').addClass('invisible');
+
+    var item = items.filter('[data-sort="' + sortKey + '"]').addClass('fw-bold');
+    item.find('.fa-check').removeClass('invisible');
+
+    $('#issuesSortMenu .issues-sort-title')
+        .text(item.length && sortKey !== ''
+            ? 'Сортировка: ' + item.text().trim().toLowerCase()
+            : 'Сортировка');
+};
+
+/**
+ * Применяет режим сортировки, заданный в адресе страницы,
+ * чтобы ссылка на отсортированный список открывалась в том же порядке.
+ */
+issuePage.applySortFromHash = function () {
+    var sortKey = window.location.hash.replace(/^#/, '');
+    if (!/^[a-z-]+$/.test(sortKey)
+            || !Object.prototype.hasOwnProperty.call(issuePage.sortComparators, sortKey)
+            || !$('#issuesSortMenu ~ .dropdown-menu [data-sort="' + sortKey + '"]').length) {
+        return;
+    }
+
+    issuePage.sortIssues(sortKey);
 };
 
 issuePage.handleFilterState = function (value) {
