@@ -208,8 +208,8 @@ let issueForm = {
             }
 
             issueForm.setIssueBy({
-                name: $("#issueInfo > h3 > .issue-name").text(),
-                hours: $("#issueInfo > h3 .issue-hours").text(),
+                name: $("#issueInfo .issue-name").text(),
+                hours: $("#issueInfo .issue-hours").text(),
                 desc: $("#issueInfo .desc .raw-desc").text(),
                 priority: getVal("priority"),
                 completeDate: getVal("completeDate"),
@@ -846,8 +846,8 @@ let issueForm = {
 
         const attachmentInputs = $("#issueForm input[name='issueFiles[]']");
         let newFilesCount = 0;
-        let oversizeFileMessage = '';
-        const maxFileSize = window.lpmOptions.issueFileMaxSizeMb;
+        let totalFilesSize = 0;
+        const maxTotalSize = window.lpmOptions.attachmentsTotalSizeMb;
 
         attachmentInputs.each(function () {
             if (!this.files) return;
@@ -856,13 +856,8 @@ let issueForm = {
                 newFilesCount += this.files.length;
             }
 
-            if (!oversizeFileMessage) {
-                for (let i = 0; i < this.files.length; i++) {
-                    if (this.files[i].size > maxFileSize * 1024 * 1024) {
-                        oversizeFileMessage = 'Размер файла "' + this.files[i].name + '" не должен превышать ' + maxFileSize + ' Мб';
-                        break;
-                    }
-                }
+            for (let i = 0; i < this.files.length; i++) {
+                totalFilesSize += this.files[i].size;
             }
         });
 
@@ -871,8 +866,8 @@ let issueForm = {
             errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueFilesCount + ' файлов');
         }
 
-        if (oversizeFileMessage) {
-            errors.push(oversizeFileMessage);
+        if (maxTotalSize && totalFilesSize > maxTotalSize * 1024 * 1024) {
+            errors.push('Суммарный размер файлов не должен превышать ' + maxTotalSize + ' Мб (сейчас ' + lpm.format.sizeMb(totalFilesSize) + ')');
         }
 
         if (errors.length == 0) {

@@ -33,6 +33,10 @@ deploy to test:
     DEPLOY_PASSWORD: "${TEST_TASK_PASS}"
     DEPLOY_UPLOAD_PATH: '/tmp/'
     DEPLOY_APP_PATH: '/var/www/'
+    # Тестовое окружение сейчас не работает — миграции там не применяем.
+    # Когда окружение вернут в строй: убрать эту переменную, а если php
+    # запускается в контейнере — задать DEPLOY_MIGRATE_CMD, как в prod.
+    DEPLOY_RUN_MIGRATIONS: '0'
   environment:
     name: test
     url: http://vds02.innim.ru:8083
@@ -57,6 +61,9 @@ deploy to prod:
     DEPLOY_PASSWORD: "${PROD_TASK_PASS}"
     DEPLOY_UPLOAD_PATH: '/srv/docker/task/task.innim.ru/upload/'
     DEPLOY_APP_PATH: '/srv/docker/task/task.innim.ru/http/'
+    # Приложение работает в контейнере, php на хосте нет — миграции
+    # применяем внутри контейнера (DEPLOY_APP_PATH смонтирован в /var/www/html).
+    DEPLOY_MIGRATE_CMD: 'docker exec lightning-pm-prod php /var/www/html/lpm-cli/migrate.php apply'
   environment:
     name: prod
     url: https://task.innim.ru
@@ -79,6 +86,9 @@ deploy to wip:
     DEPLOY_PASSWORD: "${WIP_TASK_PASS}"
     DEPLOY_UPLOAD_PATH: '/srv/docker/task/wip.task.innim.ru/upload/'
     DEPLOY_APP_PATH: '/srv/docker/task/wip.task.innim.ru/http/'
+    # Приложение работает в контейнере, php на хосте нет — миграции
+    # применяем внутри контейнера (DEPLOY_APP_PATH смонтирован в /var/www/html).
+    DEPLOY_MIGRATE_CMD: 'docker exec lightning-pm-wip php /var/www/html/lpm-cli/migrate.php apply'
   environment:
     name: wip
     url: https://wip.task.innim.ru

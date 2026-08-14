@@ -38,6 +38,7 @@ class AdminService extends LPMBaseService
         foreach ($data as $field => $value) {
             switch ($field) {
                 case 'allowRegistration':
+                case 'newIssueView':
                     $values[$field] = (bool)$value;
                     break;
                 case 'title':
@@ -74,6 +75,39 @@ class AdminService extends LPMBaseService
         } catch (\Exception $e) {
             return $this->exception($e);
         }
+
+        return $this->answer();
+    }
+
+    /**
+     * Применяет неприменённые миграции схемы БД.
+     *
+     * Выполнение прекращается на первой ошибке; применённые до неё миграции
+     * остаются применёнными.
+     *
+     * @return
+     */
+    public function applyDbMigrations()
+    {
+        // Изменение схемы может идти минутами — лимит времени PHP тут не помощник.
+        set_time_limit(0);
+
+        try {
+            $report = (new DbMigrator($this->getUserId()))->apply();
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        foreach ($report['results'] as $result) {
+            if (!$result['ok']) {
+                return $this->error(
+                    'Не удалось применить ' . $result['name'] . ': ' . $result['error']
+                );
+            }
+        }
+
+        $this->add2Answer('applied', count($report['results']));
+        $this->add2Answer('baseline', count($report['baseline']));
 
         return $this->answer();
     }

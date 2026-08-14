@@ -49,8 +49,13 @@ class F2PException extends Exception
      * модуль с требуемыми функциями не подключё  
      * @var int
      */
-    const ERRNO_COMPRESS_UNAVAILABLE = 19008; 
-	
+    const ERRNO_COMPRESS_UNAVAILABLE = 19008;
+    /**
+     * Тело запроса превысило post_max_size и было отброшено PHP
+     * @var int
+     */
+    const ERRNO_REQUEST_TOO_LARGE    = 19009;
+
 	/**
 	 * @var string
 	 */

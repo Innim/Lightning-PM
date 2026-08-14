@@ -83,6 +83,32 @@ class PagePrinter
     {
         PageConstructor::includePattern('issues', compact('list'));
     }
+
+    /**
+     * Печатает меню выбора сортировки списка задач.
+     *
+     * Пункты для задач в тесте печатаются, только если такие задачи
+     * в списке есть.
+     * @param array<Issue> $list Список задач, который будет выведен на странице.
+     */
+    public static function issuesSort($list)
+    {
+        $items = [
+            ['sort' => '', 'label' => 'По умолчанию'],
+            ['sort' => 'last-created', 'label' => 'Последние добавленные'],
+        ];
+
+        foreach ($list as $issue) {
+            if ($issue->isTesting()) {
+                $items[] = ['header' => 'Задачи в тесте'];
+                $items[] = ['sort' => 'test-priority', 'label' => 'По приоритету'];
+                $items[] = ['sort' => 'test-stale', 'label' => 'Давно без активности'];
+                break;
+            }
+        }
+
+        PageConstructor::includePattern('components/issues-sort', compact('items'));
+    }
     
     public static function issueForm($project, $issue, $input, $isHidden)
     {
@@ -95,6 +121,31 @@ class PagePrinter
     }
 
     /**
+     * Печатает бейдж с давностью последней активности по задаче в тесте.
+     *
+     * Ничего не печатает для задач не в тесте и для тех, по которым
+     * активность была недавно.
+     * @param Issue $issue Задача.
+     */
+    public static function issueTestAge(Issue $issue)
+    {
+        $days = $issue->daysWithoutTestActivity();
+        if ($days < ISSUE_TEST_AGE_MIN_DAYS) {
+            return;
+        }
+
+        $isBug = $issue->isChangesRequested;
+        $classes = $days >= ISSUE_TEST_STALE_DAYS ? 'bg-secondary text-white' : 'bg-light text-muted';
+        $label = ($isBug ? 'баг ' : 'без активности ') . $days . ' дн';
+        $hint = ($isBug ? 'Последний баг: ' : 'Последняя активность: ') . $issue->getTestActivityDate();
+
+        PageConstructor::includePattern(
+            'components/issue-test-age',
+            compact('issue', 'days', 'classes', 'label', 'hint')
+        );
+    }
+
+    /**
      * Печатает блок связанных задач для страницы задачи.
      * @param Issue $issue Задача, для которой выводятся связи.
      */
@@ -102,6 +153,61 @@ class PagePrinter
     {
         $linkedIssues = $issue->getLinkedIssues();
         PageConstructor::includePattern('components/issue-linked', compact('issue', 'linkedIssues'));
+    }
+
+    /**
+     * Печатает участника задачи: аватар и ссылку на его страницу.
+     * @param User $user Участник.
+     * @param bool $withSp Выводить ли оценку участника в story points.
+     */
+    public static function issueUser(User $user, $withSp = false)
+    {
+        PageConstructor::includePattern('components/issue-user', compact('user', 'withSp'));
+    }
+
+    /**
+     * Печатает группу участников задачи (исполнители, тестеры, мастеры).
+     * @param Issue $issue Задача.
+     * @param float $userId Идентификатор текущего пользователя.
+     * @param string $role Роль группы: member|tester|master.
+     * @param string $label Подпись группы.
+     */
+    public static function issueParticipants(Issue $issue, $userId, $role, $label)
+    {
+        $withSp = false;
+        $hidden = [];
+
+        switch ($role) {
+            case 'tester':
+                $users = $issue->getTesters();
+                $field = 'testers';
+                $rowClass = 'testers-row';
+                $hidden = ['testers' => $issue->getTesterIdsStr()];
+                break;
+            case 'master':
+                $users = $issue->getMasters();
+                $field = 'masters';
+                $rowClass = 'masters-row';
+                $hidden = ['masters' => $issue->getMasterIdsStr()];
+                break;
+            case 'member':
+            default:
+                $role = 'member';
+                $users = $issue->getMembers();
+                $field = 'members';
+                $rowClass = 'members-row';
+                $withSp = true;
+                $hidden = [
+                    'members' => $issue->getMemberIdsStr(),
+                    'membersSp' => $issue->getMembersSpStr(),
+                ];
+                break;
+        }
+
+        PageConstructor::includePattern(
+            'components/issue-participants',
+            compact('issue', 'userId', 'role', 'label', 'users', 'field', 'rowClass', 'hidden', 'withSp')
+        );
     }
 
     /**
@@ -134,7 +240,29 @@ class PagePrinter
     {
         PageConstructor::includePattern('users-chooser');
     }
-    
+
+    /**
+     * Печатает блок состояния миграций схемы БД.
+     */
+    public static function dbMigrations()
+    {
+        $migrator = new DbMigrator();
+        $migrations = $migrator->getStatus();
+        $orphans = $migrator->getOrphanNames();
+
+        $pendingCount = 0;
+        foreach ($migrations as $migration) {
+            if ($migration->isPending()) {
+                $pendingCount++;
+            }
+        }
+
+        PageConstructor::includePattern(
+            'settings-db',
+            compact('migrations', 'orphans', 'pendingCount')
+        );
+    }
+
     public static function comment(Comment $comment, $showIssueLink = false)
     {
         PageConstructor::includePattern('comment', compact('comment', 'showIssueLink'));
@@ -349,7 +477,7 @@ class PagePrinter
             'themeUrl' => self::getPC()->getThemeUrl(),
             'issueImgsCount' => Issue::MAX_IMAGES_COUNT,
             'issueFilesCount' => Issue::MAX_FILES_COUNT,
-            'issueFileMaxSizeMb' => MAX_FILE_SIZE_MB,
+            'attachmentsTotalSizeMb' => MAX_ATTACHMENTS_TOTAL_SIZE_MB,
             'gitlabUrl' => defined('GITLAB_URL') ? GITLAB_URL : '',
             'videoUrlPatterns' => AttachmentVideoHelper::URL_PATTERNS,
             'imageUrlPatterns' => AttachmentImageHelper::URL_PATTERNS,
@@ -359,6 +487,11 @@ class PagePrinter
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,
                 'moderator' => User::ROLE_MODERATOR,
+            ],
+            'issueStatuses' => [
+                'inWork' => Issue::STATUS_IN_WORK,
+                'test' => Issue::STATUS_WAIT,
+                'completed' => Issue::STATUS_COMPLETED,
             ],
         ];
         self::printJSObject('window.lpmOptions', $data, true, false);

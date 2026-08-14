@@ -1,0 +1,34 @@
+<?php
+/*
+Требуются:
+    $issue     - задача
+    $userId    - идентификатор текущего пользователя
+    $role      - роль группы: member|tester|master
+    $label     - подпись группы
+    $users     - участники группы (User[])
+    $field     - имя поля, по которому группа обновляется из JS
+    $rowClass  - класс строки группы
+    $hidden    - скрытые поля формы: имя => значение
+    $withSp    - выводить оценку участника в story points
+*/
+?>
+<div class="issue-meta-cell issue-participants <?=$rowClass;?>" data-role="<?=$role;?>">
+    <?php /* Ссылка добавления себя стоит у подписи, а не у имён: иначе при длинных
+             именах она переносится на отдельную строку и читается как мусор. */ ?>
+    <div class="issue-meta-label text-uppercase text-muted fw-semibold x-small">
+        <span><?=$label;?></span>
+        <?php lpm_print_issue_add_me($issue, $userId, $role); ?>
+    </div>
+    <span class="participants d-flex flex-wrap align-items-center gap-2" data-field="<?=$field;?>">
+        <?php if (empty($users)): ?>
+        <span class="text-muted">Не назначены</span>
+        <?php else: ?>
+        <?php foreach ($users as $user): ?>
+        <?php lpm_print_issue_user($user, $withSp); ?>
+        <?php endforeach; ?>
+        <?php endif; ?>
+    </span>
+    <?php foreach ($hidden as $name => $value): ?>
+    <input type="hidden" name="<?=$name;?>" value="<?=$value;?>" />
+    <?php endforeach; ?>
+</div>

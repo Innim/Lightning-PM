@@ -14,7 +14,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Config: `lpm-config.inc.php` (runtime), Docker env in `.dev/docker-env/`.
 - Fixed, non-secret, non-deployment constants (display limits, size caps) live in `lpm-core/consts.inc.php` (peers: `MAX_FILE_SIZE_MB`, `MAX_IMAGE_SIZE_MB`, `COPY_YEAR`). Prefer this over overloading domain classes (e.g. `Issue`) or `lpm-config.inc.php` (which is for per-deployment/runtime config and secrets).
 - Data: app files in `lpm-files/`; logs under `_private/logs/` (create and ensure writable if needed).
-- DB: schema dump in `.dev/db/dump.sql`, historical migrations in `.dev/db/changes-log.sql`.
+- DB: schema changes are migrations in `lpm-core/modules/db/migrations/`, applied via `lpm-cli/migrate.php` (see `docs/db-migrations.md`). The pre-0.27.0 dump and change log are frozen in `.dev/db/legacy/`.
 - Formatting: PHP uses php-cs-fixer with `@PSR1,@PSR2` (see `README.md`).
 - `CLAUDE.md` is a symlink to this `AGENTS.md` — edit `AGENTS.md` directly; writes through the `CLAUDE.md` symlink are refused.
 
@@ -53,10 +53,12 @@ This file tells the coding assistant how to safely and efficiently work in this 
  - For UI components, prefer adding a `PagePrinter` method that includes the template and expose it via an alias in `lpm-core/aliases.inc.php` (e.g., `lpm_print_goto_issue($project)`), then call the alias in templates instead of `includePattern()` directly.
 
 ## DB Changes
-- If a change requires schema updates:
-  - Append the SQL to `.dev/db/changes-log.sql` with a timestamped comment.
-  - Do not auto-edit `.dev/db/dump.sql`; it is updated manually by maintainers.
-- Avoid breaking migrations; prefer additive changes and non-destructive scripts.
+- Schema changes are migrations. Create one with `.dev/bin/lpm migrate create <slug>` (never hand-name the file — the `YYYYMMDDHHMMSS_` prefix defines apply order), then fill in `up()` and, where an inverse exists, `down()`. Full contract: `docs/db-migrations.md`.
+- Inside a migration use `$this->exec($sql)` for a single statement, `$this->execFile('<same-name>.sql')` for a batch, and `$this->t(LPMTables::X)` for table names — never hardcode the `lpm_` prefix. This is the one place raw SQL is expected; the `DBQueryBuilder` rule above does not apply.
+- No `DELIMITER`, stored procedures or triggers (`DELIMITER` is a client directive and cannot be sent to the server). No transactions — MySQL runs DDL outside them, so write migrations that survive a re-run after a partial failure (`IF NOT EXISTS`, `INSERT IGNORE`).
+- Never edit a migration that has already been applied (its checksum is recorded and `status` will flag the mismatch) — add a new one. Apply with `.dev/bin/lpm migrate apply`; `status` and `apply --dry-run` change nothing.
+- `.dev/db/legacy/` is frozen history — do NOT append to `changes-log.sql` or edit `dump.sql` any more.
+- Prefer additive, non-destructive changes; a column added in one release and backfilled in the next is safer than both at once, since new code is deployed before migrations run.
 
 ## Frontend Conventions
 - Stick to existing patterns in `lpm-scripts/*.js` and template files in `lpm-themes/`.
@@ -69,7 +71,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - jQuery UI is not used — the project is fully on Bootstrap 5 for dialogs, tabs, the completion-date picker, and tooltips. Don't add it back.
 - The global tooltip is one delegated Bootstrap tooltip on `<body>` in `lpm-scripts/lightning.js` (selector `[title]:not([data-tooltip]):not([data-bs-toggle]), [data-bs-toggle="tooltip"][title]:not([data-tooltip])`, `container: 'body'`), so any `[title]` element (including dynamically added ones) gets a tooltip. Its priority-change refresh lives in `lpm-scripts/issues.js`.
 - Don't put `title` on a bare FontAwesome `<i>` icon: its rendered box height is sub-pixel (~0.8px, the glyph is a `::before`), so the tooltip anchors flush and overlaps the icon, making it hard to click. Put `title` on the wrapping element (`<a>`/`<button>` — real line-box height) so the tip clears the top edge; keep `aria-label` on that wrapper for the accessible name and `aria-hidden="true"` on the `<i>`. Do NOT "fix" tooltip spacing by adding a global `offset` — Bootstrap's delegated tooltip ignores per-element `data-bs-offset` (`_getDelegateConfig` uses only the shared config), and changing the shared offset shifts every tooltip in the app.
-- `window.lpmOptions` (emitted by `lpm-scripts/js-options.php`) exposes server constants to JS — `url`/`themeUrl`/`gitlabUrl`, image/file limits (`issueImgsCount`, `issueFilesCount`, `issueFileMaxSizeMb`), `roles`, and `issueUrlPattern` (= `OwnUrlHelper::getIssueUrlPattern()`; group 1 = project uid, group 2 = idInProject). Use it (e.g. `new RegExp('^' + lpmOptions.issueUrlPattern + '$')` to detect/parse an issue URL client-side) instead of re-deriving these values.
+- `window.lpmOptions` (emitted by `PagePrinter::jsOptions()`, called via the `lpm_print_js_options()` alias in `page.html` before the app scripts) exposes server constants to JS — `url`/`themeUrl`/`gitlabUrl`, image/file limits (`issueImgsCount`, `issueFilesCount`, `issueFileMaxSizeMb`), `aiRequestTimeout` (= `AiIntegration::getRequestTimeout()`), URL-detection pattern arrays `videoUrlPatterns`/`imageUrlPatterns` (from `AttachmentVideoHelper`/`AttachmentImageHelper::URL_PATTERNS`), `roles` (`{user, admin, moderator}`), and `issueUrlPattern` (= `OwnUrlHelper::getIssueUrlPattern()`; group 1 = project uid, group 2 = idInProject). Use it (e.g. `new RegExp('^' + lpmOptions.issueUrlPattern + '$')` to detect/parse an issue URL client-side) instead of re-deriving these values.
 - Bootstrap 5 allows only ONE component instance per element (`Data.set`). A `[title]` element that also hosts another Bootstrap component (a `data-bs-toggle="dropdown"`/`"collapse"`/`"modal"`/… toggle) therefore CANNOT also get a Tooltip — the instance is silently not stored and the tip never hides (stays stuck open). Such toggles are excluded from the global tooltip (hence the selector above; `data-bs-toggle="tooltip"` is re-included because it hosts no conflicting component). To give such a toggle a styled tooltip anyway, put the `title` on an inner icon (no component there) and keep an `aria-label` on the toggle for its accessible name — see the `.` menu in `issue.html` and `goto-issue.html`; `lightning.js` hides that icon tooltip on `show.bs.dropdown`/`show.bs.collapse` so it doesn't linger over the opened menu/panel.
 - Don't use the `.tooltip` class for custom widgets — Bootstrap's tooltip element owns it. The homegrown hover widget on the issue-id cell uses `.copy-tooltip` for this reason.
 - Copy-to-clipboard: for a static value, put it on any element as `data-copy="<value>"` (optional `data-copy-toast="<msg>"` overrides the default "Скопировано" toast) — a global delegated handler in `lpm-scripts/lightning.js` copies it and shows the toast, no per-widget JS needed. For dynamic/computed text use `lpm.utils.copyToClipboard(text)` / `lpm.utils.copyRichToClipboard(html, plain)` then `lpm.toast.show(...)`.
@@ -141,8 +143,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
   - Move items from `## Next` to `## {version} - {YYYY-MM-DD}` in `CHANGELOG.md`.
   - Keep unrelated items under `## Next` for future.
 - DB changes:
-  - If `.dev/db/changes-log.sql` contains new statements since last release, replace the latest placeholder comment (e.g., `--NEXT`) with `-- {version}` directly above the new block.
-  - Do not edit `.dev/db/dump.sql`.
+  - Nothing to do: migrations carry their own order and are applied on deploy. Do not edit anything in `.dev/db/legacy/`.
 - Commit on `develop`:
   - `git add -A && git commit -m "release: {version}"`.
 - Merge to `master` and tag:

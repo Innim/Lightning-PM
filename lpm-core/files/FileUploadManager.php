@@ -61,6 +61,11 @@ class FileUploadManager
             $errors[] = sprintf('Вы не можете прикрепить больше %d файлов', self::getFilesLimit($availableSlots, $totalLimit));
         }
 
+        $totalError = self::checkTotalSize($filesData);
+        if (null !== $totalError) {
+            $errors[] = $totalError;
+        }
+
         return $errors;
     }
 
@@ -105,8 +110,31 @@ class FileUploadManager
             return sprintf('Файл "%s" пустой или поврежден', $originalName);
         }
 
-        if ($size > MAX_FILE_SIZE_BYTES) {
-            return sprintf('Размер файла "%s" не должен превышать %d Мб', $originalName, MAX_FILE_SIZE_MB);
+        return null;
+    }
+
+    /**
+     * Проверяет суммарный размер выбранных файлов.
+     * @param  array $filesData Данные поля из $_FILES.
+     * @return string|null Текст ошибки или null, если размер в пределах лимита.
+     */
+    private static function checkTotalSize(array $filesData)
+    {
+        $total = 0;
+        $count = count($filesData['name']);
+        for ($index = 0; $index < $count; $index++) {
+            $tmpName = $filesData['tmp_name'][$index];
+            $errorCode = isset($filesData['error'][$index]) ? $filesData['error'][$index] : UPLOAD_ERR_OK;
+
+            if (self::isEmptyUpload($tmpName, $errorCode)) {
+                continue;
+            }
+
+            $total += isset($filesData['size'][$index]) ? (int)$filesData['size'][$index] : 0;
+        }
+
+        if ($total > MAX_ATTACHMENTS_TOTAL_SIZE_BYTES) {
+            return sprintf('Суммарный размер файлов не должен превышать %d Мб', MAX_ATTACHMENTS_TOTAL_SIZE_MB);
         }
 
         return null;
@@ -120,6 +148,12 @@ class FileUploadManager
         ];
 
         if (!self::hasUploads($filesData)) {
+            return $result;
+        }
+
+        $totalError = self::checkTotalSize($filesData);
+        if (null !== $totalError) {
+            $result['errors'][] = $totalError;
             return $result;
         }
 

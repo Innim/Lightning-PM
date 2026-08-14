@@ -247,6 +247,14 @@ function lpm_print_users_chooser()
 }
 
 /**
+ * Распечатывает блок состояния миграций схемы БД.
+ */
+function lpm_print_db_migrations()
+{
+    return PagePrinter::dbMigrations();
+}
+
+/**
  * Распечатывает список видео.
  */
 function lpm_print_video_list($videoLinks)
@@ -295,11 +303,43 @@ function lpm_print_goto_issue($project)
 }
 
 /**
+ * Печатает меню выбора сортировки списка задач.
+ */
+function lpm_print_issues_sort($list)
+{
+    return PagePrinter::issuesSort($list);
+}
+
+/**
+ * Печатает бейдж с давностью последней активности по задаче в тесте.
+ */
+function lpm_print_issue_test_age($issue)
+{
+    return PagePrinter::issueTestAge($issue);
+}
+
+/**
  * Печатает блок связанных задач для страницы задачи.
  */
 function lpm_print_issue_linked($issue)
 {
     return PagePrinter::issueLinked($issue);
+}
+
+/**
+ * Печатает участника задачи: аватар и ссылку на его страницу.
+ */
+function lpm_print_issue_user($user, $withSp = false)
+{
+    return PagePrinter::issueUser($user, $withSp);
+}
+
+/**
+ * Печатает группу участников задачи (исполнители, тестеры, мастеры).
+ */
+function lpm_print_issue_participants($issue, $userId, $role, $label)
+{
+    return PagePrinter::issueParticipants($issue, $userId, $role, $label);
 }
 
 /**

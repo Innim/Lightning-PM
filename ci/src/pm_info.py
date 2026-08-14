@@ -23,6 +23,17 @@ class PMInfo(Info):
 
     deploy_git_passwd = getenv('DEPLOY_GIT_PASSWD', '')
 
+    # Применять ли миграции схемы БД после выкладки кода.
+    # Выключается значением 0/false/no.
+    deploy_run_migrations = getenv('DEPLOY_RUN_MIGRATIONS', '1').strip().lower() \
+        not in ('0', 'false', 'no', '')
+
+    # Команда применения миграций, выполняется в каталоге приложения.
+    # Если приложение работает в контейнере, а php на хосте нет — укажите здесь
+    # вызов через docker exec, например:
+    # docker exec <container> php /var/www/html/lpm-cli/migrate.php apply
+    deploy_migrate_cmd = getenv('DEPLOY_MIGRATE_CMD', 'php lpm-cli/migrate.php apply')
+
     # @property
     # def deploy_password(self):
     #     pass_env = self.get_env('DEPLOY_PASSWORD_ENV')

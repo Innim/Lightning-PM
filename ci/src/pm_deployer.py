@@ -10,7 +10,8 @@ class PMDeployer(SshWorker):
     # файлы и директории которые не заливаются на боевой.
     exclude_data = ['.dev', 'ai', 'ci',  'docs', '.gitignore', '_private', 'AGENTS.md', 'CLAUDE.md', 'README.md', 'lpm-config.inc.template.php', '.git']
 
-    def __init__(self, ssh_info: SshInfo, upload_path, remote_app_path, git_branch, git_user, git_passwd, git_project):
+    def __init__(self, ssh_info: SshInfo, upload_path, remote_app_path, git_branch, git_user, git_passwd, git_project,
+                 run_migrations=True, migrate_cmd='php lpm-cli/migrate.php apply'):
         super().__init__(ssh_info)
         self.git_project = git_project
         self.git_passwd = git_passwd
@@ -18,6 +19,8 @@ class PMDeployer(SshWorker):
         self.git_branch = git_branch
         self.upload_path = upload_path
         self.remote_app_path = remote_app_path
+        self.run_migrations = run_migrations
+        self.migrate_cmd = migrate_cmd
 
     def deploy(self):
         self.connect()
@@ -49,4 +52,15 @@ class PMDeployer(SshWorker):
         # удаляем временную директорию.
         cmd = f'rm -rf {tmp_dir}'
         self.ssh_cmd(cmd)
+
+        # применяем миграции схемы БД.
+        # Выполняется после копирования кода: миграции лежат в самом приложении,
+        # а новый код рассчитан на новую схему. Ненулевой код возврата прервёт
+        # деплой с оповещением — схема при этом может остаться изменённой
+        # частично, см. docs/db-migrations.md.
+        if self.run_migrations:
+            cmd = f'cd {self.remote_app_path} && {self.migrate_cmd}'
+            self.ssh_cmd(cmd)
+        else:
+            print('Migrations are disabled (DEPLOY_RUN_MIGRATIONS), skipping.')
 

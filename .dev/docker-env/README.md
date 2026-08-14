@@ -94,7 +94,7 @@ server {
     ssl_ciphers  HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers   on;
 
-    client_max_body_size 100M;
+    client_max_body_size 512M;
 
     location ~* ^/(_private|.dev)($|\/) {
        deny all;

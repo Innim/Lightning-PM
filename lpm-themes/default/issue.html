@@ -1,5 +1,9 @@
 <?php
-/* 
+/*
+Обновлённый вид страницы задачи. Показывается, когда в настройках включён
+экспериментальный флаг «Обновлённый вид страницы задачи» (LPMOptions::newIssueView).
+Прежний вид живёт отдельно в issue-legacy.html.
+
 Требуются:
     $issue - текущая задача
     $comments - комментарии к задаче
@@ -19,250 +23,223 @@ $classes = [];
 if ($issue->isTesting()) $classes[] = 'issue-testing';
 ?>
 <article id="issueView" class="mx-auto container container-main px-4 py-4 <?=implode(' ', $classes);?>">
-	<div class="col d-flex justify-content-between align-items-center">
-		<h1><a href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a></h1>
-        <div class="header-operations-bar row gx-2">
-            <div class="col">
-                <?php lpm_print_goto_issue($project); ?>
-            </div>
-            <div class="col">
-                <a class="btn btn-outline-primary btn-sm" href="<?=$issue->getProjectUrl('add-issue');?>" role="button" title="Новая задача">
-                    <i class="fa-solid fa-plus"></i>
-                </a>
-            </div>
+    <div class="issue-page-header d-flex justify-content-between align-items-center gap-3 mb-3">
+        <?php /* Класс back-link нужен JS: после удаления задачи он уводит по этой ссылке */ ?>
+        <h1 class="h6 mb-0 text-truncate">
+            <a class="back-link link-secondary text-decoration-none"
+                href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a>
+        </h1>
+        <div class="header-operations-bar d-flex align-items-center gap-2 flex-shrink-0">
+            <?php lpm_print_goto_issue($project); ?>
+            <a class="btn btn-outline-primary btn-sm" href="<?=$issue->getProjectUrl('add-issue');?>" role="button"
+                title="Новая задача" aria-label="Новая задача">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            </a>
         </div>
-	</div>
+    </div>
 
-    <!-- <p class="header-back-link"><a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a></p> -->
-    <article id="issueInfo" class="issue-info container-legacy block-with-attachments" data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
+    <article id="issueInfo"
+        class="issue-info issue-card card shadow-sm block-with-attachments <?=IssueViewHelper::statusStateClass($issue->status);?>"
+        data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
         data-labels="<?=implode(',', $issue->getLabelNames());?>" data-issue-id="<?=$issue->id;?>">
-        <h3>
-            <span class="issue-id"><?=$issue->getIdInProject();?></span>.
-            <span class="issue-name"><?=$issue->getName();?></span><?php if (($hours = $issue->hours) > 0): ?><span
-                class="issues-hours-box">(<span
-                    class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?>)</span><?php endif;?>
-            <?php if ($project->scrum && !$isOnBoard):?>
-            <a href="#" onclick="return issuePage.putStickerOnBoard();" title="Поместить на Scrum доску"
-                class="scrum-put-sticker"><i class="fa fa-thumbtack" aria-hidden="true"></i></a>
-            <?php endif;?>
-        </h3>
+        <div class="issue-header card-header bg-white">
+            <div class="d-flex align-items-start gap-3">
+                <h2 class="issue-title h5 mb-0 flex-grow-1 text-break">
+                    <span class="issue-id font-monospace text-muted" data-copy="<?=$issue->getIdInProject();?>"
+                        data-copy-toast="Номер задачи скопирован"
+                        title="Копировать номер задачи">#<?=$issue->getIdInProject();?></span>
+                    <span class="issue-name"><?=$issue->getName();?></span>
+                </h2>
 
-        <div class="issue-actions d-flex align-items-center justify-content-end gap-1 mb-3 me-2">
-            <a href="javascript:void(0);" 
-                onclick="issuePage.onClickCopyIssueUrl(event)" 
-                title="Копировать ссылку на задачу"
-                data-issue-url="<?=$issue->getConstURL();?>"
-                class="me-1 link-secondary">
-                <i class="fa fa-link fa-xs" aria-hidden="true"></i>
-            </a>
-            
-            <a href="javascript:void(0);" 
-                onclick="issuePage.onClickCopyMarkdownIssueLink(event)" 
-                title="Копировать ссылку как Markdown"
-                data-issue-url="<?=$issue->getConstURL();?>"
-                data-issue-id-in-project="<?=$issue->getIdInProject();?>"
-                class="me-1 link-secondary">
-                <i class="fa fa-hashtag fa-xs" aria-hidden="true"></i>
-            </a>
-            
-            <div class="dropdown">
-                <a href="javascript:void(0);"
-                    class="dropdown-toggle-no-caret"
-                    aria-label="Дополнительные действия"
-                    id="issueActionsDropdown"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                    class="me-1 link-secondary">
-                    <?php /* title is on an inner span, not the toggle: a Bootstrap tooltip can't attach to
-                             an element that already hosts a Dropdown (one component instance per element).
-                             The span (not the .fa icon) carries the title so the tooltip anchors to a normal
-                             line-box aligned with the sibling links above — the .fa box collapses lower. */ ?>
-                    <span title="Дополнительные действия"><i class="fa fa-ellipsis-h fa-xs" aria-hidden="true"></i></span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-sm" aria-labelledby="issueActionsDropdown">
-                    <li>
-                        <a class="dropdown-item py-1 px-2" 
-                            href="javascript:void(0);"
-                            onclick="issuePage.onClickCopyIssueName(event)"
-                            data-issue-name="<?=htmlspecialchars($issue->getName());?>">
-                            <i class="fa fa-copy me-1 fa-xs" aria-hidden="true"></i>
-                            <small>Копировать название</small>
+                <div class="issue-actions d-flex align-items-center gap-1 flex-shrink-0">
+                    <?php if ($project->scrum && !$isOnBoard):?>
+                    <a href="#" onclick="return issuePage.putStickerOnBoard();"
+                        class="btn btn-sm btn-light scrum-put-sticker"
+                        title="Поместить на Scrum доску" aria-label="Поместить на Scrum доску">
+                        <i class="fa fa-thumbtack fa-sm" aria-hidden="true"></i>
+                    </a>
+                    <?php endif;?>
+
+                    <a href="javascript:void(0);"
+                        onclick="issuePage.onClickCopyIssueUrl(event)"
+                        title="Копировать ссылку на задачу"
+                        aria-label="Копировать ссылку на задачу"
+                        data-issue-url="<?=$issue->getConstURL();?>"
+                        class="btn btn-sm btn-light">
+                        <i class="fa fa-link fa-sm" aria-hidden="true"></i>
+                    </a>
+
+                    <a href="javascript:void(0);"
+                        onclick="issuePage.onClickCopyMarkdownIssueLink(event)"
+                        title="Копировать ссылку как Markdown"
+                        aria-label="Копировать ссылку как Markdown"
+                        data-issue-url="<?=$issue->getConstURL();?>"
+                        data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                        class="btn btn-sm btn-light">
+                        <i class="fa fa-hashtag fa-sm" aria-hidden="true"></i>
+                    </a>
+
+                    <div class="dropdown">
+                        <a href="javascript:void(0);"
+                            class="btn btn-sm btn-light dropdown-toggle-no-caret"
+                            aria-label="Дополнительные действия"
+                            id="issueActionsDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <?php /* title is on an inner span, not the toggle: a Bootstrap tooltip can't attach to
+                                     an element that already hosts a Dropdown (one component instance per element).
+                                     The span (not the .fa icon) carries the title so the tooltip anchors to a normal
+                                     line-box aligned with the sibling links above — the .fa box collapses lower. */ ?>
+                            <span title="Дополнительные действия"><i class="fa fa-ellipsis-h fa-sm" aria-hidden="true"></i></span>
                         </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-1 px-2" 
-                            href="javascript:void(0);"
-                            onclick="issuePage.onClickCopyIssueNameWithoutTags(event)"
-                            data-issue-name="<?=htmlspecialchars($issue->getName());?>">
-                            <i class="fa fa-copy me-1 fa-xs" aria-hidden="true"></i>
-                            <small>Копировать название (без тегов)</small>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-1 px-2"
-                           href="javascript:void(0);"
-                           onclick="issuePage.onClickCopyIssueId(event)"
-                           data-issue-id="<?=$issue->getID();?>">
-                            <i class="fa fa-wrench me-1 fa-xs" aria-hidden="true"></i>
-                            <small>Копировать внутренний ID</small>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-1 px-2" 
-                            href="javascript:void(0);"
-                            onclick="issuePage.onClickCopyIssueTitle(event)"
-                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
-                            data-issue-name="<?=htmlspecialchars($issue->getName());?>">
-                            <i class="fa fa-heading me-1 fa-xs" aria-hidden="true"></i>
-                            <small>Копировать заголовок</small>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-1 px-2" 
-                            href="javascript:void(0);"
-                            onclick="issuePage.onClickCopyLinkedIssueTitle(event)"
-                            data-issue-url="<?=$issue->getConstURL();?>"
-                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
-                            data-issue-name="<?=htmlspecialchars($issue->getName());?>">
-                            <i class="fa fa-arrow-up-right-from-square me-1 fa-xs"></i>
-                            <small>Копировать гиперссылку</small>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-1 px-2" 
-                            href="javascript:void(0);"
-                            onclick="issuePage.onClickCopyChangelogRecord(event)"
-                            data-issue-url="<?=$issue->getConstURL();?>"
-                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
-                            data-issue-name="<?=htmlspecialchars($issue->getName());?>">
-                            <i class="fa fa-file-lines me-1 fa-xs" aria-hidden="true"></i>
-                            <small>Копировать запись для changelog</small>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-1 px-2" 
-                            href="javascript:void(0);"
-                            onclick="issuePage.onClickCopyCommitMessage(event)"
-                            data-issue-id-in-project="<?=$issue->getIdInProject();?>"
-                            data-issue-name="<?=htmlspecialchars($issue->getName());?>">
-                            <i class="fa fa-code-commit me-1 fa-xs" aria-hidden="true"></i>
-                            <small>Копировать commit сообщение</small>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-1 px-2"
-                           href="javascript:void(0);"
-                           onclick="issuePage.onClickCopyIssueForAI(event)"
-                           data-issue-url="<?=$issue->getConstURL();?>"
-                           data-issue-id-in-project="<?=$issue->getIdInProject();?>"
-                           data-issue-name="<?=htmlspecialchars($issue->getName());?>">
-                            <i class="fa fa-robot me-1 fa-xs" aria-hidden="true"></i>
-                            <small>Копировать для AI</small>
-                        </a>
-                    </li>
-                </ul>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-sm" aria-labelledby="issueActionsDropdown">
+                            <li>
+                                <a class="dropdown-item py-1 px-2" 
+                                    href="javascript:void(0);"
+                                    onclick="issuePage.onClickCopyIssueName(event)"
+                                    data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa fa-copy me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать название</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2" 
+                                    href="javascript:void(0);"
+                                    onclick="issuePage.onClickCopyIssueNameWithoutTags(event)"
+                                    data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa fa-copy me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать название (без тегов)</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2"
+                                   href="javascript:void(0);"
+                                   onclick="issuePage.onClickCopyIssueId(event)"
+                                   data-issue-id="<?=$issue->getID();?>">
+                                    <i class="fa fa-wrench me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать внутренний ID</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2" 
+                                    href="javascript:void(0);"
+                                    onclick="issuePage.onClickCopyIssueTitle(event)"
+                                    data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                                    data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa fa-heading me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать заголовок</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2" 
+                                    href="javascript:void(0);"
+                                    onclick="issuePage.onClickCopyLinkedIssueTitle(event)"
+                                    data-issue-url="<?=$issue->getConstURL();?>"
+                                    data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                                    data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa fa-arrow-up-right-from-square me-1 fa-xs"></i>
+                                    <small>Копировать гиперссылку</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2" 
+                                    href="javascript:void(0);"
+                                    onclick="issuePage.onClickCopyChangelogRecord(event)"
+                                    data-issue-url="<?=$issue->getConstURL();?>"
+                                    data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                                    data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa fa-file-lines me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать запись для changelog</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2" 
+                                    href="javascript:void(0);"
+                                    onclick="issuePage.onClickCopyCommitMessage(event)"
+                                    data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                                    data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa fa-code-commit me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать commit сообщение</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2"
+                                   href="javascript:void(0);"
+                                   onclick="issuePage.onClickCopyIssueForAI(event)"
+                                   data-issue-url="<?=$issue->getConstURL();?>"
+                                   data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                                   data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa fa-robot me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать для AI</small>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="info-list <?switch($issue->status): 
-    case 0: ?>active-issue <?break;?> 
-    <? case 1: ?>verify-issue <?break;?> 
-    <?case 2: ?>completed-issue<?break;?>
-    <?endswitch;?> mx-4">
-            <div class="info-list-item">
-                <span class="label">Статус</span>
-                <span class="value"><?=$issue->getStatus();?></span>
-            </div>
-            <div class="info-list-item">
-                <span class="label">Тип</span>
-                <span class="value"><?=$issue->getType();?></span>
-                <input type="hidden" name="type" value="<?=$issue->type;?>" />
-            </div>
-            <div class="info-list-item">
-                <span class="label">Приоритет</span>
-                <span class="value">
-                    <span class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span>
-                    <?=$issue->getPriorityStr();?> (<?=($issue->getPriorityDisplayValue());?>%)
+        <?php /* Технические данные — на подложке: она же отделяет их от описания задачи */ ?>
+        <div class="issue-props bg-light border-bottom px-3 py-3">
+            <?php /* Даты — в конце строки бейджей: отдельной строкой они смотрелись
+                     потерянно, а рядом с участниками читались как ещё один участник */ ?>
+            <div class="issue-badges d-flex flex-wrap align-items-center gap-2">
+                <span class="badge issue-status-badge <?=IssueViewHelper::statusBadgeClass($issue->status);?>"
+                    data-field="status"><?=$issue->getStatus();?></span>
+                <span class="badge issue-type-badge <?=IssueViewHelper::typeBadgeClass($issue->type);?>">
+                    <i class="issue-type-icon <?=IssueViewHelper::typeIconClass($issue->type);?> me-1"
+                        aria-hidden="true"></i><span data-field="type"><?=$issue->getType();?></span>
                 </span>
-                <input type="hidden" name="priority" value="<?=$issue->priority;?>" />
-            </div>
-            <div class="info-list-item">
-                <span class="label">Дата создания</span>
-                <span class="value"><?=$issue->getCreateDate();?></span>
-            </div>
-            <div class="issue-complete-date-row info-list-item <?=$issue->hasCompleteDate() ? '' : 'no-date';?>">
-                <span class="label">Дата завершения</span>
-                <span class="value"><?=$issue->getCompleteDate();?></span>
-                <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>" />
-            </div>
-            <div class="issue-completed-date-row info-list-item">
-                <span class="label">Завершена</span>
-                <span class="value"><?=$issue->getCompletedDate();?></span>
-            </div>
-            <div class="info-list-item">
-                <span class="label">Создал</span>
-                <span class="value"><?=$issue->getAuthorLinkedName();?></span>
-            </div>
-            <div class="members-row info-list-item">
-                <span class="label">Исполнители</span>
-                <span class="value">
-                    <span class="participants">
-                    <?php if ($issue->hasMembers()):?>
-                    <?php foreach ($issue->getMembers() as $i => $member):
-                ?><?=$i>0?',':''
-                ?> <?=$member->getLinkedName();?><?php if ($member->sp > 0):
-                ?> (<?=$member->sp;?> SP)<?php endif;?><?php
-                endforeach;?>
-                    <?php else: ?>
-                    Не назначены
-                    <?php endif; ?>
-                    </span>
-                    <?php lpm_print_issue_add_me($issue, $userId, 'member'); ?>
+                <span class="badge bg-white text-dark border" data-field="priority"><span
+                        class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span><?=$issue->getPriorityStr();?>
+                    (<?=$issue->getPriorityDisplayValue();?>%)</span>
+                <?php if ($issue->hours > 0): ?>
+                <span class="badge bg-white text-dark border issues-hours-box"><span
+                        class="issue-hours"><?=$issue->getStrHours();?></span>&nbsp;<?=$issue->getNormHoursLabel(false);?></span>
+                <?php endif;?>
+                <?php /* Срок прижат к правому краю: в общем ряду бейджей он терялся */ ?>
+                <?php $deadlineLevel = IssueViewHelper::deadlineLevel($issue); ?>
+                <span
+                    class="badge ms-auto issue-deadline-badge <?=IssueViewHelper::deadlineBadgeClass($deadlineLevel);?> issue-complete-date-row <?=$issue->hasCompleteDate() ? '' : 'no-date';?>">
+                    <i class="issue-deadline-icon <?=IssueViewHelper::deadlineIconClass($deadlineLevel);?> me-1"
+                        aria-hidden="true"></i>До <span
+                        data-field="completeDate"><?=$issue->getCompleteDate();?></span>
+                    <input type="hidden" name="completeDate" value="<?=$issue->getCompleteDate4Input();?>" />
                 </span>
-                <input type="hidden" name="members" value="<?=$issue->getMemberIdsStr();?>" />
-                <input type="hidden" name="membersSp" value="<?=$issue->getMembersSpStr();?>" />
             </div>
-            <?php $testers = $issue->getTesters(); ?>
-            <div class="testers-row info-list-item">
-                <span class="label">Тестеры</span>
-                <span class="value">
-                    <span class="participants">
-                    <?php if (empty($testers)): ?>
-                    Не назначены
-                    <?php else: ?>
-                    <?php foreach ($testers as $i => $tester) {?><?=$i>0?', ':''?>
-                    <?=$tester->getLinkedName();?><?php }?>
-                    <?php endif; ?>
-                    </span>
-                    <?php lpm_print_issue_add_me($issue, $userId, 'tester'); ?>
-                </span>
-                <input type="hidden" name="testers" value="<?=$issue->getTesterIdsStr();?>" />
+
+            <div class="issue-meta mt-3">
+                <?php lpm_print_issue_participants($issue, $userId, 'member', 'Исполнители'); ?>
+                <?php lpm_print_issue_participants($issue, $userId, 'tester', 'Тестеры'); ?>
+                <?php lpm_print_issue_participants($issue, $userId, 'master', 'Мастеры'); ?>
             </div>
-            <?php $masters = $issue->getMasters(); ?>
-            <div class="masters-row info-list-item">
-                <span class="label">Мастеры</span>
-                <span class="value">
-                    <span class="participants">
-                    <?php if (empty($masters)): ?>
-                    Не назначены
-                    <?php else: ?>
-                    <?php foreach ($masters as $i => $master) {?><?=$i>0?', ':''?>
-                    <?=$master->getLinkedName();?><?php }?>
-                    <?php endif; ?>
-                    </span>
-                    <?php lpm_print_issue_add_me($issue, $userId, 'master'); ?>
-                </span>
-                <input type="hidden" name="masters" value="<?=$issue->getMasterIdsStr();?>" />
+
+            <?php /* Автор и дата создания — историческая справка, а не рабочие данные:
+                     держим их мелко и внизу панели, чтобы не спорили со сроком */ ?>
+            <div class="issue-origin small text-muted mt-3">
+                Создана <span data-field="createDate"><?=$issue->getCreateDate();?></span>,
+                автор <span data-field="author"><?=$issue->getAuthorLinkedName();?></span><span
+                    class="issue-completed-date-row">, завершена <span
+                        data-field="completedDate"><?=$issue->getCompletedDate();?></span></span>
             </div>
+
+            <input type="hidden" name="type" value="<?=$issue->type;?>" />
+            <input type="hidden" name="priority" value="<?=$issue->priority;?>" />
+        </div>
+
+        <div class="card-body">
             <?php if (!empty($aiSummaryAvailable)): ?>
-            <?php lpm_print_ai_issue_summary($issue, $aiSummary, $aiSummarySourceHash, $aiSummaryCommentsCount); ?>
+            <div class="mb-4">
+                <?php lpm_print_ai_issue_summary($issue, $aiSummary, $aiSummarySourceHash, $aiSummaryCommentsCount); ?>
+            </div>
             <?php endif; ?>
-            <div class="desc info-list-item">
-                <div class="value formatted-desc text-with-attachments"><?=$issue->getDesc();?></div>
+
+            <div class="desc">
+                <div class="formatted-desc text-with-attachments" data-field="desc"><?=$issue->getDesc();?></div>
                 <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>
             </div>
-            <div class="info-list-item attachments"></div>
+            <div class="attachments"></div>
             <?php
             // Render previews for uploaded video files before images
             $videoFiles = [];
@@ -279,12 +256,12 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             }
             if (!empty($videoFiles)):
             ?>
-            <div class="info-list-item">
+            <div class="issue-videos">
                 <?php lpm_print_video_list($videoFiles); ?>
             </div>
             <?php endif; ?>
             <?php if ($picture = $issue->getImages()): ?>
-            <div class="info-list-item">
+            <div class="issue-images">
                 <ul class="images-line">
                     <?php foreach ($picture as $img): ?>
                     <li>
@@ -296,18 +273,16 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 </ul>
             </div>
             <?php endif; ?>
-        </div>
 
-        <?php $files = $issue->getFiles(); ?>
-        <?php if (!empty($files)): ?>
-        <div class="info-list-item files-row mx-4 mt-4">
-            <h6 class="label mb-3">Файлы</h6>
-            <div class="value w-100">
-                <ul class="issue-files-list list-group list-group-flush mb-4">
+            <?php $files = $issue->getFiles(); ?>
+            <?php if (!empty($files)): ?>
+            <div class="files-row mt-4">
+                <h3 class="h6 text-uppercase text-muted fw-semibold mb-2">Файлы</h3>
+                <ul class="issue-files-list list-group">
                     <?php foreach ($files as $file): ?>
                     <li class="issue-file-item list-group-item d-flex align-items-center justify-content-between gap-3">
                         <div class="d-flex align-items-start gap-3">
-                            <span class="text-secondary pt-1"><i class="fas fa-paperclip"></i></span>
+                            <span class="text-secondary pt-1"><i class="fas fa-paperclip" aria-hidden="true"></i></span>
                             <div class="d-flex flex-column">
                                 <a href="<?=$file->getDownloadUrl();?>" class="issue-file-link fw-semibold" target="_blank" rel="noopener" download="<?=$file->origName;?>">
                                     <span class="file-name"><?=$file->origName;?></span>
@@ -317,7 +292,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                         </div>
                         <div class="ms-auto">
                             <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$file->origName;?>">
-                                <i class="fas fa-download me-1"></i>Скачать
+                                <i class="fas fa-download me-1" aria-hidden="true"></i>Скачать
                             </a>
                         </div>
                         <input type="hidden" name="fileId" class="issue-file-id-input" value="<?=$file->fileId;?>">
@@ -325,36 +300,46 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     <?php endforeach; ?>
                 </ul>
             </div>
-        </div>
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <hr class="text-secondary opacity-50 mt-4 mb-0">
-
-        <div id="linkedIssues" class="linked-issues mx-4">
-            <?php lpm_print_issue_linked($issue); ?>
+            <div id="linkedIssues" class="linked-issues mt-4">
+                <?php lpm_print_issue_linked($issue); ?>
+            </div>
         </div>
-        <p class="buttons-bar my-4 <? switch($issue->status): 
-    case 0: ?>active-issue<?break;?> 
-    <?case 1: ?>verify-issue<?break;?> 
-    <?case 2: ?>completed-issue<?break;?>
-    <?endswitch;?>">
-            <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
-            <input type="hidden" name="revision" value="<?=$issue->revision;?>" />
-            <button class="btn btn-secondary restore-btn" onclick="restoreIssue(event);">Открыть</button>
-            <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true) || lpm_get_user()->isModerator()): ?>
-            <button class="btn btn-primary verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
-            <?php endif ?>
-            <button class="btn btn-success complete-btn" onclick="completeIssue(event);">Завершить</button>
-            <button class="btn btn-primary" onclick="issuePage.showEditForm();">Редактировать</button>
-            <button class="btn btn-danger" onclick="issuePage.removeIssue(event);">Удалить</button>
-        </p>
-        <a href="<?=lpm_get_base_page_url();?>" class="back-link">Назад</a>
-        <a href="#" onclick="issuePage.copyIssue(); return false;" class="copy-issue-link">
-            <i class="fa fa-clone" aria-hidden="true" title="Скопировать задачу"></i>
-        </a>
-        <a href="#" onclick="issuePage.finishedIssue(); return false;" class="finished-issue-link">
-            <i class="fa fa-plus-square" aria-hidden="true" title="Создать связанную задачу"></i>
-        </a>
+
+        <div class="buttons-bar card-footer d-flex flex-wrap align-items-center gap-2">
+            <div class="dropdown">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" id="issueCreateFromDropdown"
+                    data-bs-toggle="dropdown" aria-expanded="false">Создать</button>
+                <ul class="dropdown-menu" aria-labelledby="issueCreateFromDropdown">
+                    <li>
+                        <a class="dropdown-item copy-issue-link" href="#"
+                            onclick="issuePage.copyIssue(); return false;">
+                            <i class="fa fa-clone me-2" aria-hidden="true"></i>Копию этой задачи
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item finished-issue-link" href="#"
+                            onclick="issuePage.finishedIssue(); return false;">
+                            <i class="fa fa-plus-square me-2" aria-hidden="true"></i>Связанную задачу
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <?php /* Скрытые поля должны оставаться прямыми соседями кнопок:
+                     обработчики берут идентификатор задачи из родителя кнопки. */ ?>
+            <div class="issue-buttons d-flex flex-wrap align-items-center gap-2 ms-auto">
+                <input type="hidden" name="issueId" value="<?=$issue->getID();?>" />
+                <input type="hidden" name="revision" value="<?=$issue->revision;?>" />
+                <button class="btn btn-outline-danger" onclick="issuePage.removeIssue(event);">Удалить</button>
+                <button class="btn btn-outline-primary" onclick="issuePage.showEditForm();">Редактировать</button>
+                <button class="btn btn-outline-secondary restore-btn" onclick="restoreIssue(event);">Открыть</button>
+                <?php if ($issue->isMember($userId) || $issue->isMaster($userId, true) || lpm_get_user()->isModerator()): ?>
+                <button class="btn btn-primary verify-btn" onclick="verifyIssue(event)">Отправить на проверку</button>
+                <?php endif ?>
+                <button class="btn btn-success complete-btn" onclick="completeIssue(event);">Завершить</button>
+            </div>
+        </div>
     </article>
     <article id="comments" class="comments px-4">
         <div class="links-bar">

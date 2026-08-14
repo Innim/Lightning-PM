@@ -2,6 +2,15 @@ AddDefaultCharset utf-8
 
 RewriteEngine On
 
+# Прямые HTTP-запросы к коду приложения, CLI-утилитам и приватным данным
+# запрещены: код подключается только с файловой системы (index.php и php-cli),
+# а в _private лежат логи, которые наружу отдавать нельзя. На боевом сервере
+# _private закрыт ещё и на уровне nginx — здесь дублируем на уровне приложения,
+# чтобы защита не зависела от настроек конкретной установки.
+# Правило должно оставаться выше RewriteCond ниже — те относятся к правилу
+# маршрутизации, и вставка между ними её сломает.
+RewriteRule ^(_private|lpm-cli|lpm-core)/ - [F,L]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 # RewriteCond %{REQUEST_FILENAME} -f

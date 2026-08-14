@@ -1,4 +1,10 @@
--- Adminer 4.8.1 MySQL 8.0.43 dump
+-- Схема БД на момент перехода на миграции (версия 0.26.0).
+--
+-- Получена из дампа .dev/db/legacy/dump.sql без инструкций DROP TABLE: файл
+-- выполняется только на пустой базе, а отсутствие DROP гарантирует, что
+-- на непустой он ничего не разрушит. Изменять файл не нужно — всё, что
+-- меняет схему дальше, оформляется отдельными миграциями.
+
 
 SET NAMES utf8;
 SET time_zone = '+00:00';
@@ -7,7 +13,19 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 SET NAMES utf8mb4;
 
-DROP TABLE IF EXISTS `lpm_api_keys`;
+CREATE TABLE `lpm_ai_issue_summary` (
+  `issueId` bigint NOT NULL COMMENT 'Идентификатор задачи',
+  `sourceHash` char(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Слепок данных задачи, по которым составлена сводка',
+  `summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Разделы сводки в формате JSON',
+  `model` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Модель, составившая сводку',
+  `promptTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов в запросе',
+  `completionTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов в ответе',
+  `totalTokens` int NOT NULL DEFAULT '0' COMMENT 'Токенов всего',
+  `createdAt` datetime NOT NULL COMMENT 'Дата составления сводки',
+  PRIMARY KEY (`issueId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ИИ-сводки обсуждения задач';
+
+
 CREATE TABLE `lpm_api_keys` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор ключа',
   `userId` bigint NOT NULL COMMENT 'Пользователь-владелец ключа',
@@ -20,7 +38,6 @@ CREATE TABLE `lpm_api_keys` (
   KEY `userId_deleted` (`userId`,`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Пользовательские API ключи';
 
-DROP TABLE IF EXISTS `lpm_badges`;
 CREATE TABLE `lpm_badges` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `type` varchar(255) NOT NULL COMMENT 'Тип бэйджа',
@@ -32,7 +49,6 @@ CREATE TABLE `lpm_badges` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица бэйджей';
 
 
-DROP TABLE IF EXISTS `lpm_comments`;
 CREATE TABLE `lpm_comments` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'идентификатор комментария',
   `instanceType` tinyint(1) NOT NULL COMMENT 'тип инстанции, к которой оставляется коммент',
@@ -42,11 +58,11 @@ CREATE TABLE `lpm_comments` (
   `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'текст',
   `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'комментарий удалён',
   PRIMARY KEY (`id`),
-  KEY `instanceType` (`instanceType`,`instanceId`)
+  KEY `instanceType` (`instanceType`,`instanceId`),
+  KEY `instanceType_instanceId_date` (`instanceType`,`instanceId`,`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COMMENT='таблица комментариев';
 
 
-DROP TABLE IF EXISTS `lpm_file_links`;
 CREATE TABLE `lpm_file_links` (
   `linkId` bigint NOT NULL AUTO_INCREMENT COMMENT 'идентификатор связи',
   `fileId` bigint NOT NULL COMMENT 'идентификатор файла',
@@ -60,7 +76,6 @@ CREATE TABLE `lpm_file_links` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='привязки файлов к сущностям';
 
 
-DROP TABLE IF EXISTS `lpm_files`;
 CREATE TABLE `lpm_files` (
   `fileId` bigint NOT NULL AUTO_INCREMENT COMMENT 'идентификатор файла',
   `uid` char(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'уникальный идентификатор файла',
@@ -78,7 +93,6 @@ CREATE TABLE `lpm_files` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='загруженные файлы';
 
 
-DROP TABLE IF EXISTS `lpm_fixed_instance`;
 CREATE TABLE `lpm_fixed_instance` (
   `userId` int unsigned NOT NULL COMMENT 'Идентификатор пользователя',
   `instanceType` tinyint unsigned NOT NULL COMMENT 'Тип инстанции',
@@ -88,7 +102,6 @@ CREATE TABLE `lpm_fixed_instance` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='Таблица фиксации инстанции';
 
 
-DROP TABLE IF EXISTS `lpm_images`;
 CREATE TABLE `lpm_images` (
   `imgId` bigint NOT NULL AUTO_INCREMENT COMMENT 'идентификатор изображения',
   `url` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'url (полный или относительно корня сайта)',
@@ -104,7 +117,6 @@ CREATE TABLE `lpm_images` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='загруженные пользователем изображения';
 
 
-DROP TABLE IF EXISTS `lpm_instance_targets`;
 CREATE TABLE `lpm_instance_targets` (
   `instanceType` int NOT NULL COMMENT 'Тип экземпляра',
   `instanceId` int NOT NULL COMMENT 'ID экземпляра',
@@ -113,7 +125,6 @@ CREATE TABLE `lpm_instance_targets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='Цели указанной сущности.';
 
 
-DROP TABLE IF EXISTS `lpm_issue_branch`;
 CREATE TABLE `lpm_issue_branch` (
   `issueId` bigint NOT NULL COMMENT 'ID задачи',
   `repositoryId` int NOT NULL COMMENT 'ID репозитория',
@@ -131,7 +142,6 @@ CREATE TABLE `lpm_issue_branch` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='Ветка задачи на GitLab репозитории';
 
 
-DROP TABLE IF EXISTS `lpm_issue_comment`;
 CREATE TABLE `lpm_issue_comment` (
   `commentId` bigint NOT NULL COMMENT 'ID комментария',
   `type` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL COMMENT 'Тип комментария',
@@ -140,7 +150,6 @@ CREATE TABLE `lpm_issue_comment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='Данные комментария к задаче';
 
 
-DROP TABLE IF EXISTS `lpm_issue_counters`;
 CREATE TABLE `lpm_issue_counters` (
   `issueId` bigint NOT NULL COMMENT 'идентификатор задачи',
   `commentsCount` int NOT NULL DEFAULT '0' COMMENT 'количество комментариев',
@@ -148,7 +157,6 @@ CREATE TABLE `lpm_issue_counters` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COMMENT='счетчики для задачи';
 
 
-DROP TABLE IF EXISTS `lpm_issue_label_uses`;
 CREATE TABLE `lpm_issue_label_uses` (
   `labelId` int NOT NULL COMMENT 'Идентификатор метки (lpm_issue_labels.id)',
   `projectId` int NOT NULL COMMENT 'Проект, в котором использовалась метка',
@@ -158,7 +166,6 @@ CREATE TABLE `lpm_issue_label_uses` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Использования меток задач по проектам';
 
 
-DROP TABLE IF EXISTS `lpm_issue_labels`;
 CREATE TABLE `lpm_issue_labels` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор',
   `projectId` int NOT NULL DEFAULT '0' COMMENT 'Проект (0 если метка общая)',
@@ -170,7 +177,6 @@ CREATE TABLE `lpm_issue_labels` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='Метки для задач';
 
 
-DROP TABLE IF EXISTS `lpm_issue_linked`;
 CREATE TABLE `lpm_issue_linked` (
   `issueId` int NOT NULL COMMENT 'ID основной задачи',
   `linkedIssueId` int NOT NULL COMMENT 'ID связанной задачи',
@@ -179,7 +185,6 @@ CREATE TABLE `lpm_issue_linked` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='Связанные задачи';
 
 
-DROP TABLE IF EXISTS `lpm_issue_member_info`;
 CREATE TABLE `lpm_issue_member_info` (
   `instanceId` bigint NOT NULL COMMENT 'идентификатор задачи',
   `userId` bigint NOT NULL COMMENT 'идентификатор пользователя',
@@ -188,7 +193,6 @@ CREATE TABLE `lpm_issue_member_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='информация об участнике задачи';
 
 
-DROP TABLE IF EXISTS `lpm_issue_mr`;
 CREATE TABLE `lpm_issue_mr` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID записи',
   `mrId` int NOT NULL COMMENT 'ID MR',
@@ -202,7 +206,6 @@ CREATE TABLE `lpm_issue_mr` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='GitLab MR от исполнителей по задачам.';
 
 
-DROP TABLE IF EXISTS `lpm_issues`;
 CREATE TABLE `lpm_issues` (
   `id` int NOT NULL AUTO_INCREMENT,
   `projectId` int NOT NULL,
@@ -222,11 +225,12 @@ CREATE TABLE `lpm_issues` (
   `status` tinyint(1) NOT NULL DEFAULT '0',
   `revision` varchar(48) NOT NULL COMMENT 'ревизия задачи',
   PRIMARY KEY (`id`),
-  KEY `projectId` (`projectId`)
+  KEY `projectId` (`projectId`),
+  KEY `projectId_deleted_status` (`projectId`,`deleted`,`status`),
+  KEY `projectId_completedDate` (`projectId`,`completedDate`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
 
 
-DROP TABLE IF EXISTS `lpm_members`;
 CREATE TABLE `lpm_members` (
   `userId` bigint NOT NULL,
   `instanceType` smallint NOT NULL,
@@ -238,7 +242,6 @@ CREATE TABLE `lpm_members` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
 
 
-DROP TABLE IF EXISTS `lpm_options`;
 CREATE TABLE `lpm_options` (
   `option` varchar(20) NOT NULL COMMENT 'опция',
   `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'её значение',
@@ -255,7 +258,6 @@ INSERT INTO `lpm_options` (`option`, `value`) VALUES
 ('fromName',  'Innim LLC PM'),
 ('emailSubscript',  'Это письмо отправлено автоматически, не отвечайте на него. \r\nВы можете отключить отправку уведомлений в настройках профиля');
 
-DROP TABLE IF EXISTS `lpm_projects`;
 CREATE TABLE `lpm_projects` (
   `id` int NOT NULL AUTO_INCREMENT,
   `uid` varchar(255) NOT NULL,
@@ -265,6 +267,7 @@ CREATE TABLE `lpm_projects` (
   `lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'время последнего обновления проекта',
   `issuesCount` int NOT NULL DEFAULT '0' COMMENT 'количество созданных задач',
   `scrum` tinyint NOT NULL DEFAULT '0' COMMENT 'Проект использует Scrum',
+  `aiSummary` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Для задач проекта доступна ИИ-сводка',
   `isArchive` tinyint(1) NOT NULL DEFAULT '0',
   `slackNotifyChannel` varchar(255) NOT NULL COMMENT 'имя канала для оповещений в Slack',
   `masterId` bigint NOT NULL COMMENT 'идентификатор пользователя, являющегося мастером в проекте',
@@ -276,7 +279,6 @@ CREATE TABLE `lpm_projects` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
 
 
-DROP TABLE IF EXISTS `lpm_recovery_emails`;
 CREATE TABLE `lpm_recovery_emails` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `userId` bigint NOT NULL,
@@ -284,10 +286,9 @@ CREATE TABLE `lpm_recovery_emails` (
   `expDate` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `userId` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
-DROP TABLE IF EXISTS `lpm_scrum_snapshot`;
 CREATE TABLE `lpm_scrum_snapshot` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи',
   `sid` int NOT NULL COMMENT 'Идентификатор snapshot-а',
@@ -303,7 +304,6 @@ CREATE TABLE `lpm_scrum_snapshot` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
-DROP TABLE IF EXISTS `lpm_scrum_snapshot_list`;
 CREATE TABLE `lpm_scrum_snapshot_list` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор snapshot-а',
   `idInProject` int NOT NULL COMMENT 'Порядковый номер снепшота по проекту',
@@ -315,7 +315,6 @@ CREATE TABLE `lpm_scrum_snapshot_list` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 
-DROP TABLE IF EXISTS `lpm_scrum_sticker`;
 CREATE TABLE `lpm_scrum_sticker` (
   `issueId` bigint NOT NULL COMMENT 'идентификатор задачи',
   `state` tinyint NOT NULL COMMENT 'состояние стикера',
@@ -324,7 +323,6 @@ CREATE TABLE `lpm_scrum_sticker` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='стикер на scrum доске';
 
 
-DROP TABLE IF EXISTS `lpm_user_auth`;
 CREATE TABLE `lpm_user_auth` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `cookieHash` varchar(32) NOT NULL,
@@ -336,7 +334,6 @@ CREATE TABLE `lpm_user_auth` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='Данные авторизации по куки';
 
 
-DROP TABLE IF EXISTS `lpm_user_locks`;
 CREATE TABLE `lpm_user_locks` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи',
   `userId` bigint NOT NULL COMMENT 'Идентификатор пользователя',
@@ -351,7 +348,6 @@ CREATE TABLE `lpm_user_locks` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Таблица блокировок разных сущностей пользователями';
 
 
-DROP TABLE IF EXISTS `lpm_users`;
 CREATE TABLE `lpm_users` (
   `userId` bigint NOT NULL AUTO_INCREMENT,
   `email` varchar(255) NOT NULL,
@@ -373,7 +369,6 @@ CREATE TABLE `lpm_users` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
 
 
-DROP TABLE IF EXISTS `lpm_users_log`;
 CREATE TABLE `lpm_users_log` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'Идентификатор записи',
   `userId` int NOT NULL COMMENT 'Идентификатор пользователя',
@@ -385,7 +380,6 @@ CREATE TABLE `lpm_users_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='Лог действий пользователя';
 
 
-DROP TABLE IF EXISTS `lpm_users_pref`;
 CREATE TABLE `lpm_users_pref` (
   `userId` bigint NOT NULL COMMENT 'идентификатор пользователя',
   `seAddIssue` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'оповещать на email о добавлении новой задачи',
@@ -398,6 +392,3 @@ CREATE TABLE `lpm_users_pref` (
   `seIssueCommentForPM` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'оставлен комментарий к задаче для PM',
   PRIMARY KEY (`userId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COMMENT='настройки пользователя';
-
-
--- 2025-09-22 07:27:43

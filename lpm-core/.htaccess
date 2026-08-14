@@ -1,0 +1,10 @@
+# Код приложения подключается только с файловой системы (из index.php),
+# прямых HTTP-запросов сюда нет. Запрет дублирует правило в корневом
+# .htaccess, чтобы защита сохранилась при его изменении.
+<IfModule mod_authz_core.c>
+	Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+	Order allow,deny
+	Deny from all
+</IfModule>

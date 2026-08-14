@@ -10,13 +10,8 @@ $(document).ready(
         issuePage.scrumColUpdateInfo();
         var dd = new DropDown($('#dropdown'));
 
-        $(document).on('click', '#showLastCreated', function () {
-            states.setState('last-created');
-        });
-
-        $(document).on('click', '#sortDefault', function () {
-            // TODO: should remake this one
-            issuePage.sortDefault();
+        $(document).on('click', '#issuesSortMenu ~ .dropdown-menu [data-sort]', function () {
+            states.setState($(this).data('sort'));
         });
 
         $(document).on('click', '#issuesList .member-list a', function (e) {
@@ -622,8 +617,18 @@ issuePage.addMeToIssue = function (role) {
         const ids = $input.val();
         const hasParticipants = ids.length > 0;
 
-        const $participants = $('.value .participants', $row);
-        if (hasParticipants) {
+        // Сервер отдаёт голую ссылку на пользователя, вид сам решает, как её показать:
+        // обновлённый оборачивает в плашку с аватаром, прежний склеивает через запятую
+        const $participants = $('.participants', $row);
+        if ($('#issueInfo').hasClass('issue-card')) {
+            $participants.append(Issue.renderUser({
+                linkedName: res.memberHtml,
+                avatarUrl: res.avatarUrl,
+            }));
+            if (!hasParticipants) {
+                $('.text-muted', $participants).remove();
+            }
+        } else if (hasParticipants) {
             // Отступы разметки схлопнулись бы в пробел перед запятой,
             // поэтому обрезаем хвостовые пробелы
             $participants.html($participants.html().replace(/\s+$/, '') + ', ' + res.memberHtml);
@@ -1216,7 +1221,7 @@ issuePage.putStickerOnBoard = function () {
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
         if (res.success) {
-            $('#issueInfo h3 .scrum-put-sticker').remove();
+            $('#issueInfo .scrum-put-sticker').remove();
             $('#issueInfo').data('isOnBoard', true);
             issuePage.scrumColUpdateInfo();
         }
@@ -1291,45 +1296,112 @@ issuePage.showEditForm = function () {
  * @param {Issue} issue
  */
 function setIssueInfo(issue) {
-    $("#issueInfo > h3 .issue-name").text(issue.name);
+    const $issueInfo = $("#issueInfo");
+
+    // Разметка сама сообщает, какой вид открыт, — флаг настроек в JS не нужен
+    if ($issueInfo.hasClass('issue-card')) {
+        setIssueInfoCard(issue, $issueInfo);
+    } else {
+        setIssueInfoLegacy(issue, $issueInfo);
+    }
+};
+
+/**
+ * Обновляет обновлённый вид задачи (шаблон issue.html).
+ * @param {Issue} issue
+ * @param {jQuery} $issueInfo
+ */
+function setIssueInfoCard(issue, $issueInfo) {
+    $(".issue-name", $issueInfo).text(issue.name);
+
+    // Каждое поле помечено в разметке своим data-field, поэтому порядок блоков
+    // на странице можно менять, не трогая обновление
+    const values = {
+        status: issue.getStatus(),
+        type: issue.getType(),
+        priority: issue.getPriority(),
+        createDate: issue.getCreateDate(),
+        completeDate: issue.getCompleteDate(),
+        completedDate: issue.getCompletedDate(),
+        author: issue.getAuthorHtml(),
+        members: issue.getMembersHtml(),
+        testers: issue.getTestersHtml(),
+        masters: issue.getMastersHtml(),
+        desc: issue.getDesc(true),
+    };
+
+    Object.keys(values).forEach(function (field) {
+        $('[data-field="' + field + '"]', $issueInfo).html(values[field]);
+    });
+
+    $(".issue-status-badge", $issueInfo)
+        .removeClass(Issue.STATUS_BADGE_CLASSES)
+        .addClass(Issue.getStatusBadgeClass(issue.status));
+
+    $(".issue-type-badge", $issueInfo)
+        .removeClass(Issue.TYPE_BADGE_CLASSES)
+        .addClass(Issue.getTypeBadgeClass(issue.type));
+    $(".issue-type-icon", $issueInfo)
+        .removeClass(Issue.TYPE_ICON_CLASSES)
+        .addClass(Issue.getTypeIconClass(issue.type));
+
+    const deadlineLevel = Issue.getDeadlineLevel(issue);
+    $(".issue-deadline-badge", $issueInfo)
+        .removeClass(Issue.DEADLINE_BADGE_CLASSES)
+        .addClass(Issue.getDeadlineBadgeClass(deadlineLevel));
+    $(".issue-deadline-icon", $issueInfo)
+        .removeClass(Issue.DEADLINE_ICON_CLASSES)
+        .addClass(Issue.getDeadlineIconClass(deadlineLevel));
+
+    $("#issueView").toggleClass('issue-testing', issue.isVerify());
+
+    $issueInfo
+        .removeClass('active-issue verify-issue completed-issue')
+        .addClass(Issue.getStatusStateClass(issue.status));
+
+    $('.issue-complete-date-row', $issueInfo).toggleClass('no-date', !issue.hasCompleteDate());
+
+    issuePage.updateAddMeLinks(issue);
+
+    issuePage.updatePriorityVals();
+
+    $("input[name=issueId]", $issueInfo).val(issue.id);
+    $issueInfo.data('status', issue.status);
+};
+
+/* ======== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue-legacy.html) ========
+   Показывается, пока выключен экспериментальный флаг newIssueView.
+   Удаляется целиком вместе с шаблоном и одноимённым блоком в main.css. */
+
+/**
+ * Обновляет прежний вид задачи (шаблон issue-legacy.html): значения полей
+ * подставляются по их порядку в разметке, а состояние задачи задаётся
+ * классами на .info-list и .buttons-bar.
+ * @param {Issue} issue
+ * @param {jQuery} $issueInfo
+ */
+function setIssueInfoLegacy(issue, $issueInfo) {
+    $(".issue-name", $issueInfo).text(issue.name);
+
     // В строках участников имена лежат во вложенном блоке,
     // чтобы ссылка быстрого добавления себя не затиралась при обновлении
-    const fields = $("#issueInfo > .info-list > div > .value").map(function () {
+    const fields = $("> .info-list > div > .value", $issueInfo).map(function () {
         return $(this).children('.participants')[0] || this;
     }).get();
 
-    //$( "#issueInfo .buttons-bar > button.restore-btn"  ).hide();
-    //$( "#issueInfo .buttons-bar > button.complete-btn" ).hide();
-
     $("#issueView").removeClass('issue-testing');
 
-    $("#issueInfo .info-list").
-        removeClass('active-issue').
-        removeClass('verify-issue').
-        removeClass('completed-issue');
-
-    $("#issueInfo .buttons-bar").
-        removeClass('active-issue').
-        removeClass('verify-issue').
-        removeClass('completed-issue');
+    $(".info-list, .buttons-bar", $issueInfo)
+        .removeClass('active-issue verify-issue completed-issue');
 
     if (issue.isCompleted()) {
-        //$( "#issueInfo .buttons-bar > button.restore-btn" ).show();
-        $("#issueInfo .buttons-bar").addClass('completed-issue');
-        $("#issueInfo .info-list").addClass('completed-issue');
+        $(".info-list, .buttons-bar", $issueInfo).addClass('completed-issue');
     } else if (issue.isOpened()) {
-        //$( "#issueInfo .buttons-bar > button.complete-btn" ).show();
-        $("#issueInfo .buttons-bar").addClass('active-issue');
-        //$( "#issueInfo .buttons-bar" ).addClass( 'verify-issue' );
-        $("#issueInfo .info-list").addClass('active-issue');
+        $(".info-list, .buttons-bar", $issueInfo).addClass('active-issue');
     } else if (issue.isVerify()) {
-        $("#issueInfo .buttons-bar").addClass('verify-issue');
-        $("#issueInfo .info-list").addClass('verify-issue');
+        $(".info-list, .buttons-bar", $issueInfo).addClass('verify-issue');
         $("#issueView").addClass('issue-testing');
     }
-
-    const testers = issue.getTesters();
-    const masters = issue.getMasters();
 
     const values = [
         issue.getStatus(),
@@ -1340,8 +1412,8 @@ function setIssueInfo(issue) {
         issue.getCompletedDate(),
         issue.getAuthor(),
         issue.getMembers(),
-        testers,
-        masters,
+        issue.getTesters(),
+        issue.getMasters(),
         issue.getDesc(true)
     ];
 
@@ -1349,19 +1421,22 @@ function setIssueInfo(issue) {
         fields[i].innerHTML = values[i];
     }
 
-    const $completedDate = $('#issueInfo .issue-complete-date-row');
-    if (issue.hasCompleteDate())
-        $completedDate.show();
-    else 
-        $completedDate.hide();
+    const $completeDate = $('.issue-complete-date-row', $issueInfo);
+    if (issue.hasCompleteDate()) {
+        $completeDate.show();
+    } else {
+        $completeDate.hide();
+    }
 
     issuePage.updateAddMeLinks(issue);
 
     issuePage.updatePriorityVals();
 
-    $("#issueInfo > p > input[name=issueId]").val(issue.id);
-    $('#issueInfo').data('status', issue.status);
+    $("input[name=issueId]", $issueInfo).val(issue.id);
+    $issueInfo.data('status', issue.status);
 };
+
+/* ======== конец старого вида страницы задачи ======== */
 
 issuePage.createBranch = function () {
     createBranch.show(issuePage.projectId, issuePage.getIssueId(), issuePage.idInProject);
@@ -1593,26 +1668,116 @@ issuePage.addComment = function (comment, html) {
 };
 
 issuePage.handleLastCreatedSort = function () {
-    issuePage.showLastCreated();
+    issuePage.sortIssues('last-created');
 }
 
-issuePage.showLastCreated = function () {
-    var table = $('#issuesList');
-    window.defaultIssues = table.html();
-    table.find('tr:not(:first)').sort(function (a, b) {
+issuePage.handleTestPrioritySort = function () {
+    issuePage.sortIssues('test-priority');
+}
+
+issuePage.handleTestStaleSort = function () {
+    issuePage.sortIssues('test-stale');
+}
+
+/**
+ * Компараторы строк списка задач по ключу сортировки.
+ * Режимы «в тесте» переставляют только задачи в тесте, порядок остальных
+ * задач при этом сохраняется (компаратор возвращает для них 0).
+ */
+issuePage.sortComparators = {
+    'last-created': function (a, b) {
         return $(b).data('createDate') - $(a).data('createDate');
-    }).appendTo(table);
-    $('#showLastCreated').hide();
-    $('#sortDefault').show();
-    return false;
+    },
+    'test-priority': function (a, b) {
+        return issuePage.compareTestIssues(a, b, function ($a, $b) {
+            return $b.data('priority') - $a.data('priority')
+                || issuePage.testActivity($a) - issuePage.testActivity($b);
+        });
+    },
+    'test-stale': function (a, b) {
+        return issuePage.compareTestIssues(a, b, function ($a, $b) {
+            return issuePage.testActivity($a) - issuePage.testActivity($b)
+                || $b.data('priority') - $a.data('priority');
+        });
+    }
+};
+
+/**
+ * Сравнивает две строки списка для режимов сортировки задач в тесте:
+ * задачи в тесте поднимаются выше остальных и упорядочиваются переданной
+ * функцией, порядок остальных задач не меняется.
+ */
+issuePage.compareTestIssues = function (a, b, compare) {
+    var $a = $(a);
+    var $b = $(b);
+    var aInTest = $a.data('status') === lpmOptions.issueStatuses.test;
+    var bInTest = $b.data('status') === lpmOptions.issueStatuses.test;
+
+    if (!aInTest && !bInTest) return 0;
+    if (aInTest != bInTest) return aInTest ? -1 : 1;
+
+    return compare($a, $b);
+};
+
+// Дата последней активности по задаче в тесте (для задачи с багом - дата бага).
+// Если активность неизвестна - считаем ей дату создания задачи.
+issuePage.testActivity = function ($row) {
+    return $row.data('testActivity') || $row.data('createDate');
+};
+
+/**
+ * Сортирует список задач заданным режимом.
+ * Порядок по умолчанию запоминается, чтобы к нему можно было вернуться,
+ * и любая сортировка выполняется именно от него.
+ */
+issuePage.sortIssues = function (sortKey) {
+    var table = $('#issuesList');
+    if (window.defaultIssues === undefined) {
+        window.defaultIssues = table.html();
+    } else {
+        table.html(window.defaultIssues);
+    }
+
+    table.find('tr:not(:first)').sort(issuePage.sortComparators[sortKey]).appendTo(table);
+    issuePage.updateSortMenu(sortKey);
 };
 
 issuePage.sortDefault = function () {
-    window.location.hash = '';
-    var table = $('#issuesList');
-    table.html(window.defaultIssues);
-    $('#sortDefault').hide();
-    $('#showLastCreated').show();
+    if (window.defaultIssues !== undefined) {
+        $('#issuesList').html(window.defaultIssues);
+        window.defaultIssues = undefined;
+    }
+    issuePage.updateSortMenu('');
+};
+
+// Отмечает выбранный режим в меню сортировки. В заголовок кнопки режим
+// выносится, только если он отличается от сортировки по умолчанию.
+issuePage.updateSortMenu = function (sortKey) {
+    var items = $('#issuesSortMenu').siblings('.dropdown-menu').find('[data-sort]');
+    items.removeClass('fw-bold').find('.fa-check').addClass('invisible');
+
+    var item = items.filter('[data-sort="' + sortKey + '"]').addClass('fw-bold');
+    item.find('.fa-check').removeClass('invisible');
+
+    $('#issuesSortMenu .issues-sort-title')
+        .text(item.length && sortKey !== ''
+            ? 'Сортировка: ' + item.text().trim().toLowerCase()
+            : 'Сортировка');
+};
+
+/**
+ * Применяет режим сортировки, заданный в адресе страницы,
+ * чтобы ссылка на отсортированный список открывалась в том же порядке.
+ */
+issuePage.applySortFromHash = function () {
+    var sortKey = window.location.hash.replace(/^#/, '');
+    if (!/^[a-z-]+$/.test(sortKey)
+            || !Object.prototype.hasOwnProperty.call(issuePage.sortComparators, sortKey)
+            || !$('#issuesSortMenu ~ .dropdown-menu [data-sort="' + sortKey + '"]').length) {
+        return;
+    }
+
+    issuePage.sortIssues(sortKey);
 };
 
 issuePage.handleFilterState = function (value) {
@@ -1742,14 +1907,20 @@ function Issue(obj) {
     this.url = obj.url;
     this.linked = obj.linked;
 
+    const getUsersHtml = (list, withSp) => {
+        if (!list || !list.length) {
+            return '<span class="text-muted">Не назначены</span>';
+        }
+        return list.map(user => Issue.renderUser(user, withSp)).join('');
+    };
+
+    // Списки участников простым текстом — нужны старому виду задачи
+    // (issue-legacy.html), в обновлённом виде выводятся плашки с аватарами
     const getUsersStr = (list) => {
-        var str = '';
-        if (list)
-            for (var i = 0; i < list.length; i++) {
-                if (i > 0) str += ', ';
-                str += list[i].linkedName;
-            }
-        return str;
+        if (!list) {
+            return '';
+        }
+        return list.map(user => user.linkedName).join(', ');
     };
 
     this.getCompleteDate = function () {
@@ -1774,7 +1945,7 @@ function Issue(obj) {
         return this.getDate(this.createDate);
     };
 
-    this.getAuthor = function () {
+    this.getAuthorHtml = function () {
         return this.author ? this.author.linkedName : '';
     };
 
@@ -1784,19 +1955,8 @@ function Issue(obj) {
             Issue.getPriorityStr(val) + ' (' + val + '%)';
     };
 
-    this.getMembers = function () {
-        var str = '';
-        if (this.members) {
-            for (var i = 0; i < this.members.length; i++) {
-                var member = this.members[i];
-                if (i > 0) str += ', ';
-                str += this.members[i].linkedName;
-                if (member.sp)
-                    str += " (" + member.sp + " SP)";
-            }
-        }
-
-        return str ? str : 'Не назначены';
+    this.getMembersHtml = function () {
+        return getUsersHtml(this.members, true);
     };
 
     this.getMemberIds = function () {
@@ -1811,13 +1971,34 @@ function Issue(obj) {
         return this.files;
     };
 
-    this.getTesters = () => getUsersStr(this.testers) || 'Не назначены';
+    this.getTestersHtml = () => getUsersHtml(this.testers);
 
     this.getTesterIds = function () {
         return this.testers.map(tester => tester.userId);
     };
 
+    this.getMastersHtml = () => getUsersHtml(this.masters);
+
+    /* ==== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ: значения полей простым текстом ==== */
+
+    this.getAuthor = function () {
+        return this.author ? this.author.linkedName : '';
+    };
+
+    this.getMembers = function () {
+        if (!this.members || !this.members.length) {
+            return 'Не назначены';
+        }
+        return this.members
+            .map(member => member.linkedName + (member.sp ? ' (' + member.sp + ' SP)' : ''))
+            .join(', ');
+    };
+
+    this.getTesters = () => getUsersStr(this.testers) || 'Не назначены';
+
     this.getMasters = () => getUsersStr(this.masters) || 'Не назначены';
+
+    /* ==== конец блока старого вида ==== */
 
     this.getMasterIds = function () {
         return this.masters.map(master => master.userId);
@@ -1923,6 +2104,138 @@ Issue.getPriorityStr = function (priority) {
  */
 Issue.getPriorityDisplayVal = function (priority) {
     return priority + 1;
+};
+
+/**
+ * Все классы бейджа статуса — снимаются перед тем, как поставить актуальный.
+ */
+Issue.STATUS_BADGE_CLASSES = 'bg-primary bg-warning bg-success text-dark';
+
+/**
+ * Оформление бейджа статуса. Те же соответствия задаёт `IssueViewHelper` на сервере.
+ * @param {Number} status
+ */
+Issue.getStatusBadgeClass = function (status) {
+    switch (status) {
+        case 1: return 'bg-warning text-dark';
+        case 2: return 'bg-success';
+        default: return 'bg-primary';
+    }
+};
+
+/**
+ * Все классы бейджа и иконки типа — снимаются перед тем, как поставить актуальные.
+ */
+Issue.TYPE_BADGE_CLASSES = 'bg-secondary bg-danger bg-info text-dark';
+Issue.TYPE_ICON_CLASSES = 'fa-code fa-bug fa-life-ring';
+
+/**
+ * Оформление бейджа типа. Те же соответствия задаёт `IssueViewHelper` на сервере.
+ * @param {Number} type
+ */
+Issue.getTypeBadgeClass = function (type) {
+    switch (type) {
+        case 1: return 'bg-danger';
+        case 2: return 'bg-info text-dark';
+        default: return 'bg-secondary';
+    }
+};
+
+/**
+ * Иконка типа задачи — только сам глиф: класс начертания (`fa-solid`)
+ * задан в разметке и не меняется.
+ * @param {Number} type
+ */
+Issue.getTypeIconClass = function (type) {
+    switch (type) {
+        case 1: return 'fa-bug';
+        case 2: return 'fa-life-ring';
+        default: return 'fa-code';
+    }
+};
+
+/**
+ * Класс состояния задачи: определяет, какие даты и кнопки видны.
+ * @param {Number} status
+ */
+Issue.getStatusStateClass = function (status) {
+    switch (status) {
+        case 1: return 'verify-issue';
+        case 2: return 'completed-issue';
+        default: return 'active-issue';
+    }
+};
+
+/**
+ * Все классы бейджа и иконки срока — снимаются перед тем, как поставить актуальные.
+ */
+Issue.DEADLINE_BADGE_CLASSES = 'bg-danger bg-warning bg-white text-dark border';
+Issue.DEADLINE_ICON_CLASSES = 'fa-solid fa-regular fa-calendar-xmark fa-fire fa-calendar-day fa-calendar-check';
+
+/**
+ * Насколько поджимает срок выполнения задачи. Те же пороги задаёт
+ * `IssueViewHelper` на сервере.
+ * @param {Issue} issue
+ * @returns {String} outdated|urgent|medium|low; пустая строка, если срок не
+ * задан или задача завершена — тогда подсвечивать нечего.
+ */
+Issue.getDeadlineLevel = function (issue) {
+    if (issue.isCompleted() || !issue.hasCompleteDate()) {
+        return '';
+    }
+
+    // Сравниваем с началом сегодняшнего дня, чтобы задача со сроком «сегодня»
+    // не считалась просроченной
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
+    const days = (issue.completeDate * 1000 - dayStart.getTime()) / 86400000;
+
+    if (days < 0) return 'outdated';
+    if (days < 2) return 'urgent';
+    if (days < 7) return 'medium';
+    return 'low';
+};
+
+/**
+ * Оформление бейджа срока выполнения.
+ * @param {String} level Уровень из getDeadlineLevel().
+ */
+Issue.getDeadlineBadgeClass = function (level) {
+    switch (level) {
+        case 'outdated': return 'bg-danger';
+        case 'urgent':
+        case 'medium': return 'bg-warning text-dark';
+        default: return 'bg-white text-dark border';
+    }
+};
+
+/**
+ * Иконка срока выполнения.
+ * @param {String} level Уровень из getDeadlineLevel().
+ */
+Issue.getDeadlineIconClass = function (level) {
+    switch (level) {
+        case 'outdated': return 'fa-solid fa-calendar-xmark';
+        case 'urgent': return 'fa-solid fa-fire';
+        case 'medium': return 'fa-solid fa-calendar-day';
+        default: return 'fa-regular fa-calendar-check';
+    }
+};
+
+/**
+ * Разметка участника задачи — повторяет шаблон `components/issue-user`.
+ * @param {Object} user Участник (с полями linkedName, avatarUrl и, возможно, sp).
+ * @param {Boolean} withSp Выводить ли оценку участника в story points.
+ */
+Issue.renderUser = function (user, withSp) {
+    const avatar = user.avatarUrl
+        ? '<img class="rounded-circle" src="' + user.avatarUrl + '" alt="" width="22" height="22" loading="lazy" />'
+        : '';
+    const sp = withSp && user.sp > 0
+        ? '<span class="text-muted x-small">' + user.sp + '&nbsp;SP</span>'
+        : '';
+    return '<span class="issue-user d-inline-flex align-items-start gap-1">'
+        + avatar + user.linkedName + sp + '</span>';
 };
 
 Issue.getCommitMessage = function (num, title) {

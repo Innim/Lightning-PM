@@ -15,6 +15,15 @@ Load [references/api.md](references/api.md) when exact endpoints, request bodies
 
 Prefer the bundled helper script `scripts/lpm-api.sh` over raw `curl` so API calls can be approved once via a single command prefix. The script is always at `scripts/lpm-api.sh` relative to this SKILL.md file — derive the path from the skill's own directory and express it with a `~/` prefix. Never expand `~/` to an absolute path like `/Users/<name>/...`, and never run `find` or any search to locate the script.
 
+The helper script is deliberately narrow, because it is usually allow-listed by command prefix and therefore runs with whatever arguments the agent supplies:
+
+- `ROOT_URL` defines the only origin it will contact. An absolute `URL_OR_PATH` is accepted only when its scheme, host and port match `ROOT_URL`; anything else is refused and no request is made. The API key is never sent anywhere but that origin.
+- `https://` is required, except for `localhost` / `127.0.0.1` / `::1`.
+- `METHOD` must be one of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+- Raw `curl` arguments cannot be passed through. To download an attachment, use `--save-to PATH`; the path must sit inside the current directory or a temp directory, must not be hidden or reached through a symlink, and its directory must already exist.
+
+If a call is refused for one of these reasons, treat it as a signal that the URL or the target path is wrong — do not work around it with raw `curl`; tell the user instead.
+
 Before making any API call, verify that the agent's execution environment allows running the helper script. If the environment requires explicit authorization for shell commands (e.g., an allowlist, sandbox policy, or per-command approval), proactively ask the user to authorize `lpm-api.sh` for unrestricted use — ideally before the first call. A broad approval for the script path is better than repeated per-call prompts. Do not silently fail or fall back to raw `curl` without telling the user why.
 
 ## Workflow
@@ -34,7 +43,7 @@ Before making any API call, verify that the agent's execution environment allows
    - action URLs or repository hints when present
 6. Reuse the saved `id` and `idInProject` values in the rest of the workflow. Do not re-resolve before each request unless the issue URL itself changes.
 7. Fetch `GET /api/v1/issues/{issueId}` if the resolve payload looks partial, stale, or omits fields you need. Use only the saved global `id` as `{issueId}`.
-8. Download protected file URLs with the same auth headers when attachments matter for implementation or review.
+8. Download protected file URLs with the helper script's `--save-to PATH` option when attachments matter for implementation or review. The file URL must be on the same origin as `ROOT_URL`.
 9. Infer what change needs to be implemented in the local codebase from the issue description, comments, and attachments. Use Lightning PM as the source of truth when local assumptions conflict with issue context.
 10. Infer the repository and base branch. Prefer `develop` unless the issue, repository structure, or branch list clearly indicates another parent.
 11. Ask the user for repository choice only when it cannot be inferred safely.
@@ -153,7 +162,13 @@ bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com/project/demo/iss
 bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com' POST /api/v1/issues/43210/branches '{"name":"891.inner-store-payment-method","repositoryId":12,"parentBranch":"develop"}'
 ```
 
-The script derives the Lightning PM origin from the passed root or issue URL and always sends `X-LPM-API-Key`, which makes approval simpler than repeated direct `curl` invocations.
+Downloading a protected attachment:
+
+```bash
+bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com/project/demo/issue/891' GET 'https://pm.example.com/lpm-files/protected/screenshot.png' --save-to /tmp/screenshot.png
+```
+
+The script derives the Lightning PM origin from the passed root or issue URL and sends `X-LPM-API-Key` to that origin only, which makes approval simpler than repeated direct `curl` invocations. It does not follow redirects and does not accept pass-through `curl` options, so a request can never be steered to another host.
 
 Important id rule:
 

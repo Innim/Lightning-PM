@@ -98,29 +98,6 @@ code.no-highlight {
 	-o-tab-size: 4;
 	-webkit-tab-size: 4
 }
-a.back-link {
-	margin    : 0px;
-	text-align: left;
-	font-size : 10px;
-}
-a.copy-issue-link {
-	float: right;
-	font-size: 12px;
-}
-a.finished-issue-link {
-	margin-right: 7px;
-	float: right;
-	font-size: 12px;
-}
-/* p.header-back-link {
-	margin: -1.3em 0px 0.83em;
-}
-p.header-back-link a.back-link {
-    font-size : 11px;
-} */
-.buttons-bar {
-	text-align: center;
-}
 #noway {
 	display: none;
 	text-align: center;	
@@ -562,38 +539,6 @@ a.add-me-to-issue .plus-icon {
 	font-size: smaller;
 }
 
-.container-legacy.issue-info {
-	width: 100%;
-}
-
-/* панелька с информацией */
-.info-list > .info-list-item {
-	margin: 10px 0px;
-}
-.info-list > .info-list-item span.label {
-    width      : 150px;
-    /*display    : inline-block;*/
-    display: block;
-    float: left;
-    font-weight: bold;
-    font-size: smaller;
-}
-.info-list > .info-list-item span.label:after {
-    content: ":";
-}
-.info-list > .info-list-item span.value {
-	display: block;
-	margin-left: 155px;
-}
-.info-list > .info-list-item
-{
-	clear: both;
-}
-
-.info-list > .info-list-item.issue-complete-date-row.no-date {
-	display: none;
-}
-
 table tr.locked-user {
 	background-color: #cccccc;
 	color           : #999999;
@@ -817,8 +762,63 @@ table.issues-list tr.active-issue.tester {
 	background: #FFEC80;
 }*/
 
-/* просмотр задачи */
-#issueView > h1 {
+/* просмотр задачи: общее для обоих видов */
+.linked-issues .card-body {
+	font-size: smaller;
+}
+.linked-issues .linked-issue-project {
+	font-weight: bold;
+}
+
+/* ======== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue-legacy.html) ========
+   Показывается, пока выключен экспериментальный флаг newIssueView.
+   Правила, чьи селекторы попадают и в новый вид, ограничены классами
+   .issue-view-legacy / .issue-legacy. Удаляется целиком вместе с шаблоном. */
+.issue-view-legacy a.back-link {
+	margin    : 0px;
+	text-align: left;
+	font-size : 10px;
+}
+.issue-view-legacy a.copy-issue-link {
+	float: right;
+	font-size: 12px;
+}
+.issue-view-legacy a.finished-issue-link {
+	margin-right: 7px;
+	float: right;
+	font-size: 12px;
+}
+.issue-view-legacy .buttons-bar {
+	text-align: center;
+}
+.container-legacy.issue-info {
+	width: 100%;
+}
+/* панелька с информацией */
+.info-list > .info-list-item {
+	margin: 10px 0px;
+}
+.info-list > .info-list-item span.label {
+	width      : 150px;
+	display: block;
+	float: left;
+	font-weight: bold;
+	font-size: smaller;
+}
+.info-list > .info-list-item span.label:after {
+	content: ":";
+}
+.info-list > .info-list-item span.value {
+	display: block;
+	margin-left: 155px;
+}
+.info-list > .info-list-item {
+	clear: both;
+}
+.info-list > .info-list-item.issue-complete-date-row.no-date {
+	display: none;
+}
+#issueView.issue-view-legacy > h1 {
 	float: left;
 }
 #issueView .info-list.completed-issue .issue-completed-date-row {
@@ -827,12 +827,6 @@ table.issues-list tr.active-issue.tester {
 #issueView .info-list .issue-completed-date-row {
 	display: none;
 }
-.linked-issues .card-body {
-	font-size: smaller;
-}
-.linked-issues .linked-issue-project {
-	font-weight: bold;
-}
 #issueView .buttons-bar.completed-issue button.complete-btn {
 	display: none;
 }
@@ -840,17 +834,80 @@ table.issues-list tr.active-issue.tester {
 	display: none;
 }
 #issueView .buttons-bar.active-issue button.restore-btn {
-    display: none;
+	display: none;
 }
 #issueView .buttons-bar.verify-issue button.verify-btn {
-    display: none;
+	display: none;
 }
 #issueView .container-legacy {
 	box-sizing: content-box;
 	clear: both;
 	position: relative;
 }
-#issueView .info-list .desc blockquote,
+#issueView.issue-view-legacy .issue-actions {
+	position: absolute;
+	right: 0px;
+	margin-top: -15px;
+}
+#issueInfo.issue-legacy > h3 {
+	position: relative;
+}
+#issueInfo.issue-legacy > h3 .issues-hours-box {
+	display: inline-block;
+	margin-left: 5px;
+	font-size: .7em;
+}
+#issueInfo.issue-legacy > h3 .scrum-put-sticker {
+	position: absolute;
+	top: 50%;
+	right: 10px;
+	margin-top: -7px;
+	font-size: 16px;
+}
+/* ======== конец старого вида страницы задачи ======== */
+
+/* ======== НОВЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue.html) ========
+   Показывается при включённом флаге newIssueView. Удаляется целиком,
+   если от обновлённого вида откажутся. */
+/* Номер задачи копируется по клику — в Bootstrap 5.1 нет утилиты для курсора */
+#issueInfo.issue-card .issue-id {
+	cursor: pointer;
+}
+/* Панель свойств: число колонок подбирается по ширине (auto-fit). Утилиты
+   row-cols-* не подходят — они задают фиксированное число колонок, и скрытая
+   дата оставляла бы в сетке дыру. Flex-раскладка тоже не годится: перенесённая
+   на новую строку ячейка растягивалась бы на всю ширину */
+#issueInfo.issue-card .issue-meta {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: .75rem 1.5rem;
+}
+/* Фиксированная высота подписи: иначе строки с иконкой «добавить себя»
+   оказываются выше остальных и значения не выравниваются между собой */
+#issueInfo.issue-card .issue-meta-label {
+	display: flex;
+	align-items: center;
+	min-height: 1.25rem;
+	line-height: 1;
+	margin-bottom: .25rem;
+}
+/* Состав видимых дат и кнопок задаётся статусом задачи: класс состояния
+   висит на #issueInfo и переключается при смене статуса без перезагрузки */
+#issueInfo.issue-card .issue-completed-date-row,
+#issueInfo.issue-card .issue-complete-date-row.no-date,
+#issueInfo.issue-card.completed-issue button.complete-btn,
+#issueInfo.issue-card.completed-issue button.verify-btn,
+#issueInfo.issue-card.active-issue button.restore-btn,
+#issueInfo.issue-card.verify-issue button.verify-btn {
+	display: none;
+}
+#issueInfo.issue-card.completed-issue .issue-completed-date-row {
+	display: inline;
+}
+/* ======== конец нового вида страницы задачи ======== */
+
+
+#issueView .desc blockquote,
 .comment-text blockquote {
 	font-size: .9em;
 	padding: 10px;
@@ -913,12 +970,6 @@ blockquote > p {
 	padding: 0;
 }
 
-#issueView .issue-actions
-{
-	position: absolute;
-	right: 0px;
-	margin-top: -15px;
-}
 
 /* Редактирование задачи */
 #issueForm .text-warning {
@@ -962,22 +1013,6 @@ blockquote > p {
     margin-top: 10px;
 }
 
-#issueInfo > h3 {
-	position: relative;
-}
-#issueInfo > h3 .issues-hours-box
-{
-	display: inline-block;
-	margin-left: 5px;
-	font-size: .7em;
-}
-#issueInfo > h3 .scrum-put-sticker {
-	position: absolute;
-	top: 50%;
-	right: 10px;
-	margin-top: -7px;
-	font-size: 16px;
-}
 
 /*Меню скопировать в issue*/
 .popup-menu 

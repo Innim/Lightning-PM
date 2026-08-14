@@ -27,6 +27,9 @@ class Issue extends MembersInstance
 
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
+        // Даты последней активности нужны только для сортировки задач в тесте,
+        // поэтому считаются лишь для них: в больших проектах задач в тесте единицы,
+        // а подзапрос по комментариям выполняется для каждой строки выборки.
         $sql = <<<SQL
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
@@ -38,7 +41,20 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
       WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
    ORDER BY `date` DESC
-      LIMIT 1) AS `t_testState`
+      LIMIT 1) AS `t_testState`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+      ), NULL) AS `t_lastCommentDate`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+   INNER JOIN `%7\$s` `icm`
+           ON `icm`.`commentId` = `cm`.`id`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+          AND `icm`.`type` = '$requestChangesType'
+      ), NULL) AS `t_lastBugDate`
 SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
@@ -78,11 +94,32 @@ SQL;
         if (empty($orderBy)) {
             $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
             $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
+            // Дата последней активности по задаче в тесте. Для задачи с багом это дата
+            // последнего бага. Если комментариев нет вообще - берем дату изменения самой
+            // задачи (в том числе перевода в тест), чтобы только что отправленная в тест
+            // старая задача не считалась застоявшейся.
+            $testActivity = "COALESCE(IF(`t_testState` = '$requestChangesType', "
+                . "`t_lastBugDate`, `t_lastCommentDate`), "
+                . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
+
+            // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
+            // сортируются по стареющему приоритету: каждые N дней простоя добавляют
+            // задаче пункт приоритета, но не больше потолка. Так важные задачи остаются
+            // выше, а забытые постепенно всплывают и не тонут навсегда.
+            // Неизвестная дата активности считается максимальным простоем.
+            $agingDays = ISSUE_TEST_AGING_DAYS_PER_POINT;
+            $agingMax = ISSUE_TEST_AGING_MAX_BONUS;
+            $agingUnknown = $agingMax * $agingDays;
             $orderBy = <<<SQL
             FIELD(`i`.`status`, $statusesOrder),
-            `realCompleted` DESC, 
+            `realCompleted` DESC,
             IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
-            `i`.`priority` DESC, 
+            IF(`i`.`status` = $statusWait,
+               `i`.`priority` + LEAST(GREATEST(COALESCE(DATEDIFF(NOW(), $testActivity),
+                                                        $agingUnknown), 0) DIV $agingDays, $agingMax),
+               NULL) DESC,
+            IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC,
+            `i`.`priority` DESC,
             `i`.`completeDate` ASC, `id` ASC
             SQL;
         }
@@ -117,6 +154,9 @@ SQL;
 
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
+        // Даты последней активности нужны только для сортировки задач в тесте,
+        // поэтому считаются лишь для них: в больших проектах задач в тесте единицы,
+        // а подзапрос по комментариям выполняется для каждой строки выборки.
         $sql = <<<SQL
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
@@ -128,7 +168,20 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
       WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
    ORDER BY `date` DESC
-      LIMIT 1) AS `t_testState`
+      LIMIT 1) AS `t_testState`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+      ), NULL) AS `t_lastCommentDate`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT MAX(`cm`.`date`)
+         FROM `%6\$s` `cm`
+   INNER JOIN `%7\$s` `icm`
+           ON `icm`.`commentId` = `cm`.`id`
+        WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
+          AND `icm`.`type` = '$requestChangesType'
+      ), NULL) AS `t_lastBugDate`
 SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
@@ -173,11 +226,32 @@ SQL;
         if (empty($orderBy)) {
             $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
             $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
+            // Дата последней активности по задаче в тесте. Для задачи с багом это дата
+            // последнего бага. Если комментариев нет вообще - берем дату изменения самой
+            // задачи (в том числе перевода в тест), чтобы только что отправленная в тест
+            // старая задача не считалась застоявшейся.
+            $testActivity = "COALESCE(IF(`t_testState` = '$requestChangesType', "
+                . "`t_lastBugDate`, `t_lastCommentDate`), "
+                . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
+
+            // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
+            // сортируются по стареющему приоритету: каждые N дней простоя добавляют
+            // задаче пункт приоритета, но не больше потолка. Так важные задачи остаются
+            // выше, а забытые постепенно всплывают и не тонут навсегда.
+            // Неизвестная дата активности считается максимальным простоем.
+            $agingDays = ISSUE_TEST_AGING_DAYS_PER_POINT;
+            $agingMax = ISSUE_TEST_AGING_MAX_BONUS;
+            $agingUnknown = $agingMax * $agingDays;
             $orderBy = <<<SQL
             FIELD(`i`.`status`, $statusesOrder),
-            `realCompleted` DESC, 
+            `realCompleted` DESC,
             IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
-            `i`.`priority` DESC, 
+            IF(`i`.`status` = $statusWait,
+               `i`.`priority` + LEAST(GREATEST(COALESCE(DATEDIFF(NOW(), $testActivity),
+                                                        $agingUnknown), 0) DIV $agingDays, $agingMax),
+               NULL) DESC,
+            IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC,
+            `i`.`priority` DESC,
             `i`.`completeDate` ASC, `id` ASC
             SQL;
         }
@@ -1089,6 +1163,16 @@ SQL;
     public $commentsCount = 0;
 
     /**
+     * Дата последней активности по задаче в тесте.
+     *
+     * Для задачи с активным багом это дата последнего бага, иначе - дата
+     * последнего комментария; если комментариев нет - дата изменения задачи.
+     * Заполняется только для задач в тесте, для остальных 0.
+     * @var float
+     */
+    public $testActivityDate = 0;
+
+    /**
      *
      * @var User
      */
@@ -1485,6 +1569,32 @@ SQL;
         return $diff / 86400;
     }
     
+    /**
+     * Возвращает количество полных дней без активности по задаче в тесте.
+     *
+     * Если задача не в тесте или дата активности неизвестна - вернет null.
+     * @return int|null
+     */
+    public function daysWithoutTestActivity()
+    {
+        if (!$this->isTesting() || empty($this->testActivityDate)) {
+            return null;
+        }
+
+        // Считаем по календарным дням, чтобы сегодняшняя активность давала 0 дней
+        $diff = DateTimeUtils::dayStart() - DateTimeUtils::dayStart('U', $this->testActivityDate);
+        return $diff > 0 ? (int)round($diff / 86400) : 0;
+    }
+
+    /**
+     * Возвращает дату последней активности по задаче в тесте.
+     * @return string
+     */
+    public function getTestActivityDate()
+    {
+        return self::getDateTimeStr($this->testActivityDate);
+    }
+
     public function getCompletedDate()
     {
         return self::getDateStr($this->completedDate);
@@ -1554,6 +1664,13 @@ SQL;
             $testState = $hash['t_testState'];
             $this->isPassTest = $testState == IssueCommentType::PASS_TEST;
             $this->isChangesRequested = $this->isTesting() && $testState == IssueCommentType::REQUEST_CHANGES;
+        }
+
+        if ($this->isTesting() && array_key_exists('t_lastCommentDate', $hash)) {
+            $date = $this->isChangesRequested ? $hash['t_lastBugDate'] : $hash['t_lastCommentDate'];
+            $this->testActivityDate = empty($date)
+                ? max($this->createDate, $this->modifiedDate)
+                : (float)DateTimeUtils::convertMysqlDate($date);
         }
 
         return $res;

@@ -758,8 +758,11 @@ class IssueService extends LPMBaseService
             // Записываем лог
             UserLogEntry::issueEdit($userId, $issue->id, 'Add self as ' . $role);
 
+            // Отдаём только ссылку на пользователя и аватар: как их показать,
+            // решает клиент — вид страницы задачи выбирается настройкой
             $this->add2Answer('userId', $userId);
             $this->add2Answer('memberHtml', $user->getLinkedName());
+            $this->add2Answer('avatarUrl', $user->getAvatarUrl());
         } catch (\Exception $e) {
             return $this->exception($e);
         }
