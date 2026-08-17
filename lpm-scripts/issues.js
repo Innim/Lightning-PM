@@ -1304,7 +1304,36 @@ function setIssueInfo(issue) {
     } else {
         setIssueInfoLegacy(issue, $issueInfo);
     }
+
+    setIssueFormState(issue, $issueInfo);
 };
+
+/**
+ * Обновляет скрытые поля задачи: из них заполняется форма редактирования,
+ * поэтому они должны соответствовать показанным значениям.
+ * @param {Issue} issue
+ * @param {jQuery} $issueInfo
+ */
+function setIssueFormState(issue, $issueInfo) {
+    const values = {
+        issueId: issue.id,
+        revision: issue.revision,
+        type: issue.type,
+        priority: issue.priority,
+        completeDate: issue.getCompleteDateInput(),
+        members: issue.getMemberIds().join(','),
+        membersSp: issue.getMembersSp().join(','),
+        testers: issue.getTesterIds().join(','),
+        masters: issue.getMasterIds().join(','),
+    };
+
+    Object.keys(values).forEach(function (field) {
+        const value = values[field];
+        if (value === undefined) return;
+
+        $('input[name=' + field + ']', $issueInfo).val(value);
+    });
+}
 
 /**
  * Обновляет обновлённый вид задачи (шаблон issue.html).
@@ -1370,7 +1399,6 @@ function setIssueInfoCard(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $("input[name=issueId]", $issueInfo).val(issue.id);
     $issueInfo.data('status', issue.status);
 };
 
@@ -1437,7 +1465,6 @@ function setIssueInfoLegacy(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $("input[name=issueId]", $issueInfo).val(issue.id);
     $issueInfo.data('status', issue.status);
 };
 
@@ -1901,6 +1928,7 @@ function Issue(obj) {
     this.name = obj.name;
     this.status = obj.status;
     this.type = obj.type;
+    this.revision = obj.revision;
     this.members = obj.members;
     this.priority = obj.priority;
     this.hours = obj.hours;
@@ -1965,11 +1993,11 @@ function Issue(obj) {
     };
 
     this.getMemberIds = function () {
-        return this.members.map(member => member.userId);
+        return (this.members || []).map(member => member.userId);
     };
 
     this.getMembersSp = function () {
-        return this.members.map(member => member.sp);
+        return (this.members || []).map(member => member.sp);
     };
 
     this.getFiles = function () {
@@ -1979,7 +2007,7 @@ function Issue(obj) {
     this.getTestersHtml = () => getUsersHtml(this.testers);
 
     this.getTesterIds = function () {
-        return this.testers.map(tester => tester.userId);
+        return (this.testers || []).map(tester => tester.userId);
     };
 
     this.getMastersHtml = () => getUsersHtml(this.masters);
@@ -2006,7 +2034,7 @@ function Issue(obj) {
     /* ==== конец блока старого вида ==== */
 
     this.getMasterIds = function () {
-        return this.masters.map(master => master.userId);
+        return (this.masters || []).map(master => master.userId);
     };
 
     this.getFilesForForm = function () {
