@@ -258,7 +258,7 @@ class PagePrinter
         }
 
         PageConstructor::includePattern(
-            'settings-db',
+            'status-db',
             compact('migrations', 'orphans', 'pendingCount')
         );
     }

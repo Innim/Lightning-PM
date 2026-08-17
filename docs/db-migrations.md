@@ -68,7 +68,7 @@ limit and no web-server timeout, and its output lands in the deploy log.
 
 ## From the admin UI
 
-`Настройки` has a **База данных** card showing every migration and its state,
+`Статус` has a **База данных** card showing every migration and its state,
 with an *Применить миграции* button when something is pending. It runs the same
 `apply` as the CLI, records the admin's user id in the journal, and reports the
 failing migration inline.
