@@ -1,0 +1,36 @@
+# Здесь лежат файлы, загруженные пользователями, поэтому их содержимое
+# нельзя считать доверенным: любой обработчик, назначенный по расширению,
+# выполнил бы загруженный код. Отключаем исполнение целиком.
+#
+# Это основной запрет; в коде он продублирован тем, что исполняемые расширения
+# при сохранении отбрасываются (FileUploadManager::buildStoredExtension).
+# На боевом сервере то же самое должно быть настроено и на уровне nginx -
+# защита не должна зависеть от того, читается ли .htaccess.
+
+# Ни один обработчик не должен применяться к содержимому этой директории
+<IfModule mod_php7.c>
+	php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+	php_flag engine off
+</IfModule>
+
+RemoveHandler .php .php3 .php4 .php5 .php6 .php7 .php8 .phps .pht .phtm .phtml .phar .inc
+RemoveType .php .php3 .php4 .php5 .php6 .php7 .php8 .phps .pht .phtm .phtml .phar .inc
+RemoveHandler .cgi .pl .py .rb .sh .jsp .asp .aspx .shtml .shtm
+RemoveType .cgi .pl .py .rb .sh .jsp .asp .aspx .shtml .shtm
+
+Options -ExecCGI -Includes -Indexes
+
+# Вложения (lpm-files/files) отдаются только через FileDownloadController,
+# который проверяет права доступа. Прямой доступ к ним запрещён, иначе
+# проверку прав можно было бы обойти, зная путь до файла.
+RewriteEngine On
+RewriteRule ^files/ - [F,L]
+
+# Всё, что всё-таки отдаётся напрямую (lpm-files/imgs), браузер не должен
+# пытаться интерпретировать не по заявленному типу.
+<IfModule mod_headers.c>
+	Header set X-Content-Type-Options "nosniff"
+	Header set Content-Security-Policy "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'"
+</IfModule>

@@ -3,9 +3,20 @@
 class PassRecoveryPage extends LPMPage
 {
     private $_show ;
-    private $_userId;
-    private $_recoveryKey;
-    
+    /**
+     * Пользователь, для которого восстанавливается пароль.
+     * Заполняется только после проверки ссылки восстановления.
+     * @var int
+     */
+    private $_userId = 0;
+    /**
+     * Ключ восстановления из ссылки. Заполняется только после того,
+     * как совпал с актуальным ключом пользователя, поэтому всегда
+     * содержит значение из базы, а не пришедшее из запроса.
+     * @var string
+     */
+    private $_recoveryKey = '';
+
     public function __construct()
     {
         parent::__construct('pass-recovery', 'Восстановление пароля', false, true);
@@ -21,7 +32,7 @@ class PassRecoveryPage extends LPMPage
            
         if (!empty($_POST)) {
             foreach ($_POST as $key => $value) {
-                $_POST[$key] = trim($value);
+                $_POST[$key] = is_string($value) ? trim($value) : $value;
             }
             if (isset($_POST['remail'])) {
                 // TODO: вынеси отсюда все сохранение и выделить работу с БД
@@ -39,18 +50,21 @@ class PassRecoveryPage extends LPMPage
                     $this->_engine->addError('Пользователь с таким email не зарегистрирован');
                 }
             } elseif (isset($_POST['newPass']) && isset($_POST['rePass']) && isset($_POST['userId']) && isset($_POST['key'])) {
-                if ($_POST['newPass'] != $_POST['rePass']) {
+                if (!is_string($_POST['newPass']) || !is_string($_POST['rePass'])
+                        || !is_scalar($_POST['userId']) || !is_string($_POST['key'])) {
+                    $this->_engine->addError('Некорректные данные формы');
+                } elseif ($_POST['newPass'] != $_POST['rePass']) {
                     $this->_engine->addError('Пароли не совпадают');
                     $this->_show = 'changePassForm';
                 } else {
-                    $this->updatePass($_POST['newPass'], $_POST['userId'], $_POST['key']);
+                    $this->updatePass($_POST['newPass'], (int)$_POST['userId'], $_POST['key']);
                 }
             }
         } elseif ($this->getPUID() == 'reclink') {
-            $key = $this->getAddParam(0);
+            $key = (string)$this->getAddParam(0);
             $userId = $this->_engine->getParams()->getQueryArg('userId');
 
-            $userId = base64_decode(urldecode($userId));
+            $userId = (int)base64_decode(urldecode((string)$userId));
             if (!empty($key) && !empty($userId)) {
                 if ($this->checkUrlKey($key, $userId)) {
                     $this->_userId = $userId;
@@ -67,11 +81,18 @@ class PassRecoveryPage extends LPMPage
         return $this;
     }
     
+    /**
+     * Проверяет, что ключ восстановления совпадает с актуальным ключом пользователя.
+     * @param  string $key    Ключ из ссылки восстановления.
+     * @param  int    $userId Идентификатор пользователя.
+     * @return bool
+     */
     private function checkUrlKey($key, $userId)
     {
         $savedKey = $this->getActualKey($userId);
         if ($savedKey !== false) {
-            if ($savedKey === null || $savedKey !== $key) {
+            // hash_equals - чтобы по времени ответа нельзя было подбирать ключ посимвольно
+            if ($savedKey === null || !hash_equals((string)$savedKey, (string)$key)) {
                 $this->_engine->addError('Запись не найдена');
             } else {
                 return true;
@@ -81,12 +102,18 @@ class PassRecoveryPage extends LPMPage
         return false;
     }
 
+    /**
+     * Возвращает актуальный (не просроченный) ключ восстановления пользователя.
+     * @param  int $userId Идентификатор пользователя.
+     * @return string|null|false Ключ, null если актуального ключа нет,
+     *                           false при ошибке чтения из базы.
+     */
     private function getActualKey($userId)
     {
         // TODO: вынеси отсюда все сохранение и выделить работу с БД
         $db = LPMGlobals::getInstance()->getDBConnect();
         $curDate = DateTimeUtils::mysqlDate();
-        $sql = "SELECT `recoveryKey` FROM `%s` WHERE `userId` = '" . $userId .
+        $sql = "SELECT `recoveryKey` FROM `%s` WHERE `userId` = '" . (int)$userId .
             "' AND `expDate` >= '". $curDate . "' LIMIT 1";
         if (!$query = $db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
             $this->_engine->addError('Ошибка чтения из базы');
@@ -118,7 +145,7 @@ class PassRecoveryPage extends LPMPage
         $expDate = date("Y-m-d H:i:s", $expFormat);
         $key = md5(BaseString::randomStr());
         $sql = "REPLACE INTO `%s` (`userId`, `recoveryKey`, `expDate` )" .
-               "VALUES ('" . $userId . "', '" . $key . "', '" . $expDate . "' )";
+               "VALUES ('" . (int)$userId . "', '" . $key . "', '" . $expDate . "' )";
 
         if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
             $this->_engine->addError('Ошибка записи в базу');
@@ -146,8 +173,15 @@ class PassRecoveryPage extends LPMPage
         }
     }
     
+    /**
+     * Задаёт пользователю новый пароль, если передан актуальный ключ восстановления.
+     * @param string $newPass Новый пароль.
+     * @param int    $userId  Идентификатор пользователя.
+     * @param string $key     Ключ из ссылки восстановления.
+     */
     private function updatePass($newPass, $userId, $key)
     {
+        $userId = (int)$userId;
         if ($this->checkUrlKey($key, $userId)) {
             // TODO: вынеси отсюда все сохранение и выделить работу с БД
             $db = LPMGlobals::getInstance()->getDBConnect();
@@ -160,7 +194,7 @@ class PassRecoveryPage extends LPMPage
                 $this->_engine->addError('Ошибка записи в БД');
             } else {
                 $this->_show = 'recoverySuccess';
-                $sql = "DELETE FROM `%s` WHERE `recoveryKey` = '" . $key . "'";
+                $sql = "DELETE FROM `%s` WHERE `recoveryKey` = '" . $db->escape_string($key) . "'";
                 if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
                     $this->_engine->addError('ошибка удаления');
                 }
@@ -168,11 +202,19 @@ class PassRecoveryPage extends LPMPage
         }
     }
     
+    /**
+     * Пользователь, для которого восстанавливается пароль.
+     * @return int 0, если ссылка восстановления не проверена.
+     */
     public function getUserId()
     {
         return $this->_userId;
     }
-    
+
+    /**
+     * Проверенный ключ восстановления - шестнадцатеричная строка.
+     * @return string Пустая строка, если ссылка восстановления не проверена.
+     */
     public function getKey()
     {
         return $this->_recoveryKey;

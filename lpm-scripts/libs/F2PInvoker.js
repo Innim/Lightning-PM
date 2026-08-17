@@ -73,8 +73,27 @@ var F2PInvoker = ru.vbinc.net.F2PInvoker = function( gateway, defaultPackage, us
      * @constant
      * @type Number 
      */
-    F2PInvoker.ERRNO_EXECUTE_METHOD_ERROR = 19007; 
-    
+    F2PInvoker.ERRNO_EXECUTE_METHOD_ERROR = 19007;
+    /**
+     * Невозможно использовать сжатие -
+     * модуль с требуемыми функциями не подключён
+     * @constant
+     * @type Number
+     */
+    F2PInvoker.ERRNO_COMPRESS_UNAVAILABLE = 19008;
+    /**
+     * Тело запроса превысило post_max_size и было отброшено PHP
+     * @constant
+     * @type Number
+     */
+    F2PInvoker.ERRNO_REQUEST_TOO_LARGE    = 19009;
+    /**
+     * Запрос отправлен недопустимым HTTP методом
+     * @constant
+     * @type Number
+     */
+    F2PInvoker.ERRNO_WRONG_REQUEST_METHOD = 19010;
+
     /**
      * Время ожидания ответа с сервера
      * в секундах
