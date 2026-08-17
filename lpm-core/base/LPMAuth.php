@@ -2,11 +2,34 @@
 class LPMAuth
 {
     /**
-     * @return cookieHash
+     * Создаёт значение для куки авторизации.
+     * @return string Строка из 32 шестнадцатеричных символов -
+     *                под размер колонки `cookieHash`.
      */
     public static function createCookieHash()
     {
-        return md5(BaseString::randomStr());
+        return SecureRandomHelper::hex(16);
+    }
+
+    /**
+     * Удаляет сохранённые авторизации пользователя.
+     *
+     * Нужно при смене пароля: иначе вход по ранее выданным кукам продолжил бы
+     * работать, и смена пароля не отбирала бы доступ у того, кто эти куки увёл.
+     * @param  float $userId       Идентификатор пользователя.
+     * @param  int   $exceptHashId Запись, которую надо оставить (текущая
+     *                             авторизация), либо 0, чтобы удалить все.
+     * @return bool Удаление выполнено.
+     */
+    public static function removeSessions($userId, $exceptHashId = 0)
+    {
+        $db = LPMGlobals::getInstance()->getDBConnect();
+        $sql = "delete from `%s` where `userId` = '" . (float)$userId . "'";
+        if ($exceptHashId > 0) {
+            $sql .= " and `id` <> '" . (int)$exceptHashId . "'";
+        }
+
+        return (bool)$db->queryt($sql, LPMTables::USER_AUTH);
     }
 
     /**
@@ -31,6 +54,11 @@ class LPMAuth
     private $_userId = 0;
     private $_email = '';
     private $_cookiePath = '//';
+    /**
+     * Отдавать куки только по HTTPS.
+     * @var bool
+     */
+    private $_cookieSecure = false;
     private $_authType = self::AUTH_TYPE_NONE;
     /**
      * @var int
@@ -46,6 +74,9 @@ class LPMAuth
         if ($siteURL !== false && !empty($siteURL['path'])) {
             $this->_cookiePath = $siteURL['path'];
         }
+
+        $this->_cookieSecure = $siteURL !== false
+            && isset($siteURL['scheme']) && $siteURL['scheme'] === 'https';
 
         $externalAuthResult = $this->parseExternalAuth($params);
         if ($externalAuthResult === null) {
@@ -64,6 +95,13 @@ class LPMAuth
      */
     public function init($userId, $email, $cookieHash = '', $hashId = null)
     {
+        // Идентификатор сессии меняем при каждом входе: иначе идентификатор,
+        // который атакующий успел подсунуть жертве до входа, продолжил бы
+        // действовать уже для авторизованной сессии.
+        // Данные сессии при этом сохраняются - в них лежит адрес,
+        // на который надо вернуть пользователя после входа.
+        session_regenerate_id(true);
+
         $this->_userId  = $userId;
         $this->_email   = $email;
         $this->_isLogin = true;
@@ -147,9 +185,32 @@ class LPMAuth
         return $this->_userId;
     }
 
+    /**
+     * Удаляет сохранённые авторизации текущего пользователя, кроме текущей.
+     * @return bool Удаление выполнено.
+     */
+    public function removeOtherSessions()
+    {
+        if (!$this->_isLogin) {
+            return false;
+        }
+
+        return self::removeSessions($this->_userId, $this->_hashId);
+    }
+
     private function setCookie($name, $value, $expire = 0)
     {
-        setcookie($name, $value, $expire, $this->_cookiePath);
+        setcookie($name, $value, [
+            'expires' => $expire,
+            'path' => $this->_cookiePath,
+            // По HTTP куку слать нельзя, но и требовать этого от установки
+            // на http нельзя - иначе авторизация просто не будет работать
+            'secure' => $this->_cookieSecure,
+            // Куку не должен читать JavaScript
+            'httponly' => true,
+            // Куку не должны слать запросы со сторонних сайтов
+            'samesite' => 'Lax',
+        ]);
     }
 
     /**

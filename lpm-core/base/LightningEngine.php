@@ -494,9 +494,11 @@ class LightningEngine
         
         // Если не удалось инициализировать, то перебрасываем на главную
         if (!$res = $page->init()) {
+            $isAnonymous = !$this->isAuth();
+
             // Если мы сейчас не авторизованы, а страница требует авторизации -
             // запомним URL для пересылки после авторизации
-            if (!$this->isAuth() && $page->needAuth) {
+            if ($isAnonymous && $page->needAuth) {
                 $redirectPath = $this->getCurrentUrlPath();
                 if (!empty($redirectPath)) {
                     $session = Session::getInstance();
@@ -509,11 +511,16 @@ class LightningEngine
                     $session->set(AuthPage::SESSION_REDIRECT_OG, $ogStr);
                 }
             }
+
             // пересылка на главную
             // т.к. нам надо пересылать данные OG, то нужно обязательно
             // сохранить сессию, но грабберы сайтов (для которых и нужен OG)
-            // не поддерживают cookie, поэтому передаем явно
-            self::go2URL(null, [LPMParams::QUERY_ARG_SID => session_id()]);
+            // не поддерживают cookie, поэтому передаем явно.
+            // Авторизованным идентификатор в адрес не подставляем: оттуда он
+            // попадает в историю браузера, в Referer и в скопированную ссылку,
+            // а по нему можно войти под этим пользователем.
+            $queryArgs = $isAnonymous ? [LPMParams::QUERY_ARG_SID => session_id()] : null;
+            self::go2URL(null, $queryArgs);
         }
 
         return $res;

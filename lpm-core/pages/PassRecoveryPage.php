@@ -143,7 +143,7 @@ class PassRecoveryPage extends LPMPage
 
         $expFormat = mktime(date("H"), date("i"), date("s"), date("m"), date("d")+1, date("Y"));
         $expDate = date("Y-m-d H:i:s", $expFormat);
-        $key = md5(BaseString::randomStr());
+        $key = SecureRandomHelper::hex(16);
         $sql = "REPLACE INTO `%s` (`userId`, `recoveryKey`, `expDate` )" .
                "VALUES ('" . (int)$userId . "', '" . $key . "', '" . $expDate . "' )";
 
@@ -182,23 +182,46 @@ class PassRecoveryPage extends LPMPage
     private function updatePass($newPass, $userId, $key)
     {
         $userId = (int)$userId;
-        if ($this->checkUrlKey($key, $userId)) {
-            // TODO: вынеси отсюда все сохранение и выделить работу с БД
-            $db = LPMGlobals::getInstance()->getDBConnect();
 
-            $salt = User::blowfishSalt();
-            $sql = "UPDATE `%s` SET ".
-                   "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
-                   "WHERE `userId` = '" . $userId . "'";
-            if (!$db->queryt($sql, LPMTables::USERS)) {
-                $this->_engine->addError('Ошибка записи в БД');
-            } else {
-                $this->_show = 'recoverySuccess';
-                $sql = "DELETE FROM `%s` WHERE `recoveryKey` = '" . $db->escape_string($key) . "'";
-                if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
-                    $this->_engine->addError('ошибка удаления');
-                }
-            }
+        // Ключ проверяем первым: пока ссылка не подтверждена, ни возвращать
+        // пользователя в форму, ни запоминать пришедшие значения нельзя.
+        if (!$this->checkUrlKey($key, $userId)) {
+            return;
+        }
+
+        $this->_userId = $userId;
+        $this->_recoveryKey = (string)$key;
+
+        if (!Validation::checkPass($newPass, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, true)) {
+            $this->_engine->addError(sprintf(
+                'Пароль должен быть от %d до %d символов - используйте латинские буквы, цифры или знаки',
+                PASSWORD_MIN_LENGTH,
+                PASSWORD_MAX_LENGTH
+            ));
+            $this->_show = 'changePassForm';
+            return;
+        }
+
+        // TODO: вынеси отсюда все сохранение и выделить работу с БД
+        $db = LPMGlobals::getInstance()->getDBConnect();
+
+        $salt = User::blowfishSalt();
+        $sql = "UPDATE `%s` SET ".
+               "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
+               "WHERE `userId` = '" . $userId . "'";
+        if (!$db->queryt($sql, LPMTables::USERS)) {
+            $this->_engine->addError('Ошибка записи в БД');
+            return;
+        }
+
+        // Пароль восстанавливают в том числе когда доступ увели,
+        // поэтому ранее выданные куки должны перестать работать
+        LPMAuth::removeSessions($userId);
+
+        $this->_show = 'recoverySuccess';
+        $sql = "DELETE FROM `%s` WHERE `recoveryKey` = '" . $db->escape_string($key) . "'";
+        if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
+            $this->_engine->addError('ошибка удаления');
         }
     }
     

@@ -69,24 +69,42 @@ class ProfileService extends LPMBaseService
     
     public function newPass($currentPass, $newPass)
     {
+        $newPass = (string)$newPass;
+        if (!Validation::checkPass($newPass, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, true)) {
+            return $this->error(sprintf(
+                'Пароль должен быть от %d до %d символов - используйте латинские буквы, цифры или знаки',
+                PASSWORD_MIN_LENGTH,
+                PASSWORD_MAX_LENGTH
+            ));
+        }
+
+        $userId = (float)$this->_auth->getUserId();
         $sql = "SELECT `pass` FROM `%s` " .
-               "WHERE `userId` = '" . $this->_auth->getUserId() . "'";
+               "WHERE `userId` = '" . $userId . "'";
         if (!$query = $this->_db->queryt($sql, LPMTables::USERS)) {
             return $this->error('Ошибка чтения из базы');
-        } elseif ($userInfo = $query->fetch_assoc()) {
-            if (!User::passwordVerify($currentPass, $userInfo['pass'])) {
-                return $this->error('Неверный пароль');
-            } else {
-                $salt = User::blowfishSalt();
-                $sql = "UPDATE `%s` SET ".
-                       "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
-                       "WHERE `userId` = '" . $this->_auth->getUserId() . "'";
-                if (!$this->_db->queryt($sql, LPMTables::USERS)) {
-                    return $this->error('Ошибка записи в БД');
-                }
-            }
         }
-        
+
+        if (!$userInfo = $query->fetch_assoc()) {
+            return $this->error('Пользователь не найден');
+        }
+
+        if (!User::passwordVerify($currentPass, $userInfo['pass'])) {
+            return $this->error('Неверный пароль');
+        }
+
+        $salt = User::blowfishSalt();
+        $sql = "UPDATE `%s` SET ".
+               "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
+               "WHERE `userId` = '" . $userId . "'";
+        if (!$this->_db->queryt($sql, LPMTables::USERS)) {
+            return $this->error('Ошибка записи в БД');
+        }
+
+        // Смена пароля должна отбирать доступ у того, кто увёл куки:
+        // сохранённые ранее авторизации перестают действовать.
+        $this->_auth->removeOtherSessions();
+
         return $this->answer();
     }
 }

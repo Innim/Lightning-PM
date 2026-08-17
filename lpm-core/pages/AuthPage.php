@@ -161,13 +161,12 @@ class AuthPage extends BasePage
             return $engine->addError('Введён некорректный email');
         }
 
-        if (!Validation::checkPass($input['pass'], 24, 1, true)) {
-            return $engine->addError('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
-        }
-
-
-        if (!Validation::checkPass($input['pass'], 24, 1, true)) {
-            return $engine->addError('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
+        if (!Validation::checkPass($input['pass'], PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, true)) {
+            return $engine->addError(sprintf(
+                'Пароль должен быть от %d до %d символов - используйте латинские буквы, цифры или знаки',
+                PASSWORD_MIN_LENGTH,
+                PASSWORD_MAX_LENGTH
+            ));
         }
 
         if (!empty($input['nick']) && !Validation::check(

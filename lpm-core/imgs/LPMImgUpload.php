@@ -114,7 +114,7 @@ class LPMImgUpload
             }
 
             $value = str_replace(['data:image/png;base64,', ' '], ['', '+'], $value);
-            $filepath = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.jpeg';
+            $filepath = $dirTempPath . DIRECTORY_SEPARATOR . SecureRandomHelper::str(10) . '.jpeg';
 
             if (!file_put_contents($filepath, base64_decode($value))) {
                 $errors[] = 'Ошибка при записи в файл';
@@ -162,7 +162,7 @@ class LPMImgUpload
             }
 
             // получаем из нее картинку и сохраняем ее
-            $filepath = $dirTempPath . DIRECTORY_SEPARATOR . BaseString::randomStr(10) . '.png';
+            $filepath = $dirTempPath . DIRECTORY_SEPARATOR . SecureRandomHelper::str(10) . '.png';
 
             $value = AttachmentImageHelper::getDirectUrl($value);
 
@@ -533,7 +533,7 @@ class LPMImgUpload
         // Сохраняем исходный файл
         // Ищем уникальное имя
         do {
-            $srcFilename = $dir . $this->_prefix . BaseString::randomStr(10) . '.' . $ext;
+            $srcFilename = $dir . $this->_prefix . SecureRandomHelper::str(10) . '.' . $ext;
             $srcFilepath = LPMImg::getSrcImgPath($srcFilename);
         } while (file_exists($srcFilepath));
 

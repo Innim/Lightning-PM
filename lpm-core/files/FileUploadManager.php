@@ -1,6 +1,5 @@
 <?php
 
-use GMFramework\BaseString;
 use GMFramework\FileSystemUtils;
 
 class FileUploadManager
@@ -199,7 +198,7 @@ class FileUploadManager
             $extension = self::buildStoredExtension($sanitizedName);
 
             do {
-                $storedBase = BaseString::randomStr(16);
+                $storedBase = SecureRandomHelper::str(16);
                 $storedName = $extension ? $storedBase . '.' . $extension : $storedBase;
                 $relativePath = self::buildRelativePath($itemType, $itemId, $storedName);
                 $absolutePath = self::getAbsolutePath($relativePath);

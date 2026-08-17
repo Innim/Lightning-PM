@@ -1,6 +1,5 @@
 <?php
 
-use GMFramework\BaseString;
 use GMFramework\FileSystemUtils;
 
 /**
@@ -339,7 +338,7 @@ class LPMFile extends LPMBaseObject
     private static function generateUid()
     {
         do {
-            $uid = BaseString::randomStr(32);
+            $uid = SecureRandomHelper::str(32);
         } while (self::loadByUid($uid));
 
         return $uid;

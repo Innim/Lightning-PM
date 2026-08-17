@@ -153,6 +153,19 @@ define('ISSUE_TEST_AGING_DAYS_PER_POINT', 2);
 define('ISSUE_TEST_AGING_MAX_BONUS', 20);
 
 /**
+ * Минимальная длина пароля.
+ * @var int
+ */
+define('PASSWORD_MIN_LENGTH', 8);
+
+/**
+ * Максимальная длина пароля. Ограничение алгоритма хэширования:
+ * всё, что длиннее 72 байт, bcrypt всё равно не учитывает.
+ * @var int
+ */
+define('PASSWORD_MAX_LENGTH', 72);
+
+/**
  * Максимальная длина названия проекта (ограничение колонки в БД).
  * @var int
  */
