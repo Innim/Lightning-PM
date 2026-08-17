@@ -1091,7 +1091,7 @@ class IssueService extends LPMBaseService
 
         $user = $this->getUser();
 
-        if (!$this->checkRole(User::ROLE_ADMIN)) {
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
             if (!Comment::checkDeleteCommentById($id)) {
                 return $this->error('Время удаления истекло.');
             }
