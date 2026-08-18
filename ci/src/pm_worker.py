@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ciutil.core.worker import CIWorker
 from ciutil.deploy.ssh_worker import SshInfo
-from src.pm_deployer import PMDeployer
+from src.pm_deployer import PMDeployer, MigrationsResult
 from src.pm_info import PMInfo
 
 
@@ -9,6 +9,8 @@ class PMWorker(CIWorker):
     def __init__(self):
         info = PMInfo()
         super().__init__(info=info)
+        # Итог применения миграций последнего деплоя, заполняется в deploy().
+        self.migrations = MigrationsResult(ran=False, output='')
 
     def deploy(self):
         print('deploying...')
@@ -28,3 +30,4 @@ class PMWorker(CIWorker):
                               migrate_cmd=self.info.deploy_migrate_cmd)
 
         deployer.deploy()
+        self.migrations = deployer.migrations

@@ -51,13 +51,13 @@ def log_error(title, text):
 @runner(msg_title='Deploy to PROD')
 def prod_deploy():
     worker.deploy()
-    notifier.deploy_message(deploy_type='prod')
+    notifier.deploy_message(deploy_type='prod', migrations=worker.migrations)
 
 
 @runner(msg_title='Deploy to TEST')
 def test_deploy():
     worker.deploy()
-    notifier.deploy_message(deploy_type='test')
+    notifier.deploy_message(deploy_type='test', migrations=worker.migrations)
 
 
 if __name__ == '__main__':
