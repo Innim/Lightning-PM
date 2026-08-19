@@ -44,8 +44,11 @@
                 <?php endif; ?>
 
                 <?php if ($remaining = $summary->getRemaining()): ?>
-                <div class="mb-2">
-                    <div class="fw-bold">Осталось сделать</div>
+                <div class="bg-white rounded border-start border-4 border-primary py-2 px-3 mt-3">
+                    <div class="d-flex align-items-center gap-2 fw-bold text-primary mb-1">
+                        <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                        Осталось сделать
+                    </div>
                     <ul class="mb-0">
                         <?php foreach ($remaining as $item): ?>
                         <li><?=htmlspecialchars($item, ENT_QUOTES);?></li>
