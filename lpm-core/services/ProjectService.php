@@ -472,8 +472,8 @@ class ProjectService extends LPMBaseService
 
     /**
      * Сохраняет проект: основную информацию (идентификатор, название, описание)
-     * и настройки (Scrum, ИИ-сводка задач, канал Slack, привязки к GitLab) —
-     * всё за один вызов.
+     * и настройки (Scrum, ИИ-сводка задач, обязательные теги, канал Slack,
+     * привязки к GitLab) — всё за один вызов.
      *
      * Настройка ИИ-сводки применяется только если интеграция с ИИ настроена,
      * в ином случае сохраняется текущее значение.
@@ -491,7 +491,8 @@ class ProjectService extends LPMBaseService
         $slackNotifyChannel,
         $gitlabGroupId,
         $gitlabProjectIds,
-        $aiSummary
+        $aiSummary,
+        $requireLabels
     ) {
         $projectId = (int)$projectId;
         $uid  = strtolower(trim((string)$uid));
@@ -501,12 +502,15 @@ class ProjectService extends LPMBaseService
         $gitlabGroupId = (int)$gitlabGroupId;
         $gitlabProjectIds = (string)$gitlabProjectIds;
 
-        if (($scrum !== 0 && $scrum !== 1) || ($aiSummary !== 0 && $aiSummary !== 1)) {
+        if (($scrum !== 0 && $scrum !== 1) || ($aiSummary !== 0 && $aiSummary !== 1)
+            || ($requireLabels !== 0 && $requireLabels !== 1)
+        ) {
             return $this->error('Неверные входные параметры');
         }
 
         $scrum = (bool)$scrum;
         $aiSummary = (bool)$aiSummary;
+        $requireLabels = (bool)$requireLabels;
 
         // проверяем права пользователя
         if (!$this->checkRole(User::ROLE_MODERATOR)) {
@@ -556,6 +560,7 @@ class ProjectService extends LPMBaseService
             || $gitlabGroupId !== $project->gitlabGroupId
             || $gitlabProjectIds !== $project->gitlabProjectIds
             || $aiSummary !== $project->aiSummary
+            || $requireLabels !== $project->requireLabels
         ) {
             $result = Project::updateProjectSettings(
                 $projectId,
@@ -563,7 +568,8 @@ class ProjectService extends LPMBaseService
                 $slackNotifyChannel,
                 $gitlabGroupId,
                 $gitlabProjectIds,
-                $aiSummary
+                $aiSummary,
+                $requireLabels
             );
 
             if (!$result) {

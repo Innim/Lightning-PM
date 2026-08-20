@@ -162,14 +162,24 @@ SQL;
         return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
     }
 
-    public static function putStickerOnBoard(Issue $issue)
+    /**
+     * Определяет состояние, в котором стикер задачи окажется на доске.
+     * @param  Issue $issue Задача.
+     * @return int Состояние стикера.
+     */
+    public static function getStateForIssue(Issue $issue)
     {
         switch ($issue->status) {
-            case Issue::STATUS_IN_WORK: $state = ScrumStickerState::TODO; break;
-            case Issue::STATUS_WAIT: $state = ScrumStickerState::TESTING; break;
-            case Issue::STATUS_COMPLETED: $state = ScrumStickerState::DONE; break;
-            default: $state = ScrumStickerState::BACKLOG;
+            case Issue::STATUS_IN_WORK: return ScrumStickerState::TODO;
+            case Issue::STATUS_WAIT: return ScrumStickerState::TESTING;
+            case Issue::STATUS_COMPLETED: return ScrumStickerState::DONE;
+            default: return ScrumStickerState::BACKLOG;
         }
+    }
+
+    public static function putStickerOnBoard(Issue $issue)
+    {
+        $state = self::getStateForIssue($issue);
         $issueId = $issue->id;
         $added = DateTimeUtils::mysqlDate();
 

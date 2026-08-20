@@ -76,6 +76,7 @@ $(function () {
         // Чекбокса нет, если интеграция с ИИ не настроена — сервер в этом случае
         // оставляет текущее значение настройки.
         const aiSummary = $('#aiSummaryCheckbox').prop('checked') ? 1 : 0;
+        const requireLabels = $('#requireLabelsCheckbox').prop('checked') ? 1 : 0;
 
         const gitlabProjectIds = $('#gitlabProjectIds').val();
         if (gitlabProjectIds) {
@@ -96,6 +97,7 @@ $(function () {
             $('#gitlabGroupId').val(),
             gitlabProjectIds,
             aiSummary,
+            requireLabels,
             function (res) {
                 if (!res.success) {
                     showError(res.error || 'Ошибка при запросе к серверу');

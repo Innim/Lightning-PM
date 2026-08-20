@@ -111,7 +111,7 @@ Content-Type: application/json
 Fields:
 
 - `projectId` (required) — project `id` or `uid`; the authenticated user must have access to it.
-- `name` (required) — issue title.
+- `name` (required) — issue title. Labels are the `[label]` prefixes of the name (`[api][ui] Title`), so the name must contain a title besides them. When the project has *«Задачи должны иметь теги»* enabled, the name must also start with at least one label; otherwise the request is rejected with `400`.
 - `desc` (optional) — issue description, up to 60000 characters.
 - `type` (optional, default `0`) — `0` develop, `1` bug, `2` support.
 - `priority` (optional, default `49` — normal) — integer clamped to `0..99`.

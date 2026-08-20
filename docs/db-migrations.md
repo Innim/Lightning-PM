@@ -44,6 +44,7 @@ Available in a migration:
 | `execFile($name)` | run a whole `.sql` file sitting next to the migration |
 | `t($table)` | table name with this install's prefix — pass an `LPMTables` constant |
 | `tableExists($table)` | whether a table exists (name including prefix) |
+| `columnExists($table, $column)` | whether a column exists — guard an `ADD`/`DROP COLUMN` with it so the migration survives a rerun |
 
 Never hardcode `lpm_` — use `t(LPMTables::X)`, the prefix is configurable.
 

@@ -41,27 +41,30 @@ let scrumBoard = {
             preloader.show();
             srv.issue.changeScrumState(issueId, state, function (res) {
                 preloader.hide();
-                if (res.success) {
-                    $sticker.attr('data-sticker-state', state);
-                    // Перевешиваем стикер
-                    $sticker.remove();
-                    var colName;
-                    switch (state) {
-                        case ScrumStickerState.todo: colName = 'todo'; break;
-                        case ScrumStickerState.inProgress: colName = 'in_progress'; break;
-                        case ScrumStickerState.testing: colName = 'testing'; break;
-                        case ScrumStickerState.done: colName = 'done'; break;
-                    }
+                if (!res.success) {
+                    srv.err(res);
+                    return;
+                }
 
-                    if (colName) {
-                        $('.scrum-board-col.col-' + colName).append($sticker);
-                    }
+                $sticker.attr('data-sticker-state', state);
+                // Перевешиваем стикер
+                $sticker.remove();
+                var colName;
+                switch (state) {
+                    case ScrumStickerState.todo: colName = 'todo'; break;
+                    case ScrumStickerState.inProgress: colName = 'in_progress'; break;
+                    case ScrumStickerState.testing: colName = 'testing'; break;
+                    case ScrumStickerState.done: colName = 'done'; break;
+                }
 
-                    issuePage.scrumColUpdateInfo();
+                if (colName) {
+                    $('.scrum-board-col.col-' + colName).append($sticker);
+                }
 
-                    if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
-                        scrumBoard.takeIssueBy($sticker);
-                    }
+                issuePage.scrumColUpdateInfo();
+
+                if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
+                    scrumBoard.takeIssueBy($sticker);
                 }
             });
         };

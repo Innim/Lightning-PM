@@ -104,6 +104,17 @@ abstract class DbMigration
     }
 
     /**
+     * Существует ли колонка в таблице текущей базы.
+     * @param string $table Имя таблицы с префиксом — см. t().
+     * @param string $column Имя колонки.
+     * @return bool
+     */
+    protected function columnExists($table, $column)
+    {
+        return DbMigrator::columnExists($this->_db, $table, $column);
+    }
+
+    /**
      * Выполняет один SQL-запрос.
      * @param string $sql Запрос; пустая строка игнорируется.
      * @throws DbMigrationException Если запрос завершился ошибкой.

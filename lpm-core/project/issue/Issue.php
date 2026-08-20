@@ -681,6 +681,11 @@ SQL;
 
     /**
      * Возвращает список меток по имени.
+     *
+     * Метки - это идущие подряд блоки в квадратных скобках в начале имени;
+     * между ними допустимы пробелы. Текст метки может быть на любом языке,
+     * пустые блоки пропускаются.
+     *
      * @param $issueName Имя задачи.
      * @return array<string> Список меток в указанном имени.
      */
@@ -692,12 +697,50 @@ SQL;
 
         $labels = [];
         $matches = [];
-        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", $name, $matches)) {
-            if (count($matches) > 1) {
-                $labels = array_unique($matches[1]);
+        if (preg_match_all(self::LABELS_PATTERN, $name, $matches)) {
+            foreach ($matches[1] as $label) {
+                $label = trim($label);
+                if ($label !== '' && !in_array($label, $labels)) {
+                    $labels[] = $label;
+                }
             }
         }
         return $labels;
+    }
+
+    /**
+     * Возвращает имя задачи без ведущих меток.
+     * @param $issueName Имя задачи.
+     * @return string Заголовок задачи: то, что остаётся от имени, если убрать
+     *                метки в его начале. Пустая строка, если кроме меток
+     *                в имени ничего нет.
+     */
+    public static function getNameWithoutLabels($issueName)
+    {
+        $name = trim($issueName);
+        if (mb_substr($name, 0, 1) !== '[') return $name;
+
+        return trim(preg_replace(self::LABELS_PATTERN, '', $name));
+    }
+
+    /**
+     * Проверяет, что в имени задачи есть заголовок, а не только метки.
+     * @param $issueName Имя задачи.
+     * @return bool
+     */
+    public static function hasTitle($issueName)
+    {
+        return self::getNameWithoutLabels($issueName) !== '';
+    }
+
+    /**
+     * Проверяет, что в имени задачи указана хотя бы одна метка.
+     * @param $issueName Имя задачи.
+     * @return bool
+     */
+    public static function hasLabels($issueName)
+    {
+        return !empty(self::getLabelsByName($issueName));
     }
 
     /**
@@ -1125,6 +1168,15 @@ SQL;
     const DESC_MAX_LEN = 60000;
     const DEFAULT_PRIORITY = 49;
     const IMPORTANT_PRIORITY = 79;
+
+    /**
+     * Метка в начале имени задачи: блок в квадратных скобках и пробелы за ним.
+     *
+     * Шаблон привязан к началу поиска (`A`), поэтому подряд идущие совпадения -
+     * это ровно те метки, с которых начинается имя. Должен совпадать
+     * с разбором меток в issue-form.js.
+     */
+    const LABELS_PATTERN = '/\[([^\]]*)\]\s*/uA';
     
     public $id            =  0;
     public $projectId     =  0;
