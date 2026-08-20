@@ -2,7 +2,7 @@
 /**
  * Страница авторизации и регистрации.
  */
-class AuthPage extends BasePage
+class AuthPage extends LPMPage
 {
     const SESSION_REDIRECT = 'lightning_redirect';
     /**
@@ -32,6 +32,8 @@ class AuthPage extends BasePage
 
         // проверяем, не пришли ли данные формы
         if (!empty($_POST)) {
+            $db = LPMGlobals::getInstance()->getDBConnect();
+
             $input = [];
             foreach ($_POST as $key => $value) {
                 $input[$key] = trim($value);
@@ -61,19 +63,19 @@ class AuthPage extends BasePage
                         'INTO' => LPMTables::USERS
                     ];
 
-                    if (!$this->_db->queryb($sqlHash)) {
-                        if ($this->_db->errno == 1062) {
+                    if (!$db->queryb($sqlHash)) {
+                        if ($db->errno == 1062) {
                             $engine->addError('Пользователь с таким email уже зарегистрирован');
                         } else {
                             $engine->addError('Ошибка записи в базу');
                         }
                     } else {
-                        $userId = $this->_db->insert_id;
+                        $userId = $db->insert_id;
                         // записываем еще и настройки для пользователя
                         $sql = "INSERT INTO `%s` (`userId`) VALUES (" . $userId . ")";
-                        if (!$this->_db->queryt($sql, LPMTables::USERS_PREF)) {
+                        if (!$db->queryt($sql, LPMTables::USERS_PREF)) {
                             // удаляем  пользователя
-                            $this->_db->queryt(
+                            $db->queryt(
                                 "DELETE FROM `%s` WHERE `userId` = '" . $userId . "'",
                                 LPMTables::USERS
                             );
@@ -90,10 +92,10 @@ class AuthPage extends BasePage
                 } else {
                     // авторизация
                     $pass  = $input['apass'];
-                    $email = $this->_db->escape_string($input['aemail']);
+                    $email = $db->escape_string($input['aemail']);
 
                     $sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
-                    if (!$query = $this->_db->queryt($sql, LPMTables::USERS)) {
+                    if (!$query = $db->queryt($sql, LPMTables::USERS)) {
                         $engine->addError('Ошибка чтения из базы');
                     } elseif ($userInfo = $query->fetch_assoc()) {
                         if (!User::passwordVerify($pass, $userInfo['pass'])) {
@@ -105,7 +107,7 @@ class AuthPage extends BasePage
                             $sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() .
                                 "' where `userId` = '" . $userInfo['userId'] . "'";
 
-                            if (!$this->_db->queryt($sqlVisit, LPMTables::USERS)) {
+                            if (!$db->queryt($sqlVisit, LPMTables::USERS)) {
                                 $engine->addError('Ошибка записи в базу');
                             } else {
                                 $this->auth($userInfo['userId'], $email, $cookieHash);
@@ -120,8 +122,7 @@ class AuthPage extends BasePage
             // Если есть Open Graph данные от страницы пересылки, то используем их
             $redirectOG = Session::getInstance()->get(self::SESSION_REDIRECT_OG);
             if (!empty($redirectOG)) {
-                $og = json_decode($redirectOG);
-                $this->_openGraph = $og;
+                $this->_openGraph = json_decode($redirectOG, true);
             }
         }
         

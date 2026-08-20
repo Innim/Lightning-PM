@@ -145,7 +145,7 @@ class ProjectPage extends LPMPage
                     // Но пока есть такой запрос, сделаем так.
                     $images = $issue->getImages();
                     $imageUrl = empty($images) ? null : $images[0]->getSource();
-                    $this->SetOpenGraph($this->getTitleByIssue($issue), null, $imageUrl);
+                    $this->setOpenGraph($this->getTitleByIssue($issue), null, $imageUrl);
                 }
             }
             

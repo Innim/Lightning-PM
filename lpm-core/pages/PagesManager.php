@@ -8,7 +8,7 @@ class PagesManager
     private $_engine;
     /**
      *
-     * @var BasePage
+     * @var LPMPage
      */
     private $_defaultPage;
     
@@ -51,7 +51,7 @@ class PagesManager
         $list = array();
         $currentPage = $this->_engine->getCurrentPage();
         $activeUid = $currentPage ? $currentPage->getMenuSectionUid() : null;
-        foreach ($this->_pages as /*@var $page BasePage */ $page) {
+        foreach ($this->_pages as /*@var $page LPMPage */ $page) {
             if (!$page->notInMenu && (!$page->needAuth || $this->_engine->isAuth())
                     && $page->checkUserRole()) {
                 $link = $page->getLink();
@@ -91,11 +91,11 @@ class PagesManager
     /**
      *
      * @param string $pageUID
-     * return BasePage|false
+     * return LPMPage|false
      */
     public function getPageByUid($pageUID)
     {
-        foreach ($this->_pages as /*@var $page BasePage */ $page) {
+        foreach ($this->_pages as /*@var $page LPMPage */ $page) {
             if ($page->uid == $pageUID) {
                 return $page;
             }
@@ -105,7 +105,7 @@ class PagesManager
     
     /**
      *
-     * return BasePage|false
+     * return LPMPage|false
      */
     public function getDefaultPage()
     {
