@@ -31,6 +31,14 @@ class DeclensionHelper
         return self::getDeclension(['год', 'года', 'лет'], $count);
     }
 
+    public static function newComments($count)
+    {
+        return self::getDeclension(
+            ['новый комментарий', 'новых комментария', 'новых комментариев'],
+            $count
+        );
+    }
+
     public static function storyPoints($count, $short = false)
     {
         return ($short ? 'SP' : ($count > 1 ? 'story points' : 'story point'));

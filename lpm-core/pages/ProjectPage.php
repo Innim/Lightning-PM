@@ -290,8 +290,6 @@ class ProjectPage extends LPMPage
         $this->addTmplVar('aiSummary', $available ? IssueSummary::loadByIssue($issue->getID()) : null);
         $this->addTmplVar('aiSummarySourceHash', $available
             ? IssueSummaryBuilder::sourceHash($issue, $comments) : '');
-        $this->addTmplVar('aiSummaryCommentsCount', $available
-            ? IssueSummaryBuilder::countMeaningful($comments) : 0);
 
         if ($available) {
             $this->_js[] = 'issue-summary';

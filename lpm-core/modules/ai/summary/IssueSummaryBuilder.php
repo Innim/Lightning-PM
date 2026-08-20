@@ -91,6 +91,30 @@ TEXT;
     }
 
     /**
+     * Считает содержательные комментарии, появившиеся после составления сводки.
+     *
+     * Показывает, насколько сводка отстала от обсуждения. Правки описания
+     * и других данных задачи здесь не учитываются, поэтому нулевой результат
+     * не означает, что сводка актуальна — это проверяет
+     * IssueSummary::isActualFor().
+     *
+     * @param IssueSummary $summary Сохранённая сводка.
+     * @param array<Comment> $comments Все комментарии задачи.
+     * @return int
+     */
+    public static function countNewComments(IssueSummary $summary, array $comments)
+    {
+        $count = 0;
+        foreach (self::filterMeaningful($comments) as $comment) {
+            if ($comment->date > $summary->createdAt) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
      * Определяет, доступна ли сводка для задачи: настроена ли интеграция с ИИ,
      * включена ли сводка в проекте, есть ли у пользователя доступ к задаче
      * и достаточно ли в задаче содержания, чтобы сводка экономила чтение.
