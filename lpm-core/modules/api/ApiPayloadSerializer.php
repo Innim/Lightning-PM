@@ -69,6 +69,53 @@ class ApiPayloadSerializer
         return $obj;
     }
 
+    /**
+     * Краткое представление задачи для списков.
+     *
+     * Не содержит описания, комментариев и вложений - их отдаёт запрос самой задачи.
+     * @return array
+     */
+    public function issueBrief(Issue $issue)
+    {
+        return [
+            'id' => $issue->id,
+            'idInProject' => $issue->idInProject,
+            'name' => $issue->getName(),
+            'url' => $issue->getConstURL(),
+            'type' => $issue->type,
+            'status' => $issue->status,
+            'priority' => $issue->priority,
+            'hours' => $issue->hours,
+            'labels' => $issue->getLabelNames(),
+            'commentsCount' => $issue->commentsCount,
+            'createDate' => $issue->createDate,
+            'modifiedDate' => $issue->modifiedDate,
+            'completeDate' => $issue->completeDate,
+            'completedDate' => $issue->completedDate,
+            'author' => [
+                'id' => $issue->author->getID(),
+                'name' => $issue->author->getName(),
+                'nick' => $issue->author->nick,
+            ],
+        ];
+    }
+
+    /**
+     * Метка (тег) задач с количеством использований.
+     * @param array $label Данные метки, см. Project::getLabels().
+     * @return array
+     */
+    public function label(array $label)
+    {
+        return [
+            'id' => (int)$label['id'],
+            'label' => $label['label'],
+            'uses' => (int)$label['projectUses'],
+            'totalUses' => (int)$label['countUses'],
+            'isCommon' => (int)$label['projectId'] === 0,
+        ];
+    }
+
     public function comment(Comment $comment)
     {
         $type = null;
