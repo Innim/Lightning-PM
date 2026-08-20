@@ -1220,11 +1220,14 @@ issuePage.putStickerOnBoard = function () {
     const issueId = $('#issueInfo').data('issueId');
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
-        if (res.success) {
-            $('#issueInfo .scrum-put-sticker').remove();
-            $('#issueInfo').data('isOnBoard', true);
-            issuePage.scrumColUpdateInfo();
+        if (!res.success) {
+            srv.err(res);
+            return;
         }
+
+        $('#issueInfo .scrum-put-sticker').remove();
+        $('#issueInfo').data('isOnBoard', true);
+        issuePage.scrumColUpdateInfo();
     });
 };
 

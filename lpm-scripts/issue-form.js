@@ -832,6 +832,19 @@ let issueForm = {
     validateIssueForm: function () {
         var errors = [];
 
+        // Регулярка тегов должна совпадать с серверной (Issue::getLabelsByName),
+        // иначе форма пропустит название, которое сервер не примет.
+        const name = $.trim($("#issueForm form input[name=name]").val());
+        const labelsStr = (name.match(/^(?:\[[\w: -]+?\])+/) || [''])[0];
+
+        if ($.trim(name.substr(labelsStr.length)) === '') {
+            errors.push('У задачи должен быть заголовок, а не только теги');
+        }
+
+        if ($('#issueForm').data('requireLabels') && labelsStr === '') {
+            errors.push('У задачи должен быть указан хотя бы один тег');
+        }
+
         const imageInputs = $("#issueForm input[name='images[]']");
         let newImagesCount = 0;
         imageInputs.each(function () {
@@ -874,7 +887,11 @@ let issueForm = {
             $('#issueForm > div.validateError').hide();
             return true;
         } else {
-            $('#issueForm > div.validateError').html(errors.join('<br/>')).show();
+            const $error = $('#issueForm > div.validateError');
+            $error.html(errors.join('<br/>')).show();
+            // Ошибки выводятся вверху формы, а кнопка сохранения - внизу:
+            // без прокрутки нажатие выглядит как отсутствие реакции.
+            $error[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
             return false;
         }
     },

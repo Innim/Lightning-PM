@@ -701,6 +701,41 @@ SQL;
     }
 
     /**
+     * Возвращает имя задачи без ведущих меток.
+     * @param $issueName Имя задачи.
+     * @return string Заголовок задачи: то, что остаётся от имени, если убрать
+     *                метки в его начале. Пустая строка, если кроме меток
+     *                в имени ничего нет.
+     */
+    public static function getNameWithoutLabels($issueName)
+    {
+        $name = trim($issueName);
+        if (mb_substr($name, 0, 1) !== '[') return $name;
+
+        return trim(preg_replace("/^(?:\[[\w: -]+?\])+/", '', $name));
+    }
+
+    /**
+     * Проверяет, что в имени задачи есть заголовок, а не только метки.
+     * @param $issueName Имя задачи.
+     * @return bool
+     */
+    public static function hasTitle($issueName)
+    {
+        return self::getNameWithoutLabels($issueName) !== '';
+    }
+
+    /**
+     * Проверяет, что в имени задачи указана хотя бы одна метка.
+     * @param $issueName Имя задачи.
+     * @return bool
+     */
+    public static function hasLabels($issueName)
+    {
+        return !empty(self::getLabelsByName($issueName));
+    }
+
+    /**
      * Сохраняет метку.
      * @param $label string Текст метки.
      * @param $projectId int Идентификатор проекта для которого создается метка (если не передан, то метка будет общей).

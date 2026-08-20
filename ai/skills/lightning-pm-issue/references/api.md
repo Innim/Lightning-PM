@@ -105,7 +105,7 @@ Content-Type: application/json
 ```
 
 - `projectId` (required): project `id` or `uid` the user can access.
-- `name` (required): issue title.
+- `name` (required): issue title. Labels are `[label]` prefixes of the name (`[api][ui] Title`), so a title besides them is required. Projects that require labels reject a name without any label with `400`.
 - `desc` (optional): description (Markdown allowed), up to 60000 characters.
 - `type` (optional, default `0`): `0` develop, `1` bug, `2` support.
 - `priority` (optional, default `49` — normal): integer `0..99`.
