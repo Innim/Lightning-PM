@@ -832,16 +832,19 @@ let issueForm = {
     validateIssueForm: function () {
         var errors = [];
 
-        // Регулярка тегов должна совпадать с серверной (Issue::getLabelsByName),
+        // Разбор тегов должен совпадать с серверным (Issue::LABELS_PATTERN),
         // иначе форма пропустит название, которое сервер не примет.
         const name = $.trim($("#issueForm form input[name=name]").val());
-        const labelsStr = (name.match(/^(?:\[[\w: -]+?\])+/) || [''])[0];
+        const labelsStr = (name.match(/^(?:\[[^\]]*\]\s*)+/) || [''])[0];
+        const labels = (labelsStr.match(/\[[^\]]*\]/g) || [])
+            .map((label) => $.trim(label.slice(1, -1)))
+            .filter((label) => label !== '');
 
         if ($.trim(name.substr(labelsStr.length)) === '') {
             errors.push('У задачи должен быть заголовок, а не только теги');
         }
 
-        if ($('#issueForm').data('requireLabels') && labelsStr === '') {
+        if ($('#issueForm').data('requireLabels') && labels.length === 0) {
             errors.push('У задачи должен быть указан хотя бы один тег');
         }
 
