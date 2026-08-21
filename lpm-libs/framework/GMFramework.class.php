@@ -131,6 +131,7 @@ class GMFramework
 			case 'DateTimeFormat'           :
 		    case 'Date'                     : $package .= 'datetime/'; break;
 			// db
+			case 'DBColumn'                 :
 			case 'DBConnect'                :
             case 'DBConnectWithLog'         :
             case 'DBQueryBuilder'           :

@@ -27,10 +27,24 @@ class LPMBaseObject extends StreamObject
     }
     
     /**
+     * Имя колонки - для подстановки туда, где конструктор запросов ждёт
+     * значение. Нужно, например, чтобы сравнить колонку с колонкой:
+     * <code>'ON' => ['`fl`.`fileId`' => self::col('f.fileId')]</code>.
+     * Обычная строка в этом месте всегда экранируется как значение.
+     * @param  string $name Имя колонки, при необходимости с именем таблицы
+     *                      или алиасом через точку: `fileId`, `f.fileId`.
+     * @return \GMFramework\DBColumn
+     */
+    protected static function col($name)
+    {
+        return new \GMFramework\DBColumn($name);
+    }
+
+    /**
      * Строит SQL запрос с помощью конструктора запросов \GMFramework\DBQueryBuilder
      * @return string
      */
-    protected static function buildQuery($sqlHash, $tables = null) 
+    protected static function buildQuery($sqlHash, $tables = null)
     {
         return self::getQueryBuilder()->buildQuery($sqlHash, $tables);
     }

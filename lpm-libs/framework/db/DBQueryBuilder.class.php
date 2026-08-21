@@ -467,19 +467,41 @@ class DBQueryBuilder {
         return $res;
     }
     
-    private function getValueForSQL($val) 
+    /**
+     * Подготавливает значение для подстановки в запрос.
+     *
+     * Строки экранируются всегда. Чтобы подставить имя колонки (например, для
+     * сравнения колонки с колонкой в ON), значение надо передать объектом
+     * DBColumn: признак, выраженный самой строкой, подделывался бы данными
+     * из запроса. Для SQL NULL передаётся php-шный null - строка 'NULL'
+     * значением NULL не считается, иначе введённое пользователем слово
+     * молча занулило бы колонку.
+     * @param mixed $val
+     * @return string|int|float
+     * @throws Exception Если значение такого типа подставить нельзя.
+     */
+    private function getValueForSQL($val)
     {
-        if ($val !== 'NULL') 
-        {
-            if (is_string($val) && ($val === '' || $val{0} !== '`')) 
-                $val = "'" . $this->escape_string($val) . "'";
-            elseif (is_bool($val))
-                $val = (int)$val;
-            elseif (is_null($val))
-                $val = 'NULL';
-        }
-            
-        return $val;
+        if ($val instanceof DBColumn)
+            return $val->getSql();
+
+        if (is_null($val))
+            return 'NULL';
+
+        if (is_bool($val))
+            return (int)$val;
+
+        if (is_string($val))
+            return "'" . $this->escape_string($val) . "'";
+
+        if (is_int($val) || is_float($val))
+            return $val;
+
+        // Объект с приведением к строке считаем значением - и экранируем
+        if (is_object($val) && method_exists($val, '__toString'))
+            return "'" . $this->escape_string((string)$val) . "'";
+
+        throw new Exception('Value of type ' . gettype($val) . ' can not be used in query');
     }
 
     private function where2Str($array, $join = 'AND')

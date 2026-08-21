@@ -69,7 +69,7 @@ class LPMFile extends LPMBaseObject
                 [
                     'INNER JOIN' => LPMTables::FILE_LINKS,
                     'AS'         => 'fl',
-                    'ON'         => ['`fl`.`fileId`' => '`f`.`fileId`'],
+                    'ON'         => ['`fl`.`fileId`' => self::col('f.fileId')],
                 ],
             ],
             'WHERE'  => $where,
@@ -93,7 +93,7 @@ class LPMFile extends LPMBaseObject
                 [
                     'INNER JOIN' => LPMTables::FILE_LINKS,
                     'AS'         => 'fl',
-                    'ON'         => ['`fl`.`fileId`' => '`f`.`fileId`'],
+                    'ON'         => ['`fl`.`fileId`' => self::col('f.fileId')],
                 ],
             ],
             'WHERE'  => [
