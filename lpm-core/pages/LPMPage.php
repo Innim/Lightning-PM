@@ -379,13 +379,17 @@ abstract class LPMPage
         }
     }
 
+    /**
+     * Задаёт данные Open Graph для страницы.
+     * @param string      $title
+     * @param string|null $url   Адрес страницы. Если не задан, берётся адрес текущей страницы.
+     * @param string|null $image Адрес картинки. Если не задан, `og:image` не отдаётся.
+     * @param string      $type
+     */
     protected function setOpenGraph($title, $url = null, $image = null, $type = "website")
     {
         if ($url == null) {
             $url = LightningEngine::getURL(LightningEngine::getInstance()->getCurrentUrlPath());
-        }
-        if ($image == null) {
-            $image = LPMOptions::getInstance()->logo;
         }
         $og = compact('title', 'type', 'url', 'image');
         $og = array_filter($og);

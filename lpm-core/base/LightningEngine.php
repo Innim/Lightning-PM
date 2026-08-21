@@ -97,7 +97,7 @@ class LightningEngine
      */
     private $_params;
     /**
-     * @var BasePage
+     * @var LPMPage
      */
     private $_curPage;
     /**
@@ -461,7 +461,7 @@ class LightningEngine
     }
 
     /**
-     * @return BasePage
+     * @return LPMPage
      */
     public function getCurrentPage()
     {
@@ -483,7 +483,7 @@ class LightningEngine
     }
     
     /**
-     * @return BasePage
+     * @return LPMPage
      */
     private function initCurrentPage()
     {

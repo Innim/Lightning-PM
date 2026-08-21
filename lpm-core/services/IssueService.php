@@ -569,12 +569,25 @@ class IssueService extends LPMBaseService
                 throw new Exception('Нет стикера для этой задачи');
             }
 
+            $issue = $sticker->getIssue();
+
+            // Если проект требует теги - задачу без них нельзя взять
+            // из бэклога на спринт
+            if ($sticker->state == ScrumStickerState::BACKLOG
+                    && ScrumStickerState::isActiveState($state)
+                    && $issue->getProject()->requireLabels
+                    && !Issue::hasLabels($issue->getName())) {
+                throw new Exception(
+                    'Нельзя добавить на спринт задачу без тегов - ' .
+                    'у задачи должен быть указан хотя бы один тег'
+                );
+            }
+
             // Менять состояние стикера может любой пользователь
             if (!ScrumSticker::updateStickerState($issueId, $state)) {
                 return $this->errorDBSave();
             }
 
-            $issue = $sticker->getIssue();
             $newState = null;
             if ($state === ScrumStickerState::TESTING) {
                 // Если состояние "Тестируется" - ставим задачу на проверку
@@ -611,6 +624,17 @@ class IssueService extends LPMBaseService
             $issue = Issue::load($issueId);
             if ($issue === null) {
                 return $this->error('Нет такой задачи');
+            }
+
+            // Задача в работе попадает сразу на спринт, а туда без тегов нельзя,
+            // если проект их требует
+            if (ScrumStickerState::isActiveState(ScrumSticker::getStateForIssue($issue))
+                    && $issue->getProject()->requireLabels
+                    && !Issue::hasLabels($issue->getName())) {
+                return $this->error(
+                    'Нельзя добавить на спринт задачу без тегов - ' .
+                    'у задачи должен быть указан хотя бы один тег'
+                );
             }
 
             if (!ScrumSticker::putStickerOnBoard($issue)) {
@@ -1091,7 +1115,7 @@ class IssueService extends LPMBaseService
 
         $user = $this->getUser();
 
-        if (!$this->checkRole(User::ROLE_ADMIN)) {
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
             if (!Comment::checkDeleteCommentById($id)) {
                 return $this->error('Время удаления истекло.');
             }

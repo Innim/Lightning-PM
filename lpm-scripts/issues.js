@@ -685,7 +685,8 @@ issuePage.setPriorityVal = function (value) {
     let displayVal = Issue.getPriorityDisplayVal(valueInt);
     $('#priority').val(valueInt);
 
-    $('#priorityVal').html(title + ' (' + displayVal + '%)');
+    $('#priorityVal').html('<i class="fa-solid fa-angles-up" aria-hidden="true"></i> '
+        + title + ' (' + displayVal + ')');
     $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(valueInt));
 };
 
@@ -1060,7 +1061,7 @@ issuePage.changePriority = function (e) {
                 let priorityVal = Issue.getPriorityDisplayVal(priority);
                 let tooltipHost = $('.priority-title-owner', $row)[0];
                 if (tooltipHost) {
-                    let newTitle = 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)';
+                    let newTitle = 'Приоритет: ' + priorityStr + ' (' + priorityVal + ')';
                     // Drop the per-element tooltip instance (and any tip shown for the old value);
                     // the delegated body tooltip rebuilds it from the fresh title on next hover.
                     let tooltipInstance = bootstrap.Tooltip.getInstance(tooltipHost);
@@ -1220,11 +1221,14 @@ issuePage.putStickerOnBoard = function () {
     const issueId = $('#issueInfo').data('issueId');
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
-        if (res.success) {
-            $('#issueInfo .scrum-put-sticker').remove();
-            $('#issueInfo').data('isOnBoard', true);
-            issuePage.scrumColUpdateInfo();
+        if (!res.success) {
+            srv.err(res);
+            return;
         }
+
+        $('#issueInfo .scrum-put-sticker').remove();
+        $('#issueInfo').data('isOnBoard', true);
+        issuePage.scrumColUpdateInfo();
     });
 };
 
@@ -1304,7 +1308,36 @@ function setIssueInfo(issue) {
     } else {
         setIssueInfoLegacy(issue, $issueInfo);
     }
+
+    setIssueFormState(issue, $issueInfo);
 };
+
+/**
+ * Обновляет скрытые поля задачи: из них заполняется форма редактирования,
+ * поэтому они должны соответствовать показанным значениям.
+ * @param {Issue} issue
+ * @param {jQuery} $issueInfo
+ */
+function setIssueFormState(issue, $issueInfo) {
+    const values = {
+        issueId: issue.id,
+        revision: issue.revision,
+        type: issue.type,
+        priority: issue.priority,
+        completeDate: issue.getCompleteDateInput(),
+        members: issue.getMemberIds().join(','),
+        membersSp: issue.getMembersSp().join(','),
+        testers: issue.getTesterIds().join(','),
+        masters: issue.getMasterIds().join(','),
+    };
+
+    Object.keys(values).forEach(function (field) {
+        const value = values[field];
+        if (value === undefined) return;
+
+        $('input[name=' + field + ']', $issueInfo).val(value);
+    });
+}
 
 /**
  * Обновляет обновлённый вид задачи (шаблон issue.html).
@@ -1333,6 +1366,11 @@ function setIssueInfoCard(issue, $issueInfo) {
     Object.keys(values).forEach(function (field) {
         $('[data-field="' + field + '"]', $issueInfo).html(values[field]);
     });
+
+    // У задачи без описания вместо него показывается заглушка
+    const hasDesc = (issue.desc || '').trim() !== '';
+    $('.desc .formatted-desc', $issueInfo).toggleClass('d-none', !hasDesc);
+    $('.desc .desc-placeholder', $issueInfo).toggleClass('d-none', hasDesc);
 
     $(".issue-status-badge", $issueInfo)
         .removeClass(Issue.STATUS_BADGE_CLASSES)
@@ -1365,7 +1403,6 @@ function setIssueInfoCard(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $("input[name=issueId]", $issueInfo).val(issue.id);
     $issueInfo.data('status', issue.status);
 };
 
@@ -1432,7 +1469,6 @@ function setIssueInfoLegacy(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $("input[name=issueId]", $issueInfo).val(issue.id);
     $issueInfo.data('status', issue.status);
 };
 
@@ -1824,6 +1860,13 @@ issuePage.showIssuesByUser = function (memberId) {
 };
 
 issuePage.scrumColUpdateInfo = function () {
+    // Группы, в которых не осталось видимых стикеров (например, после фильтрации),
+    // скрываем целиком, чтобы не оставлять пустой заголовок группы.
+    // Делаем это до подсчёта, иначе скрытая группа спрячет и свои стикеры.
+    $('#scrumBoard .scrum-board-priority-group').each(function (i, el) {
+        el.hidden = !$('.scrum-board-sticker', el).get().some((sticker) => !sticker.hidden);
+    });
+
     const cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     const getColStickersSelector = (col) =>
         '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker:visible';
@@ -1896,6 +1939,7 @@ function Issue(obj) {
     this.name = obj.name;
     this.status = obj.status;
     this.type = obj.type;
+    this.revision = obj.revision;
     this.members = obj.members;
     this.priority = obj.priority;
     this.hours = obj.hours;
@@ -1951,8 +1995,11 @@ function Issue(obj) {
 
     this.getPriority = function () {
         var val = Issue.getPriorityDisplayVal(this.priority);
-        return '<span class="priority-val circle">' + this.priority + '</span>' +
-            Issue.getPriorityStr(val) + ' (' + val + '%)';
+        // В кружок кладётся отображаемое значение: updatePriorityVals() красит
+        // по нему фон и очищает текст, оставляя цветную точку
+        return '<i class="fa-solid fa-angles-up me-1 align-middle" aria-hidden="true"></i>' +
+            '<span class="priority-val circle">' + val + '</span>' +
+            Issue.getPriorityStr(this.priority) + ' (' + val + ')';
     };
 
     this.getMembersHtml = function () {
@@ -1960,11 +2007,11 @@ function Issue(obj) {
     };
 
     this.getMemberIds = function () {
-        return this.members.map(member => member.userId);
+        return (this.members || []).map(member => member.userId);
     };
 
     this.getMembersSp = function () {
-        return this.members.map(member => member.sp);
+        return (this.members || []).map(member => member.sp);
     };
 
     this.getFiles = function () {
@@ -1974,7 +2021,7 @@ function Issue(obj) {
     this.getTestersHtml = () => getUsersHtml(this.testers);
 
     this.getTesterIds = function () {
-        return this.testers.map(tester => tester.userId);
+        return (this.testers || []).map(tester => tester.userId);
     };
 
     this.getMastersHtml = () => getUsersHtml(this.masters);
@@ -2001,7 +2048,7 @@ function Issue(obj) {
     /* ==== конец блока старого вида ==== */
 
     this.getMasterIds = function () {
-        return this.masters.map(master => master.userId);
+        return (this.masters || []).map(master => master.userId);
     };
 
     this.getFilesForForm = function () {

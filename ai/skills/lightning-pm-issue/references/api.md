@@ -85,6 +85,40 @@ GET /api/v1/projects
 
 Add `?archive=1` to list archived projects instead of active ones. Each item has the shape `{id, uid, name, url, scrum}`; use `id` or `uid` as `projectId` in later calls. The list is scoped to the user's access (moderators see all projects, others see only their own).
 
+## Listing Project Issues
+
+List issues of a project, e.g. to find a related or duplicate task:
+
+```http
+GET /api/v1/projects/{projectId}/issues
+```
+
+Optional query parameters:
+
+- `status`: comma-separated `inWork`, `test`, `completed` (or `0`, `1`, `2`); any status by default.
+- `type`: comma-separated `develop`, `bug`, `support` (or `0`, `1`, `2`).
+- `label`: comma-separated labels (case-insensitive); an issue must have all of them.
+- `search`: substring of the issue name, or the beginning of `idInProject`.
+- `limit` (default `50`, max `200`) and `offset` for paging.
+
+Example:
+
+```http
+GET /api/v1/projects/demo/issues?status=inWork,test&label=api&limit=20
+```
+
+The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, priority, hours, labels, commentsCount, createDate, modifiedDate, completeDate, completedDate, author}` with dates as unix timestamps (`0` when unset). Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments.
+
+## Listing Project Labels
+
+List labels (tags) of a project, e.g. to pick correct `[label]` prefixes for a new issue:
+
+```http
+GET /api/v1/projects/{projectId}/labels
+```
+
+The response is `{project, labels}`, where each label is `{id, label, uses, totalUses, isCommon}`, sorted by `uses` — how often the label is used in this project (`totalUses` counts all projects, `isCommon` marks labels shared between projects). Prefer existing labels over inventing new ones.
+
 ## Creating an Issue
 
 Create a new issue in a project when the user asks to open/file a task rather than implement an existing one:
@@ -105,7 +139,7 @@ Content-Type: application/json
 ```
 
 - `projectId` (required): project `id` or `uid` the user can access.
-- `name` (required): issue title.
+- `name` (required): issue title. Labels are `[label]` prefixes of the name (`[api][ui] Title`), so a title besides them is required. Projects that require labels reject a name without any label with `400`.
 - `desc` (optional): description (Markdown allowed), up to 60000 characters.
 - `type` (optional, default `0`): `0` develop, `1` bug, `2` support.
 - `priority` (optional, default `49` — normal): integer `0..99`.

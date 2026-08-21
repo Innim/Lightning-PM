@@ -50,6 +50,31 @@ class DbMigrator
     }
 
     /**
+     * Существует ли колонка в таблице текущей базы.
+     * @param DBConnect $db Соединение с БД.
+     * @param string $table Имя таблицы с префиксом.
+     * @param string $column Имя колонки.
+     * @return bool
+     */
+    public static function columnExists($db, $table, $column)
+    {
+        $sql = "SELECT 1 FROM `information_schema`.`COLUMNS`
+            WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = '"
+            . $db->escape_string($table) . "' AND `COLUMN_NAME` = '"
+            . $db->escape_string($column) . "' LIMIT 1";
+
+        $res = $db->query($sql);
+        if ($res === false) {
+            return false;
+        }
+
+        $exists = $res->num_rows > 0;
+        $res->free();
+
+        return $exists;
+    }
+
+    /**
      * Соединение с БД.
      * @var DBConnect
      */

@@ -50,7 +50,17 @@ if (!isset($addClearBoard)) $addClearBoard = false;
             <?php 
             $columnStickers = isset($stickersByState[$state]) ? $stickersByState[$state] : [];
             ScrumSticker::sortStickersForBoard($state, $columnStickers);
-            foreach ($columnStickers as $sticker):
+            // Стикеры в колонке разбиты на группы по приоритету задач
+            $stickersByPriorityGroup = ScrumSticker::splitByPriorityGroups($columnStickers);
+            foreach ($stickersByPriorityGroup as $priorityGroup => $groupStickers): ?>
+            <div class="scrum-board-priority-group" data-priority-group="<?=$priorityGroup;?>">
+                <div class="priority-group-header d-flex align-items-center mx-1 text-muted">
+                    <span class="priority-group-label" title="Приоритет задач"><i class="fa-solid fa-angles-up"
+                            aria-hidden="true"></i> <?=Issue::getPriorityGroupLabel($priorityGroup);?></span>
+                    <span class="flex-grow-1 border-top ms-2"></span>
+                </div>
+            <?php
+            foreach ($groupStickers as $sticker):
                 $sp = $sticker->getIssue()->hours;
                 if ($sp == 0)
                     $color = 'white';
@@ -77,7 +87,8 @@ if (!isset($addClearBoard)) $addClearBoard = false;
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
-                 data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>">
+                 data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>"
+                 data-priority-group="<?=$priorityGroup;?>">
                 <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                 <?php if ($addProjectName): ?>
                     <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
@@ -106,6 +117,8 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                     <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                        class="sticker-control-next"><i class="fa fa-caret-right" aria-hidden="true"></i></a>
                 </div>
+            </div>
+            <?php endforeach;?>
             </div>
             <?php endforeach;?>
         </td>

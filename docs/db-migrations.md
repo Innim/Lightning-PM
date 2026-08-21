@@ -44,6 +44,7 @@ Available in a migration:
 | `execFile($name)` | run a whole `.sql` file sitting next to the migration |
 | `t($table)` | table name with this install's prefix — pass an `LPMTables` constant |
 | `tableExists($table)` | whether a table exists (name including prefix) |
+| `columnExists($table, $column)` | whether a column exists — guard an `ADD`/`DROP COLUMN` with it so the migration survives a rerun |
 
 Never hardcode `lpm_` — use `t(LPMTables::X)`, the prefix is configurable.
 
@@ -68,7 +69,7 @@ limit and no web-server timeout, and its output lands in the deploy log.
 
 ## From the admin UI
 
-`Настройки` has a **База данных** card showing every migration and its state,
+`Статус` has a **База данных** card showing every migration and its state,
 with an *Применить миграции* button when something is pending. It runs the same
 `apply` as the CLI, records the admin's user id in the journal, and reports the
 failing migration inline.

@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from collections import namedtuple
+
 from ciutil.deploy.ssh_worker import SshWorker, SshInfo
 from ciutil.utils.util import random_str, generate_date_stamp
+
+
+# Итог применения миграций схемы БД после выкладки кода.
+# ran    — выполнялось ли автоприменение (флаг DEPLOY_RUN_MIGRATIONS);
+# output — вывод команды применения (когда ran=True).
+MigrationsResult = namedtuple('MigrationsResult', 'ran output')
 
 
 class PMDeployer(SshWorker):
@@ -21,6 +29,8 @@ class PMDeployer(SshWorker):
         self.remote_app_path = remote_app_path
         self.run_migrations = run_migrations
         self.migrate_cmd = migrate_cmd
+        # Итог применения миграций, заполняется в deploy().
+        self.migrations = MigrationsResult(ran=False, output='')
 
     def deploy(self):
         self.connect()
@@ -60,7 +70,10 @@ class PMDeployer(SshWorker):
         # частично, см. docs/db-migrations.md.
         if self.run_migrations:
             cmd = f'cd {self.remote_app_path} && {self.migrate_cmd}'
-            self.ssh_cmd(cmd)
+            result = self.ssh_cmd(cmd)
+            output = getattr(result, 'stdout', '') or ''
+            self.migrations = MigrationsResult(ran=True, output=output.strip())
         else:
             print('Migrations are disabled (DEPLOY_RUN_MIGRATIONS), skipping.')
+            self.migrations = MigrationsResult(ran=False, output='')
 

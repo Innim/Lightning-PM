@@ -1,48 +1,31 @@
 <?php
-/* 
-Требуются: 
+/*
+Требуются:
     AppStatus $status - модель статуса приложения
 */
 ?>
 <div class="mx-auto container container-main px-4 py-4">
   <h1>Статус приложения</h1>
 
-  <div class="card">
-    <div class="card-body">
-      <div class="alert alert-success info-message" role="alert"></div>
+  <div class="alert alert-success info-message" role="alert"></div>
 
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col" colspan="2">Кэш</th>  
-          </tr>
-        </thead>
-        <tbody>
-          <?php if ($status->cacheEnabled):?>
-          <tr>
-            <th scope="row">Действия</th>
-            <td>
-              <button id="cacheFlushButton" type="button" class="btn btn-warning">Сбросить кэш</button>
-            </td>
-          </tr>
-          <?php endif;?>
-          <tr>
-            <th scope="row">Включен</th>
-            <td class="<?=bool_class($status->cacheEnabled);?>"><?=bool_label($status->cacheEnabled);?></td>
-          </tr>
-        </tbody>
-      </table>
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2">
+      <span>Кэш</span>
+      <?php if ($status->cacheEnabled):?>
+      <span class="badge bg-success">Включен</span>
+      <?php else:?>
+      <span class="badge bg-secondary">Выключен</span>
+      <?php endif;?>
     </div>
- </div>
+    <div class="card-body">
+      <?php if ($status->cacheEnabled):?>
+      <button id="cacheFlushButton" type="button" class="btn btn-warning">Сбросить кэш</button>
+      <?php else:?>
+      <p class="mb-0 text-muted">Кэширование отключено в настройках приложения.</p>
+      <?php endif;?>
+    </div>
+  </div>
+
+  <?php lpm_print_db_migrations(); ?>
 </div>
-<?php
-
-function bool_class($value) 
-{
-    return $value ? 'table-success' : 'table-danger';
-}
-
-function bool_label($value) 
-{
-    return $value ? 'Да' : 'Нет';
-}

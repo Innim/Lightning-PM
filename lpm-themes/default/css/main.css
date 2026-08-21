@@ -1080,6 +1080,14 @@ blockquote > p {
 	font-weight: normal;
     font-size: 0.9em;
 }
+/* Группы стикеров по приоритету: размер подписи под масштаб стикеров
+   (утилит для произвольного font-size в Bootstrap нет) и отступ между группами */
+.scrum-board-priority-group + .scrum-board-priority-group {
+	margin-top: 8px;
+}
+.scrum-board-priority-group .priority-group-header {
+	font-size: 9pt;
+}
 .scrum-board-sticker {
 	position: relative;
     display: inline-block;

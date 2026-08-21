@@ -145,7 +145,7 @@ class ProjectPage extends LPMPage
                     // Но пока есть такой запрос, сделаем так.
                     $images = $issue->getImages();
                     $imageUrl = empty($images) ? null : $images[0]->getSource();
-                    $this->SetOpenGraph($this->getTitleByIssue($issue), null, $imageUrl);
+                    $this->setOpenGraph($this->getTitleByIssue($issue), null, $imageUrl);
                 }
             }
             
@@ -290,8 +290,6 @@ class ProjectPage extends LPMPage
         $this->addTmplVar('aiSummary', $available ? IssueSummary::loadByIssue($issue->getID()) : null);
         $this->addTmplVar('aiSummarySourceHash', $available
             ? IssueSummaryBuilder::sourceHash($issue, $comments) : '');
-        $this->addTmplVar('aiSummaryCommentsCount', $available
-            ? IssueSummaryBuilder::countMeaningful($comments) : 0);
 
         if ($available) {
             $this->_js[] = 'issue-summary';
@@ -883,7 +881,16 @@ class ProjectPage extends LPMPage
         
         if (mb_strlen($_POST['desc']) > Issue::DESC_MAX_LEN) {
             $this->addError('Слишком длинное описание. Максимальная длина: ' . Issue::DESC_MAX_LEN . ' символов');
-        } 
+        }
+
+        $name = trim((string)$input['name']);
+        if (!Issue::hasTitle($name)) {
+            $this->addError('У задачи должен быть заголовок, а не только теги');
+        }
+
+        if ($this->_project->requireLabels && !Issue::hasLabels($name)) {
+            $this->addError('У задачи должен быть указан хотя бы один тег');
+        }
 
         return !$this->hasErrors();
     }
