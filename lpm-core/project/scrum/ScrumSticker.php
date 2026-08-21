@@ -246,6 +246,32 @@ SQL;
         return $stickersByState;
     }
 
+    /**
+     * Разбивает список стикеров на группы по приоритету задач.
+     *
+     * Группы идут от большего приоритета к меньшему, порядок стикеров
+     * внутри группы сохраняется из исходного списка.
+     * @param  ScrumSticker[] $list Список стикеров одной колонки.
+     * @return array Массив `номер группы => список стикеров`.
+     * @see Issue::getPriorityGroup()
+     */
+    public static function splitByPriorityGroups($list)
+    {
+        $stickersByGroup = [];
+        foreach ($list as $sticker) {
+            $group = $sticker->getIssue()->getPriorityGroup();
+            if (!isset($stickersByGroup[$group])) {
+                $stickersByGroup[$group] = [$sticker];
+            } else {
+                $stickersByGroup[$group][] = $sticker;
+            }
+        }
+
+        krsort($stickersByGroup);
+
+        return $stickersByGroup;
+    }
+
     public static function sortStickersForBoard($state, &$list)
     {
         switch ($state) {

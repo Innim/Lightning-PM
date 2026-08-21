@@ -685,7 +685,8 @@ issuePage.setPriorityVal = function (value) {
     let displayVal = Issue.getPriorityDisplayVal(valueInt);
     $('#priority').val(valueInt);
 
-    $('#priorityVal').html(title + ' (' + displayVal + '%)');
+    $('#priorityVal').html('<i class="fa-solid fa-angles-up" aria-hidden="true"></i> '
+        + title + ' (' + displayVal + ')');
     $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(valueInt));
 };
 
@@ -1060,7 +1061,7 @@ issuePage.changePriority = function (e) {
                 let priorityVal = Issue.getPriorityDisplayVal(priority);
                 let tooltipHost = $('.priority-title-owner', $row)[0];
                 if (tooltipHost) {
-                    let newTitle = 'Приоритет: ' + priorityStr + ' (' + priorityVal + '%)';
+                    let newTitle = 'Приоритет: ' + priorityStr + ' (' + priorityVal + ')';
                     // Drop the per-element tooltip instance (and any tip shown for the old value);
                     // the delegated body tooltip rebuilds it from the fresh title on next hover.
                     let tooltipInstance = bootstrap.Tooltip.getInstance(tooltipHost);
@@ -1859,6 +1860,13 @@ issuePage.showIssuesByUser = function (memberId) {
 };
 
 issuePage.scrumColUpdateInfo = function () {
+    // Группы, в которых не осталось видимых стикеров (например, после фильтрации),
+    // скрываем целиком, чтобы не оставлять пустой заголовок группы.
+    // Делаем это до подсчёта, иначе скрытая группа спрячет и свои стикеры.
+    $('#scrumBoard .scrum-board-priority-group').each(function (i, el) {
+        el.hidden = !$('.scrum-board-sticker', el).get().some((sticker) => !sticker.hidden);
+    });
+
     const cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
     const getColStickersSelector = (col) =>
         '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker:visible';
@@ -1987,8 +1995,11 @@ function Issue(obj) {
 
     this.getPriority = function () {
         var val = Issue.getPriorityDisplayVal(this.priority);
-        return '<span class="priority-val circle">' + this.priority + '</span>' +
-            Issue.getPriorityStr(val) + ' (' + val + '%)';
+        // В кружок кладётся отображаемое значение: updatePriorityVals() красит
+        // по нему фон и очищает текст, оставляя цветную точку
+        return '<i class="fa-solid fa-angles-up me-1 align-middle" aria-hidden="true"></i>' +
+            '<span class="priority-val circle">' + val + '</span>' +
+            Issue.getPriorityStr(this.priority) + ' (' + val + ')';
     };
 
     this.getMembersHtml = function () {

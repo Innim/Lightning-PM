@@ -1174,7 +1174,7 @@ SQL;
      */
     public static function changePriority(User $user, Issue $issue, $delta)
     {
-        $issue->priority = (int)max(0, min($issue->priority + $delta, 100));
+        $issue->priority = self::normalizePriority($issue->priority + $delta);
         $issue->updateRevision();
         $hash = [
             'UPDATE' => LPMTables::ISSUES,
@@ -1226,6 +1226,52 @@ SQL;
      */
     public static function getNewRevision() {
         return uniqid();
+    }
+
+    /**
+     * Возвращает номер группы приоритета для указанного значения приоритета.
+     *
+     * Группы нумеруются от 0 (самый низкий приоритет) и по возрастанию
+     * приоритета, каждая охватывает диапазон в `PRIORITY_GROUP_STEP` процентов.
+     * @param  int $priority Значение приоритета.
+     * @return int Номер группы приоритета.
+     */
+    public static function getPriorityGroupByValue($priority)
+    {
+        return (int)floor(self::normalizePriority($priority) / self::PRIORITY_GROUP_STEP);
+    }
+
+    /**
+     * Возвращает подпись диапазона приоритетов группы, например `71–75`.
+     * @param  int $group Номер группы приоритета.
+     * @return string
+     */
+    public static function getPriorityGroupLabel($group)
+    {
+        $min = $group * self::PRIORITY_GROUP_STEP;
+        $max = $min + self::PRIORITY_GROUP_STEP - 1;
+        return self::getPriorityDisplayValueBy($min) . '–'
+            . self::getPriorityDisplayValueBy($max);
+    }
+
+    /**
+     * Возвращает отображаемое значение приоритета (в процентах).
+     * @param  int $priority Значение приоритета.
+     * @return int Значение от 1 до 100.
+     */
+    public static function getPriorityDisplayValueBy($priority)
+    {
+        return self::normalizePriority($priority) + 1;
+    }
+
+    /**
+     * Приводит значение приоритета к допустимому диапазону.
+     * @param  int $priority Значение приоритета.
+     * @return int Значение от 0 до `MAX_PRIORITY`.
+     */
+    public static function normalizePriority($priority)
+    {
+        return (int)max(0, min((int)$priority, self::MAX_PRIORITY));
     }
 
     /**
@@ -1311,6 +1357,16 @@ SQL;
      * с разбором меток в issue-form.js.
      */
     const LABELS_PATTERN = '/\[([^\]]*)\]\s*/uA';
+    
+    /**
+     * Максимальное значение приоритета — отображается как 100%.
+     */
+    const MAX_PRIORITY = 99;
+
+    /**
+     * Шаг (в процентах), с которым задачи разбиваются на группы по приоритету.
+     */
+    const PRIORITY_GROUP_STEP = 5;
     
     public $id            =  0;
     public $projectId     =  0;
@@ -1602,7 +1658,16 @@ SQL;
     
     public function getPriorityDisplayValue()
     {
-        return $this->priority + 1;
+        return self::getPriorityDisplayValueBy($this->priority);
+    }
+
+    /**
+     * Возвращает номер группы приоритета, к которой относится задача.
+     * @return int
+     */
+    public function getPriorityGroup()
+    {
+        return self::getPriorityGroupByValue($this->priority);
     }
 
     /**
