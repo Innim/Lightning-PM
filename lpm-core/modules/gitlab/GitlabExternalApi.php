@@ -70,14 +70,29 @@ class GitlabExternalApi extends ExternalApi
         }
     }
 
+    /**
+     * Проверяет секретный токен, которым GitLab подписывает вызов хука.
+     *
+     * Ненастроенный токен - это отказ, а не пропуск: иначе хук, меняющий
+     * состояние задач, был бы открыт для любого запроса извне.
+     * @return bool
+     */
     private function checkToken()
     {
         if (empty($this->_token)) {
-            return true;
+            LPMLog::error(
+                'GITLAB_HOOK_TOKEN не задан - вызов хука отклонён',
+                LPMLog::CH_GITLAB
+            );
+            return false;
         }
 
-        return !empty($_SERVER['HTTP_X_GITLAB_TOKEN']) &&
-            $_SERVER['HTTP_X_GITLAB_TOKEN'] == $this->_token;
+        if (empty($_SERVER['HTTP_X_GITLAB_TOKEN'])) {
+            return false;
+        }
+
+        // hash_equals - чтобы по времени ответа нельзя было подбирать токен посимвольно
+        return hash_equals((string)$this->_token, (string)$_SERVER['HTTP_X_GITLAB_TOKEN']);
     }
 
     private function onException(Exception $e)

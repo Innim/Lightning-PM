@@ -354,9 +354,9 @@ function lpm_print_issue_add_me($issue, $userId, $role)
 /**
  * Печатает блок ИИ-сводки обсуждения задачи.
  */
-function lpm_print_ai_issue_summary($issue, $summary, $sourceHash, $commentsCount)
+function lpm_print_ai_issue_summary($issue, $summary, $sourceHash, array $comments)
 {
-    return PagePrinter::aiIssueSummary($issue, $summary, $sourceHash, $commentsCount);
+    return PagePrinter::aiIssueSummary($issue, $summary, $sourceHash, $comments);
 }
 
 /**

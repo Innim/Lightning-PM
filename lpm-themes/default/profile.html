@@ -58,17 +58,19 @@ $pref = $user->pref;
                     <div class="mb-3">
                         <label for="currentPass" class="form-label">Текущий пароль</label>
                         <input id="currentPass" type="password" class="form-control" name="currentPass"
-                            maxlength="24" required autocomplete="current-password" />
+                            maxlength="<?=PASSWORD_MAX_LENGTH;?>" required autocomplete="current-password" />
                     </div>
                     <div class="mb-3">
                         <label for="newPass" class="form-label">Новый пароль</label>
                         <input id="newPass" type="password" class="form-control" name="newPass"
-                            maxlength="24" required autocomplete="new-password" />
+                            minlength="<?=PASSWORD_MIN_LENGTH;?>" maxlength="<?=PASSWORD_MAX_LENGTH;?>"
+                            required autocomplete="new-password" />
                     </div>
                     <div class="mb-3">
                         <label for="repeatPass" class="form-label">Подтверждение пароля</label>
                         <input id="repeatPass" type="password" class="form-control" name="repeatPass"
-                            maxlength="24" required autocomplete="new-password" />
+                            minlength="<?=PASSWORD_MIN_LENGTH;?>" maxlength="<?=PASSWORD_MAX_LENGTH;?>"
+                            required autocomplete="new-password" />
                     </div>
                     <div class="text-end">
                         <button class="btn btn-primary" type="submit">Сохранить</button>

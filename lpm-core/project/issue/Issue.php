@@ -3,7 +3,24 @@ class Issue extends MembersInstance
 {
     private static $_listByProjects = array();
     private static $_listByUser = array();
-    
+
+    /**
+     * Возвращает выражение постраничной выборки для запроса списка задач.
+     * @param  int $limit  Максимальное количество задач (0 - без ограничения).
+     * @param  int $offset Смещение выборки.
+     * @return string Часть SQL запроса (пустая строка, если ограничения нет).
+     */
+    private static function getLimitSql($limit, $offset)
+    {
+        $limit = (int)$limit;
+        if ($limit <= 0) {
+            return '';
+        }
+
+        $offset = max(0, (int)$offset);
+        return ' LIMIT ' . $limit . ' OFFSET ' . $offset;
+    }
+
     /**
      * Выборка происходит из таблиц:
      * - задач - i
@@ -15,10 +32,18 @@ class Issue extends MembersInstance
      * @param  string $extraSelect Дополнительная строка полей для выборки.
      * @param  array  $extraTables Ассоциативный массив дополнительных таблиц для выборки
      *                             [алиас => таблица].
+     * @param  int    $limit       Максимальное количество задач в выборке (0 - без ограничения).
+     * @param  int    $offset      Смещение выборки.
      * @return array<Issue> Массив загруженных задач.
      */
-    protected static function loadList($where, $extraSelect = '', $extraTables = null, $orderBy = null)
-    {
+    protected static function loadList(
+        $where,
+        $extraSelect = '',
+        $extraTables = null,
+        $orderBy = null,
+        $limit = 0,
+        $offset = 0
+    ) {
         $instanceType = LPMInstanceTypes::ISSUE;
 
         $passTestType = IssueCommentType::PASS_TEST;
@@ -125,6 +150,8 @@ SQL;
         }
 
         $sql .= " AND `i`.`authorId` = `u`.`userId` ORDER BY " . $orderBy;
+
+        $sql .= self::getLimitSql($limit, $offset);
 
         array_unshift($args, $sql);
         
@@ -318,6 +345,113 @@ SQL;
 
         $where .= $args;
         return self::loadList($where);
+    }
+
+    /**
+     * Загружает список задач проекта с фильтрацией и постраничной выборкой.
+     * @param  int   $projectId Идентификатор проекта.
+     * @param  array $filters   Фильтры выборки, см. buildProjectFilterWhere().
+     * @param  int   $limit     Максимальное количество задач (0 - без ограничения).
+     * @param  int   $offset    Смещение выборки.
+     * @return array<Issue> Массив загруженных задач.
+     */
+    public static function loadListByProjectFiltered($projectId, array $filters = [], $limit = 0, $offset = 0)
+    {
+        return self::loadList(self::buildProjectFilterWhere($projectId, $filters), '', null, null, $limit, $offset);
+    }
+
+    /**
+     * Возвращает общее количество задач проекта, подходящих под фильтры.
+     * @param  int   $projectId Идентификатор проекта.
+     * @param  array $filters   Фильтры выборки, см. buildProjectFilterWhere().
+     * @return int Количество задач.
+     */
+    public static function countListByProjectFiltered($projectId, array $filters = [])
+    {
+        $where = self::buildProjectFilterWhere($projectId, $filters);
+        $sql = "SELECT COUNT(*) AS `count` FROM `%s` `i` WHERE `i`.`deleted` = '0' AND " . $where;
+
+        $res = self::getDB()->queryt($sql, LPMTables::ISSUES);
+        return $res ? (int)$res->fetch_assoc()['count'] : 0;
+    }
+
+    /**
+     * Формирует условие выборки задач проекта по фильтрам.
+     *
+     * Условие использует только поля таблицы задач (алиас `i`).
+     * @param  int   $projectId Идентификатор проекта.
+     * @param  array $filters   Фильтры выборки:
+     *                          - `statuses` array<int> статусы задач;
+     *                          - `types` array<int> типы задач;
+     *                          - `labels` array<string> метки, каждая из которых должна быть у задачи;
+     *                          - `search` string подстрока имени или начало номера задачи в проекте.
+     * @return string Условие выборки.
+     */
+    private static function buildProjectFilterWhere($projectId, array $filters)
+    {
+        $db = self::getDB();
+        $where = '`i`.`projectId` = ' . (int)$projectId;
+
+        if (!empty($filters['statuses'])) {
+            $where .= ' AND `i`.`status` IN (' . implode(',', array_map('intval', $filters['statuses'])) . ')';
+        }
+
+        if (!empty($filters['types'])) {
+            $where .= ' AND `i`.`type` IN (' . implode(',', array_map('intval', $filters['types'])) . ')';
+        }
+
+        if (!empty($filters['labels'])) {
+            $issueIds = self::loadIdsByLabels($projectId, $filters['labels']);
+            $where .= ' AND `i`.`id` IN (' . (empty($issueIds) ? '0' : implode(',', $issueIds)) . ')';
+        }
+
+        $search = isset($filters['search']) ? (string)$filters['search'] : '';
+        if ($search !== '') {
+            $needle = $db->escape4Search_t($search);
+            $where .= " AND (`i`.`idInProject` LIKE '$needle%%' OR `i`.`name` LIKE '%%$needle%%')";
+        }
+
+        return $where;
+    }
+
+    /**
+     * Возвращает идентификаторы задач проекта, у которых есть все указанные метки.
+     *
+     * Метки задачи - это только блоки в квадратных скобках в начале её имени, поэтому
+     * выборка по имени в запросе дает лишь кандидатов: точное совпадение проверяется
+     * разбором имени. Регистр меток не учитывается.
+     * @param  int           $projectId Идентификатор проекта.
+     * @param  array<string> $labels    Метки, каждая из которых должна быть у задачи.
+     * @return array<int> Идентификаторы задач.
+     */
+    private static function loadIdsByLabels($projectId, array $labels)
+    {
+        $db = self::getDB();
+        $needles = [];
+        foreach (array_unique($labels) as $label) {
+            $needles[] = mb_strtolower($label);
+        }
+
+        $where = '`i`.`projectId` = ' . (int)$projectId . " AND `i`.`deleted` = '0'" .
+            " AND `i`.`name` LIKE '[%%'";
+        foreach ($needles as $needle) {
+            $where .= " AND `i`.`name` LIKE '%%[" . $db->escape4Search_t($needle) . "]%%'";
+        }
+
+        $res = $db->queryt("SELECT `i`.`id`, `i`.`name` FROM `%s` AS `i` WHERE " . $where, LPMTables::ISSUES);
+        if (!$res) {
+            return [];
+        }
+
+        $issueIds = [];
+        while ($row = $res->fetch_assoc()) {
+            $issueLabels = array_map('mb_strtolower', self::getLabelsByName($row['name']));
+            if (count(array_intersect($needles, $issueLabels)) === count($needles)) {
+                $issueIds[] = (int)$row['id'];
+            }
+        }
+
+        return $issueIds;
     }
 
     /**
@@ -681,6 +815,11 @@ SQL;
 
     /**
      * Возвращает список меток по имени.
+     *
+     * Метки - это идущие подряд блоки в квадратных скобках в начале имени;
+     * между ними допустимы пробелы. Текст метки может быть на любом языке,
+     * пустые блоки пропускаются.
+     *
      * @param $issueName Имя задачи.
      * @return array<string> Список меток в указанном имени.
      */
@@ -692,12 +831,50 @@ SQL;
 
         $labels = [];
         $matches = [];
-        if (preg_match_all("/(?:\[([\w: -]+?)\])+.*/UA", $name, $matches)) {
-            if (count($matches) > 1) {
-                $labels = array_unique($matches[1]);
+        if (preg_match_all(self::LABELS_PATTERN, $name, $matches)) {
+            foreach ($matches[1] as $label) {
+                $label = trim($label);
+                if ($label !== '' && !in_array($label, $labels)) {
+                    $labels[] = $label;
+                }
             }
         }
         return $labels;
+    }
+
+    /**
+     * Возвращает имя задачи без ведущих меток.
+     * @param $issueName Имя задачи.
+     * @return string Заголовок задачи: то, что остаётся от имени, если убрать
+     *                метки в его начале. Пустая строка, если кроме меток
+     *                в имени ничего нет.
+     */
+    public static function getNameWithoutLabels($issueName)
+    {
+        $name = trim($issueName);
+        if (mb_substr($name, 0, 1) !== '[') return $name;
+
+        return trim(preg_replace(self::LABELS_PATTERN, '', $name));
+    }
+
+    /**
+     * Проверяет, что в имени задачи есть заголовок, а не только метки.
+     * @param $issueName Имя задачи.
+     * @return bool
+     */
+    public static function hasTitle($issueName)
+    {
+        return self::getNameWithoutLabels($issueName) !== '';
+    }
+
+    /**
+     * Проверяет, что в имени задачи указана хотя бы одна метка.
+     * @param $issueName Имя задачи.
+     * @return bool
+     */
+    public static function hasLabels($issueName)
+    {
+        return !empty(self::getLabelsByName($issueName));
     }
 
     /**
@@ -997,7 +1174,7 @@ SQL;
      */
     public static function changePriority(User $user, Issue $issue, $delta)
     {
-        $issue->priority = (int)max(0, min($issue->priority + $delta, 100));
+        $issue->priority = self::normalizePriority($issue->priority + $delta);
         $issue->updateRevision();
         $hash = [
             'UPDATE' => LPMTables::ISSUES,
@@ -1049,6 +1226,52 @@ SQL;
      */
     public static function getNewRevision() {
         return uniqid();
+    }
+
+    /**
+     * Возвращает номер группы приоритета для указанного значения приоритета.
+     *
+     * Группы нумеруются от 0 (самый низкий приоритет) и по возрастанию
+     * приоритета, каждая охватывает диапазон в `PRIORITY_GROUP_STEP` процентов.
+     * @param  int $priority Значение приоритета.
+     * @return int Номер группы приоритета.
+     */
+    public static function getPriorityGroupByValue($priority)
+    {
+        return (int)floor(self::normalizePriority($priority) / self::PRIORITY_GROUP_STEP);
+    }
+
+    /**
+     * Возвращает подпись диапазона приоритетов группы, например `71–75`.
+     * @param  int $group Номер группы приоритета.
+     * @return string
+     */
+    public static function getPriorityGroupLabel($group)
+    {
+        $min = $group * self::PRIORITY_GROUP_STEP;
+        $max = $min + self::PRIORITY_GROUP_STEP - 1;
+        return self::getPriorityDisplayValueBy($min) . '–'
+            . self::getPriorityDisplayValueBy($max);
+    }
+
+    /**
+     * Возвращает отображаемое значение приоритета (в процентах).
+     * @param  int $priority Значение приоритета.
+     * @return int Значение от 1 до 100.
+     */
+    public static function getPriorityDisplayValueBy($priority)
+    {
+        return self::normalizePriority($priority) + 1;
+    }
+
+    /**
+     * Приводит значение приоритета к допустимому диапазону.
+     * @param  int $priority Значение приоритета.
+     * @return int Значение от 0 до `MAX_PRIORITY`.
+     */
+    public static function normalizePriority($priority)
+    {
+        return (int)max(0, min((int)$priority, self::MAX_PRIORITY));
     }
 
     /**
@@ -1125,6 +1348,25 @@ SQL;
     const DESC_MAX_LEN = 60000;
     const DEFAULT_PRIORITY = 49;
     const IMPORTANT_PRIORITY = 79;
+
+    /**
+     * Метка в начале имени задачи: блок в квадратных скобках и пробелы за ним.
+     *
+     * Шаблон привязан к началу поиска (`A`), поэтому подряд идущие совпадения -
+     * это ровно те метки, с которых начинается имя. Должен совпадать
+     * с разбором меток в issue-form.js.
+     */
+    const LABELS_PATTERN = '/\[([^\]]*)\]\s*/uA';
+    
+    /**
+     * Максимальное значение приоритета — отображается как 100%.
+     */
+    const MAX_PRIORITY = 99;
+
+    /**
+     * Шаг (в процентах), с которым задачи разбиваются на группы по приоритету.
+     */
+    const PRIORITY_GROUP_STEP = 5;
     
     public $id            =  0;
     public $projectId     =  0;
@@ -1416,7 +1658,16 @@ SQL;
     
     public function getPriorityDisplayValue()
     {
-        return $this->priority + 1;
+        return self::getPriorityDisplayValueBy($this->priority);
+    }
+
+    /**
+     * Возвращает номер группы приоритета, к которой относится задача.
+     * @return int
+     */
+    public function getPriorityGroup()
+    {
+        return self::getPriorityGroupByValue($this->priority);
     }
 
     /**

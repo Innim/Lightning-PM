@@ -75,6 +75,14 @@
                     <label class="form-check-label" for="scrumCheckbox">Проект использует Scrum</label>
                 </div>
 
+                <div class="form-check mb-3">
+                    <input id="requireLabelsCheckbox" class="form-check-input" type="checkbox" <?=$project->requireLabels ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="requireLabelsCheckbox">Задачи должны иметь теги</label>
+                    <div class="form-text">
+                        Задачу без тега в начале названия нельзя будет сохранить и добавить на спринт.
+                    </div>
+                </div>
+
                 <?php if (!empty($aiSummaryAvailable)): ?>
                 <div class="form-check mb-3">
                     <input id="aiSummaryCheckbox" class="form-check-input" type="checkbox" <?=$project->aiSummary ? 'checked' : '' ?>>

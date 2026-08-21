@@ -219,7 +219,7 @@ class ApiKey extends LPMBaseObject
 
     private static function buildToken($userId)
     {
-        return self::TOKEN_PREFIX . $userId . '_' . BaseString::randomStr(48);
+        return self::TOKEN_PREFIX . $userId . '_' . SecureRandomHelper::str(48);
     }
 
     private static function buildPreview($token)

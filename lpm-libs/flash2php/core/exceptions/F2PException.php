@@ -55,6 +55,11 @@ class F2PException extends Exception
      * @var int
      */
     const ERRNO_REQUEST_TOO_LARGE    = 19009;
+    /**
+     * Запрос отправлен недопустимым HTTP методом
+     * @var int
+     */
+    const ERRNO_WRONG_REQUEST_METHOD = 19010;
 
 	/**
 	 * @var string

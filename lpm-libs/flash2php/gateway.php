@@ -26,25 +26,13 @@ require_once( F2P_ROOT . 'core/Flash2PHP.php' );
 // TODO проверку на то что загружен класс
 $service = new Flash2PHP();
 
-// удаляем слюши если надо
-if (get_magic_quotes_gpc()) {
-    $process = array(&$_GET, &$_POST, &$_COOKIE, &$_REQUEST);
-    while (list($key, $val) = each($process)) {
-      foreach ($val as $k => $v) {
-          unset($process[$key][$k]);
-          if (is_array($v)) {
-              $process[$key][stripslashes($k)] = $v;
-              $process[] = &$process[$key][stripslashes($k)];
-          } else {
-              $process[$key][stripslashes($k)] = stripslashes($v);
-          }
-       }
-    }
-    unset($process);
-}
-
 try {
-	if( count( $_POST ) == 0 ) $_POST = $_GET;
+	// Только POST: методы сервисов меняют состояние, а запрос, который можно
+	// выполнить переходом по ссылке или загрузкой картинки, выполняется
+	// с чужой страницы от имени залогиненного пользователя.
+	if( ( $_SERVER['REQUEST_METHOD'] ?? '' ) !== 'POST' )
+		throw new F2PException( 'Request method not allowed', F2PException::ERRNO_WRONG_REQUEST_METHOD );
+
 	$service->init( $_POST );
 	unset( $_POST );
 	$service->execute();

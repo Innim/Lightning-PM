@@ -55,23 +55,20 @@ class User extends LPMBaseObject
     }
     
     /**
-     * @param String $email
-     * @return User
+     * @param  String $email
+     * @return User|null Пользователь или null, если такого email нет.
+     * @throws \GMFramework\ProviderLoadException При ошибке чтения из базы.
      */
     public static function loadByEmail($email)
     {
-        $db = self::getDB();
-        $res = $db->queryb([
+        return self::loadAndParseSingleV2([
             'SELECT' => '*',
             'FROM'   => LPMTables::USERS,
             'WHERE'  => [
                 'email' => $email,
             ],
             'LIMIT' => 1,
-        ]);
-        
-        $list = StreamObject::parseListResult($res, __CLASS__);
-        return empty($list) ? null : $list[0];
+        ], __CLASS__);
     }
     
     /**
@@ -94,6 +91,49 @@ class User extends LPMBaseObject
         return empty($list) ? null : $list[0];
     }
     
+    /**
+     * Возвращает хэш пароля пользователя.
+     *
+     * Пароль намеренно не входит в загружаемые поля пользователя,
+     * поэтому для проверки он читается отдельно.
+     * @param  int $userId Идентификатор пользователя.
+     * @return string|null Хэш или null, если пользователя нет.
+     * @throws \GMFramework\ProviderLoadException При ошибке чтения из базы.
+     */
+    public static function loadPasswordHash($userId)
+    {
+        $userId = (int)$userId;
+        if ($userId <= 0) {
+            return null;
+        }
+
+        $res = self::loadFromDV2([
+            'SELECT' => '`pass`',
+            'FROM'   => LPMTables::USERS,
+            'WHERE'  => ['userId' => $userId],
+            'LIMIT'  => 1,
+        ]);
+
+        $row = $res->fetch_assoc();
+
+        return $row ? $row['pass'] : null;
+    }
+
+    /**
+     * Задаёт пользователю новый пароль.
+     * @param int    $userId       Идентификатор пользователя.
+     * @param string $passwordHash Хэш нового пароля.
+     * @throws \GMFramework\ProviderSaveException При ошибке записи в базу.
+     */
+    public static function updatePassword($userId, $passwordHash)
+    {
+        self::buildAndSaveToDbV2([
+            'UPDATE' => LPMTables::USERS,
+            'SET'    => ['pass' => $passwordHash],
+            'WHERE'  => ['userId' => (int)$userId],
+        ]);
+    }
+
     /**
      * Обновляет поле блокировки пользователя.
      * @param int $userId

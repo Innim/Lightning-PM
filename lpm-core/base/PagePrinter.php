@@ -215,14 +215,18 @@ class PagePrinter
      * @param Issue $issue Задача.
      * @param IssueSummary $summary Сохранённая сводка или null, если её ещё нет.
      * @param string $sourceHash Слепок текущего состояния задачи.
-     * @param int $commentsCount Количество содержательных комментариев.
+     * @param array<Comment> $comments Все комментарии задачи.
      */
-    public static function aiIssueSummary(Issue $issue, $summary, $sourceHash, $commentsCount)
+    public static function aiIssueSummary(Issue $issue, $summary, $sourceHash, array $comments)
     {
         $isActual = !empty($summary) && $summary->isActualFor($sourceHash);
+        $commentsCount = IssueSummaryBuilder::countMeaningful($comments);
+        $newCommentsCount = empty($summary) || $isActual
+            ? 0 : IssueSummaryBuilder::countNewComments($summary, $comments);
+
         PageConstructor::includePattern(
             'components/ai-issue-summary',
-            compact('issue', 'summary', 'commentsCount', 'isActual')
+            compact('issue', 'summary', 'commentsCount', 'isActual', 'newCommentsCount')
         );
     }
 
@@ -483,6 +487,7 @@ class PagePrinter
             'imageUrlPatterns' => AttachmentImageHelper::URL_PATTERNS,
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
             'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
+            'priorityGroupStep' => Issue::PRIORITY_GROUP_STEP,
             'roles' => [
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,

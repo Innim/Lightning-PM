@@ -30,6 +30,76 @@ GET /api/v1/projects
 
 Add `?archive=1` to list archived projects instead of active ones. Each item has the shape `{id, uid, name, url, scrum}`. Moderators receive every project; other users receive only the projects they are members of.
 
+## Listing project issues
+
+List issues of a project:
+
+```http
+GET /api/v1/projects/{projectId}/issues
+```
+
+Query parameters (all optional):
+
+- `status` — comma-separated list of `inWork`, `test`, `completed` (or the numeric codes `0`, `1`, `2`). `all` or an omitted parameter means any status.
+- `type` — comma-separated list of `develop`, `bug`, `support` (or `0`, `1`, `2`).
+- `label` — comma-separated list of labels; an issue must have **all** of them. Matching ignores case and covers only the `[label]` prefixes of the issue name, so a label cannot itself contain a comma.
+- `search` — substring of the issue name, or the beginning of `idInProject`.
+- `limit` — page size, `50` by default, `200` maximum.
+- `offset` — number of issues to skip, `0` by default.
+
+An unknown `status` or `type` value is rejected with `400`.
+
+Issues come in the same order as in the web UI: issues in test first, then in work, then completed. The response is:
+
+```json
+{
+  "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "issues": [
+    {
+      "id": 25355,
+      "idInProject": 2797,
+      "name": "[api][ui] Payment retry duplicates the request",
+      "url": "https://example.com/project/demo/issue/2797",
+      "type": 0,
+      "status": 1,
+      "priority": 77,
+      "hours": 2,
+      "labels": ["api", "ui"],
+      "commentsCount": 19,
+      "createDate": 1752756617,
+      "modifiedDate": 1755842946,
+      "completeDate": 0,
+      "completedDate": 0,
+      "author": {"id": 60, "name": "Ivan Petrov", "nick": "petrov"}
+    }
+  ],
+  "paging": {"limit": 50, "offset": 0, "total": 2607}
+}
+```
+
+Dates are unix timestamps in seconds; `0` means the date is not set. Items carry no description, comments, or attachments — request `GET /api/v1/issues/{issueId}` for the full issue.
+
+## Listing project labels
+
+List labels (tags) available in a project:
+
+```http
+GET /api/v1/projects/{projectId}/labels
+```
+
+The response is:
+
+```json
+{
+  "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "labels": [
+    {"id": 176, "label": "api", "uses": 1759, "totalUses": 1869, "isCommon": false}
+  ]
+}
+```
+
+Labels are sorted by popularity in this project: `uses` counts how many times the label was used here, `totalUses` counts uses across all projects. A label with `isCommon: true` is shared by all projects, otherwise it belongs to this one. Use `label` from the list as the `label` filter of the issues endpoint or as an `[label]` prefix when creating an issue.
+
 ## Core workflow
 
 1. Resolve a pasted issue URL:
@@ -111,7 +181,7 @@ Content-Type: application/json
 Fields:
 
 - `projectId` (required) — project `id` or `uid`; the authenticated user must have access to it.
-- `name` (required) — issue title.
+- `name` (required) — issue title. Labels are the `[label]` prefixes of the name (`[api][ui] Title`), so the name must contain a title besides them. When the project has *«Задачи должны иметь теги»* enabled, the name must also start with at least one label; otherwise the request is rejected with `400`.
 - `desc` (optional) — issue description, up to 60000 characters.
 - `type` (optional, default `0`) — `0` develop, `1` bug, `2` support.
 - `priority` (optional, default `49` — normal) — integer clamped to `0..99`.
@@ -123,6 +193,8 @@ The response returns the created issue payload (same shape as `GET /api/v1/issue
 ## Scope of v1
 
 - List projects available to the user.
+- List issues of a project with filters and paging.
+- List labels of a project with their popularity.
 - Read issue details by URL or issue id.
 - Read comments, images, and files.
 - List repositories and branches available to the user in GitLab integration.

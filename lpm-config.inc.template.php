@@ -72,7 +72,8 @@ define('GITLAB_TOKEN', '');
 // Sudo пользователь для интеграции с GitLab
 define('GITLAB_SUDO_USER', '');
 
-// Токен для GitLab Hook
+// Токен для GitLab Hook.
+// Обязателен: пока он не задан, вызовы хука отклоняются.
 define('GITLAB_HOOK_TOKEN', '');
 
 // Настройки сервера кэша

@@ -1,6 +1,5 @@
 <?php
 
-use GMFramework\BaseString;
 use GMFramework\FileSystemUtils;
 
 /**
@@ -70,7 +69,7 @@ class LPMFile extends LPMBaseObject
                 [
                     'INNER JOIN' => LPMTables::FILE_LINKS,
                     'AS'         => 'fl',
-                    'ON'         => ['`fl`.`fileId`' => '`f`.`fileId`'],
+                    'ON'         => ['`fl`.`fileId`' => self::col('f.fileId')],
                 ],
             ],
             'WHERE'  => $where,
@@ -94,7 +93,7 @@ class LPMFile extends LPMBaseObject
                 [
                     'INNER JOIN' => LPMTables::FILE_LINKS,
                     'AS'         => 'fl',
-                    'ON'         => ['`fl`.`fileId`' => '`f`.`fileId`'],
+                    'ON'         => ['`fl`.`fileId`' => self::col('f.fileId')],
                 ],
             ],
             'WHERE'  => [
@@ -339,7 +338,7 @@ class LPMFile extends LPMBaseObject
     private static function generateUid()
     {
         do {
-            $uid = BaseString::randomStr(32);
+            $uid = SecureRandomHelper::str(32);
         } while (self::loadByUid($uid));
 
         return $uid;

@@ -54,9 +54,8 @@ class AiService extends LPMBaseService
                 );
             }
 
-            $commentsCount = IssueSummaryBuilder::countMeaningful($comments);
-            $html = $this->getHtml(function () use ($issue, $summary, $sourceHash, $commentsCount) {
-                PagePrinter::aiIssueSummary($issue, $summary, $sourceHash, $commentsCount);
+            $html = $this->getHtml(function () use ($issue, $summary, $sourceHash, $comments) {
+                PagePrinter::aiIssueSummary($issue, $summary, $sourceHash, $comments);
             });
 
             $this->add2Answer('html', $html);

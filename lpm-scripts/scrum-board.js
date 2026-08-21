@@ -41,27 +41,33 @@ let scrumBoard = {
             preloader.show();
             srv.issue.changeScrumState(issueId, state, function (res) {
                 preloader.hide();
-                if (res.success) {
-                    $sticker.attr('data-sticker-state', state);
-                    // Перевешиваем стикер
-                    $sticker.remove();
-                    var colName;
-                    switch (state) {
-                        case ScrumStickerState.todo: colName = 'todo'; break;
-                        case ScrumStickerState.inProgress: colName = 'in_progress'; break;
-                        case ScrumStickerState.testing: colName = 'testing'; break;
-                        case ScrumStickerState.done: colName = 'done'; break;
-                    }
+                if (!res.success) {
+                    srv.err(res);
+                    return;
+                }
 
-                    if (colName) {
-                        $('.scrum-board-col.col-' + colName).append($sticker);
-                    }
+                $sticker.attr('data-sticker-state', state);
+                // Перевешиваем стикер
+                $sticker.remove();
+                var colName;
+                switch (state) {
+                    case ScrumStickerState.todo: colName = 'todo'; break;
+                    case ScrumStickerState.inProgress: colName = 'in_progress'; break;
+                    case ScrumStickerState.testing: colName = 'testing'; break;
+                    case ScrumStickerState.done: colName = 'done'; break;
+                }
 
-                    issuePage.scrumColUpdateInfo();
+                if (colName) {
+                    scrumBoard.putStickerInColumn($sticker, $('.scrum-board-col.col-' + colName));
+                }
 
-                    if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
-                        scrumBoard.takeIssueBy($sticker);
-                    }
+                // Группа приоритета, из которой ушёл стикер, могла опустеть
+                scrumBoard.removeEmptyPriorityGroups();
+
+                issuePage.scrumColUpdateInfo();
+
+                if (curState == ScrumStickerState.todo && state == ScrumStickerState.inProgress && memberIds.length == 0) {
+                    scrumBoard.takeIssueBy($sticker);
                 }
             });
         };
@@ -75,6 +81,54 @@ let scrumBoard = {
         } else {
             applyState();
         }
+    },
+    /**
+     * Помещает стикер в колонку, в группу его приоритета.
+     * Если такой группы в колонке ещё нет — создаёт её,
+     * сохраняя порядок групп по убыванию приоритета.
+     */
+    putStickerInColumn: function ($sticker, $col) {
+        const group = parseInt($sticker.data('priorityGroup'));
+        const $groups = $col.children('.scrum-board-priority-group');
+        const getGroup = ($el) => parseInt($el.data('priorityGroup'));
+
+        let $group = $groups.filter((_, el) => getGroup($(el)) === group);
+        if ($group.length == 0) {
+            $group = scrumBoard.createPriorityGroup(group);
+            const $next = $groups.filter((_, el) => getGroup($(el)) < group).first();
+            if ($next.length > 0) {
+                $group.insertBefore($next);
+            } else {
+                $col.append($group);
+            }
+        }
+
+        $group.append($sticker);
+    },
+    /**
+     * Убирает с доски группы приоритета, в которых не осталось стикеров.
+     */
+    removeEmptyPriorityGroups: function () {
+        $('#scrumBoard .scrum-board-priority-group').each(function (i, el) {
+            if ($('.scrum-board-sticker', el).length == 0) {
+                $(el).remove();
+            }
+        });
+    },
+    createPriorityGroup: function (group) {
+        const step = lpmOptions.priorityGroupStep;
+        const label = (group * step + 1) + '–' + (group * step + step);
+
+        return $('<div class="scrum-board-priority-group"></div>')
+            .attr('data-priority-group', group)
+            .append(
+                $('<div class="priority-group-header d-flex align-items-center mx-1 text-muted"></div>')
+                    .append($('<span class="priority-group-label"></span>')
+                        .attr('title', 'Приоритет задач')
+                        .append('<i class="fa-solid fa-angles-up" aria-hidden="true"></i> ')
+                        .append(document.createTextNode(label)))
+                    .append('<span class="flex-grow-1 border-top ms-2"></span>')
+            );
     },
     takeIssue: function (e) {
         const $control = $(e.currentTarget);
@@ -134,6 +188,7 @@ let scrumBoard = {
                     $elements = $elements.find('.scrum-board-sticker');
 
                     $elements.remove();
+                    scrumBoard.removeEmptyPriorityGroups();
                     sprintTarget.setValue('', '');
                     issuePage.scrumColUpdateInfo();
                 } else {

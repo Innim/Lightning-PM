@@ -1,6 +1,5 @@
 <?php
 
-use GMFramework\BaseString;
 use GMFramework\FileSystemUtils;
 
 class FileUploadManager
@@ -196,11 +195,10 @@ class FileUploadManager
             }
 
             $sanitizedName = self::sanitizeOriginalName($originalName);
-            $extension = mb_strtolower((string)pathinfo($sanitizedName, PATHINFO_EXTENSION));
-            $extension = preg_replace('/[^a-z0-9]+/i', '', $extension);
+            $extension = self::buildStoredExtension($sanitizedName);
 
             do {
-                $storedBase = BaseString::randomStr(16);
+                $storedBase = SecureRandomHelper::str(16);
                 $storedName = $extension ? $storedBase . '.' . $extension : $storedBase;
                 $relativePath = self::buildRelativePath($itemType, $itemId, $storedName);
                 $absolutePath = self::getAbsolutePath($relativePath);
@@ -306,6 +304,35 @@ class FileUploadManager
         }
 
         return $mime;
+    }
+
+    /**
+     * Определяет расширение, с которым файл будет сохранён в хранилище.
+     *
+     * Расширения, которые веб-сервер может отдать на исполнение, отбрасываются:
+     * файл сохраняется вовсе без расширения. Оригинальное имя при этом
+     * не меняется - оно хранится отдельно и подставляется при скачивании.
+     *
+     * Белым списком тут не обойтись: вложением может быть файл любого типа.
+     * Поэтому это второй рубеж - основной запрет на исполнение задаётся
+     * конфигурацией веб-сервера (см. lpm-files/.htaccess).
+     * @param  string $name Оригинальное имя файла (уже нормализованное).
+     * @return string Расширение без точки или пустая строка.
+     */
+    private static function buildStoredExtension($name)
+    {
+        $executableExtensions = [
+            'php', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8',
+            'phps', 'pht', 'phtm', 'phtml', 'phar', 'inc',
+            'htaccess', 'htpasswd', 'shtml', 'shtm',
+            'cgi', 'pl', 'py', 'rb', 'sh', 'bash',
+            'jsp', 'jspx', 'asp', 'aspx', 'ashx', 'asmx',
+        ];
+
+        $extension = mb_strtolower((string)pathinfo($name, PATHINFO_EXTENSION));
+        $extension = preg_replace('/[^a-z0-9]+/i', '', $extension);
+
+        return in_array($extension, $executableExtensions, true) ? '' : $extension;
     }
 
     private static function sanitizeOriginalName($name)

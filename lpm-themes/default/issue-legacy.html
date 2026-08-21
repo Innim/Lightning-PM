@@ -13,7 +13,6 @@
     $aiSummaryAvailable - доступен ли блок ИИ-сводки задачи
     $aiSummary - сохранённая ИИ-сводка (IssueSummary) или null, если её ещё нет
     $aiSummarySourceHash - слепок текущего состояния задачи
-    $aiSummaryCommentsCount - количество содержательных комментариев задачи
 Необязательные:
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
@@ -189,8 +188,9 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             <div class="info-list-item">
                 <span class="label">Приоритет</span>
                 <span class="value">
+                    <i class="fa-solid fa-angles-up align-middle" aria-hidden="true"></i>
                     <span class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span>
-                    <?=$issue->getPriorityStr();?> (<?=($issue->getPriorityDisplayValue());?>%)
+                    <?=$issue->getPriorityStr();?> (<?=($issue->getPriorityDisplayValue());?>)
                 </span>
                 <input type="hidden" name="priority" value="<?=$issue->priority;?>" />
             </div>
@@ -263,7 +263,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <input type="hidden" name="masters" value="<?=$issue->getMasterIdsStr();?>" />
             </div>
             <?php if (!empty($aiSummaryAvailable)): ?>
-            <?php lpm_print_ai_issue_summary($issue, $aiSummary, $aiSummarySourceHash, $aiSummaryCommentsCount); ?>
+            <?php lpm_print_ai_issue_summary($issue, $aiSummary, $aiSummarySourceHash, $comments); ?>
             <?php endif; ?>
             <div class="desc info-list-item">
                 <div class="value formatted-desc text-with-attachments"><?=$issue->getDesc();?></div>

@@ -64,6 +64,17 @@ class ApiIssueController extends ApiControllerBase
             return ApiResponse::error('Issue name is required', 400);
         }
 
+        if (!Issue::hasTitle($name)) {
+            return ApiResponse::error('Issue name must contain a title, not only labels', 400);
+        }
+
+        if ($project->requireLabels && !Issue::hasLabels($name)) {
+            return ApiResponse::error(
+                'Project requires labels: issue name must start with a label, e.g. "[label] Title"',
+                400
+            );
+        }
+
         $desc = (string)$this->request()->getBody('desc', '');
         if (mb_strlen($desc) > Issue::DESC_MAX_LEN) {
             return ApiResponse::error('Description is too long, max ' . Issue::DESC_MAX_LEN . ' characters', 400);
