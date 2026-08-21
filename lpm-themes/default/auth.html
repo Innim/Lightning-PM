@@ -61,11 +61,11 @@ $allowRegistration = LPMOptions::getInstance()->allowRegistration;
 						</div>
 						<div class="mb-3">
 							<label for="regPassword" class="form-label">Пароль</label>
-							<input type="password" class="form-control" id="regPassword" name="pass" required="required" maxlength="24">
+							<input type="password" class="form-control" id="regPassword" name="pass" required="required" minlength="<?=PASSWORD_MIN_LENGTH;?>" maxlength="<?=PASSWORD_MAX_LENGTH;?>">
 						</div>
 						<div class="mb-3">
 							<label for="regPassword2" class="form-label">Подтверждение пароля</label>
-							<input type="password" class="form-control" id="regPassword2" name="repass" required="required" maxlength="24">
+							<input type="password" class="form-control" id="regPassword2" name="repass" required="required" minlength="<?=PASSWORD_MIN_LENGTH;?>" maxlength="<?=PASSWORD_MAX_LENGTH;?>">
 						</div>
 						<div class="mb-3">
 							<label for="regFirstName" class="form-label">Имя</label>

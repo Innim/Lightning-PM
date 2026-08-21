@@ -16,20 +16,14 @@ class LPMAuth
      *
      * Нужно при смене пароля: иначе вход по ранее выданным кукам продолжил бы
      * работать, и смена пароля не отбирала бы доступ у того, кто эти куки увёл.
-     * @param  float $userId       Идентификатор пользователя.
-     * @param  int   $exceptHashId Запись, которую надо оставить (текущая
-     *                             авторизация), либо 0, чтобы удалить все.
-     * @return bool Удаление выполнено.
+     * @param  int $userId       Идентификатор пользователя.
+     * @param  int $exceptHashId Запись, которую надо оставить (текущая
+     *                           авторизация), либо 0, чтобы удалить все.
+     * @throws \GMFramework\ProviderSaveException При ошибке записи в базу.
      */
     public static function removeSessions($userId, $exceptHashId = 0)
     {
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $sql = "delete from `%s` where `userId` = '" . (float)$userId . "'";
-        if ($exceptHashId > 0) {
-            $sql .= " and `id` <> '" . (int)$exceptHashId . "'";
-        }
-
-        return (bool)$db->queryt($sql, LPMTables::USER_AUTH);
+        UserAuth::removeForUser($userId, $exceptHashId);
     }
 
     /**
@@ -187,15 +181,15 @@ class LPMAuth
 
     /**
      * Удаляет сохранённые авторизации текущего пользователя, кроме текущей.
-     * @return bool Удаление выполнено.
+     * @throws \GMFramework\ProviderSaveException При ошибке записи в базу.
      */
     public function removeOtherSessions()
     {
         if (!$this->_isLogin) {
-            return false;
+            return;
         }
 
-        return self::removeSessions($this->_userId, $this->_hashId);
+        self::removeSessions($this->_userId, $this->_hashId);
     }
 
     private function setCookie($name, $value, $expire = 0)
@@ -232,9 +226,21 @@ class LPMAuth
     {
         // если сессия живет
         if ($data = unserialize(Session::getInstance()->get(self::SESSION_NAME))) {
-            $this->_userId  = (float)$data['uid'];
+            $userId = (float)$data['uid'];
+            $hashId = (float)$data['hashId'];
+
+            // Живой сессии недостаточно: авторизацию могли отозвать, пока
+            // пользователь ничего не делал (сменил пароль на другом устройстве).
+            // Отзыв удаляет запись авторизации, поэтому сверяемся с базой -
+            // иначе уже открытая сессия пережила бы смену пароля.
+            if (!UserAuth::exists($userId, $hashId)) {
+                $this->destroy();
+                return;
+            }
+
+            $this->_userId  = $userId;
             $this->_email   = $data['email'];
-            $this->_hashId  = (float)$data['hashId'];
+            $this->_hashId  = $hashId;
             $this->_isLogin = true;
             $this->_authType = self::AUTH_TYPE_SESSION;
         } elseif (!empty($_COOKIE[self::COOKIE_USER_ID]) && !empty($_COOKIE[self::COOKIE_HASH])) {

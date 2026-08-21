@@ -78,32 +78,27 @@ class ProfileService extends LPMBaseService
             ));
         }
 
-        $userId = (float)$this->_auth->getUserId();
-        $sql = "SELECT `pass` FROM `%s` " .
-               "WHERE `userId` = '" . $userId . "'";
-        if (!$query = $this->_db->queryt($sql, LPMTables::USERS)) {
-            return $this->error('Ошибка чтения из базы');
-        }
+        $userId = $this->getUserId();
 
-        if (!$userInfo = $query->fetch_assoc()) {
-            return $this->error('Пользователь не найден');
-        }
+        try {
+            $currentHash = User::loadPasswordHash($userId);
+            if ($currentHash === null) {
+                return $this->error('Пользователь не найден');
+            }
 
-        if (!User::passwordVerify($currentPass, $userInfo['pass'])) {
-            return $this->error('Неверный пароль');
-        }
+            if (!User::passwordVerify($currentPass, $currentHash)) {
+                return $this->error('Неверный пароль');
+            }
 
-        $salt = User::blowfishSalt();
-        $sql = "UPDATE `%s` SET ".
-               "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
-               "WHERE `userId` = '" . $userId . "'";
-        if (!$this->_db->queryt($sql, LPMTables::USERS)) {
-            return $this->error('Ошибка записи в БД');
-        }
+            $salt = User::blowfishSalt();
+            User::updatePassword($userId, User::passwordHash($newPass, $salt));
 
-        // Смена пароля должна отбирать доступ у того, кто увёл куки:
-        // сохранённые ранее авторизации перестают действовать.
-        $this->_auth->removeOtherSessions();
+            // Смена пароля должна отбирать доступ у того, кто увёл куки:
+            // сохранённые ранее авторизации перестают действовать.
+            $this->_auth->removeOtherSessions();
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
 
         return $this->answer();
     }

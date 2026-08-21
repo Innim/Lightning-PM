@@ -35,20 +35,7 @@ class PassRecoveryPage extends LPMPage
                 $_POST[$key] = is_string($value) ? trim($value) : $value;
             }
             if (isset($_POST['remail'])) {
-                // TODO: вынеси отсюда все сохранение и выделить работу с БД
-                $db = LPMGlobals::getInstance()->getDBConnect();
-                $email = $db->escape_string($_POST['remail']);
-                $sql = "SELECT `userId`, `pass`, `locked`, `firstName` " .
-                       "FROM `%s` WHERE `email` = '" . $email . "'";
-                if (!$query = $db->queryt($sql, LPMTables::USERS)) {
-                    $this->_engine->addError('Ошибка чтения из базы');
-                } elseif ($userInfo = $query->fetch_assoc()) {
-                    if ($this->sendRecoveryEmail($userInfo['userId'], $userInfo['firstName'], $email)) {
-                        $this->_show = 'successEmail';
-                    }
-                } else {
-                    $this->_engine->addError('Пользователь с таким email не зарегистрирован');
-                }
+                $this->requestRecoveryEmail((string)$_POST['remail']);
             } elseif (isset($_POST['newPass']) && isset($_POST['rePass']) && isset($_POST['userId']) && isset($_POST['key'])) {
                 if (!is_string($_POST['newPass']) || !is_string($_POST['rePass'])
                         || !is_scalar($_POST['userId']) || !is_string($_POST['key'])) {
@@ -89,88 +76,90 @@ class PassRecoveryPage extends LPMPage
      */
     private function checkUrlKey($key, $userId)
     {
-        $savedKey = $this->getActualKey($userId);
-        if ($savedKey !== false) {
-            // hash_equals - чтобы по времени ответа нельзя было подбирать ключ посимвольно
-            if ($savedKey === null || !hash_equals((string)$savedKey, (string)$key)) {
-                $this->_engine->addError('Запись не найдена');
-            } else {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Возвращает актуальный (не просроченный) ключ восстановления пользователя.
-     * @param  int $userId Идентификатор пользователя.
-     * @return string|null|false Ключ, null если актуального ключа нет,
-     *                           false при ошибке чтения из базы.
-     */
-    private function getActualKey($userId)
-    {
-        // TODO: вынеси отсюда все сохранение и выделить работу с БД
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $curDate = DateTimeUtils::mysqlDate();
-        $sql = "SELECT `recoveryKey` FROM `%s` WHERE `userId` = '" . (int)$userId .
-            "' AND `expDate` >= '". $curDate . "' LIMIT 1";
-        if (!$query = $db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
+        try {
+            $savedKey = PassRecoveryKey::loadActualKey($userId);
+        } catch (Exception $e) {
             $this->_engine->addError('Ошибка чтения из базы');
             return false;
-        } elseif ($row = $query->fetch_assoc()) {
-            return $row['recoveryKey'];
-        } else {
-            return null;
         }
+
+        // hash_equals - чтобы по времени ответа нельзя было подбирать ключ посимвольно
+        if ($savedKey === null || !hash_equals((string)$savedKey, (string)$key)) {
+            $this->_engine->addError('Запись не найдена');
+            return false;
+        }
+
+        return true;
     }
     
+    /**
+     * Обрабатывает запрос письма для восстановления пароля.
+     * @param string $email Адрес, указанный в форме.
+     */
+    private function requestRecoveryEmail($email)
+    {
+        // Форма публичная, поэтому проверяем формат до обращения к базе.
+        // Сообщение здесь то же, что и при отсутствии пользователя, чтобы
+        // по ответу нельзя было отличить одно от другого.
+        if (!Validation::checkEmail($email)) {
+            $this->_engine->addError('Пользователь с таким email не зарегистрирован');
+            return;
+        }
+
+        try {
+            $user = User::loadByEmail($email);
+        } catch (Exception $e) {
+            $this->_engine->addError('Ошибка чтения из базы');
+            return;
+        }
+
+        if (!$user) {
+            $this->_engine->addError('Пользователь с таким email не зарегистрирован');
+            return;
+        }
+
+        if ($this->sendRecoveryEmail($user->userId, $user->firstName, $email)) {
+            $this->_show = 'successEmail';
+        }
+    }
+
     private function sendRecoveryEmail($userId, $firstName, $email)
     {
-        // Проверим, нет ли актуального письма
-        $currentKey = $this->getActualKey($userId);
-        if ($currentKey === false) {
-            return false;
-        }
-
-        if ($currentKey != null) {
-            $this->_engine->addError('Письмо уже было отправлено на данный email');
-            return false;
-        }
-
-        // TODO: вынеси отсюда все сохранение и выделить работу с БД
-        $db = LPMGlobals::getInstance()->getDBConnect();
-
         $expFormat = mktime(date("H"), date("i"), date("s"), date("m"), date("d")+1, date("Y"));
         $expDate = date("Y-m-d H:i:s", $expFormat);
         $key = SecureRandomHelper::hex(16);
-        $sql = "REPLACE INTO `%s` (`userId`, `recoveryKey`, `expDate` )" .
-               "VALUES ('" . (int)$userId . "', '" . $key . "', '" . $expDate . "' )";
 
-        if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
-            $this->_engine->addError('Ошибка записи в базу');
-            return false;
-        } else {
-            $href = "pass-recovery/reclink/" . $key . "/?userId=" . urlencode(base64_encode($userId));
-            $recoveryLink ='<a href="'. SITE_URL . $href .'"> ' . SITE_URL .  $href . '</a>';
-            $lines = [
-                "Здравствуйте, $firstName.",
-                "Для восстановления пароля перейдите по ссылке:",
-                "$recoveryLink",
-                "Ссылка будет действительна в течении суток.",
-            ];
-            $subject = "Восстановление пароля";
-            $message = implode("<br>", $lines);
-            
-            $res = EmailNotifier::getInstance()->send($email, $firstName, $subject, $message);
-            if ($res) {
-                return true;
-            } else {
-                $this->_engine->addError('Не удалось отправить письмо, попробуйте позже или свяжитесь с администратором.');
-                // TODO: удалить из базы? или дать возможность запросить отправку еще раз
+        try {
+            // Проверим, нет ли актуального письма
+            if (PassRecoveryKey::loadActualKey($userId) !== null) {
+                $this->_engine->addError('Письмо уже было отправлено на данный email');
                 return false;
             }
+
+            PassRecoveryKey::save($userId, $key, $expDate);
+        } catch (Exception $e) {
+            $this->_engine->addError('Ошибка записи в базу');
+            return false;
         }
+
+        $href = "pass-recovery/reclink/" . $key . "/?userId=" . urlencode(base64_encode($userId));
+        $recoveryLink ='<a href="'. SITE_URL . $href .'"> ' . SITE_URL .  $href . '</a>';
+        $lines = [
+            "Здравствуйте, $firstName.",
+            "Для восстановления пароля перейдите по ссылке:",
+            "$recoveryLink",
+            "Ссылка будет действительна в течении суток.",
+        ];
+        $subject = "Восстановление пароля";
+        $message = implode("<br>", $lines);
+
+        if (EmailNotifier::getInstance()->send($email, $firstName, $subject, $message)) {
+            return true;
+        }
+
+        $this->_engine->addError('Не удалось отправить письмо, попробуйте позже или свяжитесь с администратором.');
+        // TODO: удалить из базы? или дать возможность запросить отправку еще раз
+        return false;
     }
     
     /**
@@ -202,27 +191,22 @@ class PassRecoveryPage extends LPMPage
             return;
         }
 
-        // TODO: вынеси отсюда все сохранение и выделить работу с БД
-        $db = LPMGlobals::getInstance()->getDBConnect();
-
         $salt = User::blowfishSalt();
-        $sql = "UPDATE `%s` SET ".
-               "`pass` = '" . User::passwordHash($newPass, $salt) . "' " .
-               "WHERE `userId` = '" . $userId . "'";
-        if (!$db->queryt($sql, LPMTables::USERS)) {
+
+        try {
+            User::updatePassword($userId, User::passwordHash($newPass, $salt));
+
+            // Пароль восстанавливают в том числе когда доступ увели,
+            // поэтому ранее выданные куки должны перестать работать
+            LPMAuth::removeSessions($userId);
+
+            PassRecoveryKey::removeByKey($key);
+        } catch (Exception $e) {
             $this->_engine->addError('Ошибка записи в БД');
             return;
         }
 
-        // Пароль восстанавливают в том числе когда доступ увели,
-        // поэтому ранее выданные куки должны перестать работать
-        LPMAuth::removeSessions($userId);
-
         $this->_show = 'recoverySuccess';
-        $sql = "DELETE FROM `%s` WHERE `recoveryKey` = '" . $db->escape_string($key) . "'";
-        if (!$db->queryt($sql, LPMTables::RECOVERY_EMAILS)) {
-            $this->_engine->addError('ошибка удаления');
-        }
     }
     
     /**

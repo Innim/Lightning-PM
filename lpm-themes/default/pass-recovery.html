@@ -51,11 +51,11 @@ $remail = isset($_POST['remail']) && is_string($_POST['remail'])
 					<form method="post" action="">
 						<div class="mb-3">
 							<label for="newPass" class="form-label">Новый пароль</label>
-							<input type="password" class="form-control" id="newPass" name="newPass" required="required" maxlength="24">
+							<input type="password" class="form-control" id="newPass" name="newPass" required="required" minlength="<?=PASSWORD_MIN_LENGTH;?>" maxlength="<?=PASSWORD_MAX_LENGTH;?>">
 						</div>
 						<div class="mb-3">
 							<label for="repeatPass" class="form-label">Подтверждение пароля</label>
-							<input type="password" class="form-control" id="repeatPass" name="rePass" required="required" maxlength="24">
+							<input type="password" class="form-control" id="repeatPass" name="rePass" required="required" minlength="<?=PASSWORD_MIN_LENGTH;?>" maxlength="<?=PASSWORD_MAX_LENGTH;?>">
 						</div>
 						<input type="hidden" name="userId" value="<?=lpm_get_current_page()->getUserId(); ?>" />
 						<input type="hidden" name="key" value="<?=lpm_get_current_page()->getKey(); ?>" />
