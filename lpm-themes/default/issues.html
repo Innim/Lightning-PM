@@ -74,7 +74,7 @@ $userId = lpm_get_user()->userId;
 				</div>
 			</td>
 			<td>
-				<div class="priority-title-owner" title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->getPriorityDisplayValue();?>%)">
+				<div class="priority-title-owner" title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->getPriorityDisplayValue();?>)">
 					<nobr>
 						<span href="#" class="priority-val circle" data-value="<?=$issue->priority;?>">
 							<?=$issue->getPriorityDisplayValue();?></span><?=$issue->getType();?>

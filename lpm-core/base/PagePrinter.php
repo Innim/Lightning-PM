@@ -483,6 +483,7 @@ class PagePrinter
             'imageUrlPatterns' => AttachmentImageHelper::URL_PATTERNS,
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
             'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
+            'priorityGroupStep' => Issue::PRIORITY_GROUP_STEP,
             'roles' => [
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,
