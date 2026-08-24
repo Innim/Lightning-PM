@@ -73,9 +73,10 @@ $(function () {
         }
 
         const scrum = $('#scrumCheckbox').prop('checked') ? 1 : 0;
-        // Чекбокса нет, если интеграция с ИИ не настроена — сервер в этом случае
-        // оставляет текущее значение настройки.
+        // Чекбоксов нет, если интеграция с ИИ не настроена — сервер в этом случае
+        // оставляет текущие значения настроек.
         const aiSummary = $('#aiSummaryCheckbox').prop('checked') ? 1 : 0;
+        const aiTestChecklist = $('#aiTestChecklistCheckbox').prop('checked') ? 1 : 0;
         const requireLabels = $('#requireLabelsCheckbox').prop('checked') ? 1 : 0;
 
         const gitlabProjectIds = $('#gitlabProjectIds').val();
@@ -97,6 +98,7 @@ $(function () {
             $('#gitlabGroupId').val(),
             gitlabProjectIds,
             aiSummary,
+            aiTestChecklist,
             requireLabels,
             function (res) {
                 if (!res.success) {

@@ -35,6 +35,10 @@ if (!empty($issueComment)) {
       $bgColorClass = 'bg-success bg-opacity-25';
       $bgIconClass = 'fa-check';
       break;
+    case IssueCommentType::TEST_CHECKLIST:
+      $bgColorClass = 'bg-info bg-opacity-25';
+      $bgIconClass = 'fa-list-check';
+      break;
   }
 
   $isAutoComment = $issueComment->isAutoComment();

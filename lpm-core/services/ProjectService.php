@@ -492,6 +492,7 @@ class ProjectService extends LPMBaseService
         $gitlabGroupId,
         $gitlabProjectIds,
         $aiSummary,
+        $aiTestChecklist,
         $requireLabels
     ) {
         $projectId = (int)$projectId;
@@ -503,6 +504,7 @@ class ProjectService extends LPMBaseService
         $gitlabProjectIds = (string)$gitlabProjectIds;
 
         if (($scrum !== 0 && $scrum !== 1) || ($aiSummary !== 0 && $aiSummary !== 1)
+            || ($aiTestChecklist !== 0 && $aiTestChecklist !== 1)
             || ($requireLabels !== 0 && $requireLabels !== 1)
         ) {
             return $this->error('Неверные входные параметры');
@@ -510,6 +512,7 @@ class ProjectService extends LPMBaseService
 
         $scrum = (bool)$scrum;
         $aiSummary = (bool)$aiSummary;
+        $aiTestChecklist = (bool)$aiTestChecklist;
         $requireLabels = (bool)$requireLabels;
 
         // проверяем права пользователя
@@ -548,10 +551,11 @@ class ProjectService extends LPMBaseService
             }
         }
 
-        // без настроенной интеграции с ИИ настройка сводки не отображается
-        // и не редактируется
+        // без настроенной интеграции с ИИ настройки ИИ-возможностей
+        // не отображаются и не редактируются
         if (!AiIntegration::getInstance()->isAvailable()) {
             $aiSummary = $project->aiSummary;
+            $aiTestChecklist = $project->aiTestChecklist;
         }
 
         // обновляем настройки только если они действительно изменились
@@ -560,6 +564,7 @@ class ProjectService extends LPMBaseService
             || $gitlabGroupId !== $project->gitlabGroupId
             || $gitlabProjectIds !== $project->gitlabProjectIds
             || $aiSummary !== $project->aiSummary
+            || $aiTestChecklist !== $project->aiTestChecklist
             || $requireLabels !== $project->requireLabels
         ) {
             $result = Project::updateProjectSettings(
@@ -569,6 +574,7 @@ class ProjectService extends LPMBaseService
                 $gitlabGroupId,
                 $gitlabProjectIds,
                 $aiSummary,
+                $aiTestChecklist,
                 $requireLabels
             );
 

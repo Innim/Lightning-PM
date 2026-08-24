@@ -230,6 +230,16 @@ class PagePrinter
         );
     }
 
+    public static function aiTestChecklistLink($published)
+    {
+        PageConstructor::includePattern('components/ai-test-checklist-link', compact('published'));
+    }
+
+    public static function aiTestChecklistDialog()
+    {
+        PageConstructor::includePattern('components/ai-test-checklist-dialog');
+    }
+
     public static function projectsList($list, $isArchive = false)
     {
         PageConstructor::includePattern('projects-list', compact('list', 'isArchive'));

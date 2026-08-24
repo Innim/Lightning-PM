@@ -73,6 +73,7 @@ class Project extends MembersInstance
         $gitlabGroupId,
         $gitlabProjectIds,
         $aiSummary,
+        $aiTestChecklist,
         $requireLabels
     )
     {
@@ -86,6 +87,7 @@ class Project extends MembersInstance
                 'gitlabGroupId' => $gitlabGroupId,
                 'gitlabProjectIds' => $gitlabProjectIds,
                 'aiSummary' => $aiSummary,
+                'aiTestChecklist' => $aiTestChecklist,
                 'requireLabels' => $requireLabels,
             ],
             'WHERE' => [
@@ -416,6 +418,12 @@ SQL;
     public $aiSummary = false;
 
     /**
+     * Для задач проекта доступен чек-лист тестирования, составляемый ИИ.
+     * @var Boolean
+     */
+    public $aiTestChecklist = false;
+
+    /**
      * Задачи проекта должны иметь хотя бы один тег.
      * @var Boolean
      */
@@ -506,7 +514,13 @@ SQL;
     {
         parent::__construct();
         $this->_typeConverter->addIntVars('id', 'defaultIssueMemberId', 'gitlabGroupId');
-        $this->_typeConverter->addBoolVars('scrum', 'fixedInstance', 'aiSummary', 'requireLabels');
+        $this->_typeConverter->addBoolVars(
+            'scrum',
+            'fixedInstance',
+            'aiSummary',
+            'aiTestChecklist',
+            'requireLabels'
+        );
 
         $this->addClientFields('id', 'uid', 'name', 'desc', 'scrum');
     }
