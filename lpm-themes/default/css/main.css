@@ -1237,6 +1237,67 @@ blockquote > p {
     margin-top: -2px;
     vertical-align: middle;
 }
+.scrum-board-sticker .sticker-issue-deadline {
+	display: inline-block;
+	margin-top: 3px;
+	padding: 0 3px;
+	font-size: 9px;
+	line-height: 14px;
+	white-space: nowrap;
+	color: #333333;
+	background-color: #fefefe;
+	border: solid 1px #cccccc;
+	border-radius: 2px;
+}
+/* Белая окантовка: фон стикера бывает красным и оранжевым, без неё залитый
+   бейдж сливается с ним */
+.scrum-board-sticker .sticker-issue-deadline.deadline-outdated {
+	color: #ffffff;
+	background-color: #d40000;
+	border-color: #ffffff;
+}
+.scrum-board-sticker .sticker-issue-deadline.deadline-urgent {
+	color: #ffffff;
+	background-color: #ef6c00;
+	border-color: #ffffff;
+}
+.scrum-board-sticker .sticker-issue-deadline.deadline-medium {
+	color: #756800;
+	border-color: #d3cf00;
+}
+.scrum-board-sticker .sticker-issue-deadline.deadline-low {
+	color: #666666;
+}
+/* Полоса по левому краю стикера: срок горит, это должно быть видно, не
+   вчитываясь в бейдж. inset, чтобы не конфликтовать с рамками .mine/.tester;
+   вторая, белая линия отделяет полосу от фона стикера */
+/* Полоса вписана в левый отступ стикера (5px), чтобы текст не переносился
+   иначе, чем на стикерах без срока */
+.scrum-board-sticker.deadline-outdated {
+	box-shadow: inset 4px 0 0 #d40000, inset 5px 0 0 #ffffff;
+}
+.scrum-board-sticker.deadline-urgent {
+	box-shadow: inset 4px 0 0 #ef6c00, inset 5px 0 0 #ffffff;
+}
+/* Номер задачи прижат к левому краю — сдвигаем его правее полосы */
+.scrum-board-sticker.deadline-outdated .sticker-issue-id,
+.scrum-board-sticker.deadline-urgent .sticker-issue-id {
+	left: 7px;
+}
+/* Задача в колонке "Готово" завершена — срок ей больше не актуален.
+   Скрываем по колонке, а не при рендере: стикер переносится между колонками
+   на клиенте, без перерисовки */
+.col-done .scrum-board-sticker .sticker-issue-deadline {
+	display: none;
+}
+.col-done .scrum-board-sticker.deadline-outdated,
+.col-done .scrum-board-sticker.deadline-urgent {
+	box-shadow: none;
+}
+.col-done .scrum-board-sticker.deadline-outdated .sticker-issue-id,
+.col-done .scrum-board-sticker.deadline-urgent .sticker-issue-id {
+	left: 3px;
+}
 .scrum-board-sticker .pass-test-check,
 .scrum-board-sticker .changes-requested-check {
 	display: none;

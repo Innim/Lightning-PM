@@ -77,6 +77,29 @@ class IssueViewHelper
     }
 
     /**
+     * Подсказка о том, сколько осталось до срока выполнения задачи.
+     * @param  Issue $issue Задача.
+     * @return string Текст подсказки. Пустая строка, если срок не задан
+     * или задача уже завершена.
+     */
+    public static function deadlineHint(Issue $issue)
+    {
+        if (self::deadlineLevel($issue) === '') {
+            return '';
+        }
+
+        $days = (int)floor($issue->daysTillComplete());
+        if ($days < 0) {
+            return 'Просрочена на ' . abs($days) . ' дн.';
+        }
+        if ($days === 0) {
+            return 'Срок сегодня';
+        }
+
+        return 'Осталось ' . $days . ' дн.';
+    }
+
+    /**
      * Классы бейджа статуса задачи.
      * @param  int $status Статус задачи.
      * @return string Список CSS-классов.
