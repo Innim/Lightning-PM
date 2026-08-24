@@ -40,6 +40,33 @@ class IssueViewHelper
     }
 
     /**
+     * Готовность задачи в тесте: влиты ли правки, которые её изменили.
+     *
+     * Определяется только для задач в тесте, по которым известно состояние MR.
+     * Пока задача ждёт правок (найдены проблемы) или уже отмечена прошедшей
+     * тестирование, состояние MR не показывается - у задачи есть отметка поважнее.
+     * @param  Issue $issue Задача.
+     * @return string Уровень: wait-merge (правки ещё не влиты) |
+     * ready (правки влиты, можно тестировать). Пустая строка, если показывать нечего.
+     */
+    public static function testMergeLevel(Issue $issue)
+    {
+        if (!$issue->isTesting() || $issue->isPassTest || $issue->isChangesRequested) {
+            return '';
+        }
+
+        switch ($issue->testMrState) {
+            case GitlabMergeRequest::STATE_OPENED:
+            case GitlabMergeRequest::STATE_LOCKED:
+                return 'wait-merge';
+            case GitlabMergeRequest::STATE_MERGED:
+                return 'ready';
+            default:
+                return '';
+        }
+    }
+
+    /**
      * Классы бейджа срока выполнения.
      * @param  string $level Уровень из deadlineLevel().
      * @return string Список CSS-классов.

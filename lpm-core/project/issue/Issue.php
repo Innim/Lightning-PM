@@ -22,6 +22,22 @@ class Issue extends MembersInstance
     }
 
     /**
+     * Возвращает список состояний MR для FIELD() в порядке возрастания
+     * "завершённости": в выборке состояния задачи побеждает самый незавершённый MR,
+     * т.к. пока есть невлитый MR - правки по задаче ещё не в стабильной ветке.
+     * @return string Часть SQL запроса - состояния через запятую.
+     */
+    private static function getMrStatesOrderSql()
+    {
+        return "'" . implode("', '", [
+            GitlabMergeRequest::STATE_CLOSED,
+            GitlabMergeRequest::STATE_MERGED,
+            GitlabMergeRequest::STATE_LOCKED,
+            GitlabMergeRequest::STATE_OPENED,
+        ]) . "'";
+    }
+
+    /**
      * Выборка происходит из таблиц:
      * - задач - i
      * - пользователей - u
@@ -49,21 +65,22 @@ class Issue extends MembersInstance
         $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
         $mergeRequestType = IssueCommentType::MERGE_REQUEST;
+        $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
-        // Даты последней активности нужны только для сортировки задач в тесте,
+        // Даты последней активности и состояние MR нужны только для задач в тесте,
         // поэтому считаются лишь для них: в больших проектах задач в тесте единицы,
-        // а подзапрос по комментариям выполняется для каждой строки выборки.
+        // а подзапросы выполняются для каждой строки выборки.
         $sql = <<<SQL
-SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
-    IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
+SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
+    IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
-    (SELECT `icm`.`type` 
+    (SELECT `icm`.`type`
        FROM `%6\$s` `cm`
- INNER JOIN `%7\$s` `icm` 
+ INNER JOIN `%7\$s` `icm`
          ON `icm`.`commentId` = `cm`.`id`
-      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
+      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
    ORDER BY `date` DESC
       LIMIT 1) AS `t_testState`,
@@ -79,7 +96,13 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
            ON `icm`.`commentId` = `cm`.`id`
         WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
           AND `icm`.`type` = '$requestChangesType'
-      ), NULL) AS `t_lastBugDate`
+      ), NULL) AS `t_lastBugDate`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT `mr`.`state`
+         FROM `%8\$s` `mr`
+        WHERE `mr`.`issueId` = `i`.`id`
+     ORDER BY FIELD(`mr`.`state`, $mrStatesOrder) DESC
+        LIMIT 1), NULL) AS `t_mrState`
 SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
@@ -93,7 +116,8 @@ SQL;
             LPMTables::PROJECTS,
             LPMTables::SCRUM_STICKER,
             LPMTables::COMMENTS,
-            LPMTables::ISSUE_COMMENT
+            LPMTables::ISSUE_COMMENT,
+            LPMTables::ISSUE_MR
         );
 
         if (!empty($extraTables)) {
@@ -178,21 +202,22 @@ SQL;
         $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
         $mergeRequestType = IssueCommentType::MERGE_REQUEST;
+        $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
         $statusCompleted = Issue::STATUS_COMPLETED;
-        // Даты последней активности нужны только для сортировки задач в тесте,
+        // Даты последней активности и состояние MR нужны только для задач в тесте,
         // поэтому считаются лишь для них: в больших проектах задач в тесте единицы,
-        // а подзапрос по комментариям выполняется для каждой строки выборки.
+        // а подзапросы выполняются для каждой строки выборки.
         $sql = <<<SQL
-SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`, 
-    IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`, 
+SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
+    IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
-    (SELECT `icm`.`type` 
+    (SELECT `icm`.`type`
        FROM `%6\$s` `cm`
- INNER JOIN `%7\$s` `icm` 
+ INNER JOIN `%7\$s` `icm`
          ON `icm`.`commentId` = `cm`.`id`
-      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0 
+      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
    ORDER BY `date` DESC
       LIMIT 1) AS `t_testState`,
@@ -208,7 +233,13 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
            ON `icm`.`commentId` = `cm`.`id`
         WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
           AND `icm`.`type` = '$requestChangesType'
-      ), NULL) AS `t_lastBugDate`
+      ), NULL) AS `t_lastBugDate`,
+    IF(`i`.`status` = $statusWait,
+      (SELECT `mr`.`state`
+         FROM `%8\$s` `mr`
+        WHERE `mr`.`issueId` = `i`.`id`
+     ORDER BY FIELD(`mr`.`state`, $mrStatesOrder) DESC
+        LIMIT 1), NULL) AS `t_mrState`
 SQL;
         if (!empty($extraSelect)) {
             $sql .= ', ' . $extraSelect;
@@ -227,7 +258,8 @@ SQL;
             LPMTables::PROJECTS,
             LPMTables::SCRUM_STICKER,
             LPMTables::COMMENTS,
-            LPMTables::ISSUE_COMMENT
+            LPMTables::ISSUE_COMMENT,
+            LPMTables::ISSUE_MR
         );
 
         if (!empty($joinTables)) {
@@ -1450,6 +1482,19 @@ SQL;
     public $isChangesRequested;
 
     /**
+     * Состояние правок по задаче в тесте: состояние MR задачи
+     * (см. GitlabMergeRequest::STATE_*).
+     *
+     * Если по задаче несколько MR - берётся самый незавершённый: пока
+     * есть открытый MR, правки ещё не влиты.
+     *
+     * Если null, то это означает, что данных нет: задача не в тесте,
+     * по ней нет ни одного MR либо данные не загружены.
+     * @var string
+     */
+    public $testMrState;
+
+    /**
      * Проект, к которому относится задача
      * @var Project
      */
@@ -1915,6 +1960,10 @@ SQL;
             $testState = $hash['t_testState'];
             $this->isPassTest = $testState == IssueCommentType::PASS_TEST;
             $this->isChangesRequested = $this->isTesting() && $testState == IssueCommentType::REQUEST_CHANGES;
+        }
+
+        if (isset($hash['t_mrState'])) {
+            $this->testMrState = $hash['t_mrState'];
         }
 
         if ($this->isTesting() && array_key_exists('t_lastCommentDate', $hash)) {
