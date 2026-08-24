@@ -123,6 +123,9 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - All entries in `CHANGELOG.md` must be written in Russian.
 - Entries describe the user-facing change/behavior only — no implementation details (CSS selectors, class names, function names, root-cause internals). Put the "how" in the commit message/code.
 - Be terse — no filler. Don't pad an entry by contrasting against the old state (e.g. avoid "вместо прежнего широкого блока …"); just state the change.
+- **One entry = one sentence** (plus an issue link, where there is one). Entries have been drifting long — if an entry runs to a second or third sentence, it is over-detailed, not thorough. Cut it back; the detail belongs in the commit message.
+- Name the change, don't enumerate its parts. Skip the list of UI elements it is made of (badge, frame, warning, button, counter), the per-case branches, the settings' default values and the "and also …" tail. A reader must learn *what is now different for them*, not how it was assembled — the rest they will see in the app.
+- If one change genuinely covers several independent user-visible things, prefer separate one-sentence entries over one entry with a list.
 
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.
