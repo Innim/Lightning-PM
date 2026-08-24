@@ -84,6 +84,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
                 if ($issue->isPassTest) $cssClasses[] = 'pass-test';
                 if ($issue->isChangesRequested) $cssClasses[] = 'changes-requested';
+                if ($testMergeLevel = IssueViewHelper::testMergeLevel($issue)) $cssClasses[] = 'test-' . $testMergeLevel;
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
@@ -96,6 +97,8 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
                     <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
                     <i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
+                    <i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>
+                    <i class="fas fa-code-merge test-ready-check" title="Правки влиты — можно тестировать"></i>
                     <span class="sticker-issue-title"><?=$sticker->getName();?></span>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>

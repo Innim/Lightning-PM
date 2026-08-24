@@ -75,6 +75,31 @@ class DbMigrator
     }
 
     /**
+     * Существует ли индекс в таблице текущей базы.
+     * @param DBConnect $db Соединение с БД.
+     * @param string $table Имя таблицы с префиксом.
+     * @param string $index Имя индекса.
+     * @return bool
+     */
+    public static function indexExists($db, $table, $index)
+    {
+        $sql = "SELECT 1 FROM `information_schema`.`STATISTICS`
+            WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = '"
+            . $db->escape_string($table) . "' AND `INDEX_NAME` = '"
+            . $db->escape_string($index) . "' LIMIT 1";
+
+        $res = $db->query($sql);
+        if ($res === false) {
+            return false;
+        }
+
+        $exists = $res->num_rows > 0;
+        $res->free();
+
+        return $exists;
+    }
+
+    /**
      * Соединение с БД.
      * @var DBConnect
      */

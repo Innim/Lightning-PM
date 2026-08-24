@@ -599,7 +599,9 @@ table tr.verify-issue {
 
 table.issues-list tr td .icon-deadline,
 table.issues-list tr td .pass-test-check,
-table.issues-list tr td .changes-requested-check {
+table.issues-list tr td .changes-requested-check,
+table.issues-list tr td .test-wait-merge-check,
+table.issues-list tr td .test-ready-check {
 	display: none;
 }
 
@@ -636,12 +638,23 @@ table.issues-list tr td .changes-requested-check {
 	color: #dc3545;
 }
 
+table.issues-list tr td .test-wait-merge-check {
+	color: #b06000;
+}
+
+/* Зелёный в этом списке занят отметкой «прошла тестирование» */
+table.issues-list tr td .test-ready-check {
+	color: #0d6efd;
+}
+
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
 table tr.deadline-low-issue td .icon-deadline.icon-deadline-low,
-table.issues-list tr.pass-test .pass-test-check, 
-table.issues-list tr.changes-requested .changes-requested-check {
+table.issues-list tr.pass-test .pass-test-check,
+table.issues-list tr.changes-requested .changes-requested-check,
+table.issues-list tr.test-wait-merge .test-wait-merge-check,
+table.issues-list tr.test-ready .test-ready-check {
 	display: inline-block;
 }
 
@@ -1238,11 +1251,15 @@ blockquote > p {
     vertical-align: middle;
 }
 .scrum-board-sticker .pass-test-check,
-.scrum-board-sticker .changes-requested-check {
+.scrum-board-sticker .changes-requested-check,
+.scrum-board-sticker .test-wait-merge-check,
+.scrum-board-sticker .test-ready-check {
 	display: none;
 }
 .scrum-board-sticker.pass-test .pass-test-check,
-.scrum-board-sticker.changes-requested .changes-requested-check {
+.scrum-board-sticker.changes-requested .changes-requested-check,
+.scrum-board-sticker.test-wait-merge .test-wait-merge-check,
+.scrum-board-sticker.test-ready .test-ready-check {
 	display: inline-block;
 }
 #scrumBoard.hide-sp .scrum-board-sticker .sticker-issue-sp {
