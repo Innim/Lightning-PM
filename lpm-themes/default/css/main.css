@@ -204,7 +204,8 @@ fieldset > ol.members-list {
     position:relative;
     vertical-align: middle;
     cursor:default;
-    width: 160px;
+    /* Ширины должно хватать на самый длинный вариант с иконкой: "нормальный (100)" */
+    width: 190px;
     padding: 0;
 }
 
@@ -256,6 +257,7 @@ fieldset > ol.members-list {
     text-align: center;
     display:block;
     width: 100%;
+    white-space: nowrap;
     z-index: 1;
 }
 
