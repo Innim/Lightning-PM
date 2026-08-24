@@ -1,0 +1,19 @@
+<?php
+/*
+Ссылка запуска чек-листа тестирования в панели над комментариями.
+
+Пока чек-лист по задаче не публиковали, ссылка выделена и показана с текстом.
+После публикации остаётся только иконка: действие ещё может понадобиться,
+но место в панели уже не занимает. Класс ai-checklist-link нужен JS
+(lpm-scripts/popups/ai-test-checklist.js переключает вид после публикации).
+
+Требуются:
+    $published - публиковался ли чек-лист по этой задаче
+*/
+$label = 'Составить чек-лист тестирования';
+?>
+<a href="#" class="ai-checklist-link<?=$published ? '' : ' text-primary';?>"
+    <?php if ($published): ?>title="<?=$label;?>" aria-label="<?=$label;?>"<?php endif; ?>
+    onclick="aiTestChecklist.show(); return false;"><i class="fa-solid fa-list-check"
+        aria-hidden="true"></i><span
+        class="ai-checklist-link-text<?=$published ? ' d-none' : '';?>"> Чек-лист тестирования</span></a>

@@ -1182,6 +1182,12 @@ function verifyIssue(e) {
                     setIssueInfo(new Issue(res.issue));
                 }
                 issuePage.updateStat();
+
+                // Чек-лист подключается флагом проекта, а issues.js грузится
+                // и на списках задач, и на scrum доске.
+                if (typeof aiTestChecklist !== 'undefined' && aiTestChecklist.isAvailable()) {
+                    aiTestChecklist.show();
+                }
             } else {
                 srv.err(res);
             }

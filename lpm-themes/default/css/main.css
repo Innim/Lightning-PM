@@ -436,6 +436,14 @@ a.add-me-to-issue .plus-icon {
 #issueView.issue-testing .comments .links-bar .comments-controls .request-changes-link {
 	display: inline-block;
 }
+/* Чек-лист собирается для задачи на проверке. Класс issue-testing есть в обоих
+   видах страницы задачи и переключается при смене статуса без перезагрузки */
+.comments .links-bar .comments-controls .ai-checklist-link {
+	display: none;
+}
+#issueView.issue-testing .comments .links-bar .comments-controls .ai-checklist-link {
+	display: inline-block;
+}
 .comments .links-bar .scrum-comments-shortcut a {
 	display: inline-block;
 	margin-right: 5px;

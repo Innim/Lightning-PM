@@ -241,6 +241,9 @@ let srv = {
         issueSummary: function (issueId, onResult) {
             this.s._('issueSummary');
         },
+        issueTestChecklist: function (issueId, onResult) {
+            this.s._('issueTestChecklist');
+        },
     },
     files: {
         s: new BaseService('FilesService'),
@@ -291,6 +294,9 @@ let srv = {
         },
         passTest: function (issueId, text, files, onResult) {
             this.s.callWithFiles('passTest', [issueId, text], files, onResult);
+        },
+        postTestChecklist: function (issueId, text, onResult) {
+            this.s._('postTestChecklist');
         },
         createBranch: function (issueId, branchName, gitlabProjectId, parentBranch, onResult) {
             this.s._('createBranch');
@@ -384,7 +390,7 @@ let srv = {
         },
         saveProject: function (
             projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds,
-            aiSummary, requireLabels, onResult
+            aiSummary, aiTestChecklist, requireLabels, onResult
         ) {
             this.s._('saveProject');
         },
@@ -622,13 +628,23 @@ lpm.dialog = {
         let onHidden = opts.onCancel;
 
         let hasButtons = false;
-        const $primaryBtn = $('.btn-primary', $modalTemplate);
+        // Только кнопки футера: в content могут быть свои .btn-primary/.btn-secondary,
+        // и поиск по всему окну удалял бы или переименовывал их.
+        const $footer = $('.modal-footer', $modalTemplate);
+        const $primaryBtn = $('.btn-primary', $footer);
         if (opts.primaryBtn) {
             $primaryBtn.text(opts.primaryBtn);
             $primaryBtn.on('click', function () {
                 if (opts.onPrimary) {
+                    const cancelHandler = onHidden;
                     onHidden = null;
-                    opts.onPrimary();
+                    // onPrimary может вернуть false, чтобы окно осталось открытым
+                    // (многошаговый диалог закрывает себя сам). Окно ещё открыто,
+                    // поэтому обработчик отмены возвращаем на место.
+                    if (opts.onPrimary() === false) {
+                        onHidden = cancelHandler;
+                        return;
+                    }
                 }
                 modal.hide();
             });
@@ -637,7 +653,7 @@ lpm.dialog = {
             $primaryBtn.remove();
         }
 
-        const $secondaryBtn = $('.btn-secondary', $modalTemplate);
+        const $secondaryBtn = $('.btn-secondary', $footer);
         if (opts.secondaryBtn) {
             $secondaryBtn.text(opts.secondaryBtn);
             if (opts.onSecondary) {

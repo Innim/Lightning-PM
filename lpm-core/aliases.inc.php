@@ -360,6 +360,22 @@ function lpm_print_ai_issue_summary($issue, $summary, $sourceHash, array $commen
 }
 
 /**
+ * Печатает ссылку запуска чек-листа тестирования.
+ */
+function lpm_print_ai_test_checklist_link($published)
+{
+    return PagePrinter::aiTestChecklistLink($published);
+}
+
+/**
+ * Печатает разметку диалога чек-листа тестирования.
+ */
+function lpm_print_ai_test_checklist_dialog()
+{
+    return PagePrinter::aiTestChecklistDialog();
+}
+
+/**
  * Печатает кнопку копирования значения в буфер обмена.
  */
 function lpm_print_copy_button($value, $toast = 'Скопировано')

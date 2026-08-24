@@ -268,6 +268,7 @@ class ProjectPage extends LPMPage
         );
 
         $this->initIssueSummary($issue, $comments);
+        $this->initIssueTestChecklist($issue, $comments);
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
@@ -293,6 +294,29 @@ class ProjectPage extends LPMPage
 
         if ($available) {
             $this->_js[] = 'issue-summary';
+        }
+    }
+
+    /**
+     * Готовит данные чек-листа тестирования: доступен ли он для задачи
+     * и публиковался ли он раньше. К модели при этом не обращается —
+     * чек-лист составляется только по запросу пользователя.
+     */
+    private function initIssueTestChecklist(Issue $issue, array $comments)
+    {
+        $available = IssueTestChecklistBuilder::isAvailableFor(
+            $issue,
+            $this->_engine->getUserId()
+        );
+
+        $this->addTmplVar('aiTestChecklistAvailable', $available);
+        $this->addTmplVar(
+            'aiTestChecklistPublished',
+            $available && IssueTestChecklistBuilder::isPublished($comments)
+        );
+
+        if ($available) {
+            $this->_js[] = 'popups/ai-test-checklist';
         }
     }
 
@@ -412,7 +436,7 @@ class ProjectPage extends LPMPage
     private function initSettings()
     {
         $this->addTmplVar('project', $this->_project);
-        $this->addTmplVar('aiSummaryAvailable', AiIntegration::getInstance()->isAvailable());
+        $this->addTmplVar('aiIntegrationAvailable', AiIntegration::getInstance()->isAvailable());
     }
 
     private function getIssuesListJs()
