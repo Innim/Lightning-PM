@@ -70,7 +70,7 @@ Use the payload to inspect:
 - issue description
 - comments
 - images
-- attached files
+- attached files, both of the issue (`files`) and of each comment (`comments[].files`)
 - project id
 - issue id
 - action URLs or repository hints if present
@@ -235,7 +235,7 @@ Attached files and images in the issue payload are served from protected URLs. D
 GET <file_url>
 ```
 
-`<file_url>` comes from the issue payload (e.g. inside `images` or `attachments` fields). Save the result to `/tmp/` to keep it isolated from the working tree.
+`<file_url>` comes from the issue payload: `images` for issue screenshots, `files` for files attached to the issue itself, and `comments[].files` for files attached to a comment. The two `files` collections share one item shape `{fileId, uid, name, mimeType, size, sizeFormatted, created, url, requiresAuthentication}`, so the same parser handles both. An image attached to a comment arrives there as a regular file with an image `mimeType` — it is never in `images`. Save the result to `/tmp/` to keep it isolated from the working tree.
 
 To save with a specific name, pass `--output` through the helper script:
 

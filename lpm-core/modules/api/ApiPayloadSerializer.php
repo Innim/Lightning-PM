@@ -40,9 +40,7 @@ class ApiPayloadSerializer
 
         $obj->files = [];
         foreach ($issue->getFiles() as $file) {
-            $item = $file->getClientObject();
-            $item->requiresAuthentication = true;
-            $obj->files[] = $item;
+            $obj->files[] = $this->file($file);
         }
 
         $obj->linked = [];
@@ -135,6 +133,11 @@ class ApiPayloadSerializer
             }
         }
 
+        $files = [];
+        foreach ($comment->getFiles() as $file) {
+            $files[] = $this->file($file);
+        }
+
         return [
             'id' => $comment->id,
             'text' => $comment->text,
@@ -146,8 +149,20 @@ class ApiPayloadSerializer
             ],
             'type' => $type,
             'meta' => $meta,
+            'files' => $files,
             'url' => empty($comment->issue) ? null : $comment->getIssueCommentUrl($comment->issue),
         ];
+    }
+
+    /**
+     * Вложение задачи или комментария.
+     * @return stdClass
+     */
+    private function file(LPMFile $file)
+    {
+        $obj = $file->getClientObject();
+        $obj->requiresAuthentication = true;
+        return $obj;
     }
 
     public function project(Project $project)

@@ -1,5 +1,8 @@
 ## Next
 
+### Fixed
+- API: в комментариях задачи отдаются приложенные к ним файлы ([#393](https://task.innim.ru/project/lightning-pm/issue/393)).
+
 ## 0.28.0 - 2026-08-21
 
 ### Added

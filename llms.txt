@@ -16,4 +16,6 @@ Use the authenticated API instead of scraping HTML.
 - List branches: `GET /api/v1/projects/{projectId}/repositories/{repositoryId}/branches`
 - Create branch: `POST /api/v1/issues/{issueId}/branches`
 
+Attachments come in the issue payload as `files` (attached to the issue) and `comments[].files` (attached to a comment), both with the same item shape `{fileId, uid, name, mimeType, size, sizeFormatted, created, url, requiresAuthentication}`. A `url` with `requiresAuthentication: true` needs the same auth header as any other request.
+
 Comments should be high-signal only: use them for tester instructions, caveats, or implementation details not already clear from the issue. Do not post routine progress updates such as branch creation or "implementation started".
