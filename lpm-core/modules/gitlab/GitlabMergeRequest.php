@@ -60,6 +60,12 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
     public $targetProjectId;
 
     /**
+     * Название MR.
+     * @var String
+     */
+    public $title;
+
+    /**
      * Описание MR.
      * @var String
      */

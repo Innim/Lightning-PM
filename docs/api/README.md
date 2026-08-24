@@ -159,6 +159,26 @@ Content-Type: application/json
 
 Do not post routine progress comments such as branch creation or "implementation started". Use comments for handoff details, tester instructions, limitations, or clarifications that are not obvious from the issue itself.
 
+## Attachments
+
+Attachments live in two places of the issue payload: `files` holds the files attached to the issue itself, and `comments[].files` holds the files attached to that comment. Both use the same item shape, so one parser covers them:
+
+```json
+{
+  "fileId": 29,
+  "uid": "5VbGulWzO8XAZSrpiep7LOx2ZqZ5Ymph",
+  "name": "screenshot.jpg",
+  "mimeType": "image/jpeg",
+  "size": 21761,
+  "sizeFormatted": "21.3 Кб",
+  "created": 1781163460,
+  "url": "https://example.com/file/5VbGulWzO8XAZSrpiep7LOx2ZqZ5Ymph",
+  "requiresAuthentication": true
+}
+```
+
+An image attached to a comment arrives here as a regular file with an image `mimeType`; the separate `images` collection of the issue payload never contains comment attachments. `requiresAuthentication: true` means `url` needs the same auth header as any other API request.
+
 ## Creating an issue
 
 Create a new issue in a project:
@@ -196,7 +216,7 @@ The response returns the created issue payload (same shape as `GET /api/v1/issue
 - List issues of a project with filters and paging.
 - List labels of a project with their popularity.
 - Read issue details by URL or issue id.
-- Read comments, images, and files.
+- Read comments, images, and files of the issue and of its comments.
 - List repositories and branches available to the user in GitLab integration.
 - Create an issue in a project.
 - Create a branch for an issue.

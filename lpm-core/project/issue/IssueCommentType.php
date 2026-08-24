@@ -33,6 +33,11 @@ class IssueCommentType
     const MERGE_REQUEST = 'merge_request';
 
     /**
+     * Чек-лист тестирования, опубликованный для тестировщика.
+     */
+    const TEST_CHECKLIST = 'test_checklist';
+
+    /**
      * Комментарий о создании ветки.
      */
     const CREATE_BRANCH = 'create_branch';

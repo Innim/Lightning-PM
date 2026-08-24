@@ -423,6 +423,64 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Публикует чек-лист тестирования комментарием к задаче.
+     *
+     * Текст приходит от пользователя: черновик составляется ИИ, но публикуется
+     * только после правки и явного подтверждения.
+     *
+     * @param   int     $issueId Идентификатор задачи.
+     * @param   String  $text Текст чек-листа.
+     * @return {
+     *     Comment comment    Добавленный комментарий.
+     *     String  html       HTML код комментария.
+     *     String  linkedHtml HTML блока связанных задач, если связи изменились.
+     * }
+     */
+    public function postTestChecklist($issueId, $text)
+    {
+        $issueId = (int)$issueId;
+        $text = trim((string)$text);
+
+        try {
+            $issue = Issue::load($issueId);
+            if (!$issue) {
+                return $this->error('Нет такой задачи');
+            }
+
+            // Задача приходит по глобальному идентификатору, поэтому права
+            // на проект надо проверить здесь: проверка внутри чек-листа
+            // ограничена уровнем задачи.
+            $this->getProjectRequireReadPermission($issue->projectId);
+
+            if (!IssueTestChecklistBuilder::isAvailableFor($issue, $this->getUserId())) {
+                return $this->error('Чек-лист для этой задачи недоступен');
+            }
+
+            if ($text === '') {
+                return $this->error('Чек-лист пуст');
+            }
+
+            $comment = $this->postComment($issue, $text, false, IssueCommentType::TEST_CHECKLIST);
+
+            $addedLinks = IssueLinked::syncFromText($issue, $text, $this->getUserId());
+
+            $this->setupCommentAnswer($comment);
+
+            // если из комментария добавились связи — вернём обновлённый блок связанных задач
+            if ($addedLinks > 0) {
+                $linkedHtml = $this->getHtml(function () use ($issue) {
+                    PagePrinter::issueLinked(Issue::load($issue->getID()));
+                });
+                $this->add2Answer('linkedHtml', $linkedHtml);
+            }
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Создает ветку задачи на репозитории и добавляет комментарий с именем ветки.
      *
      * @param  int $issueId Идентификатор задачи.
