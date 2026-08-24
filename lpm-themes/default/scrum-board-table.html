@@ -79,11 +79,14 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 $issue = $sticker->getIssue();
                 $members = $issue->getMembers();
 
+                $deadlineLevel = IssueViewHelper::deadlineLevel($issue);
+
                 $cssClasses = [$color];
                 if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
                 if ($issue->isPassTest) $cssClasses[] = 'pass-test';
                 if ($issue->isChangesRequested) $cssClasses[] = 'changes-requested';
+                if ($deadlineLevel !== '') $cssClasses[] = 'deadline-' . $deadlineLevel;
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
@@ -103,8 +106,14 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                     foreach ($members as $j => $member):
                         echo $j > 0 ? ', ' : '';
                         echo lpm_print_table_scrum_board_issue_member($member);
-                    endforeach; 
+                    endforeach;
                 ?></span>
+                <?php if ($deadlineLevel !== ''): ?>
+                    <span class="sticker-issue-deadline deadline-<?=$deadlineLevel;?>"
+                          title="<?=IssueViewHelper::deadlineHint($issue);?>"><i
+                            class="<?=IssueViewHelper::deadlineIconClass($deadlineLevel);?>"
+                            aria-hidden="true"></i> <?=$issue->getCompleteDate();?></span>
+                <?php endif; ?>
                 <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                    class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
                 <div class="control-line">
