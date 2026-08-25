@@ -1453,7 +1453,9 @@ function setIssueInfoCard(issue, $issueInfo, substatus) {
 
     issuePage.updatePriorityVals();
 
-    $issueInfo.data('status', issue.status);
+    // Атрибут держим в паре с jQuery-хранилищем: .data() его больше не читает,
+    // и без этого разметка сохраняет статус, с которым страница загрузилась.
+    $issueInfo.attr('data-status', issue.status).data('status', issue.status);
 };
 
 /**
@@ -1550,7 +1552,9 @@ function setIssueInfoLegacy(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $issueInfo.data('status', issue.status);
+    // Атрибут держим в паре с jQuery-хранилищем: .data() его больше не читает,
+    // и без этого разметка сохраняет статус, с которым страница загрузилась.
+    $issueInfo.attr('data-status', issue.status).data('status', issue.status);
 };
 
 /* ======== конец старого вида страницы задачи ======== */
