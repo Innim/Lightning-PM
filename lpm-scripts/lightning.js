@@ -244,6 +244,9 @@ let srv = {
         issueTestChecklist: function (issueId, onResult) {
             this.s._('issueTestChecklist');
         },
+        issueDraft: function (projectId, text, images, onResult) {
+            this.s._('issueDraft');
+        },
     },
     files: {
         s: new BaseService('FilesService'),
@@ -390,7 +393,7 @@ let srv = {
         },
         saveProject: function (
             projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds,
-            aiSummary, aiTestChecklist, requireLabels, onResult
+            aiSummary, aiTestChecklist, aiIssueDraft, requireLabels, onResult
         ) {
             this.s._('saveProject');
         },

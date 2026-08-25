@@ -117,4 +117,52 @@ class AiService extends LPMBaseService
 
         return $this->answer();
     }
+
+    /**
+     * Составляет черновик задачи по свободному описанию и изображениям.
+     *
+     * Требует прав на чтение проекта, в котором заводится задача.
+     *
+     * Черновик не сохраняется: он возвращается для правки пользователем
+     * и становится задачей только после того, как тот сохранит форму.
+     *
+     * @param int $projectId Идентификатор проекта.
+     * @param string $text Свободное описание задачи.
+     * @param array $images Изображения строками data URI.
+     * @return [
+     *    name: string - предлагаемое название задачи,
+     *    type: int - тип задачи (одна из констант Issue::TYPE_*),
+     *    desc: string - описание задачи в разметке Markdown
+     * ]
+     */
+    public function issueDraft($projectId, $text, $images)
+    {
+        $projectId = (int)$projectId;
+
+        try {
+            $project = $this->getProjectRequireReadPermission($projectId);
+
+            if (!IssueDraftBuilder::isAvailableFor($project)) {
+                return $this->error('Черновик задачи в этом проекте недоступен');
+            }
+
+            $result = IssueDraftBuilder::generate(
+                $project,
+                $text,
+                IssueDraftBuilder::parseImages(is_array($images) ? $images : [])
+            );
+
+            $draft = $result['draft'];
+            $this->add2Answer('name', $draft['name']);
+            $this->add2Answer('type', $draft['type']);
+            $this->add2Answer('desc', IssueDraftBuilder::toDescText($draft));
+        } catch (AiException $e) {
+            LPMLog::exception($e, LPMLog::CH_AI, ['projectId' => $projectId]);
+            return $this->error($e->getLocalizedMessage());
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
 }

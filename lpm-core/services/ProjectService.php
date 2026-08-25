@@ -493,6 +493,7 @@ class ProjectService extends LPMBaseService
         $gitlabProjectIds,
         $aiSummary,
         $aiTestChecklist,
+        $aiIssueDraft,
         $requireLabels
     ) {
         $projectId = (int)$projectId;
@@ -505,6 +506,7 @@ class ProjectService extends LPMBaseService
 
         if (($scrum !== 0 && $scrum !== 1) || ($aiSummary !== 0 && $aiSummary !== 1)
             || ($aiTestChecklist !== 0 && $aiTestChecklist !== 1)
+            || ($aiIssueDraft !== 0 && $aiIssueDraft !== 1)
             || ($requireLabels !== 0 && $requireLabels !== 1)
         ) {
             return $this->error('Неверные входные параметры');
@@ -513,6 +515,7 @@ class ProjectService extends LPMBaseService
         $scrum = (bool)$scrum;
         $aiSummary = (bool)$aiSummary;
         $aiTestChecklist = (bool)$aiTestChecklist;
+        $aiIssueDraft = (bool)$aiIssueDraft;
         $requireLabels = (bool)$requireLabels;
 
         // проверяем права пользователя
@@ -556,6 +559,7 @@ class ProjectService extends LPMBaseService
         if (!AiIntegration::getInstance()->isAvailable()) {
             $aiSummary = $project->aiSummary;
             $aiTestChecklist = $project->aiTestChecklist;
+            $aiIssueDraft = $project->aiIssueDraft;
         }
 
         // обновляем настройки только если они действительно изменились
@@ -565,6 +569,7 @@ class ProjectService extends LPMBaseService
             || $gitlabProjectIds !== $project->gitlabProjectIds
             || $aiSummary !== $project->aiSummary
             || $aiTestChecklist !== $project->aiTestChecklist
+            || $aiIssueDraft !== $project->aiIssueDraft
             || $requireLabels !== $project->requireLabels
         ) {
             $result = Project::updateProjectSettings(
@@ -575,6 +580,7 @@ class ProjectService extends LPMBaseService
                 $gitlabProjectIds,
                 $aiSummary,
                 $aiTestChecklist,
+                $aiIssueDraft,
                 $requireLabels
             );
 

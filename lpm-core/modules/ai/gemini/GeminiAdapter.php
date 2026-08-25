@@ -117,7 +117,7 @@ class GeminiAdapter implements AiAdapter
 
         LPMLog::debug('Запрос к Gemini', LPMLog::CH_AI, [
             'model' => $model,
-            'payload' => $payload,
+            'payload' => $this->redactPayload($payload),
         ]);
 
         $data = $this->send($model, $payload);
@@ -141,9 +141,25 @@ class GeminiAdapter implements AiAdapter
     {
         $contents = [];
         foreach ($request->getMessages() as $message) {
+            $parts = [];
+
+            $text = $message->getText();
+            if ($text !== '') {
+                $parts[] = ['text' => $text];
+            }
+
+            foreach ($message->getImages() as $image) {
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => $image->getMimeType(),
+                        'data' => $image->getBase64(),
+                    ],
+                ];
+            }
+
             $contents[] = [
                 'role' => $message->getRole() === AiMessage::ROLE_ASSISTANT ? 'model' : 'user',
-                'parts' => [['text' => $message->getText()]],
+                'parts' => $parts,
             ];
         }
 
@@ -177,6 +193,39 @@ class GeminiAdapter implements AiAdapter
         if (!empty($config)) {
             $payload['generationConfig'] = $config;
         }
+
+        return $payload;
+    }
+
+    /**
+     * Заменяет в теле запроса данные изображений на их тип и размер.
+     *
+     * Изображения передаются в base64 и занимают в разы больше места, чем
+     * весь остальной запрос, поэтому в отладочный лог уходит не содержимое,
+     * а только указание на то, что изображение было.
+     *
+     * @param array $payload Тело запроса.
+     * @return array Тело запроса, пригодное для записи в лог.
+     */
+    private function redactPayload(array $payload)
+    {
+        if (empty($payload['contents'])) {
+            return $payload;
+        }
+
+        foreach ($payload['contents'] as &$content) {
+            if (empty($content['parts'])) {
+                continue;
+            }
+
+            foreach ($content['parts'] as &$part) {
+                if (isset($part['inline_data']['data'])) {
+                    $part['inline_data']['data'] = '<' . strlen($part['inline_data']['data']) . ' байт base64>';
+                }
+            }
+            unset($part);
+        }
+        unset($content);
 
         return $payload;
     }
