@@ -40,9 +40,7 @@ class ApiPayloadSerializer
 
         $obj->files = [];
         foreach ($issue->getFiles() as $file) {
-            $item = $file->getClientObject();
-            $item->requiresAuthentication = true;
-            $obj->files[] = $item;
+            $obj->files[] = $this->file($file);
         }
 
         $obj->linked = [];
@@ -101,6 +99,21 @@ class ApiPayloadSerializer
     }
 
     /**
+     * Задача на скрам-доске: краткое представление задачи, дополненное
+     * состоянием её стикера и датой добавления на доску.
+     * @param ScrumSticker $sticker Стикер доски с загруженной задачей.
+     * @return array
+     */
+    public function boardIssue(ScrumSticker $sticker)
+    {
+        $item = $this->issueBrief($sticker->getIssue());
+        $item['stickerState'] = $sticker->state;
+        $item['addedToBoard'] = $sticker->added;
+
+        return $item;
+    }
+
+    /**
      * Метка (тег) задач с количеством использований.
      * @param array $label Данные метки, см. Project::getLabels().
      * @return array
@@ -135,6 +148,11 @@ class ApiPayloadSerializer
             }
         }
 
+        $files = [];
+        foreach ($comment->getFiles() as $file) {
+            $files[] = $this->file($file);
+        }
+
         return [
             'id' => $comment->id,
             'text' => $comment->text,
@@ -146,8 +164,20 @@ class ApiPayloadSerializer
             ],
             'type' => $type,
             'meta' => $meta,
+            'files' => $files,
             'url' => empty($comment->issue) ? null : $comment->getIssueCommentUrl($comment->issue),
         ];
+    }
+
+    /**
+     * Вложение задачи или комментария.
+     * @return stdClass
+     */
+    private function file(LPMFile $file)
+    {
+        $obj = $file->getClientObject();
+        $obj->requiresAuthentication = true;
+        return $obj;
     }
 
     public function project(Project $project)

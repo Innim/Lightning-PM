@@ -16,6 +16,18 @@ class ApiProjectController extends ApiControllerBase
         'support' => Issue::TYPE_SUPPORT,
     ];
 
+    /**
+     * Колонки скрам-доски в порядке их отображения:
+     * состояние стикера => машиночитаемый ключ и название колонки.
+     * @see ScrumStickerState
+     */
+    const BOARD_COLUMNS = [
+        ScrumStickerState::TODO => ['key' => 'todo', 'name' => 'TO DO'],
+        ScrumStickerState::IN_PROGRESS => ['key' => 'inProgress', 'name' => 'В работе'],
+        ScrumStickerState::TESTING => ['key' => 'testing', 'name' => 'Тестируется'],
+        ScrumStickerState::DONE => ['key' => 'done', 'name' => 'Готово'],
+    ];
+
     const ISSUES_DEFAULT_LIMIT = 50;
     const ISSUES_MAX_LIMIT = 200;
 
@@ -38,6 +50,10 @@ class ApiProjectController extends ApiControllerBase
 
         if (count($path) === 2 && $path[1] === 'issues') {
             return $this->listIssues($project);
+        }
+
+        if (count($path) === 2 && $path[1] === 'board') {
+            return $this->showBoard($project);
         }
 
         if (count($path) === 2 && $path[1] === 'labels') {
@@ -115,6 +131,53 @@ class ApiProjectController extends ApiControllerBase
                 'total' => Issue::countListByProjectFiltered($project->id, $filters),
             ],
         ]);
+    }
+
+    private function showBoard(Project $project)
+    {
+        if (!$project->scrum) {
+            return ApiResponse::error('Project has no scrum board', 400);
+        }
+
+        $stickersByState = ScrumSticker::splitByStates(ScrumSticker::loadBoard($project->id));
+
+        $columns = [];
+        foreach (self::BOARD_COLUMNS as $state => $column) {
+            $stickers = isset($stickersByState[$state]) ? $stickersByState[$state] : [];
+            $columns[] = [
+                'state' => $state,
+                'key' => $column['key'],
+                'name' => $column['name'],
+                'issues' => $this->serializeBoardColumn($state, $stickers),
+            ];
+        }
+
+        return ApiResponse::success([
+            'project' => $this->serializer()->project($project),
+            'columns' => $columns,
+        ]);
+    }
+
+    /**
+     * Сериализует стикеры одной колонки доски в том же порядке, в котором они
+     * показаны на доске: группы приоритета от большей к меньшей, внутри группы -
+     * порядок сортировки колонки.
+     * @param  int            $state    Состояние стикеров колонки.
+     * @param  ScrumSticker[] $stickers Стикеры колонки.
+     * @return array Список задач колонки.
+     */
+    private function serializeBoardColumn($state, array $stickers)
+    {
+        ScrumSticker::sortStickersForBoard($state, $stickers);
+
+        $issues = [];
+        foreach (ScrumSticker::splitByPriorityGroups($stickers) as $groupStickers) {
+            foreach ($groupStickers as $sticker) {
+                $issues[] = $this->serializer()->boardIssue($sticker);
+            }
+        }
+
+        return $issues;
     }
 
     private function listLabels(Project $project)

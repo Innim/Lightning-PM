@@ -100,6 +100,57 @@ The response is:
 
 Labels are sorted by popularity in this project: `uses` counts how many times the label was used here, `totalUses` counts uses across all projects. A label with `isCommon: true` is shared by all projects, otherwise it belongs to this one. Use `label` from the list as the `label` filter of the issues endpoint or as an `[label]` prefix when creating an issue.
 
+## Reading the scrum board
+
+List the issues placed on the scrum board of a project, grouped by board columns:
+
+```http
+GET /api/v1/projects/{projectId}/board
+```
+
+The project must be a scrum one, otherwise the request is rejected with `400`. The response is:
+
+```json
+{
+  "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "columns": [
+    {
+      "state": 1,
+      "key": "todo",
+      "name": "TO DO",
+      "issues": [
+        {
+          "id": 25240,
+          "idInProject": 933,
+          "name": "[api] Operations list glitches while a new one is added",
+          "url": "https://example.com/project/demo/issue/933",
+          "type": 0,
+          "status": 0,
+          "priority": 69,
+          "hours": 0.5,
+          "labels": ["api"],
+          "commentsCount": 4,
+          "createDate": 1751016664,
+          "modifiedDate": 0,
+          "completeDate": 0,
+          "completedDate": 0,
+          "author": {"id": 60, "name": "Ivan Petrov", "nick": "petrov"},
+          "stickerState": 1,
+          "addedToBoard": 1753777297
+        }
+      ]
+    },
+    {"state": 2, "key": "inProgress", "name": "В работе", "issues": []},
+    {"state": 3, "key": "testing", "name": "Тестируется", "issues": []},
+    {"state": 4, "key": "done", "name": "Готово", "issues": []}
+  ]
+}
+```
+
+All four columns are always present and come in board order: `todo`, `inProgress`, `testing`, `done`. A column carries its sticker `state` code, a machine-readable `key`, and the `name` shown in the web UI; an empty column has an empty `issues` list.
+
+Issues inside a column come in the same order as on the board. An item is the short issue payload of the issues endpoint plus two board fields: `stickerState` (equals the column `state`) and `addedToBoard` (unix timestamp of the moment the issue was put on the board). Issues in the backlog are not on the board and never appear here — use `GET /api/v1/projects/{projectId}/issues` for the whole project.
+
 ## Core workflow
 
 1. Resolve a pasted issue URL:
@@ -159,6 +210,26 @@ Content-Type: application/json
 
 Do not post routine progress comments such as branch creation or "implementation started". Use comments for handoff details, tester instructions, limitations, or clarifications that are not obvious from the issue itself.
 
+## Attachments
+
+Attachments live in two places of the issue payload: `files` holds the files attached to the issue itself, and `comments[].files` holds the files attached to that comment. Both use the same item shape, so one parser covers them:
+
+```json
+{
+  "fileId": 29,
+  "uid": "5VbGulWzO8XAZSrpiep7LOx2ZqZ5Ymph",
+  "name": "screenshot.jpg",
+  "mimeType": "image/jpeg",
+  "size": 21761,
+  "sizeFormatted": "21.3 Кб",
+  "created": 1781163460,
+  "url": "https://example.com/file/5VbGulWzO8XAZSrpiep7LOx2ZqZ5Ymph",
+  "requiresAuthentication": true
+}
+```
+
+An image attached to a comment arrives here as a regular file with an image `mimeType`; the separate `images` collection of the issue payload never contains comment attachments. `requiresAuthentication: true` means `url` needs the same auth header as any other API request.
+
 ## Creating an issue
 
 Create a new issue in a project:
@@ -195,8 +266,9 @@ The response returns the created issue payload (same shape as `GET /api/v1/issue
 - List projects available to the user.
 - List issues of a project with filters and paging.
 - List labels of a project with their popularity.
+- Read the scrum board of a project with its issues grouped by columns.
 - Read issue details by URL or issue id.
-- Read comments, images, and files.
+- Read comments, images, and files of the issue and of its comments.
 - List repositories and branches available to the user in GitLab integration.
 - Create an issue in a project.
 - Create a branch for an issue.

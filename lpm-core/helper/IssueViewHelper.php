@@ -40,6 +40,33 @@ class IssueViewHelper
     }
 
     /**
+     * Готовность задачи в тесте: влиты ли правки, которые её изменили.
+     *
+     * Определяется только для задач в тесте, по которым известно состояние MR.
+     * Пока задача ждёт правок (найдены проблемы) или уже отмечена прошедшей
+     * тестирование, состояние MR не показывается - у задачи есть отметка поважнее.
+     * @param  Issue $issue Задача.
+     * @return string Уровень: wait-merge (правки ещё не влиты) |
+     * ready (правки влиты, можно тестировать). Пустая строка, если показывать нечего.
+     */
+    public static function testMergeLevel(Issue $issue)
+    {
+        if (!$issue->isTesting() || $issue->isPassTest || $issue->isChangesRequested) {
+            return '';
+        }
+
+        switch ($issue->testMrState) {
+            case GitlabMergeRequest::STATE_OPENED:
+            case GitlabMergeRequest::STATE_LOCKED:
+                return 'wait-merge';
+            case GitlabMergeRequest::STATE_MERGED:
+                return 'ready';
+            default:
+                return '';
+        }
+    }
+
+    /**
      * Классы бейджа срока выполнения.
      * @param  string $level Уровень из deadlineLevel().
      * @return string Список CSS-классов.
@@ -74,6 +101,29 @@ class IssueViewHelper
             default:
                 return 'fa-regular fa-calendar-check';
         }
+    }
+
+    /**
+     * Подсказка о том, сколько осталось до срока выполнения задачи.
+     * @param  Issue $issue Задача.
+     * @return string Текст подсказки. Пустая строка, если срок не задан
+     * или задача уже завершена.
+     */
+    public static function deadlineHint(Issue $issue)
+    {
+        if (self::deadlineLevel($issue) === '') {
+            return '';
+        }
+
+        $days = (int)floor($issue->daysTillComplete());
+        if ($days < 0) {
+            return 'Просрочена на ' . abs($days) . ' дн.';
+        }
+        if ($days === 0) {
+            return 'Срок сегодня';
+        }
+
+        return 'Осталось ' . $days . ' дн.';
     }
 
     /**

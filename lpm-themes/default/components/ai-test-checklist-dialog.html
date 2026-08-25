@@ -1,0 +1,40 @@
+<?php
+/*
+Разметка диалога чек-листа тестирования. Показывается через lpm.dialog,
+который клонирует содержимое этого блока, поэтому сам блок скрыт.
+
+Требуются: переменные не нужны — разметка статична, данные подставляет JS
+(lpm-scripts/popups/ai-test-checklist.js).
+*/
+?>
+<div id="aiTestChecklistContent" style="display:none">
+    <?php /* Класс ai-test-checklist-body нужен JS: по нему находится
+             модальное окно, чтобы расширить его под текст чек-листа. */ ?>
+    <div class="ai-test-checklist-body">
+    <div class="ai-test-checklist-error alert alert-danger py-2" style="display:none" role="alert"></div>
+
+    <div class="ai-test-checklist-published alert alert-warning py-2" style="display:none" role="alert">
+        Чек-лист для этой задачи уже публиковался — новый добавится отдельным комментарием.
+    </div>
+
+    <div class="ai-test-checklist-intro">
+        <p class="mb-0">
+            ИИ прочитает описание задачи, обсуждение и связанные merge request&#39;ы
+            и составит черновик чек-листа для тестировщика. Черновик можно
+            отредактировать перед публикацией.
+        </p>
+    </div>
+
+    <div class="ai-test-checklist-draft" style="display:none">
+        <?php /* Подпись только для скринридера: над полем уже есть заголовок
+                 диалога, а первая строка черновика повторяет его ещё раз. */ ?>
+        <textarea id="aiTestChecklistText" class="form-control" rows="14"
+            aria-label="Черновик чек-листа"></textarea>
+        <div class="form-text">
+            Разметка Markdown. Текст публикуется комментарием как есть,
+            неопубликованный черновик будет потерян.
+        </div>
+    </div>
+
+    </div>
+</div>

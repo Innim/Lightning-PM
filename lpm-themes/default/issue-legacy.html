@@ -13,6 +13,8 @@
     $aiSummaryAvailable - доступен ли блок ИИ-сводки задачи
     $aiSummary - сохранённая ИИ-сводка (IssueSummary) или null, если её ещё нет
     $aiSummarySourceHash - слепок текущего состояния задачи
+    $aiTestChecklistAvailable - доступен ли для задачи чек-лист тестирования от ИИ
+    $aiTestChecklistPublished - публиковался ли чек-лист по задаче
 Необязательные:
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
@@ -189,7 +191,8 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <span class="label">Приоритет</span>
                 <span class="value">
                     <i class="fa-solid fa-angles-up align-middle" aria-hidden="true"></i>
-                    <span class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span>
+                    <span class="priority-val circle"
+                        data-value="<?=$issue->priority;?>"><?=$issue->getPriorityDisplayValue();?></span>
                     <?=$issue->getPriorityStr();?> (<?=($issue->getPriorityDisplayValue());?>)
                 </span>
                 <input type="hidden" name="priority" value="<?=$issue->priority;?>" />
@@ -385,6 +388,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     комментарии</a>
                 <a href="#" onclick="comments.showCommentForm(); return false;">Добавить комментарий</a>
                 <a href="#" class="request-changes-link text-danger" onclick="comments.showCommentForm(true); return false;"><i class="fas fa-bug changes-requested-check"></i> Найдены проблемы</a>
+                <?php if (!empty($aiTestChecklistAvailable)) lpm_print_ai_test_checklist_link($aiTestChecklistPublished); ?>
             </div>
         </div>
         <form id="addCommentForm" class="add-comment" onsubmit="issuePage.postComment(); return false;">
@@ -572,3 +576,5 @@ HTML;
   <div class="list-group mt-2 add-issue-link-results" style="display:none;"></div>
   <div class="form-text">По названию — поиск в текущем проекте; <code>#</code> и номер (<code>#12</code>) — точный поиск по номеру. Чтобы связать задачу из другого проекта, вставьте ссылку на неё.</div>
 </div>
+
+<?php if (!empty($aiTestChecklistAvailable)) lpm_print_ai_test_checklist_dialog(); ?>

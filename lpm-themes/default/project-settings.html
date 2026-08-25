@@ -2,7 +2,7 @@
 /*
  Требуются:
      $project - Проект
-     $aiSummaryAvailable - настроена ли интеграция с ИИ
+     $aiIntegrationAvailable - настроена ли интеграция с ИИ
 */
 ?>
 <div id="projectSettings" class="mx-auto container container-main px-4 py-4">
@@ -83,11 +83,20 @@
                     </div>
                 </div>
 
-                <?php if (!empty($aiSummaryAvailable)): ?>
+                <?php if (!empty($aiIntegrationAvailable)): ?>
                 <div class="form-check mb-3">
                     <input id="aiSummaryCheckbox" class="form-check-input" type="checkbox" <?=$project->aiSummary ? 'checked' : '' ?>>
                     <label class="form-check-label" for="aiSummaryCheckbox">ИИ-сводка задач</label>
                     <div class="form-text">Краткая сводка обсуждения задачи, которую можно собрать на её странице.</div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input id="aiTestChecklistCheckbox" class="form-check-input" type="checkbox" <?=$project->aiTestChecklist ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="aiTestChecklistCheckbox">Чек-лист тестирования от ИИ</label>
+                    <div class="form-text">
+                        Черновик чек-листа для тестировщика, который можно собрать у задачи на проверке
+                        и опубликовать комментарием.
+                    </div>
                 </div>
                 <?php endif; ?>
             </div>

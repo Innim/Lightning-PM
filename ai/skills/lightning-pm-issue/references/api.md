@@ -70,7 +70,7 @@ Use the payload to inspect:
 - issue description
 - comments
 - images
-- attached files
+- attached files, both of the issue (`files`) and of each comment (`comments[].files`)
 - project id
 - issue id
 - action URLs or repository hints if present
@@ -118,6 +118,20 @@ GET /api/v1/projects/{projectId}/labels
 ```
 
 The response is `{project, labels}`, where each label is `{id, label, uses, totalUses, isCommon}`, sorted by `uses` — how often the label is used in this project (`totalUses` counts all projects, `isCommon` marks labels shared between projects). Prefer existing labels over inventing new ones.
+
+## Reading the Scrum Board
+
+Read the scrum board of a project, e.g. to see what is in work right now and in which column:
+
+```http
+GET /api/v1/projects/{projectId}/board
+```
+
+The response is `{project, columns}`. Columns always come in board order — `todo`, `inProgress`, `testing`, `done` — and each one is `{state, key, name, issues}`, where `state` is the numeric sticker state (`1`, `2`, `3`, `4`) and `name` is the column title from the web UI. An empty column still comes with an empty `issues` list.
+
+Each item of `issues` is the short issue payload of the issues endpoint plus `stickerState` (same as the column `state`) and `addedToBoard` (unix timestamp of when the issue was put on the board). Issues come in the same order as on the board. Backlog issues have no sticker and are not returned here; use `GET /api/v1/projects/{projectId}/issues` to list all issues of the project.
+
+A non-scrum project is rejected with `400`, an unknown or inaccessible project with `404`.
 
 ## Creating an Issue
 
@@ -235,7 +249,7 @@ Attached files and images in the issue payload are served from protected URLs. D
 GET <file_url>
 ```
 
-`<file_url>` comes from the issue payload (e.g. inside `images` or `attachments` fields). Save the result to `/tmp/` to keep it isolated from the working tree.
+`<file_url>` comes from the issue payload: `images` for issue screenshots, `files` for files attached to the issue itself, and `comments[].files` for files attached to a comment. The two `files` collections share one item shape `{fileId, uid, name, mimeType, size, sizeFormatted, created, url, requiresAuthentication}`, so the same parser handles both. An image attached to a comment arrives there as a regular file with an image `mimeType` — it is never in `images`. Save the result to `/tmp/` to keep it isolated from the working tree.
 
 To save with a specific name, pass `--output` through the helper script:
 

@@ -19,7 +19,7 @@
                 <td><a href="<?=$issue->getConstURL();?>"><?=$issue->getIdInProject();?></a></td>
                 <td>
                     <nobr>
-                        <span class="priority-val circle"
+                        <span class="priority-val circle" data-value="<?=$issue->priority;?>"
                             title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->getPriorityDisplayValue();?>)">
                             <?=$issue->getPriorityDisplayValue();?></span><?=$issue->getType();?>
                     </nobr>

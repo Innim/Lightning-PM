@@ -407,6 +407,51 @@ class GitlabIntegration
     }
 
     /**
+     * Возвращает файлы, изменённые в merge request'е.
+     *
+     * Пути возвращаются, только если их не больше `$maxFiles`: у крупного MR
+     * список перестаёт что-либо говорить о сути изменений. Количество файлов
+     * возвращается всегда.
+     *
+     * @param  int|string $projectId      Идентификатор проекта на GitLab.
+     * @param  int        $mrInternalId   Внутренний идентификатор MR на GitLab.
+     * @param  int        $maxFiles       Порог, до которого возвращаются пути.
+     * @return array|null <code>['count' => int, 'files' => array<string>]</code>
+     * или null, если данные получить не удалось.
+     */
+    public function getMRChangedFiles($projectId, $mrInternalId, $maxFiles)
+    {
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $res = $client->mergeRequests()->changes($projectId, $mrInternalId);
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return null;
+        }
+
+        if (empty($res['changes']) || !is_array($res['changes'])) {
+            return ['count' => 0, 'files' => []];
+        }
+
+        $files = [];
+        foreach ($res['changes'] as $change) {
+            $path = empty($change['new_path']) ? ($change['old_path'] ?? '') : $change['new_path'];
+            if ($path !== '') {
+                $files[] = $path;
+            }
+        }
+
+        return [
+            'count' => count($files),
+            'files' => count($files) > $maxFiles ? [] : $files,
+        ];
+    }
+
+    /**
      * Получает информацию о последнем пайплайне для проекта.
      * @param int|string $projectId Идентификатор проекта на GitLab.
      * @param string $ref Ветка или тег, для которого нужно получить пайплайн.

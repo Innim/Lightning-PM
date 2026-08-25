@@ -115,6 +115,17 @@ abstract class DbMigration
     }
 
     /**
+     * Существует ли индекс в таблице текущей базы.
+     * @param string $table Имя таблицы с префиксом — см. t().
+     * @param string $index Имя индекса.
+     * @return bool
+     */
+    protected function indexExists($table, $index)
+    {
+        return DbMigrator::indexExists($this->_db, $table, $index);
+    }
+
+    /**
      * Выполняет один SQL-запрос.
      * @param string $sql Запрос; пустая строка игнорируется.
      * @throws DbMigrationException Если запрос завершился ошибкой.

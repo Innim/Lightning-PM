@@ -84,6 +84,14 @@ class IssueComment extends LPMBaseObject
     }
 
     /**
+     * Определяет, является ли комментарий чек-листом тестирования.
+     * @return bool
+     */
+    public function isTestChecklist() {
+        return $this->type == IssueCommentType::TEST_CHECKLIST;
+    }
+
+    /**
      * Определяет, является ли комментарий информацией о создании ветки.
      * @return bool
      */
