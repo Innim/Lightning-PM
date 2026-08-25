@@ -83,7 +83,13 @@
                     </div>
                 </div>
 
-                <?php if (!empty($aiIntegrationAvailable)): ?>
+            </div>
+        </div>
+
+        <?php if (!empty($aiIntegrationAvailable)): ?>
+        <div class="card my-3">
+            <div class="card-header">Возможности ИИ</div>
+            <div class="card-body">
                 <div class="form-check mb-3">
                     <input id="aiSummaryCheckbox" class="form-check-input" type="checkbox" <?=$project->aiSummary ? 'checked' : '' ?>>
                     <label class="form-check-label" for="aiSummaryCheckbox">ИИ-сводка задач</label>
@@ -98,9 +104,18 @@
                         и опубликовать комментарием.
                     </div>
                 </div>
-                <?php endif; ?>
+
+                <div class="form-check mb-0">
+                    <input id="aiIssueDraftCheckbox" class="form-check-input" type="checkbox" <?=$project->aiIssueDraft ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="aiIssueDraftCheckbox">Черновик задачи от ИИ</label>
+                    <div class="form-text">
+                        В форме создания задачи можно собрать черновик названия, типа
+                        и описания по свободному тексту и скриншотам.
+                    </div>
+                </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="d-flex justify-content-end gap-2 mt-2">
             <button class="btn btn-secondary" type="reset">Сбросить</button>

@@ -67,12 +67,14 @@ class AiRequest
 
     /**
      * Добавляет сообщение пользователя в конец диалога.
-     * @param string $text Текст сообщения.
+     * @param string $text Текст сообщения; может быть пустым,
+     * если передано хотя бы одно изображение.
+     * @param AiImage[] $images Изображения, прилагаемые к сообщению.
      * @return AiRequest
      */
-    public function addUserMessage($text)
+    public function addUserMessage($text, array $images = [])
     {
-        return $this->addMessage(AiMessage::user($text));
+        return $this->addMessage(AiMessage::user($text, $images));
     }
 
     /**
@@ -93,6 +95,22 @@ class AiRequest
     public function getMessages()
     {
         return $this->_messages;
+    }
+
+    /**
+     * Есть ли в запросе изображения — т.е. требуется ли от модели
+     * умение их читать.
+     * @return bool
+     */
+    public function hasImages()
+    {
+        foreach ($this->_messages as $message) {
+            if ($message->hasImages()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

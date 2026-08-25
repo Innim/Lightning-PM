@@ -74,6 +74,7 @@ class Project extends MembersInstance
         $gitlabProjectIds,
         $aiSummary,
         $aiTestChecklist,
+        $aiIssueDraft,
         $requireLabels
     )
     {
@@ -88,6 +89,7 @@ class Project extends MembersInstance
                 'gitlabProjectIds' => $gitlabProjectIds,
                 'aiSummary' => $aiSummary,
                 'aiTestChecklist' => $aiTestChecklist,
+                'aiIssueDraft' => $aiIssueDraft,
                 'requireLabels' => $requireLabels,
             ],
             'WHERE' => [
@@ -424,6 +426,12 @@ SQL;
     public $aiTestChecklist = false;
 
     /**
+     * В проекте доступен черновик задачи, составляемый ИИ.
+     * @var Boolean
+     */
+    public $aiIssueDraft = false;
+
+    /**
      * Задачи проекта должны иметь хотя бы один тег.
      * @var Boolean
      */
@@ -519,6 +527,7 @@ SQL;
             'fixedInstance',
             'aiSummary',
             'aiTestChecklist',
+            'aiIssueDraft',
             'requireLabels'
         );
 

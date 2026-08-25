@@ -8,13 +8,28 @@
 */
 
 $descMaxLen = Issue::DESC_MAX_LEN;
-$isHidden = !empty($isHidden)
+$isHidden = !empty($isHidden);
+$aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
 ?>
 <article id="issueForm" class="container-legacy" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>"
     data-require-labels="<?=(int)$project->requireLabels;?>">
     <h3></h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <form class="row g-3" method="post" enctype="multipart/form-data">
+
+        <?php if ($aiDraftAvailable): ?>
+        <?php /* Класс ai-issue-draft-row нужен JS: строка скрывается
+                 при редактировании задачи (issue-form.js). */ ?>
+        <div class="col-12 ai-issue-draft-row d-flex align-items-center flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary"
+                onclick="issueForm.showDraftDialog()">
+                <i class="fa-solid fa-wand-magic-sparkles me-1" aria-hidden="true"></i>Собрать черновик
+            </button>
+            <span class="form-text mt-0">
+                ИИ предложит название, тип и описание по свободному тексту и скриншотам.
+            </span>
+        </div>
+        <?php endif; ?>
 
         <div class="col-12 input-group">
             <input type="text" class="form-control" id="issueNameInput" name="name" placeholder="Название задачи*"
@@ -445,6 +460,41 @@ $isHidden = !empty($isHidden)
         </div>
     </div>
     <?php endif;?>
+
+    <?php if ($aiDraftAvailable): ?>
+    <?php /* Разметка диалога черновика задачи. Показывается через lpm.dialog,
+             который клонирует содержимое этого блока, поэтому сам блок скрыт
+             и остаётся в DOM: id внутри него дублируются, и JS ищет поля
+             только внутри открытого окна (issue-form.js). */ ?>
+    <?php /* Лимиты читает JS с этого блока: в клон диалога попадает только
+             innerHTML, поэтому атрибуты берутся с самого шаблона. */ ?>
+    <div id="aiIssueDraftContent" style="display:none"
+        data-max-images="<?=IssueDraftBuilder::MAX_IMAGES;?>"
+        data-max-total-size-mb="<?=IssueDraftBuilder::MAX_IMAGES_TOTAL_SIZE_MB;?>">
+        <div class="ai-issue-draft-body">
+            <div class="ai-issue-draft-error alert alert-danger py-2" style="display:none" role="alert"></div>
+
+            <div class="ai-issue-draft-overwrite alert alert-warning py-2" style="display:none" role="alert">
+                Название, тип и описание в форме будут заменены черновиком.
+            </div>
+
+            <textarea id="aiIssueDraftText" class="form-control" rows="8"
+                placeholder="Опишите проблему или задачу своими словами"
+                aria-label="Свободное описание задачи"></textarea>
+
+            <div class="mt-3">
+                <label for="aiIssueDraftImages" class="form-label">Скриншоты</label>
+                <input type="file" class="form-control" id="aiIssueDraftImages" accept="image/*" multiple>
+                <div class="form-text">
+                    До <?=IssueDraftBuilder::MAX_IMAGES;?> изображений, суммарно
+                    до <?=IssueDraftBuilder::MAX_IMAGES_TOTAL_SIZE_MB;?> Мб.
+                    Скриншот можно вставить из буфера обмена.
+                </div>
+                <ul class="ai-issue-draft-previews list-unstyled d-flex flex-wrap gap-2 mt-2 mb-0"></ul>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div id="issueFormTemplates" style="display:none">
         <li class="image-item my-2 position-relative">
