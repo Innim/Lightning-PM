@@ -191,7 +191,8 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <span class="label">Приоритет</span>
                 <span class="value">
                     <i class="fa-solid fa-angles-up align-middle" aria-hidden="true"></i>
-                    <span class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span>
+                    <span class="priority-val circle"
+                        data-value="<?=$issue->priority;?>"><?=$issue->getPriorityDisplayValue();?></span>
                     <?=$issue->getPriorityStr();?> (<?=($issue->getPriorityDisplayValue());?>)
                 </span>
                 <input type="hidden" name="priority" value="<?=$issue->priority;?>" />

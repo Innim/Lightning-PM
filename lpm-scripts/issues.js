@@ -671,12 +671,25 @@ issuePage.updatePriorityVals = function () {
     issuePage.setPriorityVal($('input[type=range]#priority').val());
     //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
     $('.priority-val.circle').each(function (i) {
-        issuePage.updatePriorityVal($(this), parseInt($(this).text()));
+        issuePage.updatePriorityVal($(this), parseInt($(this).data('value')));
         $(this).text('');
     });
 };
-issuePage.updatePriorityVal = function ($el, value) {
-    $el.css('backgroundColor', issuePage.getPriorityColor(value));
+
+/**
+ * Обновляет кружок приоритета: цвет фона и значение, которое показывается
+ * внутри кружка в режиме сортировки по приоритету.
+ * @param {jQuery} $el
+ * @param {Number} priority приоритет задачи (0..99)
+ */
+issuePage.updatePriorityVal = function ($el, priority) {
+    $el.css({
+        backgroundColor: issuePage.getPriorityColor(priority),
+        color: issuePage.getPriorityTextColor(priority)
+    });
+    // Значение выводится из атрибута средствами CSS: внутри кружка оно должно
+    // появляться только в режиме сортировки по приоритету.
+    $el.attr('data-value-label', Issue.getPriorityDisplayVal(priority));
 }
 
 issuePage.setPriorityVal = function (value) {
@@ -706,7 +719,12 @@ issuePage.downPriorityVal = function () {
     };
 }
 
-issuePage.getPriorityColor = function (val) {
+/**
+ * Составляющие цвета приоритета по шкале синий - голубой - зелёный - жёлтый - красный.
+ * @param {Number} val
+ * @returns {Number[]} [r, g, b]
+ */
+issuePage.getPriorityRgb = function (val) {
     var v = Math.floor(val % 25 / 25 * 255);
     var r = 0;
     var g = 0;
@@ -724,7 +742,25 @@ issuePage.getPriorityColor = function (val) {
         r = 255;
         g = 255 - v;
     }
-    return 'rgba( ' + r + ', ' + g + ', ' + b + ', 0.8 )';
+    return [r, g, b];
+};
+
+issuePage.getPriorityColor = function (val) {
+    var rgb = issuePage.getPriorityRgb(val);
+    return 'rgba( ' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + ', 0.8 )';
+};
+
+/**
+ * Цвет значения приоритета, читаемый на кружке этого приоритета:
+ * на тёмном фоне (низкий приоритет и самый высокий) - белый, иначе чёрный.
+ * @param {Number} val
+ * @returns {String}
+ */
+issuePage.getPriorityTextColor = function (val) {
+    var rgb = issuePage.getPriorityRgb(val);
+    // Фон полупрозрачный, поэтому яркость считается для цвета, смешанного с белым фоном.
+    var luma = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+    return luma * 0.8 + 255 * 0.2 < 140 ? '#ffffff' : '#000000';
 };
 
 issuePage.updateStat = function () {
@@ -1796,7 +1832,7 @@ issuePage.sortIssues = function (sortKey) {
     var $body = $('#issuesList > tbody');
     $body.append(issuePage.getDefaultIssues($body).slice()
         .sort(issuePage.sortComparators[sortKey]));
-    issuePage.updateSortMenu(sortKey);
+    issuePage.applySortView(sortKey);
 };
 
 issuePage.sortDefault = function () {
@@ -1807,7 +1843,16 @@ issuePage.sortDefault = function () {
         // переставляет строку), поэтому он запоминается заново при следующей сортировке.
         window.defaultIssues = undefined;
     }
-    issuePage.updateSortMenu('');
+    issuePage.applySortView('');
+};
+
+/**
+ * Настраивает вид списка под выбранный режим сортировки: отмечает его в меню
+ * и при сортировке по приоритету показывает его значение в кружке каждой задачи.
+ */
+issuePage.applySortView = function (sortKey) {
+    $('#issuesList').toggleClass('show-priority-values', sortKey === 'test-priority');
+    issuePage.updateSortMenu(sortKey);
 };
 
 // Отмечает выбранный режим в меню сортировки. В заголовок кнопки режим
@@ -2019,10 +2064,10 @@ function Issue(obj) {
 
     this.getPriority = function () {
         var val = Issue.getPriorityDisplayVal(this.priority);
-        // В кружок кладётся отображаемое значение: updatePriorityVals() красит
-        // по нему фон и очищает текст, оставляя цветную точку
+        // Текст кружка очищает updatePriorityVals(), оставляя цветную точку;
+        // цвет и значение внутри кружка берутся из data-value
         return '<i class="fa-solid fa-angles-up me-1 align-middle" aria-hidden="true"></i>' +
-            '<span class="priority-val circle">' + val + '</span>' +
+            '<span class="priority-val circle" data-value="' + this.priority + '">' + val + '</span>' +
             Issue.getPriorityStr(this.priority) + ' (' + val + ')';
     };
 

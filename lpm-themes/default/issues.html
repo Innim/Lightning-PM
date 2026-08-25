@@ -80,16 +80,17 @@ $userId = lpm_get_user()->userId;
 			<td>
 				<div class="priority-title-owner" title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->getPriorityDisplayValue();?>)">
 					<nobr>
-						<span href="#" class="priority-val circle" data-value="<?=$issue->priority;?>">
-							<?=$issue->getPriorityDisplayValue();?></span><?=$issue->getType();?>
+						<?php /* Обёртка задаёт точку отсчёта для стрелок: они центрируются
+						         по кружку, ширина которого зависит от режима сортировки */ ?>
+						<span class="priority-val-box"><span href="#" class="priority-val circle"
+								data-value="<?=$issue->priority;?>"><?=$issue->getPriorityDisplayValue();?></span><?php
+							if (!$issue->isCompleted()): ?><span class="priority-change-bar"><i
+									class="fas fa-caret-up priority-control priority-up"
+									onclick="issuePage.changePriority(event);"></i><i
+									class="fas fa-caret-down priority-control priority-down"
+									onclick="issuePage.changePriority(event);"></i></span><?php
+							endif;?></span><?=$issue->getType();?>
 					</nobr>
-					<?php if (!$issue->isCompleted()): ?>
-					<span class="priority-change-bar" class="display:block;"><i
-							class="fas fa-caret-up priority-control priority-up"
-							onclick="issuePage.changePriority(event);"></i><i
-							class="fas fa-caret-down priority-control priority-down"
-							onclick="issuePage.changePriority(event);"></i></span>
-					<?php endif;?>
 				</div>
 			</td>
 			<td>

@@ -296,6 +296,25 @@ fieldset > ol.members-list {
     /* margin-top: 5px;
     margin-left: -1px; */
 }
+
+/* Значение приоритета внутри кружка. Само значение хранится в data-value-label,
+   его проставляет issues.js вместе с цветом кружка. */
+table.issues-list.show-priority-values .priority-val.circle {
+    width: auto;
+    min-width: 7px;
+    height: auto;
+    padding: 1px 4px;
+    font-size: 10px;
+    line-height: 11px;
+    font-weight: 600;
+    text-align: center;
+}
+table.issues-list.show-priority-values .priority-val.circle::after {
+    content: attr(data-value-label);
+}
+table.issues-list.show-priority-values tr.completed-issue .priority-val {
+    opacity: 0.5;
+}
 button.remove-btn,
 a.remove-btn {
 	width              : 16px;
@@ -742,13 +761,26 @@ table.issues-list td .on-board-state {
 	font-size: 12px;
 	color: #333333;
 }
+table.issues-list td .priority-val-box {
+	position: relative;
+	display: inline-block;
+	margin-right: 5px;
+}
+table.issues-list td .priority-val-box .priority-val.circle {
+	margin-right: 0;
+}
+/* Стрелки центрируются по кружку приоритета: его ширина зависит от того,
+   показано ли внутри значение приоритета. */
 table.issues-list td .priority-change-bar {
 	position: absolute;
-	left: 4px;
+	left: 50%;
 	top: 50%;
 	width: 14px;
 	height: 38px;
-	margin-top: -17px;
+	/* Половина ширины и высоты полосы - так её центр совпадает с центром кружка */
+	margin: -19px 0 0 -7px;
+	line-height: 1;
+	text-align: center;
 	color: #cecece;
 	font-size: 13px;
 }
@@ -757,6 +789,9 @@ table.issues-list td .priority-change-bar:hover {
 }
 table.issues-list td .priority-change-bar .priority-control {
 	position: absolute;
+	/* Ширину иконке задаёт FontAwesome, поэтому центрируем сдвигом, а не left/right */
+	left: 50%;
+	transform: translateX(-50%);
 	cursor: pointer;
 }
 table.issues-list td .priority-change-bar .priority-up {

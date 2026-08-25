@@ -193,7 +193,8 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                          и иконка без него встаёт выше кружка и центра бейджа */ ?>
                 <span class="badge bg-white text-dark border" data-field="priority"><i
                         class="fa-solid fa-angles-up me-1 align-middle" aria-hidden="true"></i><span
-                        class="priority-val circle"><?=$issue->getPriorityDisplayValue();?></span><?=$issue->getPriorityStr();?>
+                        class="priority-val circle"
+                        data-value="<?=$issue->priority;?>"><?=$issue->getPriorityDisplayValue();?></span><?=$issue->getPriorityStr();?>
                     (<?=$issue->getPriorityDisplayValue();?>)</span>
                 <?php if ($issue->hours > 0): ?>
                 <span class="badge bg-white text-dark border issues-hours-box"><span
