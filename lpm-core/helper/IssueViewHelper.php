@@ -127,12 +127,37 @@ class IssueViewHelper
     }
 
     /**
+     * Отображаемое название статуса задачи.
+     * @param  int $status    Статус задачи.
+     * @param  int $substatus Уточнение статуса (@see IssueSubstatus).
+     * @return string Название подстатуса, если он есть, иначе название статуса.
+     */
+    public static function statusLabel($status, $substatus = IssueSubstatus::NONE)
+    {
+        $name = IssueSubstatus::getName($substatus);
+        return $name === '' ? Issue::getStatusName($status) : $name;
+    }
+
+    /**
      * Классы бейджа статуса задачи.
-     * @param  int $status Статус задачи.
+     *
+     * Подстатус задаёт своё оформление: он уточняет статус «В работе»
+     * и показывается вместо него.
+     * @param  int $status    Статус задачи.
+     * @param  int $substatus Уточнение статуса (@see IssueSubstatus).
      * @return string Список CSS-классов.
      */
-    public static function statusBadgeClass($status)
+    public static function statusBadgeClass($status, $substatus = IssueSubstatus::NONE)
     {
+        switch ((int)$substatus) {
+            case IssueSubstatus::BACKLOG:
+                return 'bg-secondary';
+            case IssueSubstatus::TODO:
+                return 'bg-info text-dark';
+            case IssueSubstatus::IN_PROGRESS:
+                return 'bg-primary';
+        }
+
         switch ((int)$status) {
             case Issue::STATUS_WAIT:
                 return 'bg-warning text-dark';
@@ -146,6 +171,9 @@ class IssueViewHelper
     /**
      * Класс состояния задачи. Определяет, какие даты и кнопки видны
      * на странице задачи.
+     *
+     * Подстатус на состояние не влияет: набор доступных действий
+     * задаёт только статус задачи.
      * @param  int $status Статус задачи.
      * @return string CSS-класс.
      */
