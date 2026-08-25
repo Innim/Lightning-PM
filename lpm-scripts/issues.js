@@ -1768,25 +1768,43 @@ issuePage.testActivity = function ($row) {
 };
 
 /**
- * Сортирует список задач заданным режимом.
- * Порядок по умолчанию запоминается, чтобы к нему можно было вернуться,
- * и любая сортировка выполняется именно от него.
+ * Возвращает строки списка задач в порядке по умолчанию, запоминая его
+ * при первом обращении, чтобы к нему можно было вернуться и чтобы любая
+ * сортировка выполнялась именно от него.
+ * Запоминаются сами строки, а не их разметка: состояние строки меняется
+ * на месте (цвет кружка приоритета, скрытие фильтром), и снимок разметки
+ * это состояние терял бы. Удалённые со страницы строки отбрасываются.
+ * @param {jQuery} $body тело таблицы списка задач
+ * @returns {Element[]}
  */
-issuePage.sortIssues = function (sortKey) {
-    var table = $('#issuesList');
+issuePage.getDefaultIssues = function ($body) {
     if (window.defaultIssues === undefined) {
-        window.defaultIssues = table.html();
+        window.defaultIssues = $body.children('tr').get();
     } else {
-        table.html(window.defaultIssues);
+        window.defaultIssues = window.defaultIssues.filter(function (row) {
+            return $.contains(document.documentElement, row);
+        });
     }
 
-    table.find('tr:not(:first)').sort(issuePage.sortComparators[sortKey]).appendTo(table);
+    return window.defaultIssues;
+};
+
+/**
+ * Сортирует список задач заданным режимом.
+ */
+issuePage.sortIssues = function (sortKey) {
+    var $body = $('#issuesList > tbody');
+    $body.append(issuePage.getDefaultIssues($body).slice()
+        .sort(issuePage.sortComparators[sortKey]));
     issuePage.updateSortMenu(sortKey);
 };
 
 issuePage.sortDefault = function () {
     if (window.defaultIssues !== undefined) {
-        $('#issuesList').html(window.defaultIssues);
+        var $body = $('#issuesList > tbody');
+        $body.append(issuePage.getDefaultIssues($body));
+        // Порядок по умолчанию меняется прямо на странице (изменение приоритета
+        // переставляет строку), поэтому он запоминается заново при следующей сортировке.
         window.defaultIssues = undefined;
     }
     issuePage.updateSortMenu('');
