@@ -12,6 +12,7 @@ Use the authenticated API instead of scraping HTML.
 - Add comment: `POST /api/v1/issues/{issueId}/comments`
 - List project issues: `GET /api/v1/projects/{projectId}/issues` (filters: `status`, `type`, `label`, `search`, `limit`, `offset`)
 - List project labels (tags): `GET /api/v1/projects/{projectId}/labels` (sorted by usage in this project)
+- Read project scrum board: `GET /api/v1/projects/{projectId}/board` (issues grouped by columns `todo`, `inProgress`, `testing`, `done`, in board order; `400` for a non-scrum project)
 - List repositories: `GET /api/v1/projects/{projectId}/repositories`
 - List branches: `GET /api/v1/projects/{projectId}/repositories/{repositoryId}/branches`
 - Create branch: `POST /api/v1/issues/{issueId}/branches`

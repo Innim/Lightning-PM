@@ -119,6 +119,20 @@ GET /api/v1/projects/{projectId}/labels
 
 The response is `{project, labels}`, where each label is `{id, label, uses, totalUses, isCommon}`, sorted by `uses` — how often the label is used in this project (`totalUses` counts all projects, `isCommon` marks labels shared between projects). Prefer existing labels over inventing new ones.
 
+## Reading the Scrum Board
+
+Read the scrum board of a project, e.g. to see what is in work right now and in which column:
+
+```http
+GET /api/v1/projects/{projectId}/board
+```
+
+The response is `{project, columns}`. Columns always come in board order — `todo`, `inProgress`, `testing`, `done` — and each one is `{state, key, name, issues}`, where `state` is the numeric sticker state (`1`, `2`, `3`, `4`) and `name` is the column title from the web UI. An empty column still comes with an empty `issues` list.
+
+Each item of `issues` is the short issue payload of the issues endpoint plus `stickerState` (same as the column `state`) and `addedToBoard` (unix timestamp of when the issue was put on the board). Issues come in the same order as on the board. Backlog issues have no sticker and are not returned here; use `GET /api/v1/projects/{projectId}/issues` to list all issues of the project.
+
+A non-scrum project is rejected with `400`, an unknown or inaccessible project with `404`.
+
 ## Creating an Issue
 
 Create a new issue in a project when the user asks to open/file a task rather than implement an existing one:
