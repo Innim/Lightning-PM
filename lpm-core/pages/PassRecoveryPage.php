@@ -30,7 +30,11 @@ class PassRecoveryPage extends LPMPage
             return false;
         }
            
-        if (!empty($_POST)) {
+        if (!empty($_POST) && !CsrfToken::check()) {
+            $this->_engine->addError(
+                'Страница устарела. Запросите письмо заново или откройте ссылку из письма ещё раз'
+            );
+        } elseif (!empty($_POST)) {
             foreach ($_POST as $key => $value) {
                 $_POST[$key] = is_string($value) ? trim($value) : $value;
             }
@@ -61,10 +65,16 @@ class PassRecoveryPage extends LPMPage
             } else {
                 $this->_engine->addError('Некорректная ссылка');
             }
-        } else {
+        }
+
+        // Ветка, не выбравшая что показывать (протухший токен, неверная ссылка,
+        // некорректные данные), всё равно должна оставить пользователю форму:
+        // шаблон рисует тело по getShow(), иначе он увидит пустую карточку
+        // и не сможет ничего сделать, кроме как уйти со страницы.
+        if (empty($this->_show)) {
             $this->_show = 'emailForm';
         }
-        
+
         return $this;
     }
     

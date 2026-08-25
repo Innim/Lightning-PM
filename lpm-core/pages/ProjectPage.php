@@ -174,7 +174,20 @@ class ProjectPage extends LPMPage
         
         // проверяем, не добавили ли задачу или может отредактировали
         if (isset($_POST['actionType'])) {
-            if ($_POST['actionType'] == 'addIssue') {
+            if (!CsrfToken::check()) {
+                // Токен живёт вместе с сессией, а задачу пишут и дольше, чем
+                // она держится без запросов. Если форма пришла с нашей же
+                // страницы - возвращаем введённое, чтобы отправить его заново
+                // (в форме уже новый токен), иначе текст задачи просто пропал бы.
+                if (CsrfToken::isSameOrigin()) {
+                    $this->_issueInput = ['data' => $_POST];
+                    $this->_engine->addError(
+                        'Страница устарела, задача не сохранена. Проверьте данные и отправьте форму ещё раз'
+                    );
+                } else {
+                    $this->_engine->addError('Страница устарела. Обновите её и повторите действие');
+                }
+            } elseif ($_POST['actionType'] == 'addIssue') {
                 $this->handleFormAction();
             } elseif ($_POST['actionType'] == 'editIssue' && isset($_POST['issueId'])) {
                 $this->handleFormAction(true);

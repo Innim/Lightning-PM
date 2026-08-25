@@ -39,7 +39,7 @@ class PagesManager
             new ChangelogPage()
         );
         
-        $this->addLink2UserMenu('Выход', ProfilePage::SUID_EXIT);
+        $this->addLink2UserMenu('Выход', ProfilePage::SUID_EXIT, true);
     }
     
     /**
@@ -112,11 +112,16 @@ class PagesManager
         return $this->_defaultPage;
     }
     
-    private function addLink2UserMenu($label, $suid)
+    /**
+     * @param string $label    Подпись пункта.
+     * @param string $suid     Идентификатор подстраницы профиля.
+     * @param bool   $isAction Пункт меняет состояние - отправляется формой.
+     */
+    private function addLink2UserMenu($label, $suid, $isAction = false)
     {
-        array_push(
-            $this->_userMenu,
-            new Link($label, Link::getUrlByUid('profile', $suid))
-        );
+        $link = new Link($label, Link::getUrlByUid('profile', $suid));
+        $link->isAction = $isAction;
+
+        array_push($this->_userMenu, $link);
     }
 }

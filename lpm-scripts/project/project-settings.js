@@ -77,6 +77,7 @@ $(function () {
         // оставляет текущие значения настроек.
         const aiSummary = $('#aiSummaryCheckbox').prop('checked') ? 1 : 0;
         const aiTestChecklist = $('#aiTestChecklistCheckbox').prop('checked') ? 1 : 0;
+        const aiIssueDraft = $('#aiIssueDraftCheckbox').prop('checked') ? 1 : 0;
         const requireLabels = $('#requireLabelsCheckbox').prop('checked') ? 1 : 0;
 
         const gitlabProjectIds = $('#gitlabProjectIds').val();
@@ -99,6 +100,7 @@ $(function () {
             gitlabProjectIds,
             aiSummary,
             aiTestChecklist,
+            aiIssueDraft,
             requireLabels,
             function (res) {
                 if (!res.success) {

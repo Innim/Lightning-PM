@@ -54,10 +54,16 @@ class Link
     
     public $href;
     public $label;
-    
+    /**
+     * Пункт меняет состояние (например, выход из аккаунта), поэтому
+     * отправляется формой, а не открывается ссылкой.
+     * @var bool
+     */
+    public $isAction = false;
+
     private $_reqRole;
     private $_isCurrent = false;
-    
+
     public function __construct($label = '', $href = '', $reqRole = -1)
     {
         $this->href     = $href;

@@ -34,6 +34,7 @@
 			<div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
 
 			<form onsubmit="return validateAddProj();" method="post">
+				<?php lpm_print_csrf_field(); ?>
 				<div class="mb-3">
 				<label for="projectNameInput" class="form-label">Название проекта</label>
 				<input id="projectNameInput" type="text" name="name" class="form-control" maxlength="255" required="required" value="<?php lpm_print_post_var('name');?>">

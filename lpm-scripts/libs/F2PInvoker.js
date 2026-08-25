@@ -266,7 +266,13 @@ var F2PInvoker = ru.vbinc.net.F2PInvoker = function( gateway, defaultPackage, us
             
             xhr.open( 'POST', url, true );
             xhr.setRequestHeader( 'Content-Type', /*'text/plain' );//*/'application/x-www-form-urlencoded' );
-            xhr.send( params );                        
+
+            for (var headerName in F2PInvoker.defaultHeaders) {
+                if (Object.prototype.hasOwnProperty.call( F2PInvoker.defaultHeaders, headerName ))
+                    xhr.setRequestHeader( headerName, F2PInvoker.defaultHeaders[headerName] );
+            }
+
+            xhr.send( params );
         }
     };
     
@@ -325,3 +331,10 @@ var F2PInvoker = ru.vbinc.net.F2PInvoker = function( gateway, defaultPackage, us
         sendRequest();
     };
 };
+
+/**
+ * Заголовки, добавляемые к каждому запросу всех экземпляров.
+ * Задаются приложением один раз - см. lightning.js
+ * @type Object
+ */
+F2PInvoker.defaultHeaders = {};
