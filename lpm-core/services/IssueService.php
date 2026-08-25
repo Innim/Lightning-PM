@@ -51,6 +51,7 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $this->addSubstatus2Answer($issue->id);
     
         return $this->answer();
     }
@@ -78,6 +79,7 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $this->addSubstatus2Answer($issue->id);
     
         return $this->answer();
     }
@@ -100,6 +102,7 @@ class IssueService extends LPMBaseService
         }
         
         $this->add2Answer('issue', $this->getIssue4Client($issue, true, $loadLinked));
+        $this->addSubstatus2Answer($issue->id);
         return $this->answer();
     }
 
@@ -122,6 +125,7 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $this->addSubstatus2Answer($issue->id);
         return $this->answer();
     }
     
@@ -698,6 +702,8 @@ class IssueService extends LPMBaseService
             if (!ScrumSticker::putStickerOnBoard($issue)) {
                 return $this->errorDBSave();
             }
+
+            $this->addSubstatus2Answer($issue->id);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -1198,6 +1204,8 @@ class IssueService extends LPMBaseService
                 // обновляем счетчик комментариев для задачи
                 Issue::updateCommentsCounter($comment->instanceId);
 
+                $this->addSubstatus2Answer($comment->instanceId);
+
                 // Если это коммент о создании ветки — удаляем связь и опционально саму ветку
                 if (!empty($comment->issueComment) && $comment->issueComment->isCreateBranch()) {
                     $data = $comment->issueComment->getCreateBranchData();
@@ -1248,6 +1256,23 @@ class IssueService extends LPMBaseService
         );
     }
 
+    /**
+     * Добавляет в ответ актуальное уточнение статуса задачи (@see IssueSubstatus).
+     *
+     * Задача перечитывается: подстатус выводится из комментариев задачи и её
+     * стикера на доске, а в объекте, с которым работал вызывающий метод, эти
+     * данные остались на момент загрузки - до только что внесённых изменений.
+     * Поэтому вызывать нужно последним, когда все изменения уже сохранены.
+     * @param int $issueId Идентификатор задачи.
+     */
+    private function addSubstatus2Answer($issueId)
+    {
+        $issue = Issue::load((float)$issueId);
+        if (!empty($issue)) {
+            $this->add2Answer('substatus', $issue->getSubstatus());
+        }
+    }
+
     private function setupCommentAnswer(Comment $comment)
     {
         $html = $this->getHtml(function () use ($comment) {
@@ -1256,6 +1281,10 @@ class IssueService extends LPMBaseService
         
         $this->add2Answer('comment', $comment->getClientObject());
         $this->add2Answer('html', $html);
+
+        if ($comment->instanceType == LPMInstanceTypes::ISSUE) {
+            $this->addSubstatus2Answer($comment->instanceId);
+        }
     }
 
     private function completeIssue(Issue $issue)
@@ -1267,6 +1296,7 @@ class IssueService extends LPMBaseService
         Issue::setStatus($issue, Issue::STATUS_COMPLETED, $this->getUser());
         
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $this->addSubstatus2Answer($issue->id);
     }
 
     private function validateBranchName($value)

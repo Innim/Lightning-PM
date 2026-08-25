@@ -31,7 +31,7 @@ $userId = lpm_get_user()->userId;
 				$classes[] = 'deadline-' . $deadlineLevel . '-issue';
 			}
 
-			if ($issue->isPassTest) {
+			if ($issue->getSubstatus() === IssueSubstatus::PASS_TEST) {
 				$classes[] = 'pass-test';
 			}
 

@@ -83,7 +83,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
          ON `icm`.`commentId` = `cm`.`id`
       WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
-   ORDER BY `date` DESC
+   ORDER BY `date` DESC, `cm`.`id` DESC
       LIMIT 1) AS `t_testState`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
@@ -221,7 +221,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
          ON `icm`.`commentId` = `cm`.`id`
       WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
         AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
-   ORDER BY `date` DESC
+   ORDER BY `date` DESC, `cm`.`id` DESC
       LIMIT 1) AS `t_testState`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
@@ -1953,21 +1953,31 @@ SQL;
     }
 
     /**
-     * Уточнение статуса «В работе»: на каком этапе задача внутри этого статуса.
+     * Уточнение статуса задачи: на каком этапе она внутри своего статуса.
      *
-     * Подстатус не хранится - он выводится из состояния стикера задачи
-     * на Scrum доске: задача без стикера считается лежащей в бэклоге,
-     * стикер в колонке «К выполнению» даёт TODO, остальные - IN_PROGRESS.
-     * Стикер приезжает вместе с задачей в общей выборке, поэтому
-     * дополнительного запроса на задачу не делается.
+     * Подстатус не хранится, а выводится из данных, которые приезжают вместе
+     * с задачей в общей выборке, поэтому дополнительного запроса на задачу
+     * не делается.
      *
-     * У задач не в статусе «В работе», а также в проектах без Scrum,
-     * подстатуса нет.
+     * Задачу «В работе» уточняет состояние её стикера на Scrum доске: задача
+     * без стикера считается лежащей в бэклоге, стикер в колонке «К выполнению»
+     * даёт TODO, остальные - IN_PROGRESS. В проектах без Scrum уточнения нет.
+     *
+     * Задачу «Ожидает проверки» уточняет отметка о прохождении тестирования
+     * ({@see $isPassTest}): она выводится из комментариев задачи, поэтому
+     * снимается сама, как только по задаче появляется более свежий комментарий
+     * с багом или с MR.
+     *
+     * У завершённых задач подстатуса нет.
      * @return int Подстатус.
      * @see IssueSubstatus
      */
     public function getSubstatus()
     {
+        if ($this->isTesting()) {
+            return $this->isPassTest ? IssueSubstatus::PASS_TEST : IssueSubstatus::NONE;
+        }
+
         if ($this->status != self::STATUS_IN_WORK || !$this->projectScrum) {
             return IssueSubstatus::NONE;
         }
