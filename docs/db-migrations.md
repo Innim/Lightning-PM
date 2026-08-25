@@ -9,12 +9,17 @@ the README there if you are upgrading an install older than 0.26.0.
 
 ## Creating a migration
 
+Always create the file with `create`, never hand-name it — the
+`YYYYMMDDHHMMSS_` prefix defines apply order:
+
 ```bash
 php lpm-cli/migrate.php create add_project_ai_summary
+# locally, inside the container: .dev/bin/lpm migrate create add_project_ai_summary
 # -> lpm-core/modules/db/migrations/20260811093012_add_project_ai_summary.php
 ```
 
-The generated file returns an anonymous class:
+Then fill in `up()` and, where an inverse exists, `down()`. The generated file
+returns an anonymous class:
 
 ```php
 <?php
@@ -132,6 +137,9 @@ cutover are not skipped.
   files.
 - **`down()` is optional.** Without it the migration is irreversible and
   `rollback` refuses to touch it. The initial schema has no `down()` on purpose.
+- **Prefer additive, non-destructive changes.** A column added in one release and
+  backfilled in the next is safer than both at once, since new code is deployed
+  before migrations run.
 - Migrations are applied in filename order, and the timestamp prefix comes from
   the moment `create` ran — so two branches merged in any order still apply the
   union of their migrations, each exactly once.
