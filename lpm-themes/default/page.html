@@ -47,7 +47,16 @@
 							</a>
 							<ul class="dropdown-menu dropdown-menu-end">
 								<?php foreach (lpm_get_user_menu() as $link):?>
+								<?php if ($link->isAction):?>
+								<li>
+									<form method="post" action="<?=$link->href;?>">
+										<?php lpm_print_csrf_field(); ?>
+										<button type="submit" class="dropdown-item"><?=$link->label;?></button>
+									</form>
+								</li>
+								<?php else:?>
 								<li><a class="dropdown-item" href="<?=$link->href;?>"><?=$link->label;?></a></li>
+								<?php endif;?>
 								<?php endforeach;?>
 							</ul>
 						</li>

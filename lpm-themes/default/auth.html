@@ -26,6 +26,7 @@ $allowRegistration = LPMOptions::getInstance()->allowRegistration;
 					<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signIn'])) lpm_print_errors();?></div>
 
 					<form method="post">
+						<?php lpm_print_csrf_field(); ?>
 						<div class="mb-3">
 							<label for="loginEmail" class="form-label">Email</label>
 							<input type="email" class="form-control" id="loginEmail" name="aemail" required="required" value="<?=$aemail?>">
@@ -55,6 +56,7 @@ $allowRegistration = LPMOptions::getInstance()->allowRegistration;
 					<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
 
 					<form onsubmit="return validateReg();" action="#reg" method="post">
+						<?php lpm_print_csrf_field(); ?>
 						<div class="mb-3">
 							<label for="regEmail" class="form-label">Email</label>
 							<input type="email" class="form-control" id="regEmail" name="email" required="required" value="<?=$email?>">

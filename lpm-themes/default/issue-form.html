@@ -16,6 +16,7 @@ $aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
     <h3></h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <form class="row g-3" method="post" enctype="multipart/form-data">
+        <?php lpm_print_csrf_field(); ?>
 
         <?php if ($aiDraftAvailable): ?>
         <?php /* Класс ai-issue-draft-row нужен JS: строка скрывается
