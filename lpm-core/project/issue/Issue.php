@@ -76,6 +76,7 @@ class Issue extends MembersInstance
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
+    `p`.`scrum` AS `projectScrum`,
     (SELECT `icm`.`type`
        FROM `%6\$s` `cm`
  INNER JOIN `%7\$s` `icm`
@@ -213,6 +214,7 @@ SQL;
 SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
+    `p`.`scrum` AS `projectScrum`,
     (SELECT `icm`.`type`
        FROM `%6\$s` `cm`
  INNER JOIN `%7\$s` `icm`
@@ -1274,6 +1276,21 @@ SQL;
     }
 
     /**
+     * Возвращает отображаемое название статуса задачи.
+     * @param  int $status Статус задачи.
+     * @return string Название. Пустая строка для неизвестного статуса.
+     */
+    public static function getStatusName($status)
+    {
+        switch ((int)$status) {
+            case self::STATUS_IN_WORK: return 'В работе';
+            case self::STATUS_WAIT: return 'Ожидает проверки';
+            case self::STATUS_COMPLETED: return 'Завершена';
+            default: return '';
+        }
+    }
+
+    /**
      * Возвращает подпись диапазона приоритетов группы, например `71–75`.
      * @param  int $group Номер группы приоритета.
      * @return string
@@ -1405,6 +1422,14 @@ SQL;
     public $projectName  = ''; /*для загрузки задач по нескольким проектам*/
     public $idInProject   =  0;
     public $projectUID    = '';
+    /**
+     * Использует ли проект задачи Scrum доску.
+     *
+     * Заполняется вместе с задачей в общей выборке, чтобы вид задачи
+     * не грузил ради этого весь проект.
+     * @var bool
+     */
+    public $projectScrum  = false;
     public $name          = '';
     public $desc          = '';
     /**
@@ -1529,7 +1554,13 @@ SQL;
             'hours'
         );
         $this->_typeConverter->addIntVars('priority', 'projectId', 'idInProject');
-        $this->_typeConverter->addBoolVars('isOnBoard', 'isBaseLinked', 'isPassTest', 'isChangesRequested');
+        $this->_typeConverter->addBoolVars(
+            'isOnBoard',
+            'isBaseLinked',
+            'isPassTest',
+            'isChangesRequested',
+            'projectScrum'
+        );
         $this->addDateTimeFields('createDate', 'startDate', 'modifiedDate', 'completeDate', 'completedDate');
 
         $this->addClientFields(
@@ -1918,14 +1949,37 @@ SQL;
     
     public function getStatus()
     {
-        switch ($this->status) {
-            case self::STATUS_IN_WORK: return 'В работе';
-            case self::STATUS_WAIT: return 'Ожидает проверки';
-            case self::STATUS_COMPLETED: return 'Завершена';
-            default: return '';
-        }
+        return self::getStatusName($this->status);
     }
-    
+
+    /**
+     * Уточнение статуса «В работе»: на каком этапе задача внутри этого статуса.
+     *
+     * Подстатус не хранится - он выводится из состояния стикера задачи
+     * на Scrum доске: задача без стикера считается лежащей в бэклоге,
+     * стикер в колонке «К выполнению» даёт TODO, остальные - IN_PROGRESS.
+     * Стикер приезжает вместе с задачей в общей выборке, поэтому
+     * дополнительного запроса на задачу не делается.
+     *
+     * У задач не в статусе «В работе», а также в проектах без Scrum,
+     * подстатуса нет.
+     * @return int Подстатус.
+     * @see IssueSubstatus
+     */
+    public function getSubstatus()
+    {
+        if ($this->status != self::STATUS_IN_WORK || !$this->projectScrum) {
+            return IssueSubstatus::NONE;
+        }
+
+        $sticker = $this->getSticker();
+        if (empty($sticker) || !$sticker->isOnBoard()) {
+            return IssueSubstatus::BACKLOG;
+        }
+
+        return $sticker->isTodo() ? IssueSubstatus::TODO : IssueSubstatus::IN_PROGRESS;
+    }
+
     /**
      * Определяет, находится ли сейчас задача в тестировании.
      */

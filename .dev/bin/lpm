@@ -7,68 +7,244 @@
 # composer.phar. This wraps those calls behind one script so it can be approved
 # once (instead of per docker-exec command) and works the same on any machine.
 #
-# Usage (run from anywhere in the repo):
-#   .dev/bin/lpm composer <args...>   Run bundled composer.phar in lpm-libs/
-#   .dev/bin/lpm lint <path...>       php -l on repo-relative (or absolute) PHP files
-#   .dev/bin/lpm migrate <args...>    Run DB migrations (lpm-cli/migrate.php)
-#   .dev/bin/lpm php <args...>        Run php in the container (cwd = repo root)
-#   .dev/bin/lpm exec <cmd...>        Run an arbitrary command in the container
-#   .dev/bin/lpm shell                Open an interactive shell in the container
-#
-# Container name and mount point are overridable via env:
-#   LPM_CONTAINER (default: lightning-pm)   LPM_MOUNT (default: /var/www/html)
-#
 set -euo pipefail
 
 CONTAINER="${LPM_CONTAINER:-lightning-pm}"
+DB_CONTAINER="${LPM_DB_CONTAINER:-$CONTAINER-db-1}"
 MOUNT="${LPM_MOUNT:-/var/www/html}"
 
-# Repo root: this script lives at .dev/bin/lpm, so root is two levels up.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+usage() {
+  cat <<EOF
+Usage (run from anywhere in the repo, including a git worktree):
+  lpm composer <args...>        Run bundled composer.phar in lpm-libs/
+  lpm lint <path...>            Check syntax: .php via container php -l, .js via host node --check
+  lpm migrate <args...>         Run DB migrations (lpm-cli/migrate.php)
+  lpm php <args...>             Run php in the container (cwd = work tree root)
+  lpm run <file.php> [args...]  Run a host PHP file (may live outside the repo) in the container
+  lpm db [SQL]                  Run SQL in the dev DB, or open a mysql shell without SQL
+  lpm status                    Show project containers, app port, dev DB name, SITE_URL
+  lpm exec <cmd...>             Run an arbitrary command in the container
+  lpm shell                     Open an interactive shell in the container
+
+Paths are resolved against the work tree holding this script — each git worktree
+has its own copy of it, so call the copy of the tree you mean to act on.
+
+Env overrides (an explicitly set value always wins over autodetection):
+  LPM_CONTAINER     app container            (default: lightning-pm)
+  LPM_DB_CONTAINER  MySQL container          (default: \$LPM_CONTAINER-db-1)
+  LPM_MOUNT         container path of the current work tree (default: derived
+                    from the container's bind mount at /var/www/html)
+EOF
+}
 
 die() { echo "lpm: $*" >&2; exit 1; }
 
-# Translate a host path (absolute or repo-relative) to its path in the container.
+# The work tree is the one holding THIS script (each git worktree has its own
+# copy of it), NOT the one the caller stands in: paths must follow the code that
+# was invoked. Relative arguments are resolved against it too, so a cross-tree
+# call is announced instead of quietly acting on the other tree's files.
+REPO_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel 2>/dev/null)" \
+  || die "not inside a git work tree: ${BASH_SOURCE[0]}"
+REPO_ROOT="$(cd "$REPO_ROOT" && pwd -P)"
+
+CWD_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -n "$CWD_ROOT" ]]; then
+  CWD_ROOT="$(cd "$CWD_ROOT" && pwd -P)"
+  if [[ "$CWD_ROOT" != "$REPO_ROOT" ]]; then
+    echo "lpm: warning: this lpm belongs to work tree $REPO_ROOT," >&2
+    echo "    but the current directory is in $CWD_ROOT." >&2
+    echo "    Relative paths are resolved against $REPO_ROOT." >&2
+  fi
+fi
+# --git-common-dir points at the main checkout's .git even from a worktree.
+MAIN_ROOT="$(dirname "$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-dir)")"
+
+# $MOUNT is NOT automatically this work tree: the container mounts one host
+# directory there — usually the main checkout, and then a git worktree sits at a
+# nested path under it, but a stand started from a worktree mounts that worktree
+# instead. Guessing means silently linting/running another checkout's files, so
+# ask docker what is mounted; fall back to the main checkout when it can't say.
+MOUNT_SRC=""
+if [[ -z "${LPM_MOUNT:-}" ]]; then
+  MOUNT_SRC="$(docker inspect \
+    -f "{{range .Mounts}}{{if eq .Destination \"$MOUNT\"}}{{.Source}}{{end}}{{end}}" \
+    "$CONTAINER" 2>/dev/null || true)"
+  if [[ -d "$MOUNT_SRC" ]]; then
+    MOUNT_SRC="$(cd "$MOUNT_SRC" && pwd -P)"
+  else
+    MOUNT_SRC="$MAIN_ROOT"
+  fi
+fi
+
+if [[ -n "${LPM_MOUNT:-}" ]]; then
+  CONTAINER_ROOT="$MOUNT"
+else
+  case "$REPO_ROOT" in
+    "$MOUNT_SRC") CONTAINER_ROOT="$MOUNT" ;;
+    "$MOUNT_SRC"/*) CONTAINER_ROOT="$MOUNT/${REPO_ROOT#"$MOUNT_SRC"/}" ;;
+    *) CONTAINER_ROOT="" ;;
+  esac
+fi
+
+require_container_root() {
+  [[ -n "$CONTAINER_ROOT" ]] || die "work tree $REPO_ROOT is not inside $MOUNT_SRC,
+    which container $CONTAINER mounts at $MOUNT, so it is not visible there.
+    Point LPM_CONTAINER at the right stand, or set LPM_MOUNT to this tree's path inside the container."
+}
+
+# Translate a host path (absolute or work-tree-relative) to its path in the container.
 to_container_path() {
   local p="$1" abs
   if [[ "$p" = /* ]]; then abs="$p"; else abs="$REPO_ROOT/$p"; fi
   case "$abs" in
-    "$REPO_ROOT") echo "$MOUNT" ;;
-    "$REPO_ROOT"/*) echo "$MOUNT/${abs#"$REPO_ROOT"/}" ;;
-    *) die "path is outside the repo: $p" ;;
+    "$REPO_ROOT") echo "$CONTAINER_ROOT" ;;
+    "$REPO_ROOT"/*) echo "$CONTAINER_ROOT/${abs#"$REPO_ROOT"/}" ;;
+    *) die "path is outside the work tree $REPO_ROOT: $p" ;;
   esac
 }
 
-[[ $# -ge 1 ]] || die "no command given (try: composer | lint | migrate | php | exec | shell)"
+to_host_path() {
+  local p="$1" abs
+  if [[ "$p" = /* ]]; then abs="$p"; else abs="$REPO_ROOT/$p"; fi
+  [[ -f "$abs" ]] || die "file not found: $p"
+  echo "$abs"
+}
+
+# Read app config values (DB_NAME, MYSQL_USER, MYSQL_PASS, SITE_URL) from
+# lpm-config.inc.php as seen by the container, so nothing has to be hardcoded.
+# The secret never reaches argv: it is captured into a variable here and handed
+# to mysql through the environment.
+read_app_config() {
+  local out
+  export LPM_CFG_DIRS="${CONTAINER_ROOT:+$CONTAINER_ROOT:}$MOUNT"
+  out="$(docker exec -e LPM_CFG_DIRS -w / "$CONTAINER" php -r '
+    foreach (explode(":", getenv("LPM_CFG_DIRS")) as $d) {
+        if (is_file($d . "/lpm-config.inc.php")) { require $d . "/lpm-config.inc.php"; break; }
+    }
+    foreach (["DB_NAME", "MYSQL_USER", "MYSQL_PASS", "SITE_URL"] as $c) {
+        echo $c, "=", defined($c) ? constant($c) : "", "\n";
+    }' 2>/dev/null)" || die "cannot read config from container $CONTAINER (is it running? try: lpm status)"
+  CFG_DB_NAME=""; CFG_DB_USER=""; CFG_DB_PASS=""; CFG_SITE_URL=""
+  local k v
+  while IFS='=' read -r k v; do
+    case "$k" in
+      DB_NAME) CFG_DB_NAME="$v" ;;
+      MYSQL_USER) CFG_DB_USER="$v" ;;
+      MYSQL_PASS) CFG_DB_PASS="$v" ;;
+      SITE_URL) CFG_SITE_URL="$v" ;;
+    esac
+  done <<<"$out"
+}
+
+[[ $# -ge 1 ]] || { usage >&2; die "no command given"; }
 cmd="$1"; shift
 
 case "$cmd" in
   composer)
-    exec docker exec -w "$MOUNT/lpm-libs" "$CONTAINER" php composer.phar "$@"
+    require_container_root
+    # composer.phar is gitignored, so a worktree does not have it — fall back to
+    # the main checkout's copy. Composer acts on the working directory anyway.
+    phar="$CONTAINER_ROOT/lpm-libs/composer.phar"
+    [[ -f "$REPO_ROOT/lpm-libs/composer.phar" ]] || phar="$MOUNT/lpm-libs/composer.phar"
+    exec docker exec -w "$CONTAINER_ROOT/lpm-libs" "$CONTAINER" php "$phar" "$@"
     ;;
   lint)
     [[ $# -ge 1 ]] || die "lint needs at least one file"
+    require_container_root
     status=0
     for f in "$@"; do
-      docker exec "$CONTAINER" php -l "$(to_container_path "$f")" || status=1
+      case "$f" in
+        *.php)
+          cf="$(to_container_path "$f")"
+          docker exec "$CONTAINER" php -l "$cf" || status=1
+          ;;
+        *.js)
+          # node runs on the host: the app container has no node runtime.
+          command -v node >/dev/null 2>&1 || die "node not found on PATH, cannot check $f"
+          hf="$(to_host_path "$f")"
+          if node --check "$hf"; then
+            echo "No syntax errors detected in $hf"
+          else
+            status=1
+          fi
+          ;;
+        *)
+          die "don't know how to lint $f (expected .php or .js)"
+          ;;
+      esac
     done
     exit "$status"
     ;;
   migrate)
-    exec docker exec -w "$MOUNT" "$CONTAINER" php lpm-cli/migrate.php "$@"
+    require_container_root
+    exec docker exec -w "$CONTAINER_ROOT" "$CONTAINER" php lpm-cli/migrate.php "$@"
     ;;
   php)
-    exec docker exec -w "$MOUNT" "$CONTAINER" php "$@"
+    require_container_root
+    exec docker exec -w "$CONTAINER_ROOT" "$CONTAINER" php "$@"
+    ;;
+  run)
+    [[ $# -ge 1 ]] || die "run needs a PHP file"
+    require_container_root
+    src="$1"; shift
+    # A relative path is a caller's path first (the file may live anywhere on the
+    # host), and only then a work-tree-relative one, as for the other commands.
+    if [[ ! -f "$src" && "$src" != /* && -f "$REPO_ROOT/$src" ]]; then
+      src="$REPO_ROOT/$src"
+    fi
+    [[ -f "$src" ]] || die "file not found: $src"
+    tmp="/tmp/lpm-run-$$-$(basename "$src")"
+    trap 'docker exec "$CONTAINER" rm -f "$tmp" >/dev/null 2>&1 || true' EXIT
+    docker cp "$src" "$CONTAINER:$tmp" >/dev/null
+    status=0
+    docker exec -w "$CONTAINER_ROOT" "$CONTAINER" php "$tmp" "$@" || status=$?
+    exit "$status"
+    ;;
+  db)
+    docker inspect -f '{{.State.Running}}' "$DB_CONTAINER" >/dev/null 2>&1 \
+      || die "db container not found: $DB_CONTAINER (override with LPM_DB_CONTAINER)"
+    read_app_config
+    [[ -n "$CFG_DB_NAME" ]] || die "DB_NAME is not defined in lpm-config.inc.php"
+    export MYSQL_PWD="$CFG_DB_PASS"
+    if [[ $# -eq 0 ]]; then
+      # Without a terminal (an agent, a pipe) mysql just reads SQL from stdin.
+      tty=""; if [[ -t 0 ]]; then tty="-t"; fi
+      exec docker exec -i $tty -e MYSQL_PWD "$DB_CONTAINER" \
+        mysql -u"$CFG_DB_USER" --default-character-set=utf8mb4 "$CFG_DB_NAME"
+    fi
+    printf '%s\n' "$*" | docker exec -i -e MYSQL_PWD "$DB_CONTAINER" \
+      mysql -u"$CFG_DB_USER" --default-character-set=utf8mb4 "$CFG_DB_NAME"
+    ;;
+  status)
+    fmt='{{.Names}}\t{{.State}}\t{{.Ports}}'
+    rows="$(docker ps -a --filter "label=com.docker.compose.project=$CONTAINER" --format "$fmt")"
+    [[ -n "$rows" ]] || rows="$(docker ps -a --filter "name=^${CONTAINER}" --format "$fmt")"
+    echo "Containers (project $CONTAINER):"
+    printf '%s\n' "${rows:-(none)}"
+    echo "Work tree:  $REPO_ROOT -> ${CONTAINER_ROOT:-<not mounted in container>}"
+    if [[ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null)" == "true" ]]; then
+      echo "App port:   $(docker port "$CONTAINER" 80 2>/dev/null | head -n 1 || echo '<none>')"
+      read_app_config
+      echo "Dev DB:     ${CFG_DB_NAME:-<unknown>} @ $DB_CONTAINER"
+      echo "SITE_URL:   ${CFG_SITE_URL:-<unknown>}"
+    else
+      echo "App container $CONTAINER is not running."
+    fi
     ;;
   exec)
     [[ $# -ge 1 ]] || die "exec needs a command"
-    exec docker exec -w "$MOUNT" "$CONTAINER" "$@"
+    require_container_root
+    exec docker exec -w "$CONTAINER_ROOT" "$CONTAINER" "$@"
     ;;
   shell|sh)
-    exec docker exec -it -w "$MOUNT" "$CONTAINER" bash
+    require_container_root
+    exec docker exec -it -w "$CONTAINER_ROOT" "$CONTAINER" bash
+    ;;
+  help|-h|--help)
+    usage
     ;;
   *)
-    die "unknown command: $cmd (try: composer | lint | migrate | php | exec | shell)"
+    usage >&2
+    die "unknown command: $cmd"
     ;;
 esac

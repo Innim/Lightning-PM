@@ -21,19 +21,7 @@ $userId = lpm_get_user()->userId;
 	<tbody>
 		<?php
 		foreach ($list as $issue):
-			$classes = [];
-
-			switch ($issue->status) {
-				case Issue::STATUS_IN_WORK:
-					$classes[] = 'active-issue';
-					break;
-				case Issue::STATUS_WAIT:
-					$classes[] = 'verify-issue';
-					break;
-				case Issue::STATUS_COMPLETED:
-					$classes[] = 'completed-issue';
-					break;
-			}
+			$classes = [IssueViewHelper::statusStateClass($issue->status)];
 
 			if ($issue->isTester($userId)) {
 				$classes[] = 'tester';

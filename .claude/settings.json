@@ -10,6 +10,16 @@
             "statusMessage": "Проверка правила: Bootstrap вместо custom CSS"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/api-docs-reminder.sh",
+            "statusMessage": "Проверка правила: синхронизация доков внешнего API"
+          }
+        ]
       }
     ]
   },
