@@ -51,7 +51,7 @@ class IssueViewHelper
      */
     public static function testMergeLevel(Issue $issue)
     {
-        if (!$issue->isTesting() || $issue->isPassTest || $issue->isChangesRequested) {
+        if (!$issue->isTesting() || $issue->hasPassTestMark || $issue->isChangesRequested) {
             return '';
         }
 

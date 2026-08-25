@@ -281,8 +281,8 @@ SQL;
                 usort($list, function (ScrumSticker $a, ScrumSticker $b) {
                     $aIssue = $a->getIssue();
                     $bIssue = $b->getIssue();
-                    if ($aIssue->isPassTest != $bIssue->isPassTest) {
-                        return $aIssue->isPassTest ? -1 : 1;
+                    if ($aIssue->hasPassTestMark != $bIssue->hasPassTestMark) {
+                        return $aIssue->hasPassTestMark ? -1 : 1;
                     }
 
                     if ($aIssue->isChangesRequested != $bIssue->isChangesRequested) {
