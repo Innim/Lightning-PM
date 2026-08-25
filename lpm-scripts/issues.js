@@ -1260,7 +1260,8 @@ issuePage.removeIssue = function (e) {
 
 issuePage.putStickerOnBoard = function () {
     preloader.show();
-    const issueId = $('#issueInfo').data('issueId');
+    const $issueInfo = $('#issueInfo');
+    const issueId = $issueInfo.data('issueId');
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
         if (!res.success) {
@@ -1268,8 +1269,18 @@ issuePage.putStickerOnBoard = function () {
             return;
         }
 
-        $('#issueInfo .scrum-put-sticker').remove();
-        $('#issueInfo').data('isOnBoard', true);
+        $('.scrum-put-sticker', $issueInfo).remove();
+        $issueInfo.data('isOnBoard', true);
+
+        // Задачу в работе сервер кладёт в колонку «К выполнению»
+        // (ScrumSticker::getStateForIssue), у остальных уточнения статуса нет
+        const status = $issueInfo.data('status');
+        setIssueStatusBadge(
+            $issueInfo,
+            status,
+            status === 0 ? Issue.SUBSTATUS_TODO : Issue.SUBSTATUS_NONE
+        );
+
         issuePage.scrumColUpdateInfo();
     });
 };
@@ -1391,8 +1402,8 @@ function setIssueInfoCard(issue, $issueInfo) {
 
     // Каждое поле помечено в разметке своим data-field, поэтому порядок блоков
     // на странице можно менять, не трогая обновление
+    // (статус живёт в бейдже и обновляется отдельно — вместе с оформлением)
     const values = {
-        status: issue.getStatus(),
         type: issue.getType(),
         priority: issue.getPriority(),
         createDate: issue.getCreateDate(),
@@ -1414,9 +1425,11 @@ function setIssueInfoCard(issue, $issueInfo) {
     $('.desc .formatted-desc', $issueInfo).toggleClass('d-none', !hasDesc);
     $('.desc .desc-placeholder', $issueInfo).toggleClass('d-none', hasDesc);
 
-    $(".issue-status-badge", $issueInfo)
-        .removeClass(Issue.STATUS_BADGE_CLASSES)
-        .addClass(Issue.getStatusBadgeClass(issue.status));
+    setIssueStatusBadge(
+        $issueInfo,
+        issue.status,
+        Issue.getSubstatus(issue, $issueInfo.data('projectScrum'), $issueInfo.data('substatus'))
+    );
 
     $(".issue-type-badge", $issueInfo)
         .removeClass(Issue.TYPE_BADGE_CLASSES)
@@ -1447,6 +1460,24 @@ function setIssueInfoCard(issue, $issueInfo) {
 
     $issueInfo.data('status', issue.status);
 };
+
+/**
+ * Ставит бейджу статуса актуальные текст и оформление.
+ *
+ * Показанное уточнение статуса запоминается на карточке: следующее обновление
+ * задачи, не меняющее статус, должно его сохранить.
+ * @param {jQuery} $issueInfo Карточка задачи (#issueInfo).
+ * @param {Number} status
+ * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
+ */
+function setIssueStatusBadge($issueInfo, status, substatus) {
+    $issueInfo.data('substatus', substatus);
+
+    $(".issue-status-badge", $issueInfo)
+        .removeClass(Issue.STATUS_BADGE_CLASSES)
+        .addClass(Issue.getStatusBadgeClass(status, substatus))
+        .text(Issue.getStatusLabel(status, substatus));
+}
 
 /* ======== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue-legacy.html) ========
    Показывается, пока выключен экспериментальный флаг newIssueView.
@@ -2143,11 +2174,7 @@ function Issue(obj) {
     };
 
     this.getStatus = function () {
-        switch (this.status) {
-            case 1: return 'Ожидает проверки';
-            case 2: return 'Завершена';
-            default: return 'В работе';
-        }
+        return Issue.getStatusLabel(this.status);
     };
 
     this.getType = function () {
@@ -2223,15 +2250,70 @@ Issue.getPriorityDisplayVal = function (priority) {
 };
 
 /**
+ * Уточнения статуса «В работе». Те же значения задаёт `IssueSubstatus` на сервере.
+ */
+Issue.SUBSTATUS_NONE = 0;
+Issue.SUBSTATUS_BACKLOG = 1;
+Issue.SUBSTATUS_TODO = 2;
+Issue.SUBSTATUS_IN_PROGRESS = 3;
+
+/**
+ * Уточнение статуса задачи после её обновления без перезагрузки страницы.
+ *
+ * В какой колонке доски лежит задача, знает только сервер, поэтому уже
+ * показанное уточнение сохраняется как есть. Заново оно выводится лишь тогда,
+ * когда задача вернулась в работу: в этот момент сервер сам переносит стикер
+ * в колонку «В работе» (`Issue::setStatus`).
+ * @param {Issue} issue
+ * @param {Boolean} isScrum Использует ли проект задачи Scrum доску.
+ * @param {Number} shownSubstatus Уточнение, показанное до обновления.
+ * @returns {Number} Issue.SUBSTATUS_*
+ */
+Issue.getSubstatus = function (issue, isScrum, shownSubstatus) {
+    if (!isScrum || !issue.isOpened()) return Issue.SUBSTATUS_NONE;
+    if (!issue.isOnBoard) return Issue.SUBSTATUS_BACKLOG;
+
+    return shownSubstatus === Issue.SUBSTATUS_TODO || shownSubstatus === Issue.SUBSTATUS_IN_PROGRESS
+        ? shownSubstatus : Issue.SUBSTATUS_IN_PROGRESS;
+};
+
+/**
+ * Название статуса задачи: уточнение статуса показывается вместо него.
+ * Те же названия задаёт `IssueViewHelper::statusLabel()` на сервере.
+ * @param {Number} status
+ * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
+ */
+Issue.getStatusLabel = function (status, substatus) {
+    switch (substatus) {
+        case Issue.SUBSTATUS_BACKLOG: return 'Бэклог';
+        case Issue.SUBSTATUS_TODO: return 'К выполнению';
+        case Issue.SUBSTATUS_IN_PROGRESS: return 'В работе';
+    }
+
+    switch (status) {
+        case 1: return 'Ожидает проверки';
+        case 2: return 'Завершена';
+        default: return 'В работе';
+    }
+};
+
+/**
  * Все классы бейджа статуса — снимаются перед тем, как поставить актуальный.
  */
-Issue.STATUS_BADGE_CLASSES = 'bg-primary bg-warning bg-success text-dark';
+Issue.STATUS_BADGE_CLASSES = 'bg-primary bg-warning bg-success bg-secondary bg-info text-dark';
 
 /**
  * Оформление бейджа статуса. Те же соответствия задаёт `IssueViewHelper` на сервере.
  * @param {Number} status
+ * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
  */
-Issue.getStatusBadgeClass = function (status) {
+Issue.getStatusBadgeClass = function (status, substatus) {
+    switch (substatus) {
+        case Issue.SUBSTATUS_BACKLOG: return 'bg-secondary';
+        case Issue.SUBSTATUS_TODO: return 'bg-info text-dark';
+        case Issue.SUBSTATUS_IN_PROGRESS: return 'bg-primary';
+    }
+
     switch (status) {
         case 1: return 'bg-warning text-dark';
         case 2: return 'bg-success';
