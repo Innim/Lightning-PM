@@ -19,6 +19,7 @@ $remail = isset($_POST['remail']) && is_string($_POST['remail'])
 					<?php switch (lpm_get_current_page()->getShow()) {
 						case 'emailForm': ?>
 					<form method="post">
+						<?php lpm_print_csrf_field(); ?>
 						<div class="mb-3">
 							<label for="recEmail" class="form-label">Email</label>
 							<input type="email" class="form-control" id="recEmail" name="remail" required="required" value="<?=$remail?>">
@@ -49,6 +50,7 @@ $remail = isset($_POST['remail']) && is_string($_POST['remail'])
 
 					<?php break; case 'changePassForm': ?>
 					<form method="post" action="">
+						<?php lpm_print_csrf_field(); ?>
 						<div class="mb-3">
 							<label for="newPass" class="form-label">Новый пароль</label>
 							<input type="password" class="form-control" id="newPass" name="newPass" required="required" minlength="<?=PASSWORD_MIN_LENGTH;?>" maxlength="<?=PASSWORD_MAX_LENGTH;?>">

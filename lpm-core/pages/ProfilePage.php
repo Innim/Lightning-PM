@@ -32,9 +32,17 @@ class ProfilePage extends LPMPage
         
         switch ($engine->getParams()->suid) {
             case self::SUID_EXIT: {
-                $engine->getAuth()->destroy();
-                LightningEngine::go2URL();
-            } break;
+                // Выход меняет состояние, поэтому только своей формой и POST-ом:
+                // по ссылке пользователя мог бы разлогинить любой сторонний сайт.
+                if ($this->isExitConfirmed()) {
+                    $engine->getAuth()->destroy();
+                    LightningEngine::go2URL();
+                }
+
+                $engine->addError('Не удалось выйти. Обновите страницу и попробуйте снова');
+            }
+            // no break - без подтверждения показываем обычную страницу профиля
+            // falls through
             default: {
                 $user = $engine->getUser();
 
@@ -45,5 +53,14 @@ class ProfilePage extends LPMPage
         }
         
         return $this;
+    }
+
+    /**
+     * Определяет, что выход запрошен со своей же страницы.
+     * @return bool
+     */
+    private function isExitConfirmed()
+    {
+        return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && CsrfToken::check();
     }
 }

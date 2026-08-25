@@ -31,12 +31,14 @@ class AuthPage extends LPMPage
         $engine = LightningEngine::getInstance();
 
         // проверяем, не пришли ли данные формы
-        if (!empty($_POST)) {
+        if (!empty($_POST) && !CsrfToken::check()) {
+            $engine->addError('Форма устарела. Обновите страницу и попробуйте снова');
+        } elseif (!empty($_POST)) {
             $db = LPMGlobals::getInstance()->getDBConnect();
 
             $input = [];
             foreach ($_POST as $key => $value) {
-                $input[$key] = trim($value);
+                $input[$key] = is_string($value) ? trim($value) : $value;
             }
 
             if (isset($input['email'])) {

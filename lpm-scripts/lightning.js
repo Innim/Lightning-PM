@@ -107,6 +107,7 @@ function BaseService(service, f2p) {
             processData: false,
             contentType: false,
             dataType: 'json',
+            headers: ru.vbinc.net.F2PInvoker.defaultHeaders,
             success: function (obj) {
                 if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED) {
                     window.location.reload();
@@ -208,6 +209,11 @@ const lpm = {
 window.lpm = lpm;
 
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
+
+// Токен своей страницы: сервер отклоняет запросы к сервисам без него, поэтому
+// со стороннего сайта действие от имени пользователя выполнить нельзя.
+// Задаём на конструкторе - его читают все инвокеры, включая создаваемые позже.
+ru.vbinc.net.F2PInvoker.defaultHeaders['X-CSRF-Token'] = window.lpmOptions.csrfToken;
 
 // Сборка ИИ-сводки — это запрос к внешней модели, он идёт дольше обычного:
 // сервер ждёт ответа до aiRequestTimeout секунд, поэтому у ИИ-сервиса
@@ -445,6 +451,26 @@ let srv = {
         showError(typeof res.error != 'undefined' ? res.error : 'Ошибка при запросе к серверу');
     }
 };
+
+// Пока страница открыта, напоминаем о себе серверу: токен страницы живёт вместе
+// с сессией, а PHP сбрасывает её после session.gc_maxlifetime без запросов.
+// Форму — например, описание задачи — заполняют и дольше, и без пинга отправка
+// упёрлась бы в устаревший токен.
+(function () {
+    const lifetime = parseInt(window.lpmOptions.sessionLifetime, 10);
+    if (!lifetime || lifetime <= 0) return;
+
+    // С запасом — половина срока, но не чаще раза в минуту и не реже раза в 10 минут
+    const interval = Math.min(Math.max(Math.floor(lifetime / 2), 60), 600) * 1000;
+
+    setInterval(function () {
+        // Намеренно в обход BaseService: тот на отказ перезагружает страницу,
+        // а фоновый пинг не должен стирать недописанную форму. Если сессия всё
+        // же умерла, пользователь узнает об этом при отправке — и получит
+        // введённое обратно.
+        srv.f2p.request('SessionService', 'ping', function () {});
+    }, interval);
+})();
 
 var states = {
     _list: [],

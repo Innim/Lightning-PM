@@ -68,6 +68,17 @@ class PagePrinter
         self::cssLink('main');
     }
     
+    /**
+     * Печатает скрытое поле с токеном страницы.
+     * Нужно в каждой форме, которая отправляется на сервер обычным POST:
+     * без токена запрос отклоняется как пришедший со стороннего сайта.
+     */
+    public static function csrfField()
+    {
+        echo '<input type="hidden" name="' . CsrfToken::FIELD .
+            '" value="' . htmlspecialchars(CsrfToken::get(), ENT_QUOTES, 'UTF-8') . '">';
+    }
+
     public static function errors()
     {
         // Текст ошибки может содержать пользовательские данные (например,
@@ -479,6 +490,8 @@ class PagePrinter
         $data = [
             'url' => SITE_URL,
             'themeUrl' => self::getPC()->getThemeUrl(),
+            'csrfToken' => CsrfToken::get(),
+            'sessionLifetime' => (int)ini_get('session.gc_maxlifetime'),
             'issueImgsCount' => Issue::MAX_IMAGES_COUNT,
             'issueFilesCount' => Issue::MAX_FILES_COUNT,
             'attachmentsTotalSizeMb' => MAX_ATTACHMENTS_TOTAL_SIZE_MB,
@@ -562,9 +575,19 @@ JS;
         LightningEngine::getInstance()->getCurrentPage()->printContent();
     }
     
+    /**
+     * Печатает значение поля формы, возвращая пользователю введённое.
+     *
+     * Значение экранируется: иначе отправленная со стороннего сайта форма
+     * выполнила бы свой HTML на нашей странице.
+     * @param string $var     Имя поля.
+     * @param string $default Что печатать, если поле не передано.
+     */
     public static function postVar($var, $default = '')
     {
-        echo isset($_POST[$var]) ? $_POST[$var] : $default;
+        $value = isset($_POST[$var]) && is_string($_POST[$var]) ? $_POST[$var] : $default;
+
+        echo htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
     
     public static function jsRedirect($url)

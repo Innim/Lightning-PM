@@ -142,6 +142,7 @@ class LPMAuth
         $this->_authType = self::AUTH_TYPE_NONE;
         $this->setCookie(self::COOKIE_USER_ID, '');
         $this->setCookie(self::COOKIE_HASH, '');
+        CsrfToken::reset();
         Session::getInstance()->unsetVar(self::SESSION_NAME);
         Session::getInstance()->destroy();
     }

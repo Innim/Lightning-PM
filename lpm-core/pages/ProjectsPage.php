@@ -49,8 +49,10 @@ class ProjectsPage extends LPMPage
         }
         
         if (!empty($_POST)) {
-            if (!$this->addProject($_POST)) {
-                $engine = LightningEngine::getInstance();
+            $engine = LightningEngine::getInstance();
+            if (!CsrfToken::check()) {
+                $engine->addError('Страница устарела. Обновите её и повторите действие');
+            } elseif (!$this->addProject($_POST)) {
                 $engine->addError($this->_error);
             }
         } elseif ($this->_curSubpage) {

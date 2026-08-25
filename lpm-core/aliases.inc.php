@@ -303,6 +303,14 @@ function lpm_print_goto_issue($project)
 }
 
 /**
+ * Печатает скрытое поле с токеном страницы для формы.
+ */
+function lpm_print_csrf_field()
+{
+    return PagePrinter::csrfField();
+}
+
+/**
  * Печатает меню выбора сортировки списка задач.
  */
 function lpm_print_issues_sort($list)

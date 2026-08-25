@@ -20,13 +20,19 @@ class LPMBaseService extends SecureService
     
     public function beforeFilter($calledFunc)
     {
+        // Проверяем раньше всего: запрос со стороннего сайта не должен доходить
+        // до метода даже там, где авторизация не требуется.
+        if (!CsrfToken::check()) {
+            return false;
+        }
+
         if (in_array($calledFunc, $this->_allowMethods)) {
             return true;
         }
-    
+
         $this->_engine = new LightningEngine();
         $this->_auth = $this->_engine->getAuth();
-    
+
         return $this->_auth->isLogin();
     }
 
