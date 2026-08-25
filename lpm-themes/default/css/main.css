@@ -761,9 +761,13 @@ table.issues-list td .on-board-state {
 	font-size: 12px;
 	color: #333333;
 }
+/* Обёртка должна быть ровно по размеру кружка: стрелки центрируются по её
+   середине, а inline-block растянула бы её по строчному боксу. */
 table.issues-list td .priority-val-box {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
 	margin-right: 5px;
 }
 table.issues-list td .priority-val-box .priority-val.circle {
