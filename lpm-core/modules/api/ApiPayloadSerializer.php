@@ -99,6 +99,21 @@ class ApiPayloadSerializer
     }
 
     /**
+     * Задача на скрам-доске: краткое представление задачи, дополненное
+     * состоянием её стикера и датой добавления на доску.
+     * @param ScrumSticker $sticker Стикер доски с загруженной задачей.
+     * @return array
+     */
+    public function boardIssue(ScrumSticker $sticker)
+    {
+        $item = $this->issueBrief($sticker->getIssue());
+        $item['stickerState'] = $sticker->state;
+        $item['addedToBoard'] = $sticker->added;
+
+        return $item;
+    }
+
+    /**
      * Метка (тег) задач с количеством использований.
      * @param array $label Данные метки, см. Project::getLabels().
      * @return array
