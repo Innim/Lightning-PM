@@ -17,15 +17,24 @@ class ScrumSticker extends LPMBaseObject
 `i`.`projectId` = ${projectId} AND `s`.`state` IN (${states})
 SQL;
 
-        $list = self::loadList($where);
+        return self::preloadParticipants(self::loadList($where));
+    }
 
-        // Заранее загружаем участников (исполнителей и тестировщиков) всех задач доски
-        // одним запросом, чтобы шаблон не делал по запросу на каждый стикер
-        // (getMembers/isMember/isTester).
+    /**
+     * Заранее загружает участников (исполнителей и тестировщиков) всех задач
+     * списка одним запросом, чтобы шаблон стикера не делал по запросу на каждый
+     * стикер (getMembers/isMember/isTester/getTesterIds).
+     *
+     * @param  array<ScrumSticker> $list
+     * @return array<ScrumSticker> Тот же список.
+     */
+    private static function preloadParticipants(array $list)
+    {
         $issueIds = [];
         foreach ($list as $sticker) {
             $issueIds[] = $sticker->issueId;
         }
+
         $participants = Member::loadListAnyForIssues($issueIds, true, true, false);
         foreach ($list as $sticker) {
             $sticker->getIssue()->extractParticipantsFrom($participants, true, true, false);
@@ -118,12 +127,12 @@ SQL;
         $where = <<<SQL
 `s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
 SQL;
-        return self::loadList(
+        return self::preloadParticipants(self::loadList(
             $where,
             '',
             ['m' => LPMTables::MEMBERS],
             ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
-        );
+        ));
     }
     
     /**
