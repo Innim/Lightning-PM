@@ -84,7 +84,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 $cssClasses = [$color];
                 if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
-                if ($issue->isPassTest) $cssClasses[] = 'pass-test';
+                if ($issue->getSubstatus() === IssueSubstatus::PASS_TEST) $cssClasses[] = 'pass-test';
                 if ($issue->isChangesRequested) $cssClasses[] = 'changes-requested';
                 if ($deadlineLevel !== '') $cssClasses[] = 'deadline-' . $deadlineLevel;
                 if ($testMergeLevel = IssueViewHelper::testMergeLevel($issue)) $cssClasses[] = 'test-' . $testMergeLevel;

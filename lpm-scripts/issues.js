@@ -1071,7 +1071,7 @@ function completeIssue(e) {
                             $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
                             showMain();
                         } else if ($('#issueView').length > 0) {
-                            setIssueInfo(new Issue(res.issue));
+                            setIssueInfo(new Issue(res.issue), res.substatus);
                         }
                         issuePage.updateStat();
                     } else {
@@ -1193,7 +1193,7 @@ function restoreIssue(e) {
                     $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
                     showMain();
                 } else if ($('#issueView').length > 0) {
-                    setIssueInfo(new Issue(res.issue));
+                    setIssueInfo(new Issue(res.issue), res.substatus);
                 }
                 issuePage.updateStat();
             } else {
@@ -1215,7 +1215,7 @@ function verifyIssue(e) {
             preloader.hide();
             if (res.success) {
                 if ($('#issueView').length > 0) {
-                    setIssueInfo(new Issue(res.issue));
+                    setIssueInfo(new Issue(res.issue), res.substatus);
                 }
                 issuePage.updateStat();
 
@@ -1271,15 +1271,7 @@ issuePage.putStickerOnBoard = function () {
 
         $('.scrum-put-sticker', $issueInfo).remove();
         $issueInfo.data('isOnBoard', true);
-
-        // Задачу в работе сервер кладёт в колонку «К выполнению»
-        // (ScrumSticker::getStateForIssue), у остальных уточнения статуса нет
-        const status = $issueInfo.data('status');
-        setIssueStatusBadge(
-            $issueInfo,
-            status,
-            status === 0 ? Issue.SUBSTATUS_TODO : Issue.SUBSTATUS_NONE
-        );
+        applyIssueSubstatus(res);
 
         issuePage.scrumColUpdateInfo();
     });
@@ -1292,7 +1284,7 @@ function showIssue(issueId) {
         function (res) {
             if (res.success) {
                 states.setState('issue-view');
-                setIssueInfo(new Issue(res.issue));
+                setIssueInfo(new Issue(res.issue), res.substatus);
             } else {
                 srv.err(res);
             }
@@ -1349,15 +1341,16 @@ issuePage.showEditForm = function () {
 };
 
 /**
- * 
  * @param {Issue} issue
+ * @param {Number} substatus Уточнение статуса задачи, присланное сервером
+ * (Issue.SUBSTATUS_*).
  */
-function setIssueInfo(issue) {
+function setIssueInfo(issue, substatus) {
     const $issueInfo = $("#issueInfo");
 
     // Разметка сама сообщает, какой вид открыт, — флаг настроек в JS не нужен
     if ($issueInfo.hasClass('issue-card')) {
-        setIssueInfoCard(issue, $issueInfo);
+        setIssueInfoCard(issue, $issueInfo, substatus);
     } else {
         setIssueInfoLegacy(issue, $issueInfo);
     }
@@ -1396,8 +1389,10 @@ function setIssueFormState(issue, $issueInfo) {
  * Обновляет обновлённый вид задачи (шаблон issue.html).
  * @param {Issue} issue
  * @param {jQuery} $issueInfo
+ * @param {Number} substatus Уточнение статуса, присланное сервером
+ * (Issue.SUBSTATUS_*). Без него бейдж статуса остаётся как есть.
  */
-function setIssueInfoCard(issue, $issueInfo) {
+function setIssueInfoCard(issue, $issueInfo, substatus) {
     $(".issue-name", $issueInfo).text(issue.name);
 
     // Каждое поле помечено в разметке своим data-field, поэтому порядок блоков
@@ -1425,11 +1420,11 @@ function setIssueInfoCard(issue, $issueInfo) {
     $('.desc .formatted-desc', $issueInfo).toggleClass('d-none', !hasDesc);
     $('.desc .desc-placeholder', $issueInfo).toggleClass('d-none', hasDesc);
 
-    setIssueStatusBadge(
-        $issueInfo,
-        issue.status,
-        Issue.getSubstatus(issue, $issueInfo.data('projectScrum'), $issueInfo.data('substatus'))
-    );
+    // Подстатус знает только сервер, поэтому без него бейдж не трогаем:
+    // иначе показанное уточнение подменилось бы названием самого статуса
+    if (substatus !== undefined) {
+        setIssueStatusBadge($issueInfo, issue.status, substatus);
+    }
 
     $(".issue-type-badge", $issueInfo)
         .removeClass(Issue.TYPE_BADGE_CLASSES)
@@ -1458,25 +1453,40 @@ function setIssueInfoCard(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $issueInfo.data('status', issue.status);
+    // Атрибут держим в паре с jQuery-хранилищем: .data() его больше не читает,
+    // и без этого разметка сохраняет статус, с которым страница загрузилась.
+    $issueInfo.attr('data-status', issue.status).data('status', issue.status);
 };
 
 /**
  * Ставит бейджу статуса актуальные текст и оформление.
- *
- * Показанное уточнение статуса запоминается на карточке: следующее обновление
- * задачи, не меняющее статус, должно его сохранить.
  * @param {jQuery} $issueInfo Карточка задачи (#issueInfo).
  * @param {Number} status
  * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
  */
 function setIssueStatusBadge($issueInfo, status, substatus) {
-    $issueInfo.data('substatus', substatus);
-
     $(".issue-status-badge", $issueInfo)
         .removeClass(Issue.STATUS_BADGE_CLASSES)
         .addClass(Issue.getStatusBadgeClass(status, substatus))
         .text(Issue.getStatusLabel(status, substatus));
+}
+
+/**
+ * Обновляет уточнение статуса в бейдже по ответу сервиса.
+ *
+ * Подстатус вычисляется только на сервере - он зависит от комментариев задачи
+ * и её стикера на доске, которых в ответе нет. Поэтому каждое действие,
+ * способное его изменить, присылает актуальное значение, а клиент его
+ * не додумывает.
+ * @param {Object} res Ответ сервиса.
+ */
+function applyIssueSubstatus(res) {
+    if (res.substatus === undefined) return;
+
+    const $issueInfo = $('#issueInfo');
+    if ($issueInfo.length === 0) return;
+
+    setIssueStatusBadge($issueInfo, $issueInfo.data('status'), res.substatus);
 }
 
 /* ======== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue-legacy.html) ========
@@ -1542,7 +1552,9 @@ function setIssueInfoLegacy(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $issueInfo.data('status', issue.status);
+    // Атрибут держим в паре с jQuery-хранилищем: .data() его больше не читает,
+    // и без этого разметка сохраняет статус, с которым страница загрузилась.
+    $issueInfo.attr('data-status', issue.status).data('status', issue.status);
 };
 
 /* ======== конец старого вида страницы задачи ======== */
@@ -1708,6 +1720,7 @@ issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSucces
                 preloader.hide();
                 if (res.success) {
                     issuePage.addComment(res.comment, res.html);
+                    applyIssueSubstatus(res);
                     if (res.linkedHtml) issuePage.updateLinkedIssues(res.linkedHtml);
                     if (onSuccess) onSuccess(res);
                 } else {
@@ -1731,7 +1744,7 @@ issuePage.merged = function () {
             (issueId, handler) => srv.issue.merged(issueId, complete, handler),
             res => {
                 if (res.issue)
-                    setIssueInfo(new Issue(res.issue));
+                    setIssueInfo(new Issue(res.issue), res.substatus);
                 issuePage.updateStat();
             });
     }
@@ -2250,32 +2263,13 @@ Issue.getPriorityDisplayVal = function (priority) {
 };
 
 /**
- * Уточнения статуса «В работе». Те же значения задаёт `IssueSubstatus` на сервере.
+ * Уточнения статуса задачи. Те же значения задаёт `IssueSubstatus` на сервере.
  */
 Issue.SUBSTATUS_NONE = 0;
 Issue.SUBSTATUS_BACKLOG = 1;
 Issue.SUBSTATUS_TODO = 2;
 Issue.SUBSTATUS_IN_PROGRESS = 3;
-
-/**
- * Уточнение статуса задачи после её обновления без перезагрузки страницы.
- *
- * В какой колонке доски лежит задача, знает только сервер, поэтому уже
- * показанное уточнение сохраняется как есть. Заново оно выводится лишь тогда,
- * когда задача вернулась в работу: в этот момент сервер сам переносит стикер
- * в колонку «В работе» (`Issue::setStatus`).
- * @param {Issue} issue
- * @param {Boolean} isScrum Использует ли проект задачи Scrum доску.
- * @param {Number} shownSubstatus Уточнение, показанное до обновления.
- * @returns {Number} Issue.SUBSTATUS_*
- */
-Issue.getSubstatus = function (issue, isScrum, shownSubstatus) {
-    if (!isScrum || !issue.isOpened()) return Issue.SUBSTATUS_NONE;
-    if (!issue.isOnBoard) return Issue.SUBSTATUS_BACKLOG;
-
-    return shownSubstatus === Issue.SUBSTATUS_TODO || shownSubstatus === Issue.SUBSTATUS_IN_PROGRESS
-        ? shownSubstatus : Issue.SUBSTATUS_IN_PROGRESS;
-};
+Issue.SUBSTATUS_PASS_TEST = 4;
 
 /**
  * Название статуса задачи: уточнение статуса показывается вместо него.
@@ -2288,6 +2282,7 @@ Issue.getStatusLabel = function (status, substatus) {
         case Issue.SUBSTATUS_BACKLOG: return 'Бэклог';
         case Issue.SUBSTATUS_TODO: return 'К выполнению';
         case Issue.SUBSTATUS_IN_PROGRESS: return 'В работе';
+        case Issue.SUBSTATUS_PASS_TEST: return 'Прошла тестирование';
     }
 
     switch (status) {
@@ -2300,7 +2295,8 @@ Issue.getStatusLabel = function (status, substatus) {
 /**
  * Все классы бейджа статуса — снимаются перед тем, как поставить актуальный.
  */
-Issue.STATUS_BADGE_CLASSES = 'bg-primary bg-warning bg-success bg-secondary bg-info text-dark';
+Issue.STATUS_BADGE_CLASSES =
+    'bg-primary bg-warning bg-success bg-secondary bg-info bg-opacity-75 text-dark';
 
 /**
  * Оформление бейджа статуса. Те же соответствия задаёт `IssueViewHelper` на сервере.
@@ -2312,6 +2308,7 @@ Issue.getStatusBadgeClass = function (status, substatus) {
         case Issue.SUBSTATUS_BACKLOG: return 'bg-secondary';
         case Issue.SUBSTATUS_TODO: return 'bg-info text-dark';
         case Issue.SUBSTATUS_IN_PROGRESS: return 'bg-primary';
+        case Issue.SUBSTATUS_PASS_TEST: return 'bg-success bg-opacity-75 text-dark';
     }
 
     switch (status) {
@@ -2483,7 +2480,8 @@ issuePage.deleteComment = (id, deleteBranch, callback) => {
         deleteBranch,
         function (res) {
             if (res.success) {
-                callback(true);
+                applyIssueSubstatus(res);
+                callback(res);
             } else {
                 srv.err(res);
             }
@@ -2496,6 +2494,7 @@ issuePage.resolveComment = (id, callback) => {
         id,
         function (res) {
             if (res.success) {
+                applyIssueSubstatus(res);
                 callback(res);
             } else {
                 srv.err(res);

@@ -38,6 +38,62 @@ class Issue extends MembersInstance
     }
 
     /**
+     * Возвращает описание запроса, определяющего текущее состояние задачи
+     * в тесте: тип последнего комментария среди отметки о прохождении теста,
+     * запроса правок и комментария с MR. Более свежий комментарий вытесняет
+     * прежний, поэтому отметка о прохождении теста снимается сама.
+     *
+     * Это единственное определение правила: его используют и общая выборка
+     * задач (подзапросом), и точечная загрузка отметки
+     * {@see loadPassTestMark()}.
+     * @param  int|\GMFramework\DBColumn $issueId Идентификатор задачи либо
+     *                                            колонка с ним - для подзапроса.
+     * @return array Описание запроса для конструктора.
+     */
+    private static function getTestStateSqlHash($issueId)
+    {
+        return [
+            'SELECT' => '`icm`.`type`',
+            'FROM'   => LPMTables::COMMENTS,
+            'AS'     => 'cm',
+            'JOINS'  => [[
+                'INNER JOIN' => LPMTables::ISSUE_COMMENT,
+                'AS'         => 'icm',
+                'ON'         => ['`icm`.`commentId`' => self::col('cm.id')],
+            ]],
+            'WHERE' => [
+                '`cm`.`instanceType`' => LPMInstanceTypes::ISSUE,
+                '`cm`.`instanceId`'   => $issueId,
+                '`cm`.`deleted`'      => 0,
+                '`icm`.`type`'        => [
+                    IssueCommentType::PASS_TEST,
+                    IssueCommentType::REQUEST_CHANGES,
+                    IssueCommentType::MERGE_REQUEST,
+                ],
+            ],
+            // Комментарии одной секунды разводим по id: иначе отметка
+            // определялась бы произвольно
+            'ORDER BY' => ['`cm`.`date` DESC', '`cm`.`id` DESC'],
+            'LIMIT'    => 1,
+        ];
+    }
+
+    /**
+     * Загружает отметку о прохождении тестирования по комментариям задачи.
+     *
+     * Точечный запрос вместо полной перезагрузки задачи: нужен там, где после
+     * изменения комментариев надо освежить только эту отметку.
+     * @param  int $issueId Идентификатор задачи.
+     * @return bool Стоит ли на задаче отметка о прохождении тестирования.
+     */
+    public static function loadPassTestMark($issueId)
+    {
+        $row = self::buildAndExecuteSingle(self::getTestStateSqlHash((int)$issueId));
+
+        return !empty($row) && $row['type'] == IssueCommentType::PASS_TEST;
+    }
+
+    /**
      * Выборка происходит из таблиц:
      * - задач - i
      * - пользователей - u
@@ -64,7 +120,7 @@ class Issue extends MembersInstance
 
         $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
-        $mergeRequestType = IssueCommentType::MERGE_REQUEST;
+        $testStateSql = '(' . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'))) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -77,14 +133,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
     `p`.`scrum` AS `projectScrum`,
-    (SELECT `icm`.`type`
-       FROM `%6\$s` `cm`
- INNER JOIN `%7\$s` `icm`
-         ON `icm`.`commentId` = `cm`.`id`
-      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
-        AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
-   ORDER BY `date` DESC
-      LIMIT 1) AS `t_testState`,
+    $testStateSql AS `t_testState`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
          FROM `%6\$s` `cm`
@@ -202,7 +251,7 @@ SQL;
 
         $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
-        $mergeRequestType = IssueCommentType::MERGE_REQUEST;
+        $testStateSql = '(' . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'))) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -215,14 +264,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     IF(`i`.`status` = $statusCompleted, `i`.`completedDate`, NULL) AS `realCompleted`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
     `p`.`scrum` AS `projectScrum`,
-    (SELECT `icm`.`type`
-       FROM `%6\$s` `cm`
- INNER JOIN `%7\$s` `icm`
-         ON `icm`.`commentId` = `cm`.`id`
-      WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
-        AND `icm`.`type` IN ('$passTestType', '$requestChangesType', '$mergeRequestType')
-   ORDER BY `date` DESC
-      LIMIT 1) AS `t_testState`,
+    $testStateSql AS `t_testState`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
          FROM `%6\$s` `cm`
@@ -1488,18 +1530,32 @@ SQL;
     public $isBaseLinked;
 
     /**
-     * Есть ли отметка о тестировании.
+     * Стоит ли на задаче отметка о прохождении тестирования.
+     *
+     * Отметку ставит комментарий типа {@see IssueCommentType::PASS_TEST},
+     * а снимает любой более свежий комментарий с багом или с MR - поэтому
+     * отметка может и вернуться, если такой комментарий удалили или его баг
+     * пометили решённым.
+     *
+     * Признак не зависит от статуса задачи: он остаётся и после завершения.
+     * Если нужно «задача сейчас в тесте и уже прошла его» - это подстатус
+     * {@see IssueSubstatus::PASS_TEST}, а не этот флаг; для показа
+     * пользователю почти всегда нужен именно подстатус.
      *
      * Если null, то это означает, что данные не загружены.
+     * @see getSubstatus()
      * @var bool
      */
-    public $isPassTest;
+    public $hasPassTestMark;
 
     /**
      * Задача ожидает внесения изменений.
      *
      * Задача ушла в тест, при тестировании обнаружены проблемы
      * и в данный момент задача в состоянии ожидания внесения правок.
+     *
+     * В отличие от {@see $hasPassTestMark}, признак ограничен статусом:
+     * у задачи не в тесте он всегда false.
      *
      * Если null, то это означает, что данные не загружены.
      * @var bool
@@ -1557,7 +1613,7 @@ SQL;
         $this->_typeConverter->addBoolVars(
             'isOnBoard',
             'isBaseLinked',
-            'isPassTest',
+            'hasPassTestMark',
             'isChangesRequested',
             'projectScrum'
         );
@@ -1953,21 +2009,30 @@ SQL;
     }
 
     /**
-     * Уточнение статуса «В работе»: на каком этапе задача внутри этого статуса.
+     * Уточнение статуса задачи: на каком этапе она внутри своего статуса.
      *
-     * Подстатус не хранится - он выводится из состояния стикера задачи
-     * на Scrum доске: задача без стикера считается лежащей в бэклоге,
-     * стикер в колонке «К выполнению» даёт TODO, остальные - IN_PROGRESS.
-     * Стикер приезжает вместе с задачей в общей выборке, поэтому
-     * дополнительного запроса на задачу не делается.
+     * Подстатус не хранится, а выводится из данных, которые приезжают вместе
+     * с задачей в общей выборке, поэтому дополнительного запроса на задачу
+     * не делается.
      *
-     * У задач не в статусе «В работе», а также в проектах без Scrum,
-     * подстатуса нет.
+     * Задачу «В работе» уточняет состояние её стикера на Scrum доске: задача
+     * без стикера считается лежащей в бэклоге, стикер в колонке «К выполнению»
+     * даёт TODO, остальные - IN_PROGRESS. В проектах без Scrum уточнения нет.
+     *
+     * Задачу «Ожидает проверки» уточняет отметка о прохождении тестирования
+     * ({@see $hasPassTestMark}). Подстатус, в отличие от самой отметки,
+     * ограничен статусом: у завершённой задачи отметка остаётся, а подстатуса
+     * уже нет - «Завершена» говорит больше, чем «прошла тестирование».
      * @return int Подстатус.
      * @see IssueSubstatus
+     * @see reloadSubstatusSources()
      */
     public function getSubstatus()
     {
+        if ($this->isTesting()) {
+            return $this->hasPassTestMark ? IssueSubstatus::PASS_TEST : IssueSubstatus::NONE;
+        }
+
         if ($this->status != self::STATUS_IN_WORK || !$this->projectScrum) {
             return IssueSubstatus::NONE;
         }
@@ -1978,6 +2043,30 @@ SQL;
         }
 
         return $sticker->isTodo() ? IssueSubstatus::TODO : IssueSubstatus::IN_PROGRESS;
+    }
+
+    /**
+     * Перечитывает данные, из которых выводится подстатус задачи.
+     *
+     * Нужен, когда задача уже загружена, а потом изменилось что-то, от чего
+     * подстатус зависит: комментарии задачи, её статус или стикер на доске.
+     * Перечитывается только то, что нужно при текущем статусе задачи, поэтому
+     * запрос будет один, а у завершённой задачи - ни одного.
+     *
+     * Набор источников должен совпадать с тем, что читает {@see getSubstatus()}.
+     */
+    public function reloadSubstatusSources()
+    {
+        if ($this->isTesting()) {
+            $this->hasPassTestMark = self::loadPassTestMark($this->id);
+            return;
+        }
+
+        if ($this->status == self::STATUS_IN_WORK && $this->projectScrum) {
+            $sticker = ScrumSticker::load($this->id);
+            // Загрузчик отдаёт false, а отсутствие стикера здесь - это null
+            $this->_sticker = empty($sticker) ? null : $sticker;
+        }
     }
 
     /**
@@ -2012,7 +2101,7 @@ SQL;
 
         if (isset($hash['t_testState'])) {
             $testState = $hash['t_testState'];
-            $this->isPassTest = $testState == IssueCommentType::PASS_TEST;
+            $this->hasPassTestMark = $testState == IssueCommentType::PASS_TEST;
             $this->isChangesRequested = $this->isTesting() && $testState == IssueCommentType::REQUEST_CHANGES;
         }
 
