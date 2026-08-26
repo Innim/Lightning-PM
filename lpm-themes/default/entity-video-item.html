@@ -6,6 +6,9 @@
 if (!empty($video)):
 ?>
 <?php if ($video->type == 'youtube'): ?>
+<?php // CSP приложения задаёт object-src 'none' - если YouTube-вставку оживят
+      // (сейчас AttachmentVideoHelper для неё возвращает null), политику
+      // в lpm-core/consts.inc.php нужно расширить, иначе плеер не загрузится ?>
 <object width="480" height="320" class="video ytb" data="<?php echo $video->url; ?>">
 </object>
 <?php else: ?>

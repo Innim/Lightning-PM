@@ -177,6 +177,51 @@ define('PROJECT_NAME_MAX_LENGTH', 255);
  */
 define('PROJECT_DESC_MAX_LENGTH', 65535);
 
+/**
+ * Политика Content-Security-Policy для страниц приложения.
+ * Пустая строка отключает заголовок.
+ *
+ * `unsafe-inline` и `unsafe-eval` пока нужны: в шаблонах есть инлайновые
+ * обработчики и стили, а Vue 2 компилирует шаблоны в рантайме.
+ *
+ * `object-src 'none'` сочетается с тем, что YouTube-вставка
+ * (`entity-video-item.html`) сейчас не строится - см. комментарий в шаблоне.
+ * @var string
+ */
+if (!defined('SECURITY_CSP_POLICY')) {
+    define('SECURITY_CSP_POLICY', implode('; ', [
+        "default-src 'self'",
+        "base-uri 'self'",
+        "object-src 'none'",
+        "frame-ancestors 'self'",
+        "form-action 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https: http:",
+        "media-src 'self' data: blob: https: http:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+    ]));
+}
+
+/**
+ * Слать политику CSP только для отчёта, ничего не блокируя.
+ * Нужно, чтобы обкатать более строгую политику на живом трафике.
+ * @var bool
+ */
+if (!defined('SECURITY_CSP_REPORT_ONLY')) {
+    define('SECURITY_CSP_REPORT_ONLY', false);
+}
+
+/**
+ * Время жизни заголовка Strict-Transport-Security, в секундах.
+ * 0 отключает заголовок. Отправляется только если SITE_URL - https.
+ * @var int
+ */
+if (!defined('SECURITY_HSTS_MAX_AGE')) {
+    define('SECURITY_HSTS_MAX_AGE', 15552000); // 180 дней
+}
+
 // -- Вспомогательные константы --
 
 define('MAX_ATTACHMENTS_TOTAL_SIZE_BYTES', MAX_ATTACHMENTS_TOTAL_SIZE_MB * 1024 * 1024);

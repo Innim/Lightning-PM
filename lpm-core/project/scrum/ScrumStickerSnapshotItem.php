@@ -272,7 +272,7 @@ SQL;
                 } else {
                     // TODO: наверное кидать исключение надо только для задача в готово/тесте?
                     $member = $this->getMember($userId);
-                    throw new Exception("SP для участника " . $member->getName() .
+                    throw new Exception("SP для участника " . $member->getPlainName() .
                         " не заданы. Задача \"" . $this->issue_name . "\"");
                 }
             } else {

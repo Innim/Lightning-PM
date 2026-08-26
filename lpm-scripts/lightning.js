@@ -808,6 +808,19 @@ lpm.utils = {
             return lpm.utils.copyToClipboard(plain);
         }
     },
+    /**
+     * Экранирует текст для безопасной вставки в HTML.
+     * @param {string} text
+     * @returns {string}
+     */
+    escapeHtml: function (text) {
+        return String(text === null || text === undefined ? '' : text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
     copyToClipboard: function (text) {
         // Modern clipboard API (works in HTTPS/localhost)
         if (navigator.clipboard && window.isSecureContext) {
@@ -902,10 +915,15 @@ function User(obj) {
     this.nick = obj.nick;
     //this.        = obj.;
 
+    // Имя пользователя приходит с сервера как есть, поэтому всё,
+    // что вставляется в разметку, экранируется здесь.
     this.getLinkedName = function () {
-        return this.getName();
+        return this._obj.linkedName
+            ? this._obj.linkedName
+            : lpm.utils.escapeHtml(this.getName());
     };
 
+    // Имя в исходном виде: для вставки в разметку не годится.
     this.getName = function () {
         return this.firstName + ' ' +
             (this.nick != '' ? this.nick + ' ' : '') +

@@ -169,7 +169,7 @@ class ProjectPage extends LPMPage
 
         Project::$currentProject = $this->_project;
         
-        $this->_header = 'Проект &quot;' . $this->_project->name . '&quot;';
+        $this->_header = 'Проект "' . $this->_project->name . '"';
         $this->_title  = $this->_project->name;
         
         // проверяем, не добавили ли задачу или может отредактировали
