@@ -43,9 +43,6 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
     <article id="issueInfo"
         class="issue-info issue-card card shadow-sm block-with-attachments <?=IssueViewHelper::statusStateClass($issue->status);?>"
         data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
-        <?php /* Подстатус и признак Scrum нужны JS: по ним он пересобирает
-                 бейдж статуса после обновления задачи без перезагрузки */ ?>
-        data-project-scrum="<?=$project->scrum ? 1 : 0;?>" data-substatus="<?=$substatus;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
         data-labels="<?=implode(',', $issue->getLabelNames());?>" data-issue-id="<?=$issue->id;?>">
         <div class="issue-header card-header bg-white">

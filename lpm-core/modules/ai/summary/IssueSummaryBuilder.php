@@ -449,7 +449,7 @@ TEXT;
             $lines[] = 'Завершена: ' . $issue->getCompletedDate();
         }
 
-        if ($issue->isPassTest) {
+        if ($issue->hasPassTestMark) {
             $lines[] = 'Тестирование: пройдено';
         } elseif ($issue->isChangesRequested) {
             $lines[] = 'Тестирование: найдены проблемы, требуются правки';
