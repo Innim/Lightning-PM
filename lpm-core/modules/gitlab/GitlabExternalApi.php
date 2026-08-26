@@ -25,6 +25,24 @@ class GitlabExternalApi extends ExternalApi
     
     const EVENT_NAME_PUSH = 'push';
 
+    /**
+     * Сколько раз спрашивать у GitLab пайплайн запушенного коммита.
+     *
+     * Пайплайн создаётся тем же пушем, что вызвал хук, поэтому на момент
+     * первого запроса его может ещё не быть. Ссылка попадает в комментарий
+     * о влитии один раз и навсегда, поэтому подождать выгоднее, чем оставить
+     * комментарий без состояния сборки.
+     */
+    const PIPELINE_LOOKUP_ATTEMPTS = 3;
+
+    /**
+     * Пауза между попытками получить пайплайн запушенного коммита, секунды.
+     *
+     * Хук отвечает синхронно, поэтому суммарное ожидание должно оставаться
+     * заметно меньше таймаута вебхука GitLab (по умолчанию 10 секунд).
+     */
+    const PIPELINE_LOOKUP_RETRY_DELAY_SEC = 1;
+
     const REPO_BRANCH_PREFIX = 'refs/heads/';
     const DEVELOP_BRANCH = 'develop';
     const MASTER_BRANCH = 'master';
@@ -306,6 +324,8 @@ class GitlabExternalApi extends ExternalApi
             $issueIds = array_keys($branchesByIssueId);
             $issues = Issue::loadListByIds($issueIds);
 
+            $pipelineUrl = $this->findPushPipelineUrl($user, $repositoryId, $branchName, $data);
+
             foreach ($issues as $issue) {
                 $branches = $branchesByIssueId[$issue->id];
 
@@ -319,6 +339,10 @@ class GitlabExternalApi extends ExternalApi
                 }
 
                 $commentText = implode("\n", $commentTextArr);
+                if (!empty($pipelineUrl)) {
+                    $commentText .= "\n\n" . $pipelineUrl;
+                }
+
                 $comments->postComment($user, $issue, $commentText, true, true,
                     IssueCommentType::BRANCH_MERGED, 
                     IssueCommentBranchMergedData::serializeBy($issueBranch));
@@ -335,6 +359,49 @@ class GitlabExternalApi extends ExternalApi
                 }
             }
         }
+    }
+
+    /**
+     * Возвращает URL пайплайна, запущенного пушем в стабильную ветку.
+     *
+     * В комментарий о влитии кладётся именно ссылка, а не состояние сборки:
+     * состояние меняется уже после публикации комментария, поэтому актуальное
+     * подтягивается по этой ссылке при просмотре задачи.
+     *
+     * @param User $user Пользователь, от имени которого идёт запрос к GitLab.
+     * @param int|string $repositoryId Идентификатор проекта на GitLab.
+     * @param string $branchName Ветка, в которую сделан пуш.
+     * @param array $data Данные события push.
+     * @return string|null URL пайплайна или null, если пайплайн для коммита
+     * так и не появился (в том числе если в проекте нет CI).
+     */
+    private function findPushPipelineUrl(User $user, $repositoryId, $branchName, $data)
+    {
+        $sha = empty($data['checkout_sha']) ? null : $data['checkout_sha'];
+        if (empty($sha)) {
+            return null;
+        }
+
+        $gitlab = GitlabIntegration::getInstance($user);
+
+        for ($attempt = 1; $attempt <= self::PIPELINE_LOOKUP_ATTEMPTS; $attempt++) {
+            if ($attempt > 1) {
+                sleep(self::PIPELINE_LOOKUP_RETRY_DELAY_SEC);
+            }
+
+            $pipeline = $gitlab->getPipelineForCommit($repositoryId, $branchName, $sha);
+            if (!empty($pipeline) && !empty($pipeline->url)) {
+                return $pipeline->url;
+            }
+        }
+
+        LPMLog::debug('No pipeline for pushed commit', LPMLog::CH_GITLAB, [
+            'repositoryId' => $repositoryId,
+            'ref'          => $branchName,
+            'sha'          => $sha,
+        ]);
+
+        return null;
     }
 
     private function updateLastCommit(User $user, $repositoryId, $branchName, $data)
