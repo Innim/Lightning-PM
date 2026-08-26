@@ -554,23 +554,81 @@ function lpm_get_issue_labels_names()
 }
 
 /**
- * Возвращает список объектов участников проекта для JS фильтра.
+ * Готовит данные к выводу в HTML-атрибут как JSON (`:options='…'` и подобные).
  *
- * Имя берётся экранированным намеренно: список уходит в JSON внутри
- * HTML-атрибута (`:options='…'` в `issue-list-filter.html`), а `json_encode`
- * одинарную кавычку не экранирует — с сырым именем атрибут рвётся.
- * Браузер разбирает атрибут и отдаёт Vue исходную строку, поэтому
- * двойного экранирования в интерфейсе не возникает.
+ * Порядок обязателен: сначала `json_encode` сырых данных, потом экранирование
+ * готовой строки целиком. При обратном порядке `json_encode` получает `&quot;`
+ * вместо кавычки, не экранирует её, а браузер при разборе атрибута
+ * возвращает голую кавычку и ломает JSON.
+ *
+ * Атрибут берётся в одинарные кавычки, поэтому апостроф в данных тоже
+ * должен быть экранирован — {@see HTMLHelper::escape()} закрывает обе кавычки.
+ *
+ * @param  mixed $data Данные для JSON.
+ * @return string Значение, готовое к подстановке внутрь атрибута.
+ */
+function lpm_json_attr($data)
+{
+    return HTMLHelper::escape(json_encode($data));
+}
+
+/**
+ * Возвращает участников проекта для JS фильтра, сгруппированных по ролям.
+ *
+ * Группы: «Исполнители» — все участники проекта, «Тестировщики» — только те
+ * из них, кто назначен тестировщиком хотя бы на одну задачу проекта.
+ * Пустые группы не возвращаются, чтобы в списке не было заголовка без людей.
+ * Один и тот же человек в разных группах — это разные опции мультиселекта,
+ * поэтому `key` включает роль: `track-by` требует уникальности по всем группам.
+ *
+ * Имена возвращаются в исходном виде, без экранирования: список уходит в
+ * HTML-атрибут через {@see lpm_json_attr()}, который экранирует уже готовый
+ * JSON. Экранировать имя заранее нельзя — `json_encode` не распознает в
+ * `&quot;` кавычку и не экранирует её, а браузер вернёт её в JSON голой.
+ *
+ * @return array<array> Группы вида
+ *                      `['groupLabel' => string, 'users' => array<array>]`.
  */
 function lpm_get_project_members_for_filter()
 {
     $users = PageConstructor::getProjectMembers();
-    return array_values(array_map(function ($user) {
-        return [
-            'userId' => $user->getID(), 
-            'name' => $user->getName(),
+    $project = PageConstructor::getProject();
+    $testerIds = empty($project)
+            ? []
+            : array_flip(Member::loadIssueTesterIdsForProject($project->getID()));
+
+    $members = [];
+    $testers = [];
+    foreach ($users as $user) {
+        $userId = $user->getID();
+        $name = $user->getPlainName();
+
+        $members[] = [
+            'key' => 'm' . $userId,
+            'userId' => $userId,
+            'role' => 'member',
+            'name' => $name,
         ];
-    }, $users));
+
+        if (isset($testerIds[$userId])) {
+            $testers[] = [
+                'key' => 't' . $userId,
+                'userId' => $userId,
+                'role' => 'tester',
+                'name' => $name,
+            ];
+        }
+    }
+
+    $groups = [];
+    if (!empty($members)) {
+        $groups[] = ['groupLabel' => 'Исполнители', 'users' => $members];
+    }
+    if (!empty($testers)) {
+        $groups[] = ['groupLabel' => 'Тестировщики', 'users' => $testers];
+    }
+
+    return $groups;
 }
 
 /**

@@ -1929,23 +1929,31 @@ issuePage.applySortFromHash = function () {
     issuePage.sortIssues(sortKey);
 };
 
+/**
+ * Восстанавливает фильтр из адреса страницы.
+ * Ключ `users` - исполнители, `testers` - тестировщики; ссылки без `testers`
+ * (сохранённые до появления фильтра по тестировщикам) остаются рабочими.
+ */
 issuePage.handleFilterState = function (value) {
     const filters = value.trim() == '' ? [] : value.split(';');
     const tags = [];
-    const userIds = [];
+    const memberIds = [];
+    const testerIds = [];
 
     filters.forEach(filter => {
         const [key, value] = filter.split('=');
         if (key === 'tags') {
             tags.push(...decodeURI(value).split(','));
         } else if (key === 'users') {
-            userIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
+            memberIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
+        } else if (key === 'testers') {
+            testerIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
         }
     });
 
     const filterVm = issuePage.filterVm;
     filterVm.selectedTags = tags;
-    filterVm.selectUsers(userIds)
+    filterVm.selectUsers(memberIds, testerIds);
 }
 
 issuePage.onFilterChanged = function (filter)  {
@@ -1958,8 +1966,18 @@ issuePage.onFilterChanged = function (filter)  {
             filters.push(`tags=${encodeURI(tags.join(','))}`);
         }
 
-        if (users.length) {
-            filters.push(`users=${encodeURI(users.map(user => user.userId).join(','))}`);
+        const idsByRole = (role) => users
+            .filter((user) => user.role === role)
+            .map((user) => user.userId);
+
+        const memberIds = idsByRole('member');
+        if (memberIds.length) {
+            filters.push(`users=${encodeURI(memberIds.join(','))}`);
+        }
+
+        const testerIds = idsByRole('tester');
+        if (testerIds.length) {
+            filters.push(`testers=${encodeURI(testerIds.join(','))}`);
         }
 
         states.setState('filter:' + filters.join(';'), true);
@@ -1969,7 +1987,7 @@ issuePage.onFilterChanged = function (filter)  {
 }
 
 issuePage.showIssuesByUser = function (memberId) {
-    issuePage.filterVm.selectUsers([memberId]);
+    issuePage.filterVm.selectUsers([memberId], []);
 };
 
 issuePage.scrumColUpdateInfo = function () {
