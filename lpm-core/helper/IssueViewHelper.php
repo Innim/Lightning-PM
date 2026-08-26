@@ -43,15 +43,18 @@ class IssueViewHelper
      * Готовность задачи в тесте: влиты ли правки, которые её изменили.
      *
      * Определяется только для задач в тесте, по которым известно состояние MR.
-     * Пока задача ждёт правок (найдены проблемы) или уже отмечена прошедшей
-     * тестирование, состояние MR не показывается - у задачи есть отметка поважнее.
+     * Пока задача ждёт правок (найдены проблемы), уже взята кем-то на проверку
+     * или отмечена прошедшей тестирование, состояние MR не показывается -
+     * у задачи есть отметка поважнее.
      * @param  Issue $issue Задача.
      * @return string Уровень: wait-merge (правки ещё не влиты) |
      * ready (правки влиты, можно тестировать). Пустая строка, если показывать нечего.
      */
     public static function testMergeLevel(Issue $issue)
     {
-        if (!$issue->isTesting() || $issue->hasPassTestMark || $issue->isChangesRequested) {
+        if (!$issue->isTesting() || $issue->hasPassTestMark
+            || $issue->isChangesRequested || $issue->isTakenForTesting
+        ) {
             return '';
         }
 
@@ -143,7 +146,7 @@ class IssueViewHelper
      *
      * Подстатус задаёт своё оформление: он уточняет статус и показывается
      * вместо него. Цвет идёт по нарастанию готовности задачи:
-     * серый - голубой - синий - жёлтый - светло-зелёный - зелёный.
+     * серый - голубой - синий - жёлтый - бледно-зелёный - светло-зелёный - зелёный.
      * @param  int $status    Статус задачи.
      * @param  int $substatus Уточнение статуса (@see IssueSubstatus).
      * @return string Список CSS-классов.
@@ -157,6 +160,8 @@ class IssueViewHelper
                 return 'bg-info text-dark';
             case IssueSubstatus::IN_PROGRESS:
                 return 'bg-primary';
+            case IssueSubstatus::TAKEN_FOR_TESTING:
+                return 'bg-success bg-opacity-25 text-dark';
             case IssueSubstatus::PASS_TEST:
                 return 'bg-success bg-opacity-75 text-dark';
         }

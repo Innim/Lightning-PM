@@ -391,6 +391,97 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Отмечает, что текущий пользователь взял задачу в тестирование.
+     *
+     * Отметка живёт в журнале задачи, а не в комментариях: её надо уметь
+     * снимать, а комментарий из ленты не убрать. Взять задачу может любой,
+     * кому она доступна: задача в тесте ничья, тестировщики разбирают
+     * такие задачи сами. Взявший заодно добавляется в тестировщики задачи,
+     * если его там ещё нет.
+     * @param   int $issueId Идентификатор задачи.
+     * @return {
+     *     int  substatus       Уточнение статуса задачи.
+     *     bool testerAdded     Добавлен ли пользователь в тестировщики задачи.
+     *     float  userId        Идентификатор добавленного тестировщика.
+     *     String memberHtml    Ссылка на добавленного тестировщика.
+     *     String avatarUrl     Аватар добавленного тестировщика.
+     * }
+     */
+    public function takeForTesting($issueId)
+    {
+        $issueId = (int)$issueId;
+
+        try {
+            $issue = $this->getIssueForTestingMark($issueId);
+
+            $user = $this->getUser();
+            $userId = $user->getID();
+
+            if ($issue->isTakenForTesting) {
+                return $this->error('Задача уже взята в тестирование');
+            }
+
+            IssueEvent::create($issueId, IssueEventType::TAKEN_FOR_TESTING, $userId);
+
+            // Назначение тестировщиком - отдельный от отметки механизм: оно
+            // переживает снятие отметки, поэтому здесь только добавляем
+            $testerAdded = !$issue->isTester($userId);
+            if ($testerAdded) {
+                if (!Member::saveIssueTesters($issueId, [$userId])) {
+                    return $this->errorDBSave();
+                }
+
+                UserLogEntry::issueEdit($userId, $issueId, 'Add self as tester by taking for testing');
+
+                // Отдаём то же, что и addMeToIssue: клиент показывает участника одинаково
+                $this->add2Answer('userId', $userId);
+                $this->add2Answer('memberHtml', $user->getLinkedName());
+                $this->add2Answer('avatarUrl', $user->getAvatarUrl());
+            }
+
+            $this->add2Answer('testerAdded', $testerAdded);
+            $this->answerTakenForTesting($issue);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Снимает с задачи отметку о взятии в тестирование.
+     *
+     * Снять отметку может любой, кому доступна задача, и в любой момент:
+     * иначе тот, кто взял задачу и пропал, заблокировал бы её насовсем.
+     * Из тестировщиков задачи пользователь при этом не убирается - его могли
+     * назначить туда заранее и не этим действием.
+     * @param   int $issueId Идентификатор задачи.
+     * @return {
+     *     int substatus Уточнение статуса задачи.
+     * }
+     */
+    public function releaseFromTesting($issueId)
+    {
+        $issueId = (int)$issueId;
+
+        try {
+            $issue = $this->getIssueForTestingMark($issueId);
+
+            if (!$issue->isTakenForTesting) {
+                return $this->error('Задача не взята в тестирование');
+            }
+
+            IssueEvent::create($issueId, IssueEventType::RELEASED_FROM_TESTING, $this->getUserId());
+
+            $this->answerTakenForTesting($issue);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Отмечает что задача прошла тестирование.
      * @param   int     $issueId Идентификатор задачи
      * @param   String  $text Текст комментария
@@ -1272,6 +1363,43 @@ class IssueService extends LPMBaseService
                 ? $_FILES['commentFiles']
                 : null
         );
+    }
+
+    /**
+     * Загружает задачу для действий с отметкой о взятии в тестирование
+     * и проверяет, что действие вообще применимо.
+     * @param  int $issueId Идентификатор задачи.
+     * @return Issue Задача с актуальными отметками.
+     * @throws Exception Если задачи нет, доступа к проекту нет либо задача
+     * не находится в тестировании.
+     */
+    private function getIssueForTestingMark($issueId)
+    {
+        $issue = Issue::load($issueId);
+        if (!$issue) {
+            throw new Exception('Нет такой задачи');
+        }
+
+        // Задача приходит по глобальному идентификатору, поэтому права
+        // на проект надо проверить здесь
+        $this->getProjectRequireReadPermission($issue->projectId);
+
+        if (!$issue->isTesting()) {
+            throw new Exception('Отметка о тестировании доступна только для задач, ожидающих проверки');
+        }
+
+        return $issue;
+    }
+
+    /**
+     * Добавляет в ответ актуальное состояние отметки о взятии в тестирование.
+     * @param Issue $issue Задача, у которой отметка только что изменилась.
+     */
+    private function answerTakenForTesting(Issue $issue)
+    {
+        $issue->reloadSubstatusSources();
+
+        $this->addSubstatus2Answer($issue);
     }
 
     /**
