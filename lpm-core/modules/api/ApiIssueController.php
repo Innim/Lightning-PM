@@ -107,6 +107,11 @@ class ApiIssueController extends ApiControllerBase
             throw new Exception('Failed to load created issue');
         }
 
+        // Связи по упоминаниям в описании: общего места сохранения описания нет,
+        // поэтому каждый способ создать или отредактировать задачу делает это сам
+        // (веб-форма — в ProjectPage::saveIssue())
+        IssueLinked::syncFromText($issue, $desc, $user->getID());
+
         Project::updateIssuesCount($project->id);
 
         UserLogEntry::create(

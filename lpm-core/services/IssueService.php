@@ -168,14 +168,14 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            $comment = $this->postComment(
+            $result = $this->postCommentWithResult(
                 $issue,
                 $text,
                 false,
                 $requestChanges ? IssueCommentType::REQUEST_CHANGES : null
             );
-
-            $addedLinks = IssueLinked::syncFromText($issue, $text, $this->getUserId());
+            $comment = $result['comment'];
+            $addedLinks = $result['addedLinks'];
 
             $this->setupCommentAnswer($comment);
 
@@ -466,9 +466,9 @@ class IssueService extends LPMBaseService
                 return $this->error('Чек-лист пуст');
             }
 
-            $comment = $this->postComment($issue, $text, false, IssueCommentType::TEST_CHECKLIST);
-
-            $addedLinks = IssueLinked::syncFromText($issue, $text, $this->getUserId());
+            $result = $this->postCommentWithResult($issue, $text, false, IssueCommentType::TEST_CHECKLIST);
+            $comment = $result['comment'];
+            $addedLinks = $result['addedLinks'];
 
             $this->setupCommentAnswer($comment);
 
@@ -1245,7 +1245,22 @@ class IssueService extends LPMBaseService
         string $type = null,
         string $data = null
     ) {
-        return $this->_engine->comments()->postComment(
+        $result = $this->postCommentWithResult($issue, $text, $ignoreSlackNotification, $type, $data);
+
+        return $result['comment'];
+    }
+
+    /**
+     * @return array см. CommentsManager::postCommentWithResult()
+     */
+    private function postCommentWithResult(
+        Issue $issue,
+        $text,
+        $ignoreSlackNotification = false,
+        string $type = null,
+        string $data = null
+    ) {
+        return $this->_engine->comments()->postCommentWithResult(
             $this->getUser(),
             $issue,
             $text,

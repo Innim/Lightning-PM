@@ -215,6 +215,8 @@ Content-Type: application/json
 
 Use the same resolved global `id` here as well. Do not substitute `idInProject` from the issue URL into `/api/v1/issues/{issueId}/comments`.
 
+An issue URL of this instance written in a comment text — or in the `desc` of a created issue — automatically links the two issues, so mention one only when the link is wanted.
+
 Good comment content:
 
 - tester instructions

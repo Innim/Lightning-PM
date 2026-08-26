@@ -261,6 +261,8 @@ Fields:
 
 The response returns the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with HTTP status `201`. Read the global `id` and `idInProject` from it for later requests. The issue is created without members, testers, or a scrum-board sticker; assign those through the web UI if needed.
 
+An issue URL of this Lightning PM instance written in `desc` or in a comment text automatically links the two issues, the same as in the web UI.
+
 ## Scope of v1
 
 - List projects available to the user.
