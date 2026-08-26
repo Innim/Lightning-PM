@@ -437,7 +437,7 @@ TEXT;
             'Проект: ' . $issue->projectName,
             'Тип: ' . $issue->getType(),
             'Статус: ' . $issue->getStatus(),
-            'Автор: ' . ($issue->author ? $issue->author->getShortName() : ''),
+            'Автор: ' . ($issue->author ? $issue->author->getPlainShortName() : ''),
             'Создана: ' . $issue->getCreateDate(),
         ];
 
@@ -472,7 +472,7 @@ TEXT;
      */
     private static function buildCommentBlock(Comment $comment)
     {
-        $header = $comment->getDate() . ', ' . $comment->author->getShortName();
+        $header = $comment->getDate() . ', ' . $comment->author->getPlainShortName();
 
         $label = self::getCommentTypeLabel($comment);
         if ($label !== '') {

@@ -196,7 +196,7 @@ class SlackIntegration
         $this->postMessageForIssue($issue, $text, [[
             'fallback' => $issue->getName(),
             //'title' => $issue->getName(),
-            'title' => $comment->author->getShortName() . ' написал:',
+            'title' => $comment->author->getPlainShortName() . ' написал:',
             'text' => $this->formatCommentTextForSlack($comment->getCleanText()),
             'title_link' => $commentUrl
         ]]);

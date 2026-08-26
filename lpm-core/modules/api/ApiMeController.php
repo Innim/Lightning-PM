@@ -8,7 +8,7 @@ class ApiMeController extends ApiControllerBase
         return ApiResponse::success([
             'user' => [
                 'id' => $user->getID(),
-                'name' => $user->getName(),
+                'name' => $user->getPlainName(),
                 'email' => $user->email,
             ],
         ]);

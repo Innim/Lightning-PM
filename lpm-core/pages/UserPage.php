@@ -57,7 +57,7 @@ class UserPage extends LPMPage
             return false;
         }
 
-        $this->_title  = "Пользователь " . $user->getName();
+        $this->_title  = "Пользователь " . $user->getPlainName();
         $this->_header = 'Профиль пользователя';
 
         $this->addTmplVar('user', $user);

@@ -44,7 +44,7 @@ class IssueEmailFormatter
         }
 
         if (!empty($user)) {
-            $message = str_replace(self::PARAM_USER, $user->getName(), $message);
+            $message = str_replace(self::PARAM_USER, $user->getPlainName(), $message);
         }
 
         if (!empty($project)) {
