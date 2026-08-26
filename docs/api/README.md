@@ -62,7 +62,7 @@ Issues come in the same order as in the web UI: issues in test first, then in wo
       "url": "https://example.com/project/demo/issue/2797",
       "type": 0,
       "status": 1,
-      "priority": 77,
+      "priority": 78,
       "hours": 2,
       "labels": ["api", "ui"],
       "commentsCount": 19,
@@ -77,7 +77,7 @@ Issues come in the same order as in the web UI: issues in test first, then in wo
 }
 ```
 
-Dates are unix timestamps in seconds; `0` means the date is not set. Items carry no description, comments, or attachments — request `GET /api/v1/issues/{issueId}` for the full issue.
+Dates are unix timestamps in seconds; `0` means the date is not set. `priority` is the value shown in the web UI, an integer `1..100`. Items carry no description, comments, or attachments — request `GET /api/v1/issues/{issueId}` for the full issue.
 
 ## Listing project labels
 
@@ -126,7 +126,7 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
           "url": "https://example.com/project/demo/issue/933",
           "type": 0,
           "status": 0,
-          "priority": 69,
+          "priority": 70,
           "hours": 0.5,
           "labels": ["api"],
           "commentsCount": 4,
@@ -243,7 +243,7 @@ Content-Type: application/json
   "name": "Payment retry duplicates the request",
   "desc": "Double-clicking the pay button sends the purchase request twice.",
   "type": 1,
-  "priority": 5,
+  "priority": 80,
   "hours": 2,
   "completeDate": "2026-07-15"
 }
@@ -255,7 +255,7 @@ Fields:
 - `name` (required) — issue title. Labels are the `[label]` prefixes of the name (`[api][ui] Title`), so the name must contain a title besides them. When the project has *«Задачи должны иметь теги»* enabled, the name must also start with at least one label; otherwise the request is rejected with `400`.
 - `desc` (optional) — issue description, up to 60000 characters.
 - `type` (optional, default `0`) — `0` develop, `1` bug, `2` support.
-- `priority` (optional, default `49` — normal) — integer clamped to `0..99`.
+- `priority` (optional, default `50` — normal) — integer `1..100`, the same value the web UI shows for the issue; anything outside the range is rejected with `400`. Earlier the API used the internal scale `0..99`, one less than the displayed value; see the changelog for the release that switched it.
 - `hours` (optional, default `0`) — story points estimate; only `0.5` is accepted as a fraction, other values are treated as integers.
 - `completeDate` (optional) — target date in `YYYY-MM-DD` format.
 

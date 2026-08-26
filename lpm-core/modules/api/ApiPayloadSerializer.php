@@ -9,10 +9,15 @@ class ApiPayloadSerializer
         $this->baseUrl = rtrim($baseUrl, '/');
     }
 
+    /**
+     * Полное представление задачи.
+     *
+     * Приоритет отдаётся в отображаемой шкале (1..100), как в интерфейсе.
+     * @return stdClass
+     */
     public function issue(Issue $issue)
     {
-        $obj = $issue->getClientObject();
-        unset($obj->formattedDesc);
+        $obj = $this->issueObject($issue);
 
         $obj->members = [];
         foreach ($issue->getMembers() as $member) {
@@ -45,7 +50,7 @@ class ApiPayloadSerializer
 
         $obj->linked = [];
         foreach ($issue->getLinkedIssues() as $linked) {
-            $obj->linked[] = $linked->getClientObject();
+            $obj->linked[] = $this->issueObject($linked);
         }
 
         $obj->labels = $issue->getLabelNames();
@@ -68,9 +73,26 @@ class ApiPayloadSerializer
     }
 
     /**
+     * Поля задачи, общие для полного представления и для вложенных в него
+     * связанных задач: клиентский объект без служебных полей веб-формы
+     * и с приоритетом в отображаемой шкале.
+     * @return stdClass
+     */
+    private function issueObject(Issue $issue)
+    {
+        $obj = $issue->getClientObject();
+        unset($obj->formattedDesc);
+        unset($obj->completeDateInput);
+        $obj->priority = Issue::getPriorityDisplayValueBy($issue->priority);
+
+        return $obj;
+    }
+
+    /**
      * Краткое представление задачи для списков.
      *
      * Не содержит описания, комментариев и вложений - их отдаёт запрос самой задачи.
+     * Приоритет отдаётся в отображаемой шкале (1..100), как в интерфейсе.
      * @return array
      */
     public function issueBrief(Issue $issue)
@@ -82,7 +104,7 @@ class ApiPayloadSerializer
             'url' => $issue->getConstURL(),
             'type' => $issue->type,
             'status' => $issue->status,
-            'priority' => $issue->priority,
+            'priority' => Issue::getPriorityDisplayValueBy($issue->priority),
             'hours' => $issue->hours,
             'labels' => $issue->getLabelNames(),
             'commentsCount' => $issue->commentsCount,

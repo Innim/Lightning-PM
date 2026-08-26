@@ -85,7 +85,23 @@ class ApiIssueController extends ApiControllerBase
             return ApiResponse::error('Invalid issue type', 400);
         }
 
-        $priority = min(99, max(0, (int)$this->request()->getBody('priority', Issue::DEFAULT_PRIORITY)));
+        // Приоритет в API — в той же шкале, что видит пользователь в интерфейсе.
+        $minPriority = Issue::getPriorityDisplayValueBy(0);
+        $maxPriority = Issue::getPriorityDisplayValueBy(Issue::MAX_PRIORITY);
+        $priorityInput = $this->request()->getBody('priority');
+        if ($priorityInput === null || $priorityInput === '') {
+            $priorityInput = Issue::getPriorityDisplayValueBy(Issue::DEFAULT_PRIORITY);
+        }
+
+        if (!is_numeric($priorityInput) || (int)$priorityInput != $priorityInput
+                || $priorityInput < $minPriority || $priorityInput > $maxPriority) {
+            return ApiResponse::error(
+                'Invalid priority, expected an integer ' . $minPriority . '..' . $maxPriority,
+                400
+            );
+        }
+
+        $priority = Issue::priorityFromDisplayValue($priorityInput);
         $hours = Issue::parseStoryPoints($this->request()->getBody('hours', 0));
         if (!Issue::isValidStoryPoints($hours)) {
             return ApiResponse::error('Invalid hours, expected a non-negative integer or 0.5', 400);
