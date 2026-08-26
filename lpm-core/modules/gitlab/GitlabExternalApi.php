@@ -344,8 +344,8 @@ class GitlabExternalApi extends ExternalApi
                 }
 
                 $comments->postComment($user, $issue, $commentText, true, true,
-                    IssueCommentType::BRANCH_MERGED, 
-                    IssueCommentBranchMergedData::serializeBy($issueBranch));
+                    IssueCommentType::BRANCH_MERGED,
+                    IssueCommentBranchMergedData::serializeBy($branches));
 
                 // Проверяем права и вливаем только задачи, которые уже в тесте
                 if ($issue->checkEditPermit($user->userId) && $issue->status == Issue::STATUS_WAIT) {
