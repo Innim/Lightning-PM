@@ -477,6 +477,42 @@ class GitlabIntegration
         }
     }
 
+    /**
+     * Возвращает пайплайн, запущенный для конкретного коммита ветки.
+     *
+     * @param int|string $projectId Идентификатор проекта на GitLab.
+     * @param string $ref Ветка или тег, в которой находится коммит.
+     * @param string $sha SHA коммита.
+     * @return GitlabPipeline|null Самый свежий пайплайн этого коммита или null,
+     * если пайплайна нет либо данные получить не удалось.
+     */
+    public function getPipelineForCommit($projectId, $ref, $sha)
+    {
+        if (empty($ref) || empty($sha)) {
+            return null;
+        }
+
+        $client = $this->client();
+        if ($client == null) {
+            return null;
+        }
+
+        try {
+            $res = $client->projects()->pipelines($projectId, [
+                'ref' => $ref,
+                'sha' => $sha,
+                'order_by' => 'id',
+                'sort' => 'desc',
+                'per_page' => 1,
+            ]);
+
+            return empty($res) ? null : new GitlabPipeline($res[0]);
+        } catch (Exception $e) {
+            $this->onCallException(__METHOD__, $e);
+            return null;
+        }
+    }
+
     private function sudoGetUserByEmail($email)
     {
         try {
