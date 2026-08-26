@@ -476,7 +476,7 @@ TEXT;
             'Автор: ' . ($issue->author ? $issue->author->getPlainShortName() : ''),
         ];
 
-        if ($issue->isPassTest) {
+        if ($issue->hasPassTestMark) {
             $lines[] = 'Тестирование: уже пройдено ранее';
         } elseif ($issue->isChangesRequested) {
             $lines[] = 'Тестирование: ранее найдены проблемы, требовались правки';

@@ -51,7 +51,7 @@ class IssueViewHelper
      */
     public static function testMergeLevel(Issue $issue)
     {
-        if (!$issue->isTesting() || $issue->isPassTest || $issue->isChangesRequested) {
+        if (!$issue->isTesting() || $issue->hasPassTestMark || $issue->isChangesRequested) {
             return '';
         }
 
@@ -141,8 +141,9 @@ class IssueViewHelper
     /**
      * Классы бейджа статуса задачи.
      *
-     * Подстатус задаёт своё оформление: он уточняет статус «В работе»
-     * и показывается вместо него.
+     * Подстатус задаёт своё оформление: он уточняет статус и показывается
+     * вместо него. Цвет идёт по нарастанию готовности задачи:
+     * серый - голубой - синий - жёлтый - светло-зелёный - зелёный.
      * @param  int $status    Статус задачи.
      * @param  int $substatus Уточнение статуса (@see IssueSubstatus).
      * @return string Список CSS-классов.
@@ -156,6 +157,8 @@ class IssueViewHelper
                 return 'bg-info text-dark';
             case IssueSubstatus::IN_PROGRESS:
                 return 'bg-primary';
+            case IssueSubstatus::PASS_TEST:
+                return 'bg-success bg-opacity-75 text-dark';
         }
 
         switch ((int)$status) {

@@ -51,6 +51,8 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $issue->reloadSubstatusSources();
+        $this->addSubstatus2Answer($issue);
     
         return $this->answer();
     }
@@ -78,6 +80,8 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $issue->reloadSubstatusSources();
+        $this->addSubstatus2Answer($issue);
     
         return $this->answer();
     }
@@ -100,6 +104,7 @@ class IssueService extends LPMBaseService
         }
         
         $this->add2Answer('issue', $this->getIssue4Client($issue, true, $loadLinked));
+        $this->addSubstatus2Answer($issue);
         return $this->answer();
     }
 
@@ -122,6 +127,7 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $this->addSubstatus2Answer($issue);
         return $this->answer();
     }
     
@@ -698,6 +704,9 @@ class IssueService extends LPMBaseService
             if (!ScrumSticker::putStickerOnBoard($issue)) {
                 return $this->errorDBSave();
             }
+
+            $issue->reloadSubstatusSources();
+            $this->addSubstatus2Answer($issue);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -1198,6 +1207,8 @@ class IssueService extends LPMBaseService
                 // обновляем счетчик комментариев для задачи
                 Issue::updateCommentsCounter($comment->instanceId);
 
+                $this->addCommentIssueSubstatus2Answer($comment);
+
                 // Если это коммент о создании ветки — удаляем связь и опционально саму ветку
                 if (!empty($comment->issueComment) && $comment->issueComment->isCreateBranch()) {
                     $data = $comment->issueComment->getCreateBranchData();
@@ -1248,6 +1259,45 @@ class IssueService extends LPMBaseService
         );
     }
 
+    /**
+     * Добавляет в ответ уточнение статуса задачи (@see IssueSubstatus).
+     *
+     * Задача должна быть с актуальными данными: если к этому моменту менялись
+     * её статус, стикер или комментарии, вызывающий метод обязан сначала
+     * позвать {@see Issue::reloadSubstatusSources()}.
+     * @param Issue $issue Задача.
+     */
+    private function addSubstatus2Answer(Issue $issue)
+    {
+        $this->add2Answer('substatus', $issue->getSubstatus());
+    }
+
+    /**
+     * Добавляет в ответ уточнение статуса задачи, к которой оставлен
+     * комментарий: публикация, правка и удаление комментария могут менять
+     * отметку о прохождении тестирования.
+     * @param Comment $comment Уже изменённый комментарий.
+     */
+    private function addCommentIssueSubstatus2Answer(Comment $comment)
+    {
+        if ($comment->instanceType != LPMInstanceTypes::ISSUE) {
+            return;
+        }
+
+        $issue = $comment->issue;
+        if (empty($issue)) {
+            // Задачи под рукой нет - общая выборка сразу даёт всё нужное
+            $issue = Issue::load($comment->instanceId);
+            if (empty($issue)) {
+                return;
+            }
+        } else {
+            $issue->reloadSubstatusSources();
+        }
+
+        $this->addSubstatus2Answer($issue);
+    }
+
     private function setupCommentAnswer(Comment $comment)
     {
         $html = $this->getHtml(function () use ($comment) {
@@ -1256,6 +1306,8 @@ class IssueService extends LPMBaseService
         
         $this->add2Answer('comment', $comment->getClientObject());
         $this->add2Answer('html', $html);
+
+        $this->addCommentIssueSubstatus2Answer($comment);
     }
 
     private function completeIssue(Issue $issue)
@@ -1267,6 +1319,8 @@ class IssueService extends LPMBaseService
         Issue::setStatus($issue, Issue::STATUS_COMPLETED, $this->getUser());
         
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $issue->reloadSubstatusSources();
+        $this->addSubstatus2Answer($issue);
     }
 
     private function validateBranchName($value)
