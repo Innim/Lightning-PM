@@ -92,7 +92,7 @@ class ApiPayloadSerializer
             'completedDate' => $issue->completedDate,
             'author' => [
                 'id' => $issue->author->getID(),
-                'name' => $issue->author->getName(),
+                'name' => $issue->author->getPlainName(),
                 'nick' => $issue->author->nick,
             ],
         ];
@@ -159,7 +159,7 @@ class ApiPayloadSerializer
             'createdAt' => date('c', $comment->date),
             'author' => [
                 'id' => $comment->author->getID(),
-                'name' => $comment->author->getName(),
+                'name' => $comment->author->getPlainName(),
                 'nick' => $comment->author->nick,
             ],
             'type' => $type,

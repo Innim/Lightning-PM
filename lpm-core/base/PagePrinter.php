@@ -1,14 +1,24 @@
 <?php
 class PagePrinter
 {
+    /**
+     * Печатает заголовок страницы для тега <title>.
+     * Заголовки складываются из данных пользователя (имя задачи, проекта,
+     * пользователя), поэтому печатаются экранированными.
+     */
     public static function title()
     {
-        echo self::getPC()->getTitle();
+        echo HTMLHelper::escape(self::getPC()->getTitle());
     }
-    
+
+    /**
+     * Печатает заголовок страницы для вывода в теле страницы.
+     * Как и {@see PagePrinter::title()}, содержит пользовательские данные —
+     * печатается экранированным, разметку в заголовок класть нельзя.
+     */
     public static function header()
     {
-        echo self::getPC()->getHeader();
+        echo HTMLHelper::escape(self::getPC()->getHeader());
     }
     
     public static function siteTitle()
@@ -628,7 +638,7 @@ JS;
     
     private static function openGraph($property, $content)
     {
-        echo '<meta property="og:' . $property . '" content="' . str_replace('"', '', $content) . '" />';
+        echo '<meta property="og:' . $property . '" content="' . HTMLHelper::escape($content) . '" />';
     }
     
     /**

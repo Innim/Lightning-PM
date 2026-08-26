@@ -29,7 +29,7 @@
                 <div class="mb-3">
                     <label for="role" class="form-label">Роль</label>
                     <select class="form-select" id="role" name="role" data-current="<?=$user->role;?>"
-                        data-username="<?=htmlspecialchars($user->getName());?>">
+                        data-username="<?=$user->getName();?>">
                         <?php foreach (User::getRolesMap() as $roleValue => $roleTitle): ?>
                         <option value="<?=$roleValue;?>"<?=$roleValue == $user->role ? ' selected' : '';?>><?=$roleTitle;?></option>
                         <?php endforeach; ?>
@@ -38,7 +38,7 @@
                 <?php endif; ?>
                 <div class="mb-3">
                     <label for="slackName" class="form-label">Slack Member ID</label>
-                    <input type="text" class="form-control" id="slackName" name="slackName" value="<?=$user->slackName;?>">
+                    <input type="text" class="form-control" id="slackName" name="slackName" value="<?=lpm_escape($user->slackName);?>">
                     <div class="form-text"><a
                             href="https://medium.com/@moshfeu/how-to-find-my-member-id-in-slack-workspace-d4bba942e38c"
                             target="_blank">Как найти Member ID</a></div>

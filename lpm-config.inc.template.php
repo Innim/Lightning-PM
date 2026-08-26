@@ -144,6 +144,22 @@ define('AI_GEMINI_MODEL', 'gemini-3.6-flash');
 // define('AI_GEMINI_THINKING_BUDGET', -1);
 
 
+// Заголовки безопасности
+// Значения по умолчанию заданы в lpm-core/consts.inc.php,
+// здесь их можно переопределить.
+
+// Политика Content-Security-Policy. Пустая строка отключает заголовок.
+// define('SECURITY_CSP_POLICY', "default-src 'self'; ...");
+
+// Слать политику только для отчёта, ничего не блокируя —
+// нужно, чтобы обкатать более строгую политику на живом трафике.
+// define('SECURITY_CSP_REPORT_ONLY', false);
+
+// Время жизни Strict-Transport-Security в секундах, 0 отключает заголовок.
+// Отправляется, только если SITE_URL начинается с https.
+// define('SECURITY_HSTS_MAX_AGE', 15552000);
+
+
 // Настройки каналов оповещений
 
 // Оповещать по Email

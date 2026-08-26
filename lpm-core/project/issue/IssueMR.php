@@ -81,6 +81,52 @@ class IssueMR extends LPMBaseObject
     }
 
     /**
+     * Приводит сохраненное состояние Merge Request к переданному.
+     *
+     * Обновляет только уже существующие записи — если MR не привязан ни к одной
+     * задаче, ничего не происходит. Запись в БД выполняется только тогда,
+     * когда сохраненное состояние отличается от переданного.
+     *
+     * @param  int    $mrId  Идентификатор MR: внутренний идентификатор GitLab
+     *                       ({@see GitlabMergeRequest::$id}), а не номер MR
+     *                       внутри проекта ({@see GitlabMergeRequest::$internalId}).
+     * @param  string $state Актуальное состояние (см. GitlabMergeRequest::STATE_*).
+     * @return bool true, если состояние было обновлено.
+     * @throws \GMFramework\ProviderLoadException Если не удалось прочитать состояние.
+     * @throws \GMFramework\ProviderSaveException Если не удалось сохранить состояние.
+     */
+    public static function syncState($mrId, $state)
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => 'state',
+            'FROM'   => LPMTables::ISSUE_MR,
+            'WHERE'  => ['mrId' => $mrId],
+        ]);
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        $outdated = false;
+        foreach ($res as $raw) {
+            if ($raw['state'] !== $state) {
+                $outdated = true;
+                break;
+            }
+        }
+
+        if (!$outdated) {
+            return false;
+        }
+
+        if (self::updateState($mrId, $state) === false) {
+            throw new \GMFramework\ProviderSaveException();
+        }
+
+        return true;
+    }
+
+    /**
      * Создает запись.
      * @param  int    $mrId    Идентификатор MR.
      * @param  int    $issueId Идентификатор задачи.

@@ -86,7 +86,7 @@ class IssueChangeSet
     private static function userName($userId)
     {
         $user = User::load($userId);
-        return $user ? $user->getName() : ('#' . (int)$userId);
+        return $user ? $user->getPlainName() : ('#' . (int)$userId);
     }
 
     /** @var string[] */

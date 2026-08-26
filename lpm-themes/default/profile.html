@@ -37,13 +37,13 @@ $pref = $user->pref;
                 </div>
                 <dl class="row mb-0">
                     <dt class="col-sm-3 text-muted fw-normal">Имя</dt>
-                    <dd class="col-sm-9"><?=$user->firstName;?></dd>
+                    <dd class="col-sm-9"><?=lpm_escape($user->firstName);?></dd>
 
                     <dt class="col-sm-3 text-muted fw-normal">Фамилия</dt>
-                    <dd class="col-sm-9"><?=$user->lastName;?></dd>
+                    <dd class="col-sm-9"><?=lpm_escape($user->lastName);?></dd>
 
                     <dt class="col-sm-3 text-muted fw-normal">Ник</dt>
-                    <dd class="col-sm-9"><?=$user->nick;?></dd>
+                    <dd class="col-sm-9"><?=lpm_escape($user->nick);?></dd>
 
                     <dt class="col-sm-3 text-muted fw-normal">Регистрация</dt>
                     <dd class="col-sm-9 mb-0"><?=$user->getRegDate();?></dd>
