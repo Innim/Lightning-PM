@@ -196,6 +196,46 @@ class Member extends User
     }
 
     /**
+     * Возвращает идентификаторы пользователей, назначенных тестировщиками
+     * хотя бы на одну неудалённую задачу проекта.
+     *
+     * Выбираются только идентификаторы (без объектов пользователей) и без повторов:
+     * на проект приходятся тысячи назначений, а различных тестировщиков - десятки.
+     *
+     * @param  int $projectId Идентификатор проекта.
+     * @return array<int> Список идентификаторов пользователей.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
+    public static function loadIssueTesterIdsForProject($projectId)
+    {
+        $res = self::loadFromDV2([
+            'SELECT' => '`m`.`userId`',
+            'FROM'   => LPMTables::MEMBERS,
+            'AS'     => 'm',
+            'JOINS'  => [
+                [
+                    'INNER JOIN' => LPMTables::ISSUES,
+                    'AS'         => 'i',
+                    'ON'         => ['`i`.`id`' => self::col('m.instanceId')],
+                ],
+            ],
+            'WHERE'  => [
+                '`m`.`instanceType`' => LPMInstanceTypes::ISSUE_FOR_TEST,
+                '`i`.`projectId`'    => (int)$projectId,
+                '`i`.`deleted`'      => 0,
+            ],
+            'GROUP BY' => '`m`.`userId`',
+        ]);
+
+        $ids = [];
+        while ($row = $res->fetch_assoc()) {
+            $ids[] = (int)$row['userId'];
+        }
+
+        return $ids;
+    }
+
+    /**
      * Загружает список специализированных тестеров для конкретного проекта.
      * @return array<Member>
      */

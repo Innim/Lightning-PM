@@ -1356,6 +1356,19 @@ SQL;
     }
 
     /**
+     * Переводит отображаемое значение приоритета во внутреннее.
+     *
+     * Обратная операция к {@see getPriorityDisplayValueBy()}: интерфейс и
+     * внешнее API работают со шкалой 1..100, хранится значение 0..`MAX_PRIORITY`.
+     * @param  int $displayValue Отображаемое значение приоритета.
+     * @return int Значение от 0 до `MAX_PRIORITY`.
+     */
+    public static function priorityFromDisplayValue($displayValue)
+    {
+        return self::normalizePriority((int)$displayValue - 1);
+    }
+
+    /**
      * Приводит значение приоритета к допустимому диапазону.
      * @param  int $priority Значение приоритета.
      * @return int Значение от 0 до `MAX_PRIORITY`.

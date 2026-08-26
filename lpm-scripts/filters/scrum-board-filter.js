@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     issuePage.filterVm = lpm.components.issueListFilter.init({
         selector: '#scrumBoardFilter',
-        filter: function (el, tags, userIds) {
+        filter: function (el, tags, memberIds, testerIds) {
             if (tags.length > 0) {
 
                 const titleEl = el.querySelector('.sticker-issue-title');
@@ -18,19 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!hasTag) return false;
             }
 
-            if (userIds.length > 0) {
-                const memberListEl = el.querySelector('.sticker-issue-members');
-                if (!memberListEl) return false;
-
-                const memberLinks = memberListEl.querySelectorAll('[data-member-id]');
-                const memberIds = Array.from(memberLinks).map(link =>
-                    parseInt(link.getAttribute('data-member-id'))
-                );
-                const hasMatchingUser = userIds.some((userId) => memberIds.includes(userId));
-                if (!hasMatchingUser) return false;
-            }
-
-            return true;
+            return lpm.components.issueListFilter.matchesUsers(el, memberIds, testerIds);
         },
         getIssueElements: function () {
             return document.querySelectorAll('.scrum-board-sticker');

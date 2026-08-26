@@ -107,7 +107,7 @@ Example:
 GET /api/v1/projects/demo/issues?status=inWork,test&label=api&limit=20
 ```
 
-The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, priority, hours, labels, commentsCount, createDate, modifiedDate, completeDate, completedDate, author}` with dates as unix timestamps (`0` when unset). Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments.
+The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, priority, hours, labels, commentsCount, createDate, modifiedDate, completeDate, completedDate, author}` with dates as unix timestamps (`0` when unset) and `priority` in the same `1..100` scale the web UI shows. Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments.
 
 ## Listing Project Labels
 
@@ -146,7 +146,7 @@ Content-Type: application/json
   "name": "Payment retry duplicates the request",
   "desc": "Double-clicking the pay button sends the purchase request twice.",
   "type": 1,
-  "priority": 5,
+  "priority": 80,
   "hours": 2,
   "completeDate": "2026-07-15"
 }
@@ -156,7 +156,7 @@ Content-Type: application/json
 - `name` (required): issue title. Labels are `[label]` prefixes of the name (`[api][ui] Title`), so a title besides them is required. Projects that require labels reject a name without any label with `400`.
 - `desc` (optional): description (Markdown allowed), up to 60000 characters.
 - `type` (optional, default `0`): `0` develop, `1` bug, `2` support.
-- `priority` (optional, default `49` — normal): integer `0..99`.
+- `priority` (optional, default `50` — normal): integer `1..100`, as shown in the web UI; out-of-range values are rejected with `400`.
 - `hours` (optional, default `0`): story points estimate; only `0.5` is a valid fraction.
 - `completeDate` (optional): target date as `YYYY-MM-DD`.
 

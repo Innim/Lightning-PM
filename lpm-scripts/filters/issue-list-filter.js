@@ -3,7 +3,7 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
     issuePage.filterVm = lpm.components.issueListFilter.init({
-        filter: function (row, tags, userIds) {
+        filter: function (row, tags, memberIds, testerIds) {
             let showRow = true;
 
             if (tags.length > 0 && showRow) {
@@ -17,18 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (userIds.length > 0 && showRow) {
-                const memberListDiv = row.querySelector('.member-list');
-                if (memberListDiv) {
-                    const memberLinks = memberListDiv.querySelectorAll('[data-member-id]');
-                    const memberIds = Array.from(memberLinks).map(link =>
-                        parseInt(link.getAttribute('data-member-id'))
-                    );
-                    const hasMatchingUser = userIds.some((userId) => memberIds.includes(userId));
-                    showRow = hasMatchingUser;
-                } else {
-                    showRow = false;
-                }
+            if (showRow) {
+                showRow = lpm.components.issueListFilter.matchesUsers(row, memberIds, testerIds);
             }
 
             return showRow;
