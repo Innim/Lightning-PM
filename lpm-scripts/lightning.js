@@ -399,7 +399,7 @@ let srv = {
         },
         saveProject: function (
             projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds,
-            aiSummary, aiTestChecklist, aiIssueDraft, requireLabels, onResult
+            aiSummary, aiTestChecklist, aiIssueDraft, aiContext, requireLabels, onResult
         ) {
             this.s._('saveProject');
         },
