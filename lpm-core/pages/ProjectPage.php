@@ -1362,21 +1362,47 @@ class ProjectPage extends LPMPage
         }
     }
 
+    /**
+     * Добавляет к ошибкам страницы сообщение о неудачном изменении
+     * положения задачи на доске.
+     * @param  bool $putOnBoard Задачу пытались поместить на доску, а не снять.
+     * @return bool Всегда false, как и addError().
+     */
+    private function addBoardError($putOnBoard)
+    {
+        return $this->addError($putOnBoard
+            ? 'Не удалось поместить стикер на доску'
+            : 'Не удалось снять стикер с доски');
+    }
+
+    /**
+     * Приводит положение задачи на скрам-доске к состоянию флажка формы.
+     *
+     * Статус задачи при этом не меняется: колонка на доске выводится из статуса,
+     * а не наоборот.
+     * @param  Issue $issue      Сохранённая задача.
+     * @param  bool  $putOnBoard Задача должна оказаться на доске.
+     * @return bool false, если изменение не удалось; причина добавлена
+     *              к ошибкам страницы.
+     */
     private function updateScrumBoard(Issue $issue, $putOnBoard)
     {
-        if ($issue->isOnBoard() != $putOnBoard) {
+        if ($issue->isOnBoard() == $putOnBoard) {
+            return true;
+        }
+
+        $user = $this->_engine->getUser();
+
+        try {
             if ($putOnBoard) {
-                if (!ScrumSticker::putStickerOnBoard($issue)) {
-                    return $this->addError('Не удалось поместить стикер на доску');
-                }
+                ScrumBoardManager::putOnBoard($issue);
             } else {
-                if (!ScrumSticker::updateStickerState(
-                    $issue->id,
-                    ScrumStickerState::BACKLOG
-                )) {
-                    return $this->addError('Не удалось снять стикер с доски');
-                }
+                ScrumBoardManager::removeFromBoard($issue, $user);
             }
+        } catch (ScrumBoardException $e) {
+            return $this->addBoardError($putOnBoard);
+        } catch (\GMFramework\ProviderSaveException $e) {
+            return $this->addBoardError($putOnBoard);
         }
 
         return true;
