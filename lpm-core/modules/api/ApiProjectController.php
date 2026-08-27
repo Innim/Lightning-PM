@@ -16,18 +16,6 @@ class ApiProjectController extends ApiControllerBase
         'support' => Issue::TYPE_SUPPORT,
     ];
 
-    /**
-     * Колонки скрам-доски в порядке их отображения:
-     * состояние стикера => машиночитаемый ключ и название колонки.
-     * @see ScrumStickerState
-     */
-    const BOARD_COLUMNS = [
-        ScrumStickerState::TODO => ['key' => 'todo', 'name' => 'TO DO'],
-        ScrumStickerState::IN_PROGRESS => ['key' => 'inProgress', 'name' => 'В работе'],
-        ScrumStickerState::TESTING => ['key' => 'testing', 'name' => 'Тестируется'],
-        ScrumStickerState::DONE => ['key' => 'done', 'name' => 'Готово'],
-    ];
-
     const ISSUES_DEFAULT_LIMIT = 50;
     const ISSUES_MAX_LIMIT = 200;
 
@@ -142,7 +130,7 @@ class ApiProjectController extends ApiControllerBase
         $stickersByState = ScrumSticker::splitByStates(ScrumSticker::loadBoard($project->id));
 
         $columns = [];
-        foreach (self::BOARD_COLUMNS as $state => $column) {
+        foreach (ApiPayloadSerializer::BOARD_COLUMNS as $state => $column) {
             $stickers = isset($stickersByState[$state]) ? $stickersByState[$state] : [];
             $columns[] = [
                 'state' => $state,

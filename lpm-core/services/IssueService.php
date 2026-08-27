@@ -623,51 +623,14 @@ class IssueService extends LPMBaseService
         $state   = (int)$state;
 
         try {
-            // Проверяем состояние
-            if (!ScrumStickerState::validateValue($state)) {
-                throw new Exception('Неизвестное состояние');
+            $issue = Issue::load($issueId);
+            if (empty($issue)) {
+                return $this->error('Нет такой задачи');
             }
 
-            $sticker = ScrumSticker::load($issueId);
-            if ($sticker === null) {
-                throw new Exception('Нет стикера для этой задачи');
-            }
-
-            $issue = $sticker->getIssue();
-
-            // Если проект требует теги - задачу без них нельзя взять
-            // из бэклога на спринт
-            if ($sticker->state == ScrumStickerState::BACKLOG
-                    && ScrumStickerState::isActiveState($state)
-                    && $issue->getProject()->requireLabels
-                    && !Issue::hasLabels($issue->getName())) {
-                throw new Exception(
-                    'Нельзя добавить на спринт задачу без тегов - ' .
-                    'у задачи должен быть указан хотя бы один тег'
-                );
-            }
-
-            // Менять состояние стикера может любой пользователь
-            if (!ScrumSticker::updateStickerState($issueId, $state)) {
-                return $this->errorDBSave();
-            }
-
-            $newState = null;
-            if ($state === ScrumStickerState::TESTING) {
-                // Если состояние "Тестируется" - ставим задачу на проверку
-                $newState = Issue::STATUS_WAIT;
-            } elseif ($state === ScrumStickerState::DONE) {
-                // Если "Готово" - закрываем задачу
-                $newState = Issue::STATUS_COMPLETED;
-            } elseif ($issue->status == Issue::STATUS_WAIT &&
-                    ($state === ScrumStickerState::TODO || $state === ScrumStickerState::IN_PROGRESS)) {
-                // Если она в режиме ожидания - переоткрываем задачу
-                $newState = Issue::STATUS_IN_WORK;
-            }
-            
-            if ($newState !== null) {
-                Issue::setStatus($issue, $newState, $this->getUser(), true, false);
-            }
+            ScrumBoardManager::changeState($issue, $state, $this->getUser());
+        } catch (\GMFramework\ProviderSaveException $e) {
+            return $this->errorDBSave();
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -686,27 +649,15 @@ class IssueService extends LPMBaseService
 
         try {
             $issue = Issue::load($issueId);
-            if ($issue === null) {
+            if (empty($issue)) {
                 return $this->error('Нет такой задачи');
             }
 
-            // Задача в работе попадает сразу на спринт, а туда без тегов нельзя,
-            // если проект их требует
-            if (ScrumStickerState::isActiveState(ScrumSticker::getStateForIssue($issue))
-                    && $issue->getProject()->requireLabels
-                    && !Issue::hasLabels($issue->getName())) {
-                return $this->error(
-                    'Нельзя добавить на спринт задачу без тегов - ' .
-                    'у задачи должен быть указан хотя бы один тег'
-                );
-            }
+            ScrumBoardManager::putOnBoard($issue);
 
-            if (!ScrumSticker::putStickerOnBoard($issue)) {
-                return $this->errorDBSave();
-            }
-
-            $issue->reloadSubstatusSources();
             $this->addSubstatus2Answer($issue);
+        } catch (\GMFramework\ProviderSaveException $e) {
+            return $this->errorDBSave();
         } catch (\Exception $e) {
             return $this->exception($e);
         }
