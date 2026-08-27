@@ -472,11 +472,11 @@ class ProjectService extends LPMBaseService
 
     /**
      * Сохраняет проект: основную информацию (идентификатор, название, описание)
-     * и настройки (Scrum, ИИ-сводка задач, обязательные теги, канал Slack,
-     * привязки к GitLab) — всё за один вызов.
+     * и настройки (Scrum, ИИ-возможности, контекст проекта для ИИ, обязательные
+     * теги, канал Slack, привязки к GitLab) — всё за один вызов.
      *
-     * Настройка ИИ-сводки применяется только если интеграция с ИИ настроена,
-     * в ином случае сохраняется текущее значение.
+     * Настройки ИИ применяются только если интеграция с ИИ настроена,
+     * в ином случае сохраняются текущие значения.
      *
      * Настройка, под которую в таблице проектов ещё нет колонки (миграция не
      * применена), пропускается: остальные настройки при этом сохраняются.
@@ -497,6 +497,7 @@ class ProjectService extends LPMBaseService
         $aiSummary,
         $aiTestChecklist,
         $aiIssueDraft,
+        $aiContext,
         $requireLabels
     ) {
         $projectId = (int)$projectId;
@@ -506,6 +507,7 @@ class ProjectService extends LPMBaseService
         $slackNotifyChannel = (string)$slackNotifyChannel;
         $gitlabGroupId = (int)$gitlabGroupId;
         $gitlabProjectIds = (string)$gitlabProjectIds;
+        $aiContext = AiProjectContext::normalize($aiContext);
 
         if (($scrum !== 0 && $scrum !== 1) || ($aiSummary !== 0 && $aiSummary !== 1)
             || ($aiTestChecklist !== 0 && $aiTestChecklist !== 1)
@@ -520,6 +522,18 @@ class ProjectService extends LPMBaseService
         $aiTestChecklist = (bool)$aiTestChecklist;
         $aiIssueDraft = (bool)$aiIssueDraft;
         $requireLabels = (bool)$requireLabels;
+
+        // без настроенной интеграции настройки ИИ не отображаются
+        // и не редактируются - присланные значения игнорируются
+        $aiAvailable = AiIntegration::getInstance()->isAvailable();
+
+        // проверяем до любых записей в базу: иначе отказ по длине контекста
+        // оставил бы уже сохранённые название, описание и uid
+        if ($aiAvailable && !AiProjectContext::isValid($aiContext)) {
+            return $this->error('Контекст проекта для ИИ не должен превышать '
+                . AI_PROJECT_CONTEXT_MAX_LENGTH . ' символов, сейчас '
+                . mb_strlen($aiContext));
+        }
 
         // проверяем права пользователя
         if (!$this->checkRole(User::ROLE_MODERATOR)) {
@@ -557,12 +571,11 @@ class ProjectService extends LPMBaseService
             }
         }
 
-        // без настроенной интеграции с ИИ настройки ИИ-возможностей
-        // не отображаются и не редактируются
-        if (!AiIntegration::getInstance()->isAvailable()) {
+        if (!$aiAvailable) {
             $aiSummary = $project->aiSummary;
             $aiTestChecklist = $project->aiTestChecklist;
             $aiIssueDraft = $project->aiIssueDraft;
+            $aiContext = AiProjectContext::normalize($project->aiContext);
         }
 
         // обновляем настройки только если они действительно изменились
@@ -573,6 +586,7 @@ class ProjectService extends LPMBaseService
             || $aiSummary !== $project->aiSummary
             || $aiTestChecklist !== $project->aiTestChecklist
             || $aiIssueDraft !== $project->aiIssueDraft
+            || $aiContext !== AiProjectContext::normalize($project->aiContext)
             || $requireLabels !== $project->requireLabels
         ) {
             $result = Project::updateProjectSettings(
@@ -584,6 +598,7 @@ class ProjectService extends LPMBaseService
                 $aiSummary,
                 $aiTestChecklist,
                 $aiIssueDraft,
+                $aiContext,
                 $requireLabels
             );
 
