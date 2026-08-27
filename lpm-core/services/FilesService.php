@@ -18,6 +18,12 @@ class FilesService extends LPMBaseService
      */
     public function getCompressStatus($uids)
     {
+        // Опрос идёт, пока на странице висит заглушка сжатия, — то есть ровно
+        // тогда, когда есть кому заметить застрявшую очередь. Это единственный
+        // регулярный вызов, из которого можно освободить слоты воркеров,
+        // убитых без шанса прибраться за собой (OOM, SIGKILL).
+        VideoCompressor::dispatchOnPoll();
+
         $files = [];
         $userId = $this->_auth->getUserId();
 
