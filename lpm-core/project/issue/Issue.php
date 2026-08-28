@@ -1015,6 +1015,10 @@ SQL;
 
     /**
      * Помечает задачу как удаленную.
+     *
+     * Вложения задачи и её комментариев при этом удаляются безвозвратно:
+     * удалённую задачу ни один загрузчик больше не отдаёт, поэтому добраться
+     * до её вложений уже нельзя.
      */
     public static function remove(User $user, Issue $issue)
     {
@@ -1025,6 +1029,8 @@ SQL;
         }
 
         Project::updateIssuesCount($issue->projectId);
+
+        UploadsCleanupManager::removeIssueUploads($issue->id);
 
         // Записываем лог
         UserLogEntry::create(

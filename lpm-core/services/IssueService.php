@@ -1146,13 +1146,7 @@ class IssueService extends LPMBaseService
 
         try {
             Comment::remove($user, $comment);
-            LPMFile::delete(
-                LPMInstanceTypes::COMMENT,
-                $comment->id,
-                array_map(function (LPMFile $file) {
-                    return $file->fileId;
-                }, $comment->getFiles())
-            );
+            UploadsCleanupManager::removeCommentUploads($comment->id);
 
             if ($comment->instanceType == LPMInstanceTypes::ISSUE) {
                 // обновляем счетчик комментариев для задачи

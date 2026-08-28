@@ -254,6 +254,26 @@ class LPMFile extends LPMBaseObject
         }
     }
 
+    /**
+     * Отвязывает от сущности все её файлы и удаляет с диска те из них,
+     * которые не привязаны больше ни к одной сущности.
+     * @param int $itemType Одна из констант {@see LPMInstanceTypes}.
+     * @param int $itemId
+     */
+    public static function deleteAllByInstance($itemType, $itemId)
+    {
+        $files = self::loadListByInstance($itemType, $itemId);
+        if (empty($files)) {
+            return;
+        }
+
+        self::delete($itemType, $itemId, array_map(function (LPMFile $file) {
+            return $file->fileId;
+        }, $files));
+
+        FileUploadManager::removeStorageDirectory($itemType, $itemId);
+    }
+
     public static function linkToInstance($fileId, $itemType, $itemId)
     {
         $fileId = (int)$fileId;

@@ -45,6 +45,34 @@ class LPMImg extends LPMBaseObject
         return self::loadListByInstance(LPMInstanceTypes::ISSUE, $issueId);
     }
 
+    /**
+     * Помечает удалёнными все изображения сущности и стирает с диска
+     * их исходники вместе с созданными для них превью.
+     * @param int $instanceType Одна из констант {@see LPMInstanceTypes}.
+     * @param int $instanceId
+     * @throws \GMFramework\ProviderSaveException
+     */
+    public static function removeAllByInstance($instanceType, $instanceId)
+    {
+        $images = self::loadListByInstance((int)$instanceType, (int)$instanceId);
+        if (empty($images)) {
+            return;
+        }
+
+        self::buildAndSaveToDbV2([
+            'UPDATE' => LPMTables::IMAGES,
+            'SET'    => ['deleted' => 1],
+            'WHERE'  => [
+                'itemType' => (int)$instanceType,
+                'itemId'   => (int)$instanceId,
+            ],
+        ]);
+
+        foreach ($images as $image) {
+            $image->removeAll();
+        }
+    }
+
 
     public static function getImgPath($imgName = '')
     {

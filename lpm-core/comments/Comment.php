@@ -65,7 +65,38 @@ SQL;
 
         return self::loadList($where);
     }
-    
+
+    /**
+     * Возвращает идентификаторы всех комментариев сущности,
+     * включая уже удалённые.
+     * @param int $instanceType Одна из констант {@see LPMInstanceTypes}.
+     * @param int $instanceId
+     * @return int[]
+     * @throws \GMFramework\ProviderLoadException
+     */
+    public static function loadIdsByInstance($instanceType, $instanceId)
+    {
+        $res = self::buildAndExecute([
+            'SELECT' => 'id',
+            'FROM'   => LPMTables::COMMENTS,
+            'WHERE'  => [
+                'instanceType' => (int)$instanceType,
+                'instanceId'   => (int)$instanceId,
+            ],
+        ]);
+
+        if (!$res) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        $ids = [];
+        while ($row = $res->fetch_assoc()) {
+            $ids[] = (int)$row['id'];
+        }
+
+        return $ids;
+    }
+
     /**
      * Валидирует и нормализует текст комментария.
      * @param string $text Исходный текст.
