@@ -399,7 +399,7 @@ let srv = {
         },
         saveProject: function (
             projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds,
-            aiSummary, aiTestChecklist, aiIssueDraft, requireLabels, onResult
+            aiSummary, aiTestChecklist, aiIssueDraft, aiContext, requireLabels, onResult
         ) {
             this.s._('saveProject');
         },
@@ -985,17 +985,38 @@ $(document).ready(
         // titled control that removes or hides its own DOM node while the tooltip is open (e.g. the
         // SCRUM board "Убрать с доски" action removes the sticker on AJAX success — no mouseleave
         // fires) leaves the tooltip stuck in <body>. While a tooltip is shown, watch for its trigger
-        // being removed or hidden and dispose the tooltip so it isn't left orphaned. Disposing (not
-        // hide()) avoids re-firing hide.bs.tooltip, whose guard below would otherwise un-hide the
-        // trigger the app deliberately hid.
+        // being removed or hidden and close the tooltip so it isn't left orphaned.
+        // Close it with hide(), NEVER dispose(): Bootstrap finishes hide() in a callback queued on
+        // the tip's fade transition, and that callback reads the instance back (_cleanTipClass →
+        // getTipElement → this._config). dispose() nulls every field of the instance, so a hide
+        // still in flight then throws "Cannot read properties of null (reading 'template')".
+        // Dropping the fade class first makes our own hide() run its callback synchronously, so this
+        // cleanup leaves nothing pending either; the class is put back for the next show.
+        // That callback only detaches the tip when _hoverState is not 'show', and it is 'show'
+        // whenever the pointer still sits on the trigger (any repeat mouseover re-sets it), so the
+        // tip has to be detached here explicitly — otherwise an invisible tip stays in <body>.
         $('body').on('shown.bs.tooltip', function(e) {
             const trigger = e.target;
             const observer = new MutationObserver(function() {
-                if (!document.body.contains(trigger) || !$(trigger).is(':visible')) {
-                    observer.disconnect();
-                    $(trigger).removeData('lpmTooltipCleanup');
-                    const instance = bootstrap.Tooltip.getInstance(trigger);
-                    if (instance) instance.dispose();
+                if (document.body.contains(trigger) && $(trigger).is(':visible')) return;
+
+                observer.disconnect();
+                $(trigger).removeData('lpmTooltipCleanup');
+                const instance = bootstrap.Tooltip.getInstance(trigger);
+                if (!instance) return;
+
+                // hide() fires hide.bs.tooltip, whose jQuery default action hides the trigger (see
+                // the handler below). That handler is delegated on <body> and cannot see a trigger
+                // that has already left the DOM — a detached node that gets re-attached later would
+                // come back with display:none — so restore the value here as well.
+                const display = trigger.style.display;
+                const tip = instance.tip;
+                if (tip) tip.classList.remove('fade');
+                instance.hide();
+                trigger.style.display = display;
+                if (tip) {
+                    tip.remove();
+                    tip.classList.add('fade');
                 }
             });
             observer.observe(document.body, {
@@ -1053,11 +1074,14 @@ $(document).ready(
         });
 
         // Same conflict for tooltips: when hide.bs.tooltip fires, jQuery's default action calls the
-        // Element.prototype.hide polyfill on the tooltip's trigger element, hiding it. Restore its
-        // display in a microtask (after the trigger's default action runs) to keep the target visible.
+        // Element.prototype.hide polyfill on the tooltip's trigger element, hiding it. Restore the
+        // display value the trigger had BEFORE that (not ''), in a microtask that runs after the
+        // default action: the cleanup above closes tooltips of elements the app has just hidden
+        // itself, and blanking display there would put them back on screen.
         $('body').on('hide.bs.tooltip', function(e) {
             const el = e.target;
-            Promise.resolve().then(function() { el.style.display = ''; });
+            const display = el.style.display;
+            Promise.resolve().then(function() { el.style.display = display; });
         });
 
         window.lpInfo.userId = $('#curUserId').val();

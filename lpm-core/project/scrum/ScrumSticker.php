@@ -186,9 +186,23 @@ SQL;
         }
     }
 
-    public static function putStickerOnBoard(Issue $issue)
+    /**
+     * Создаёт стикер задачи на доске или переставляет уже существующий.
+     *
+     * Неактивное состояние (бэклог, архив, удалён) означает, что стикера
+     * на доске быть не должно - он удаляется.
+     * @param  Issue    $issue Задача.
+     * @param  int|null $state Состояние стикера; null - вывести из статуса задачи.
+     * @return bool Успешность сохранения.
+     * @see    getStateForIssue()
+     */
+    public static function putStickerOnBoard(Issue $issue, $state = null)
     {
-        $state = self::getStateForIssue($issue);
+        if ($state === null) {
+            $state = self::getStateForIssue($issue);
+        }
+
+        $state = (int)$state;
         $issueId = $issue->id;
         $added = DateTimeUtils::mysqlDate();
 

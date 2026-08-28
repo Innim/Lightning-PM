@@ -353,6 +353,12 @@ TEXT;
             'Проект: ' . $project->name,
         ];
 
+        $context = AiProjectContext::block($project);
+        if ($context !== '') {
+            $lines[] = '';
+            $lines[] = $context;
+        }
+
         if ($imagesCount > 0) {
             // Модель должна знать, что изображения — часть постановки,
             // а не иллюстрация к ней.

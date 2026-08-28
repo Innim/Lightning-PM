@@ -2,6 +2,50 @@
 
 class ApiPayloadSerializer
 {
+    /**
+     * Состояние стикера по имени колонки доски.
+     * @param  string $key Имя колонки.
+     * @return int|null Состояние стикера или null, если такой колонки нет.
+     */
+    public static function boardColumnState($key)
+    {
+        foreach (self::BOARD_COLUMNS as $state => $column) {
+            if ($column['key'] === $key) {
+                return $state;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Имена всех колонок доски в порядке их отображения.
+     * @return array<string>
+     */
+    public static function boardColumnKeys()
+    {
+        $keys = [];
+        foreach (self::BOARD_COLUMNS as $column) {
+            $keys[] = $column['key'];
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Колонки скрам-доски в порядке их отображения:
+     * состояние стикера => машиночитаемый ключ и название колонки.
+     *
+     * Ключи - единственные имена колонок, которые понимает и отдаёт API.
+     * @see ScrumStickerState
+     */
+    const BOARD_COLUMNS = [
+        ScrumStickerState::TODO => ['key' => 'todo', 'name' => 'TO DO'],
+        ScrumStickerState::IN_PROGRESS => ['key' => 'inProgress', 'name' => 'В работе'],
+        ScrumStickerState::TESTING => ['key' => 'testing', 'name' => 'Тестируется'],
+        ScrumStickerState::DONE => ['key' => 'done', 'name' => 'Готово'],
+    ];
+
     private $baseUrl;
 
     public function __construct($baseUrl)
@@ -55,6 +99,7 @@ class ApiPayloadSerializer
 
         $obj->labels = $issue->getLabelNames();
         $obj->isOnBoard = $issue->isOnBoard();
+        $obj->boardColumn = $this->boardColumn($issue);
         $obj->project = (object)$this->project($issue->getProject());
 
         $obj->comments = [];
@@ -67,9 +112,27 @@ class ApiPayloadSerializer
             'comment' => $this->baseUrl . '/issues/' . $issue->id . '/comments',
             'createBranch' => $this->baseUrl . '/issues/' . $issue->id . '/branches',
             'repositories' => $this->baseUrl . '/projects/' . $issue->projectId . '/repositories',
+            'board' => $this->baseUrl . '/issues/' . $issue->id . '/board',
         ];
 
         return $obj;
+    }
+
+    /**
+     * Имя колонки доски, в которой сейчас находится задача.
+     * @param  Issue $issue Задача.
+     * @return string|null Имя колонки или null, если задачи нет на доске.
+     */
+    public function boardColumn(Issue $issue)
+    {
+        $sticker = $issue->getSticker();
+        if (empty($sticker) || !$sticker->isOnBoard()) {
+            return null;
+        }
+
+        return isset(self::BOARD_COLUMNS[$sticker->state])
+            ? self::BOARD_COLUMNS[$sticker->state]['key']
+            : null;
     }
 
     /**

@@ -151,6 +151,35 @@ All four columns are always present and come in board order: `todo`, `inProgress
 
 Issues inside a column come in the same order as on the board. An item is the short issue payload of the issues endpoint plus two board fields: `stickerState` (equals the column `state`) and `addedToBoard` (unix timestamp of the moment the issue was put on the board). Issues in the backlog are not on the board and never appear here — use `GET /api/v1/projects/{projectId}/issues` for the whole project.
 
+The full issue payload of `GET /api/v1/issues/{issueId}` reports the same position from the issue side: `isOnBoard` tells whether the issue is on the board and `boardColumn` names its column (`null` for an issue in the backlog).
+
+## Moving an issue on the scrum board
+
+Put an issue on the board or move it to another column:
+
+```http
+PUT /api/v1/issues/{issueId}/board
+Content-Type: application/json
+
+{
+  "column": "inProgress"
+}
+```
+
+- `column` (optional) — `todo`, `inProgress`, `testing` or `done`, the same column keys the board endpoint returns. An unknown value is rejected with `400`.
+- Without `column` the issue goes to the column matching its status, exactly like the *«На доску»* button in the web UI: an issue in work lands in `todo`, an issue in test in `testing`, a completed one in `done`.
+- With `column` the issue is placed in that column even if it was not on the board before.
+
+Moving an issue to `testing` puts it on test, moving it to `done` completes it, and moving an issue that waits for test back to `todo` or `inProgress` reopens it — the same status changes the board does in the web UI.
+
+Take an issue off the board (it returns to the backlog, its status does not change):
+
+```http
+DELETE /api/v1/issues/{issueId}/board
+```
+
+Both requests answer with the updated issue payload, the same shape as `GET /api/v1/issues/{issueId}`. A non-scrum project is rejected with `400`. When the project requires labels, an issue without any label cannot be moved out of the backlog and the request is rejected with `400`.
+
 ## Core workflow
 
 1. Resolve a pasted issue URL:
@@ -245,7 +274,8 @@ Content-Type: application/json
   "type": 1,
   "priority": 80,
   "hours": 2,
-  "completeDate": "2026-07-15"
+  "completeDate": "2026-07-15",
+  "board": "todo"
 }
 ```
 
@@ -258,8 +288,9 @@ Fields:
 - `priority` (optional, default `50` — normal) — integer `1..100`, the same value the web UI shows for the issue; anything outside the range is rejected with `400`. Earlier the API used the internal scale `0..99`, one less than the displayed value; see the changelog for the release that switched it.
 - `hours` (optional, default `0`) — story points estimate; only `0.5` is accepted as a fraction, other values are treated as integers.
 - `completeDate` (optional) — target date in `YYYY-MM-DD` format.
+- `board` (optional, default `false`) — put the new issue straight on the scrum board: `true` places it in the column matching its status, a column key (`todo`, `inProgress`, `testing`, `done`) places it in that column. A non-scrum project or an unknown column is rejected with `400` and no issue is created.
 
-The response returns the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with HTTP status `201`. Read the global `id` and `idInProject` from it for later requests. The issue is created without members, testers, or a scrum-board sticker; assign those through the web UI if needed.
+The response returns the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with HTTP status `201`. Read the global `id` and `idInProject` from it for later requests. The issue is created without members and testers; assign those through the web UI if needed.
 
 An issue URL of this Lightning PM instance written in `desc` or in a comment text automatically links the two issues, the same as in the web UI.
 
@@ -269,6 +300,7 @@ An issue URL of this Lightning PM instance written in `desc` or in a comment tex
 - List issues of a project with filters and paging.
 - List labels of a project with their popularity.
 - Read the scrum board of a project with its issues grouped by columns.
+- Put an issue on the scrum board, move it between columns, or take it off the board.
 - Read issue details by URL or issue id.
 - Read comments, images, and files of the issue and of its comments.
 - List repositories and branches available to the user in GitLab integration.

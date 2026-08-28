@@ -159,4 +159,8 @@ class LPMTables
      * Журнал применённых миграций схемы БД.
      */
     const DB_MIGRATIONS = 'db_migrations';
+    /**
+     * Занятые слоты фонового сжатия видео.
+     */
+    const VIDEO_COMPRESS_SLOTS = 'video_compress_slots';
 }

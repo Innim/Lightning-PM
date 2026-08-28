@@ -133,6 +133,34 @@ Each item of `issues` is the short issue payload of the issues endpoint plus `st
 
 A non-scrum project is rejected with `400`, an unknown or inaccessible project with `404`.
 
+## Moving an Issue on the Scrum Board
+
+Put an issue on the board or move it to another column, e.g. to take a task into work:
+
+```http
+PUT /api/v1/issues/{issueId}/board
+Content-Type: application/json
+
+{
+  "column": "inProgress"
+}
+```
+
+- `column` (optional): `todo`, `inProgress`, `testing` or `done` — the same column keys the board endpoint returns; an unknown value is rejected with `400`.
+- Without `column` the column follows the issue status, exactly like the *«На доску»* button in the web UI.
+- With `column` the issue is placed in that column even if it was not on the board before.
+- Moving to `testing` sends the issue to test, moving to `done` completes it, and returning an issue that waits for test to `todo` or `inProgress` reopens it.
+
+Take an issue off the board — it returns to the backlog and keeps its status:
+
+```http
+DELETE /api/v1/issues/{issueId}/board
+```
+
+Both requests answer with the updated issue payload (same shape as `GET /api/v1/issues/{issueId}`), so `isOnBoard` and `boardColumn` in it show the resulting position; `boardColumn` is `null` for an issue in the backlog. A non-scrum project is rejected with `400`, and so is an issue without labels in a project that requires them.
+
+Use the resolved global `id` as `{issueId}` here as well.
+
 ## Creating an Issue
 
 Create a new issue in a project when the user asks to open/file a task rather than implement an existing one:
@@ -148,7 +176,8 @@ Content-Type: application/json
   "type": 1,
   "priority": 80,
   "hours": 2,
-  "completeDate": "2026-07-15"
+  "completeDate": "2026-07-15",
+  "board": "todo"
 }
 ```
 
@@ -159,8 +188,9 @@ Content-Type: application/json
 - `priority` (optional, default `50` — normal): integer `1..100`, as shown in the web UI; out-of-range values are rejected with `400`.
 - `hours` (optional, default `0`): story points estimate; only `0.5` is a valid fraction.
 - `completeDate` (optional): target date as `YYYY-MM-DD`.
+- `board` (optional, default `false`): put the new issue straight on the scrum board — `true` uses the column matching its status, a column key (`todo`, `inProgress`, `testing`, `done`) uses that column. A non-scrum project or an unknown column is rejected with `400` and no issue is created.
 
-The response is the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with status `201`. Save the returned global `id` and `idInProject` for follow-up calls (branches, comments). The new issue has no members, testers, or scrum sticker.
+The response is the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with status `201`. Save the returned global `id` and `idInProject` for follow-up calls (branches, comments). The new issue has no members and testers, and stays in the backlog unless `board` was passed.
 
 ## Repository and Branch Workflow
 
