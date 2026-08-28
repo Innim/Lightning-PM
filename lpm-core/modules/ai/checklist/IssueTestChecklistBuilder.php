@@ -408,7 +408,8 @@ TEXT;
     }
 
     /**
-     * Собирает текст запроса к модели: данные задачи, merge request'ы и обсуждение.
+     * Собирает текст запроса к модели: данные задачи, контекст проекта,
+     * merge request'ы и обсуждение.
      *
      * Длинное обсуждение усекается — передаются только первые и последние
      * комментарии, факт усечения указывается в запросе.
@@ -434,6 +435,11 @@ TEXT;
         }
 
         $text = "Составь чек-лист тестирования по задаче.\n\n" . self::buildIssueBlock($issue);
+
+        $context = AiProjectContext::block($issue->getProject());
+        if ($context !== '') {
+            $text .= "\n\n" . $context;
+        }
 
         if (!empty($mergeRequests)) {
             $text .= "\n\nMerge request'ы задачи:\n";
@@ -473,10 +479,10 @@ TEXT;
             'Проект: ' . $issue->projectName,
             'Тип: ' . $issue->getType(),
             'Статус: ' . $issue->getStatus(),
-            'Автор: ' . ($issue->author ? $issue->author->getShortName() : ''),
+            'Автор: ' . ($issue->author ? $issue->author->getPlainShortName() : ''),
         ];
 
-        if ($issue->isPassTest) {
+        if ($issue->hasPassTestMark) {
             $lines[] = 'Тестирование: уже пройдено ранее';
         } elseif ($issue->isChangesRequested) {
             $lines[] = 'Тестирование: ранее найдены проблемы, требовались правки';
@@ -526,7 +532,7 @@ TEXT;
      */
     private static function buildCommentBlock(Comment $comment)
     {
-        $header = $comment->getDate() . ', ' . $comment->author->getShortName();
+        $header = $comment->getDate() . ', ' . $comment->author->getPlainShortName();
 
         $label = self::getCommentTypeLabel($comment);
         if ($label !== '') {

@@ -596,6 +596,51 @@ issuePage.addMeRoles = {
 };
 
 /**
+ * Дописывает участника в состав задачи на странице.
+ * @param {string} role member|tester|master
+ * @param {Object} res Ответ сервиса с полями userId, memberHtml, avatarUrl.
+ */
+issuePage.appendParticipant = function (role, res) {
+    const roleInfo = issuePage.addMeRoles[role];
+    if (!roleInfo) return;
+
+    const $row = $('#issueInfo ' + roleInfo.row);
+    const $input = $('input[name=' + roleInfo.field + ']', $row);
+    const ids = $input.val();
+    const hasParticipants = ids.length > 0;
+
+    // Сервер отдаёт голую ссылку на пользователя, вид сам решает, как её показать:
+    // обновлённый оборачивает в плашку с аватаром, прежний склеивает через запятую
+    const $participants = $('.participants', $row);
+    if ($('#issueInfo').hasClass('issue-card')) {
+        $participants.append(Issue.renderUser({
+            linkedName: res.memberHtml,
+            avatarUrl: res.avatarUrl,
+        }));
+        if (!hasParticipants) {
+            $('.text-muted', $participants).remove();
+        }
+    } else if (hasParticipants) {
+        // Отступы разметки схлопнулись бы в пробел перед запятой,
+        // поэтому обрезаем хвостовые пробелы
+        $participants.html($participants.html().replace(/\s+$/, '') + ', ' + res.memberHtml);
+    } else {
+        $participants.html(res.memberHtml);
+    }
+
+    // Скрытые поля используются для заполнения формы редактирования,
+    // поэтому их состав должен соответствовать отображаемому
+    $input.val(hasParticipants ? ids + ',' + res.userId : String(res.userId));
+    if (role === 'member') {
+        const $spInput = $('input[name=membersSp]', $row);
+        const sp = $spInput.val();
+        $spInput.val(sp.length > 0 ? sp + ',0' : '0');
+    }
+
+    $('.add-me-to-issue', $row).hide();
+};
+
+/**
  * Добавляет текущего пользователя к участникам задачи в указанной роли.
  * @param {string} role member|tester|master
  */
@@ -612,40 +657,7 @@ issuePage.addMeToIssue = function (role) {
             return;
         }
 
-        const $row = $('#issueInfo ' + roleInfo.row);
-        const $input = $('input[name=' + roleInfo.field + ']', $row);
-        const ids = $input.val();
-        const hasParticipants = ids.length > 0;
-
-        // Сервер отдаёт голую ссылку на пользователя, вид сам решает, как её показать:
-        // обновлённый оборачивает в плашку с аватаром, прежний склеивает через запятую
-        const $participants = $('.participants', $row);
-        if ($('#issueInfo').hasClass('issue-card')) {
-            $participants.append(Issue.renderUser({
-                linkedName: res.memberHtml,
-                avatarUrl: res.avatarUrl,
-            }));
-            if (!hasParticipants) {
-                $('.text-muted', $participants).remove();
-            }
-        } else if (hasParticipants) {
-            // Отступы разметки схлопнулись бы в пробел перед запятой,
-            // поэтому обрезаем хвостовые пробелы
-            $participants.html($participants.html().replace(/\s+$/, '') + ', ' + res.memberHtml);
-        } else {
-            $participants.html(res.memberHtml);
-        }
-
-        // Скрытые поля используются для заполнения формы редактирования,
-        // поэтому их состав должен соответствовать отображаемому
-        $input.val(hasParticipants ? ids + ',' + res.userId : String(res.userId));
-        if (role === 'member') {
-            const $spInput = $('input[name=membersSp]', $row);
-            const sp = $spInput.val();
-            $spInput.val(sp.length > 0 ? sp + ',0' : '0');
-        }
-
-        $('.add-me-to-issue', $row).hide();
+        issuePage.appendParticipant(role, res);
     });
 };
 
@@ -1071,7 +1083,7 @@ function completeIssue(e) {
                             $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
                             showMain();
                         } else if ($('#issueView').length > 0) {
-                            setIssueInfo(new Issue(res.issue));
+                            setIssueInfo(new Issue(res.issue), res.substatus);
                         }
                         issuePage.updateStat();
                     } else {
@@ -1193,7 +1205,7 @@ function restoreIssue(e) {
                     $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
                     showMain();
                 } else if ($('#issueView').length > 0) {
-                    setIssueInfo(new Issue(res.issue));
+                    setIssueInfo(new Issue(res.issue), res.substatus);
                 }
                 issuePage.updateStat();
             } else {
@@ -1215,7 +1227,7 @@ function verifyIssue(e) {
             preloader.hide();
             if (res.success) {
                 if ($('#issueView').length > 0) {
-                    setIssueInfo(new Issue(res.issue));
+                    setIssueInfo(new Issue(res.issue), res.substatus);
                 }
                 issuePage.updateStat();
 
@@ -1260,7 +1272,8 @@ issuePage.removeIssue = function (e) {
 
 issuePage.putStickerOnBoard = function () {
     preloader.show();
-    const issueId = $('#issueInfo').data('issueId');
+    const $issueInfo = $('#issueInfo');
+    const issueId = $issueInfo.data('issueId');
     srv.issue.putStickerOnBoard(issueId, function (res) {
         preloader.hide();
         if (!res.success) {
@@ -1268,8 +1281,10 @@ issuePage.putStickerOnBoard = function () {
             return;
         }
 
-        $('#issueInfo .scrum-put-sticker').remove();
-        $('#issueInfo').data('isOnBoard', true);
+        $('.scrum-put-sticker', $issueInfo).remove();
+        $issueInfo.data('isOnBoard', true);
+        applyIssueSubstatus(res);
+
         issuePage.scrumColUpdateInfo();
     });
 };
@@ -1281,7 +1296,7 @@ function showIssue(issueId) {
         function (res) {
             if (res.success) {
                 states.setState('issue-view');
-                setIssueInfo(new Issue(res.issue));
+                setIssueInfo(new Issue(res.issue), res.substatus);
             } else {
                 srv.err(res);
             }
@@ -1338,15 +1353,18 @@ issuePage.showEditForm = function () {
 };
 
 /**
- * 
  * @param {Issue} issue
+ * @param {Number} substatus Уточнение статуса задачи, присланное сервером
+ * (Issue.SUBSTATUS_*).
  */
-function setIssueInfo(issue) {
+function setIssueInfo(issue, substatus) {
+    applyUnderTesting(substatus);
+
     const $issueInfo = $("#issueInfo");
 
     // Разметка сама сообщает, какой вид открыт, — флаг настроек в JS не нужен
     if ($issueInfo.hasClass('issue-card')) {
-        setIssueInfoCard(issue, $issueInfo);
+        setIssueInfoCard(issue, $issueInfo, substatus);
     } else {
         setIssueInfoLegacy(issue, $issueInfo);
     }
@@ -1385,14 +1403,16 @@ function setIssueFormState(issue, $issueInfo) {
  * Обновляет обновлённый вид задачи (шаблон issue.html).
  * @param {Issue} issue
  * @param {jQuery} $issueInfo
+ * @param {Number} substatus Уточнение статуса, присланное сервером
+ * (Issue.SUBSTATUS_*). Без него бейдж статуса остаётся как есть.
  */
-function setIssueInfoCard(issue, $issueInfo) {
+function setIssueInfoCard(issue, $issueInfo, substatus) {
     $(".issue-name", $issueInfo).text(issue.name);
 
     // Каждое поле помечено в разметке своим data-field, поэтому порядок блоков
     // на странице можно менять, не трогая обновление
+    // (статус живёт в бейдже и обновляется отдельно — вместе с оформлением)
     const values = {
-        status: issue.getStatus(),
         type: issue.getType(),
         priority: issue.getPriority(),
         createDate: issue.getCreateDate(),
@@ -1414,9 +1434,11 @@ function setIssueInfoCard(issue, $issueInfo) {
     $('.desc .formatted-desc', $issueInfo).toggleClass('d-none', !hasDesc);
     $('.desc .desc-placeholder', $issueInfo).toggleClass('d-none', hasDesc);
 
-    $(".issue-status-badge", $issueInfo)
-        .removeClass(Issue.STATUS_BADGE_CLASSES)
-        .addClass(Issue.getStatusBadgeClass(issue.status));
+    // Подстатус знает только сервер, поэтому без него бейдж не трогаем:
+    // иначе показанное уточнение подменилось бы названием самого статуса
+    if (substatus !== undefined) {
+        setIssueStatusBadge($issueInfo, issue.status, substatus);
+    }
 
     $(".issue-type-badge", $issueInfo)
         .removeClass(Issue.TYPE_BADGE_CLASSES)
@@ -1445,8 +1467,43 @@ function setIssueInfoCard(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $issueInfo.data('status', issue.status);
+    // Атрибут держим в паре с jQuery-хранилищем: .data() его больше не читает,
+    // и без этого разметка сохраняет статус, с которым страница загрузилась.
+    $issueInfo.attr('data-status', issue.status).data('status', issue.status);
 };
+
+/**
+ * Ставит бейджу статуса актуальные текст и оформление.
+ * @param {jQuery} $issueInfo Карточка задачи (#issueInfo).
+ * @param {Number} status
+ * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
+ */
+function setIssueStatusBadge($issueInfo, status, substatus) {
+    $(".issue-status-badge", $issueInfo)
+        .removeClass(Issue.STATUS_BADGE_CLASSES)
+        .addClass(Issue.getStatusBadgeClass(status, substatus))
+        .text(Issue.getStatusLabel(status, substatus));
+}
+
+/**
+ * Обновляет уточнение статуса в бейдже по ответу сервиса.
+ *
+ * Подстатус вычисляется только на сервере - он зависит от комментариев задачи
+ * и её стикера на доске, которых в ответе нет. Поэтому каждое действие,
+ * способное его изменить, присылает актуальное значение, а клиент его
+ * не додумывает.
+ * @param {Object} res Ответ сервиса.
+ */
+function applyIssueSubstatus(res) {
+    if (res.substatus === undefined) return;
+
+    applyUnderTesting(res.substatus);
+
+    const $issueInfo = $('#issueInfo');
+    if ($issueInfo.length === 0) return;
+
+    setIssueStatusBadge($issueInfo, $issueInfo.data('status'), res.substatus);
+}
 
 /* ======== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue-legacy.html) ========
    Показывается, пока выключен экспериментальный флаг newIssueView.
@@ -1511,7 +1568,9 @@ function setIssueInfoLegacy(issue, $issueInfo) {
 
     issuePage.updatePriorityVals();
 
-    $issueInfo.data('status', issue.status);
+    // Атрибут держим в паре с jQuery-хранилищем: .data() его больше не читает,
+    // и без этого разметка сохраняет статус, с которым страница загрузилась.
+    $issueInfo.attr('data-status', issue.status).data('status', issue.status);
 };
 
 /* ======== конец старого вида страницы задачи ======== */
@@ -1551,6 +1610,80 @@ issuePage.removeLink = function (linkedIssueId, linkedLabel) {
 
 issuePage.updateLinkedIssues = function (html) {
     $('#linkedIssues').html(html);
+};
+
+/**
+ * Отмечает, что текущий пользователь взял задачу в тестирование.
+ * @param {Boolean} [confirmed] Подтверждён ли перехват задачи у того,
+ * кто проверяет её сейчас.
+ */
+issuePage.takeForTesting = function (confirmed) {
+    issuePage.changeTestingMark(
+        (issueId, handler) => srv.issue.takeForTesting(issueId, !!confirmed, handler),
+        function (res) {
+            if (res.needConfirm) {
+                // holderName сервис отдаёт уже экранированным: диалог вставляет
+                // text как HTML
+                lpm.dialog.confirm({
+                    text: 'Задачу тестирует ' + res.holderName + '. Взять на себя?',
+                    yesLabel: 'Взять на себя',
+                    onYes: () => issuePage.takeForTesting(true),
+                });
+                return;
+            }
+
+            if (res.testerAdded) issuePage.appendParticipant('tester', res);
+        });
+};
+
+issuePage.releaseFromTesting = function () {
+    issuePage.changeTestingMark(
+        (issueId, handler) => srv.issue.releaseFromTesting(issueId, handler));
+};
+
+/**
+ * Ставит или снимает отметку о взятии задачи в тестирование.
+ * @param {Function} srvCall Вызов сервиса: (issueId, handler).
+ * @param {Function} [onSuccess] Дополнительная обработка успешного ответа.
+ */
+issuePage.changeTestingMark = function (srvCall, onSuccess) {
+    preloader.show();
+    srvCall(issuePage.getIssueId(), function (res) {
+        preloader.hide();
+        if (!res.success) {
+            srv.err(res);
+            return;
+        }
+
+        applyIssueSubstatus(res);
+        if (onSuccess) onSuccess(res);
+    });
+};
+
+/**
+ * Переключает ссылки взятия и снятия отметки о тестировании.
+ *
+ * Отметку снимает не только явное действие: её убирают и отметка о прохождении
+ * теста, и найденные проблемы, и новый MR, и смена статуса задачи. Общий
+ * признак у всех этих ответов один - подстатус, поэтому состояние ссылок
+ * выводится из него: подстатус «Взята в тестирование» стоит тогда и только
+ * тогда, когда стоит отметка (@see Issue::getSubstatus()).
+ * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
+ */
+function applyUnderTesting(substatus) {
+    if (substatus === undefined) return;
+
+    issuePage.setUnderTesting(substatus === Issue.SUBSTATUS_UNDER_TESTING);
+}
+
+/**
+ * Переключает ссылки взятия и снятия отметки о тестировании.
+ * @param {Boolean} taken Стоит ли на задаче отметка о взятии.
+ */
+issuePage.setUnderTesting = function (taken) {
+    const $bar = $('#issueView .scrum-comments-shortcut');
+    $('.take-for-testing-icon', $bar).toggle(!taken);
+    $('.release-from-testing-icon', $bar).toggle(!!taken);
 };
 
 issuePage.commentPassTesting = function () {
@@ -1677,6 +1810,7 @@ issuePage.doSomethingAndPostCommentForCurrentIssue = function (srvCall, onSucces
                 preloader.hide();
                 if (res.success) {
                     issuePage.addComment(res.comment, res.html);
+                    applyIssueSubstatus(res);
                     if (res.linkedHtml) issuePage.updateLinkedIssues(res.linkedHtml);
                     if (onSuccess) onSuccess(res);
                 } else {
@@ -1700,7 +1834,7 @@ issuePage.merged = function () {
             (issueId, handler) => srv.issue.merged(issueId, complete, handler),
             res => {
                 if (res.issue)
-                    setIssueInfo(new Issue(res.issue));
+                    setIssueInfo(new Issue(res.issue), res.substatus);
                 issuePage.updateStat();
             });
     }
@@ -1885,23 +2019,31 @@ issuePage.applySortFromHash = function () {
     issuePage.sortIssues(sortKey);
 };
 
+/**
+ * Восстанавливает фильтр из адреса страницы.
+ * Ключ `users` - исполнители, `testers` - тестировщики; ссылки без `testers`
+ * (сохранённые до появления фильтра по тестировщикам) остаются рабочими.
+ */
 issuePage.handleFilterState = function (value) {
     const filters = value.trim() == '' ? [] : value.split(';');
     const tags = [];
-    const userIds = [];
+    const memberIds = [];
+    const testerIds = [];
 
     filters.forEach(filter => {
         const [key, value] = filter.split('=');
         if (key === 'tags') {
             tags.push(...decodeURI(value).split(','));
         } else if (key === 'users') {
-            userIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
+            memberIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
+        } else if (key === 'testers') {
+            testerIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
         }
     });
 
     const filterVm = issuePage.filterVm;
     filterVm.selectedTags = tags;
-    filterVm.selectUsers(userIds)
+    filterVm.selectUsers(memberIds, testerIds);
 }
 
 issuePage.onFilterChanged = function (filter)  {
@@ -1914,8 +2056,18 @@ issuePage.onFilterChanged = function (filter)  {
             filters.push(`tags=${encodeURI(tags.join(','))}`);
         }
 
-        if (users.length) {
-            filters.push(`users=${encodeURI(users.map(user => user.userId).join(','))}`);
+        const idsByRole = (role) => users
+            .filter((user) => user.role === role)
+            .map((user) => user.userId);
+
+        const memberIds = idsByRole('member');
+        if (memberIds.length) {
+            filters.push(`users=${encodeURI(memberIds.join(','))}`);
+        }
+
+        const testerIds = idsByRole('tester');
+        if (testerIds.length) {
+            filters.push(`testers=${encodeURI(testerIds.join(','))}`);
         }
 
         states.setState('filter:' + filters.join(';'), true);
@@ -1925,7 +2077,7 @@ issuePage.onFilterChanged = function (filter)  {
 }
 
 issuePage.showIssuesByUser = function (memberId) {
-    issuePage.filterVm.selectUsers([memberId]);
+    issuePage.filterVm.selectUsers([memberId], []);
 };
 
 issuePage.scrumColUpdateInfo = function () {
@@ -2143,11 +2295,7 @@ function Issue(obj) {
     };
 
     this.getStatus = function () {
-        switch (this.status) {
-            case 1: return 'Ожидает проверки';
-            case 2: return 'Завершена';
-            default: return 'В работе';
-        }
+        return Issue.getStatusLabel(this.status);
     };
 
     this.getType = function () {
@@ -2223,15 +2371,57 @@ Issue.getPriorityDisplayVal = function (priority) {
 };
 
 /**
+ * Уточнения статуса задачи. Те же значения задаёт `IssueSubstatus` на сервере.
+ */
+Issue.SUBSTATUS_NONE = 0;
+Issue.SUBSTATUS_BACKLOG = 1;
+Issue.SUBSTATUS_TODO = 2;
+Issue.SUBSTATUS_IN_PROGRESS = 3;
+Issue.SUBSTATUS_PASS_TEST = 4;
+Issue.SUBSTATUS_UNDER_TESTING = 5;
+
+/**
+ * Название статуса задачи: уточнение статуса показывается вместо него.
+ * Те же названия задаёт `IssueViewHelper::statusLabel()` на сервере.
+ * @param {Number} status
+ * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
+ */
+Issue.getStatusLabel = function (status, substatus) {
+    switch (substatus) {
+        case Issue.SUBSTATUS_BACKLOG: return 'Бэклог';
+        case Issue.SUBSTATUS_TODO: return 'К выполнению';
+        case Issue.SUBSTATUS_IN_PROGRESS: return 'В работе';
+        case Issue.SUBSTATUS_PASS_TEST: return 'Прошла тестирование';
+        case Issue.SUBSTATUS_UNDER_TESTING: return 'Взята в тестирование';
+    }
+
+    switch (status) {
+        case 1: return 'Ожидает проверки';
+        case 2: return 'Завершена';
+        default: return 'В работе';
+    }
+};
+
+/**
  * Все классы бейджа статуса — снимаются перед тем, как поставить актуальный.
  */
-Issue.STATUS_BADGE_CLASSES = 'bg-primary bg-warning bg-success text-dark';
+Issue.STATUS_BADGE_CLASSES =
+    'bg-primary bg-warning bg-success bg-secondary bg-info bg-opacity-50 bg-opacity-75 text-dark';
 
 /**
  * Оформление бейджа статуса. Те же соответствия задаёт `IssueViewHelper` на сервере.
  * @param {Number} status
+ * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
  */
-Issue.getStatusBadgeClass = function (status) {
+Issue.getStatusBadgeClass = function (status, substatus) {
+    switch (substatus) {
+        case Issue.SUBSTATUS_BACKLOG: return 'bg-secondary';
+        case Issue.SUBSTATUS_TODO: return 'bg-info text-dark';
+        case Issue.SUBSTATUS_IN_PROGRESS: return 'bg-primary';
+        case Issue.SUBSTATUS_UNDER_TESTING: return 'bg-warning bg-opacity-50 text-dark';
+        case Issue.SUBSTATUS_PASS_TEST: return 'bg-success bg-opacity-75 text-dark';
+    }
+
     switch (status) {
         case 1: return 'bg-warning text-dark';
         case 2: return 'bg-success';
@@ -2401,7 +2591,8 @@ issuePage.deleteComment = (id, deleteBranch, callback) => {
         deleteBranch,
         function (res) {
             if (res.success) {
-                callback(true);
+                applyIssueSubstatus(res);
+                callback(res);
             } else {
                 srv.err(res);
             }
@@ -2414,6 +2605,7 @@ issuePage.resolveComment = (id, callback) => {
         id,
         function (res) {
             if (res.success) {
+                applyIssueSubstatus(res);
                 callback(res);
             } else {
                 srv.err(res);

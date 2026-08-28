@@ -192,6 +192,9 @@ class PageConstructor
 
     public function createPage()
     {
+        // Заголовки уходят до первого вывода - иначе они уже не применятся.
+        SecurityHeaders::send();
+
         $page = LightningEngine::getInstance()->getCurrentPage();
         $this->_title  		= $page->getTitle();
         $this->_header	 	= $page->getHeader();

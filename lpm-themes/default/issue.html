@@ -19,6 +19,7 @@ $userId = lpm_get_user()->getID();
 $isOnBoard = $issue->isOnBoard();
 
 $project = $issue->getProject();
+$substatus = $issue->getSubstatus();
 
 $classes = [];
 if ($issue->isTesting()) $classes[] = 'issue-testing';
@@ -183,8 +184,8 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
 
         <div class="issue-props bg-light border-bottom px-3 py-3">
             <div class="issue-badges d-flex flex-wrap align-items-center gap-2">
-                <span class="badge issue-status-badge <?=IssueViewHelper::statusBadgeClass($issue->status);?>"
-                    data-field="status"><?=$issue->getStatus();?></span>
+                <span class="badge issue-status-badge <?=IssueViewHelper::statusBadgeClass($issue->status, $substatus);?>"
+                    data-field="status"><?=IssueViewHelper::statusLabel($issue->status, $substatus);?></span>
                 <span class="badge issue-type-badge <?=IssueViewHelper::typeBadgeClass($issue->type);?>">
                     <i class="issue-type-icon <?=IssueViewHelper::typeIconClass($issue->type);?> me-1"
                         aria-hidden="true"></i><span data-field="type"><?=$issue->getType();?></span>
@@ -361,6 +362,15 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                         class="fas fa-plus plus-icon"></i>
                 </a>
                 <?php endif; ?>
+                <?php /* Обе ссылки всегда в разметке: JS переключает их после действия,
+                         не перезагружая страницу */ ?>
+                <a href="#" class="take-for-testing-icon" onclick="issuePage.takeForTesting(); return false;"
+                    title="Взять в тестирование"<?=$issue->isUnderTesting ? ' style="display:none;"' : '';?>><i
+                        class="fas fa-flask" aria-hidden="true"></i></a>
+                <a href="#" class="release-from-testing-icon under-testing"
+                    onclick="issuePage.releaseFromTesting(); return false;"
+                    title="Снять отметку «Взята в тестирование»"<?=$issue->isUnderTesting ? '' : ' style="display:none;"';?>><i
+                        class="fas fa-flask" aria-hidden="true"></i></a>
                 <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i
                         class="far fa-check-square" aria-hidden="true"></i></a>
                 <a href="#" onclick="issuePage.commentMergeInDevelop(); return false;" title="Влита в develop"><i

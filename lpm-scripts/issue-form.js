@@ -24,6 +24,43 @@ $(function ($) {
         });
     });
 
+    // Диалог черновика показывается через lpm.dialog, т.е. его разметка
+    // добавляется и удаляется на лету — обработчики только делегированные.
+    $(document).on('change', '.modal.show #aiIssueDraftImages', function () {
+        issueForm.addDraftImages(this.files);
+        // Сброс значения позволяет выбрать тот же файл ещё раз после удаления.
+        this.value = '';
+    });
+    $(document).on('click', '.modal.show .remove-draft-image', function (e) {
+        e.preventDefault();
+
+        // Перерисовка списка отцепляет от DOM элемент, по которому только что
+        // кликнули. Глобальный обработчик iLoad (lpm-scripts/libs/iLoad.js)
+        // поднимается от event.target вверх по parentNode и выходит из цикла
+        // только на document.body — у отцепленного узла цепочка обрывается на
+        // null, и он падает с TypeError. Поэтому DOM меняем следующей задачей,
+        // когда событие уже разошлось по документу. По той же причине штатные
+        // кнопки удаления в форме убирают элемент из колбэка диалога
+        // подтверждения, а не прямо в обработчике клика.
+        const image = $(this).data('image');
+        setTimeout(function () {
+            issueForm.removeDraftImage(image);
+        }, 0);
+    });
+    document.addEventListener('paste', pasteDraftImage);
+
+    function pasteDraftImage(event) {
+        // Только для открытого диалога черновика. Вставка в саму форму задачи
+        // обрабатывается отдельно (pasteClipboardImage ниже), а диалог живёт
+        // вне #issueForm, поэтому обработчики не пересекаются.
+        if (!$('.modal.show .ai-issue-draft-body').length) return;
+
+        const clipboard = event.clipboardData;
+        if (!clipboard || !clipboard.files || !clipboard.files.length) return;
+
+        issueForm.addDraftImages(clipboard.files);
+    }
+
     function pasteClipboardImage(event) {
         // Только для формы задачи. Вставка в комментарии обрабатывается отдельно (см. comments.js).
         if (!$(event.target).closest('#issueForm').length) return;
@@ -564,6 +601,209 @@ let issueForm = {
     },
     updateHeader: function (isEdit) {
         $("#issueForm > h3").text(isEdit ? "Редактирование задачи" : "Добавить задачу");
+        // Черновик перезаписывает название, тип и описание целиком, поэтому
+        // предлагается только при создании задачи.
+        $('#issueForm .ai-issue-draft-row').toggleClass('d-none', isEdit);
+    },
+
+    // --- Черновик задачи от ИИ ---
+
+    // Приложенные изображения текущего диалога: [{ name, dataUri, size }].
+    // Черновик нигде не хранится — список живёт только пока окно открыто.
+    draftImages: [],
+    showDraftDialog: function () {
+        const tpl = document.getElementById('aiIssueDraftContent');
+        if (!tpl) return;
+
+        issueForm.draftImages = [];
+
+        lpm.dialog.show({
+            title: 'Черновик задачи',
+            content: tpl.innerHTML,
+            primaryBtn: 'Собрать черновик',
+            secondaryBtn: 'Отмена',
+            onPrimary: function () {
+                issueForm.generateDraft();
+                // Окно закрывается только после успешной сборки черновика.
+                return false;
+            },
+        });
+
+        // lpm.dialog не умеет задавать размер окна, а в узком не помещаются
+        // ни описание, ни превью скриншотов.
+        issueForm.draftDialog().addClass('modal-lg');
+
+        const $form = $('#issueForm form');
+        const filled = !!$form.find('input[name=name]').val().trim()
+            || !!$form.find('textarea[name=desc]').val().trim();
+        if (filled) {
+            issueForm.draft$('.ai-issue-draft-overwrite').show();
+        }
+
+        issueForm.draft$('#aiIssueDraftText').focus();
+    },
+    // Окно открытого диалога черновика.
+    //
+    // Скрытый шаблон #aiIssueDraftContent остаётся в DOM с теми же id, поэтому
+    // глобальные селекторы попали бы в него; отбираем копию по .modal-dialog,
+    // предка которого у шаблона нет. Опираться на .modal.show нельзя: этот
+    // класс Bootstrap вешает после анимации подложки, то есть уже после того,
+    // как lpm.dialog.show() вернул управление.
+    draftDialog: function () {
+        return $('.ai-issue-draft-body').closest('.modal-dialog');
+    },
+    // Ищем элементы только внутри открытого диалога — см. draftDialog().
+    draft$: function (sel) {
+        return issueForm.draftDialog().find(sel);
+    },
+    draftLimits: function () {
+        const tpl = $('#aiIssueDraftContent');
+        return {
+            maxImages: parseInt(tpl.data('maxImages'), 10),
+            maxTotalSizeMb: parseInt(tpl.data('maxTotalSizeMb'), 10),
+        };
+    },
+    addDraftImages: function (files) {
+        const limits = issueForm.draftLimits();
+
+        // Набор картинок меняется — прежняя жалоба на него уже не актуальна.
+        issueForm.clearDraftError();
+
+        Array.prototype.forEach.call(files || [], function (file) {
+            if (!file.type || file.type.indexOf('image/') !== 0) {
+                issueForm.showDraftError('«' + (file.name || 'Файл') + '» — не изображение');
+                return;
+            }
+
+            if (issueForm.draftImages.length >= limits.maxImages) {
+                issueForm.showDraftError('Можно приложить не больше '
+                    + limits.maxImages + ' изображений');
+                return;
+            }
+
+            const totalSize = issueForm.draftImages.reduce(function (sum, img) {
+                return sum + img.size;
+            }, file.size);
+            if (totalSize > limits.maxTotalSizeMb * 1024 * 1024) {
+                issueForm.showDraftError('Суммарный размер изображений не должен превышать '
+                    + limits.maxTotalSizeMb + ' Мб');
+                return;
+            }
+
+            // Место в списке занимаем сразу, до асинхронного чтения файла:
+            // иначе лимит не удержать, когда файлы выбраны разом.
+            const image = { name: file.name || 'Скриншот', size: file.size, dataUri: null };
+            issueForm.draftImages.push(image);
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                image.dataUri = e.target.result;
+                issueForm.renderDraftImages();
+            };
+            reader.onerror = function () {
+                issueForm.removeDraftImage(image);
+                issueForm.showDraftError('Не удалось прочитать «' + image.name + '»');
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+    removeDraftImage: function (image) {
+        const index = issueForm.draftImages.indexOf(image);
+        if (index === -1) return;
+
+        issueForm.draftImages.splice(index, 1);
+        issueForm.clearDraftError();
+        issueForm.renderDraftImages();
+    },
+    renderDraftImages: function () {
+        const $list = issueForm.draft$('.ai-issue-draft-previews').empty();
+
+        issueForm.draftImages.forEach(function (image) {
+            if (!image.dataUri) return;
+
+            const $img = $('<img class="border rounded" alt="">')
+                .attr('src', image.dataUri)
+                .attr('title', image.name)
+                .css({ height: '72px', width: 'auto' });
+            const $remove = $('<a href="javascript:void(0)" aria-label="Убрать изображение">')
+                .addClass('remove-btn remove-draft-image align-top')
+                .data('image', image);
+
+            $('<li class="d-flex align-items-start">').append($img, $remove).appendTo($list);
+        });
+    },
+    generateDraft: function () {
+        const $btn = issueForm.draft$('.modal-footer .btn-primary');
+        if ($btn.prop('disabled')) return;
+
+        const text = issueForm.draft$('#aiIssueDraftText').val().trim();
+
+        // Файл читается асинхронно, и до конца чтения у картинки нет dataUri —
+        // а превью появляется только вместе с ним. Отправить сейчас значило бы
+        // молча потерять уже приложенный скриншот, поэтому ждём чтения.
+        if (issueForm.draftImages.some(function (image) { return !image.dataUri; })) {
+            issueForm.showDraftError('Изображения ещё читаются — повторите через мгновение');
+            return;
+        }
+
+        const images = issueForm.draftImages.map(function (image) { return image.dataUri; });
+
+        if (!text && !images.length) {
+            issueForm.showDraftError('Опишите задачу или приложите изображение');
+            return;
+        }
+
+        issueForm.clearDraftError();
+        $btn.prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>'
+            + 'Собираем черновик…'
+        );
+
+        // Запоминаем текущее окно: ответа модели ждём секунды, и за это время
+        // диалог могут закрыть или открыть заново. lpm.dialog удаляет копию
+        // окна из DOM при закрытии, так что отцепленный элемент означает,
+        // что этот запрос уже никому не нужен.
+        const $dialog = issueForm.draftDialog();
+
+        srv.ai.issueDraft($('#issueProjectID').val(), text, images, function (res) {
+            // От черновика отказались, пока он собирался, — молча подменять
+            // название, тип и описание в форме уже нельзя.
+            if (!document.body.contains($dialog[0])) return;
+
+            if (!res.success) {
+                $btn.prop('disabled', false).text('Собрать черновик');
+                issueForm.showDraftError(res.error || 'Не удалось собрать черновик');
+                return;
+            }
+
+            issueForm.applyDraft(res);
+            issueForm.closeDraftDialog();
+            lpm.toast.show('Черновик собран — проверьте и поправьте поля');
+        });
+    },
+    applyDraft: function (draft) {
+        const $form = $('#issueForm form');
+
+        $form.find('input[name=name]').val(draft.name);
+        issueFormLabels.issueNameChanged(draft.name);
+
+        $form.find('input:radio[name=type][value=' + draft.type + ']').prop('checked', true);
+
+        // Событие input обновляет счётчики символов и слов под полем описания.
+        $form.find('textarea[name=desc]').val(draft.desc).trigger('input');
+    },
+    closeDraftDialog: function () {
+        // Ищем окно через draftDialog(), а не по .modal.show: этот класс
+        // Bootstrap проставляет с задержкой, и сразу после открытия диалога
+        // закрыть его по нему не получится.
+        const el = issueForm.draftDialog().closest('.modal')[0];
+        if (el) bootstrap.Modal.getOrCreateInstance(el).hide();
+    },
+    showDraftError: function (msg) {
+        issueForm.draft$('.ai-issue-draft-error').text(msg).show();
+    },
+    clearDraftError: function () {
+        issueForm.draft$('.ai-issue-draft-error').hide().text('');
     },
     addSprintNumToName: function () {
         $nameInput = $("#issueForm form input[name=name]");
@@ -674,8 +914,6 @@ let issueForm = {
 
         const li = $(e.currentTarget).parents('.members-list-item');
         if (li.length == 0) return;
-
-        console.log(li);
 
         const userId = $('input[name="' + fieldName + '[]"]', li).val();
         var userName = $('span.user-name', li).html();

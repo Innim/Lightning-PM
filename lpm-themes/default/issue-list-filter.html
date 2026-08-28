@@ -13,7 +13,7 @@
       <vue-multiselect
         placeholder="Теги"
         v-model="selectedTags"
-        :options='<?=json_encode(lpm_get_issue_labels_names());?>'
+        :options='<?=lpm_json_attr(lpm_get_issue_labels_names());?>'
         :show-labels="false"
         :max-height="200"
         close-on-select
@@ -23,19 +23,39 @@
       ></vue-multiselect>
     </div>
     <div class="filter-selector col ms-1">
+      <!-- Люди сгруппированы по ролям: одна и та же фамилия может быть выбрана
+           как исполнитель и как тестировщик, поэтому track-by - составной key,
+           а роль показываем иконкой и в списке, и в выбранной плашке. -->
       <vue-multiselect
         ref="userMultiselect"
         placeholder="Пользователи"
         v-model="selectedUsers"
-        :options='<?=json_encode(lpm_get_project_members_for_filter());?>'
+        :options='<?=lpm_json_attr(lpm_get_project_members_for_filter());?>'
+        group-values="users"
+        group-label="groupLabel"
         :show-labels="false"
         :max-height="200"
-        :track-by="'userId'"
+        :track-by="'key'"
         :label="'name'"
         close-on-select
         searchable
         multiple
-      ></vue-multiselect>
+      >
+        <template slot="option" slot-scope="props">
+          <span v-if="props.option.$groupLabel">{{ props.option.$groupLabel }}</span>
+          <span v-else><i class="fas fa-fw" :class="userRoleIcon(props.option)"
+              aria-hidden="true"></i> {{ props.option.name }}</span>
+        </template>
+        <template slot="tag" slot-scope="props">
+          <span class="multiselect__tag"><i class="fas fa-fw" :class="userRoleIcon(props.option)"
+              aria-hidden="true"></i> <span>{{ props.option.name }}</span><i
+              tabindex="1"
+              class="multiselect__tag-icon"
+              :aria-label="'Убрать ' + props.option.name + ' из фильтра'"
+              @keypress.enter.prevent="props.remove(props.option)"
+              @mousedown.prevent="props.remove(props.option)"></i></span>
+        </template>
+      </vue-multiselect>
     </div>
     <div class="col-auto">
       <button

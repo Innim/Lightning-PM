@@ -112,7 +112,7 @@ class EmailNotifier extends LPMBaseObject
         foreach ($users as $user) {
             $this->send(
                 $user->email,
-                $user->getName(),
+                $user->getPlainName(),
                 $subject,
                 $text
             );

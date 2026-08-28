@@ -13,6 +13,8 @@ class AuthPage extends LPMPage
     const NICK_MAX_LENGTH = 64;
     const NICK_MIN_LENGTH = 3;
 
+    const NAME_MAX_LENGTH = 128;
+
     public function __construct()
     {
         parent::__construct('auth', 'Авторизация', false, true);
@@ -31,12 +33,14 @@ class AuthPage extends LPMPage
         $engine = LightningEngine::getInstance();
 
         // проверяем, не пришли ли данные формы
-        if (!empty($_POST)) {
+        if (!empty($_POST) && !CsrfToken::check()) {
+            $engine->addError('Форма устарела. Обновите страницу и попробуйте снова');
+        } elseif (!empty($_POST)) {
             $db = LPMGlobals::getInstance()->getDBConnect();
 
             $input = [];
             foreach ($_POST as $key => $value) {
-                $input[$key] = trim($value);
+                $input[$key] = is_string($value) ? trim($value) : $value;
             }
 
             if (isset($input['email'])) {
@@ -50,8 +54,8 @@ class AuthPage extends LPMPage
                     $values = [
                         'email' => $input['email'],
                         'pass' => $pass,
-                        'firstName' => mb_substr($input['firstName'], 0, 128),
-                        'lastName' => mb_substr($input['lastName'], 0, 128),
+                        'firstName' => mb_substr($input['firstName'], 0, self::NAME_MAX_LENGTH),
+                        'lastName' => mb_substr($input['lastName'], 0, self::NAME_MAX_LENGTH),
                         'nick' => empty($input['nick']) ? '' : mb_substr($input['nick'], 0, self::NICK_MAX_LENGTH),
                         'lastVisit' => DateTimeUtils::mysqlDate(),
                         'regDate' => DateTimeUtils::mysqlDate()
@@ -156,6 +160,21 @@ class AuthPage extends LPMPage
 
         if ($input['pass'] != $input['repass']) {
             return $engine->addError('Введённые пароли не совпадают');
+        }
+
+        foreach (['firstName' => 'Имя', 'lastName' => 'Фамилия'] as $field => $label) {
+            if (mb_strlen($input[$field]) > self::NAME_MAX_LENGTH) {
+                return $engine->addError(sprintf(
+                    'Поле "%s" не может быть длиннее %d символов',
+                    $label,
+                    self::NAME_MAX_LENGTH
+                ));
+            }
+
+            // Угловые скобки в имени не нужны, а в разметке они опаснее всего.
+            if (preg_match('/[<>]/u', $input[$field])) {
+                return $engine->addError(sprintf('Поле "%s" содержит недопустимые символы', $label));
+            }
         }
 
         if (!Validation::checkEmail($input['email'])) {

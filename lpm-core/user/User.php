@@ -314,14 +314,54 @@ class User extends LPMBaseObject
         return $this->secret ? '***' : $this->email;
     }
     
+    /**
+     * Полное имя пользователя, готовое для вывода в HTML.
+     *
+     * Имя, фамилия и ник задаются самим пользователем и не ограничены
+     * набором символов, поэтому результат экранирован. Для не-HTML
+     * контекстов (JSON внешнего API, письма, Slack, промпты AI, логи)
+     * нужен {@see User::getPlainName()}.
+     *
+     * @return string
+     */
     public function getName()
+    {
+        return HTMLHelper::escape($this->getPlainName());
+    }
+
+    /**
+     * Полное имя пользователя в исходном виде, без экранирования.
+     *
+     * Выводить в HTML напрямую нельзя — для этого есть {@see User::getName()}.
+     *
+     * @return string
+     */
+    public function getPlainName()
     {
         return $this->firstName . ' ' .
                ($this->nick != '' ? $this->nick . ' ' : '') .
                $this->lastName;
     }
-    
+
+    /**
+     * Короткое имя пользователя (ник либо фамилия с инициалом),
+     * готовое для вывода в HTML.
+     *
+     * @return string
+     */
     public function getShortName()
+    {
+        return HTMLHelper::escape($this->getPlainShortName());
+    }
+
+    /**
+     * Короткое имя пользователя в исходном виде, без экранирования.
+     *
+     * Выводить в HTML напрямую нельзя — для этого есть {@see User::getShortName()}.
+     *
+     * @return string
+     */
+    public function getPlainShortName()
     {
         if (empty($this->nick)) {
             return $this->lastName . ' ' . mb_substr($this->firstName, 0, 1);
@@ -335,10 +375,14 @@ class User extends LPMBaseObject
         return $this->avatarUrl;
     }
     
+    /**
+     * Имя пользователя ссылкой на его профиль — готовый HTML.
+     * @return string
+     */
     public function getLinkedName()
     {
         $url = $this->getUrl();
-        return '<a href="' . $url . '">'.$this->getName() . '</a>';
+        return '<a href="' . HTMLHelper::escape($url) . '">' . $this->getName() . '</a>';
     }
 
     public function getUrl()

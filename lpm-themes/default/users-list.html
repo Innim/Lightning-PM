@@ -32,7 +32,7 @@ $isModerator = lpm_is_moderator();
                 <?php endif; ?>
             </td>
             <?php if ($isModerator): ?>
-            <td><?=$user->email;?></td>
+            <td><?=lpm_escape($user->email);?></td>
             <?php endif; ?>
             <td><?php $lastVisit = $user->getLastVisit(); if ($lastVisit != ''): ?><span title="<?=$user->getLastVisitFull();?>"><?=$lastVisit;?></span><?php endif; ?></td>
             <?php if ($isModerator): ?>

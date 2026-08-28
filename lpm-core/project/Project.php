@@ -17,7 +17,14 @@ class Project extends MembersInstance
      * @var array<int, Project>
      */
     private static $_projectsByIds = [];
-    
+
+    /**
+     * Колонки таблицы проектов, существующие в базе, в виде `имя => true`.
+     * `null` — набор ещё не прочитан.
+     * @var array<string, bool>|null
+     */
+    private static $_projectsColumns = null;
+
     public static function loadList($where = null)
     {
         return StreamObject::loadListDefault(
@@ -63,8 +70,89 @@ class Project extends MembersInstance
     }
 
     /**
-     * Обновляет настройки проекта
+     * Возвращает колонки таблицы проектов, существующие в базе, в виде `имя => true`.
      *
+     * Набор читается из базы не больше одного раза за запрос. Постоянного кэша
+     * намеренно нет: после применения миграции состав колонок должен обновиться
+     * сам, без перезапуска или сброса кэша.
+     *
+     * @return array<string, bool>|null `null`, если состав колонок узнать не удалось.
+     */
+    private static function getProjectsColumns()
+    {
+        if (self::$_projectsColumns === null) {
+            // выборка заведомо пустого набора строк: нужны только метаданные колонок
+            $result = self::getDB()->queryb([
+                'SELECT' => '*',
+                'FROM' => LPMTables::PROJECTS,
+                'WHERE' => ['id' => 0],
+                'LIMIT' => 1,
+            ]);
+
+            if (!$result) {
+                return null;
+            }
+
+            $columns = [];
+            foreach ($result->fetch_fields() as $field) {
+                $columns[$field->name] = true;
+            }
+            $result->free();
+
+            self::$_projectsColumns = $columns;
+        }
+
+        return self::$_projectsColumns;
+    }
+
+    /**
+     * Оставляет в наборе `колонка => значение` только те колонки,
+     * которые есть в таблице проектов.
+     *
+     * Новый код выкатывается раньше, чем применяются миграции, поэтому колонки,
+     * добавленной последней миграцией, какое-то время может ещё не быть в базе.
+     * Без фильтрации весь запрос падал бы на неизвестной колонке — то есть
+     * не сохранялась бы ни одна настройка проекта, включая давно существующие.
+     *
+     * @param  array<string, mixed> $values
+     * @return array<string, mixed> Набор без отсутствующих в таблице колонок.
+     */
+    private static function filterExistingColumns(array $values)
+    {
+        $columns = self::getProjectsColumns();
+        if ($columns === null) {
+            return $values;
+        }
+
+        $existing = [];
+        $missing = [];
+        foreach ($values as $column => $value) {
+            if (isset($columns[$column])) {
+                $existing[$column] = $value;
+            } else {
+                $missing[] = $column;
+            }
+        }
+
+        if (!empty($missing)) {
+            LPMLog::warning(
+                'В таблице проектов нет колонок, значения для них не сохранены — '
+                    . 'вероятно, не применена миграция',
+                LPMLog::CH_DB,
+                ['columns' => implode(', ', $missing)]
+            );
+        }
+
+        return $existing;
+    }
+
+    /**
+     * Обновляет настройки проекта.
+     *
+     * Настройки, для которых в таблице ещё нет колонки, пропускаются —
+     * остальные сохраняются (см. self::filterExistingColumns()).
+     *
+     * @return bool `true`, если сохранение прошло успешно.
      */
     public static function updateProjectSettings(
         $projectId,
@@ -74,28 +162,39 @@ class Project extends MembersInstance
         $gitlabProjectIds,
         $aiSummary,
         $aiTestChecklist,
+        $aiIssueDraft,
+        $aiContext,
         $requireLabels
     )
     {
         $db = self::getDB();
 
+        $set = self::filterExistingColumns([
+            'scrum' => $scrum,
+            'slackNotifyChannel' => $slackNotifyChannel,
+            'gitlabGroupId' => $gitlabGroupId,
+            'gitlabProjectIds' => $gitlabProjectIds,
+            'aiSummary' => $aiSummary,
+            'aiTestChecklist' => $aiTestChecklist,
+            'aiIssueDraft' => $aiIssueDraft,
+            'aiContext' => $aiContext,
+            'requireLabels' => $requireLabels,
+        ]);
+
+        // писать нечего: колонок под все эти настройки в таблице ещё нет
+        if (empty($set)) {
+            return true;
+        }
+
         $hash = [
             'UPDATE' => LPMTables::PROJECTS,
-            'SET' => [
-                'scrum' => $scrum,
-                'slackNotifyChannel' => $slackNotifyChannel,
-                'gitlabGroupId' => $gitlabGroupId,
-                'gitlabProjectIds' => $gitlabProjectIds,
-                'aiSummary' => $aiSummary,
-                'aiTestChecklist' => $aiTestChecklist,
-                'requireLabels' => $requireLabels,
-            ],
+            'SET' => $set,
             'WHERE' => [
                 'id' => $projectId
             ]
         ];
 
-        return $db->queryb($hash);
+        return (bool)$db->queryb($hash);
     }
 
     /**
@@ -424,6 +523,22 @@ SQL;
     public $aiTestChecklist = false;
 
     /**
+     * В проекте доступен черновик задачи, составляемый ИИ.
+     * @var Boolean
+     */
+    public $aiIssueDraft = false;
+
+    /**
+     * Описание предметной области проекта, которое подмешивается
+     * в запросы к ИИ: что за продукт, для кого, на чём написан,
+     * что означают принятые в команде термины.
+     *
+     * `null`, если контекст не задан.
+     * @var string|null
+     */
+    public $aiContext = null;
+
+    /**
      * Задачи проекта должны иметь хотя бы один тег.
      * @var Boolean
      */
@@ -519,6 +634,7 @@ SQL;
             'fixedInstance',
             'aiSummary',
             'aiTestChecklist',
+            'aiIssueDraft',
             'requireLabels'
         );
 

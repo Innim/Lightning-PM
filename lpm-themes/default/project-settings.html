@@ -83,7 +83,13 @@
                     </div>
                 </div>
 
-                <?php if (!empty($aiIntegrationAvailable)): ?>
+            </div>
+        </div>
+
+        <?php if (!empty($aiIntegrationAvailable)): ?>
+        <div class="card my-3">
+            <div class="card-header">Возможности ИИ</div>
+            <div class="card-body">
                 <div class="form-check mb-3">
                     <input id="aiSummaryCheckbox" class="form-check-input" type="checkbox" <?=$project->aiSummary ? 'checked' : '' ?>>
                     <label class="form-check-label" for="aiSummaryCheckbox">ИИ-сводка задач</label>
@@ -98,9 +104,33 @@
                         и опубликовать комментарием.
                     </div>
                 </div>
-                <?php endif; ?>
+
+                <div class="form-check mb-3">
+                    <input id="aiIssueDraftCheckbox" class="form-check-input" type="checkbox" <?=$project->aiIssueDraft ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="aiIssueDraftCheckbox">Черновик задачи от ИИ</label>
+                    <div class="form-text">
+                        В форме создания задачи можно собрать черновик названия, типа
+                        и описания по свободному тексту и скриншотам.
+                    </div>
+                </div>
+
+                <div class="mb-0">
+                    <label for="aiContext" class="form-label">Контекст проекта</label>
+                    <textarea id="aiContext" class="form-control" rows="6"
+                        maxlength="<?=AI_PROJECT_CONTEXT_MAX_LENGTH;?>"
+                        placeholder="Например: мобильное приложение для доставки еды курьерам; Flutter + Kotlin; «слот» — интервал доставки, «волна» — партия заказов на смену."><?=htmlspecialchars((string)$project->aiContext, ENT_QUOTES);?></textarea>
+                    <div class="form-text d-flex justify-content-between gap-3">
+                        <span>
+                            Опишите предметную область: что за продукт и для кого, на чём написан,
+                            принятые в команде термины, особенности процесса.
+                            Контекст уходит в каждый запрос к ИИ.
+                        </span>
+                        <span id="aiContextCounter" class="text-nowrap"></span>
+                    </div>
+                </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="d-flex justify-content-end gap-2 mt-2">
             <button class="btn btn-secondary" type="reset">Сбросить</button>

@@ -38,20 +38,20 @@ $lastVisitAgo = $user->getLastVisitAgo();
             <dl class="row mb-0">
                 <?php if ($user->nick != ''): ?>
                 <dt class="col-sm-3 text-muted fw-normal">Ник</dt>
-                <dd class="col-sm-9"><?=$user->nick;?></dd>
+                <dd class="col-sm-9"><?=lpm_escape($user->nick);?></dd>
                 <?php endif; ?>
 
                 <?php if ($isModerator): ?>
                 <dt class="col-sm-3 text-muted fw-normal">Email</dt>
                 <dd class="col-sm-9 d-flex align-items-center gap-2">
-                    <span><?=$user->email;?></span>
+                    <span><?=lpm_escape($user->email);?></span>
                     <?lpm_print_copy_button($user->email, 'Email скопирован');?>
                 </dd>
 
                 <dt class="col-sm-3 text-muted fw-normal">Slack Member ID</dt>
                 <dd class="col-sm-9 d-flex align-items-center gap-2">
                     <?php if ($user->slackName != ''): ?>
-                    <code><?=$user->slackName;?></code>
+                    <code><?=lpm_escape($user->slackName);?></code>
                     <?lpm_print_copy_button($user->slackName, 'Slack Member ID скопирован');?>
                     <?php else: ?>
                     <span class="text-muted">—</span>

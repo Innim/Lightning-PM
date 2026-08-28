@@ -44,7 +44,126 @@ class ApiIssueController extends ApiControllerBase
             return $this->createBranch($issue);
         }
 
+        if ($method === 'PUT' && count($path) === 2 && $path[1] === 'board') {
+            return $this->putIssueOnBoard($issue);
+        }
+
+        if ($method === 'DELETE' && count($path) === 2 && $path[1] === 'board') {
+            return $this->removeIssueFromBoard($issue);
+        }
+
         return ApiResponse::error('Route not found', 404);
+    }
+
+    /**
+     * Ставит задачу на доску или переводит её в другую колонку.
+     *
+     * Колонка задаётся необязательным параметром `column`; без него она
+     * выводится из статуса задачи, как по кнопке «На доску» в интерфейсе.
+     * @return ApiResponse Обновлённая задача.
+     */
+    private function putIssueOnBoard(Issue $issue)
+    {
+        if (!$issue->getProject()->scrum) {
+            return ApiResponse::error('Project has no scrum board', 400);
+        }
+
+        $column = $this->request()->getBody('column');
+        $state = null;
+        if ($column !== null && $column !== '') {
+            $state = is_string($column) ? ApiPayloadSerializer::boardColumnState($column) : null;
+            if ($state === null) {
+                return ApiResponse::error(
+                    'Unknown board column, expected one of: ' .
+                    implode(', ', ApiPayloadSerializer::boardColumnKeys()),
+                    400
+                );
+            }
+        }
+
+        try {
+            if ($state === null) {
+                ScrumBoardManager::putOnBoard($issue);
+            } else {
+                ScrumBoardManager::changeState($issue, $state, $this->user(), true);
+            }
+        } catch (ScrumBoardException $e) {
+            return ApiResponse::error($e->getMessage(), $e->getStatusCode());
+        }
+
+        return $this->reloadedIssueResponse($issue);
+    }
+
+    /**
+     * Снимает задачу с доски - она возвращается в бэклог.
+     * @return ApiResponse Обновлённая задача.
+     */
+    private function removeIssueFromBoard(Issue $issue)
+    {
+        if (!$issue->getProject()->scrum) {
+            return ApiResponse::error('Project has no scrum board', 400);
+        }
+
+        try {
+            ScrumBoardManager::removeFromBoard($issue, $this->user());
+        } catch (ScrumBoardException $e) {
+            return ApiResponse::error($e->getMessage(), $e->getStatusCode());
+        }
+
+        return $this->reloadedIssueResponse($issue);
+    }
+
+    /**
+     * Ответ с задачей, перечитанной из базы: статус и стикер задачи могли
+     * измениться, а загруженный объект их кэширует.
+     * @return ApiResponse
+     * @throws Exception Если задачу не удалось перечитать.
+     */
+    private function reloadedIssueResponse(Issue $issue, $statusCode = 200)
+    {
+        $reloaded = Issue::load($issue->id);
+        if (!$reloaded) {
+            throw new Exception('Failed to load issue');
+        }
+
+        return ApiResponse::success([
+            'issue' => $this->serializer()->issue($reloaded),
+        ], $statusCode);
+    }
+
+    /**
+     * Разбирает параметр `board` запроса на создание задачи.
+     * @param  Project $project Проект создаваемой задачи.
+     * @return bool|int|ApiResponse `false` - задача создаётся без стикера,
+     *         `true` - ставится на доску в колонку по своему статусу,
+     *         число - состояние стикера заданной колонки. Ответ с ошибкой,
+     *         если значение параметра не распознано.
+     */
+    private function parseCreateBoard(Project $project)
+    {
+        $board = $this->request()->getBody('board');
+        if ($board === null || $board === false || $board === '' || $board === 0) {
+            return false;
+        }
+
+        if (!$project->scrum) {
+            return ApiResponse::error('Project has no scrum board', 400);
+        }
+
+        if ($board === true) {
+            return true;
+        }
+
+        $state = is_string($board) ? ApiPayloadSerializer::boardColumnState($board) : null;
+        if ($state === null) {
+            return ApiResponse::error(
+                'Invalid board value, expected true or one of: ' .
+                implode(', ', ApiPayloadSerializer::boardColumnKeys()),
+                400
+            );
+        }
+
+        return $state;
     }
 
     private function createIssue()
@@ -85,7 +204,23 @@ class ApiIssueController extends ApiControllerBase
             return ApiResponse::error('Invalid issue type', 400);
         }
 
-        $priority = min(99, max(0, (int)$this->request()->getBody('priority', Issue::DEFAULT_PRIORITY)));
+        // Приоритет в API — в той же шкале, что видит пользователь в интерфейсе.
+        $minPriority = Issue::getPriorityDisplayValueBy(0);
+        $maxPriority = Issue::getPriorityDisplayValueBy(Issue::MAX_PRIORITY);
+        $priorityInput = $this->request()->getBody('priority');
+        if ($priorityInput === null || $priorityInput === '') {
+            $priorityInput = Issue::getPriorityDisplayValueBy(Issue::DEFAULT_PRIORITY);
+        }
+
+        if (!is_numeric($priorityInput) || (int)$priorityInput != $priorityInput
+                || $priorityInput < $minPriority || $priorityInput > $maxPriority) {
+            return ApiResponse::error(
+                'Invalid priority, expected an integer ' . $minPriority . '..' . $maxPriority,
+                400
+            );
+        }
+
+        $priority = Issue::priorityFromDisplayValue($priorityInput);
         $hours = Issue::parseStoryPoints($this->request()->getBody('hours', 0));
         if (!Issue::isValidStoryPoints($hours)) {
             return ApiResponse::error('Invalid hours, expected a non-negative integer or 0.5', 400);
@@ -94,6 +229,13 @@ class ApiIssueController extends ApiControllerBase
         $completeDate = Issue::parseCompleteDate($this->request()->getBody('completeDate'));
         if ($completeDate === false) {
             return ApiResponse::error('Invalid completeDate, expected format YYYY-MM-DD', 400);
+        }
+
+        // Разбираем до создания задачи, чтобы некорректная колонка
+        // не оставляла после себя созданную задачу
+        $board = $this->parseCreateBoard($project);
+        if ($board instanceof ApiResponse) {
+            return $board;
         }
 
         $user = $this->user();
@@ -107,6 +249,19 @@ class ApiIssueController extends ApiControllerBase
             throw new Exception('Failed to load created issue');
         }
 
+        // Связи по упоминаниям в описании: общего места сохранения описания нет,
+        // поэтому каждый способ создать или отредактировать задачу делает это сам
+        // (веб-форма — в ProjectPage::saveIssue())
+        IssueLinked::syncFromText($issue, $desc, $user->getID());
+
+        if ($board !== false) {
+            if ($board === true) {
+                ScrumBoardManager::putOnBoard($issue);
+            } else {
+                ScrumBoardManager::changeState($issue, $board, $user, true);
+            }
+        }
+
         Project::updateIssuesCount($project->id);
 
         UserLogEntry::create(
@@ -117,6 +272,10 @@ class ApiIssueController extends ApiControllerBase
         );
 
         Issue::notifyAdded($issue, $user);
+
+        if ($board !== false) {
+            return $this->reloadedIssueResponse($issue, 201);
+        }
 
         return ApiResponse::success([
             'issue' => $this->serializer()->issue($issue),
@@ -207,6 +366,11 @@ class ApiIssueController extends ApiControllerBase
                     throw new Exception('Failed to move scrum sticker');
                 }
             }
+
+            // Стикер задачи мог переехать в другую колонку, а загруженная
+            // задача его кэширует - иначе в ответе будут прежние
+            // подстатус и колонка доски
+            $issue->reloadSubstatusSources();
         }
 
         return [

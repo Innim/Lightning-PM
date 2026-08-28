@@ -17,15 +17,24 @@ class ScrumSticker extends LPMBaseObject
 `i`.`projectId` = ${projectId} AND `s`.`state` IN (${states})
 SQL;
 
-        $list = self::loadList($where);
+        return self::preloadParticipants(self::loadList($where));
+    }
 
-        // Заранее загружаем участников (исполнителей и тестировщиков) всех задач доски
-        // одним запросом, чтобы шаблон не делал по запросу на каждый стикер
-        // (getMembers/isMember/isTester).
+    /**
+     * Заранее загружает участников (исполнителей и тестировщиков) всех задач
+     * списка одним запросом, чтобы шаблон стикера не делал по запросу на каждый
+     * стикер (getMembers/isMember/isTester/getTesterIds).
+     *
+     * @param  array<ScrumSticker> $list
+     * @return array<ScrumSticker> Тот же список.
+     */
+    private static function preloadParticipants(array $list)
+    {
         $issueIds = [];
         foreach ($list as $sticker) {
             $issueIds[] = $sticker->issueId;
         }
+
         $participants = Member::loadListAnyForIssues($issueIds, true, true, false);
         foreach ($list as $sticker) {
             $sticker->getIssue()->extractParticipantsFrom($participants, true, true, false);
@@ -118,12 +127,12 @@ SQL;
         $where = <<<SQL
 `s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
 SQL;
-        return self::loadList(
+        return self::preloadParticipants(self::loadList(
             $where,
             '',
             ['m' => LPMTables::MEMBERS],
             ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
-        );
+        ));
     }
     
     /**
@@ -177,9 +186,23 @@ SQL;
         }
     }
 
-    public static function putStickerOnBoard(Issue $issue)
+    /**
+     * Создаёт стикер задачи на доске или переставляет уже существующий.
+     *
+     * Неактивное состояние (бэклог, архив, удалён) означает, что стикера
+     * на доске быть не должно - он удаляется.
+     * @param  Issue    $issue Задача.
+     * @param  int|null $state Состояние стикера; null - вывести из статуса задачи.
+     * @return bool Успешность сохранения.
+     * @see    getStateForIssue()
+     */
+    public static function putStickerOnBoard(Issue $issue, $state = null)
     {
-        $state = self::getStateForIssue($issue);
+        if ($state === null) {
+            $state = self::getStateForIssue($issue);
+        }
+
+        $state = (int)$state;
         $issueId = $issue->id;
         $added = DateTimeUtils::mysqlDate();
 
@@ -281,8 +304,8 @@ SQL;
                 usort($list, function (ScrumSticker $a, ScrumSticker $b) {
                     $aIssue = $a->getIssue();
                     $bIssue = $b->getIssue();
-                    if ($aIssue->isPassTest != $bIssue->isPassTest) {
-                        return $aIssue->isPassTest ? -1 : 1;
+                    if ($aIssue->hasPassTestMark != $bIssue->hasPassTestMark) {
+                        return $aIssue->hasPassTestMark ? -1 : 1;
                     }
 
                     if ($aIssue->isChangesRequested != $bIssue->isChangesRequested) {

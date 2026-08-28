@@ -22,6 +22,21 @@ $(function () {
         $('#projectError').addClass('d-none');
     }
 
+    // Счётчик длины контекста проекта: длина ограничена, потому что контекст
+    // уходит в каждый запрос к ИИ. Поля нет, если интеграция с ИИ не настроена.
+    const $aiContext = $('#aiContext');
+    if ($aiContext.length) {
+        const limit = Number($aiContext.attr('maxlength'));
+        const updateAiContextCounter = () => {
+            $('#aiContextCounter').text($aiContext.val().length + ' / ' + limit);
+        };
+
+        $aiContext.on('input', updateAiContextCounter);
+        // Сброс формы возвращает исходное значение уже после события.
+        $aiContext.closest('form').on('reset', () => setTimeout(updateAiContextCounter, 0));
+        updateAiContextCounter();
+    }
+
     // Возвращает поле идентификатора в исходное заблокированное состояние.
     function lockUid() {
         $('#projectUid').prop('disabled', true);
@@ -77,6 +92,8 @@ $(function () {
         // оставляет текущие значения настроек.
         const aiSummary = $('#aiSummaryCheckbox').prop('checked') ? 1 : 0;
         const aiTestChecklist = $('#aiTestChecklistCheckbox').prop('checked') ? 1 : 0;
+        const aiIssueDraft = $('#aiIssueDraftCheckbox').prop('checked') ? 1 : 0;
+        const aiContext = $aiContext.length ? $aiContext.val().trim() : '';
         const requireLabels = $('#requireLabelsCheckbox').prop('checked') ? 1 : 0;
 
         const gitlabProjectIds = $('#gitlabProjectIds').val();
@@ -99,6 +116,8 @@ $(function () {
             gitlabProjectIds,
             aiSummary,
             aiTestChecklist,
+            aiIssueDraft,
+            aiContext,
             requireLabels,
             function (res) {
                 if (!res.success) {

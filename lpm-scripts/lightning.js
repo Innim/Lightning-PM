@@ -107,6 +107,7 @@ function BaseService(service, f2p) {
             processData: false,
             contentType: false,
             dataType: 'json',
+            headers: ru.vbinc.net.F2PInvoker.defaultHeaders,
             success: function (obj) {
                 if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED) {
                     window.location.reload();
@@ -209,6 +210,11 @@ window.lpm = lpm;
 
 let gateway = window.lpmOptions.url + 'lpm-libs/flash2php/gateway.php';
 
+// Токен своей страницы: сервер отклоняет запросы к сервисам без него, поэтому
+// со стороннего сайта действие от имени пользователя выполнить нельзя.
+// Задаём на конструкторе - его читают все инвокеры, включая создаваемые позже.
+ru.vbinc.net.F2PInvoker.defaultHeaders['X-CSRF-Token'] = window.lpmOptions.csrfToken;
+
 // Сборка ИИ-сводки — это запрос к внешней модели, он идёт дольше обычного:
 // сервер ждёт ответа до aiRequestTimeout секунд, поэтому у ИИ-сервиса
 // собственный инвокер с запасом сверху (у общего таймаут 30 секунд).
@@ -243,6 +249,9 @@ let srv = {
         },
         issueTestChecklist: function (issueId, onResult) {
             this.s._('issueTestChecklist');
+        },
+        issueDraft: function (projectId, text, images, onResult) {
+            this.s._('issueDraft');
         },
     },
     files: {
@@ -291,6 +300,12 @@ let srv = {
         },
         merged: function (issueId, complete, onResult) {
             this.s._('merged');
+        },
+        takeForTesting: function (issueId, confirmed, onResult) {
+            this.s._('takeForTesting');
+        },
+        releaseFromTesting: function (issueId, onResult) {
+            this.s._('releaseFromTesting');
         },
         passTest: function (issueId, text, files, onResult) {
             this.s.callWithFiles('passTest', [issueId, text], files, onResult);
@@ -390,7 +405,7 @@ let srv = {
         },
         saveProject: function (
             projectId, uid, name, desc, scrum, slackNotifyChannel, gitlabGroupId, gitlabProjectIds,
-            aiSummary, aiTestChecklist, requireLabels, onResult
+            aiSummary, aiTestChecklist, aiIssueDraft, aiContext, requireLabels, onResult
         ) {
             this.s._('saveProject');
         },
@@ -451,6 +466,26 @@ let srv = {
         showError(typeof res.error != 'undefined' ? res.error : 'Ошибка при запросе к серверу');
     }
 };
+
+// Пока страница открыта, напоминаем о себе серверу: токен страницы живёт вместе
+// с сессией, а PHP сбрасывает её после session.gc_maxlifetime без запросов.
+// Форму — например, описание задачи — заполняют и дольше, и без пинга отправка
+// упёрлась бы в устаревший токен.
+(function () {
+    const lifetime = parseInt(window.lpmOptions.sessionLifetime, 10);
+    if (!lifetime || lifetime <= 0) return;
+
+    // С запасом — половина срока, но не чаще раза в минуту и не реже раза в 10 минут
+    const interval = Math.min(Math.max(Math.floor(lifetime / 2), 60), 600) * 1000;
+
+    setInterval(function () {
+        // Намеренно в обход BaseService: тот на отказ перезагружает страницу,
+        // а фоновый пинг не должен стирать недописанную форму. Если сессия всё
+        // же умерла, пользователь узнает об этом при отправке — и получит
+        // введённое обратно.
+        srv.f2p.request('SessionService', 'ping', function () {});
+    }, interval);
+})();
 
 var states = {
     _list: [],
@@ -779,6 +814,19 @@ lpm.utils = {
             return lpm.utils.copyToClipboard(plain);
         }
     },
+    /**
+     * Экранирует текст для безопасной вставки в HTML.
+     * @param {string} text
+     * @returns {string}
+     */
+    escapeHtml: function (text) {
+        return String(text === null || text === undefined ? '' : text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
     copyToClipboard: function (text) {
         // Modern clipboard API (works in HTTPS/localhost)
         if (navigator.clipboard && window.isSecureContext) {
@@ -873,10 +921,15 @@ function User(obj) {
     this.nick = obj.nick;
     //this.        = obj.;
 
+    // Имя пользователя приходит с сервера как есть, поэтому всё,
+    // что вставляется в разметку, экранируется здесь.
     this.getLinkedName = function () {
-        return this.getName();
+        return this._obj.linkedName
+            ? this._obj.linkedName
+            : lpm.utils.escapeHtml(this.getName());
     };
 
+    // Имя в исходном виде: для вставки в разметку не годится.
     this.getName = function () {
         return this.firstName + ' ' +
             (this.nick != '' ? this.nick + ' ' : '') +
@@ -938,17 +991,38 @@ $(document).ready(
         // titled control that removes or hides its own DOM node while the tooltip is open (e.g. the
         // SCRUM board "Убрать с доски" action removes the sticker on AJAX success — no mouseleave
         // fires) leaves the tooltip stuck in <body>. While a tooltip is shown, watch for its trigger
-        // being removed or hidden and dispose the tooltip so it isn't left orphaned. Disposing (not
-        // hide()) avoids re-firing hide.bs.tooltip, whose guard below would otherwise un-hide the
-        // trigger the app deliberately hid.
+        // being removed or hidden and close the tooltip so it isn't left orphaned.
+        // Close it with hide(), NEVER dispose(): Bootstrap finishes hide() in a callback queued on
+        // the tip's fade transition, and that callback reads the instance back (_cleanTipClass →
+        // getTipElement → this._config). dispose() nulls every field of the instance, so a hide
+        // still in flight then throws "Cannot read properties of null (reading 'template')".
+        // Dropping the fade class first makes our own hide() run its callback synchronously, so this
+        // cleanup leaves nothing pending either; the class is put back for the next show.
+        // That callback only detaches the tip when _hoverState is not 'show', and it is 'show'
+        // whenever the pointer still sits on the trigger (any repeat mouseover re-sets it), so the
+        // tip has to be detached here explicitly — otherwise an invisible tip stays in <body>.
         $('body').on('shown.bs.tooltip', function(e) {
             const trigger = e.target;
             const observer = new MutationObserver(function() {
-                if (!document.body.contains(trigger) || !$(trigger).is(':visible')) {
-                    observer.disconnect();
-                    $(trigger).removeData('lpmTooltipCleanup');
-                    const instance = bootstrap.Tooltip.getInstance(trigger);
-                    if (instance) instance.dispose();
+                if (document.body.contains(trigger) && $(trigger).is(':visible')) return;
+
+                observer.disconnect();
+                $(trigger).removeData('lpmTooltipCleanup');
+                const instance = bootstrap.Tooltip.getInstance(trigger);
+                if (!instance) return;
+
+                // hide() fires hide.bs.tooltip, whose jQuery default action hides the trigger (see
+                // the handler below). That handler is delegated on <body> and cannot see a trigger
+                // that has already left the DOM — a detached node that gets re-attached later would
+                // come back with display:none — so restore the value here as well.
+                const display = trigger.style.display;
+                const tip = instance.tip;
+                if (tip) tip.classList.remove('fade');
+                instance.hide();
+                trigger.style.display = display;
+                if (tip) {
+                    tip.remove();
+                    tip.classList.add('fade');
                 }
             });
             observer.observe(document.body, {
@@ -1006,11 +1080,14 @@ $(document).ready(
         });
 
         // Same conflict for tooltips: when hide.bs.tooltip fires, jQuery's default action calls the
-        // Element.prototype.hide polyfill on the tooltip's trigger element, hiding it. Restore its
-        // display in a microtask (after the trigger's default action runs) to keep the target visible.
+        // Element.prototype.hide polyfill on the tooltip's trigger element, hiding it. Restore the
+        // display value the trigger had BEFORE that (not ''), in a microtask that runs after the
+        // default action: the cleanup above closes tooltips of elements the app has just hidden
+        // itself, and blanking display there would put them back on screen.
         $('body').on('hide.bs.tooltip', function(e) {
             const el = e.target;
-            Promise.resolve().then(function() { el.style.display = ''; });
+            const display = el.style.display;
+            Promise.resolve().then(function() { el.style.display = display; });
         });
 
         window.lpInfo.userId = $('#curUserId').val();

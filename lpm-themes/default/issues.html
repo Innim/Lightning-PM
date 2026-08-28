@@ -21,19 +21,7 @@ $userId = lpm_get_user()->userId;
 	<tbody>
 		<?php
 		foreach ($list as $issue):
-			$classes = [];
-
-			switch ($issue->status) {
-				case Issue::STATUS_IN_WORK:
-					$classes[] = 'active-issue';
-					break;
-				case Issue::STATUS_WAIT:
-					$classes[] = 'verify-issue';
-					break;
-				case Issue::STATUS_COMPLETED:
-					$classes[] = 'completed-issue';
-					break;
-			}
+			$classes = [IssueViewHelper::statusStateClass($issue->status)];
 
 			if ($issue->isTester($userId)) {
 				$classes[] = 'tester';
@@ -43,8 +31,13 @@ $userId = lpm_get_user()->userId;
 				$classes[] = 'deadline-' . $deadlineLevel . '-issue';
 			}
 
-			if ($issue->isPassTest) {
+			$substatus = $issue->getSubstatus();
+			if ($substatus === IssueSubstatus::PASS_TEST) {
 				$classes[] = 'pass-test';
+			}
+
+			if ($substatus === IssueSubstatus::UNDER_TESTING) {
+				$classes[] = 'under-testing';
 			}
 
 			if ($issue->isChangesRequested) {
@@ -60,7 +53,8 @@ $userId = lpm_get_user()->userId;
 			data-create-date="<?=$issue->createDate;?>"
 			data-priority="<?=$issue->priority;?>"
 			data-test-activity="<?=$issue->testActivityDate;?>"
-			data-labels="<?=implode(',', $issue->getLabelNames());?>">
+			data-labels="<?=implode(',', $issue->getLabelNames());?>"
+			data-tester-ids="<?=$issue->getTesterIdsStr();?>">
 			<td>
 				<?php if ($issue->isOnBoard()):?>
 				<span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
@@ -94,6 +88,7 @@ $userId = lpm_get_user()->userId;
 				</div>
 			</td>
 			<td>
+				<i class="fas fa-flask under-testing-check" title="Взята в тестирование"></i>
 				<i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
 				<i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
 				<i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>

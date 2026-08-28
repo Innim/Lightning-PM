@@ -51,6 +51,8 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $issue->reloadSubstatusSources();
+        $this->addSubstatus2Answer($issue);
     
         return $this->answer();
     }
@@ -78,6 +80,8 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $issue->reloadSubstatusSources();
+        $this->addSubstatus2Answer($issue);
     
         return $this->answer();
     }
@@ -100,6 +104,7 @@ class IssueService extends LPMBaseService
         }
         
         $this->add2Answer('issue', $this->getIssue4Client($issue, true, $loadLinked));
+        $this->addSubstatus2Answer($issue);
         return $this->answer();
     }
 
@@ -122,6 +127,7 @@ class IssueService extends LPMBaseService
         }
 
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $this->addSubstatus2Answer($issue);
         return $this->answer();
     }
     
@@ -162,14 +168,14 @@ class IssueService extends LPMBaseService
                 return $this->error('Нет такой задачи');
             }
 
-            $comment = $this->postComment(
+            $result = $this->postCommentWithResult(
                 $issue,
                 $text,
                 false,
                 $requestChanges ? IssueCommentType::REQUEST_CHANGES : null
             );
-
-            $addedLinks = IssueLinked::syncFromText($issue, $text, $this->getUserId());
+            $comment = $result['comment'];
+            $addedLinks = $result['addedLinks'];
 
             $this->setupCommentAnswer($comment);
 
@@ -385,6 +391,120 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Отмечает, что текущий пользователь взял задачу в тестирование.
+     *
+     * Отметка живёт в журнале задачи, а не в комментариях: её надо уметь
+     * снимать, а комментарий из ленты не убрать. Взять задачу может любой,
+     * кому она доступна: задача в тесте ничья, тестировщики разбирают
+     * такие задачи сами. Взявший заодно добавляется в тестировщики задачи,
+     * если его там ещё нет.
+     *
+     * Задачу, которую проверяет другой, можно перехватить, но только
+     * с подтверждением: без $confirmed сервис ничего не меняет и отвечает
+     * `needConfirm` с именем того, кто проверяет её сейчас. В журнале
+     * остаются оба события - и прежнее взятие, и перехват.
+     * @param   int  $issueId   Идентификатор задачи.
+     * @param   bool $confirmed Подтверждён ли перехват задачи у другого
+     * пользователя.
+     * @return {
+     *     bool needConfirm     Нужно подтверждение перехвата: отметка не изменена.
+     *     String holderName    Имя проверяющего задачу сейчас, экранированное
+     *                          для вставки в HTML (при needConfirm).
+     *     int  substatus       Уточнение статуса задачи.
+     *     bool testerAdded     Добавлен ли пользователь в тестировщики задачи.
+     *     float  userId        Идентификатор добавленного тестировщика.
+     *     String memberHtml    Ссылка на добавленного тестировщика.
+     *     String avatarUrl     Аватар добавленного тестировщика.
+     * }
+     */
+    public function takeForTesting($issueId, $confirmed = false)
+    {
+        $issueId = (int)$issueId;
+
+        try {
+            $issue = $this->getIssueForTestingMark($issueId);
+
+            $user = $this->getUser();
+            $userId = $user->getID();
+
+            if ($issue->isUnderTesting) {
+                $holder = $this->getTestingMarkHolder($issueId);
+                if (!empty($holder) && $holder->getID() == $userId) {
+                    return $this->error('Задача уже взята в тестирование');
+                }
+
+                if (!$confirmed) {
+                    $this->add2Answer('needConfirm', true);
+                    $this->add2Answer(
+                        'holderName',
+                        empty($holder) ? 'другой пользователь' : $holder->getName()
+                    );
+
+                    return $this->answer();
+                }
+            }
+
+            IssueEvent::create($issueId, IssueEventType::TAKEN_FOR_TESTING, $userId);
+
+            // Назначение тестировщиком - отдельный от отметки механизм: оно
+            // переживает снятие отметки, поэтому здесь только добавляем
+            $testerAdded = !$issue->isTester($userId);
+            if ($testerAdded) {
+                if (!Member::saveIssueTesters($issueId, [$userId])) {
+                    return $this->errorDBSave();
+                }
+
+                UserLogEntry::issueEdit($userId, $issueId, 'Add self as tester by taking for testing');
+
+                // Отдаём то же, что и addMeToIssue: клиент показывает участника одинаково
+                $this->add2Answer('userId', $userId);
+                $this->add2Answer('memberHtml', $user->getLinkedName());
+                $this->add2Answer('avatarUrl', $user->getAvatarUrl());
+            }
+
+            $this->add2Answer('testerAdded', $testerAdded);
+            $this->answerTestingMark($issue);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
+     * Снимает с задачи отметку о взятии в тестирование.
+     *
+     * Снять отметку может любой, кому доступна задача, и в любой момент:
+     * иначе тот, кто взял задачу и пропал, заблокировал бы её насовсем.
+     * Из тестировщиков задачи пользователь при этом не убирается - его могли
+     * назначить туда заранее и не этим действием.
+     * @param   int $issueId Идентификатор задачи.
+     * @return {
+     *     int substatus Уточнение статуса задачи.
+     * }
+     */
+    public function releaseFromTesting($issueId)
+    {
+        $issueId = (int)$issueId;
+
+        try {
+            $issue = $this->getIssueForTestingMark($issueId);
+
+            if (!$issue->isUnderTesting) {
+                return $this->error('Задача не взята в тестирование');
+            }
+
+            IssueEvent::create($issueId, IssueEventType::RELEASED_FROM_TESTING, $this->getUserId());
+
+            $this->answerTestingMark($issue);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Отмечает что задача прошла тестирование.
      * @param   int     $issueId Идентификатор задачи
      * @param   String  $text Текст комментария
@@ -460,9 +580,9 @@ class IssueService extends LPMBaseService
                 return $this->error('Чек-лист пуст');
             }
 
-            $comment = $this->postComment($issue, $text, false, IssueCommentType::TEST_CHECKLIST);
-
-            $addedLinks = IssueLinked::syncFromText($issue, $text, $this->getUserId());
+            $result = $this->postCommentWithResult($issue, $text, false, IssueCommentType::TEST_CHECKLIST);
+            $comment = $result['comment'];
+            $addedLinks = $result['addedLinks'];
 
             $this->setupCommentAnswer($comment);
 
@@ -617,51 +737,14 @@ class IssueService extends LPMBaseService
         $state   = (int)$state;
 
         try {
-            // Проверяем состояние
-            if (!ScrumStickerState::validateValue($state)) {
-                throw new Exception('Неизвестное состояние');
+            $issue = Issue::load($issueId);
+            if (empty($issue)) {
+                return $this->error('Нет такой задачи');
             }
 
-            $sticker = ScrumSticker::load($issueId);
-            if ($sticker === null) {
-                throw new Exception('Нет стикера для этой задачи');
-            }
-
-            $issue = $sticker->getIssue();
-
-            // Если проект требует теги - задачу без них нельзя взять
-            // из бэклога на спринт
-            if ($sticker->state == ScrumStickerState::BACKLOG
-                    && ScrumStickerState::isActiveState($state)
-                    && $issue->getProject()->requireLabels
-                    && !Issue::hasLabels($issue->getName())) {
-                throw new Exception(
-                    'Нельзя добавить на спринт задачу без тегов - ' .
-                    'у задачи должен быть указан хотя бы один тег'
-                );
-            }
-
-            // Менять состояние стикера может любой пользователь
-            if (!ScrumSticker::updateStickerState($issueId, $state)) {
-                return $this->errorDBSave();
-            }
-
-            $newState = null;
-            if ($state === ScrumStickerState::TESTING) {
-                // Если состояние "Тестируется" - ставим задачу на проверку
-                $newState = Issue::STATUS_WAIT;
-            } elseif ($state === ScrumStickerState::DONE) {
-                // Если "Готово" - закрываем задачу
-                $newState = Issue::STATUS_COMPLETED;
-            } elseif ($issue->status == Issue::STATUS_WAIT &&
-                    ($state === ScrumStickerState::TODO || $state === ScrumStickerState::IN_PROGRESS)) {
-                // Если она в режиме ожидания - переоткрываем задачу
-                $newState = Issue::STATUS_IN_WORK;
-            }
-            
-            if ($newState !== null) {
-                Issue::setStatus($issue, $newState, $this->getUser(), true, false);
-            }
+            ScrumBoardManager::changeState($issue, $state, $this->getUser());
+        } catch (\GMFramework\ProviderSaveException $e) {
+            return $this->errorDBSave();
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -680,24 +763,15 @@ class IssueService extends LPMBaseService
 
         try {
             $issue = Issue::load($issueId);
-            if ($issue === null) {
+            if (empty($issue)) {
                 return $this->error('Нет такой задачи');
             }
 
-            // Задача в работе попадает сразу на спринт, а туда без тегов нельзя,
-            // если проект их требует
-            if (ScrumStickerState::isActiveState(ScrumSticker::getStateForIssue($issue))
-                    && $issue->getProject()->requireLabels
-                    && !Issue::hasLabels($issue->getName())) {
-                return $this->error(
-                    'Нельзя добавить на спринт задачу без тегов - ' .
-                    'у задачи должен быть указан хотя бы один тег'
-                );
-            }
+            ScrumBoardManager::putOnBoard($issue);
 
-            if (!ScrumSticker::putStickerOnBoard($issue)) {
-                return $this->errorDBSave();
-            }
+            $this->addSubstatus2Answer($issue);
+        } catch (\GMFramework\ProviderSaveException $e) {
+            return $this->errorDBSave();
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -1198,6 +1272,8 @@ class IssueService extends LPMBaseService
                 // обновляем счетчик комментариев для задачи
                 Issue::updateCommentsCounter($comment->instanceId);
 
+                $this->addCommentIssueSubstatus2Answer($comment);
+
                 // Если это коммент о создании ветки — удаляем связь и опционально саму ветку
                 if (!empty($comment->issueComment) && $comment->issueComment->isCreateBranch()) {
                     $data = $comment->issueComment->getCreateBranchData();
@@ -1234,7 +1310,22 @@ class IssueService extends LPMBaseService
         string $type = null,
         string $data = null
     ) {
-        return $this->_engine->comments()->postComment(
+        $result = $this->postCommentWithResult($issue, $text, $ignoreSlackNotification, $type, $data);
+
+        return $result['comment'];
+    }
+
+    /**
+     * @return array см. CommentsManager::postCommentWithResult()
+     */
+    private function postCommentWithResult(
+        Issue $issue,
+        $text,
+        $ignoreSlackNotification = false,
+        string $type = null,
+        string $data = null
+    ) {
+        return $this->_engine->comments()->postCommentWithResult(
             $this->getUser(),
             $issue,
             $text,
@@ -1248,6 +1339,98 @@ class IssueService extends LPMBaseService
         );
     }
 
+    /**
+     * Загружает задачу для действий с отметкой о взятии в тестирование
+     * и проверяет, что действие вообще применимо.
+     * @param  int $issueId Идентификатор задачи.
+     * @return Issue Задача с актуальными отметками.
+     * @throws Exception Если задачи нет, доступа к проекту нет либо задача
+     * не находится в тестировании.
+     */
+    private function getIssueForTestingMark($issueId)
+    {
+        $issue = Issue::load($issueId);
+        if (!$issue) {
+            throw new Exception('Нет такой задачи');
+        }
+
+        // Задача приходит по глобальному идентификатору, поэтому права
+        // на проект надо проверить здесь
+        $this->getProjectRequireReadPermission($issue->projectId);
+
+        if (!$issue->isTesting()) {
+            throw new Exception('Отметка о тестировании доступна только для задач, ожидающих проверки');
+        }
+
+        return $issue;
+    }
+
+    /**
+     * Пользователь, за которым стоит отметка о взятии задачи в тестирование.
+     *
+     * Осмысленно только для задачи с отметкой: за снятой отметкой стоит тот,
+     * кто её снял.
+     * @param  int $issueId Идентификатор задачи.
+     * @return User|false Пользователь либо false, если отметку не ставили
+     * или её автора не удалось загрузить.
+     */
+    private function getTestingMarkHolder($issueId)
+    {
+        $event = Issue::loadLastTestingEvent($issueId);
+
+        return empty($event) ? false : User::load($event->userId);
+    }
+
+    /**
+     * Добавляет в ответ актуальное состояние отметки о взятии в тестирование.
+     * @param Issue $issue Задача, у которой отметка только что изменилась.
+     */
+    private function answerTestingMark(Issue $issue)
+    {
+        $issue->reloadSubstatusSources();
+
+        $this->addSubstatus2Answer($issue);
+    }
+
+    /**
+     * Добавляет в ответ уточнение статуса задачи (@see IssueSubstatus).
+     *
+     * Задача должна быть с актуальными данными: если к этому моменту менялись
+     * её статус, стикер или комментарии, вызывающий метод обязан сначала
+     * позвать {@see Issue::reloadSubstatusSources()}.
+     * @param Issue $issue Задача.
+     */
+    private function addSubstatus2Answer(Issue $issue)
+    {
+        $this->add2Answer('substatus', $issue->getSubstatus());
+    }
+
+    /**
+     * Добавляет в ответ уточнение статуса задачи, к которой оставлен
+     * комментарий: публикация, правка и удаление комментария могут менять
+     * отметку о прохождении тестирования.
+     * @param Comment $comment Уже изменённый комментарий.
+     */
+    private function addCommentIssueSubstatus2Answer(Comment $comment)
+    {
+        if ($comment->instanceType != LPMInstanceTypes::ISSUE) {
+            return;
+        }
+
+        $issue = $comment->issue;
+        if (empty($issue)) {
+            // Задачи под рукой нет - общая выборка сразу даёт всё нужное
+            $issue = Issue::load($comment->instanceId);
+            if (empty($issue)) {
+                return;
+            }
+        } else {
+            $issue->reloadSubstatusSources();
+        }
+
+        $this->addSubstatus2Answer($issue);
+    }
+
     private function setupCommentAnswer(Comment $comment)
     {
         $html = $this->getHtml(function () use ($comment) {
@@ -1256,6 +1439,8 @@ class IssueService extends LPMBaseService
         
         $this->add2Answer('comment', $comment->getClientObject());
         $this->add2Answer('html', $html);
+
+        $this->addCommentIssueSubstatus2Answer($comment);
     }
 
     private function completeIssue(Issue $issue)
@@ -1267,6 +1452,8 @@ class IssueService extends LPMBaseService
         Issue::setStatus($issue, Issue::STATUS_COMPLETED, $this->getUser());
         
         $this->add2Answer('issue', $this->getIssue4Client($issue));
+        $issue->reloadSubstatusSources();
+        $this->addSubstatus2Answer($issue);
     }
 
     private function validateBranchName($value)

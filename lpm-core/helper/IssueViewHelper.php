@@ -43,15 +43,18 @@ class IssueViewHelper
      * Готовность задачи в тесте: влиты ли правки, которые её изменили.
      *
      * Определяется только для задач в тесте, по которым известно состояние MR.
-     * Пока задача ждёт правок (найдены проблемы) или уже отмечена прошедшей
-     * тестирование, состояние MR не показывается - у задачи есть отметка поважнее.
+     * Пока задача ждёт правок (найдены проблемы), проверяется кем-то прямо
+     * сейчас или отмечена прошедшей тестирование, состояние MR
+     * не показывается - у задачи есть отметка поважнее.
      * @param  Issue $issue Задача.
      * @return string Уровень: wait-merge (правки ещё не влиты) |
      * ready (правки влиты, можно тестировать). Пустая строка, если показывать нечего.
      */
     public static function testMergeLevel(Issue $issue)
     {
-        if (!$issue->isTesting() || $issue->isPassTest || $issue->isChangesRequested) {
+        if (!$issue->isTesting() || $issue->hasPassTestMark
+            || $issue->isChangesRequested || $issue->isUnderTesting
+        ) {
             return '';
         }
 
@@ -127,12 +130,44 @@ class IssueViewHelper
     }
 
     /**
+     * Отображаемое название статуса задачи.
+     * @param  int $status    Статус задачи.
+     * @param  int $substatus Уточнение статуса (@see IssueSubstatus).
+     * @return string Название подстатуса, если он есть, иначе название статуса.
+     */
+    public static function statusLabel($status, $substatus = IssueSubstatus::NONE)
+    {
+        $name = IssueSubstatus::getName($substatus);
+        return $name === '' ? Issue::getStatusName($status) : $name;
+    }
+
+    /**
      * Классы бейджа статуса задачи.
-     * @param  int $status Статус задачи.
+     *
+     * Подстатус задаёт своё оформление: он уточняет статус и показывается
+     * вместо него. Цвет идёт по нарастанию готовности задачи:
+     * серый - голубой - синий - жёлтый - зелёный. Внутри жёлтого оттенок
+     * различает задачу в тесте: приглушённый - её проверяют прямо сейчас,
+     * насыщенный - она ждёт проверки.
+     * @param  int $status    Статус задачи.
+     * @param  int $substatus Уточнение статуса (@see IssueSubstatus).
      * @return string Список CSS-классов.
      */
-    public static function statusBadgeClass($status)
+    public static function statusBadgeClass($status, $substatus = IssueSubstatus::NONE)
     {
+        switch ((int)$substatus) {
+            case IssueSubstatus::BACKLOG:
+                return 'bg-secondary';
+            case IssueSubstatus::TODO:
+                return 'bg-info text-dark';
+            case IssueSubstatus::IN_PROGRESS:
+                return 'bg-primary';
+            case IssueSubstatus::UNDER_TESTING:
+                return 'bg-warning bg-opacity-50 text-dark';
+            case IssueSubstatus::PASS_TEST:
+                return 'bg-success bg-opacity-75 text-dark';
+        }
+
         switch ((int)$status) {
             case Issue::STATUS_WAIT:
                 return 'bg-warning text-dark';
@@ -146,6 +181,9 @@ class IssueViewHelper
     /**
      * Класс состояния задачи. Определяет, какие даты и кнопки видны
      * на странице задачи.
+     *
+     * Подстатус на состояние не влияет: набор доступных действий
+     * задаёт только статус задачи.
      * @param  int $status Статус задачи.
      * @return string CSS-класс.
      */

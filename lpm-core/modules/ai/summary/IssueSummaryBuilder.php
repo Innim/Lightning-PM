@@ -163,8 +163,9 @@ TEXT;
      * Считается по тому же тексту запроса, который получит модель, поэтому
      * меняется ровно тогда, когда меняется её вход: правка описания, любое
      * поле задачи, попадающее в запрос, добавление, удаление или смена типа
-     * комментария, переименование проекта. Изменения, которых модель не видит
-     * (например, приоритет), сводку не обесценивают.
+     * комментария, переименование проекта, правка контекста проекта для ИИ.
+     * Изменения, которых модель не видит (например, приоритет), сводку
+     * не обесценивают.
      *
      * @param Issue $issue Задача.
      * @param array<Comment> $comments Все комментарии задачи.
@@ -377,7 +378,8 @@ TEXT;
     }
 
     /**
-     * Собирает текст запроса к модели: данные задачи и обсуждение.
+     * Собирает текст запроса к модели: данные задачи, контекст проекта
+     * и обсуждение.
      *
      * Длинное обсуждение усекается — передаются только первые и последние
      * комментарии, факт усечения указывается в запросе.
@@ -405,6 +407,11 @@ TEXT;
         }
 
         $text = "Составь сводку по задаче.\n\n" . self::buildIssueBlock($issue);
+
+        $context = AiProjectContext::block($issue->getProject());
+        if ($context !== '') {
+            $text .= "\n\n" . $context;
+        }
 
         $text .= "\n\nОбсуждение (комментариев: " . $total . ')';
         if ($omitted > 0) {
@@ -437,7 +444,7 @@ TEXT;
             'Проект: ' . $issue->projectName,
             'Тип: ' . $issue->getType(),
             'Статус: ' . $issue->getStatus(),
-            'Автор: ' . ($issue->author ? $issue->author->getShortName() : ''),
+            'Автор: ' . ($issue->author ? $issue->author->getPlainShortName() : ''),
             'Создана: ' . $issue->getCreateDate(),
         ];
 
@@ -449,7 +456,7 @@ TEXT;
             $lines[] = 'Завершена: ' . $issue->getCompletedDate();
         }
 
-        if ($issue->isPassTest) {
+        if ($issue->hasPassTestMark) {
             $lines[] = 'Тестирование: пройдено';
         } elseif ($issue->isChangesRequested) {
             $lines[] = 'Тестирование: найдены проблемы, требуются правки';
@@ -472,7 +479,7 @@ TEXT;
      */
     private static function buildCommentBlock(Comment $comment)
     {
-        $header = $comment->getDate() . ', ' . $comment->author->getShortName();
+        $header = $comment->getDate() . ', ' . $comment->author->getPlainShortName();
 
         $label = self::getCommentTypeLabel($comment);
         if ($label !== '') {

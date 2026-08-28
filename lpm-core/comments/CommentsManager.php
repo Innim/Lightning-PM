@@ -9,9 +9,46 @@ class CommentsManager
 
     /**
      * Публикация комментария к задаче.
+     *
+     * Упомянутые в тексте задачи автоматически связываются с текущей.
+     *
      * @return Comment
      */
     public function postComment(
+        User $user,
+        Issue $issue,
+        $text,
+        $ignoreSlackNotification = false,
+        $ignoreMr = false,
+        string $type = null,
+        string $data = null,
+        array $filesData = null
+    ) {
+        $result = $this->postCommentWithResult(
+            $user,
+            $issue,
+            $text,
+            $ignoreSlackNotification,
+            $ignoreMr,
+            $type,
+            $data,
+            $filesData
+        );
+
+        return $result['comment'];
+    }
+
+    /**
+     * Публикация комментария к задаче с данными об изменениях, которые она повлекла.
+     *
+     * Упомянутые в тексте задачи автоматически связываются с текущей.
+     *
+     * @return array {
+     *     Comment comment    Добавленный комментарий.
+     *     int     addedLinks Количество созданных связей с упомянутыми задачами.
+     * }
+     */
+    public function postCommentWithResult(
         User $user,
         Issue $issue,
         $text,
@@ -91,9 +128,13 @@ class CommentsManager
         // обновляем счетчик комментариев для задачи
         Issue::updateCommentsCounter($issueId);
 
+        // Связи по упоминаниям создаём здесь: через этот метод проходят все способы
+        // добавить комментарий (веб, внешний API, хуки GitLab)
+        $addedLinks = IssueLinked::syncFromText($issue, $text, $user->userId);
+
         Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
-        return $comment;
+        return ['comment' => $comment, 'addedLinks' => $addedLinks];
     }
     
     /**

@@ -469,6 +469,10 @@ a.add-me-to-issue .plus-icon {
 	display: inline-block;
 	margin-right: 5px;
 }
+/* Тот же цвет, что у значка взятой задачи в списке и на доске */
+.comments .links-bar .scrum-comments-shortcut a.under-testing {
+	color: #6f42c1;
+}
 .comment-input-text-tabs .tab-content {
 	border: 1px solid #dee2e6;
 	border-top: 0;
@@ -627,6 +631,7 @@ table tr.verify-issue {
 }
 
 table.issues-list tr td .icon-deadline,
+table.issues-list tr td .under-testing-check,
 table.issues-list tr td .pass-test-check,
 table.issues-list tr td .changes-requested-check,
 table.issues-list tr td .test-wait-merge-check,
@@ -659,6 +664,10 @@ table tr.pass-test a.issue-name  {
 	color: #00b100;
 }
 
+table.issues-list tr td .under-testing-check {
+	color: #6f42c1;
+}
+
 table.issues-list tr td .pass-test-check {
 	color: #00b100;
 }
@@ -680,6 +689,7 @@ table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
 table tr.deadline-low-issue td .icon-deadline.icon-deadline-low,
+table.issues-list tr.under-testing .under-testing-check,
 table.issues-list tr.pass-test .pass-test-check,
 table.issues-list tr.changes-requested .changes-requested-check,
 table.issues-list tr.test-wait-merge .test-wait-merge-check,
@@ -761,9 +771,13 @@ table.issues-list td .on-board-state {
 	font-size: 12px;
 	color: #333333;
 }
+/* Обёртка должна быть ровно по размеру кружка: стрелки центрируются по её
+   середине, а inline-block растянула бы её по строчному боксу. */
 table.issues-list td .priority-val-box {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
 	margin-right: 5px;
 }
 table.issues-list td .priority-val-box .priority-val.circle {
@@ -1356,12 +1370,14 @@ blockquote > p {
 .col-done .scrum-board-sticker.deadline-urgent .sticker-issue-id {
 	left: 3px;
 }
+.scrum-board-sticker .under-testing-check,
 .scrum-board-sticker .pass-test-check,
 .scrum-board-sticker .changes-requested-check,
 .scrum-board-sticker .test-wait-merge-check,
 .scrum-board-sticker .test-ready-check {
 	display: none;
 }
+.scrum-board-sticker.under-testing .under-testing-check,
 .scrum-board-sticker.pass-test .pass-test-check,
 .scrum-board-sticker.changes-requested .changes-requested-check,
 .scrum-board-sticker.test-wait-merge .test-wait-merge-check,

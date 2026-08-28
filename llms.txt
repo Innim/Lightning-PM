@@ -8,15 +8,28 @@ Use the authenticated API instead of scraping HTML.
 - List projects: `GET /api/v1/projects` (add `?archive=1` for archived)
 - Resolve issue by pasted URL: `GET /api/v1/issues/resolve?url=<issue_url>`
 - Load issue by id: `GET /api/v1/issues/{issueId}`
-- Create issue: `POST /api/v1/issues` (name must have a title besides `[label]` prefixes; some projects require at least one label)
+- Create issue: `POST /api/v1/issues` (name must have a title besides `[label]` prefixes; some projects require at least one label; `priority` is the `1..100` value shown in the UI, default `50`; optional `board`: `true` puts the new issue on the scrum board by its status, a column key puts it in that column)
 - Add comment: `POST /api/v1/issues/{issueId}/comments`
 - List project issues: `GET /api/v1/projects/{projectId}/issues` (filters: `status`, `type`, `label`, `search`, `limit`, `offset`)
 - List project labels (tags): `GET /api/v1/projects/{projectId}/labels` (sorted by usage in this project)
 - Read project scrum board: `GET /api/v1/projects/{projectId}/board` (issues grouped by columns `todo`, `inProgress`, `testing`, `done`, in board order; `400` for a non-scrum project)
+- Put issue on the board / move between columns: `PUT /api/v1/issues/{issueId}/board` (optional `column` from the same set; without it the column follows the issue status, as the «На доску» button does; `testing` sends the issue to test, `done` completes it)
+- Take issue off the board: `DELETE /api/v1/issues/{issueId}/board` (issue returns to the backlog, status unchanged)
 - List repositories: `GET /api/v1/projects/{projectId}/repositories`
 - List branches: `GET /api/v1/projects/{projectId}/repositories/{repositoryId}/branches`
 - Create branch: `POST /api/v1/issues/{issueId}/branches`
 
+Payload conventions, the same everywhere:
+
+- Dates are ISO-8601 and are read back in the shape they are written: a moment in time as `2026-07-15T12:34:56+03:00`, a calendar day without time as `2026-07-15` (that is `completeDate` of an issue, and it round-trips). A date that is not set is `null`.
+- A user — issue or comment author, member, tester, master, `GET /api/v1/me` — is always `{id, name, nick, firstName, lastName, avatarUrl, url}`. Issue members carry one extra field `sp`, their share of the issue estimate.
+
+The issue payload reports its board position as `isOnBoard` and `boardColumn` (`null` for an issue in the backlog), and refines `status` with `substatus`: `backlog`, `todo`, `inProgress`, `underTesting`, `passedTest`, or `null` when the status has nothing to refine (in particular for a project without a scrum board).
+
+The issue estimate is `hours`, and `hoursUnit` says what it means: `storyPoints` in a scrum project, `hours` in any other one.
+
 Attachments come in the issue payload as `files` (attached to the issue) and `comments[].files` (attached to a comment), both with the same item shape `{fileId, uid, name, mimeType, size, sizeFormatted, created, url, requiresAuthentication}`. A `url` with `requiresAuthentication: true` needs the same auth header as any other request.
 
 Comments should be high-signal only: use them for tester instructions, caveats, or implementation details not already clear from the issue. Do not post routine progress updates such as branch creation or "implementation started".
+
+An issue URL of this instance written in a description or a comment automatically links the two issues.

@@ -4,6 +4,21 @@ class HTMLHelper
     public static $bbTags = ['b', 'i', 'u', 'code'];
 
     /**
+     * Экранирует текст для безопасной вставки в HTML.
+     *
+     * Экранируются и одинарные кавычки, поэтому результат пригоден
+     * и для значения атрибута, взятого в одинарные кавычки.
+     *
+     * @param  string $text Текст в исходном виде.
+     * @return string Текст, безопасный для вывода в HTML.
+     */
+    public static function escape($text)
+    {
+        // Флаги задаём явно: до PHP 8.1 по умолчанию одинарные кавычки не экранируются.
+        return htmlspecialchars((string)$text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    /**
      * Автоматически заменяет url'ы в тексте на HTML ссылки
      * @param  string $text
      * @return string
