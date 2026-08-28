@@ -11,6 +11,15 @@ class ProjectsPage extends LPMPage
     const PUID_STAT = 'stat';
     const PUID_MY_SCRUM_BOARD = 'scrum-board-common';
 
+    /**
+     * Поле формы, по которому распознаётся отправка настроек личной scrum доски.
+     */
+    const FIELD_MY_BOARD_PREF = 'myBoardPref';
+    /**
+     * Поле формы с переключателем показа свободных задач.
+     */
+    const FIELD_SHOW_FREE_ISSUES = 'showFreeIssues';
+
     // Количество важных задач, открытых для меня по всем проектам
     private $_myIssuesCount = -1;
 
@@ -50,8 +59,15 @@ class ProjectsPage extends LPMPage
         
         if (!empty($_POST)) {
             $engine = LightningEngine::getInstance();
+            $isMyBoardPref = isset($_POST[self::FIELD_MY_BOARD_PREF]);
             if (!CsrfToken::check()) {
                 $engine->addError('Страница устарела. Обновите её и повторите действие');
+                // Форму настроек отправляет сама доска - её и показываем с ошибкой
+                if ($isMyBoardPref) {
+                    return $this->myScrumBoard();
+                }
+            } elseif ($isMyBoardPref) {
+                return $this->saveMyScrumBoardPref($_POST);
             } elseif (!$this->addProject($_POST)) {
                 $engine->addError($this->_error);
             }
@@ -181,9 +197,40 @@ class ProjectsPage extends LPMPage
 
     private function myScrumBoard(): ProjectsPage
     {
-        $userId = LightningEngine::getInstance()->getUserId();
-        $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($userId));
+        $engine = LightningEngine::getInstance();
+        $showFreeIssues = $engine->getUser()->pref->showFreeIssuesOnBoard;
+
+        $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList(
+            $engine->getUserId(),
+            $showFreeIssues
+        ));
+        $this->addTmplVar('showFreeIssues', $showFreeIssues);
         return $this;
+    }
+
+    /**
+     * Сохраняет настройки личной scrum доски и открывает её заново.
+     *
+     * После сохранения делается редирект, чтобы обновление страницы
+     * не отправляло форму повторно.
+     * @param  array $input Данные формы.
+     * @return ProjectsPage
+     */
+    private function saveMyScrumBoardPref($input): ProjectsPage
+    {
+        $userId = LightningEngine::getInstance()->getUserId();
+
+        try {
+            UserPref::saveShowFreeIssuesOnBoard(
+                $userId,
+                !empty($input[self::FIELD_SHOW_FREE_ISSUES])
+            );
+        } catch (\GMFramework\ProviderSaveException $e) {
+            LightningEngine::getInstance()->addError('Не удалось сохранить настройку доски');
+            return $this->myScrumBoard();
+        }
+
+        LightningEngine::go2URL(Link::getUrlByUid(self::UID, self::PUID_MY_SCRUM_BOARD));
     }
 
     private function getMonthLink($month, $year)

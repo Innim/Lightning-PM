@@ -118,7 +118,46 @@ SQL;
         return $list;
     }
     
-    public static function loadAllStickersList($userId)
+    /**
+     * Загружает список стикеров для личной доски пользователя.
+     *
+     * Свободные задачи (см. {@see loadFreeStickersList()}) добавляются в конец
+     * списка, поэтому в своей колонке они идут после задач пользователя.
+     * @param  int  $userId          Идентификатор пользователя.
+     * @param  bool $withFreeIssues  Добавить ли свободные задачи из проектов пользователя.
+     * @return ScrumSticker[]
+     */
+    public static function loadAllStickersList($userId, $withFreeIssues = false)
+    {
+        $list = self::loadMyStickersList($userId);
+
+        if ($withFreeIssues) {
+            $ownIssueIds = [];
+            foreach ($list as $sticker) {
+                $ownIssueIds[$sticker->issueId] = true;
+            }
+
+            foreach (self::loadFreeStickersList($userId) as $sticker) {
+                // Задача без исполнителя, где пользователь тестировщик,
+                // попадает в оба списка - свою запись оставляем
+                if (isset($ownIssueIds[$sticker->issueId])) {
+                    continue;
+                }
+
+                $sticker->_isFree = true;
+                $list[] = $sticker;
+            }
+        }
+
+        return self::preloadParticipants($list);
+    }
+
+    /**
+     * Загружает стикеры задач, в которых пользователь участвует.
+     * @param  int $userId Идентификатор пользователя.
+     * @return ScrumSticker[]
+     */
+    private static function loadMyStickersList($userId)
     {
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
@@ -127,14 +166,46 @@ SQL;
         $where = <<<SQL
 `s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
 SQL;
-        return self::preloadParticipants(self::loadList(
+        return self::loadList(
             $where,
             '',
             ['m' => LPMTables::MEMBERS],
             ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
-        ));
+        );
     }
-    
+
+    /**
+     * Загружает стикеры свободных задач - тех, которые пользователь может взять себе.
+     *
+     * Свободная задача стоит в колонке TO DO неархивного проекта, в котором
+     * пользователь состоит участником, и не имеет исполнителя.
+     * @param  int $userId Идентификатор пользователя.
+     * @return ScrumSticker[]
+     */
+    private static function loadFreeStickersList($userId)
+    {
+        $todo = ScrumStickerState::TODO;
+        $projectType = LPMInstanceTypes::PROJECT;
+        $issueType = LPMInstanceTypes::ISSUE;
+
+        // `%4$s` - таблица участий: четвёртая в списке таблиц loadList,
+        // т.к. первые три - стикеры, задачи и проекты
+        $where = <<<SQL
+`s`.`state` = ${todo} AND `p`.`isArchive` = 0
+                AND NOT EXISTS (SELECT 1
+                                  FROM `%4\$s` `im`
+                                 WHERE `im`.`instanceId` = `s`.`issueId`
+                                   AND `im`.`instanceType` = ${issueType})
+SQL;
+        return self::loadList(
+            $where,
+            '',
+            ['pm' => LPMTables::MEMBERS],
+            ["`pm`.`instanceId` = `p`.`id` AND `pm`.`instanceType` = ${projectType} " .
+                "AND `pm`.`userId` = ${userId}"]
+        );
+    }
+
     /**
      * Загружает стикер по идентификатору задачи
      * @param  int $issueId
@@ -340,6 +411,12 @@ SQL;
     // Issue
     private $_issue;
 
+    /**
+     * Задача показана как свободная - её можно взять себе.
+     * @var bool
+     */
+    private $_isFree = false;
+
     public function __construct($id = 0)
     {
         parent::__construct();
@@ -369,6 +446,15 @@ SQL;
             $this->_issue = Issue::load($this->issueId);
         }
         return $this->_issue;
+    }
+
+    /**
+     * Стикер добавлен на доску как свободная задача, а не как задача пользователя.
+     * @return boolean
+     */
+    public function isFree()
+    {
+        return $this->_isFree;
     }
 
     public function isOnBoard()
