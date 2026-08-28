@@ -54,18 +54,56 @@ class LPMImg extends LPMBaseObject
      */
     public static function removeAllByInstance($instanceType, $instanceId)
     {
-        $images = self::loadListByInstance((int)$instanceType, (int)$instanceId);
+        self::removeImages(self::loadListByInstance((int)$instanceType, (int)$instanceId));
+    }
+
+    /**
+     * Помечает удалёнными заданные изображения сущности и стирает с диска
+     * их исходники вместе с созданными для них превью.
+     * Идентификаторы, не принадлежащие сущности, игнорируются.
+     * @param int $instanceType Одна из констант {@see LPMInstanceTypes}.
+     * @param int $instanceId
+     * @param int[] $imgIds
+     * @throws \GMFramework\ProviderSaveException
+     */
+    public static function removeByIds($instanceType, $instanceId, array $imgIds)
+    {
+        $ids = array_values(array_filter(array_map('intval', $imgIds)));
+        if (empty($ids)) {
+            return;
+        }
+
+        self::removeImages(self::loadAndParseV2([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::IMAGES,
+            'WHERE'  => [
+                'deleted'  => 0,
+                'itemType' => (int)$instanceType,
+                'itemId'   => (int)$instanceId,
+                'imgId'    => $ids,
+            ],
+        ], __CLASS__));
+    }
+
+    /**
+     * @param LPMImg[] $images
+     * @throws \GMFramework\ProviderSaveException
+     */
+    private static function removeImages(array $images)
+    {
         if (empty($images)) {
             return;
+        }
+
+        $imgIds = [];
+        foreach ($images as $image) {
+            $imgIds[] = (int)$image->imgId;
         }
 
         self::buildAndSaveToDbV2([
             'UPDATE' => LPMTables::IMAGES,
             'SET'    => ['deleted' => 1],
-            'WHERE'  => [
-                'itemType' => (int)$instanceType,
-                'itemId'   => (int)$instanceId,
-            ],
+            'WHERE'  => ['imgId' => $imgIds],
         ]);
 
         foreach ($images as $image) {
