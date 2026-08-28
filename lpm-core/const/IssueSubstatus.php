@@ -4,8 +4,8 @@
  *
  * Подстатус нигде не хранится - он вычисляется по данным, которые и так
  * приезжают вместе с задачей: для «В работе» это состояние стикера
- * на Scrum доске, для «Ожидает проверки» - отметка о прохождении
- * тестирования.
+ * на Scrum доске, для «Ожидает проверки» - отметка о том, что задачу
+ * взяли на проверку или что она уже прошла тестирование.
  * @see Issue::getSubstatus()
  */
 class IssueSubstatus
@@ -37,6 +37,11 @@ class IssueSubstatus
     const PASS_TEST = 4;
 
     /**
+     * Задачу в тесте проверяют прямо сейчас.
+     */
+    const UNDER_TESTING = 5;
+
+    /**
      * Отображаемое название подстатуса.
      * @param  int $substatus Подстатус.
      * @return string Название. Пустая строка, если подстатуса нет.
@@ -48,6 +53,7 @@ class IssueSubstatus
             case self::TODO: return 'К выполнению';
             case self::IN_PROGRESS: return 'В работе';
             case self::PASS_TEST: return 'Прошла тестирование';
+            case self::UNDER_TESTING: return 'Взята в тестирование';
             default: return '';
         }
     }
