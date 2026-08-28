@@ -366,6 +366,11 @@ class ApiIssueController extends ApiControllerBase
                     throw new Exception('Failed to move scrum sticker');
                 }
             }
+
+            // Стикер задачи мог переехать в другую колонку, а загруженная
+            // задача его кэширует - иначе в ответе будут прежние
+            // подстатус и колонка доски
+            $issue->reloadSubstatusSources();
         }
 
         return [

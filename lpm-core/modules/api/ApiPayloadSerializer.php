@@ -33,6 +33,40 @@ class ApiPayloadSerializer
     }
 
     /**
+     * Момент времени в формате ISO-8601 с часовым поясом.
+     * @param  float|int $timestamp Unix-время; 0 означает, что значения нет.
+     * @return string|null Дата со временем или null, если значения нет.
+     */
+    public static function dateTime($timestamp)
+    {
+        return empty($timestamp) ? null : date('c', (int)$timestamp);
+    }
+
+    /**
+     * Календарная дата в формате ISO-8601 (`YYYY-MM-DD`), без времени.
+     *
+     * Для полей, у которых время не имеет смысла: в таком же виде API
+     * принимает их на вход.
+     * @param  float|int $timestamp Unix-время; 0 означает, что значения нет.
+     * @return string|null Дата или null, если значения нет.
+     */
+    public static function date($timestamp)
+    {
+        return empty($timestamp) ? null : date('Y-m-d', (int)$timestamp);
+    }
+
+    /**
+     * Машиночитаемый ключ подстатуса задачи.
+     * @param  int $substatus Подстатус задачи.
+     * @return string|null Ключ или null, если у задачи нет подстатуса.
+     * @see IssueSubstatus
+     */
+    public static function substatusKey($substatus)
+    {
+        return isset(self::SUBSTATUSES[$substatus]) ? self::SUBSTATUSES[$substatus] : null;
+    }
+
+    /**
      * Колонки скрам-доски в порядке их отображения:
      * состояние стикера => машиночитаемый ключ и название колонки.
      *
@@ -46,6 +80,26 @@ class ApiPayloadSerializer
         ScrumStickerState::DONE => ['key' => 'done', 'name' => 'Готово'],
     ];
 
+    /**
+     * Подстатусы задачи: код подстатуса => машиночитаемый ключ.
+     *
+     * Ключи - единственные имена подстатусов, которые отдаёт API.
+     * Отсутствующий в наборе код (IssueSubstatus::NONE) отдаётся как null.
+     * @see IssueSubstatus
+     */
+    const SUBSTATUSES = [
+        IssueSubstatus::BACKLOG => 'backlog',
+        IssueSubstatus::TODO => 'todo',
+        IssueSubstatus::IN_PROGRESS => 'inProgress',
+        IssueSubstatus::PASS_TEST => 'passedTest',
+    ];
+
+    /** Значение `hoursUnit`: оценка задачи в story points (скрам-проект). */
+    const HOURS_UNIT_STORY_POINTS = 'storyPoints';
+
+    /** Значение `hoursUnit`: оценка задачи в часах (проект без скрам-доски). */
+    const HOURS_UNIT_HOURS = 'hours';
+
     private $baseUrl;
 
     public function __construct($baseUrl)
@@ -57,58 +111,55 @@ class ApiPayloadSerializer
      * Полное представление задачи.
      *
      * Приоритет отдаётся в отображаемой шкале (1..100), как в интерфейсе.
-     * @return stdClass
+     * @return array
      */
     public function issue(Issue $issue)
     {
         $obj = $this->issueObject($issue);
 
-        $obj->members = [];
+        $obj['members'] = [];
         foreach ($issue->getMembers() as $member) {
-            $obj->members[] = $member->getClientObject();
+            $obj['members'][] = $this->member($member);
         }
 
-        $obj->testers = [];
+        $obj['testers'] = [];
         foreach ($issue->getTesters() as $tester) {
-            $obj->testers[] = $tester->getClientObject();
+            $obj['testers'][] = $this->user($tester);
         }
 
-        $obj->masters = [];
+        $obj['masters'] = [];
         foreach ($issue->getMasters() as $master) {
-            $obj->masters[] = $master->getClientObject();
+            $obj['masters'][] = $this->user($master);
         }
 
-        $obj->images = [];
+        $obj['images'] = [];
         foreach ($issue->getImages() as $image) {
-            $obj->images[] = [
+            $obj['images'][] = [
                 'imgId' => $image->imgId,
                 'source' => $image->getSource(),
                 'preview' => $image->getPreview(),
             ];
         }
 
-        $obj->files = [];
+        $obj['files'] = [];
         foreach ($issue->getFiles() as $file) {
-            $obj->files[] = $this->file($file);
+            $obj['files'][] = $this->file($file);
         }
 
-        $obj->linked = [];
+        $obj['linked'] = [];
         foreach ($issue->getLinkedIssues() as $linked) {
-            $obj->linked[] = $this->issueObject($linked);
+            $obj['linked'][] = $this->issueObject($linked);
         }
 
-        $obj->labels = $issue->getLabelNames();
-        $obj->isOnBoard = $issue->isOnBoard();
-        $obj->boardColumn = $this->boardColumn($issue);
-        $obj->project = (object)$this->project($issue->getProject());
+        $obj['project'] = $this->project($issue->getProject());
 
-        $obj->comments = [];
+        $obj['comments'] = [];
         foreach (Comment::getListByInstance(LPMInstanceTypes::ISSUE, $issue->id) as $comment) {
             $comment->issue = $issue;
-            $obj->comments[] = $this->comment($comment);
+            $obj['comments'][] = $this->comment($comment);
         }
 
-        $obj->actions = (object)[
+        $obj['actions'] = [
             'comment' => $this->baseUrl . '/issues/' . $issue->id . '/comments',
             'createBranch' => $this->baseUrl . '/issues/' . $issue->id . '/branches',
             'repositories' => $this->baseUrl . '/projects/' . $issue->projectId . '/repositories',
@@ -136,22 +187,6 @@ class ApiPayloadSerializer
     }
 
     /**
-     * Поля задачи, общие для полного представления и для вложенных в него
-     * связанных задач: клиентский объект без служебных полей веб-формы
-     * и с приоритетом в отображаемой шкале.
-     * @return stdClass
-     */
-    private function issueObject(Issue $issue)
-    {
-        $obj = $issue->getClientObject();
-        unset($obj->formattedDesc);
-        unset($obj->completeDateInput);
-        $obj->priority = Issue::getPriorityDisplayValueBy($issue->priority);
-
-        return $obj;
-    }
-
-    /**
      * Краткое представление задачи для списков.
      *
      * Не содержит описания, комментариев и вложений - их отдаёт запрос самой задачи.
@@ -167,19 +202,19 @@ class ApiPayloadSerializer
             'url' => $issue->getConstURL(),
             'type' => $issue->type,
             'status' => $issue->status,
+            'substatus' => self::substatusKey($issue->getSubstatus()),
             'priority' => Issue::getPriorityDisplayValueBy($issue->priority),
             'hours' => $issue->hours,
+            'hoursUnit' => $issue->projectScrum ? self::HOURS_UNIT_STORY_POINTS : self::HOURS_UNIT_HOURS,
             'labels' => $issue->getLabelNames(),
             'commentsCount' => $issue->commentsCount,
-            'createDate' => $issue->createDate,
-            'modifiedDate' => $issue->modifiedDate,
-            'completeDate' => $issue->completeDate,
-            'completedDate' => $issue->completedDate,
-            'author' => [
-                'id' => $issue->author->getID(),
-                'name' => $issue->author->getPlainName(),
-                'nick' => $issue->author->nick,
-            ],
+            'isOnBoard' => $issue->isOnBoard(),
+            'boardColumn' => $this->boardColumn($issue),
+            'createDate' => self::dateTime($issue->createDate),
+            'modifiedDate' => self::dateTime($issue->modifiedDate),
+            'completeDate' => self::date($issue->completeDate),
+            'completedDate' => self::dateTime($issue->completedDate),
+            'author' => $this->user($issue->author),
         ];
     }
 
@@ -193,7 +228,7 @@ class ApiPayloadSerializer
     {
         $item = $this->issueBrief($sticker->getIssue());
         $item['stickerState'] = $sticker->state;
-        $item['addedToBoard'] = $sticker->added;
+        $item['addedToBoard'] = self::dateTime($sticker->added);
 
         return $item;
     }
@@ -212,6 +247,36 @@ class ApiPayloadSerializer
             'totalUses' => (int)$label['countUses'],
             'isCommon' => (int)$label['projectId'] === 0,
         ];
+    }
+
+    /**
+     * Пользователь: единая форма для автора задачи и комментария,
+     * участников, тестировщиков, мастеров и текущего пользователя.
+     * @return array
+     */
+    public function user(User $user)
+    {
+        return [
+            'id' => $user->getID(),
+            'name' => $user->getPlainName(),
+            'nick' => $user->nick,
+            'firstName' => $user->firstName,
+            'lastName' => $user->lastName,
+            'avatarUrl' => $user->getAvatarUrl(),
+            'url' => $user->getUrl(),
+        ];
+    }
+
+    /**
+     * Исполнитель задачи: пользователь и его доля оценки задачи.
+     * @return array
+     */
+    public function member(Member $member)
+    {
+        $item = $this->user($member);
+        $item['sp'] = isset($member->sp) ? (float)$member->sp : 0;
+
+        return $item;
     }
 
     public function comment(Comment $comment)
@@ -241,28 +306,13 @@ class ApiPayloadSerializer
         return [
             'id' => $comment->id,
             'text' => $comment->text,
-            'createdAt' => date('c', $comment->date),
-            'author' => [
-                'id' => $comment->author->getID(),
-                'name' => $comment->author->getPlainName(),
-                'nick' => $comment->author->nick,
-            ],
+            'createdAt' => self::dateTime($comment->date),
+            'author' => $this->user($comment->author),
             'type' => $type,
             'meta' => $meta,
             'files' => $files,
             'url' => empty($comment->issue) ? null : $comment->getIssueCommentUrl($comment->issue),
         ];
-    }
-
-    /**
-     * Вложение задачи или комментария.
-     * @return stdClass
-     */
-    private function file(LPMFile $file)
-    {
-        $obj = $file->getClientObject();
-        $obj->requiresAuthentication = true;
-        return $obj;
     }
 
     public function project(Project $project)
@@ -278,12 +328,52 @@ class ApiPayloadSerializer
 
     public function repository(GitlabProject $project)
     {
+        $lastActivity = $project->lastActivity;
+
         return [
             'id' => $project->id,
             'name' => $project->name,
             'path' => $project->path,
             'url' => $project->url,
-            'lastActivity' => $project->lastActivity,
+            'lastActivity' => $lastActivity->isUndefined()
+                ? null
+                : self::dateTime($lastActivity->getUnixtime()),
         ];
+    }
+
+    /**
+     * Вложение задачи или комментария.
+     * @return array
+     */
+    private function file(LPMFile $file)
+    {
+        return [
+            'fileId' => $file->fileId,
+            'uid' => $file->uid,
+            'name' => $file->origName,
+            'mimeType' => $file->mimeType,
+            'size' => $file->size,
+            'sizeFormatted' => FileSizeFormatter::format($file->size),
+            'created' => self::dateTime($file->created),
+            'url' => $file->getDownloadUrl(),
+            'requiresAuthentication' => true,
+        ];
+    }
+
+    /**
+     * Поля задачи, общие для полного представления и для вложенных в него
+     * связанных задач: краткое представление, дополненное описанием.
+     * @return array
+     */
+    private function issueObject(Issue $issue)
+    {
+        $obj = $this->issueBrief($issue);
+        $obj['desc'] = $issue->desc;
+
+        if ($issue->isBaseLinked !== null) {
+            $obj['isBaseLinked'] = $issue->isBaseLinked;
+        }
+
+        return $obj;
     }
 }

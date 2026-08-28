@@ -36,9 +36,11 @@ Before making any API call, verify that the agent's execution environment allows
    - `idInProject`: project-local issue number from the URL, used only for display, human references, and URL matching
 5. Read the returned issue payload carefully:
    - title and description
+   - `status` and `substatus` — where the issue stands right now
    - comments
    - images
    - attached files
+   - linked issues
    - project and issue ids
    - action URLs or repository hints when present
 6. Reuse the saved `id` and `idInProject` values in the rest of the workflow. Do not re-resolve before each request unless the issue URL itself changes.
@@ -74,7 +76,7 @@ Always plan against the **checked-out issue branch**, never the pre-switch worki
 
 Pausing for plan approval on a non-trivial task is the one expected exception to the "continue into implementation" rule above — it is not a violation of it.
 
-Changing the issue's status or assignee/membership is **out of scope**: the API surface used by this skill does not expose it. Do not try to move the ticket "in progress", assign it, or otherwise mutate issue metadata by guessing endpoints or scraping HTML — leave those actions to the user.
+Changing the issue's status or assignee/membership is **out of scope**. The board endpoints (`PUT` / `DELETE /api/v1/issues/{issueId}/board`) do move a ticket and change its status along with it, so this is a restriction of this skill, not a gap in the API: where a ticket sits on the board is the user's call on their own board, not a side effect of an agent picking up the issue. Do not move the ticket "in progress", and do not assign it or otherwise mutate issue metadata by guessing endpoints or scraping HTML — leave those actions to the user.
 
 ## Authentication
 
