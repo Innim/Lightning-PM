@@ -301,7 +301,7 @@ let srv = {
         merged: function (issueId, complete, onResult) {
             this.s._('merged');
         },
-        takeForTesting: function (issueId, onResult) {
+        takeForTesting: function (issueId, confirmed, onResult) {
             this.s._('takeForTesting');
         },
         releaseFromTesting: function (issueId, onResult) {

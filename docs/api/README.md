@@ -130,7 +130,10 @@ Issues come in the same order as in the web UI: issues in test first, then in wo
 - `backlog` — in work, not on the scrum board;
 - `todo` — in work, on the board in the *TO DO* column;
 - `inProgress` — in work, on the board past *TO DO*;
+- `underTesting` — waiting for test and a tester is checking it right now;
 - `passedTest` — waiting for test and already marked as having passed it.
+
+An issue being checked reports `underTesting` even if it passed a test earlier: the new check outranks the old result.
 
 A project without a scrum board has no board columns to refine "in work" with, so its issues in work report `substatus: null`.
 

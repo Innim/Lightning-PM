@@ -86,7 +86,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
                 $substatus = $issue->getSubstatus();
                 if ($substatus === IssueSubstatus::PASS_TEST) $cssClasses[] = 'pass-test';
-                if ($substatus === IssueSubstatus::TAKEN_FOR_TESTING) $cssClasses[] = 'taken-for-testing';
+                if ($substatus === IssueSubstatus::UNDER_TESTING) $cssClasses[] = 'under-testing';
                 if ($issue->isChangesRequested) $cssClasses[] = 'changes-requested';
                 if ($deadlineLevel !== '') $cssClasses[] = 'deadline-' . $deadlineLevel;
                 if ($testMergeLevel = IssueViewHelper::testMergeLevel($issue)) $cssClasses[] = 'test-' . $testMergeLevel;
@@ -101,7 +101,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                     <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
                 <?php endif; ?>
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
-                    <i class="fas fa-flask taken-for-testing-check" title="Взята в тестирование"></i>
+                    <i class="fas fa-flask under-testing-check" title="Взята в тестирование"></i>
                     <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
                     <i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
                     <i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>

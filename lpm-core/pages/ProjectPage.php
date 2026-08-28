@@ -792,6 +792,10 @@ class ProjectPage extends LPMPage
             return;
         }
 
+        // Отметку о взятии в тестирование держит тестировщик задачи,
+        // поэтому исключение его из тестировщиков снимает и отметку
+        $issue->releaseFromTestingIfNotTester($userId);
+
         // автоматически связываем задачу с упомянутыми в описании задачами
         IssueLinked::syncFromText($issue, $rawDesc, $userId);
 

@@ -13,17 +13,17 @@ class IssueEvent extends LPMBaseObject
      * Записывает событие в журнал задачи.
      * @param  int    $issueId  Идентификатор задачи.
      * @param  string $type     Тип события (@see IssueEventType).
-     * @param  float  $authorId Идентификатор пользователя, совершившего событие.
+     * @param  float  $userId   Идентификатор пользователя, совершившего событие.
      * @param  string $data     Дополнительные данные события.
      * @return IssueEvent Записанное событие.
      * @throws \GMFramework\ProviderSaveException Если не удалось записать данные.
      */
-    public static function create($issueId, $type, $authorId, $data = null)
+    public static function create($issueId, $type, $userId, $data = null)
     {
         $fields = [
             'issueId'  => (int)$issueId,
             'type'     => (string)$type,
-            'authorId' => (float)$authorId,
+            'userId'   => (float)$userId,
             'date'     => DateTimeUtils::mysqlDate(),
             'data'     => (string)$data,
         ];
@@ -103,7 +103,7 @@ class IssueEvent extends LPMBaseObject
      * Идентификатор пользователя, совершившего событие.
      * @var float
      */
-    public $authorId = 0;
+    public $userId = 0;
 
     /**
      * Дата и время события.
@@ -122,7 +122,7 @@ class IssueEvent extends LPMBaseObject
         parent::__construct();
 
         $this->_typeConverter->addIntVars('issueId');
-        $this->_typeConverter->addFloatVars('id', 'authorId');
+        $this->_typeConverter->addFloatVars('id', 'userId');
         $this->addDateTimeFields('date');
 
         if (!empty($raw)) {

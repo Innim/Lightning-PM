@@ -1358,7 +1358,7 @@ issuePage.showEditForm = function () {
  * (Issue.SUBSTATUS_*).
  */
 function setIssueInfo(issue, substatus) {
-    applyTakenForTesting(substatus);
+    applyUnderTesting(substatus);
 
     const $issueInfo = $("#issueInfo");
 
@@ -1497,7 +1497,7 @@ function setIssueStatusBadge($issueInfo, status, substatus) {
 function applyIssueSubstatus(res) {
     if (res.substatus === undefined) return;
 
-    applyTakenForTesting(res.substatus);
+    applyUnderTesting(res.substatus);
 
     const $issueInfo = $('#issueInfo');
     if ($issueInfo.length === 0) return;
@@ -1612,10 +1612,26 @@ issuePage.updateLinkedIssues = function (html) {
     $('#linkedIssues').html(html);
 };
 
-issuePage.takeForTesting = function () {
+/**
+ * Отмечает, что текущий пользователь взял задачу в тестирование.
+ * @param {Boolean} [confirmed] Подтверждён ли перехват задачи у того,
+ * кто проверяет её сейчас.
+ */
+issuePage.takeForTesting = function (confirmed) {
     issuePage.changeTestingMark(
-        (issueId, handler) => srv.issue.takeForTesting(issueId, handler),
+        (issueId, handler) => srv.issue.takeForTesting(issueId, !!confirmed, handler),
         function (res) {
+            if (res.needConfirm) {
+                // holderName сервис отдаёт уже экранированным: диалог вставляет
+                // text как HTML
+                lpm.dialog.confirm({
+                    text: 'Задачу тестирует ' + res.holderName + '. Взять на себя?',
+                    yesLabel: 'Взять на себя',
+                    onYes: () => issuePage.takeForTesting(true),
+                });
+                return;
+            }
+
             if (res.testerAdded) issuePage.appendParticipant('tester', res);
         });
 };
@@ -1654,17 +1670,17 @@ issuePage.changeTestingMark = function (srvCall, onSuccess) {
  * тогда, когда стоит отметка (@see Issue::getSubstatus()).
  * @param {Number} substatus Уточнение статуса (Issue.SUBSTATUS_*).
  */
-function applyTakenForTesting(substatus) {
+function applyUnderTesting(substatus) {
     if (substatus === undefined) return;
 
-    issuePage.setTakenForTesting(substatus === Issue.SUBSTATUS_TAKEN_FOR_TESTING);
+    issuePage.setUnderTesting(substatus === Issue.SUBSTATUS_UNDER_TESTING);
 }
 
 /**
  * Переключает ссылки взятия и снятия отметки о тестировании.
  * @param {Boolean} taken Стоит ли на задаче отметка о взятии.
  */
-issuePage.setTakenForTesting = function (taken) {
+issuePage.setUnderTesting = function (taken) {
     const $bar = $('#issueView .scrum-comments-shortcut');
     $('.take-for-testing-icon', $bar).toggle(!taken);
     $('.release-from-testing-icon', $bar).toggle(!!taken);
@@ -2362,7 +2378,7 @@ Issue.SUBSTATUS_BACKLOG = 1;
 Issue.SUBSTATUS_TODO = 2;
 Issue.SUBSTATUS_IN_PROGRESS = 3;
 Issue.SUBSTATUS_PASS_TEST = 4;
-Issue.SUBSTATUS_TAKEN_FOR_TESTING = 5;
+Issue.SUBSTATUS_UNDER_TESTING = 5;
 
 /**
  * Название статуса задачи: уточнение статуса показывается вместо него.
@@ -2376,7 +2392,7 @@ Issue.getStatusLabel = function (status, substatus) {
         case Issue.SUBSTATUS_TODO: return 'К выполнению';
         case Issue.SUBSTATUS_IN_PROGRESS: return 'В работе';
         case Issue.SUBSTATUS_PASS_TEST: return 'Прошла тестирование';
-        case Issue.SUBSTATUS_TAKEN_FOR_TESTING: return 'Взята в тестирование';
+        case Issue.SUBSTATUS_UNDER_TESTING: return 'Взята в тестирование';
     }
 
     switch (status) {
@@ -2390,7 +2406,7 @@ Issue.getStatusLabel = function (status, substatus) {
  * Все классы бейджа статуса — снимаются перед тем, как поставить актуальный.
  */
 Issue.STATUS_BADGE_CLASSES =
-    'bg-primary bg-warning bg-success bg-secondary bg-info bg-opacity-25 bg-opacity-75 text-dark';
+    'bg-primary bg-warning bg-success bg-secondary bg-info bg-opacity-50 bg-opacity-75 text-dark';
 
 /**
  * Оформление бейджа статуса. Те же соответствия задаёт `IssueViewHelper` на сервере.
@@ -2402,7 +2418,7 @@ Issue.getStatusBadgeClass = function (status, substatus) {
         case Issue.SUBSTATUS_BACKLOG: return 'bg-secondary';
         case Issue.SUBSTATUS_TODO: return 'bg-info text-dark';
         case Issue.SUBSTATUS_IN_PROGRESS: return 'bg-primary';
-        case Issue.SUBSTATUS_TAKEN_FOR_TESTING: return 'bg-success bg-opacity-25 text-dark';
+        case Issue.SUBSTATUS_UNDER_TESTING: return 'bg-warning bg-opacity-50 text-dark';
         case Issue.SUBSTATUS_PASS_TEST: return 'bg-success bg-opacity-75 text-dark';
     }
 

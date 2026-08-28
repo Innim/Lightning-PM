@@ -24,7 +24,7 @@ Payload conventions, the same everywhere:
 - Dates are ISO-8601 and are read back in the shape they are written: a moment in time as `2026-07-15T12:34:56+03:00`, a calendar day without time as `2026-07-15` (that is `completeDate` of an issue, and it round-trips). A date that is not set is `null`.
 - A user — issue or comment author, member, tester, master, `GET /api/v1/me` — is always `{id, name, nick, firstName, lastName, avatarUrl, url}`. Issue members carry one extra field `sp`, their share of the issue estimate.
 
-The issue payload reports its board position as `isOnBoard` and `boardColumn` (`null` for an issue in the backlog), and refines `status` with `substatus`: `backlog`, `todo`, `inProgress`, `passedTest`, or `null` when the status has nothing to refine (in particular for a project without a scrum board).
+The issue payload reports its board position as `isOnBoard` and `boardColumn` (`null` for an issue in the backlog), and refines `status` with `substatus`: `backlog`, `todo`, `inProgress`, `underTesting`, `passedTest`, or `null` when the status has nothing to refine (in particular for a project without a scrum board).
 
 The issue estimate is `hours`, and `hoursUnit` says what it means: `storyPoints` in a scrum project, `hours` in any other one.
 

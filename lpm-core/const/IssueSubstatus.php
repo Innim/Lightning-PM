@@ -37,9 +37,9 @@ class IssueSubstatus
     const PASS_TEST = 4;
 
     /**
-     * Задача в тесте и кто-то уже взял её на проверку.
+     * Задачу в тесте проверяют прямо сейчас.
      */
-    const TAKEN_FOR_TESTING = 5;
+    const UNDER_TESTING = 5;
 
     /**
      * Отображаемое название подстатуса.
@@ -53,7 +53,7 @@ class IssueSubstatus
             case self::TODO: return 'К выполнению';
             case self::IN_PROGRESS: return 'В работе';
             case self::PASS_TEST: return 'Прошла тестирование';
-            case self::TAKEN_FOR_TESTING: return 'Взята в тестирование';
+            case self::UNDER_TESTING: return 'Взята в тестирование';
             default: return '';
         }
     }

@@ -124,16 +124,31 @@ class Issue extends MembersInstance
     }
 
     /**
+     * Загружает последнее событие журнала об отметке о взятии задачи
+     * в тестирование.
+     *
+     * Это единственное место, где задан набор событий отметки: по последнему
+     * из них определяются и её состояние, и тот, за кем она стоит.
+     * @param  int $issueId Идентификатор задачи.
+     * @return IssueEvent|null Событие взятия либо снятия отметки, null - если
+     * отметку ни разу не ставили.
+     */
+    public static function loadLastTestingEvent($issueId)
+    {
+        return IssueEvent::loadLast((int)$issueId, [
+            IssueEventType::TAKEN_FOR_TESTING,
+            IssueEventType::RELEASED_FROM_TESTING,
+        ]);
+    }
+
+    /**
      * Загружает момент, с которого задача считается взятой в тестирование.
      * @param  int $issueId Идентификатор задачи.
      * @return string|null Дата события взятия либо null, если отметки нет.
      */
     public static function loadTakenForTestingDate($issueId)
     {
-        $event = IssueEvent::loadLast((int)$issueId, [
-            IssueEventType::TAKEN_FOR_TESTING,
-            IssueEventType::RELEASED_FROM_TESTING,
-        ]);
+        $event = self::loadLastTestingEvent($issueId);
 
         return empty($event) || $event->type != IssueEventType::TAKEN_FOR_TESTING
             ? null
@@ -1640,13 +1655,13 @@ SQL;
     public $isChangesRequested;
 
     /**
-     * Задачу взяли в тестирование: кто-то из тестировщиков отметил,
-     * что проверяет её прямо сейчас.
+     * Задачу проверяют прямо сейчас.
      *
-     * Отметку ставит событие журнала
-     * {@see IssueEventType::TAKEN_FOR_TESTING}: она держится, пока её не снимут
-     * событием {@see IssueEventType::RELEASED_FROM_TESTING} и пока по задаче
-     * не появится более свежая отметка о прохождении теста, о баге или о MR.
+     * Признак поднимает событие журнала
+     * {@see IssueEventType::TAKEN_FOR_TESTING}, а снимает либо событие
+     * {@see IssueEventType::RELEASED_FROM_TESTING}, либо более свежая отметка
+     * о прохождении теста, о баге или о MR: задача остаётся за тем, кто её
+     * взял, но проверка уже не идёт.
      *
      * Как и {@see $isChangesRequested}, признак ограничен статусом:
      * у задачи не в тесте он всегда false.
@@ -1654,7 +1669,7 @@ SQL;
      * Если null, то это означает, что данные не загружены.
      * @var bool
      */
-    public $isTakenForTesting;
+    public $isUnderTesting;
 
     /**
      * Состояние правок по задаче в тесте: состояние MR задачи
@@ -1709,7 +1724,7 @@ SQL;
             'isBaseLinked',
             'hasPassTestMark',
             'isChangesRequested',
-            'isTakenForTesting',
+            'isUnderTesting',
             'projectScrum'
         );
         $this->addDateTimeFields('createDate', 'startDate', 'modifiedDate', 'completeDate', 'completedDate');
@@ -1980,6 +1995,34 @@ SQL;
     }
 
     /**
+     * Снимает отметку о взятии задачи в тестирование, если тот, кто проверяет
+     * задачу, больше не её тестировщик.
+     *
+     * Взятие задачи добавляет взявшего в тестировщики, поэтому исключение
+     * из тестировщиков означает, что задачу он больше не проверяет. Отметка
+     * снимается тем же событием, что и вручную.
+     * @param  float $byUserId Идентификатор пользователя, снимающего отметку.
+     * @return bool Была ли снята отметка.
+     * @throws \GMFramework\ProviderSaveException Если не удалось записать событие.
+     */
+    public function releaseFromTestingIfNotTester($byUserId)
+    {
+        if (!$this->isUnderTesting) {
+            return false;
+        }
+
+        $event = self::loadLastTestingEvent($this->id);
+        if (empty($event) || $this->isTester($event->userId)) {
+            return false;
+        }
+
+        IssueEvent::create($this->id, IssueEventType::RELEASED_FROM_TESTING, $byUserId);
+        $this->isUnderTesting = false;
+
+        return true;
+    }
+
+    /**
      * Определяет, является ли указанный пользователь мастером задачи.
      * @param int $userId Идентификатор пользователя.
      * @param bool $includingProject    Если `true`, будет выполнена проверка не только среди
@@ -2114,8 +2157,8 @@ SQL;
      * без стикера считается лежащей в бэклоге, стикер в колонке «К выполнению»
      * даёт TODO, остальные - IN_PROGRESS. В проектах без Scrum уточнения нет.
      *
-     * Задачу «Ожидает проверки» уточняют отметки о тестировании: о взятии
-     * задачи на проверку ({@see $isTakenForTesting}) и о прохождении теста
+     * Задачу «Ожидает проверки» уточняют отметки о тестировании: о том, что
+     * её проверяют сейчас ({@see $isUnderTesting}), и о прохождении теста
      * ({@see $hasPassTestMark}). Побеждает первая: она по построению свежее
      * отметки о прохождении теста, а значит задачу перепроверяют и прежний
      * результат уже неактуален. Подстатус, в отличие от самих
@@ -2129,8 +2172,8 @@ SQL;
     public function getSubstatus()
     {
         if ($this->isTesting()) {
-            if ($this->isTakenForTesting) {
-                return IssueSubstatus::TAKEN_FOR_TESTING;
+            if ($this->isUnderTesting) {
+                return IssueSubstatus::UNDER_TESTING;
             }
 
             return $this->hasPassTestMark
@@ -2195,7 +2238,7 @@ SQL;
         // Даты в формате MySQL сравниваются как строки: формат фиксированной ширины.
         // Отметка о проверке той же секунды считается более свежей - взятие
         // потеряло смысл, как только по задаче появился результат
-        $this->isTakenForTesting = $this->isTesting()
+        $this->isUnderTesting = $this->isTesting()
             && !empty($takenAt)
             && (empty($testStateDate) || $takenAt > $testStateDate);
     }

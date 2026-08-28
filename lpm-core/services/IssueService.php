@@ -398,8 +398,18 @@ class IssueService extends LPMBaseService
      * кому она доступна: задача в тесте ничья, тестировщики разбирают
      * такие задачи сами. Взявший заодно добавляется в тестировщики задачи,
      * если его там ещё нет.
-     * @param   int $issueId Идентификатор задачи.
+     *
+     * Задачу, которую проверяет другой, можно перехватить, но только
+     * с подтверждением: без $confirmed сервис ничего не меняет и отвечает
+     * `needConfirm` с именем того, кто проверяет её сейчас. В журнале
+     * остаются оба события - и прежнее взятие, и перехват.
+     * @param   int  $issueId   Идентификатор задачи.
+     * @param   bool $confirmed Подтверждён ли перехват задачи у другого
+     * пользователя.
      * @return {
+     *     bool needConfirm     Нужно подтверждение перехвата: отметка не изменена.
+     *     String holderName    Имя проверяющего задачу сейчас, экранированное
+     *                          для вставки в HTML (при needConfirm).
      *     int  substatus       Уточнение статуса задачи.
      *     bool testerAdded     Добавлен ли пользователь в тестировщики задачи.
      *     float  userId        Идентификатор добавленного тестировщика.
@@ -407,7 +417,7 @@ class IssueService extends LPMBaseService
      *     String avatarUrl     Аватар добавленного тестировщика.
      * }
      */
-    public function takeForTesting($issueId)
+    public function takeForTesting($issueId, $confirmed = false)
     {
         $issueId = (int)$issueId;
 
@@ -417,8 +427,21 @@ class IssueService extends LPMBaseService
             $user = $this->getUser();
             $userId = $user->getID();
 
-            if ($issue->isTakenForTesting) {
-                return $this->error('Задача уже взята в тестирование');
+            if ($issue->isUnderTesting) {
+                $holder = $this->getTestingMarkHolder($issueId);
+                if (!empty($holder) && $holder->getID() == $userId) {
+                    return $this->error('Задача уже взята в тестирование');
+                }
+
+                if (!$confirmed) {
+                    $this->add2Answer('needConfirm', true);
+                    $this->add2Answer(
+                        'holderName',
+                        empty($holder) ? 'другой пользователь' : $holder->getName()
+                    );
+
+                    return $this->answer();
+                }
             }
 
             IssueEvent::create($issueId, IssueEventType::TAKEN_FOR_TESTING, $userId);
@@ -440,7 +463,7 @@ class IssueService extends LPMBaseService
             }
 
             $this->add2Answer('testerAdded', $testerAdded);
-            $this->answerTakenForTesting($issue);
+            $this->answerTestingMark($issue);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -467,13 +490,13 @@ class IssueService extends LPMBaseService
         try {
             $issue = $this->getIssueForTestingMark($issueId);
 
-            if (!$issue->isTakenForTesting) {
+            if (!$issue->isUnderTesting) {
                 return $this->error('Задача не взята в тестирование');
             }
 
             IssueEvent::create($issueId, IssueEventType::RELEASED_FROM_TESTING, $this->getUserId());
 
-            $this->answerTakenForTesting($issue);
+            $this->answerTestingMark($issue);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -1343,10 +1366,26 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Пользователь, за которым стоит отметка о взятии задачи в тестирование.
+     *
+     * Осмысленно только для задачи с отметкой: за снятой отметкой стоит тот,
+     * кто её снял.
+     * @param  int $issueId Идентификатор задачи.
+     * @return User|false Пользователь либо false, если отметку не ставили
+     * или её автора не удалось загрузить.
+     */
+    private function getTestingMarkHolder($issueId)
+    {
+        $event = Issue::loadLastTestingEvent($issueId);
+
+        return empty($event) ? false : User::load($event->userId);
+    }
+
+    /**
      * Добавляет в ответ актуальное состояние отметки о взятии в тестирование.
      * @param Issue $issue Задача, у которой отметка только что изменилась.
      */
-    private function answerTakenForTesting(Issue $issue)
+    private function answerTestingMark(Issue $issue)
     {
         $issue->reloadSubstatusSources();
 

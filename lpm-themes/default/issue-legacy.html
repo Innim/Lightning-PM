@@ -380,11 +380,11 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <?php /* Обе ссылки всегда в разметке: JS переключает их после действия,
                          не перезагружая страницу */ ?>
                 <a href="#" class="take-for-testing-icon" onclick="issuePage.takeForTesting(); return false;"
-                    title="Взять в тестирование"<?=$issue->isTakenForTesting ? ' style="display:none;"' : '';?>><i
+                    title="Взять в тестирование"<?=$issue->isUnderTesting ? ' style="display:none;"' : '';?>><i
                         class="fas fa-flask" aria-hidden="true"></i></a>
-                <a href="#" class="release-from-testing-icon taken-for-testing"
+                <a href="#" class="release-from-testing-icon under-testing"
                     onclick="issuePage.releaseFromTesting(); return false;"
-                    title="Снять отметку «Взята в тестирование»"<?=$issue->isTakenForTesting ? '' : ' style="display:none;"';?>><i
+                    title="Снять отметку «Взята в тестирование»"<?=$issue->isUnderTesting ? '' : ' style="display:none;"';?>><i
                         class="fas fa-flask" aria-hidden="true"></i></a>
                 <a href="#" onclick="issuePage.commentPassTesting(); return false;" title="Прошла тестирование"><i
                         class="far fa-check-square" aria-hidden="true"></i></a>

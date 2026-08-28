@@ -36,8 +36,8 @@ $userId = lpm_get_user()->userId;
 				$classes[] = 'pass-test';
 			}
 
-			if ($substatus === IssueSubstatus::TAKEN_FOR_TESTING) {
-				$classes[] = 'taken-for-testing';
+			if ($substatus === IssueSubstatus::UNDER_TESTING) {
+				$classes[] = 'under-testing';
 			}
 
 			if ($issue->isChangesRequested) {
@@ -88,7 +88,7 @@ $userId = lpm_get_user()->userId;
 				</div>
 			</td>
 			<td>
-				<i class="fas fa-flask taken-for-testing-check" title="Взята в тестирование"></i>
+				<i class="fas fa-flask under-testing-check" title="Взята в тестирование"></i>
 				<i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
 				<i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
 				<i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>

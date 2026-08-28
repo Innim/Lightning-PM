@@ -91,6 +91,7 @@ class ApiPayloadSerializer
         IssueSubstatus::BACKLOG => 'backlog',
         IssueSubstatus::TODO => 'todo',
         IssueSubstatus::IN_PROGRESS => 'inProgress',
+        IssueSubstatus::UNDER_TESTING => 'underTesting',
         IssueSubstatus::PASS_TEST => 'passedTest',
     ];
 

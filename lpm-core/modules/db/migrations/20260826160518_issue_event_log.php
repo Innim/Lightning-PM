@@ -19,7 +19,7 @@ return new class extends DbMigration {
             `issueId` bigint NOT NULL COMMENT 'ID задачи',
             `type` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL
                 COMMENT 'Тип события',
-            `authorId` bigint NOT NULL COMMENT 'ID пользователя, совершившего событие',
+            `userId` bigint NOT NULL COMMENT 'ID пользователя, совершившего событие',
             `date` datetime NOT NULL COMMENT 'Дата и время события',
             `data` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NULL
                 COMMENT 'Дополнительные данные события',

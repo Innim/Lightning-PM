@@ -470,7 +470,7 @@ a.add-me-to-issue .plus-icon {
 	margin-right: 5px;
 }
 /* Тот же цвет, что у значка взятой задачи в списке и на доске */
-.comments .links-bar .scrum-comments-shortcut a.taken-for-testing {
+.comments .links-bar .scrum-comments-shortcut a.under-testing {
 	color: #6f42c1;
 }
 .comment-input-text-tabs .tab-content {
@@ -631,7 +631,7 @@ table tr.verify-issue {
 }
 
 table.issues-list tr td .icon-deadline,
-table.issues-list tr td .taken-for-testing-check,
+table.issues-list tr td .under-testing-check,
 table.issues-list tr td .pass-test-check,
 table.issues-list tr td .changes-requested-check,
 table.issues-list tr td .test-wait-merge-check,
@@ -664,7 +664,7 @@ table tr.pass-test a.issue-name  {
 	color: #00b100;
 }
 
-table.issues-list tr td .taken-for-testing-check {
+table.issues-list tr td .under-testing-check {
 	color: #6f42c1;
 }
 
@@ -689,7 +689,7 @@ table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,
 table tr.deadline-low-issue td .icon-deadline.icon-deadline-low,
-table.issues-list tr.taken-for-testing .taken-for-testing-check,
+table.issues-list tr.under-testing .under-testing-check,
 table.issues-list tr.pass-test .pass-test-check,
 table.issues-list tr.changes-requested .changes-requested-check,
 table.issues-list tr.test-wait-merge .test-wait-merge-check,
@@ -1370,14 +1370,14 @@ blockquote > p {
 .col-done .scrum-board-sticker.deadline-urgent .sticker-issue-id {
 	left: 3px;
 }
-.scrum-board-sticker .taken-for-testing-check,
+.scrum-board-sticker .under-testing-check,
 .scrum-board-sticker .pass-test-check,
 .scrum-board-sticker .changes-requested-check,
 .scrum-board-sticker .test-wait-merge-check,
 .scrum-board-sticker .test-ready-check {
 	display: none;
 }
-.scrum-board-sticker.taken-for-testing .taken-for-testing-check,
+.scrum-board-sticker.under-testing .under-testing-check,
 .scrum-board-sticker.pass-test .pass-test-check,
 .scrum-board-sticker.changes-requested .changes-requested-check,
 .scrum-board-sticker.test-wait-merge .test-wait-merge-check,
