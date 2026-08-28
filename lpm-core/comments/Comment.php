@@ -36,6 +36,15 @@ SQL;
         return $comments;
     }
 
+    /**
+     * Возвращает комментарии к задачам проекта, начиная с самых свежих.
+     * Комментарии удалённых задач в выборку не попадают: до самой задачи
+     * добраться уже нельзя, а её вложения удалены вместе с ней.
+     * @param int $projectId
+     * @param int $from Смещение от начала выборки.
+     * @param int $limit Ограничение на кол-во комментариев; 0 — без ограничения.
+     * @return Comment[]
+     */
     public static function getIssuesListByProject($projectId, $from = 0, $limit = 0)
     {
         $instanceType = LPMInstanceTypes::ISSUE;
@@ -46,6 +55,7 @@ SQL;
 			  FROM `%1\$s` `c`, `%2\$s` `u`, `%3\$s` `p`, `%4\$s` `i`
 			 WHERE `c`.`deleted` = 0 AND `c`.`instanceType` = {$instanceType} 
 			   AND `c`.`authorId` = `u`.`userId` AND `i`.`id` = `c`.`instanceId`
+			   AND `i`.`deleted` = 0
 			   AND `i`.`projectId` = `p`.`id` AND `p`.`id` = {$projectId}
 		  ORDER BY `c`.`date` DESC
 			{$limitStr}
