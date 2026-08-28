@@ -718,7 +718,7 @@ class ProjectPage extends LPMPage
 
         // сохраняем задачу
         if ($editMode) {
-            $issueId = $this->saveIssue($db, $issueId, $_POST['name'], $_POST['desc'], $hours, $type, $completeDate, $priority);
+            $issueId = $this->saveIssue($db, $issueId, $_POST['name'], $_POST['desc'], $hours, $type, $completeDate, $priority, $userId);
         } else {
             $issueId = Issue::createNew($this->_project, $rawName, $rawDesc, $type, $priority, $hours, $completeDate, $userId);
             if (!$issueId) {
@@ -1102,10 +1102,25 @@ class ProjectPage extends LPMPage
 
     /**
      * Сохраняет изменения задачи и присваивает ей новую ревизию.
+     * Прежнее содержимое задачи остаётся в истории слепков.
+     * @param  DBConnect   $db           Соединение с БД.
+     * @param  float       $issueId      Идентификатор задачи.
+     * @param  String      $name         Название задачи, экранированное для запроса.
+     * @param  String      $desc         Описание задачи, экранированное для запроса.
+     * @param  float       $hours        Оценка: нормочасы или story points.
+     * @param  int         $type         Тип задачи, см. Issue::TYPE_*.
+     * @param  String|null $completeDate Плановая дата завершения в формате
+     *                                   `ГГГГ-ММ-ДД ЧЧ:ММ:СС`; null — без даты.
+     * @param  int         $priority     Приоритет задачи.
+     * @param  int         $userId       Идентификатор сохраняющего пользователя.
      * @return float|bool Идентификатор задачи или false, если сохранить не удалось.
      */
-    private function saveIssue(DBConnect $db, $issueId, $name, $desc, $hours, $type, $completeDate, $priority)
+    private function saveIssue(DBConnect $db, $issueId, $name, $desc, $hours, $type, $completeDate, $priority, $userId)
     {
+        // Для задачи, созданной до появления истории, фиксируем её нынешнее
+        // содержимое — иначе эта правка затрёт его, не оставив ни одного слепка.
+        IssueContentSnapshot::recordBaseline($issueId);
+
         $revision = Issue::getNewRevision();
         $sql = "UPDATE `%s` SET " .
                     "`name` = '" . $name . "', " .
@@ -1120,6 +1135,8 @@ class ProjectPage extends LPMPage
         if (!$db->queryt($sql, LPMTables::ISSUES)) {
             return $this->addError('Ошибка записи в базу');
         }
+
+        IssueContentSnapshot::record($issueId, $userId);
 
         // Если дальше возникнет ошибка, форма будет восстановлена из введённых данных.
         // Ревизия в ней должна быть актуальной, иначе повторное сохранение
@@ -1362,21 +1379,47 @@ class ProjectPage extends LPMPage
         }
     }
 
+    /**
+     * Добавляет к ошибкам страницы сообщение о неудачном изменении
+     * положения задачи на доске.
+     * @param  bool $putOnBoard Задачу пытались поместить на доску, а не снять.
+     * @return bool Всегда false, как и addError().
+     */
+    private function addBoardError($putOnBoard)
+    {
+        return $this->addError($putOnBoard
+            ? 'Не удалось поместить стикер на доску'
+            : 'Не удалось снять стикер с доски');
+    }
+
+    /**
+     * Приводит положение задачи на скрам-доске к состоянию флажка формы.
+     *
+     * Статус задачи при этом не меняется: колонка на доске выводится из статуса,
+     * а не наоборот.
+     * @param  Issue $issue      Сохранённая задача.
+     * @param  bool  $putOnBoard Задача должна оказаться на доске.
+     * @return bool false, если изменение не удалось; причина добавлена
+     *              к ошибкам страницы.
+     */
     private function updateScrumBoard(Issue $issue, $putOnBoard)
     {
-        if ($issue->isOnBoard() != $putOnBoard) {
+        if ($issue->isOnBoard() == $putOnBoard) {
+            return true;
+        }
+
+        $user = $this->_engine->getUser();
+
+        try {
             if ($putOnBoard) {
-                if (!ScrumSticker::putStickerOnBoard($issue)) {
-                    return $this->addError('Не удалось поместить стикер на доску');
-                }
+                ScrumBoardManager::putOnBoard($issue);
             } else {
-                if (!ScrumSticker::updateStickerState(
-                    $issue->id,
-                    ScrumStickerState::BACKLOG
-                )) {
-                    return $this->addError('Не удалось снять стикер с доски');
-                }
+                ScrumBoardManager::removeFromBoard($issue, $user);
             }
+        } catch (ScrumBoardException $e) {
+            return $this->addBoardError($putOnBoard);
+        } catch (\GMFramework\ProviderSaveException $e) {
+            return $this->addBoardError($putOnBoard);
         }
 
         return true;

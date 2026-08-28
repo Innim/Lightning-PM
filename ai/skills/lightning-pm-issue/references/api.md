@@ -11,6 +11,15 @@ Use this reference when exact endpoint names, auth headers, or payload shapes ma
 - Treat a pasted issue link as implementation input by default, not as a read-only inspection request, unless the user explicitly asks only for analysis.
 - `idInProject` from the issue URL is not the same as the global `id` used by `/api/v1/issues/{issueId}/...` endpoints.
 
+## Payload Conventions
+
+These hold in every payload of the API:
+
+- **Dates** are ISO-8601 and are read back in the shape they are written. A moment in time carries time and offset (`2026-07-15T12:34:56+03:00`); a calendar day that has no time carries only the day (`2026-07-15`). `completeDate` of an issue is the only date-only field, and it round-trips: send `"2026-07-15"`, read `"2026-07-15"`. A date that is not set is `null`, never `0`.
+- **Users** always come in one shape — `{id, name, nick, firstName, lastName, avatarUrl, url}` — for the issue author, the comment author, members, testers, masters, and `GET /api/v1/me` (which adds `email`). `name` is the ready display name; do not assemble it from the parts. Issue members carry one extra field, `sp` — their share of the issue estimate.
+- **The estimate** is `hours` plus `hoursUnit`, which says what the number means: `storyPoints` in a scrum project, `hours` in any other one. The unit follows the project.
+- **`status` and `substatus`.** `status` is `0` in work, `1` waiting for test, `2` completed. `substatus` refines it the way the web UI badge does: `backlog` (in work, not on the board), `todo` (on the board in *TO DO*), `inProgress` (on the board past *TO DO*), `passedTest` (in test and already marked as passed). It is `null` when there is nothing to refine — in particular for issues of a project without a scrum board.
+
 ## Authentication
 
 Set this environment variable before local shell calls when possible:
@@ -67,10 +76,12 @@ Use the resolved global `id` as `{issueId}`, not the number from the issue URL.
 Use the payload to inspect:
 
 - issue title
-- issue description
+- issue description (`desc`)
+- `status` and `substatus` — where the issue stands right now
 - comments
 - images
 - attached files, both of the issue (`files`) and of each comment (`comments[].files`)
+- linked issues (`linked`)
 - project id
 - issue id
 - action URLs or repository hints if present
@@ -107,7 +118,7 @@ Example:
 GET /api/v1/projects/demo/issues?status=inWork,test&label=api&limit=20
 ```
 
-The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, priority, hours, labels, commentsCount, createDate, modifiedDate, completeDate, completedDate, author}` with dates as unix timestamps (`0` when unset) and `priority` in the same `1..100` scale the web UI shows. Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments.
+The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, substatus, priority, hours, hoursUnit, labels, commentsCount, isOnBoard, boardColumn, createDate, modifiedDate, completeDate, completedDate, author}`, with `priority` in the same `1..100` scale the web UI shows. Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments.
 
 ## Listing Project Labels
 
@@ -129,9 +140,39 @@ GET /api/v1/projects/{projectId}/board
 
 The response is `{project, columns}`. Columns always come in board order — `todo`, `inProgress`, `testing`, `done` — and each one is `{state, key, name, issues}`, where `state` is the numeric sticker state (`1`, `2`, `3`, `4`) and `name` is the column title from the web UI. An empty column still comes with an empty `issues` list.
 
-Each item of `issues` is the short issue payload of the issues endpoint plus `stickerState` (same as the column `state`) and `addedToBoard` (unix timestamp of when the issue was put on the board). Issues come in the same order as on the board. Backlog issues have no sticker and are not returned here; use `GET /api/v1/projects/{projectId}/issues` to list all issues of the project.
+Each item of `issues` is the short issue payload of the issues endpoint plus `stickerState` (same as the column `state`) and `addedToBoard` (when the issue was put on the board). Issues come in the same order as on the board. Backlog issues have no sticker and are not returned here; use `GET /api/v1/projects/{projectId}/issues` to list all issues of the project.
 
 A non-scrum project is rejected with `400`, an unknown or inaccessible project with `404`.
+
+## Moving an Issue on the Scrum Board
+
+Moving a ticket is **out of scope for this skill** — see [Implementation Expectation](../SKILL.md#implementation-expectation). The endpoints are documented here because the payload they answer with is the issue payload, and because the user may ask for the move explicitly; do not call them on your own initiative.
+
+Put an issue on the board or move it to another column:
+
+```http
+PUT /api/v1/issues/{issueId}/board
+Content-Type: application/json
+
+{
+  "column": "inProgress"
+}
+```
+
+- `column` (optional): `todo`, `inProgress`, `testing` or `done` — the same column keys the board endpoint returns; an unknown value is rejected with `400`.
+- Without `column` the column follows the issue status, exactly like the *«На доску»* button in the web UI.
+- With `column` the issue is placed in that column even if it was not on the board before.
+- Moving to `testing` sends the issue to test, moving to `done` completes it, and returning an issue that waits for test to `todo` or `inProgress` reopens it.
+
+Take an issue off the board — it returns to the backlog and keeps its status:
+
+```http
+DELETE /api/v1/issues/{issueId}/board
+```
+
+Both requests answer with the updated issue payload (same shape as `GET /api/v1/issues/{issueId}`), so `isOnBoard` and `boardColumn` in it show the resulting position; `boardColumn` is `null` for an issue in the backlog. A non-scrum project is rejected with `400`, and so is an issue without labels in a project that requires them.
+
+Use the resolved global `id` as `{issueId}` here as well.
 
 ## Creating an Issue
 
@@ -148,7 +189,8 @@ Content-Type: application/json
   "type": 1,
   "priority": 80,
   "hours": 2,
-  "completeDate": "2026-07-15"
+  "completeDate": "2026-07-15",
+  "board": "todo"
 }
 ```
 
@@ -157,10 +199,11 @@ Content-Type: application/json
 - `desc` (optional): description (Markdown allowed), up to 60000 characters.
 - `type` (optional, default `0`): `0` develop, `1` bug, `2` support.
 - `priority` (optional, default `50` — normal): integer `1..100`, as shown in the web UI; out-of-range values are rejected with `400`.
-- `hours` (optional, default `0`): story points estimate; only `0.5` is a valid fraction.
-- `completeDate` (optional): target date as `YYYY-MM-DD`.
+- `hours` (optional, default `0`): the estimate in the unit the project uses — story points in a scrum project, hours in any other one; only `0.5` is a valid fraction.
+- `completeDate` (optional): target date as `YYYY-MM-DD`, the same shape it is returned in.
+- `board` (optional, default `false`): put the new issue straight on the scrum board — `true` uses the column matching its status, a column key (`todo`, `inProgress`, `testing`, `done`) uses that column. A non-scrum project or an unknown column is rejected with `400` and no issue is created.
 
-The response is the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with status `201`. Save the returned global `id` and `idInProject` for follow-up calls (branches, comments). The new issue has no members, testers, or scrum sticker.
+The response is the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with status `201`. Save the returned global `id` and `idInProject` for follow-up calls (branches, comments). The new issue has no members and testers, and stays in the backlog unless `board` was passed.
 
 ## Repository and Branch Workflow
 

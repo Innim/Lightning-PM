@@ -1182,7 +1182,12 @@ SQL;
             return null;
         }
 
-        return $db->insert_id;
+        $issueId = $db->insert_id;
+
+        // Начальный слепок содержимого — с него начинается история задачи.
+        IssueContentSnapshot::record($issueId, $authorId);
+
+        return $issueId;
     }
 
     /**

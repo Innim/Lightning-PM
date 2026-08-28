@@ -67,6 +67,11 @@ class LPMTables
      */
     const ISSUE_EVENT = 'issue_event';
     /**
+     * История слепков содержимого задач.
+     * @var string
+     */
+    const ISSUE_CONTENT_SNAPSHOTS = 'issue_content_snapshots';
+    /**
      * Стикеры для Scrum доски
      * @var string
      */
@@ -159,4 +164,8 @@ class LPMTables
      * Журнал применённых миграций схемы БД.
      */
     const DB_MIGRATIONS = 'db_migrations';
+    /**
+     * Занятые слоты фонового сжатия видео.
+     */
+    const VIDEO_COMPRESS_SLOTS = 'video_compress_slots';
 }

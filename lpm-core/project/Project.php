@@ -163,6 +163,7 @@ class Project extends MembersInstance
         $aiSummary,
         $aiTestChecklist,
         $aiIssueDraft,
+        $aiContext,
         $requireLabels
     )
     {
@@ -176,6 +177,7 @@ class Project extends MembersInstance
             'aiSummary' => $aiSummary,
             'aiTestChecklist' => $aiTestChecklist,
             'aiIssueDraft' => $aiIssueDraft,
+            'aiContext' => $aiContext,
             'requireLabels' => $requireLabels,
         ]);
 
@@ -525,6 +527,16 @@ SQL;
      * @var Boolean
      */
     public $aiIssueDraft = false;
+
+    /**
+     * Описание предметной области проекта, которое подмешивается
+     * в запросы к ИИ: что за продукт, для кого, на чём написан,
+     * что означают принятые в команде термины.
+     *
+     * `null`, если контекст не задан.
+     * @var string|null
+     */
+    public $aiContext = null;
 
     /**
      * Задачи проекта должны иметь хотя бы один тег.
