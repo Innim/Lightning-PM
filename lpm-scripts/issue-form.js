@@ -915,8 +915,6 @@ let issueForm = {
         const li = $(e.currentTarget).parents('.members-list-item');
         if (li.length == 0) return;
 
-        console.log(li);
-
         const userId = $('input[name="' + fieldName + '[]"]', li).val();
         var userName = $('span.user-name', li).html();
 
