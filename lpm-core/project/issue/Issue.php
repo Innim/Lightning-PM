@@ -39,21 +39,24 @@ class Issue extends MembersInstance
 
     /**
      * Возвращает описание запроса, определяющего текущее состояние задачи
-     * в тесте: тип последнего комментария среди отметки о прохождении теста,
+     * в тесте: последний комментарий среди отметки о прохождении теста,
      * запроса правок и комментария с MR. Более свежий комментарий вытесняет
-     * прежний, поэтому отметка о прохождении теста снимается сама.
+     * прежний, поэтому отметка о прохождении теста снимается сама;
+     * обычные комментарии в набор не входят и отметку не сбивают.
      *
      * Это единственное определение правила: его используют и общая выборка
      * задач (подзапросом), и точечная загрузка отметки
-     * {@see loadPassTestMark()}.
+     * {@see loadTestStateComment()}.
      * @param  int|\GMFramework\DBColumn $issueId Идентификатор задачи либо
      *                                            колонка с ним - для подзапроса.
+     * @param  string $select Список полей выборки. Для подзапроса поле должно
+     *                        быть ровно одно.
      * @return array Описание запроса для конструктора.
      */
-    private static function getTestStateSqlHash($issueId)
+    private static function getTestStateSqlHash($issueId, $select = '`icm`.`type`')
     {
         return [
-            'SELECT' => '`icm`.`type`',
+            'SELECT' => $select,
             'FROM'   => LPMTables::COMMENTS,
             'AS'     => 'cm',
             'JOINS'  => [[
@@ -79,18 +82,77 @@ class Issue extends MembersInstance
     }
 
     /**
-     * Загружает отметку о прохождении тестирования по комментариям задачи.
+     * Загружает комментарий, задающий текущее состояние задачи в тесте.
      *
      * Точечный запрос вместо полной перезагрузки задачи: нужен там, где после
-     * изменения комментариев надо освежить только эту отметку.
+     * изменения комментариев надо освежить только отметки о тестировании.
      * @param  int $issueId Идентификатор задачи.
-     * @return bool Стоит ли на задаче отметка о прохождении тестирования.
+     * @return array|null Массив с полями `type` (@see IssueCommentType)
+     * и `date` (когда отметка поставлена). null, если отметок нет.
      */
-    public static function loadPassTestMark($issueId)
+    public static function loadTestStateComment($issueId)
     {
-        $row = self::buildAndExecuteSingle(self::getTestStateSqlHash((int)$issueId));
+        $row = self::buildAndExecuteSingle(
+            self::getTestStateSqlHash((int)$issueId, '`icm`.`type`, `cm`.`date`')
+        );
 
-        return !empty($row) && $row['type'] == IssueCommentType::PASS_TEST;
+        return empty($row) ? null : $row;
+    }
+
+    /**
+     * Возвращает описание запроса, определяющего момент, с которого задача
+     * считается взятой в тестирование.
+     *
+     * Отметка о взятии живёт в журнале задачи, а снимающие её отметки
+     * о проверке - в комментариях, поэтому состояние выводится сравнением дат:
+     * задача взята, если событие взятия свежее последней отметки о проверке.
+     * Запрос отдаёт дату последнего события журнала о тестировании, если это
+     * взятие, и NULL, если отметку уже сняли.
+     * @param  int|\GMFramework\DBColumn $issueId Идентификатор задачи либо
+     *                                            колонка с ним - для подзапроса.
+     * @return array Описание запроса для конструктора.
+     */
+    private static function getTakenForTestingSqlHash($issueId)
+    {
+        $taken = IssueEventType::TAKEN_FOR_TESTING;
+
+        return IssueEvent::getLastSqlHash(
+            $issueId,
+            [$taken, IssueEventType::RELEASED_FROM_TESTING],
+            "IF(`ev`.`type` = '$taken', `ev`.`date`, NULL)"
+        );
+    }
+
+    /**
+     * Загружает последнее событие журнала об отметке о взятии задачи
+     * в тестирование.
+     *
+     * Это единственное место, где задан набор событий отметки: по последнему
+     * из них определяются и её состояние, и тот, за кем она стоит.
+     * @param  int $issueId Идентификатор задачи.
+     * @return IssueEvent|null Событие взятия либо снятия отметки, null - если
+     * отметку ни разу не ставили.
+     */
+    public static function loadLastTestingEvent($issueId)
+    {
+        return IssueEvent::loadLast((int)$issueId, [
+            IssueEventType::TAKEN_FOR_TESTING,
+            IssueEventType::RELEASED_FROM_TESTING,
+        ]);
+    }
+
+    /**
+     * Загружает момент, с которого задача считается взятой в тестирование.
+     * @param  int $issueId Идентификатор задачи.
+     * @return string|null Дата события взятия либо null, если отметки нет.
+     */
+    public static function loadTakenForTestingDate($issueId)
+    {
+        $event = self::loadLastTestingEvent($issueId);
+
+        return empty($event) || $event->type != IssueEventType::TAKEN_FOR_TESTING
+            ? null
+            : DateTimeUtils::mysqlDate($event->date);
     }
 
     /**
@@ -121,6 +183,10 @@ class Issue extends MembersInstance
         $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
         $testStateSql = '(' . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'))) . ')';
+        $testStateDateSql = '('
+            . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'), '`cm`.`date`')) . ')';
+        $takenForTestingSql = '('
+            . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'))) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -134,6 +200,8 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
     `p`.`scrum` AS `projectScrum`,
     $testStateSql AS `t_testState`,
+    IF(`i`.`status` = $statusWait, $testStateDateSql, NULL) AS `t_testStateDate`,
+    IF(`i`.`status` = $statusWait, $takenForTestingSql, NULL) AS `t_takenAt`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
          FROM `%6\$s` `cm`
@@ -252,6 +320,10 @@ SQL;
         $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
         $testStateSql = '(' . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'))) . ')';
+        $testStateDateSql = '('
+            . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'), '`cm`.`date`')) . ')';
+        $takenForTestingSql = '('
+            . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'))) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -265,6 +337,8 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     `u`.*, `cnt`.*, `p`.`uid` as `projectUID`, `p`.`name` AS `projectName`,
     `p`.`scrum` AS `projectScrum`,
     $testStateSql AS `t_testState`,
+    IF(`i`.`status` = $statusWait, $testStateDateSql, NULL) AS `t_testStateDate`,
+    IF(`i`.`status` = $statusWait, $takenForTestingSql, NULL) AS `t_takenAt`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
          FROM `%6\$s` `cm`
@@ -1581,6 +1655,23 @@ SQL;
     public $isChangesRequested;
 
     /**
+     * Задачу проверяют прямо сейчас.
+     *
+     * Признак поднимает событие журнала
+     * {@see IssueEventType::TAKEN_FOR_TESTING}, а снимает либо событие
+     * {@see IssueEventType::RELEASED_FROM_TESTING}, либо более свежая отметка
+     * о прохождении теста, о баге или о MR: задача остаётся за тем, кто её
+     * взял, но проверка уже не идёт.
+     *
+     * Как и {@see $isChangesRequested}, признак ограничен статусом:
+     * у задачи не в тесте он всегда false.
+     *
+     * Если null, то это означает, что данные не загружены.
+     * @var bool
+     */
+    public $isUnderTesting;
+
+    /**
      * Состояние правок по задаче в тесте: состояние MR задачи
      * (см. GitlabMergeRequest::STATE_*).
      *
@@ -1633,6 +1724,7 @@ SQL;
             'isBaseLinked',
             'hasPassTestMark',
             'isChangesRequested',
+            'isUnderTesting',
             'projectScrum'
         );
         $this->addDateTimeFields('createDate', 'startDate', 'modifiedDate', 'completeDate', 'completedDate');
@@ -1903,6 +1995,34 @@ SQL;
     }
 
     /**
+     * Снимает отметку о взятии задачи в тестирование, если тот, кто проверяет
+     * задачу, больше не её тестировщик.
+     *
+     * Взятие задачи добавляет взявшего в тестировщики, поэтому исключение
+     * из тестировщиков означает, что задачу он больше не проверяет. Отметка
+     * снимается тем же событием, что и вручную.
+     * @param  float $byUserId Идентификатор пользователя, снимающего отметку.
+     * @return bool Была ли снята отметка.
+     * @throws \GMFramework\ProviderSaveException Если не удалось записать событие.
+     */
+    public function releaseFromTestingIfNotTester($byUserId)
+    {
+        if (!$this->isUnderTesting) {
+            return false;
+        }
+
+        $event = self::loadLastTestingEvent($this->id);
+        if (empty($event) || $this->isTester($event->userId)) {
+            return false;
+        }
+
+        IssueEvent::create($this->id, IssueEventType::RELEASED_FROM_TESTING, $byUserId);
+        $this->isUnderTesting = false;
+
+        return true;
+    }
+
+    /**
      * Определяет, является ли указанный пользователь мастером задачи.
      * @param int $userId Идентификатор пользователя.
      * @param bool $includingProject    Если `true`, будет выполнена проверка не только среди
@@ -2037,10 +2157,14 @@ SQL;
      * без стикера считается лежащей в бэклоге, стикер в колонке «К выполнению»
      * даёт TODO, остальные - IN_PROGRESS. В проектах без Scrum уточнения нет.
      *
-     * Задачу «Ожидает проверки» уточняет отметка о прохождении тестирования
-     * ({@see $hasPassTestMark}). Подстатус, в отличие от самой отметки,
-     * ограничен статусом: у завершённой задачи отметка остаётся, а подстатуса
-     * уже нет - «Завершена» говорит больше, чем «прошла тестирование».
+     * Задачу «Ожидает проверки» уточняют отметки о тестировании: о том, что
+     * её проверяют сейчас ({@see $isUnderTesting}), и о прохождении теста
+     * ({@see $hasPassTestMark}). Побеждает первая: она по построению свежее
+     * отметки о прохождении теста, а значит задачу перепроверяют и прежний
+     * результат уже неактуален. Подстатус, в отличие от самих
+     * отметок, ограничен статусом: у завершённой задачи отметка остаётся,
+     * а подстатуса уже нет - «Завершена» говорит больше, чем «прошла
+     * тестирование».
      * @return int Подстатус.
      * @see IssueSubstatus
      * @see reloadSubstatusSources()
@@ -2048,7 +2172,13 @@ SQL;
     public function getSubstatus()
     {
         if ($this->isTesting()) {
-            return $this->hasPassTestMark ? IssueSubstatus::PASS_TEST : IssueSubstatus::NONE;
+            if ($this->isUnderTesting) {
+                return IssueSubstatus::UNDER_TESTING;
+            }
+
+            return $this->hasPassTestMark
+                ? IssueSubstatus::PASS_TEST
+                : IssueSubstatus::NONE;
         }
 
         if ($this->status != self::STATUS_IN_WORK || !$this->projectScrum) {
@@ -2076,7 +2206,12 @@ SQL;
     public function reloadSubstatusSources()
     {
         if ($this->isTesting()) {
-            $this->hasPassTestMark = self::loadPassTestMark($this->id);
+            $row = self::loadTestStateComment($this->id);
+            $this->applyTestState(
+                empty($row) ? null : $row['type'],
+                empty($row) ? null : $row['date'],
+                self::loadTakenForTestingDate($this->id)
+            );
             return;
         }
 
@@ -2085,6 +2220,27 @@ SQL;
             // Загрузчик отдаёт false, а отсутствие стикера здесь - это null
             $this->_sticker = empty($sticker) ? null : $sticker;
         }
+    }
+
+    /**
+     * Раскладывает состояние задачи в тесте по отметкам.
+     * @param string|null $testState     Тип комментария, задающего состояние
+     * (@see IssueCommentType), либо null, если отметок нет.
+     * @param string|null $testStateDate Дата этого комментария.
+     * @param string|null $takenAt       Дата, с которой задача взята
+     * в тестирование, либо null, если отметки о взятии нет.
+     */
+    private function applyTestState($testState, $testStateDate = null, $takenAt = null)
+    {
+        $this->hasPassTestMark = $testState == IssueCommentType::PASS_TEST;
+        $this->isChangesRequested = $this->isTesting()
+            && $testState == IssueCommentType::REQUEST_CHANGES;
+        // Даты в формате MySQL сравниваются как строки: формат фиксированной ширины.
+        // Отметка о проверке той же секунды считается более свежей - взятие
+        // потеряло смысл, как только по задаче появился результат
+        $this->isUnderTesting = $this->isTesting()
+            && !empty($takenAt)
+            && (empty($testStateDate) || $takenAt > $testStateDate);
     }
 
     /**
@@ -2117,10 +2273,12 @@ SQL;
             }
         }
 
-        if (isset($hash['t_testState'])) {
-            $testState = $hash['t_testState'];
-            $this->hasPassTestMark = $testState == IssueCommentType::PASS_TEST;
-            $this->isChangesRequested = $this->isTesting() && $testState == IssueCommentType::REQUEST_CHANGES;
+        if (array_key_exists('t_testState', $hash)) {
+            $this->applyTestState(
+                $hash['t_testState'],
+                isset($hash['t_testStateDate']) ? $hash['t_testStateDate'] : null,
+                isset($hash['t_takenAt']) ? $hash['t_takenAt'] : null
+            );
         }
 
         if (isset($hash['t_mrState'])) {

@@ -62,6 +62,11 @@ class LPMTables
      */
     const ISSUE_COMMENT = 'issue_comment';
     /**
+     * Журнал событий задачи.
+     * @var string
+     */
+    const ISSUE_EVENT = 'issue_event';
+    /**
      * История слепков содержимого задач.
      * @var string
      */

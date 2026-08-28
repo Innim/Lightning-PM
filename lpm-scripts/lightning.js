@@ -301,6 +301,12 @@ let srv = {
         merged: function (issueId, complete, onResult) {
             this.s._('merged');
         },
+        takeForTesting: function (issueId, confirmed, onResult) {
+            this.s._('takeForTesting');
+        },
+        releaseFromTesting: function (issueId, onResult) {
+            this.s._('releaseFromTesting');
+        },
         passTest: function (issueId, text, files, onResult) {
             this.s.callWithFiles('passTest', [issueId, text], files, onResult);
         },
