@@ -55,7 +55,7 @@ class VideoCompressor
      */
     public static function getMaxParallel()
     {
-        return max(1, self::intConst('VIDEO_COMPRESS_MAX_PARALLEL', 2));
+        return max(1, self::intConst('VIDEO_COMPRESS_MAX_PARALLEL', 3));
     }
 
     /**
