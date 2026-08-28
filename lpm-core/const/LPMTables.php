@@ -62,6 +62,11 @@ class LPMTables
      */
     const ISSUE_COMMENT = 'issue_comment';
     /**
+     * История слепков содержимого задач.
+     * @var string
+     */
+    const ISSUE_CONTENT_SNAPSHOTS = 'issue_content_snapshots';
+    /**
      * Стикеры для Scrum доски
      * @var string
      */
