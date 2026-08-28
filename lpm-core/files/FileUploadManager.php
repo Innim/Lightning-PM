@@ -254,6 +254,16 @@ class FileUploadManager
         return FileSystemUtils::createPath($dir);
     }
 
+    /**
+     * Удаляет директорию хранилища сущности, если в ней не осталось файлов.
+     * @param int $itemType Одна из констант {@see LPMInstanceTypes}.
+     * @param int $itemId
+     */
+    public static function removeStorageDirectory($itemType, $itemId)
+    {
+        FileSystemUtils::remove(self::getAbsoluteDirectory($itemType, $itemId), false);
+    }
+
     public static function buildRelativePath($itemType, $itemId, $fileName)
     {
         $base = self::getRelativeBase();

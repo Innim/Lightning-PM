@@ -765,7 +765,7 @@ class ProjectPage extends LPMPage
 
         // удаление старых изображений
         if (!empty($_POST["removedImages"])) {
-            $this->removeImagesFromIssue($db, $issueId, $_POST["removedImages"]);
+            $this->removeImagesFromIssue($issueId, $_POST["removedImages"]);
         }
 
         // загружаем изображения
@@ -1214,7 +1214,7 @@ class ProjectPage extends LPMPage
         return true;
     }
 
-    private function removeImagesFromIssue(DBConnect $db, $issueId, $imagesIdsStr) 
+    private function removeImagesFromIssue($issueId, $imagesIdsStr)
     {
         $delImg = explode(',', $imagesIdsStr);
         $imgIds = [];
@@ -1225,15 +1225,7 @@ class ProjectPage extends LPMPage
             }
         }
 
-        if (!empty($imgIds)) {
-            $sql = "UPDATE `%s` ".
-                        "SET `deleted`='1' ".
-                        "WHERE `imgId` IN (".implode(',', $imgIds).") ".
-                            "AND `deleted` = '0' ".
-                            "AND `itemId`='".$issueId."' ".
-                            "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
-            $db->queryt($sql, LPMTables::IMAGES);
-        }
+        LPMImg::removeByIds(LPMInstanceTypes::ISSUE, $issueId, $imgIds);
     }
 
     private function removeFilesFromIssue($issueId, $filesIdsStr)
