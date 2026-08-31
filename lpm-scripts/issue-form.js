@@ -80,17 +80,7 @@ $(function ($) {
                     var reader = new FileReader();
 
                     reader.onload = function (event) {
-                        var img = new Image(150, 100);
-                        img.src = event.target.result;
-                        $('#issueForm .images-list input[type=file]').last().parent().before("<li id='current'><a></a></li>");
-                        $('li#current a').append(img);
-                        $('li#current').append("<a class='remove-btn remove-img' onclick='javascript: return false;'>");
-                        var input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'clipboardImg[]';
-                        input.value = img.src;
-                        $('li#current').append(input);
-                        $('li#current').removeAttr("id").addClass('pasted-img');
+                        issueForm.addPreparedImage(event.target.result);
                     }
 
                     reader.readAsDataURL(blob);
@@ -331,6 +321,8 @@ let issueForm = {
             issueId: isEdit ? data.issueId : '',
             revision: isEdit ? data.revision : '',
             newImagesUrls: data.imgUrls,
+            preparedImages: data.clipboardImg,
+            preparedDraftImages: data.draftImg,
             imagesInfo: issueForm.getImagesFromPage(),
             isOnBoard: data.putToBoard,
         }, isEdit);
@@ -470,6 +462,17 @@ let issueForm = {
                 }
             });
         }
+
+        // Изображения, приложенные до сохранения задачи: форма получает их
+        // обратно, когда восстанавливается после ошибки сохранения.
+        const addPreparedImages = (images, fromDraft) => (images || []).forEach((dataUri) => {
+            if (!dataUri) return;
+
+            issueForm.addPreparedImage(dataUri, fromDraft);
+            imgsCount++;
+        });
+        addPreparedImages(value.preparedImages, false);
+        addPreparedImages(value.preparedDraftImages, true);
 
         if (imgsCount >= window.lpmOptions.issueImgsCount) {
             imgUploadLi.hide();
@@ -776,12 +779,29 @@ let issueForm = {
                 return;
             }
 
-            issueForm.applyDraft(res);
+            const attached = issueForm.applyDraft(res, images);
             issueForm.closeDraftDialog();
-            lpm.toast.show('Черновик собран — проверьте и поправьте поля');
+
+            let message = 'Черновик собран — проверьте и поправьте поля';
+            if (attached.skipped) {
+                message = 'Черновик собран, но изображение в неподдерживаемом формате'
+                    + ' приложить к задаче нельзя';
+            } else if (attached.count) {
+                message = 'Черновик собран, изображения приложены к задаче —'
+                    + ' проверьте и поправьте поля';
+            }
+            lpm.toast.show(message);
         });
     },
-    applyDraft: function (draft) {
+    /**
+     * Заполняет форму черновиком и прикладывает к задаче изображения,
+     * по которым он собран.
+     * @param {Object} draft Черновик: название, тип и описание.
+     * @param {string[]} images Изображения диалога строками data URI.
+     * @return {{count: number, skipped: number}} Сколько изображений приложено
+     * к задаче и сколько пропущено из-за неподходящего формата.
+     */
+    applyDraft: function (draft, images) {
         const $form = $('#issueForm form');
 
         $form.find('input[name=name]').val(draft.name);
@@ -791,6 +811,45 @@ let issueForm = {
 
         // Событие input обновляет счётчики символов и слов под полем описания.
         $form.find('textarea[name=desc]').val(draft.desc).trigger('input');
+
+        return issueForm.attachDraftImages(images || []);
+    },
+    /**
+     * Прикладывает к задаче изображения, по которым собран черновик.
+     *
+     * Приложенные прошлой сборкой изображения при этом снимаются: иначе
+     * вложения копились бы от каждой попытки. Всё, что пользователь приложил
+     * сам, остаётся на месте.
+     * @param {string[]} images Изображения строками data URI.
+     * @return {{count: number, skipped: number}} Сколько изображений приложено
+     * и сколько пропущено из-за формата, который задача не принимает.
+     */
+    attachDraftImages: function (images) {
+        $('#issueForm .images-list .draft-img').remove();
+
+        const attachableTypes = issueForm.draftAttachableTypes();
+        const result = { count: 0, skipped: 0 };
+
+        images.forEach(function (dataUri) {
+            const matches = String(dataUri).match(/^data:([^;,]*)/);
+            const type = matches ? matches[1].toLowerCase() : '';
+
+            if (attachableTypes.indexOf(type) === -1) {
+                result.skipped++;
+                return;
+            }
+
+            issueForm.addPreparedImage(dataUri, true);
+            result.count++;
+        });
+
+        return result;
+    },
+    // Типы изображений, которые можно приложить к задаче: модель принимает
+    // и те форматы, которые вложением задачи стать не могут.
+    draftAttachableTypes: function () {
+        const types = $('#aiIssueDraftContent').data('attachableTypes');
+        return types ? String(types).split(',') : [];
     },
     closeDraftDialog: function () {
         // Ищем окно через draftDialog(), а не по .modal.show: этот класс
@@ -823,6 +882,37 @@ let issueForm = {
 
         $nameInput.val(name);
         issueFormLabels.update();
+    },
+    /**
+     * Добавляет в форму изображение, которое будет загружено вместе с задачей:
+     * превью и скрытое поле с данными (см. ProjectPage::prepareImages()).
+     *
+     * Изображения черновика отправляются отдельным полем: по нему форма
+     * узнаёт их после восстановления, чтобы пересборка черновика заменяла
+     * прежний набор, а не добавляла к нему новый.
+     * @param {string} dataUri Изображение строкой data URI.
+     * @param {boolean} [fromDraft] Изображение приложено черновиком.
+     */
+    addPreparedImage: function (dataUri, fromDraft) {
+        if (!dataUri) return;
+
+        const img = new Image(150, 100);
+        img.src = dataUri;
+
+        const $li = $('<li class="pasted-img">')
+            .toggleClass('draft-img', !!fromDraft)
+            .append($('<a>').append(img))
+            .append('<a class="remove-btn remove-img" href="javascript:void(0)" aria-label="Убрать изображение">')
+            .append($('<input type="hidden">')
+                .attr('name', fromDraft ? 'draftImg[]' : 'clipboardImg[]')
+                .val(dataUri));
+
+        const $uploadLi = $('#issueForm .images-list input[type=file]').last().closest('li');
+        if ($uploadLi.length) {
+            $uploadLi.before($li);
+        } else {
+            $('#issueForm .images-list').append($li);
+        }
     },
     addImageByUrl: function (imageUrl, autofocus = false) {
         const urlLI = $("#issueForm ul.images-url > li.imgUrlTempl").clone().show();
@@ -1094,7 +1184,11 @@ let issueForm = {
         });
 
         const existingImagesCount = $("#issueForm .images-list .image-item").length;
-        if (newImagesCount + existingImagesCount > window.lpmOptions.issueImgsCount) {
+        // Изображения, приложенные до сохранения (вставка из буфера, черновик),
+        // занимают место наравне с выбранными в поле загрузки.
+        const preparedImagesCount = $("#issueForm .images-list .pasted-img").length;
+        if (newImagesCount + existingImagesCount + preparedImagesCount
+                > window.lpmOptions.issueImgsCount) {
             errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений');
         }
 

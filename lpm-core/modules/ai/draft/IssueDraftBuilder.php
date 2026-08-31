@@ -120,6 +120,28 @@ TEXT;
     }
 
     /**
+     * MIME-типы изображений черновика, которые можно приложить к задаче.
+     *
+     * Модель принимает больше форматов, чем вложения задачи (например webp),
+     * поэтому переносить в форму можно не любое изображение черновика.
+     *
+     * @return string[]
+     */
+    public static function getAttachableMimeTypes()
+    {
+        $types = [];
+
+        foreach (array_keys(LPMImgUpload::getAllowedTypes()) as $imageType) {
+            $mimeType = image_type_to_mime_type($imageType);
+            if (in_array($mimeType, AiImage::getSupportedMimeTypes(), true)) {
+                $types[] = $mimeType;
+            }
+        }
+
+        return array_values(array_unique($types));
+    }
+
+    /**
      * Разбирает изображения, приложенные пользователем.
      *
      * @param array $dataUris Изображения строками data URI.
