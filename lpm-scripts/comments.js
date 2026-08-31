@@ -33,7 +33,8 @@ const comments = {
     // Интервал автообновления незавершенных статусов pipeline/job, мс.
     gitlabStatusPollMs: 10000,
     // Базовый набор классов элемента статуса pipeline/job.
-    gitlabStatusItemClass: 'list-group-item py-1 px-1 mt-2 rounded-2 d-flex align-items-center',
+    // Зазор между плашками задаёт gap-2 на самом списке, а не отступ элемента.
+    gitlabStatusItemClass: 'list-group-item py-1 px-1 rounded-2 d-flex align-items-center',
     // Финальные статусы: по их достижении опрос прекращается.
     finalGitlabStatuses: ['success', 'failed', 'canceled', 'skipped'],
     // Иконки статусов pipeline/job (наборы статусов у них совпадают).
@@ -350,7 +351,8 @@ const comments = {
             const $ul = $('.merge-requests', $item.parent('.formatted-desc'));
 			mrs.forEach(function (url, i, arr) {
 				const $el = $(document.createElement('div'));
-				$ul.append($(document.createElement("li")).addClass('mt-2').append($el));
+				const $li = $(document.createElement("li")).addClass('mt-2').append($el);
+				$ul.append($li);
 
 				$el.append(preloader.getNewIndicatorSmall());
 				srv.attachments.getMRInfo(url, function (res) {
@@ -370,7 +372,9 @@ const comments = {
 								$el.append(' <span class="merged-at small" title="Дата влития">(<i class="fas fa-code-pull-request" ></i> ' + lpm.format.date(mr.mergedAt) + ')</span>');
 							}
 						} else {
-							$el.remove();
+							// Убираем весь пункт, а не его содержимое: пустой li оставил бы
+							// список непустым, и он продолжил бы занимать место в комментарии.
+							$li.remove();
 						}
 					} else {
 						$el.empty().text(typeof res.error != 'undefined' ?
