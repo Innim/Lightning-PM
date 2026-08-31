@@ -4,6 +4,11 @@
 - Изображения, по которым собран черновик задачи, прикладываются к задаче ([#420](https://task.innim.ru/project/lightning-pm/issue/420)).
 
 ### Fixed
+- Вложения удалённой задачи и её комментариев больше не остаются на сервере ([#417](https://task.innim.ru/project/lightning-pm/issue/417)).
+- Снятая при редактировании задачи картинка больше не остаётся на сервере ([#417](https://task.innim.ru/project/lightning-pm/issue/417)).
+- Комментарии удалённых задач больше не показываются в ленте комментариев проекта ([#417](https://task.innim.ru/project/lightning-pm/issue/417)).
+- Плашка состояния сборки в комментарии отбита от текста так же, как блок merge request ([#428](https://task.innim.ru/project/lightning-pm/issue/428)).
+- Вложения в комментарии о влитии ветки больше не прижимаются к нижнему краю фона ([#428](https://task.innim.ru/project/lightning-pm/issue/428)).
 - В форме задачи поле загрузки изображений возвращается, если снять лишнюю картинку ([#420](https://task.innim.ru/project/lightning-pm/issue/420)).
 
 ## 0.30.0 - 2026-08-28
