@@ -2,6 +2,7 @@ $(function ($) {
     document.addEventListener('paste', pasteClipboardImage);
     $('.images-list').on('click', '.pasted-img .remove-img', function () {
         $(this).parent('.pasted-img').remove();
+        issueForm.refreshImageSlots();
     });
     $('#issueForm').on('click', '.remove-upload-input', function (e) {
         e.preventDefault();
@@ -393,8 +394,6 @@ let issueForm = {
         issuePage.resetDescPreview($("#issueForm"));
         issuePage.updateDescCounter($("#issueForm"));
 
-        var imgsCount = 0
-
         // уже добавленные изображения
         let imgUploadLi = $("#issueForm form .images-list > li:has(input[type=file])");
         let imgs = value.imagesInfo;
@@ -410,8 +409,6 @@ let issueForm = {
 
                 imgsList.append(imgLI);
             });
-
-            imgsCount += imgs.length;
         }
         imgsList.append(imgUploadLi);
 
@@ -458,7 +455,6 @@ let issueForm = {
             newImgs.forEach((imgUrl) => {
                 if (imgUrl) {
                     issueForm.addImageByUrl(imgUrl);
-                    imgsCount++;
                 }
             });
         }
@@ -469,15 +465,11 @@ let issueForm = {
             if (!dataUri) return;
 
             issueForm.addPreparedImage(dataUri, fromDraft);
-            imgsCount++;
         });
         addPreparedImages(value.preparedImages, false);
         addPreparedImages(value.preparedDraftImages, true);
 
-        if (imgsCount >= window.lpmOptions.issueImgsCount) {
-            imgUploadLi.hide();
-            $("#issueForm form li a[name=imgByUrl]").hide();
-        }
+        issueForm.refreshImageSlots();
 
         $("#issueForm form input[name=baseIds]").val(value.baseIds?.join(',') ?? '');
         $("#issueForm form input[name=linkedIds]").val(value.linkedIds?.join(',') ?? '');
@@ -843,6 +835,8 @@ let issueForm = {
             result.count++;
         });
 
+        issueForm.refreshImageSlots();
+
         return result;
     },
     // Типы изображений, которые можно приложить к задаче: модель принимает
@@ -913,6 +907,38 @@ let issueForm = {
         } else {
             $('#issueForm .images-list').append($li);
         }
+
+        issueForm.refreshImageSlots();
+    },
+    /**
+     * Показывает или прячет поля добавления изображений: когда к задаче уже
+     * приложено предельное число картинок, добавлять больше некуда.
+     *
+     * Зовётся из всех путей, меняющих набор изображений формы, — и при
+     * добавлении, и при снятии, поэтому поля возвращаются, как только картинок
+     * снова стало меньше предела.
+     */
+    refreshImageSlots: function () {
+        const max = window.lpmOptions.issueImgsCount;
+
+        // Картинки, уже приложенные к форме. Выбранные в поле загрузки файлы
+        // сюда не входят: их число проверяется при отправке (validateIssueForm).
+        const count = $('#issueForm .images-list .image-item').length
+            + $('#issueForm .images-list .pasted-img').length
+            + $('#issueForm ul.images-url > li').not('.imgUrlTempl').length;
+        const hasFreeSlot = !max || count < max;
+
+        $('#issueForm .images-list > li:has(input[type=file])').each(function () {
+            const input = $('input[type=file]', this)[0];
+            const hasFiles = input && input.files && input.files.length > 0;
+
+            // Поле с уже выбранными файлами не прячем: вместе с ним пропали бы
+            // и сам выбор, и кнопка его снять.
+            $(this).toggle(hasFreeSlot || !!hasFiles);
+        });
+
+        // Ссылка добавления по URL лежит рядом со списком, а не внутри него.
+        $('#issueForm a[name=imgByUrl]').toggle(hasFreeSlot);
     },
     addImageByUrl: function (imageUrl, autofocus = false) {
         const urlLI = $("#issueForm ul.images-url > li.imgUrlTempl").clone().show();
@@ -922,7 +948,12 @@ let issueForm = {
             $('input[name="imgUrls[]"]', urlLI).val(imageUrl);
         }
         imgInput.append(urlLI);
-        urlLI.find("a").on('click',  (event) => urlLI.remove());
+        urlLI.find("a").on('click',  (event) => {
+            urlLI.remove();
+            issueForm.refreshImageSlots();
+        });
+
+        issueForm.refreshImageSlots();
 
         if (autofocus) urlLI.find('input').trigger('focus');
     },
@@ -1038,6 +1069,7 @@ let issueForm = {
                 if (val != '') val += ',';
                 val += imageId;
                 $('#issueForm form input[name=removedImages]').val(val);
+                issueForm.refreshImageSlots();
             }
         });
     },
