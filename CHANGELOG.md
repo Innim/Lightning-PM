@@ -10,6 +10,7 @@
 - Плашка состояния сборки в комментарии отбита от текста так же, как блок merge request ([#428](https://task.innim.ru/project/lightning-pm/issue/428)).
 - Вложения в комментарии о влитии ветки больше не прижимаются к нижнему краю фона ([#428](https://task.innim.ru/project/lightning-pm/issue/428)).
 - В форме задачи поле загрузки изображений возвращается, если снять лишнюю картинку ([#420](https://task.innim.ru/project/lightning-pm/issue/420)).
+- У видео с русским именем после сжатия сохраняется имя целиком ([#431](https://task.innim.ru/project/lightning-pm/issue/431)).
 
 ## 0.30.0 - 2026-08-28
 
