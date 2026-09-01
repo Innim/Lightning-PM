@@ -200,12 +200,53 @@ class ProjectsPage extends LPMPage
         $engine = LightningEngine::getInstance();
         $showFreeIssues = $engine->getUser()->pref->showFreeIssuesOnBoard;
 
-        $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList(
-            $engine->getUserId(),
-            $showFreeIssues
-        ));
+        list($stickers, $freeIssueIds) =
+            $this->loadMyScrumBoardStickers($engine->getUserId(), $showFreeIssues);
+
+        $this->addTmplVar('stickers', $stickers);
+        $this->addTmplVar('freeIssueIds', $freeIssueIds);
         $this->addTmplVar('showFreeIssues', $showFreeIssues);
         return $this;
+    }
+
+    /**
+     * Собирает стикеры личной scrum доски.
+     *
+     * Свободные идут в конец списка, поэтому в своей колонке показываются
+     * после задач пользователя. Какие из них свободны - признак этой доски,
+     * а не самих стикеров: на доске проекта та же задача свободной не считается.
+     * Поэтому список свободных возвращается отдельно.
+     * @param  int  $userId         Идентификатор пользователя.
+     * @param  bool $withFreeIssues Добавить ли свободные задачи из проектов пользователя.
+     * @return array Пара: список стикеров и множество `issueId => true` свободных.
+     */
+    private function loadMyScrumBoardStickers($userId, $withFreeIssues)
+    {
+        $stickers = ScrumSticker::loadUserStickersList($userId);
+        $freeIssueIds = [];
+
+        if ($withFreeIssues) {
+            $ownIssueIds = [];
+            foreach ($stickers as $sticker) {
+                $ownIssueIds[$sticker->issueId] = true;
+            }
+
+            foreach (ScrumSticker::loadFreeStickersList($userId) as $sticker) {
+                // Задача без исполнителя, где пользователь тестировщик,
+                // попадает в оба списка - свою запись оставляем
+                if (isset($ownIssueIds[$sticker->issueId])) {
+                    continue;
+                }
+
+                $stickers[] = $sticker;
+                $freeIssueIds[$sticker->issueId] = true;
+            }
+        }
+
+        // Один запрос на участников для всего итогового списка
+        ScrumSticker::preloadParticipants($stickers);
+
+        return [$stickers, $freeIssueIds];
     }
 
     /**

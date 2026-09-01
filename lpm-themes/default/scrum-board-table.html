@@ -4,9 +4,12 @@
     $stickers - список стикеров
     $addProjectName = false - определяет, нужно ли выводить имя проекта в стикере
     $addClearBoard = false - определяет, нужно ли выводить кнопку "Убрать все стикеры с доски"
+    $freeIssueIds = [] - множество `issueId => true` задач, которые показываются свободными;
+                         пусто на досках, где свободных задач не бывает
 */
 if (!isset($addProjectName)) $addProjectName = false;
 if (!isset($addClearBoard)) $addClearBoard = false;
+if (!isset($freeIssueIds)) $freeIssueIds = [];
 ?>
 <div class="scrum-board-actions">
     <a href="#" onclick="scrumBoard.changeSPVisibility(true); return false;" title="Показать SP по стикерам"
@@ -104,7 +107,8 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 $cssClasses = [$color];
                 if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
-                if ($sticker->isFree()) $cssClasses[] = 'free';
+                $isFree = isset($freeIssueIds[$sticker->issueId]);
+                if ($isFree) $cssClasses[] = 'free';
                 $substatus = $issue->getSubstatus();
                 if ($substatus === IssueSubstatus::PASS_TEST) $cssClasses[] = 'pass-test';
                 if ($substatus === IssueSubstatus::UNDER_TESTING) $cssClasses[] = 'under-testing';
@@ -136,7 +140,7 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                         echo lpm_print_table_scrum_board_issue_member($member);
                     endforeach;
                 ?></span>
-                <?php if ($sticker->isFree()): ?>
+                <?php if ($isFree): ?>
                     <span class="sticker-free-mark"><i class="far fa-hand-paper" aria-hidden="true"></i> свободна</span>
                 <?php endif; ?>
                 <?php if ($deadlineLevel !== ''): ?>

@@ -25,10 +25,14 @@ SQL;
      * списка одним запросом, чтобы шаблон стикера не делал по запросу на каждый
      * стикер (getMembers/isMember/isTester/getTesterIds).
      *
+     * {@see loadUserStickersList()} и {@see loadFreeStickersList()} участников
+     * не подгружают: их результаты складывают в один список и вызывают этот
+     * метод один раз на нём, иначе шаблон уйдёт в N+1.
+     *
      * @param  array<ScrumSticker> $list
      * @return array<ScrumSticker> Тот же список.
      */
-    private static function preloadParticipants(array $list)
+    public static function preloadParticipants(array $list)
     {
         $issueIds = [];
         foreach ($list as $sticker) {
@@ -119,45 +123,13 @@ SQL;
     }
     
     /**
-     * Загружает список стикеров для личной доски пользователя.
-     *
-     * Свободные задачи (см. {@see loadFreeStickersList()}) добавляются в конец
-     * списка, поэтому в своей колонке они идут после задач пользователя.
-     * @param  int  $userId          Идентификатор пользователя.
-     * @param  bool $withFreeIssues  Добавить ли свободные задачи из проектов пользователя.
-     * @return ScrumSticker[]
-     */
-    public static function loadAllStickersList($userId, $withFreeIssues = false)
-    {
-        $list = self::loadMyStickersList($userId);
-
-        if ($withFreeIssues) {
-            $ownIssueIds = [];
-            foreach ($list as $sticker) {
-                $ownIssueIds[$sticker->issueId] = true;
-            }
-
-            foreach (self::loadFreeStickersList($userId) as $sticker) {
-                // Задача без исполнителя, где пользователь тестировщик,
-                // попадает в оба списка - свою запись оставляем
-                if (isset($ownIssueIds[$sticker->issueId])) {
-                    continue;
-                }
-
-                $sticker->_isFree = true;
-                $list[] = $sticker;
-            }
-        }
-
-        return self::preloadParticipants($list);
-    }
-
-    /**
      * Загружает стикеры задач, в которых пользователь участвует.
+     *
+     * Участники не подгружаются, см. {@see preloadParticipants()}.
      * @param  int $userId Идентификатор пользователя.
      * @return ScrumSticker[]
      */
-    private static function loadMyStickersList($userId)
+    public static function loadUserStickersList($userId)
     {
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
@@ -179,10 +151,12 @@ SQL;
      *
      * Свободная задача стоит в колонке TO DO неархивного проекта, в котором
      * пользователь состоит участником, и не имеет исполнителя.
+     *
+     * Участники не подгружаются, см. {@see preloadParticipants()}.
      * @param  int $userId Идентификатор пользователя.
      * @return ScrumSticker[]
      */
-    private static function loadFreeStickersList($userId)
+    public static function loadFreeStickersList($userId)
     {
         $todo = ScrumStickerState::TODO;
         $projectType = LPMInstanceTypes::PROJECT;
@@ -411,12 +385,6 @@ SQL;
     // Issue
     private $_issue;
 
-    /**
-     * Задача показана как свободная - её можно взять себе.
-     * @var bool
-     */
-    private $_isFree = false;
-
     public function __construct($id = 0)
     {
         parent::__construct();
@@ -446,15 +414,6 @@ SQL;
             $this->_issue = Issue::load($this->issueId);
         }
         return $this->_issue;
-    }
-
-    /**
-     * Стикер добавлен на доску как свободная задача, а не как задача пользователя.
-     * @return boolean
-     */
-    public function isFree()
-    {
-        return $this->_isFree;
     }
 
     public function isOnBoard()

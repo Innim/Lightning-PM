@@ -2,6 +2,7 @@
 /*
 Требуются:
     $stickers - список стикеров
+    $freeIssueIds - множество `issueId => true` стикеров, показываемых свободными
     $showFreeIssues - показываются ли на доске свободные задачи
 */
 ?>
@@ -33,6 +34,6 @@
         </span>
     </h3>
     <?php
-        lpm_print_table_scrum_board($stickers, true, false);
+        lpm_print_table_scrum_board($stickers, true, false, $freeIssueIds);
     ?>
 </div>
