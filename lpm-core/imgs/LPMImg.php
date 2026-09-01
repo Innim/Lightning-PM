@@ -262,9 +262,16 @@ class LPMImg extends LPMBaseObject
     public function setSrcImg($value)
     {
         $baseSrcPath = self::getSrcImgPath();
-        $subPath = stripos($value, $baseSrcPath) === 0 
-            ? mb_substr($value, mb_strlen($baseSrcPath))
-            : basename($value);
+        if (stripos($value, $baseSrcPath) === 0) {
+            $subPath = mb_substr($value, mb_strlen($baseSrcPath));
+        } else {
+            // Имя отрезается по разделителю вручную: basename() зависит от
+            // локали и в локали C выбрасывает из имени всё до первого
+            // ASCII-символа.
+            $slashPos = strrpos($value, '/');
+            $subPath = false === $slashPos ? $value : substr($value, $slashPos + 1);
+        }
+
         $this->setSrc($value, $subPath);
     }
     
