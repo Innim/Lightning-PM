@@ -33,9 +33,7 @@
 				<div class="collapse navbar-collapse" id="mainNav">
 					<ul class="navbar-nav mx-auto gap-md-4">
 						<?php foreach (lpm_get_main_menu() as $link):?>
-						<li class="nav-item">
-							<a class="nav-link px-0 text-uppercase fw-semibold<?=$link->isCurrent() ? ' active' : '';?>" href="<?=$link->href;?>"><?=$link->label;?></a>
-						</li>
+						<?php lpm_print_main_menu_item($link); ?>
 						<?php endforeach;?>
 					</ul>
 					<?php if (lpm_is_auth()):?>

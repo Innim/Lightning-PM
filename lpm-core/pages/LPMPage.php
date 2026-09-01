@@ -199,6 +199,19 @@ abstract class LPMPage
     {
         return new Link($this->getLabel(), $this->getBaseUrl());
     }
+
+    /**
+     * Выпадающий список, который надо показать в главном меню
+     * рядом с пунктом этой страницы.
+     *
+     * Метод вызывается только при отрисовке меню, поэтому подгружать
+     * данные для списка можно прямо в нём.
+     * @return MenuDropdown|null `null`, если списка у пункта нет.
+     */
+    public function getMenuDropdown()
+    {
+        return null;
+    }
     
     /**
      * url текущей страницы, вместе с подстраницей

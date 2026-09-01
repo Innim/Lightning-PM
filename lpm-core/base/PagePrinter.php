@@ -100,6 +100,15 @@ class PagePrinter
         echo implode('<br>', $errors);
     }
     
+    /**
+     * Печатает пункт главного меню.
+     * @param Link $link Ссылка пункта меню.
+     */
+    public static function mainMenuItem(Link $link)
+    {
+        PageConstructor::includePattern('components/main-menu-item', compact('link'));
+    }
+
     public static function issues($list)
     {
         PageConstructor::includePattern('issues', compact('list'));

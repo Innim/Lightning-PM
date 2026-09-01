@@ -1,0 +1,40 @@
+<?php
+/**
+ * Пункт главного меню.
+ *
+ * Если у пункта есть выпадающий список, он открывается отдельной кнопкой
+ * рядом со ссылкой: сама ссылка должна остаться обычным переходом.
+ *
+ * Требуются:
+ *  $link - Link, ссылка пункта меню
+ */
+$dropdown = $link->dropdown;
+?>
+<?php /* flex-shrink-0: подпись и кнопка списка должны оставаться в одной строке,
+         на перенос (flex-wrap) рассчитан только сам список в свёрнутом меню */ ?>
+<li class="nav-item<?=$dropdown ? ' main-menu-item dropdown d-flex flex-wrap flex-shrink-0 align-items-center' : '';?>">
+	<a class="nav-link px-0 text-uppercase fw-semibold<?=$link->isCurrent() ? ' active' : '';?>"
+		href="<?=lpm_escape($link->href);?>"><?=lpm_escape($link->label);?></a>
+	<?php if ($dropdown):?>
+	<?php /* Подсказка висит на вложенном span, а не на переключателе: Bootstrap держит
+	         на элементе только один компонент, и тултип на элементе с Dropdown залипает */ ?>
+	<a class="nav-link ms-1 px-2" href="#" role="button" id="<?=$dropdown->id;?>"
+		data-bs-toggle="dropdown" aria-expanded="false" aria-label="<?=lpm_escape($dropdown->label);?>">
+		<span title="<?=lpm_escape($dropdown->label);?>"><i class="fa-solid fa-chevron-down fa-2xs" aria-hidden="true"></i></span>
+	</a>
+	<ul class="dropdown-menu" aria-labelledby="<?=$dropdown->id;?>">
+		<?php foreach ($dropdown->items as $item):?>
+		<li>
+			<a class="dropdown-item<?=$item->isCurrent() ? ' active' : '';?>"
+				href="<?=lpm_escape($item->href);?>"<?=$item->isCurrent() ? ' aria-current="page"' : '';?>><?=lpm_escape($item->label);?></a>
+		</li>
+		<?php endforeach;?>
+		<?php if ($dropdown->footer):?>
+		<li><hr class="dropdown-divider"></li>
+		<li>
+			<a class="dropdown-item" href="<?=lpm_escape($dropdown->footer->href);?>"><?=lpm_escape($dropdown->footer->label);?></a>
+		</li>
+		<?php endif;?>
+	</ul>
+	<?php endif;?>
+</li>

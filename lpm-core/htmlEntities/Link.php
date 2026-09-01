@@ -60,6 +60,12 @@ class Link
      * @var bool
      */
     public $isAction = false;
+    /**
+     * Выпадающий список, показываемый рядом с пунктом меню.
+     * `null`, если списка нет.
+     * @var MenuDropdown|null
+     */
+    public $dropdown = null;
 
     private $_reqRole;
     private $_isCurrent = false;

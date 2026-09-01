@@ -499,6 +499,15 @@ function lpm_get_main_menu()
 }
 
 /**
+ * Распечатывает пункт главного меню
+ * @param Link $link Ссылка пункта меню.
+ */
+function lpm_print_main_menu_item($link)
+{
+    PagePrinter::mainMenuItem($link);
+}
+
+/**
  * Возвращает массив ссылок для подменю страницы
  * @return array
  */
