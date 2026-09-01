@@ -56,6 +56,7 @@ class PagesManager
                     && $page->checkUserRole()) {
                 $link = $page->getLink();
                 $link->setCurrent($page->uid === $activeUid);
+                $link->dropdown = $page->getMenuDropdown();
                 array_push($list, $link);
             }
         }

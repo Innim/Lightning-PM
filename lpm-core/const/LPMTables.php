@@ -173,4 +173,8 @@ class LPMTables
      * Занятые слоты фонового сжатия видео.
      */
     const VIDEO_COMPRESS_SLOTS = 'video_compress_slots';
+    /**
+     * Посещения проектов пользователями.
+     */
+    const PROJECT_VISITS = 'project_visits';
 }

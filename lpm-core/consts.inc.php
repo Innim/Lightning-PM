@@ -110,6 +110,12 @@ define('ISSUE_LABELS_DISPLAY_LIMIT', 10);
 define('VISIT_THROTTLE_SECONDS', 5 * 60);
 
 /**
+ * Сколько последних проектов показывать в выпадающем списке главного меню.
+ * @var int
+ */
+define('RECENT_PROJECTS_MENU_COUNT', 7);
+
+/**
  * Предельный размер одного файла лога (в мегабайтах). При достижении
  * файл уходит в архив (см. LOG_ARCHIVE_COUNT), запись продолжается в новый.
  * @var int

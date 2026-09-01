@@ -186,6 +186,8 @@ class ProjectPage extends LPMPage
         }
 
         Project::$currentProject = $this->_project;
+
+        $this->registerVisit($user);
         
         $this->_header = 'Проект "' . $this->_project->name . '"';
         $this->_title  = $this->_project->name;
@@ -263,6 +265,23 @@ class ProjectPage extends LPMPage
         }
         
         return $this;
+    }
+
+    /**
+     * Отмечает, что пользователь открыл страницу проекта.
+     *
+     * Вызывается только при отрисовке страницы: ajax-вызовы идут мимо
+     * страниц, отдельным входом, и посещением не считаются.
+     * @param User $user Текущий пользователь.
+     */
+    private function registerVisit(User $user)
+    {
+        try {
+            ProjectVisit::registerVisit($user->userId, $this->_project->id);
+        } catch (\Exception $e) {
+            // Неудачная отметка не должна мешать открыть проект
+            LPMLog::exception($e, LPMLog::CH_APP, ['projectId' => (int)$this->_project->id]);
+        }
     }
 
     private function initIssues()

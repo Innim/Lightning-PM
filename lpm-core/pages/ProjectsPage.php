@@ -108,6 +108,52 @@ class ProjectsPage extends LPMPage
         return $label;
     }
 
+    /**
+     * Выпадающий список последних проектов пользователя.
+     *
+     * Открытый сейчас проект из списка не убирается, а помечается текущим:
+     * так набор пунктов не меняется при переходах между его страницами.
+     * @return MenuDropdown|null `null`, если показывать нечего.
+     */
+    public function getMenuDropdown()
+    {
+        $engine = LightningEngine::getInstance();
+        if (!$engine->isAuth()) {
+            return null;
+        }
+
+        try {
+            $projects = ProjectVisit::loadRecentProjects(
+                $engine->getUser(),
+                RECENT_PROJECTS_MENU_COUNT
+            );
+        } catch (\Exception $e) {
+            // Меню рисуется на каждой странице - из-за недоступного списка
+            // недавних проектов не должно падать всё приложение
+            LPMLog::exception($e, LPMLog::CH_APP);
+            return null;
+        }
+
+        if (empty($projects)) {
+            return null;
+        }
+
+        $currentProject = Project::$currentProject;
+        $items = [];
+        foreach ($projects as $project) {
+            $item = new Link($project->name, $project->getUrl());
+            $item->setCurrent($currentProject && $currentProject->id == $project->id);
+            $items[] = $item;
+        }
+
+        return new MenuDropdown(
+            'recentProjectsMenu',
+            'Последние проекты',
+            $items,
+            new Link('Все проекты', $this->getBaseUrl())
+        );
+    }
+
     private function projectsList($isArchive): ProjectsPage {
         $list = Project::getAvailList($isArchive);
         $this->addTmplVar('list', $list);
