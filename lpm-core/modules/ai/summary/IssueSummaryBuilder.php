@@ -62,11 +62,11 @@ class IssueSummaryBuilder
      * и завершена ли она.
      */
     const SUBSTATUS_NOTES = [
-        IssueSubstatus::BACKLOG => 'задача в работе, но не на доске — лежит в бэклоге проекта',
+        IssueSubstatus::BACKLOG => 'задача не на доске, лежит в бэклоге проекта; не завершена',
         IssueSubstatus::TODO => 'задача на доске, к работе ещё не приступили',
         IssueSubstatus::IN_PROGRESS => 'задача на доске, работа идёт',
         IssueSubstatus::UNDER_TESTING => 'задача в тесте, её проверяют прямо сейчас',
-        IssueSubstatus::PASS_TEST => 'задача в тесте, тестирование пройдено, но задача ещё не завершена',
+        IssueSubstatus::PASS_TEST => 'задача в тесте, проверку прошла, но ещё не завершена',
     ];
 
     /** Системная инструкция для модели */
