@@ -152,6 +152,80 @@ const comments = {
 		comments.invalidateLinks();
 		comments.initFileInputs();
 		comments.initAddForm();
+		comments.initEditForm();
+	},
+	initEditForm: function () {
+		$(document).on('click', '.edit-comment', function () {
+			comments.showEditDialog($(this));
+		});
+	},
+	// Открывает окно правки текста комментария. Разметка окна собирается здесь,
+	// а не лежит скрытым шаблоном в странице, поэтому её селекторы однозначны:
+	// второй копии этих элементов в DOM нет.
+	showEditDialog: function ($link) {
+		const commentId = $link.data('commentId');
+		const $item = $link.closest('.comments-list-item');
+		// Исходная разметка комментария, а не отрисованный HTML.
+		const text = $link.attr('data-text') || '';
+
+		lpm.dialog.show({
+			title: 'Редактирование комментария',
+			content: '<div class="comment-edit-form">'
+				+ '<div class="alert alert-danger d-none comment-edit-error" role="alert"></div>'
+				+ '<textarea class="form-control comment-edit-text" rows="15"></textarea>'
+				+ '</div>',
+			primaryBtn: 'Сохранить',
+			secondaryBtn: 'Отмена',
+			onPrimary: function () {
+				comments.saveEditedComment(commentId, $item);
+				// Окно закрывается только после успешного сохранения.
+				return false;
+			},
+		});
+
+		const $form = $('.comment-edit-form');
+		// lpm.dialog не умеет задавать размер окна, а в узком чек-лист не читается.
+		$form.closest('.modal-dialog').addClass('modal-lg');
+		$('.comment-edit-text', $form).val(text);
+	},
+	saveEditedComment: function (commentId, $item) {
+		const $form = $('.comment-edit-form');
+		const $btn = $form.closest('.modal-content').find('.modal-footer .btn-primary');
+		const $error = $('.comment-edit-error', $form);
+		const text = $('.comment-edit-text', $form).val().trim();
+
+		if (!text) {
+			// Ошибки показываем внутри окна: srv.err() открыл бы второй диалог.
+			$error.text('Комментарий не может быть пустым').removeClass('d-none');
+			return;
+		}
+
+		$error.addClass('d-none').text('');
+		$btn.prop('disabled', true);
+
+		srv.issue.editComment(commentId, text, function (res) {
+			if (!res.success) {
+				$btn.prop('disabled', false);
+				$error.text(res.error || 'Не удалось сохранить комментарий').removeClass('d-none');
+				return;
+			}
+
+			$item.html(res.html);
+			comments.updateAttachments($('.comment-text', $item));
+			attachments.update($('.block-with-attachments', $item));
+			initIssueLinkPreviews($item);
+			highlightCodeBlocks($item);
+
+			// Блок связанных задач есть только на странице задачи.
+			if (res.linkedHtml && typeof issuePage !== 'undefined') {
+				issuePage.updateLinkedIssues(res.linkedHtml);
+			}
+
+			const modalEl = $form.closest('.modal')[0];
+			if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+
+			lpm.toast.show('Комментарий изменён');
+		});
 	},
 	initFileInputs: function () {
 		$(document).on('change', '.comment-files-list input[name="commentFiles[]"]', function () {

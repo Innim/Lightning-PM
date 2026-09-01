@@ -313,6 +313,75 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Сохраняет новый текст комментария с чек-листом тестирования.
+     *
+     * Редактировать можно только чек-лист и только его автору либо
+     * модератору ({@see Comment::checkEditPermit()}). Прежний текст остаётся
+     * в истории правок.
+     *
+     * @param int $commentId Идентификатор комментария.
+     * @param string $text Новый текст чек-листа.
+     * @return {
+     *     object comment    Обновлённый комментарий.
+     *     string html       HTML обновлённого комментария.
+     *     string linkedHtml HTML блока связанных задач, если связи изменились.
+     * }
+     */
+    public function editComment($commentId, $text)
+    {
+        $commentId = (int)$commentId;
+
+        try {
+            $comment = Comment::load($commentId);
+            if (!$comment || $comment->instanceType != LPMInstanceTypes::ISSUE) {
+                return $this->error('Комментария не существует');
+            }
+
+            $issue = Issue::load($comment->instanceId);
+            if (!$issue) {
+                return $this->error('Нет такой задачи');
+            }
+
+            // Комментарий приходит по глобальному идентификатору, поэтому
+            // права на проект надо проверить здесь
+            $this->getProjectRequireReadPermission($issue->projectId);
+
+            if (!$comment->checkEditPermit($this->getUser())) {
+                return $this->error('У Вас нет прав на редактирование этого комментария');
+            }
+
+            $text = Comment::normalizeText($text);
+
+            Comment::updateText($comment, $text, $this->getUserId());
+
+            UserLogEntry::create(
+                $this->getUserId(),
+                DateTimeUtils::$currentDate,
+                UserLogEntryType::EDIT_COMMENT,
+                $comment->id
+            );
+
+            // Задачи, упомянутые правкой, связываем так же,
+            // как при публикации комментария
+            $addedLinks = IssueLinked::syncFromText($issue, $text, $this->getUserId());
+
+            $comment->issue = $issue;
+            $this->setupCommentAnswer($comment);
+
+            if ($addedLinks > 0) {
+                $linkedHtml = $this->getHtml(function () use ($issue) {
+                    PagePrinter::issueLinked(Issue::load($issue->getID()));
+                });
+                $this->add2Answer('linkedHtml', $linkedHtml);
+            }
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
+
+    /**
      * Возвращает текст комментария для предпросмотра.
      *
      * Комментарий не сохраняется в БД.
