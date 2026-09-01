@@ -471,7 +471,8 @@ $aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
              innerHTML, поэтому атрибуты берутся с самого шаблона. */ ?>
     <div id="aiIssueDraftContent" style="display:none"
         data-max-images="<?=IssueDraftBuilder::MAX_IMAGES;?>"
-        data-max-total-size-mb="<?=IssueDraftBuilder::MAX_IMAGES_TOTAL_SIZE_MB;?>">
+        data-max-total-size-mb="<?=IssueDraftBuilder::MAX_IMAGES_TOTAL_SIZE_MB;?>"
+        data-attachable-types="<?=implode(',', IssueDraftBuilder::getAttachableMimeTypes());?>">
         <div class="ai-issue-draft-body">
             <div class="ai-issue-draft-error alert alert-danger py-2" style="display:none" role="alert"></div>
 
@@ -490,6 +491,7 @@ $aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
                     До <?=IssueDraftBuilder::MAX_IMAGES;?> изображений, суммарно
                     до <?=IssueDraftBuilder::MAX_IMAGES_TOTAL_SIZE_MB;?> Мб.
                     Скриншот можно вставить из буфера обмена.
+                    Изображения, по которым собран черновик, прикладываются к задаче.
                 </div>
                 <ul class="ai-issue-draft-previews list-unstyled d-flex flex-wrap gap-2 mt-2 mb-0"></ul>
             </div>

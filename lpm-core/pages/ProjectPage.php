@@ -25,6 +25,24 @@ class ProjectPage extends LPMPage
         return array_filter(array_map('intval', explode(',', (string)$fileIdsStr)));
     }
 
+    /**
+     * Возвращает изображения, приложенные к форме до сохранения задачи.
+     * @param  string $field Имя поля формы.
+     * @return array Изображения строками base64.
+     */
+    private static function getPostedImages($field)
+    {
+        if (empty($_POST[$field]) || !is_array($_POST[$field])) {
+            return [];
+        }
+
+        // Форма присылает изображения целыми data URI,
+        // а LPMImgUpload::prepareImages() принимает только base64.
+        return array_map(function ($value) {
+            return preg_replace('~^data:[^,]*,~', '', (string)$value);
+        }, $_POST[$field]);
+    }
+
     const UID = 'project';
     const PUID_MEMBERS = 'members';
     const PUID_ISSUES = 'issues';
@@ -623,7 +641,7 @@ class ProjectPage extends LPMPage
         $_POST['name'] = trim(str_replace('%', '%%', $_POST['name']));
 
         foreach ($_POST as $key => $value) {
-            if (!in_array($key, ['members', 'clipboardImg', 'imgUrls', 'testers', 'membersSp', 'masters'])) {
+            if (!in_array($key, ['members', 'clipboardImg', 'draftImg', 'imgUrls', 'testers', 'membersSp', 'masters'])) {
                 $_POST[$key] = $db->real_escape_string($value);
             }
         }
@@ -765,7 +783,7 @@ class ProjectPage extends LPMPage
 
         // удаление старых изображений
         if (!empty($_POST["removedImages"])) {
-            $this->removeImagesFromIssue($db, $issueId, $_POST["removedImages"]);
+            $this->removeImagesFromIssue($issueId, $_POST["removedImages"]);
         }
 
         // загружаем изображения
@@ -1019,8 +1037,9 @@ class ProjectPage extends LPMPage
     }
 
     /**
-     * Получает во временные файлы изображения, вставленные из буфера обмена
-     * и добавленные по URL, и проверяет их.
+     * Получает во временные файлы изображения, приложенные к форме до
+     * сохранения (вставленные из буфера обмена или перенесённые из черновика
+     * задачи) и добавленные по URL, и проверяет их.
      * Все обнаруженные ошибки добавляются к ошибкам страницы.
      * @return bool false, если хотя бы одно изображение не может быть загружено.
      */
@@ -1028,12 +1047,14 @@ class ProjectPage extends LPMPage
     {
         $errors = [];
 
-        $clipboard = isset($_POST['clipboardImg']) && is_array($_POST['clipboardImg'])
-            ? $_POST['clipboardImg'] : [];
+        $images = array_merge(
+            self::getPostedImages('clipboardImg'),
+            self::getPostedImages('draftImg')
+        );
         $urls = isset($_POST['imgUrls']) && is_array($_POST['imgUrls'])
             ? $_POST['imgUrls'] : [];
 
-        $this->_preparedImages = LPMImgUpload::prepareImages($clipboard, $urls, $errors);
+        $this->_preparedImages = LPMImgUpload::prepareImages($images, $urls, $errors);
 
         foreach ($errors as $error) {
             $this->addError($error);
@@ -1214,7 +1235,7 @@ class ProjectPage extends LPMPage
         return true;
     }
 
-    private function removeImagesFromIssue(DBConnect $db, $issueId, $imagesIdsStr) 
+    private function removeImagesFromIssue($issueId, $imagesIdsStr)
     {
         $delImg = explode(',', $imagesIdsStr);
         $imgIds = [];
@@ -1225,15 +1246,7 @@ class ProjectPage extends LPMPage
             }
         }
 
-        if (!empty($imgIds)) {
-            $sql = "UPDATE `%s` ".
-                        "SET `deleted`='1' ".
-                        "WHERE `imgId` IN (".implode(',', $imgIds).") ".
-                            "AND `deleted` = '0' ".
-                            "AND `itemId`='".$issueId."' ".
-                            "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
-            $db->queryt($sql, LPMTables::IMAGES);
-        }
+        LPMImg::removeByIds(LPMInstanceTypes::ISSUE, $issueId, $imgIds);
     }
 
     private function removeFilesFromIssue($issueId, $filesIdsStr)

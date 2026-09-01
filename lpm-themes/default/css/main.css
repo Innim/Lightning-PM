@@ -495,13 +495,35 @@ a.add-me-to-issue .plus-icon {
     margin: 0;
     padding: 0;
 }
-.comments-list-item ul.merge-requests {
+/* Компактная карточка автокомментария: вертикальные отступы задают margin
+   абзацев текста, а не padding тела карточки. Нижний padding возвращается,
+   когда в комментарии есть вложения: они рисуются последними и иначе
+   упираются в край фона. Проверяется наполнение, а не наличие контейнеров:
+   списки MR/pipeline/job есть в разметке всегда и заполняются из JS. */
+.comments-list-item .auto-comment-body {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+.comments-list-item .auto-comment-body:has(.attachments ul:not(:empty), .comment-files > *) {
+	padding-bottom: 1rem;
+}
+
+/* Списки вложений комментария (MR, pipeline, job) всегда присутствуют в
+   разметке и заполняются из JS, поэтому пустой список скрыт. Отступ сверху
+   задаёт сам список: pipeline/job выводятся в .list-group, а во flex-контейнере
+   margin элементов не схлопывается с margin списка. */
+.comments-list-item ul.merge-requests,
+.comments-list-item ul.pipelines,
+.comments-list-item ul.jobs {
 	margin: 10px 0 0;
 	padding: 0;
 	list-style: none;
 }
 
-.comments-list-item ul.merge-requests:empty {
+.comments-list-item ul.merge-requests:empty,
+.comments-list-item ul.pipelines:empty,
+.comments-list-item ul.jobs:empty {
    display: none;
 }
 
