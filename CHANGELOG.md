@@ -4,6 +4,7 @@
 - Изображения, по которым собран черновик задачи, прикладываются к задаче ([#420](https://task.innim.ru/project/lightning-pm/issue/420)).
 
 ### Fixed
+- Повторные Enter или клики по «Сохранить» в форме задачи больше не создают дублей ([#425](https://task.innim.ru/project/lightning-pm/issue/425)).
 - Вложения удалённой задачи и её комментариев больше не остаются на сервере ([#417](https://task.innim.ru/project/lightning-pm/issue/417)).
 - Снятая при редактировании задачи картинка больше не остаётся на сервере ([#417](https://task.innim.ru/project/lightning-pm/issue/417)).
 - Комментарии удалённых задач больше не показываются в ленте комментариев проекта ([#417](https://task.innim.ru/project/lightning-pm/issue/417)).
