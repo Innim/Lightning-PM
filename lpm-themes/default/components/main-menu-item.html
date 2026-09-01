@@ -22,24 +22,19 @@ $dropdown = $link->dropdown;
 		data-bs-toggle="dropdown" aria-expanded="false" aria-label="<?=lpm_escape($dropdown->label);?>">
 		<span title="<?=lpm_escape($dropdown->label);?>"><i class="fa-solid fa-chevron-down fa-2xs" aria-hidden="true"></i></span>
 	</a>
+	<?php /* aria-current у текущего пункта не только для скринридера - по нему же
+	         рисуется полоска-отметка, см. bootstrap-reset.css */ ?>
 	<ul class="dropdown-menu" aria-labelledby="<?=$dropdown->id;?>">
-		<?php /* Место под отметку резервируется у всех пунктов (invisible, а не отсутствие
-		         иконки), иначе названия съезжают по горизонтали при смене текущего пункта */ ?>
 		<?php foreach ($dropdown->items as $item):?>
 		<li>
-			<a class="dropdown-item d-flex align-items-center gap-2" href="<?=lpm_escape($item->href);?>"<?=$item->isCurrent() ? ' aria-current="page"' : '';?>>
-				<i class="fa-solid fa-check fa-fw<?=$item->isCurrent() ? '' : ' invisible';?>" aria-hidden="true"></i>
-				<span><?=lpm_escape($item->label);?></span>
-			</a>
+			<a class="dropdown-item"
+				href="<?=lpm_escape($item->href);?>"<?=$item->isCurrent() ? ' aria-current="page"' : '';?>><?=lpm_escape($item->label);?></a>
 		</li>
 		<?php endforeach;?>
 		<?php if ($dropdown->footer):?>
 		<li><hr class="dropdown-divider"></li>
 		<li>
-			<a class="dropdown-item d-flex align-items-center gap-2" href="<?=lpm_escape($dropdown->footer->href);?>">
-				<i class="fa-solid fa-check fa-fw invisible" aria-hidden="true"></i>
-				<span><?=lpm_escape($dropdown->footer->label);?></span>
-			</a>
+			<a class="dropdown-item" href="<?=lpm_escape($dropdown->footer->href);?>"><?=lpm_escape($dropdown->footer->label);?></a>
 		</li>
 		<?php endif;?>
 	</ul>

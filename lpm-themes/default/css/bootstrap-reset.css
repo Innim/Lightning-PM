@@ -51,3 +51,22 @@ a:hover {
 .main-menu-item > .dropdown-menu {
     flex-basis: 100%;
 }
+
+/* Текущий пункт выпадающего списка в главном меню отмечается узкой полоской
+   у левого края. Полоска - псевдоэлемент поверх внутреннего отступа пункта:
+   утилиты Bootstrap так не умеют, а border или padding сдвинули бы название
+   относительно остальных пунктов. Признаком служит aria-current, чтобы
+   отметка на экране не могла разойтись с той, что читает скринридер. */
+.main-menu-item .dropdown-item[aria-current] {
+    position: relative;
+}
+
+.main-menu-item .dropdown-item[aria-current]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background-color: var(--bs-primary);
+}
