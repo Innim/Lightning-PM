@@ -97,6 +97,11 @@ class LPMTables
      */
     const COMMENTS = 'comments';
     /**
+     * История слепков текста комментариев.
+     * @var string
+     */
+    const COMMENT_TEXT_SNAPSHOTS = 'comment_text_snapshots';
+    /**
      * Данные авторизации
      * @var string
      */
