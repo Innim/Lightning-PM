@@ -439,10 +439,19 @@ class PagePrinter
      * @param $stickers
      * @param bool $addProjectName
      * @param bool $addClearBoard
+     * @param array $freeIssueIds Множество `issueId => true` задач, которые показываются
+     *                            свободными; пусто там, где свободных задач не бывает.
      */
-    public static function tableScrumBoard($stickers, $addProjectName = false, $addClearBoard = false)
-    {
-        PageConstructor::includePattern('scrum-board-table', compact('stickers', 'addProjectName', 'addClearBoard'));
+    public static function tableScrumBoard(
+        $stickers,
+        $addProjectName = false,
+        $addClearBoard = false,
+        $freeIssueIds = []
+    ) {
+        PageConstructor::includePattern(
+            'scrum-board-table',
+            compact('stickers', 'addProjectName', 'addClearBoard', 'freeIssueIds')
+        );
     }
     
     /**

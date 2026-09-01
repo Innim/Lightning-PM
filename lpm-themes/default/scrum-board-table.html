@@ -4,9 +4,12 @@
     $stickers - список стикеров
     $addProjectName = false - определяет, нужно ли выводить имя проекта в стикере
     $addClearBoard = false - определяет, нужно ли выводить кнопку "Убрать все стикеры с доски"
+    $freeIssueIds = [] - множество `issueId => true` задач, которые показываются свободными;
+                         пусто на досках, где свободных задач не бывает
 */
 if (!isset($addProjectName)) $addProjectName = false;
 if (!isset($addClearBoard)) $addClearBoard = false;
+if (!isset($freeIssueIds)) $freeIssueIds = [];
 ?>
 <div class="scrum-board-actions">
     <a href="#" onclick="scrumBoard.changeSPVisibility(true); return false;" title="Показать SP по стикерам"
@@ -23,16 +26,36 @@ if (!isset($addClearBoard)) $addClearBoard = false;
     <tr>
         <th class="col-todo">TO DO<span class="scrum-col-info">(<span class="scrum-col-count"><span
                 class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
-                class="value"></span> SP</span>)</span></th>
+                class="value"></span> SP</span>)</span><span
+                class="scrum-col-free" style="display:none;"
+                title="Свободные задачи — можно взять"> + <i class="far fa-hand-paper"
+                aria-hidden="true"></i> <span class="scrum-col-free-count"><span
+                class="value"></span> шт</span><span class="scrum-col-free-sp">, <span
+                class="value"></span> SP</span></span></th>
         <th class="col-in_progress">В работе<span class="scrum-col-info">(<span class="scrum-col-count"><span
                 class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
-                class="value"></span> SP</span>)</span></th>
+                class="value"></span> SP</span>)</span><span
+                class="scrum-col-free" style="display:none;"
+                title="Свободные задачи — можно взять"> + <i class="far fa-hand-paper"
+                aria-hidden="true"></i> <span class="scrum-col-free-count"><span
+                class="value"></span> шт</span><span class="scrum-col-free-sp">, <span
+                class="value"></span> SP</span></span></th>
         <th class="col-testing">Тестируется<span class="scrum-col-info">(<span class="scrum-col-count"><span
                 class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
-                class="value"></span> SP</span>)</span></th>
+                class="value"></span> SP</span>)</span><span
+                class="scrum-col-free" style="display:none;"
+                title="Свободные задачи — можно взять"> + <i class="far fa-hand-paper"
+                aria-hidden="true"></i> <span class="scrum-col-free-count"><span
+                class="value"></span> шт</span><span class="scrum-col-free-sp">, <span
+                class="value"></span> SP</span></span></th>
         <th class="col-done">Готово<span class="scrum-col-info">(<span class="scrum-col-count"><span
                 class="value"></span> шт</span><span class="scrum-col-sp" style="display:none;">, <span
-                class="value"></span> SP</span>)</span></th>
+                class="value"></span> SP</span>)</span><span
+                class="scrum-col-free" style="display:none;"
+                title="Свободные задачи — можно взять"> + <i class="far fa-hand-paper"
+                aria-hidden="true"></i> <span class="scrum-col-free-count"><span
+                class="value"></span> шт</span><span class="scrum-col-free-sp">, <span
+                class="value"></span> SP</span></span></th>
     </tr>
     </thead>
     <tbody>
@@ -84,6 +107,8 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                 $cssClasses = [$color];
                 if ($issue->isTester($user->userId)) $cssClasses[] = 'tester';
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
+                $isFree = isset($freeIssueIds[$sticker->issueId]);
+                if ($isFree) $cssClasses[] = 'free';
                 $substatus = $issue->getSubstatus();
                 if ($substatus === IssueSubstatus::PASS_TEST) $cssClasses[] = 'pass-test';
                 if ($substatus === IssueSubstatus::UNDER_TESTING) $cssClasses[] = 'under-testing';
@@ -115,6 +140,9 @@ if (!isset($addClearBoard)) $addClearBoard = false;
                         echo lpm_print_table_scrum_board_issue_member($member);
                     endforeach;
                 ?></span>
+                <?php if ($isFree): ?>
+                    <span class="sticker-free-mark"><i class="far fa-hand-paper" aria-hidden="true"></i> свободна</span>
+                <?php endif; ?>
                 <?php if ($deadlineLevel !== ''): ?>
                     <span class="sticker-issue-deadline deadline-<?=$deadlineLevel;?>"
                           title="<?=IssueViewHelper::deadlineHint($issue);?>"><i

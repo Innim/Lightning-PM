@@ -1138,7 +1138,8 @@ blockquote > p {
 .scrum-board-header {
 	float: left;
 }
-#scrumBoard h3 .scrum-board-info {
+#scrumBoard h3 .scrum-board-info,
+#scrumBoard h3 .scrum-board-free {
 	font-weight: normal;
 	font-size: 0.8em;
 } 
@@ -1169,7 +1170,8 @@ blockquote > p {
     vertical-align: top;
     text-align: left;
 }
-.scrum-board-table th .scrum-col-info {
+.scrum-board-table th .scrum-col-info,
+.scrum-board-table th .scrum-col-free {
 	margin-left: 5px;
 	font-weight: normal;
     font-size: 0.9em;
@@ -1295,6 +1297,22 @@ blockquote > p {
 }
 .scrum-board-sticker.tester {
 	border: solid 2px #EE82EE;
+}
+/* Класс `free` и метку `sticker-free-mark` снимает scrum-board.js,
+   когда задачу берут себе */
+.scrum-board-sticker.free {
+	border: dashed 2px #6c757d;
+}
+.scrum-board-sticker .sticker-free-mark {
+	display: block;
+	margin-top: 3px;
+	font-size: 9px;
+	color: #495057;
+}
+/* `sticker-control-remove` лежит вне `.control-line`, поэтому селектора два */
+.scrum-board-sticker.free a.sticker-control-remove,
+.scrum-board-sticker.free .control-line a:not(.sticker-control-take) {
+	display: none;
 }
 .scrum-board-sticker a {
 	text-decoration: none;
