@@ -4,6 +4,7 @@
     LPMOptions $options - настройки приложения
 */
 $cookieExpireDays = (int)($options->cookieExpire / 86400);
+$issueTextMaxLen = ISSUE_GUIDELINES_MAX_LENGTH;
 ?>
 <div class="mx-auto container container-main px-4 py-4">
   <h1>Настройки</h1>
@@ -60,6 +61,32 @@ $cookieExpireDays = (int)($options->cookieExpire / 86400);
         <div class="mb-0">
           <label for="emailSubscript" class="form-label">Подпись писем</label>
           <textarea class="form-control" id="emailSubscript" name="emailSubscript" rows="3"><?=htmlspecialchars($options->emailSubscript);?></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">Оформление задач</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="issueDescTemplate" class="form-label">Шаблон описания задачи</label>
+          <textarea class="form-control font-monospace" id="issueDescTemplate" name="issueDescTemplate"
+                    rows="6" maxlength="<?=$issueTextMaxLen;?>"
+                    aria-describedby="issueDescTemplateHelp"><?=htmlspecialchars($options->issueDescTemplate);?></textarea>
+          <div id="issueDescTemplateHelp" class="form-text">
+            Пустой скелет описания, который подставляет кнопка «Шаблон описания» в форме задачи.
+            Если оставить поле пустым, используется шаблон по умолчанию.
+          </div>
+        </div>
+        <div class="mb-0">
+          <label for="issueGuidelines" class="form-label">Правила оформления задачи</label>
+          <textarea class="form-control" id="issueGuidelines" name="issueGuidelines"
+                    rows="10" maxlength="<?=$issueTextMaxLen;?>"
+                    aria-describedby="issueGuidelinesHelp"><?=htmlspecialchars($options->issueGuidelines);?></textarea>
+          <div id="issueGuidelinesHelp" class="form-text">
+            Текстовые правила, которым следуют черновик задачи от ИИ и внешние клиенты API.
+            Если оставить поле пустым, используются правила по умолчанию.
+          </div>
         </div>
       </div>
     </div>

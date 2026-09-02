@@ -78,6 +78,14 @@ Pausing for plan approval on a non-trivial task is the one expected exception to
 
 Changing the issue's status or assignee/membership is **out of scope**. The board endpoints (`PUT` / `DELETE /api/v1/issues/{issueId}/board`) do move a ticket and change its status along with it, so this is a restriction of this skill, not a gap in the API: where a ticket sits on the board is the user's call on their own board, not a side effect of an agent picking up the issue. Do not move the ticket "in progress", and do not assign it or otherwise mutate issue metadata by guessing endpoints or scraping HTML — leave those actions to the user.
 
+## Creating a New Issue
+
+When the task is to file a new issue rather than implement an existing one, fetch the project's issue guidelines first with `GET /api/v1/projects/{projectId}/issue-guidelines`, and write the issue to what it returns — the description skeleton, the free-form writing rules, and the naming requirements.
+
+How an issue is worded and structured is a convention of the team that owns the tracker, so it is served by the instance and is never described here. Do not carry a remembered format over from another project, and do not invent section headings of your own.
+
+Older instances have no such endpoint and answer `404`. Treat that as "no published convention": write a clear, plainly structured description, name the issue `[label] Title`, and say nothing about the missing endpoint unless the user asks.
+
 ## Authentication
 
 Send either:

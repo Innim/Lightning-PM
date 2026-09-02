@@ -57,7 +57,13 @@ class IssueDraftBuilder
     const TYPE_BUG = 'bug';
     const TYPE_SUPPORT = 'support';
 
-    /** Системная инструкция для модели */
+    /**
+     * Системная инструкция для модели.
+     *
+     * Формат задачи здесь не описан: он берётся из правил оформления
+     * (см. {@see LPMOptions::getIssueGuidelines()}), которые дописываются
+     * к инструкции в {@see self::buildSystemInstruction()}.
+     */
     const SYSTEM_INSTRUCTION = <<<TEXT
 Ты помогаешь завести задачу в трекере команды разработки.
 Пользователь описывает проблему или пожелание своими словами и может
@@ -66,23 +72,14 @@ class IssueDraftBuilder
 
 Правила:
 - отвечай на русском языке;
-- опирайся только на переданные текст и изображения, не додумывай
-  функциональность, названия экранов, кнопок, версии и окружение;
-- название — одна короткая строка по сути проблемы, без точки в конце,
-  без префиксов вроде «Баг:» и без номера задачи;
-- тип выбирай так: bug — что-то работает не так, как должно;
-  support — вопрос, консультация, разовое действие силами команды;
-  develop — всё остальное, то есть новая функциональность и доработки;
-- описание оформляй в разметке Markdown разделами «### Проблема» и
-  «### Что сделать»; в первом — суть и последствия, во втором — что
-  требуется от команды;
-- шаги воспроизведения заполняй только для ошибки и только если из
-  переданных данных понятно, как её повторить; каждый шаг — одно действие;
+- опирайся только на переданные текст и изображения;
 - со скриншота снимай конкретику: точный текст ошибки, коды, названия
   экранов и полей — переноси их в описание дословно;
-- не пересказывай очевидное с картинки и не описывай её оформление;
-- чего в данных нет, того не пиши: неполный черновик лучше выдуманного.
+- не пересказывай очевидное с картинки и не описывай её оформление.
 TEXT;
+
+    /** Заголовок блока правил оформления в системной инструкции */
+    const GUIDELINES_HEADER = 'Правила оформления задачи, принятые в команде:';
 
     /**
      * Ошибка, текст которой показывается пользователю.
@@ -189,8 +186,7 @@ TEXT;
      * (см. {@see self::parseImages()}).
      * @return array Результат генерации:
      * <code>[
-     *     'draft' => ['name' => string, 'type' => int, 'desc' => string,
-     *                 'steps' => string[]],
+     *     'draft' => ['name' => string, 'type' => int, 'desc' => string],
      *     'model' => string,
      *     'usage' => AiUsage|null
      * ]</code>
@@ -207,7 +203,7 @@ TEXT;
         $prompt = self::buildPrompt($project, $text, count($images));
 
         $request = (new AiRequest())
-            ->setSystemInstruction(self::SYSTEM_INSTRUCTION)
+            ->setSystemInstruction(self::buildSystemInstruction())
             ->addUserMessage($prompt, $images)
             ->setTemperature(self::TEMPERATURE)
             ->setMaxOutputTokens(self::MAX_OUTPUT_TOKENS)
@@ -237,7 +233,10 @@ TEXT;
     }
 
     /**
-     * Собирает из черновика текст описания задачи в разметке Markdown.
+     * Возвращает из черновика текст описания задачи в разметке Markdown.
+     *
+     * Разделы описания задаёт не этот класс, а правила оформления
+     * ({@see LPMOptions::getIssueGuidelines()}), которым следует модель.
      *
      * Это черновик: пользователь правит его перед сохранением задачи.
      *
@@ -246,21 +245,22 @@ TEXT;
      */
     public static function toDescText(array $draft)
     {
-        $desc = $draft['desc'];
+        return mb_substr($draft['desc'], 0, Issue::DESC_MAX_LEN);
+    }
 
-        if (!empty($draft['steps'])) {
-            $lines = ['### Шаги воспроизведения', ''];
-
-            $number = 0;
-            foreach ($draft['steps'] as $step) {
-                $number++;
-                $lines[] = $number . '. ' . $step;
-            }
-
-            $desc = ($desc === '' ? '' : $desc . "\n\n") . implode("\n", $lines);
+    /**
+     * Собирает системную инструкцию: общие правила черновика и принятые
+     * в команде правила оформления задачи.
+     * @return string
+     */
+    private static function buildSystemInstruction()
+    {
+        $guidelines = trim(LPMOptions::getIssueGuidelines());
+        if ($guidelines === '') {
+            return self::SYSTEM_INSTRUCTION;
         }
 
-        return mb_substr($desc, 0, Issue::DESC_MAX_LEN);
+        return self::SYSTEM_INSTRUCTION . "\n\n" . self::GUIDELINES_HEADER . "\n" . $guidelines;
     }
 
     /**
@@ -283,17 +283,11 @@ TEXT;
                 ],
                 'desc' => [
                     'type' => 'string',
-                    'description' => 'Описание задачи в разметке Markdown'
-                        . ' разделами «### Проблема» и «### Что сделать»',
-                ],
-                'steps' => [
-                    'type' => 'array',
-                    'description' => 'Шаги воспроизведения ошибки, по одному действию в шаге;'
-                        . ' пустой список, если задача не об ошибке или шаги неизвестны',
-                    'items' => ['type' => 'string'],
+                    'description' => 'Описание задачи в разметке Markdown,'
+                        . ' оформленное по правилам из инструкции',
                 ],
             ],
-            'required' => ['name', 'type', 'desc', 'steps'],
+            'required' => ['name', 'type', 'desc'],
         ];
     }
 
@@ -316,7 +310,6 @@ TEXT;
             'name' => mb_substr($name, 0, self::NAME_MAX_LENGTH),
             'type' => self::parseType(isset($data['type']) ? $data['type'] : ''),
             'desc' => mb_substr($desc, 0, Issue::DESC_MAX_LEN),
-            'steps' => self::parseSteps(isset($data['steps']) ? $data['steps'] : []),
         ];
     }
 
@@ -339,24 +332,6 @@ TEXT;
             default:
                 return Issue::TYPE_DEVELOP;
         }
-    }
-
-    /**
-     * Приводит шаги воспроизведения из ответа модели к массиву непустых строк.
-     * @param mixed $steps Значение из ответа модели.
-     * @return array<string>
-     */
-    private static function parseSteps($steps)
-    {
-        $result = [];
-        foreach ((array)$steps as $step) {
-            $step = trim((string)$step);
-            if ($step !== '') {
-                $result[] = $step;
-            }
-        }
-
-        return $result;
     }
 
     /**
