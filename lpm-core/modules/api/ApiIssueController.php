@@ -346,6 +346,8 @@ class ApiIssueController extends ApiControllerBase
 
         IssueBranch::create($issue->id, $gitlabProjectId, $finalBranchName, $userId, $branch->commit->id);
 
+        GitlabWebhookManager::autoSetupForRepository($client, $gitlabProjectId);
+
         if ($issue->status == Issue::STATUS_IN_WORK) {
             if (!$issue->isMember($userId)) {
                 if (!Member::saveIssueMembers($issue->id, [$userId])) {

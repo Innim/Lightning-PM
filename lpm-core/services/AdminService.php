@@ -112,6 +112,63 @@ class AdminService extends LPMBaseService
         return $this->answer();
     }
 
+    /**
+     * Настраивает вебхуки Lightning PM во всех репозиториях,
+     * с которыми таск уже работал.
+     *
+     * Повторный вызов не создает дублей: хук с нашим адресом обновляется.
+     * Неудача на одном репозитории не останавливает остальные - в ответе
+     * возвращается список проблемных репозиториев с причинами.
+     *
+     * Отказывает целиком, если адрес хука локальный: репозитории у стендов
+     * общие с боевыми.
+     *
+     * @return stdClass Ответ с полями `hookUrl`, `total`, `succeeded`
+     * и `failed` (список `{repositoryId, message}`).
+     */
+    public function setupGitlabWebhooks()
+    {
+        // Обход десятков репозиториев - это столько же запросов к GitLab,
+        // в лимит времени по умолчанию это не укладывается
+        set_time_limit(0);
+
+        $gitlab = LightningEngine::getInstance()->gitlab();
+        if (!$gitlab->isAvailable()) {
+            return $this->error('Интеграция с GitLab не настроена');
+        }
+
+        if (GitlabWebhookManager::isHookUrlLocal()) {
+            return $this->error('Настройка недоступна: ' . GitlabWebhookManager::LOCAL_URL_REFUSAL);
+        }
+
+        try {
+            $repositoryIds = IssueBranch::loadUsedRepositoryIds();
+            $results = (new GitlabWebhookManager($gitlab))->setupForRepositories($repositoryIds);
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        $failed = [];
+        $succeeded = 0;
+        foreach ($results as $result) {
+            if ($result->isOk()) {
+                $succeeded++;
+            } else {
+                $failed[] = [
+                    'repositoryId' => $result->repositoryId,
+                    'message' => $result->message,
+                ];
+            }
+        }
+
+        $this->add2Answer('hookUrl', GitlabWebhookManager::getHookUrl());
+        $this->add2Answer('total', count($results));
+        $this->add2Answer('succeeded', $succeeded);
+        $this->add2Answer('failed', $failed);
+
+        return $this->answer();
+    }
+
     public function beforeFilter($calledFunc)
     {
         return parent::beforeFilter($calledFunc) && $this->checkRole(User::ROLE_ADMIN);

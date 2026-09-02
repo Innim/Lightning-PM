@@ -2,15 +2,14 @@
 /**
  * Внешнее API для обработки hook событий от GitLab.
  *
- * Для подключения надо вручную добавить нужные хуки в Admin Area > System Hooks.
- *
  * URL: https://task_url/api/gitlab/
  * Secret Token: То, что передается в конструктор этого класса при создании.
- * Trigger:
- * - Merge request events.
- * - Push events.
  *
- * // TODO: сделать автоматическое создание хука
+ * События приходят из двух источников:
+ * - влития и пуши - от системного хука инстанса, который заводится один раз
+ *   руками в Admin Area > System Hooks;
+ * - события пайплайнов - от хуков репозиториев, которые таск заводит сам
+ *   (`GitlabWebhookManager`), потому что системные хуки их не отдают.
  */
 class GitlabExternalApi extends ExternalApi
 {
@@ -69,20 +68,34 @@ class GitlabExternalApi extends ExternalApi
                 throw new Exception("Can't parse input");
             }
 
-            if (empty($data['event_type']) && empty($data['event_name'])) {
-                throw new Exception("Can't find event_type or event_name field");
-            }
-
             $eventType = isset($data['event_type']) ? $data['event_type'] : null;
             $eventName = isset($data['event_name']) ? $data['event_name'] : null;
+            // У части событий (в том числе pipeline) нет ни event_type, ни
+            // event_name - опознать их можно только по object_kind
+            $objectKind = isset($data[self::FIELD_OBJECT_KIND]) ? $data[self::FIELD_OBJECT_KIND] : null;
+
+            if (empty($eventType) && empty($eventName) && empty($objectKind)) {
+                throw new Exception("Can't find event_type, event_name or object_kind field");
+            }
 
             if ($eventType == self::EVENT_TYPE_MR) {
                 return $this->onMREvent($data);
             } elseif ($eventName == self::EVENT_NAME_PUSH) {
                 return $this->onPushEvent($data);
-            } else {
-                throw new Exception("Unhandled event: event_type=" . $eventType . ", event_name=" . $eventName);
             }
+
+            // Хук приносит и то, что таск не разбирает - теги, изменения
+            // проектов и пользователей на инстансе. Это штатный ход событий,
+            // а не ошибка, поэтому в лог ошибок такое не пишем.
+            // Сюда же пока попадают события пайплайнов: подписка на них
+            // заводится этой задачей, а обработчик придет отдельной (#436)
+            LPMLog::debug('Skipped event', LPMLog::CH_GITLAB, [
+                'event_type' => $eventType,
+                'event_name' => $eventName,
+                'object_kind' => $objectKind,
+            ]);
+
+            return null;
         } catch (Exception $e) {
             return $this->onException($e);
         }

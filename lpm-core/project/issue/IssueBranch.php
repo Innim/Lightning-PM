@@ -102,6 +102,34 @@ class IssueBranch extends LPMBaseObject
     }
 
     /**
+     * Возвращает все репозитории, в которых есть хотя бы одна ветка задачи.
+     *
+     * @return array<int> Идентификаторы репозиториев по возрастанию.
+     * @throws \GMFramework\ProviderLoadException Если запрос не удался.
+     */
+    public static function loadUsedRepositoryIds()
+    {
+        $db = self::getDB();
+        $res = $db->queryb([
+            'SELECT' => 'repositoryId',
+            'FROM' => LPMTables::ISSUE_BRANCH,
+            'GROUP BY' => '`repositoryId`',
+            'ORDER BY' => '`repositoryId`',
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        $list = [];
+        foreach ($res as $raw) {
+            $list[] = (int)$raw['repositoryId'];
+        }
+
+        return $list;
+    }
+
+    /**
      * Возвращает наиболее популярный репозиторий для проекта.
      *
      * @param int $projectId    Идентификатор проекта.
