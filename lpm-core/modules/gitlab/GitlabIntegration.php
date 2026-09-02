@@ -118,6 +118,79 @@ class GitlabIntegration
     }
 
     /**
+     * Возвращает список вебхуков репозитория.
+     *
+     * Управление хуками требует роли Maintainer или Owner на репозитории,
+     * поэтому запрос всегда идет от sudo пользователя, а не от текущего:
+     * у обычного разработчика прав не хватит.
+     *
+     * Список собирается по всем страницам: поиск своего хука по неполному
+     * списку завел бы второй такой же.
+     *
+     * @param  int|string $projectId Идентификатор проекта на GitLab.
+     * @return array Список хуков в том виде, в каком их отдает GitLab.
+     * @throws Exception Если запрос не удался; код исключения - HTTP статус
+     * ответа GitLab (401/403 - недостаточно прав).
+     */
+    public function sudoGetProjectHooks($projectId)
+    {
+        $client = $this->requireSudoClient();
+
+        $perPage = 100;
+        $page = 0;
+        $res = [];
+
+        do {
+            $page++;
+            $list = $client->projects()->hooks($projectId, [
+                'page' => $page,
+                'per_page' => $perPage,
+            ]);
+
+            if (empty($list)) {
+                break;
+            }
+
+            $res = array_merge($res, $list);
+        } while (count($list) == $perPage);
+
+        return $res;
+    }
+
+    /**
+     * Создает вебхук на репозитории.
+     *
+     * @param  int|string $projectId Идентификатор проекта на GitLab.
+     * @param  string     $url       Адрес, на который GitLab будет слать события.
+     * @param  array      $params    Параметры хука (флаги событий, `token`
+     *                               и прочее в терминах GitLab API).
+     * @return array Созданный хук.
+     * @throws Exception Если запрос не удался; код исключения - HTTP статус
+     * ответа GitLab.
+     */
+    public function sudoAddProjectHook($projectId, $url, array $params)
+    {
+        return $this->requireSudoClient()->projects()->addHook($projectId, $url, $params);
+    }
+
+    /**
+     * Обновляет существующий вебхук репозитория.
+     *
+     * @param  int|string $projectId Идентификатор проекта на GitLab.
+     * @param  int        $hookId    Идентификатор хука.
+     * @param  array      $params    Параметры хука; GitLab заменяет настройки
+     *                               целиком, поэтому передавать надо все
+     *                               значимые поля, включая `url`.
+     * @return array Обновленный хук.
+     * @throws Exception Если запрос не удался; код исключения - HTTP статус
+     * ответа GitLab.
+     */
+    public function sudoUpdateProjectHook($projectId, $hookId, array $params)
+    {
+        return $this->requireSudoClient()->projects()->updateHook($projectId, $hookId, $params);
+    }
+
+    /**
      * Проверяет, является ли url url'ом merge request'а.
      * @param  string  $url URL
      * @return boolean true, если является, иначе false.
@@ -562,6 +635,20 @@ class GitlabIntegration
         }
 
         return $this->_sudoClient;
+    }
+
+    /**
+     * @return \Gitlab\Client
+     * @throws Exception Если интеграция не настроена.
+     */
+    private function requireSudoClient()
+    {
+        $client = $this->sudoClient();
+        if ($client === null) {
+            throw new Exception('Интеграция с GitLab не настроена');
+        }
+
+        return $client;
     }
 
     private function getTokenName()
