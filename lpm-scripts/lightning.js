@@ -259,6 +259,9 @@ let srv = {
         getCompressStatus: function (uids, onResult) {
             this.s._('getCompressStatus');
         },
+        retryCompress: function (uid, onResult) {
+            this.s._('retryCompress');
+        },
     },
     issue: {
         s: new BaseService('IssueService'),

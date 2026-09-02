@@ -1,18 +1,27 @@
 $(document).ready(function ($) {
     videoCompressStatus.start();
+
+    // Комментарии добавляются на страницу динамически, поэтому обработчик делегирован.
+    $(document).on('click', '.video-compress-retry', function () {
+        videoCompressStatus.retry($(this));
+    });
 });
 
 /**
- * Опрос статуса фонового сжатия видео.
+ * Состояние фонового сжатия видео на странице.
  *
  * Пока на странице есть видео-заглушки в состоянии сжатия
  * (в т.ч. добавленные динамически после отправки комментария),
  * периодически спрашивает сервер и подменяет заглушку на плеер,
- * как только сжатие завершилось.
+ * как только сжатие завершилось. Здесь же запуск новой попытки для видео,
+ * сжатие которого завершилось ошибкой.
  */
 let videoCompressStatus = {
     // Интервал опроса, мс
     pollInterval: 5000,
+    // Значения compressStatus, приходящие с сервера (VideoCompressor::STATUS_*)
+    STATUS_PROCESSING: 1,
+    STATUS_FAILED: 3,
     _timer: null,
 
     start: function () {
@@ -47,23 +56,56 @@ let videoCompressStatus = {
         });
     },
 
+    /**
+     * Ставит видео в очередь на новую попытку сжатия.
+     * Пока запрос идёт, кнопка заблокирована: повторный клик не должен
+     * отправлять второй запрос.
+     * @param {jQuery} button нажатая кнопка повтора
+     */
+    retry: function (button) {
+        if (button.prop('disabled')) {
+            return;
+        }
+
+        let uid = button.closest('.comment-video-item').data('file-uid');
+        if (!uid) {
+            return;
+        }
+
+        button.prop('disabled', true);
+        srv.files.retryCompress(uid, (res) => {
+            button.prop('disabled', false);
+
+            if (!res || !res.success || !res.file) {
+                showError(res && res.error ? res.error : 'Не удалось запустить сжатие');
+                return;
+            }
+
+            this.apply(res.file);
+        });
+    },
+
+    /**
+     * Приводит блок файла к состоянию, которое пришло с сервера.
+     * @param {Object} file данные файла из ответа сервиса
+     */
     apply: function (file) {
-        // Ещё в обработке — ждём следующего опроса
-        if (file.compressStatus === 1) {
+        let item = $('.comment-video-item[data-file-uid="' + file.uid + '"]');
+        if (item.length === 0) {
             return;
         }
 
-        let placeholder = $('[data-video-compress][data-file-uid="' + file.uid + '"]');
-        if (placeholder.length === 0) {
-            return;
+        let placeholder = item.find('[data-video-compress]');
+        let processing = file.compressStatus === this.STATUS_PROCESSING;
+
+        if (processing && placeholder.length === 0) {
+            item.find('.comment-file-video').first().replaceWith(this.buildPlaceholder(file));
+        } else if (!processing && placeholder.length > 0) {
+            placeholder.replaceWith(this.buildVideo(file, placeholder.data('mime-type')));
         }
 
-        let item = placeholder.closest('.comment-video-item');
-
-        let mimeType = file.mimeType || placeholder.data('mime-type') || '';
-        let video = $('<video controls preload="metadata" class="comment-file-video rounded-2 border bg-dark"></video>');
-        $('<source>').attr('src', file.url).attr('type', mimeType).appendTo(video);
-        placeholder.replaceWith(video);
+        item.find('.video-compress-retry')
+            .toggleClass('d-none', file.compressStatus !== this.STATUS_FAILED);
 
         // Имя файла и ссылка на скачивание могли измениться (напр. .mov -> .mp4)
         if (file.name) {
@@ -76,5 +118,37 @@ let videoCompressStatus = {
         if (file.name) {
             download.attr('download', file.name);
         }
+    },
+
+    /**
+     * Заглушка идущего сжатия — та же, что рисует comment-files.html
+     * для файла, который уже сжимался к моменту отрисовки страницы.
+     * @param {Object} file данные файла из ответа сервиса
+     * @return {jQuery}
+     */
+    buildPlaceholder: function (file) {
+        let placeholder = $('<div class="comment-file-video comment-file-video-compressing rounded-2 border '
+            + 'bg-dark d-flex flex-column align-items-center justify-content-center text-light"></div>');
+        placeholder.attr('data-video-compress', '');
+        placeholder.attr('data-file-uid', file.uid);
+        placeholder.attr('data-mime-type', file.mimeType || '');
+        $('<div class="spinner-border spinner-border-sm mb-2" role="status" aria-hidden="true"></div>')
+            .appendTo(placeholder);
+        $('<span class="small"></span>').text('Сжатие видео…').appendTo(placeholder);
+
+        return placeholder;
+    },
+
+    /**
+     * Плеер для файла, обработка которого завершилась.
+     * @param {Object} file данные файла из ответа сервиса
+     * @param {String} fallbackMimeType тип из заглушки, если сервер его не прислал
+     * @return {jQuery}
+     */
+    buildVideo: function (file, fallbackMimeType) {
+        let video = $('<video controls preload="metadata" class="comment-file-video rounded-2 border bg-dark"></video>');
+        $('<source>').attr('src', file.url).attr('type', file.mimeType || fallbackMimeType || '').appendTo(video);
+
+        return video;
     },
 };
