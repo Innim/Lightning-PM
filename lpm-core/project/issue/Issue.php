@@ -638,37 +638,76 @@ WHERE;
         }
     }
     
+    /**
+     * Загружает незавершённые задачи неархивных проектов, в которых
+     * пользователь участвует - исполнителем либо тестировщиком.
+     *
+     * Незавершённые - это задачи в работе и задачи, ожидающие проверки:
+     * ушедшая в тест задача остаётся в списке и у исполнителя, и у тестировщика.
+     * @param  int $memberId Идентификатор пользователя.
+     * @return array<Issue>
+     */
     public static function getListByMember($memberId)
     {
         if (!isset(self::$_listByUser[$memberId])) {
             if (LightningEngine::getInstance()->isAuth()) {
-                /*$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
-                `%3\$s`.`name` AS `projectName`,`%4\$s`.* FROM `%1\$s`, `%2\$s`, `%3\$s`,`%4\$s`".
-                  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
-                  "AND `%4\$s`.`issueId` = `%1\$s`.`id` ".
-                  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
-                 "AND `%2\$s`.`userId` = '" . $memberId . "'".
-                 "AND `%1\$s`.`status` = '0'".
-                 "AND `%1\$s`.`deleted` = '0'".
-                 "ORDER BY `%1\$s`.`idInProject` ";*/
+                // Участие проверяется подзапросом, а не присоединением таблицы:
+                // тот, кто в задаче и исполнитель, и тестировщик, дал бы
+                // на присоединении две строки, и задача попала бы в список дважды
+                $participationSql = self::buildQuery([
+                    'SELECT' => '1',
+                    'FROM'   => LPMTables::MEMBERS,
+                    'AS'     => 'm',
+                    'WHERE'  => [
+                        '`m`.`instanceId`'   => self::col('i.id'),
+                        '`m`.`instanceType`' => [
+                            LPMInstanceTypes::ISSUE,
+                            LPMInstanceTypes::ISSUE_FOR_TEST,
+                        ],
+                        '`m`.`userId`' => (int)$memberId,
+                    ],
+                ]);
 
-                self::$_listByUser[$memberId] = self::loadList(
-                    // только задачи, в которых я участник
-                    '`i`.`id` = `m`.`instanceId` AND `m`.`instanceType` = ' . LPMInstanceTypes::ISSUE .
-                    ' AND `m`.`userId` = ' . $memberId .
-                    // открытые
-                    ' AND `i`.`status` = ' . Issue::STATUS_IN_WORK .
+                $statuses = implode(', ', [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
+
+                $list = self::loadList(
+                    // только задачи, в которых я исполнитель или тестировщик
+                    "EXISTS ($participationSql)" .
+                    // незавершённые
+                    " AND `i`.`status` IN ($statuses)" .
                     // и проект не в архиве
-                    ' AND `p`.`isArchive` = 0',
-                    '',
-                    ['m' => LPMTables::MEMBERS]
+                    ' AND `p`.`isArchive` = 0'
                 );
+
+                self::$_listByUser[$memberId] = self::preloadParticipants($list);
             } else {
                 self::$_listByUser[$memberId] = array();
             }
         }
 
         return self::$_listByUser[$memberId];
+    }
+
+    /**
+     * Заранее загружает исполнителей и тестировщиков всех задач списка.
+     *
+     * Мастера не загружаются.
+     * @param  array<Issue> $list
+     * @return array<Issue> Тот же список.
+     */
+    private static function preloadParticipants(array $list)
+    {
+        $issueIds = [];
+        foreach ($list as $issue) {
+            $issueIds[] = $issue->id;
+        }
+
+        $participants = Member::loadListAnyForIssues($issueIds, true, true, false);
+        foreach ($list as $issue) {
+            $issue->extractParticipantsFrom($participants, true, true, false);
+        }
+
+        return $list;
     }
 
     /**

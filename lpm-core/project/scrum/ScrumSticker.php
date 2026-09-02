@@ -25,10 +25,14 @@ SQL;
      * списка одним запросом, чтобы шаблон стикера не делал по запросу на каждый
      * стикер (getMembers/isMember/isTester/getTesterIds).
      *
+     * {@see loadUserStickersList()} и {@see loadFreeStickersList()} участников
+     * не подгружают: их результаты складывают в один список и вызывают этот
+     * метод один раз на нём, иначе шаблон уйдёт в N+1.
+     *
      * @param  array<ScrumSticker> $list
      * @return array<ScrumSticker> Тот же список.
      */
-    private static function preloadParticipants(array $list)
+    public static function preloadParticipants(array $list)
     {
         $issueIds = [];
         foreach ($list as $sticker) {
@@ -118,7 +122,14 @@ SQL;
         return $list;
     }
     
-    public static function loadAllStickersList($userId)
+    /**
+     * Загружает стикеры задач, в которых пользователь участвует.
+     *
+     * Участники не подгружаются, см. {@see preloadParticipants()}.
+     * @param  int $userId Идентификатор пользователя.
+     * @return ScrumSticker[]
+     */
+    public static function loadUserStickersList($userId)
     {
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
@@ -127,14 +138,48 @@ SQL;
         $where = <<<SQL
 `s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
 SQL;
-        return self::preloadParticipants(self::loadList(
+        return self::loadList(
             $where,
             '',
             ['m' => LPMTables::MEMBERS],
             ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
-        ));
+        );
     }
-    
+
+    /**
+     * Загружает стикеры свободных задач - тех, которые пользователь может взять себе.
+     *
+     * Свободная задача стоит в колонке TO DO неархивного проекта, в котором
+     * пользователь состоит участником, и не имеет исполнителя.
+     *
+     * Участники не подгружаются, см. {@see preloadParticipants()}.
+     * @param  int $userId Идентификатор пользователя.
+     * @return ScrumSticker[]
+     */
+    public static function loadFreeStickersList($userId)
+    {
+        $todo = ScrumStickerState::TODO;
+        $projectType = LPMInstanceTypes::PROJECT;
+        $issueType = LPMInstanceTypes::ISSUE;
+
+        // `%4$s` - таблица участий: четвёртая в списке таблиц loadList,
+        // т.к. первые три - стикеры, задачи и проекты
+        $where = <<<SQL
+`s`.`state` = ${todo} AND `p`.`isArchive` = 0
+                AND NOT EXISTS (SELECT 1
+                                  FROM `%4\$s` `im`
+                                 WHERE `im`.`instanceId` = `s`.`issueId`
+                                   AND `im`.`instanceType` = ${issueType})
+SQL;
+        return self::loadList(
+            $where,
+            '',
+            ['pm' => LPMTables::MEMBERS],
+            ["`pm`.`instanceId` = `p`.`id` AND `pm`.`instanceType` = ${projectType} " .
+                "AND `pm`.`userId` = ${userId}"]
+        );
+    }
+
     /**
      * Загружает стикер по идентификатору задачи
      * @param  int $issueId

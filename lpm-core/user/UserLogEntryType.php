@@ -23,7 +23,7 @@ class UserLogEntryType extends \GMFramework\Enum
     /**
      * Изменение комментария.
      */
-    const EDIT_COMMENT = 4; // TODO: если будет такой функционал
+    const EDIT_COMMENT = 4;
     /**
      * Удаление комментария.
      */

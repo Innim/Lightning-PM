@@ -2089,35 +2089,51 @@ issuePage.scrumColUpdateInfo = function () {
     });
 
     const cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
-    const getColStickersSelector = (col) =>
-        '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker:visible';
+    // Свои и свободные задачи считаются раздельно: основное число - нагрузка
+    // самого пользователя, свободные идут отдельной прибавкой к нему
+    const colStickersSelector = (col) =>
+        '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker';
+    const getColStickersSelector = (col) => colStickersSelector(col) + ':not(.free):visible';
+    const getColFreeStickersSelector = (col) => colStickersSelector(col) + '.free:visible';
+
+    const sumSP = ($stickers) => {
+        let sp = 0;
+        $stickers.each((i, el) => {
+            sp += parseFloat($(el).data('stickerSp'));
+        });
+        return sp;
+    };
+    const spStr = (sp) => parseInt(sp) == sp ? sp : sp.toFixed(1);
 
     let totalSP = 0;
     let totalNum = 0;
+    let totalFreeSP = 0;
+    let totalFreeNum = 0;
     for (let i = 0; i < cols.length; ++i) {
         const col = cols[i];
         const colStickers = $(getColStickersSelector(col));
 
-        let sp = 0;
-        colStickers.each((i, el) => {
-            sp += parseFloat($(el).data('stickerSp'));
-        });
-
+        let sp = sumSP(colStickers);
         let num = colStickers.size();
+
+        const freeStickers = $(getColFreeStickersSelector(col));
+        const freeSP = sumSP(freeStickers);
+        const freeNum = freeStickers.size();
 
         let selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
 
-        if (num > 0) {
+        // Рядом со свободными своё число не прячем: ноль своих задач - это
+        // ответ на вопрос "сколько у меня работы", а не отсутствие ответа
+        if (num > 0 || freeNum > 0) {
             $(selector + ' .scrum-col-count .value').html(num);
 
             let spSelector = selector + ' .scrum-col-sp';
-            if (sp > 0)
+            if (sp > 0 || num == 0)
                 $(spSelector).show();
             else
                 $(spSelector).hide();
 
-            let spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
-            $(spSelector + ' .value').html(spScr);
+            $(spSelector + ' .value').html(spStr(sp));
 
             totalSP += sp;
             totalNum += num;
@@ -2126,19 +2142,51 @@ issuePage.scrumColUpdateInfo = function () {
         } else {
             $(selector).hide();
         }
+
+        const freeSelector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-free';
+
+        if (freeNum > 0) {
+            $(freeSelector + ' .scrum-col-free-count .value').html(freeNum);
+
+            const freeSpSelector = freeSelector + ' .scrum-col-free-sp';
+            if (freeSP > 0)
+                $(freeSpSelector).show();
+            else
+                $(freeSpSelector).hide();
+
+            $(freeSpSelector + ' .value').html(spStr(freeSP));
+
+            totalFreeSP += freeSP;
+            totalFreeNum += freeNum;
+
+            $(freeSelector).show();
+        } else {
+            $(freeSelector).hide();
+        }
     }
 
-    if (totalNum) {
+    if (totalNum || totalFreeNum) {
         $('#scrumBoard .scrum-board-info').show();
         $('#scrumBoard .scrum-board-info .scrum-board-count .value').html(totalNum);
-        if (totalSP > 0) {
-            let totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
-            $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSpScr);
+        if (totalSP > 0 || totalNum == 0) {
+            $('#scrumBoard .scrum-board-sp').show().find('.value').html(spStr(totalSP));
         }
         else
             $('#scrumBoard .scrum-board-sp').hide();
     } else {
         $('#scrumBoard .scrum-board-info').hide();
+    }
+
+    if (totalFreeNum) {
+        $('#scrumBoard .scrum-board-free').show();
+        $('#scrumBoard .scrum-board-free .scrum-board-free-count .value').html(totalFreeNum);
+        if (totalFreeSP > 0) {
+            $('#scrumBoard .scrum-board-free-sp').show().find('.value').html(spStr(totalFreeSP));
+        }
+        else
+            $('#scrumBoard .scrum-board-free-sp').hide();
+    } else {
+        $('#scrumBoard .scrum-board-free').hide();
     }
 }
 

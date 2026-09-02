@@ -97,6 +97,11 @@ class LPMTables
      */
     const COMMENTS = 'comments';
     /**
+     * История слепков текста комментариев.
+     * @var string
+     */
+    const COMMENT_TEXT_SNAPSHOTS = 'comment_text_snapshots';
+    /**
      * Данные авторизации
      * @var string
      */
@@ -168,4 +173,8 @@ class LPMTables
      * Занятые слоты фонового сжатия видео.
      */
     const VIDEO_COMPRESS_SLOTS = 'video_compress_slots';
+    /**
+     * Посещения проектов пользователями.
+     */
+    const PROJECT_VISITS = 'project_visits';
 }

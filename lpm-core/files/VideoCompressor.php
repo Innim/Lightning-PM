@@ -550,19 +550,27 @@ class VideoCompressor
     }
 
     /**
-     * Меняет расширение в пути/имени файла.
+     * Меняет расширение в пути/имени файла. Имя без расширения получает его.
+     * Остальная часть имени сохраняется как есть, включая точки внутри него.
+     * @param  string $path Путь или имя файла.
+     * @param  string $ext  Новое расширение без точки.
+     * @return string
      */
     private static function changeExtension($path, $ext)
     {
-        $dir = pathinfo($path, PATHINFO_DIRNAME);
-        $name = pathinfo($path, PATHINFO_FILENAME);
-        $newName = $name . '.' . $ext;
+        // Имя режется по разделителям вручную: pathinfo() и basename() зависят
+        // от локали и в локали C выбрасывают всё до первого ASCII-символа.
+        $slashPos = strrpos($path, '/');
+        $dir = false === $slashPos ? '' : substr($path, 0, $slashPos + 1);
+        $name = false === $slashPos ? $path : substr($path, $slashPos + 1);
 
-        if ($dir === '' || $dir === '.') {
-            return $newName;
+        // Точка в начале — часть имени скрытого файла, а не отделяет расширение.
+        $dotPos = strrpos($name, '.');
+        if (false !== $dotPos && $dotPos > 0) {
+            $name = substr($name, 0, $dotPos);
         }
 
-        return $dir . '/' . $newName;
+        return $dir . $name . '.' . $ext;
     }
 
     /**

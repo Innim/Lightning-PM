@@ -11,6 +11,15 @@ class ProjectsPage extends LPMPage
     const PUID_STAT = 'stat';
     const PUID_MY_SCRUM_BOARD = 'scrum-board-common';
 
+    /**
+     * Поле формы, по которому распознаётся отправка настроек личной scrum доски.
+     */
+    const FIELD_MY_BOARD_PREF = 'myBoardPref';
+    /**
+     * Поле формы с переключателем показа свободных задач.
+     */
+    const FIELD_SHOW_FREE_ISSUES = 'showFreeIssues';
+
     // Количество важных задач, открытых для меня по всем проектам
     private $_myIssuesCount = -1;
 
@@ -50,8 +59,15 @@ class ProjectsPage extends LPMPage
         
         if (!empty($_POST)) {
             $engine = LightningEngine::getInstance();
+            $isMyBoardPref = isset($_POST[self::FIELD_MY_BOARD_PREF]);
             if (!CsrfToken::check()) {
                 $engine->addError('Страница устарела. Обновите её и повторите действие');
+                // Форму настроек отправляет сама доска - её и показываем с ошибкой
+                if ($isMyBoardPref) {
+                    return $this->myScrumBoard();
+                }
+            } elseif ($isMyBoardPref) {
+                return $this->saveMyScrumBoardPref($_POST);
             } elseif (!$this->addProject($_POST)) {
                 $engine->addError($this->_error);
             }
@@ -90,6 +106,52 @@ class ProjectsPage extends LPMPage
         }
 
         return $label;
+    }
+
+    /**
+     * Выпадающий список последних проектов пользователя.
+     *
+     * Открытый сейчас проект из списка не убирается, а помечается текущим:
+     * так набор пунктов не меняется при переходах между его страницами.
+     * @return MenuDropdown|null `null`, если показывать нечего.
+     */
+    public function getMenuDropdown()
+    {
+        $engine = LightningEngine::getInstance();
+        if (!$engine->isAuth()) {
+            return null;
+        }
+
+        try {
+            $projects = ProjectVisit::loadRecentProjects(
+                $engine->getUser(),
+                RECENT_PROJECTS_MENU_COUNT
+            );
+        } catch (\Exception $e) {
+            // Меню рисуется на каждой странице - из-за недоступного списка
+            // недавних проектов не должно падать всё приложение
+            LPMLog::exception($e, LPMLog::CH_APP);
+            return null;
+        }
+
+        if (empty($projects)) {
+            return null;
+        }
+
+        $currentProject = Project::$currentProject;
+        $items = [];
+        foreach ($projects as $project) {
+            $item = new Link($project->name, $project->getUrl());
+            $item->setCurrent($currentProject && $currentProject->id == $project->id);
+            $items[] = $item;
+        }
+
+        return new MenuDropdown(
+            'recentProjectsMenu',
+            'Последние проекты',
+            $items,
+            new Link('Все проекты', $this->getBaseUrl())
+        );
     }
 
     private function projectsList($isArchive): ProjectsPage {
@@ -181,9 +243,81 @@ class ProjectsPage extends LPMPage
 
     private function myScrumBoard(): ProjectsPage
     {
-        $userId = LightningEngine::getInstance()->getUserId();
-        $this->addTmplVar('stickers', ScrumSticker::loadAllStickersList($userId));
+        $engine = LightningEngine::getInstance();
+        $showFreeIssues = $engine->getUser()->pref->showFreeIssuesOnBoard;
+
+        list($stickers, $freeIssueIds) =
+            $this->loadMyScrumBoardStickers($engine->getUserId(), $showFreeIssues);
+
+        $this->addTmplVar('stickers', $stickers);
+        $this->addTmplVar('freeIssueIds', $freeIssueIds);
+        $this->addTmplVar('showFreeIssues', $showFreeIssues);
         return $this;
+    }
+
+    /**
+     * Собирает стикеры личной scrum доски.
+     *
+     * Свободные идут в конец списка, поэтому в своей колонке показываются
+     * после задач пользователя. Какие из них свободны - признак этой доски,
+     * а не самих стикеров: на доске проекта та же задача свободной не считается.
+     * Поэтому список свободных возвращается отдельно.
+     * @param  int  $userId         Идентификатор пользователя.
+     * @param  bool $withFreeIssues Добавить ли свободные задачи из проектов пользователя.
+     * @return array Пара: список стикеров и множество `issueId => true` свободных.
+     */
+    private function loadMyScrumBoardStickers($userId, $withFreeIssues)
+    {
+        $stickers = ScrumSticker::loadUserStickersList($userId);
+        $freeIssueIds = [];
+
+        if ($withFreeIssues) {
+            $ownIssueIds = [];
+            foreach ($stickers as $sticker) {
+                $ownIssueIds[$sticker->issueId] = true;
+            }
+
+            foreach (ScrumSticker::loadFreeStickersList($userId) as $sticker) {
+                // Задача без исполнителя, где пользователь тестировщик,
+                // попадает в оба списка - свою запись оставляем
+                if (isset($ownIssueIds[$sticker->issueId])) {
+                    continue;
+                }
+
+                $stickers[] = $sticker;
+                $freeIssueIds[$sticker->issueId] = true;
+            }
+        }
+
+        // Один запрос на участников для всего итогового списка
+        ScrumSticker::preloadParticipants($stickers);
+
+        return [$stickers, $freeIssueIds];
+    }
+
+    /**
+     * Сохраняет настройки личной scrum доски и открывает её заново.
+     *
+     * После сохранения делается редирект, чтобы обновление страницы
+     * не отправляло форму повторно.
+     * @param  array $input Данные формы.
+     * @return ProjectsPage
+     */
+    private function saveMyScrumBoardPref($input): ProjectsPage
+    {
+        $userId = LightningEngine::getInstance()->getUserId();
+
+        try {
+            UserPref::saveShowFreeIssuesOnBoard(
+                $userId,
+                !empty($input[self::FIELD_SHOW_FREE_ISSUES])
+            );
+        } catch (\GMFramework\ProviderSaveException $e) {
+            LightningEngine::getInstance()->addError('Не удалось сохранить настройку доски');
+            return $this->myScrumBoard();
+        }
+
+        LightningEngine::go2URL(Link::getUrlByUid(self::UID, self::PUID_MY_SCRUM_BOARD));
     }
 
     private function getMonthLink($month, $year)

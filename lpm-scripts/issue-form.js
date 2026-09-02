@@ -118,6 +118,10 @@ let issueForm = {
     masters: null,
     fileUploadTemplate: null,
     lockAcquired: false,
+    /**
+     * Отправка формы уже идёт: повторные отправки до её завершения запрещены.
+     */
+    submitting: false,
     acquireLock: function (issueId, revision, forced, onSuccess, onFail) {
         preloader.show();
 
@@ -266,22 +270,59 @@ let issueForm = {
     },
     onShow: function () {
         window.addEventListener('beforeunload', issueForm.blockClose);
-        $("#issueForm form").off('submit.issueForm').on('submit.issueForm', function (e) {
-            const $form = $(this);
-            const $submitBtn = $(".save-line button[type=submit]", $form);
+        window.addEventListener('pageshow', issueForm.onPageShow);
+        // Только сама форма задачи: внутри #issueForm лежат и другие формы
+        // (окно новой метки), их отправка форму задачи не затрагивает.
+        $("#issueForm > form").off('submit.issueForm').on('submit.issueForm', function (e) {
+            // Пока предыдущая отправка не завершилась, форма не уходит повторно:
+            // иначе быстрый повторный Enter или клик создаёт дубль задачи.
+            // Отключённой кнопки для этого мало: часть браузеров отправляет форму
+            // по Enter, даже когда кнопка отправки отключена.
+            if (issueForm.submitting) return issueForm.stopSubmit(e);
 
-            $submitBtn.prop('disabled', true);
+            if (!issueForm.validateIssueForm()) return issueForm.stopSubmit(e);
 
-            if (!issueForm.validateIssueForm()) {
-                e.preventDefault();
-                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
-                $submitBtn.prop('disabled', false);
-                return false;
-            }
+            issueForm.setSubmitting(true);
 
             // Allow navigation without unload warning on successful submit
             window.removeEventListener('beforeunload', issueForm.blockClose);
         });
+    },
+    /**
+     * Отменяет отправку формы.
+     * @param {Event} e Событие submit.
+     * @return {boolean} false - чтобы вернуть из обработчика submit.
+     */
+    stopSubmit: function (e) {
+        e.preventDefault();
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        return false;
+    },
+    /**
+     * Переводит форму в состояние отправки и обратно: в этом состоянии она
+     * не принимает новых отправок, кнопка сохранения отключена, а страница
+     * закрыта индикатором загрузки.
+     * @param {boolean} value Перевести форму в состояние отправки.
+     */
+    setSubmitting: function (value) {
+        if (issueForm.submitting === value) return;
+
+        issueForm.submitting = value;
+        $("#issueForm > form .save-line button[type=submit]").prop('disabled', value);
+
+        if (value) preloader.show();
+        else preloader.hide();
+    },
+    /**
+     * Возврат из кеша браузера (кнопка «Назад») оживляет уже отправленную форму -
+     * снимаем с неё состояние отправки, иначе отправить её снова будет нельзя.
+     * @param {PageTransitionEvent} e Событие pageshow.
+     */
+    onPageShow: function (e) {
+        if (!e.persisted || !issueForm.submitting) return;
+
+        issueForm.setSubmitting(false);
+        window.addEventListener('beforeunload', issueForm.blockClose);
     },
     onHide: function () {
         $('#issueForm > div.validateError').html('').hide();

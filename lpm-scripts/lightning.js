@@ -354,6 +354,9 @@ let srv = {
         },
         resolveComment: function (commentId, onResult) {
             this.s._('resolveComment');
+        },
+        editComment: function (commentId, text, onResult) {
+            this.s._('editComment');
         }
     },
     project: {
