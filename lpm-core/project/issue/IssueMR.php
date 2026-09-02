@@ -33,6 +33,29 @@ class IssueMR extends LPMBaseObject
     }
 
     /**
+     * Загружает список идентификаторов задач, к которым привязан MR,
+     * независимо от его состояния.
+     * @param  int $mrId Идентификатор MR.
+     * @return array<int>
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function loadIssueIdsForMr($mrId)
+    {
+        $res = self::loadFromDV2([
+            'SELECT' => 'issueId',
+            'FROM'   => LPMTables::ISSUE_MR,
+            'WHERE'  => ['mrId' => (int)$mrId],
+        ]);
+
+        $list = [];
+        foreach ($res as $raw) {
+            $list[] = (int)$raw['issueId'];
+        }
+
+        return $list;
+    }
+
+    /**
      * Определяет, есть ли открытые MR для указанной задачи.
      *
      * @param $issueId Идентификатор задачи.
