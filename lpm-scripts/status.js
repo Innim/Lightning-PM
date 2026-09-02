@@ -31,8 +31,10 @@ $(function ($) {
             lpm.dialog.confirm({
                 title: 'Настроить вебхуки?',
                 text: 'Во всех репозиториях, с которыми работал таск, будет заведён или обновлён'
-                    + ' вебхук на адрес ' + setupHooksBtn.dataset.hookUrl
-                    + ' — убедитесь, что этот адрес доступен из GitLab.',
+                    + ' хук на события пайплайнов (Pipeline events), адрес — '
+                    + setupHooksBtn.dataset.hookUrl
+                    + '. Убедитесь, что этот адрес доступен из GitLab.'
+                    + ' Системный хук инстанса не затрагивается.',
                 yesLabel: 'Настроить',
                 onYes: setupGitlabWebhooks
             });

@@ -35,22 +35,29 @@
     <div class="card-header d-flex justify-content-between align-items-center gap-2">
       <span>Вебхуки GitLab</span>
       <?php if ($gitlabHookAutoSetup):?>
-      <span class="badge bg-success">Настраиваются автоматически</span>
+      <span class="badge bg-success">Заводятся при создании ветки</span>
       <?php else:?>
-      <span class="badge bg-secondary">Только вручную</span>
+      <span class="badge bg-secondary">Только по кнопке</span>
       <?php endif;?>
     </div>
     <div class="card-body">
       <?php if (!$gitlabAvailable):?>
       <p class="mb-0 text-muted">Интеграция с GitLab не настроена.</p>
       <?php else:?>
+      <p class="mb-2">
+        Речь о хуках репозиториев: таск подписывает репозитории, с которыми уже
+        работал, на события пайплайнов — триггер <span class="font-monospace">Pipeline
+        events</span>. Ими управляет эта страница.
+      </p>
       <p>
-        Таск подписывает репозитории, с которыми уже работал, на события сборок.
-        Влития и пуши приносит системный хук инстанса — он настраивается отдельно.
+        Влития и пуши (<span class="font-monospace">Merge request events</span>,
+        <span class="font-monospace">Push events</span>) приносит другой хук —
+        системный хук инстанса. Он заводится вручную в GitLab, в разделе
+        Admin Area → System Hooks, и отсюда не настраивается.
       </p>
 
       <div class="mb-3">
-        <div class="small text-muted">Адрес хука</div>
+        <div class="small text-muted">Адрес хука — общий для обоих хуков</div>
         <div class="font-monospace text-break"><?=htmlspecialchars($gitlabHookUrl, ENT_QUOTES);?></div>
       </div>
 
