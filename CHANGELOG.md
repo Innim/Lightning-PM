@@ -8,6 +8,7 @@
 - В разделе «Мои задачи» показываются задачи, ушедшие на проверку ([#422](https://task.innim.ru/project/lightning-pm/issue/422)).
 - Таск сам подписывает репозитории GitLab на события сборок ([#424](https://task.innim.ru/project/lightning-pm/issue/424)).
 - На странице состояния можно настроить вебхуки GitLab во всех репозиториях разом ([#424](https://task.innim.ru/project/lightning-pm/issue/424)).
+- У видео, сжатие которого не удалось, рядом с файлом появилась кнопка повторить сжатие ([#421](https://task.innim.ru/project/lightning-pm/issue/421)).
 
 ### Changed
 - Изображения, по которым собран черновик задачи, прикладываются к задаче ([#420](https://task.innim.ru/project/lightning-pm/issue/420)).
