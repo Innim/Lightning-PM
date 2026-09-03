@@ -530,15 +530,6 @@ class ProjectPage extends LPMPage
         return Issue::loadIssueId($this->_project->id, $idInProject);
     }
     
-    /**
-     * Номер последнего задания в проекте
-     * @return idInProject
-     */
-    private function getLastIssueId()
-    {
-        return Issue::getLastIssueId($this->_project->id);
-    }
-
     private function loadIssues($statuses) 
     {
         $projectId = $this->_project->id;
@@ -595,11 +586,9 @@ class ProjectPage extends LPMPage
                 return $engine->addError('У вас нет прав для редактирования этой задачи');
             }
 
-            $idInProject = $curIssue->idInProject;
             $issueName = $curIssue->name;
         } else {
             $issueId = null;
-            $idInProject = (int)$this->getLastIssueId();
             $issueName = null;
         }
 
@@ -881,7 +870,9 @@ class ProjectPage extends LPMPage
         // Очищаем сохраненные данные
         $this->_issueInput = null;
     
-        $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
+        // Номер в проекте выдаёт сама вставка задачи (Issue::createNew()),
+        // поэтому адрес строим по фактическому, а не по посчитанному заранее.
+        $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $issue->idInProject);
         LightningEngine::go2URL($issueURL);
     }
 
