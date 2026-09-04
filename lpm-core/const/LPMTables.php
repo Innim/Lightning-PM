@@ -177,4 +177,8 @@ class LPMTables
      * Посещения проектов пользователями.
      */
     const PROJECT_VISITS = 'project_visits';
+    /**
+     * Состояния сборок, запущенных влитием merge request'ов задач.
+     */
+    const ISSUE_PIPELINE = 'issue_pipeline';
 }

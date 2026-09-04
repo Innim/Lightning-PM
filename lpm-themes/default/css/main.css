@@ -505,16 +505,18 @@ a.add-me-to-issue .plus-icon {
 	padding-bottom: 0;
 }
 
-.comments-list-item .auto-comment-body:has(.attachments ul:not(:empty), .comment-files > *) {
+.comments-list-item .auto-comment-body:has(.attachments ul:not(:empty), .comment-files > *, ul.branch-pipelines) {
 	padding-bottom: 1rem;
 }
 
 /* Списки вложений комментария (MR, pipeline, job) всегда присутствуют в
    разметке и заполняются из JS, поэтому пустой список скрыт. Отступ сверху
    задаёт сам список: pipeline/job выводятся в .list-group, а во flex-контейнере
-   margin элементов не схлопывается с margin списка. */
+   margin элементов не схлопывается с margin списка. Состояния сборок влитых
+   веток рисует сервер, но отступы у них те же. */
 .comments-list-item ul.merge-requests,
 .comments-list-item ul.pipelines,
+.comments-list-item ul.branch-pipelines,
 .comments-list-item ul.jobs {
 	margin: 10px 0 0;
 	padding: 0;
@@ -523,6 +525,7 @@ a.add-me-to-issue .plus-icon {
 
 .comments-list-item ul.merge-requests:empty,
 .comments-list-item ul.pipelines:empty,
+.comments-list-item ul.branch-pipelines:empty,
 .comments-list-item ul.jobs:empty {
    display: none;
 }

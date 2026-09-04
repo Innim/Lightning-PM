@@ -334,6 +334,24 @@ class PagePrinter
     {
         PageConstructor::includePattern('comment-files', compact('comment'));
     }
+
+    /**
+     * Распечатывает состояния сборок по веткам, о влитии которых
+     * говорит комментарий.
+     *
+     * Ничего не выводит, если комментарий не о влитии веток или состояние
+     * сборок неизвестно.
+     * @param Comment $comment Комментарий.
+     */
+    public static function commentBranchPipelines(Comment $comment)
+    {
+        $pipelines = IssuePipeline::loadForMergedComment($comment);
+        if (empty($pipelines)) {
+            return;
+        }
+
+        PageConstructor::includePattern('comment-branch-pipelines', compact('pipelines'));
+    }
     
     /**
      * Распечатывает список видео.
