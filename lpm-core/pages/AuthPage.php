@@ -43,6 +43,15 @@ class AuthPage extends LPMPage
                 $input[$key] = is_string($value) ? trim($value) : $value;
             }
 
+            // Пароль берём как есть: пробелы по краям - его часть. Смена пароля
+            // в профиле сохраняет его без обрезки, так что обрезка здесь
+            // оставила бы такой пароль без возможности войти.
+            foreach (['pass', 'repass', 'apass'] as $passField) {
+                if (isset($_POST[$passField]) && is_string($_POST[$passField])) {
+                    $input[$passField] = $_POST[$passField];
+                }
+            }
+
             if (isset($input['email'])) {
                 // регистрация
                 if (!LPMOptions::getInstance()->allowRegistration) {
@@ -181,12 +190,9 @@ class AuthPage extends LPMPage
             return $engine->addError('Введён некорректный email');
         }
 
-        if (!Validation::checkPass($input['pass'], PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, true)) {
-            return $engine->addError(sprintf(
-                'Пароль должен быть от %d до %d символов - используйте латинские буквы, цифры или знаки',
-                PASSWORD_MIN_LENGTH,
-                PASSWORD_MAX_LENGTH
-            ));
+        $passError = User::validatePassword($input['pass']);
+        if ($passError !== null) {
+            return $engine->addError($passError);
         }
 
         if (!empty($input['nick']) && !Validation::check(
