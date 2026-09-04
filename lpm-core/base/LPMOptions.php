@@ -92,6 +92,42 @@ class LPMOptions extends Options
     }
 
     /**
+     * Значение по умолчанию для настройки оформления задач.
+     *
+     * @param string $name имя опции: `issueDescTemplate` или `issueGuidelines`
+     * @return string умолчание; пустая строка, если у опции его нет
+     */
+    public static function getIssueTextDefault($name)
+    {
+        switch ($name) {
+            case 'issueDescTemplate':
+                return self::DEFAULT_ISSUE_DESC_TEMPLATE;
+            case 'issueGuidelines':
+                return self::DEFAULT_ISSUE_GUIDELINES;
+            default:
+                return '';
+        }
+    }
+
+    /**
+     * Совпадает ли текст с умолчанием для настройки оформления задач.
+     *
+     * Совпадающий с умолчанием текст сохранять не нужно: пустая настройка
+     * означает умолчание, и оно продолжит обновляться вместе с приложением.
+     * Различия в переводах строк и в отступах по краям несущественны.
+     *
+     * @param string $name имя опции: `issueDescTemplate` или `issueGuidelines`
+     * @param string $text проверяемый текст
+     * @return bool
+     */
+    public static function isIssueTextDefault($name, $text)
+    {
+        $text = trim(str_replace("\r\n", "\n", (string)$text));
+
+        return $text === trim(self::getIssueTextDefault($name));
+    }
+
+    /**
      * Скелет описания задачи по умолчанию.
      * @see self::getIssueDescTemplate()
      */
