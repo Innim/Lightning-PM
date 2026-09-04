@@ -1,5 +1,11 @@
 ## Next
 
+### Changed
+- У кнопки поиска задач в проекте подсказка теперь оформлена в стиле приложения ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
+
+### Fixed
+- Значок с подсказкой больше не пропадает после раскрытия панели или меню ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
+
 ## 0.31.0 - 2026-09-04
 
 ### Added
