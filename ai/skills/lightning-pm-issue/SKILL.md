@@ -84,8 +84,6 @@ When the task is to file a new issue rather than implement an existing one, fetc
 
 How an issue is worded and structured is a convention of the team that owns the tracker, so it is served by the instance and is never described here. Do not carry a remembered format over from another project, and do not invent section headings of your own.
 
-Older instances have no such endpoint and answer `404`. Treat that as "no published convention": write a clear, plainly structured description, name the issue `[label] Title`, and say nothing about the missing endpoint unless the user asks.
-
 ## Authentication
 
 Send either:

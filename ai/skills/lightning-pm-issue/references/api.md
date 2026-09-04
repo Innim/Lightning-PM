@@ -190,8 +190,6 @@ The response is `{project, descriptionTemplate, guidelines, naming}`:
 
 Do not cache the answer between tasks: both texts are an app-wide setting an administrator can change, and the naming rules differ per project.
 
-Older Lightning PM instances have no such endpoint and answer `404`. That is not an error to report: fall back to a clear, plainly structured description and the `[label] Title` naming, and do not invent a section format of your own.
-
 ## Creating an Issue
 
 Create a new issue in a project when the user asks to open/file a task rather than implement an existing one:
