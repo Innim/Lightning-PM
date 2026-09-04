@@ -334,30 +334,39 @@ class ProjectPage extends LPMPage
     }
 
     /**
-     * Готовит список задач проекта и форму поиска по нему.
+     * Готовит список задач подраздела и форму поиска по нему.
      *
-     * Показываются задачи выбранной области поиска, а если задан поисковый
-     * запрос - только найденные среди них.
+     * Показываются задачи области поиска, а если задан поисковый запрос - только
+     * найденные среди них. Пока область не меняли и не искали, подраздел
+     * показывает свой обычный список, и вместо размера выборки уместна общая
+     * статистика проекта.
+     * @param string $defaultScope Область поиска, которую подраздел показывает
+     *        без запроса: список этих задач и есть его обычное содержимое.
+     * @param bool   $scopeChoice  Можно ли менять область поиска. Если нет,
+     *        подраздел ищет только среди своих задач: область не выбирается
+     *        и не задаётся параметром адреса.
      */
-    private function initIssues()
+    private function initIssuesList($defaultScope, $scopeChoice)
     {
         $search = trim(self::getQueryParam(self::QUERY_ARG_SEARCH));
-        $scope = self::getQueryParam(self::QUERY_ARG_SCOPE);
-        if (!isset(self::SEARCH_SCOPES[$scope])) {
-            $scope = self::SEARCH_SCOPE_OPENED;
-        }
 
+        $scope = $defaultScope;
         $scopes = [];
-        foreach (self::SEARCH_SCOPES as $value => $data) {
-            $scopes[$value] = $data['label'];
+        if ($scopeChoice) {
+            $queryScope = self::getQueryParam(self::QUERY_ARG_SCOPE);
+            if (isset(self::SEARCH_SCOPES[$queryScope])) {
+                $scope = $queryScope;
+            }
+
+            foreach (self::SEARCH_SCOPES as $value => $data) {
+                $scopes[$value] = $data['label'];
+            }
         }
 
-        // Общая статистика проекта считает открытые задачи, поэтому к отобранному
-        // списку она не относится - вместо неё показываем размер самой выборки
         $countLabel = null;
         if ($search !== '') {
             $countLabel = 'Найдено';
-        } elseif ($scope !== self::SEARCH_SCOPE_OPENED) {
+        } elseif ($scope !== $defaultScope) {
             $countLabel = 'Показано';
         }
 
@@ -369,6 +378,11 @@ class ProjectPage extends LPMPage
             'scope' => $scope,
             'scopes' => $scopes,
         ]);
+    }
+
+    private function initIssues()
+    {
+        $this->initIssuesList(self::SEARCH_SCOPE_OPENED, true);
     }
 
     private function initIssue()
@@ -451,12 +465,9 @@ class ProjectPage extends LPMPage
 
     private function initCompletedIssues()
     {
-        // Своего поиска у подраздела нет: в основном списке задач можно искать
-        // и среди завершённых
-        $this->addTmplVar('issues', $this->loadIssues(self::SEARCH_SCOPES[self::SEARCH_SCOPE_COMPLETED]['statuses']));
-        $this->addTmplVar('search', '');
-        $this->addTmplVar('issuesCountLabel', null);
-        $this->addTmplVar('searchForm', null);
+        // Подраздел ищет только среди завершённых задач: показывать в нём открытые
+        // - значит противоречить его собственному названию
+        $this->initIssuesList(self::SEARCH_SCOPE_COMPLETED, false);
     }
 
     private function initComments()
