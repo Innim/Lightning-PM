@@ -557,6 +557,8 @@ class PagePrinter
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
             'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
             'priorityGroupStep' => Issue::PRIORITY_GROUP_STEP,
+            'passwordMinLength' => PASSWORD_MIN_LENGTH,
+            'passwordMaxLength' => PASSWORD_MAX_LENGTH,
             'roles' => [
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,

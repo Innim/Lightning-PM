@@ -57,20 +57,41 @@ $(document).ready(
             input.trigger('input');
         });
 
-        // Insert standard description template
+        // Insert the description template configured in the app settings
         $('#issueForm .apply-desc-template').on('click', function () {
             const $field = $('#issueForm textarea[name=desc]');
             const el = $field[0];
-            const tmplStart = "### Проблема\n\n";
-            const tmplEndSection = "### Что сделать\n\n";
+            const template = String($('#issueForm').data('descTemplate') || '');
+            if (!template.trim()) {
+                return;
+            }
+
+            // The template is split at its first blank line: text already typed
+            // in the field goes between the two halves, i.e. into the first section.
+            // The tail is re-indented with one blank line so it stays separated from
+            // that text whatever spacing the configured template itself uses.
+            const splitAt = template.indexOf("\n\n");
+            const tmplStart = splitAt === -1 ? template : template.slice(0, splitAt + 2);
+            const tmplTail = splitAt === -1 ? '' : template.slice(splitAt + 2);
+            const tmplEndSection = tmplTail === '' ? '' : "\n\n" + tmplTail.replace(/^\n+/, '');
 
             const current = $field.val() || '';
-            const hasTemplate = current.indexOf(tmplStart.trim()) !== -1 || current.indexOf(tmplEndSection.trim()) !== -1;
 
-            // Empty field: insert both parts and place caret after tmplStart
+            // An already inserted template is recognised by its Markdown headings:
+            // matching any template line instead would let a common one ("TODO:")
+            // occur in ordinary text and silently turn the button into a no-op.
+            // A template without headings has no such line and is matched as a whole.
+            const headings = template.split("\n")
+                .map(function (line) { return line.trim(); })
+                .filter(function (line) { return /^#{1,6}\s+\S/.test(line); });
+            const markers = headings.length ? headings : [template.trim()];
+            const hasTemplate = markers.some(function (marker) {
+                return current.indexOf(marker) !== -1;
+            });
+
+            // Empty field: insert the whole template and place caret after tmplStart
             if (!current.trim()) {
-                const full = tmplStart + "\n\n" + tmplEndSection;
-                $field.val(full);
+                $field.val(template);
                 try {
                     const caret = tmplStart.length;
                     el.focus();
@@ -104,8 +125,7 @@ $(document).ready(
             const after = current.slice(selEnd).trimStart();
 
             const newValueStart = before + (before ? "\n\n" : "") + tmplStart + middle;
-            const newValueEnd = tmplEndSection + after;
-            const newValue = newValueStart + "\n\n" + newValueEnd;
+            const newValue = newValueStart + tmplEndSection + after;
             const caretPos = newValueStart.length;
 
             $field.val(newValue);
