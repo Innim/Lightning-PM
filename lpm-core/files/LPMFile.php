@@ -192,6 +192,44 @@ class LPMFile extends LPMBaseObject
     }
 
     /**
+     * Возвращает видео, сжатие которого завершилось ошибкой, в состояние
+     * «в обработке» — то есть в очередь на новую попытку.
+     *
+     * Переход выполняется одной операцией и только из статуса ошибки:
+     * из нескольких одновременных вызовов успешным будет ровно один,
+     * поэтому на файл не может появиться двух заданий сразу. Удалённый
+     * файл в очередь не возвращается.
+     *
+     * @param  int $fileId
+     * @return bool true, если файл был в статусе ошибки и переведён в обработку
+     */
+    public static function requeueFailedCompress($fileId)
+    {
+        $fileId = (int)$fileId;
+        if ($fileId <= 0) {
+            return false;
+        }
+
+        $res = self::buildAndExecute([
+            'UPDATE' => LPMTables::FILES,
+            'SET'    => [
+                'compressStatus' => VideoCompressor::STATUS_PROCESSING,
+            ],
+            'WHERE'  => [
+                'fileId'         => $fileId,
+                'compressStatus' => VideoCompressor::STATUS_FAILED,
+                'deleted'        => 0,
+            ],
+        ]);
+
+        if ($res === false) {
+            throw new \GMFramework\ProviderSaveException();
+        }
+
+        return self::getDB()->affected_rows === 1;
+    }
+
+    /**
      * Сохраняет результат успешного сжатия видео: подменяет путь/имя/тип/размер
      * и помечает файл как обработанный.
      * @param int    $fileId
@@ -252,6 +290,26 @@ class LPMFile extends LPMBaseObject
                 self::markFileDeleted($file->fileId);
             }
         }
+    }
+
+    /**
+     * Отвязывает от сущности все её файлы и удаляет с диска те из них,
+     * которые не привязаны больше ни к одной сущности.
+     * @param int $itemType Одна из констант {@see LPMInstanceTypes}.
+     * @param int $itemId
+     */
+    public static function deleteAllByInstance($itemType, $itemId)
+    {
+        $files = self::loadListByInstance($itemType, $itemId);
+        if (empty($files)) {
+            return;
+        }
+
+        self::delete($itemType, $itemId, array_map(function (LPMFile $file) {
+            return $file->fileId;
+        }, $files));
+
+        FileUploadManager::removeStorageDirectory($itemType, $itemId);
     }
 
     public static function linkToInstance($fileId, $itemType, $itemId)
@@ -538,5 +596,17 @@ class LPMFile extends LPMBaseObject
     public function isCompressFailed()
     {
         return (int)$this->compressStatus === VideoCompressor::STATUS_FAILED;
+    }
+
+    /**
+     * Нужно ли выводить у видео управление повторным сжатием.
+     * Истина и пока сжатие идёт: попытка может завершиться ошибкой на уже
+     * открытой странице, и повтор должен стать доступен без её перезагрузки.
+     * @return bool
+     */
+    public function needCompressRetryControl()
+    {
+        return VideoCompressor::isEnabled() && $this->isVideo()
+            && ($this->isCompressing() || $this->isCompressFailed());
     }
 }

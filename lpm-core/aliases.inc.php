@@ -207,6 +207,15 @@ function lpm_print_comment_files(Comment $comment)
 }
 
 /**
+ * Распечатывает состояния сборок по веткам, о влитии которых
+ * говорит комментарий.
+ */
+function lpm_print_comment_branch_pipelines(Comment $comment)
+{
+    return PagePrinter::commentBranchPipelines($comment);
+}
+
+/**
 * Распечатывает задачу
 */
 function lpm_print_issue_view()
@@ -406,10 +415,16 @@ function lpm_print_copy_button($value, $toast = 'Скопировано')
  * @param $stickers
  * @param bool $addProjectName
  * @param bool $addClearBoard
+ * @param array $freeIssueIds Множество `issueId => true` задач, которые показываются
+ *                            свободными; пусто там, где свободных задач не бывает.
  */
-function lpm_print_table_scrum_board($stickers, $addProjectName = false, $addClearBoard = false)
-{
-    return PagePrinter::tableScrumBoard($stickers, $addProjectName, $addClearBoard);
+function lpm_print_table_scrum_board(
+    $stickers,
+    $addProjectName = false,
+    $addClearBoard = false,
+    $freeIssueIds = []
+) {
+    return PagePrinter::tableScrumBoard($stickers, $addProjectName, $addClearBoard, $freeIssueIds);
 }
 
 
@@ -490,6 +505,15 @@ function lpm_get_base_page_url()
 function lpm_get_main_menu()
 {
     return PageConstructor::getMainMenu();
+}
+
+/**
+ * Распечатывает пункт главного меню
+ * @param Link $link Ссылка пункта меню.
+ */
+function lpm_print_main_menu_item($link)
+{
+    PagePrinter::mainMenuItem($link);
 }
 
 /**

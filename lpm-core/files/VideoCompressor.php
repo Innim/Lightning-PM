@@ -16,6 +16,10 @@
  * Очередь разгребается без крона: закончив работу, воркер освобождает слот
  * и запускает следующий ожидающий файл.
  *
+ * Автоматических повторов после ошибки нет — ролик, стабильно роняющий
+ * процесс, крутился бы в цикле. Повтор возможен только вручную,
+ * {@see retry()}, и идёт той же очередью.
+ *
  * Работа с БД вынесена в {@see LPMFile} и {@see VideoCompressQueue},
  * здесь только оркестрация процессов и файловые операции.
  */
@@ -94,6 +98,36 @@ class VideoCompressor
         if ($actual) {
             $file->compressStatus = $actual->compressStatus;
         }
+    }
+
+    /**
+     * Возвращает видео, сжатие которого завершилось ошибкой, в очередь
+     * на новую попытку. Повторов по своей воле система не делает — это
+     * ручное действие пользователя.
+     *
+     * Повтор идёт той же очередью, что и сжатие после загрузки: если
+     * свободных слотов нет, файл ждёт наравне с остальными. Файл, который
+     * не в статусе ошибки (уже сжимается или обработан), не трогается,
+     * поэтому одновременные вызовы не создают двух заданий на один файл.
+     *
+     * @param  int $fileId
+     * @return bool true, если файл поставлен в очередь этим вызовом
+     */
+    public static function retry($fileId)
+    {
+        if (!self::isEnabled()) {
+            return false;
+        }
+
+        if (!LPMFile::requeueFailedCompress($fileId)) {
+            return false;
+        }
+
+        LPMLog::info('Сжатие запущено повторно', LPMLog::CH_VIDEO, ['fileId' => (int)$fileId]);
+
+        self::dispatch();
+
+        return true;
     }
 
     /**
@@ -550,19 +584,27 @@ class VideoCompressor
     }
 
     /**
-     * Меняет расширение в пути/имени файла.
+     * Меняет расширение в пути/имени файла. Имя без расширения получает его.
+     * Остальная часть имени сохраняется как есть, включая точки внутри него.
+     * @param  string $path Путь или имя файла.
+     * @param  string $ext  Новое расширение без точки.
+     * @return string
      */
     private static function changeExtension($path, $ext)
     {
-        $dir = pathinfo($path, PATHINFO_DIRNAME);
-        $name = pathinfo($path, PATHINFO_FILENAME);
-        $newName = $name . '.' . $ext;
+        // Имя режется по разделителям вручную: pathinfo() и basename() зависят
+        // от локали и в локали C выбрасывают всё до первого ASCII-символа.
+        $slashPos = strrpos($path, '/');
+        $dir = false === $slashPos ? '' : substr($path, 0, $slashPos + 1);
+        $name = false === $slashPos ? $path : substr($path, $slashPos + 1);
 
-        if ($dir === '' || $dir === '.') {
-            return $newName;
+        // Точка в начале — часть имени скрытого файла, а не отделяет расширение.
+        $dotPos = strrpos($name, '.');
+        if (false !== $dotPos && $dotPos > 0) {
+            $name = substr($name, 0, $dotPos);
         }
 
-        return $dir . '/' . $newName;
+        return $dir . $name . '.' . $ext;
     }
 
     /**

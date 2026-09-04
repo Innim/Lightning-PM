@@ -78,6 +78,25 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
     public $mergedAt;
 
     /**
+     * SHA последнего коммита исходной ветки.
+     * @var string
+     */
+    public $sha;
+
+    /**
+     * SHA мерж-коммита; пусто, если мерж-коммита нет
+     * (влитие перемоткой или со squash без мерж-коммита).
+     * @var string
+     */
+    public $mergeCommitSha;
+
+    /**
+     * SHA squash-коммита; пусто, если изменения влиты без squash.
+     * @var string
+     */
+    public $squashCommitSha;
+
+    /**
      * Является ли MR черновиком (Draft).
      *
      * У черновика состояние остаётся {@see self::STATE_OPENED},
@@ -113,6 +132,8 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
         $this->addAlias('source_project_id', 'sourceProjectId');
         $this->addAlias('target_project_id', 'targetProjectId');
         $this->addAlias('merged_at', 'mergedAt');
+        $this->addAlias('merge_commit_sha', 'mergeCommitSha');
+        $this->addAlias('squash_commit_sha', 'squashCommitSha');
     }
 
     public function isOpened()
@@ -133,5 +154,26 @@ class GitlabMergeRequest extends \GMFramework\StreamObject
     public function isDraft()
     {
         return $this->isOpened() && $this->draft;
+    }
+
+    /**
+     * Возвращает коммит, которым изменения MR попали в целевую ветку.
+     *
+     * Именно для него GitLab запускает сборку целевой ветки. При влитии
+     * перемоткой (fast-forward) мерж-коммита нет, и целевая ветка встаёт
+     * на последний коммит исходной - его и возвращаем.
+     *
+     * @return string SHA коммита или пустая строка, если определить его
+     * не удалось.
+     */
+    public function getMergedCommitSha()
+    {
+        foreach ([$this->mergeCommitSha, $this->squashCommitSha, $this->sha] as $sha) {
+            if (!empty($sha)) {
+                return $sha;
+            }
+        }
+
+        return '';
     }
 }

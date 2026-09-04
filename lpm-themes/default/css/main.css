@@ -495,13 +495,38 @@ a.add-me-to-issue .plus-icon {
     margin: 0;
     padding: 0;
 }
-.comments-list-item ul.merge-requests {
+/* Компактная карточка автокомментария: вертикальные отступы задают margin
+   абзацев текста, а не padding тела карточки. Нижний padding возвращается,
+   когда в комментарии есть вложения: они рисуются последними и иначе
+   упираются в край фона. Проверяется наполнение, а не наличие контейнеров:
+   списки MR/pipeline/job есть в разметке всегда и заполняются из JS. */
+.comments-list-item .auto-comment-body {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+.comments-list-item .auto-comment-body:has(.attachments ul:not(:empty), .comment-files > *, ul.branch-pipelines) {
+	padding-bottom: 1rem;
+}
+
+/* Списки вложений комментария (MR, pipeline, job) всегда присутствуют в
+   разметке и заполняются из JS, поэтому пустой список скрыт. Отступ сверху
+   задаёт сам список: pipeline/job выводятся в .list-group, а во flex-контейнере
+   margin элементов не схлопывается с margin списка. Состояния сборок влитых
+   веток рисует сервер, но отступы у них те же. */
+.comments-list-item ul.merge-requests,
+.comments-list-item ul.pipelines,
+.comments-list-item ul.branch-pipelines,
+.comments-list-item ul.jobs {
 	margin: 10px 0 0;
 	padding: 0;
 	list-style: none;
 }
 
-.comments-list-item ul.merge-requests:empty {
+.comments-list-item ul.merge-requests:empty,
+.comments-list-item ul.pipelines:empty,
+.comments-list-item ul.branch-pipelines:empty,
+.comments-list-item ul.jobs:empty {
    display: none;
 }
 
@@ -704,6 +729,13 @@ table.issues-list tr.test-ready .test-ready-check {
 	float: left;
 	width: 70%;
 	font-size : smaller;
+}
+/* Панель поиска по задачам. clear выводит её из-под строки фильтров: та флоатится,
+   и без clear панель встала бы рядом с ней. Оба свойства заданы здесь, а не
+   утилитами: в Bootstrap 5.1 нет утилит ни для clear, ни для max-width. */
+#projectView .issues-search-panel {
+	clear: both;
+	max-width: 640px;
 }
 
 /* список задач и добавление/редактирование задачи */
@@ -1116,7 +1148,8 @@ blockquote > p {
 .scrum-board-header {
 	float: left;
 }
-#scrumBoard h3 .scrum-board-info {
+#scrumBoard h3 .scrum-board-info,
+#scrumBoard h3 .scrum-board-free {
 	font-weight: normal;
 	font-size: 0.8em;
 } 
@@ -1147,7 +1180,8 @@ blockquote > p {
     vertical-align: top;
     text-align: left;
 }
-.scrum-board-table th .scrum-col-info {
+.scrum-board-table th .scrum-col-info,
+.scrum-board-table th .scrum-col-free {
 	margin-left: 5px;
 	font-weight: normal;
     font-size: 0.9em;
@@ -1273,6 +1307,22 @@ blockquote > p {
 }
 .scrum-board-sticker.tester {
 	border: solid 2px #EE82EE;
+}
+/* Класс `free` и метку `sticker-free-mark` снимает scrum-board.js,
+   когда задачу берут себе */
+.scrum-board-sticker.free {
+	border: dashed 2px #6c757d;
+}
+.scrum-board-sticker .sticker-free-mark {
+	display: block;
+	margin-top: 3px;
+	font-size: 9px;
+	color: #495057;
+}
+/* `sticker-control-remove` лежит вне `.control-line`, поэтому селектора два */
+.scrum-board-sticker.free a.sticker-control-remove,
+.scrum-board-sticker.free .control-line a:not(.sticker-control-take) {
+	display: none;
 }
 .scrum-board-sticker a {
 	text-decoration: none;

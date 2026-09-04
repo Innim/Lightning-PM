@@ -109,7 +109,7 @@ Optional query parameters:
 - `status`: comma-separated `inWork`, `test`, `completed` (or `0`, `1`, `2`); any status by default.
 - `type`: comma-separated `develop`, `bug`, `support` (or `0`, `1`, `2`).
 - `label`: comma-separated labels (case-insensitive); an issue must have all of them.
-- `search`: substring of the issue name, or the beginning of `idInProject`.
+- `search`: substring of the issue name or description, case-insensitive; a plain number (or `#12`) also matches the issue with that `idInProject`.
 - `limit` (default `50`, max `200`) and `offset` for paging.
 
 Example:
@@ -174,6 +174,22 @@ Both requests answer with the updated issue payload (same shape as `GET /api/v1/
 
 Use the resolved global `id` as `{issueId}` here as well.
 
+## Issue Guidelines
+
+Read how issues must be written in this project. Call it **before** composing a new issue:
+
+```http
+GET /api/v1/projects/{projectId}/issue-guidelines
+```
+
+The response is `{project, descriptionTemplate, guidelines, naming}`:
+
+- `descriptionTemplate`: the description skeleton used in the web UI — fill its sections instead of inventing a structure of your own.
+- `guidelines`: the team's issue-writing rules as free-form text; follow them for `name`, `desc` and `type`.
+- `naming`: `{requireTitle, requireLabels, example}` — `requireTitle` is always `true` (the name needs a title besides its `[label]` prefixes), `requireLabels` says whether at least one label is mandatory, `example` shows the expected shape.
+
+Do not cache the answer between tasks: both texts are an app-wide setting an administrator can change, and the naming rules differ per project.
+
 ## Creating an Issue
 
 Create a new issue in a project when the user asks to open/file a task rather than implement an existing one:
@@ -195,8 +211,8 @@ Content-Type: application/json
 ```
 
 - `projectId` (required): project `id` or `uid` the user can access.
-- `name` (required): issue title. Labels are `[label]` prefixes of the name (`[api][ui] Title`), so a title besides them is required. Projects that require labels reject a name without any label with `400`.
-- `desc` (optional): description (Markdown allowed), up to 60000 characters.
+- `name` (required): issue title. Labels are `[label]` prefixes of the name (`[api][ui] Title`), so a title besides them is required. Projects that require labels reject a name without any label with `400` — [Issue Guidelines](#issue-guidelines) tells you upfront whether this project is one of them.
+- `desc` (optional): description (Markdown allowed), up to 60000 characters. Its structure is a team convention — take it from [Issue Guidelines](#issue-guidelines), do not invent one.
 - `type` (optional, default `0`): `0` develop, `1` bug, `2` support.
 - `priority` (optional, default `50` — normal): integer `1..100`, as shown in the web UI; out-of-range values are rejected with `400`.
 - `hours` (optional, default `0`): the estimate in the unit the project uses — story points in a scrum project, hours in any other one; only `0.5` is a valid fraction.

@@ -14,6 +14,32 @@ $(document).ready(
             states.setState($(this).data('sort'));
         });
 
+        // Поиск идёт по всей базе задач проекта, а не по показанным строкам,
+        // поэтому смена области поиска перезапрашивает список с сервера
+        $(document).on('change', '#issuesSearchForm select[name=scope]', function () {
+            $(this).closest('form').submit();
+        });
+
+        // Раскрытие по иконке экономит клик только если курсор сразу оказывается
+        // в поле. Событие срабатывает лишь на раскрытие пользователем: форму,
+        // раскрытую сервером при активном поиске, фокус не перехватывает.
+        $(document).on('shown.bs.collapse', '#issuesSearchPanel', function () {
+            const input = this.querySelector('input[name=search]');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        });
+
+        // По кнопке «назад» браузер возвращает страницу такой, какой её оставили:
+        // в полях стоит то, что пользователь выбрал перед уходом, а список пришёл
+        // с сервера по адресу страницы. reset() возвращает полям значения из
+        // разметки, то есть ровно те, по которым список и отобран.
+        $(window).on('pageshow', function () {
+            const form = document.getElementById('issuesSearchForm');
+            if (form) form.reset();
+        });
+
         $(document).on('click', '#issuesList .member-list a', function (e) {
             const memberId = $(e.currentTarget).data('memberId');
             issuePage.showIssuesByUser(memberId);
@@ -57,20 +83,41 @@ $(document).ready(
             input.trigger('input');
         });
 
-        // Insert standard description template
+        // Insert the description template configured in the app settings
         $('#issueForm .apply-desc-template').on('click', function () {
             const $field = $('#issueForm textarea[name=desc]');
             const el = $field[0];
-            const tmplStart = "### Проблема\n\n";
-            const tmplEndSection = "### Что сделать\n\n";
+            const template = String($('#issueForm').data('descTemplate') || '');
+            if (!template.trim()) {
+                return;
+            }
+
+            // The template is split at its first blank line: text already typed
+            // in the field goes between the two halves, i.e. into the first section.
+            // The tail is re-indented with one blank line so it stays separated from
+            // that text whatever spacing the configured template itself uses.
+            const splitAt = template.indexOf("\n\n");
+            const tmplStart = splitAt === -1 ? template : template.slice(0, splitAt + 2);
+            const tmplTail = splitAt === -1 ? '' : template.slice(splitAt + 2);
+            const tmplEndSection = tmplTail === '' ? '' : "\n\n" + tmplTail.replace(/^\n+/, '');
 
             const current = $field.val() || '';
-            const hasTemplate = current.indexOf(tmplStart.trim()) !== -1 || current.indexOf(tmplEndSection.trim()) !== -1;
 
-            // Empty field: insert both parts and place caret after tmplStart
+            // An already inserted template is recognised by its Markdown headings:
+            // matching any template line instead would let a common one ("TODO:")
+            // occur in ordinary text and silently turn the button into a no-op.
+            // A template without headings has no such line and is matched as a whole.
+            const headings = template.split("\n")
+                .map(function (line) { return line.trim(); })
+                .filter(function (line) { return /^#{1,6}\s+\S/.test(line); });
+            const markers = headings.length ? headings : [template.trim()];
+            const hasTemplate = markers.some(function (marker) {
+                return current.indexOf(marker) !== -1;
+            });
+
+            // Empty field: insert the whole template and place caret after tmplStart
             if (!current.trim()) {
-                const full = tmplStart + "\n\n" + tmplEndSection;
-                $field.val(full);
+                $field.val(template);
                 try {
                     const caret = tmplStart.length;
                     el.focus();
@@ -104,8 +151,7 @@ $(document).ready(
             const after = current.slice(selEnd).trimStart();
 
             const newValueStart = before + (before ? "\n\n" : "") + tmplStart + middle;
-            const newValueEnd = tmplEndSection + after;
-            const newValue = newValueStart + "\n\n" + newValueEnd;
+            const newValue = newValueStart + tmplEndSection + after;
             const caretPos = newValueStart.length;
 
             $field.val(newValue);
@@ -777,6 +823,16 @@ issuePage.getPriorityTextColor = function (val) {
 
 issuePage.updateStat = function () {
     if ($("#projectView").length == 0) return;
+
+    // В отобранном списке (поиск или область по статусу) в статистике стоит размер
+    // выборки, а счётчиков открытых задач и часов проекта в разметке нет
+    const $shown = $(".project-stat .issues-shown");
+    if ($shown.length > 0) {
+        const count = $("#issuesList > tbody > tr").length;
+        $shown.text(count);
+        $(".issues-list-empty").toggleClass('d-none', count > 0);
+        return;
+    }
 
     $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
     $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
@@ -2089,35 +2145,51 @@ issuePage.scrumColUpdateInfo = function () {
     });
 
     const cols = ['col-todo', 'col-in_progress', 'col-testing', 'col-done'];
-    const getColStickersSelector = (col) =>
-        '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker:visible';
+    // Свои и свободные задачи считаются раздельно: основное число - нагрузка
+    // самого пользователя, свободные идут отдельной прибавкой к нему
+    const colStickersSelector = (col) =>
+        '#scrumBoard .scrum-board-table .scrum-board-col.' + col + ' .scrum-board-sticker';
+    const getColStickersSelector = (col) => colStickersSelector(col) + ':not(.free):visible';
+    const getColFreeStickersSelector = (col) => colStickersSelector(col) + '.free:visible';
+
+    const sumSP = ($stickers) => {
+        let sp = 0;
+        $stickers.each((i, el) => {
+            sp += parseFloat($(el).data('stickerSp'));
+        });
+        return sp;
+    };
+    const spStr = (sp) => parseInt(sp) == sp ? sp : sp.toFixed(1);
 
     let totalSP = 0;
     let totalNum = 0;
+    let totalFreeSP = 0;
+    let totalFreeNum = 0;
     for (let i = 0; i < cols.length; ++i) {
         const col = cols[i];
         const colStickers = $(getColStickersSelector(col));
 
-        let sp = 0;
-        colStickers.each((i, el) => {
-            sp += parseFloat($(el).data('stickerSp'));
-        });
-
+        let sp = sumSP(colStickers);
         let num = colStickers.size();
+
+        const freeStickers = $(getColFreeStickersSelector(col));
+        const freeSP = sumSP(freeStickers);
+        const freeNum = freeStickers.size();
 
         let selector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-info';
 
-        if (num > 0) {
+        // Рядом со свободными своё число не прячем: ноль своих задач - это
+        // ответ на вопрос "сколько у меня работы", а не отсутствие ответа
+        if (num > 0 || freeNum > 0) {
             $(selector + ' .scrum-col-count .value').html(num);
 
             let spSelector = selector + ' .scrum-col-sp';
-            if (sp > 0)
+            if (sp > 0 || num == 0)
                 $(spSelector).show();
             else
                 $(spSelector).hide();
 
-            let spScr = parseInt(sp) == sp ? sp : sp.toFixed(1);
-            $(spSelector + ' .value').html(spScr);
+            $(spSelector + ' .value').html(spStr(sp));
 
             totalSP += sp;
             totalNum += num;
@@ -2126,19 +2198,51 @@ issuePage.scrumColUpdateInfo = function () {
         } else {
             $(selector).hide();
         }
+
+        const freeSelector = '#scrumBoard .scrum-board-table .' + col + ' .scrum-col-free';
+
+        if (freeNum > 0) {
+            $(freeSelector + ' .scrum-col-free-count .value').html(freeNum);
+
+            const freeSpSelector = freeSelector + ' .scrum-col-free-sp';
+            if (freeSP > 0)
+                $(freeSpSelector).show();
+            else
+                $(freeSpSelector).hide();
+
+            $(freeSpSelector + ' .value').html(spStr(freeSP));
+
+            totalFreeSP += freeSP;
+            totalFreeNum += freeNum;
+
+            $(freeSelector).show();
+        } else {
+            $(freeSelector).hide();
+        }
     }
 
-    if (totalNum) {
+    if (totalNum || totalFreeNum) {
         $('#scrumBoard .scrum-board-info').show();
         $('#scrumBoard .scrum-board-info .scrum-board-count .value').html(totalNum);
-        if (totalSP > 0) {
-            let totalSpScr = parseInt(totalSP) == totalSP ? totalSP : totalSP.toFixed(1);
-            $('#scrumBoard .scrum-board-sp').show().find('.value').html(totalSpScr);
+        if (totalSP > 0 || totalNum == 0) {
+            $('#scrumBoard .scrum-board-sp').show().find('.value').html(spStr(totalSP));
         }
         else
             $('#scrumBoard .scrum-board-sp').hide();
     } else {
         $('#scrumBoard .scrum-board-info').hide();
+    }
+
+    if (totalFreeNum) {
+        $('#scrumBoard .scrum-board-free').show();
+        $('#scrumBoard .scrum-board-free .scrum-board-free-count .value').html(totalFreeNum);
+        if (totalFreeSP > 0) {
+            $('#scrumBoard .scrum-board-free-sp').show().find('.value').html(spStr(totalFreeSP));
+        }
+        else
+            $('#scrumBoard .scrum-board-free-sp').hide();
+    } else {
+        $('#scrumBoard .scrum-board-free').hide();
     }
 }
 

@@ -36,6 +36,15 @@ SQL;
         return $comments;
     }
 
+    /**
+     * Возвращает комментарии к задачам проекта, начиная с самых свежих.
+     * Комментарии удалённых задач в выборку не попадают: до самой задачи
+     * добраться уже нельзя, а её вложения удалены вместе с ней.
+     * @param int $projectId
+     * @param int $from Смещение от начала выборки.
+     * @param int $limit Ограничение на кол-во комментариев; 0 — без ограничения.
+     * @return Comment[]
+     */
     public static function getIssuesListByProject($projectId, $from = 0, $limit = 0)
     {
         $instanceType = LPMInstanceTypes::ISSUE;
@@ -46,6 +55,7 @@ SQL;
 			  FROM `%1\$s` `c`, `%2\$s` `u`, `%3\$s` `p`, `%4\$s` `i`
 			 WHERE `c`.`deleted` = 0 AND `c`.`instanceType` = {$instanceType} 
 			   AND `c`.`authorId` = `u`.`userId` AND `i`.`id` = `c`.`instanceId`
+			   AND `i`.`deleted` = 0
 			   AND `i`.`projectId` = `p`.`id` AND `p`.`id` = {$projectId}
 		  ORDER BY `c`.`date` DESC
 			{$limitStr}
@@ -65,7 +75,38 @@ SQL;
 
         return self::loadList($where);
     }
-    
+
+    /**
+     * Возвращает идентификаторы всех комментариев сущности,
+     * включая уже удалённые.
+     * @param int $instanceType Одна из констант {@see LPMInstanceTypes}.
+     * @param int $instanceId
+     * @return int[]
+     * @throws \GMFramework\ProviderLoadException
+     */
+    public static function loadIdsByInstance($instanceType, $instanceId)
+    {
+        $res = self::buildAndExecute([
+            'SELECT' => 'id',
+            'FROM'   => LPMTables::COMMENTS,
+            'WHERE'  => [
+                'instanceType' => (int)$instanceType,
+                'instanceId'   => (int)$instanceId,
+            ],
+        ]);
+
+        if (!$res) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        $ids = [];
+        while ($row = $res->fetch_assoc()) {
+            $ids[] = (int)$row['id'];
+        }
+
+        return $ids;
+    }
+
     /**
      * Валидирует и нормализует текст комментария.
      * @param string $text Исходный текст.
@@ -148,6 +189,45 @@ SQL;
         );
     }
 
+    /**
+     * Сохраняет новый текст комментария и отмечает правку.
+     *
+     * Прежний текст остаётся в истории ({@see CommentTextSnapshot}); сбой
+     * записи истории не мешает сохранить правку.
+     *
+     * @param Comment $comment Комментарий; при успехе обновляется на месте.
+     * @param string $text Новый текст, уже прошедший {@see normalizeText()}.
+     * @param int $editorId Пользователь, вносящий правку.
+     * @throws \GMFramework\ProviderSaveException Если не удалось сохранить текст.
+     */
+    public static function updateText(Comment $comment, $text, $editorId)
+    {
+        // Базовый слепок пишется до правки: иначе исходного текста
+        // уже не будет ни в комментарии, ни в истории.
+        CommentTextSnapshot::recordBaseline($comment);
+
+        $editDate = DateTimeUtils::$currentDate;
+
+        self::buildAndSaveToDbV2([
+            'UPDATE' => LPMTables::COMMENTS,
+            'SET'    => [
+                'text'     => (string)$text,
+                'editorId' => (int)$editorId,
+                'editDate' => DateTimeUtils::mysqlDate($editDate),
+            ],
+            'WHERE'  => ['id' => (int)$comment->id],
+        ]);
+
+        $comment->text = (string)$text;
+        $comment->editorId = (int)$editorId;
+        $comment->editDate = $editDate;
+        $comment->_htmlText = null;
+        $comment->_editor = null;
+        $comment->_mergeRequests = null;
+
+        CommentTextSnapshot::record($comment->id, $comment->text, $comment->editorId, $editDate);
+    }
+
     public static function discard(Comment $comment)
     {
         self::buildAndSaveToDbV2([
@@ -180,8 +260,25 @@ SQL;
     public $text         = '';
     public $dateLabel    = '';
 
+    /**
+     * Пользователь, правивший текст последним; 0 — правок не было.
+     * @var int
+     */
+    public $editorId     = 0;
+
+    /**
+     * Дата последней правки текста; 0 — правок не было.
+     * @var float
+     */
+    public $editDate     = 0;
+
 
     private $_htmlText;
+
+    /**
+     * @var User|false
+     */
+    private $_editor;
 
 
     /**
@@ -211,7 +308,8 @@ SQL;
         //$this->id = 0;
     
         $this->_typeConverter->addFloatVars('id', 'instanceId', 'instanceType', 'authorId');
-        $this->addDateTimeFields('date');
+        $this->_typeConverter->addIntVars('editorId');
+        $this->addDateTimeFields('date', 'editDate');
     
         $this->author = new User();
     }
@@ -291,6 +389,73 @@ SQL;
     public function getDate()
     {
         return $this->dateLabel;
+    }
+
+    /**
+     * Определяет, может ли пользователь редактировать текст комментария.
+     *
+     * Править можно только чек-лист тестирования
+     * ({@see IssueCommentType::TEST_CHECKLIST}) и только его автору
+     * либо модератору: остальные комментарии неизменяемы.
+     * @param User $user Пользователь, для которого проверяются права.
+     * @return bool
+     */
+    public function checkEditPermit(User $user)
+    {
+        if (empty($this->issueComment) || !$this->issueComment->isTestChecklist()) {
+            return false;
+        }
+
+        return $user->isModerator() || $user->getID() == $this->authorId;
+    }
+
+    /**
+     * Определяет, правили ли текст комментария после публикации.
+     * @return bool
+     */
+    public function isEdited()
+    {
+        return !empty($this->editDate);
+    }
+
+    /**
+     * Возвращает пользователя, правившего текст последним.
+     * @return User|false false, если правок не было либо пользователя
+     * не удалось загрузить.
+     */
+    public function getEditor()
+    {
+        if ($this->_editor === null) {
+            if (empty($this->editorId)) {
+                $this->_editor = false;
+            } elseif ($this->editorId == $this->author->getID()) {
+                $this->_editor = $this->author;
+            } else {
+                $this->_editor = User::load($this->editorId);
+            }
+        }
+
+        return $this->_editor;
+    }
+
+    /**
+     * Возвращает имя правившего текст пользователя ссылкой на его профиль.
+     * @return string Пустая строка, если правившего установить не удалось.
+     */
+    public function getEditorLinkedName()
+    {
+        $editor = $this->getEditor();
+
+        return empty($editor) ? '' : $editor->getLinkedName();
+    }
+
+    /**
+     * Возвращает дату последней правки текста для отображения.
+     * @return string Пустая строка, если правок не было.
+     */
+    public function getEditDate()
+    {
+        return self::getDateTimeStr($this->editDate);
     }
 
     /**

@@ -25,6 +25,45 @@ class ProjectPage extends LPMPage
         return array_filter(array_map('intval', explode(',', (string)$fileIdsStr)));
     }
 
+    /**
+     * Возвращает значение параметра строки запроса.
+     *
+     * $_GET к этому моменту уже разобран и удалён LPMParams - движок оставляет
+     * только заранее известные ему аргументы, а поиск задаётся параметрами
+     * одной страницы. Поэтому строка запроса читается напрямую, как это
+     * делает и внешнее API (ApiKey::getQueryArgs()).
+     * @param  string $name Имя параметра.
+     * @return string Значение параметра; пустая строка, если он не задан
+     *         или задан не строкой.
+     */
+    private static function getQueryParam($name)
+    {
+        $query = [];
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            parse_str((string)$_SERVER['QUERY_STRING'], $query);
+        }
+
+        return isset($query[$name]) && is_string($query[$name]) ? $query[$name] : '';
+    }
+
+    /**
+     * Возвращает изображения, приложенные к форме до сохранения задачи.
+     * @param  string $field Имя поля формы.
+     * @return array Изображения строками base64.
+     */
+    private static function getPostedImages($field)
+    {
+        if (empty($_POST[$field]) || !is_array($_POST[$field])) {
+            return [];
+        }
+
+        // Форма присылает изображения целыми data URI,
+        // а LPMImgUpload::prepareImages() принимает только base64.
+        return array_map(function ($value) {
+            return preg_replace('~^data:[^,]*,~', '', (string)$value);
+        }, $_POST[$field]);
+    }
+
     const UID = 'project';
     const PUID_MEMBERS = 'members';
     const PUID_ISSUES = 'issues';
@@ -35,6 +74,34 @@ class ProjectPage extends LPMPage
     const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum-board-snapshot';
     const PUID_SPRINT_STAT = 'sprint-stat';
     const PUID_SETTINGS = 'project-settings';
+
+    /** Параметр строки запроса с поисковым запросом по списку задач. */
+    const QUERY_ARG_SEARCH = 'search';
+    /** Параметр строки запроса с областью поиска по статусу задачи. */
+    const QUERY_ARG_SCOPE = 'scope';
+
+    const SEARCH_SCOPE_OPENED = 'opened';
+    const SEARCH_SCOPE_COMPLETED = 'completed';
+    const SEARCH_SCOPE_ALL = 'all';
+
+    /**
+     * Области поиска по статусу задачи: подпись для интерфейса
+     * и статусы задач, которые попадают в выборку (пусто - любые).
+     */
+    const SEARCH_SCOPES = [
+        self::SEARCH_SCOPE_OPENED => [
+            'label' => 'Открытые',
+            'statuses' => [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT],
+        ],
+        self::SEARCH_SCOPE_COMPLETED => [
+            'label' => 'Завершённые',
+            'statuses' => [Issue::STATUS_COMPLETED],
+        ],
+        self::SEARCH_SCOPE_ALL => [
+            'label' => 'Все',
+            'statuses' => [],
+        ],
+    ];
 
     /**
      *
@@ -168,6 +235,8 @@ class ProjectPage extends LPMPage
         }
 
         Project::$currentProject = $this->_project;
+
+        $this->registerVisit($user);
         
         $this->_header = 'Проект "' . $this->_project->name . '"';
         $this->_title  = $this->_project->name;
@@ -247,12 +316,73 @@ class ProjectPage extends LPMPage
         return $this;
     }
 
+    /**
+     * Отмечает, что пользователь открыл страницу проекта.
+     *
+     * Вызывается только при отрисовке страницы: ajax-вызовы идут мимо
+     * страниц, отдельным входом, и посещением не считаются.
+     * @param User $user Текущий пользователь.
+     */
+    private function registerVisit(User $user)
+    {
+        try {
+            ProjectVisit::registerVisit($user->userId, $this->_project->id);
+        } catch (\Exception $e) {
+            // Неудачная отметка не должна мешать открыть проект
+            LPMLog::exception($e, LPMLog::CH_APP, ['projectId' => (int)$this->_project->id]);
+        }
+    }
+
+    /**
+     * Готовит список задач подраздела и форму поиска по нему.
+     *
+     * Показываются задачи области поиска, а если задан поисковый запрос - только
+     * найденные среди них. Пока область не меняли и не искали, подраздел
+     * показывает свой обычный список, и вместо размера выборки уместна общая
+     * статистика проекта.
+     * @param string $defaultScope Область поиска, которую подраздел показывает
+     *        без запроса: список этих задач и есть его обычное содержимое.
+     * @param bool   $scopeChoice  Можно ли менять область поиска. Если нет,
+     *        подраздел ищет только среди своих задач: область не выбирается
+     *        и не задаётся параметром адреса.
+     */
+    private function initIssuesList($defaultScope, $scopeChoice)
+    {
+        $search = trim(self::getQueryParam(self::QUERY_ARG_SEARCH));
+
+        $scope = $defaultScope;
+        $scopes = [];
+        if ($scopeChoice) {
+            $queryScope = self::getQueryParam(self::QUERY_ARG_SCOPE);
+            if (isset(self::SEARCH_SCOPES[$queryScope])) {
+                $scope = $queryScope;
+            }
+
+            foreach (self::SEARCH_SCOPES as $value => $data) {
+                $scopes[$value] = $data['label'];
+            }
+        }
+
+        $countLabel = null;
+        if ($search !== '') {
+            $countLabel = 'Найдено';
+        } elseif ($scope !== $defaultScope) {
+            $countLabel = 'Показано';
+        }
+
+        $this->addTmplVar('issues', $this->loadIssues(self::SEARCH_SCOPES[$scope]['statuses'], $search));
+        $this->addTmplVar('search', $search);
+        $this->addTmplVar('issuesCountLabel', $countLabel);
+        $this->addTmplVar('searchForm', [
+            'url' => $this->getUrl(),
+            'scope' => $scope,
+            'scopes' => $scopes,
+        ]);
+    }
+
     private function initIssues()
     {
-        // загружаем задачи
-        $openedIssues = $this->loadIssues([Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
-            
-        $this->addTmplVar('issues', $openedIssues);
+        $this->initIssuesList(self::SEARCH_SCOPE_OPENED, true);
     }
 
     private function initIssue()
@@ -335,9 +465,9 @@ class ProjectPage extends LPMPage
 
     private function initCompletedIssues()
     {
-        // загружаем  завершенные задачи
-        $completedIssues = $this->loadIssues([Issue::STATUS_COMPLETED]);
-        $this->addTmplVar('issues', $completedIssues);
+        // Подраздел ищет только среди завершённых задач: показывать в нём открытые
+        // - значит противоречить его собственному названию
+        $this->initIssuesList(self::SEARCH_SCOPE_COMPLETED, false);
     }
 
     private function initComments()
@@ -494,17 +624,23 @@ class ProjectPage extends LPMPage
     }
     
     /**
-     * Номер последнего задания в проекте
-     * @return idInProject
+     * Загружает задачи проекта вместе с их исполнителями и тестировщиками.
+     * @param  array<int> $statuses Статусы задач (пустой список - любые).
+     * @param  string     $search   Поисковый запрос; пустой - без поиска.
+     * @return array<Issue> Массив задач.
      */
-    private function getLastIssueId()
-    {
-        return Issue::getLastIssueId($this->_project->id);
-    }
-
-    private function loadIssues($statuses) 
+    private function loadIssues($statuses, $search = '')
     {
         $projectId = $this->_project->id;
+
+        if ($search !== '') {
+            // Участников грузим только для найденных задач, а не для всех
+            // задач проекта, как это делает выборка без поиска
+            return Issue::preloadParticipants(Issue::loadListByProjectFiltered(
+                $projectId,
+                ['statuses' => $statuses, 'search' => $search]
+            ));
+        }
 
         $loadMembers = true;
         $loadTesters = true;
@@ -558,11 +694,9 @@ class ProjectPage extends LPMPage
                 return $engine->addError('У вас нет прав для редактирования этой задачи');
             }
 
-            $idInProject = $curIssue->idInProject;
             $issueName = $curIssue->name;
         } else {
             $issueId = null;
-            $idInProject = (int)$this->getLastIssueId();
             $issueName = null;
         }
 
@@ -623,7 +757,7 @@ class ProjectPage extends LPMPage
         $_POST['name'] = trim(str_replace('%', '%%', $_POST['name']));
 
         foreach ($_POST as $key => $value) {
-            if (!in_array($key, ['members', 'clipboardImg', 'imgUrls', 'testers', 'membersSp', 'masters'])) {
+            if (!in_array($key, ['members', 'clipboardImg', 'draftImg', 'imgUrls', 'testers', 'membersSp', 'masters'])) {
                 $_POST[$key] = $db->real_escape_string($value);
             }
         }
@@ -765,7 +899,7 @@ class ProjectPage extends LPMPage
 
         // удаление старых изображений
         if (!empty($_POST["removedImages"])) {
-            $this->removeImagesFromIssue($db, $issueId, $_POST["removedImages"]);
+            $this->removeImagesFromIssue($issueId, $_POST["removedImages"]);
         }
 
         // загружаем изображения
@@ -805,11 +939,6 @@ class ProjectPage extends LPMPage
             if (!$this->updateScrumBoard($issue, $putOnBoard)) return;
         }
 
-        // обновляем счетчики изображений
-        if ($uploader->getLoadedCount() > 0 || $editMode) {
-            Issue::updateImgsCounter($issueId, $uploader->getLoadedCount());
-        }
-        
         // отсылаем оповещения
         $changes = null;
         if ($editMode && isset($curIssue)) {
@@ -844,7 +973,9 @@ class ProjectPage extends LPMPage
         // Очищаем сохраненные данные
         $this->_issueInput = null;
     
-        $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $idInProject);
+        // Номер в проекте выдаёт сама вставка задачи (Issue::createNew()),
+        // поэтому адрес строим по фактическому, а не по посчитанному заранее.
+        $issueURL = $this->getBaseUrl(ProjectPage::PUID_ISSUE, $issue->idInProject);
         LightningEngine::go2URL($issueURL);
     }
 
@@ -1019,8 +1150,9 @@ class ProjectPage extends LPMPage
     }
 
     /**
-     * Получает во временные файлы изображения, вставленные из буфера обмена
-     * и добавленные по URL, и проверяет их.
+     * Получает во временные файлы изображения, приложенные к форме до
+     * сохранения (вставленные из буфера обмена или перенесённые из черновика
+     * задачи) и добавленные по URL, и проверяет их.
      * Все обнаруженные ошибки добавляются к ошибкам страницы.
      * @return bool false, если хотя бы одно изображение не может быть загружено.
      */
@@ -1028,12 +1160,14 @@ class ProjectPage extends LPMPage
     {
         $errors = [];
 
-        $clipboard = isset($_POST['clipboardImg']) && is_array($_POST['clipboardImg'])
-            ? $_POST['clipboardImg'] : [];
+        $images = array_merge(
+            self::getPostedImages('clipboardImg'),
+            self::getPostedImages('draftImg')
+        );
         $urls = isset($_POST['imgUrls']) && is_array($_POST['imgUrls'])
             ? $_POST['imgUrls'] : [];
 
-        $this->_preparedImages = LPMImgUpload::prepareImages($clipboard, $urls, $errors);
+        $this->_preparedImages = LPMImgUpload::prepareImages($images, $urls, $errors);
 
         foreach ($errors as $error) {
             $this->addError($error);
@@ -1214,7 +1348,7 @@ class ProjectPage extends LPMPage
         return true;
     }
 
-    private function removeImagesFromIssue(DBConnect $db, $issueId, $imagesIdsStr) 
+    private function removeImagesFromIssue($issueId, $imagesIdsStr)
     {
         $delImg = explode(',', $imagesIdsStr);
         $imgIds = [];
@@ -1225,15 +1359,7 @@ class ProjectPage extends LPMPage
             }
         }
 
-        if (!empty($imgIds)) {
-            $sql = "UPDATE `%s` ".
-                        "SET `deleted`='1' ".
-                        "WHERE `imgId` IN (".implode(',', $imgIds).") ".
-                            "AND `deleted` = '0' ".
-                            "AND `itemId`='".$issueId."' ".
-                            "AND `itemType`='".LPMInstanceTypes::ISSUE."'";
-            $db->queryt($sql, LPMTables::IMAGES);
-        }
+        LPMImg::removeByIds(LPMInstanceTypes::ISSUE, $issueId, $imgIds);
     }
 
     private function removeFilesFromIssue($issueId, $filesIdsStr)

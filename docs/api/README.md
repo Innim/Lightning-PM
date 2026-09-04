@@ -79,7 +79,7 @@ Query parameters (all optional):
 - `status` — comma-separated list of `inWork`, `test`, `completed` (or the numeric codes `0`, `1`, `2`). `all` or an omitted parameter means any status.
 - `type` — comma-separated list of `develop`, `bug`, `support` (or `0`, `1`, `2`).
 - `label` — comma-separated list of labels; an issue must have **all** of them. Matching ignores case and covers only the `[label]` prefixes of the issue name, so a label cannot itself contain a comma.
-- `search` — substring of the issue name, or the beginning of `idInProject`.
+- `search` — searches the issue name and description for this substring, ignoring case; `%` and `_` are matched literally. A plain number (optionally prefixed with `#`) also matches the issue with that `idInProject`.
 - `limit` — page size, `50` by default, `200` maximum.
 - `offset` — number of issues to skip, `0` by default.
 
@@ -335,6 +335,37 @@ Attachments live in two places of the issue payload: `files` holds the files att
 
 An image attached to a comment arrives here as a regular file with an image `mimeType`; the separate `images` collection of the issue payload never contains comment attachments. `requiresAuthentication: true` means `url` needs the same auth header as any other API request.
 
+## Issue guidelines
+
+Read how issues are expected to be written in a project, before creating one:
+
+```http
+GET /api/v1/projects/{projectId}/issue-guidelines
+```
+
+The response is:
+
+```json
+{
+  "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "descriptionTemplate": "### Проблема\n\n\n\n### Что сделать\n\n",
+  "guidelines": "- название — одна короткая строка по сути задачи...",
+  "naming": {
+    "requireTitle": true,
+    "requireLabels": false,
+    "example": "[api] Кнопка оплаты дублирует запрос"
+  }
+}
+```
+
+- `descriptionTemplate` — the empty description skeleton the web UI inserts with its *«Шаблон описания»* button. Fill its sections instead of inventing your own structure.
+- `guidelines` — the team's issue-writing rules as free-form text. Follow them when composing `name`, `desc` and `type`; they are the same rules the built-in AI draft follows.
+- `naming.requireTitle` — the name must contain a title besides its `[label]` prefixes (always `true`).
+- `naming.requireLabels` — the project requires at least one `[label]` prefix in the name; pick labels from `GET /api/v1/projects/{projectId}/labels`.
+- `naming.example` — a name in the expected shape.
+
+Both texts are an app-wide setting an administrator can change, so read them at issue-creation time rather than caching them. They are returned per project because the naming rules already differ between projects and the texts may later be overridden per project too.
+
 ## Creating an issue
 
 Create a new issue in a project:
@@ -359,7 +390,7 @@ Fields:
 
 - `projectId` (required) — project `id` or `uid`; the authenticated user must have access to it.
 - `name` (required) — issue title. Labels are the `[label]` prefixes of the name (`[api][ui] Title`), so the name must contain a title besides them. When the project has *«Задачи должны иметь теги»* enabled, the name must also start with at least one label; otherwise the request is rejected with `400`.
-- `desc` (optional) — issue description, up to 60000 characters.
+- `desc` (optional) — issue description, up to 60000 characters. Write it to the project's [issue guidelines](#issue-guidelines) — the format is a team convention, not a free choice.
 - `type` (optional, default `0`) — `0` develop, `1` bug, `2` support.
 - `priority` (optional, default `50` — normal) — integer `1..100`, the same value the web UI shows for the issue; anything outside the range is rejected with `400`. Earlier the API used the internal scale `0..99`, one less than the displayed value; see the changelog for the release that switched it.
 - `hours` (optional, default `0`) — the estimate, in the unit the project uses (see [Estimate](#estimate)); only `0.5` is accepted as a fraction, other values are treated as integers.
@@ -380,6 +411,7 @@ An issue URL of this Lightning PM instance written in `desc` or in a comment tex
 - Read issue details by URL or issue id.
 - Read comments, images, and files of the issue and of its comments.
 - List repositories and branches available to the user in GitLab integration.
+- Read the issue-writing guidelines of a project.
 - Create an issue in a project.
 - Create a branch for an issue.
 - Add a comment to an issue.

@@ -2,15 +2,24 @@
 /**
  * Внешнее API для обработки hook событий от GitLab.
  *
- * Для подключения надо вручную добавить нужные хуки в Admin Area > System Hooks.
+ * События приходят из двух хуков. Адрес и секрет у них общие, различаются
+ * только тем, кто их заводит и какие события присылает:
  *
  * URL: https://task_url/api/gitlab/
- * Secret Token: То, что передается в конструктор этого класса при создании.
- * Trigger:
- * - Merge request events.
- * - Push events.
+ * Secret Token: значение GITLAB_HOOK_TOKEN (передается в конструктор).
  *
- * // TODO: сделать автоматическое создание хука
+ * 1. Системный хук инстанса - заводится вручную, один раз, в
+ *    Admin Area > System Hooks. Отметить триггеры:
+ *    - Merge request events;
+ *    - Push events.
+ *
+ * 2. Хуки репозиториев - таск заводит и обновляет их сам
+ *    (`GitlabWebhookManager`), руками отмечать ничего не нужно. Триггер:
+ *    - Pipeline events.
+ *
+ * События пайплайнов вынесены в отдельный хук, потому что системные хуки их
+ * не отдают. Наборы триггеров не пересекаются намеренно: иначе одно событие
+ * приходило бы дважды, двумя разными хуками.
  */
 class GitlabExternalApi extends ExternalApi
 {
@@ -25,8 +34,10 @@ class GitlabExternalApi extends ExternalApi
     
     const EVENT_NAME_PUSH = 'push';
 
+    const OBJECT_KIND_PIPELINE = 'pipeline';
+
     /**
-     * Сколько раз спрашивать у GitLab пайплайн запушенного коммита.
+     * Сколько раз спрашивать у GitLab пайплайн коммита.
      *
      * Пайплайн создаётся тем же пушем, что вызвал хук, поэтому на момент
      * первого запроса его может ещё не быть. Ссылка попадает в комментарий
@@ -69,20 +80,34 @@ class GitlabExternalApi extends ExternalApi
                 throw new Exception("Can't parse input");
             }
 
-            if (empty($data['event_type']) && empty($data['event_name'])) {
-                throw new Exception("Can't find event_type or event_name field");
-            }
-
             $eventType = isset($data['event_type']) ? $data['event_type'] : null;
             $eventName = isset($data['event_name']) ? $data['event_name'] : null;
+            // У части событий (в том числе pipeline) нет ни event_type, ни
+            // event_name - опознать их можно только по object_kind
+            $objectKind = isset($data[self::FIELD_OBJECT_KIND]) ? $data[self::FIELD_OBJECT_KIND] : null;
+
+            if (empty($eventType) && empty($eventName) && empty($objectKind)) {
+                throw new Exception("Can't find event_type, event_name or object_kind field");
+            }
 
             if ($eventType == self::EVENT_TYPE_MR) {
                 return $this->onMREvent($data);
             } elseif ($eventName == self::EVENT_NAME_PUSH) {
                 return $this->onPushEvent($data);
-            } else {
-                throw new Exception("Unhandled event: event_type=" . $eventType . ", event_name=" . $eventName);
+            } elseif ($objectKind == self::OBJECT_KIND_PIPELINE) {
+                return $this->onPipelineEvent($data);
             }
+
+            // Хук приносит и то, что таск не разбирает - теги, изменения
+            // проектов и пользователей на инстансе. Это штатный ход событий,
+            // а не ошибка, поэтому в лог ошибок такое не пишем.
+            LPMLog::debug('Skipped event', LPMLog::CH_GITLAB, [
+                'event_type' => $eventType,
+                'event_name' => $eventName,
+                'object_kind' => $objectKind,
+            ]);
+
+            return null;
         } catch (Exception $e) {
             return $this->onException($e);
         }
@@ -146,6 +171,8 @@ class GitlabExternalApi extends ExternalApi
 
         // Если MR был влит, то возможно надо оповестить тестировщика
         if ($mr->isMerged()) {
+            $this->registerMergedMrPipeline($mr, $data);
+
             // Загружаем задачи по MR
             $issueIds = IssueMR::loadIssueIdsForOpenedMr($mr->id);
             if (!empty($issueIds)) {
@@ -213,6 +240,95 @@ class GitlabExternalApi extends ExternalApi
             } elseif (!empty($data['commits'])) {
                 $this->updateLastCommit($user, $repositoryId, $branchName, $data);
             }
+        }
+    }
+
+    /**
+     * Обрабатывает событие пайплайна: сохраняет состояние сборки у задач,
+     * merge request'ы которых влиты этим коммитом.
+     *
+     * Пайплайны, к задачам отношения не имеющие, отсеиваются самим сохранением
+     * (см. IssuePipeline::applyPipeline()): в репозитории собирается много
+     * такого, о чём таск ничего не знает.
+     *
+     * @param array $data Данные события.
+     */
+    private function onPipelineEvent($data)
+    {
+        if (!isset($data[self::FIELD_OBJECT_ATTRIBUTES])) {
+            throw new Exception("Invalid data: there is no object data");
+        }
+
+        $projectId = isset($data['project']['id']) ? (int)$data['project']['id'] : 0;
+        if (empty($projectId)) {
+            throw new Exception("Invalid data: there is no project id");
+        }
+
+        $pipeline = new GitlabPipeline($data[self::FIELD_OBJECT_ATTRIBUTES]);
+        // Идентификатор проекта лежит вне данных пайплайна, а ссылки на него
+        // в событии может не быть вовсе - собираем её из адреса репозитория
+        $pipeline->projectId = $projectId;
+        if (empty($pipeline->url) && !empty($data['project']['web_url'])) {
+            $pipeline->url = rtrim($data['project']['web_url'], '/') . '/-/' .
+                GitlabIntegration::URL_PIPELINE_SUBPATH . $pipeline->id;
+        }
+
+        $updated = IssuePipeline::applyPipeline($pipeline);
+
+        LPMLog::debug('Pipeline event received', LPMLog::CH_GITLAB, [
+            'projectId'  => $projectId,
+            'pipelineId' => $pipeline->id,
+            'ref'        => $pipeline->ref,
+            'sha'        => $pipeline->sha,
+            'status'     => $pipeline->status,
+            'updated'    => $updated,
+        ]);
+    }
+
+    /**
+     * Заводит у задач влитого MR запись о сборке, которую запустило влитие,
+     * и сразу заполняет её, если сборка уже создана.
+     *
+     * Состояние потом обновляют события пайплайна, поэтому не найденная сейчас
+     * сборка - не ошибка: она может появиться на секунду позже.
+     *
+     * @param GitlabMergeRequest $mr   Влитый merge request.
+     * @param array              $data Данные события.
+     */
+    private function registerMergedMrPipeline(GitlabMergeRequest $mr, $data)
+    {
+        $sha = $mr->getMergedCommitSha();
+        if (empty($sha) || empty($mr->targetProjectId) || empty($mr->targetBranch)) {
+            LPMLog::warning('Can\'t detect merged commit for MR', LPMLog::CH_GITLAB, [
+                'mrId' => $mr->id,
+            ]);
+            return;
+        }
+
+        $issueIds = IssueMR::loadIssueIdsForMr($mr->id);
+        if (empty($issueIds)) {
+            return;
+        }
+
+        foreach ($issueIds as $issueId) {
+            IssuePipeline::registerForMr(
+                $issueId,
+                $mr->id,
+                $mr->targetProjectId,
+                $mr->sourceBranch,
+                $mr->targetBranch,
+                $sha
+            );
+        }
+
+        $user = $this->getUser($data);
+        if (empty($user)) {
+            return;
+        }
+
+        $pipeline = $this->findPipelineForCommit($user, $mr->targetProjectId, $mr->targetBranch, $sha);
+        if (!empty($pipeline)) {
+            IssuePipeline::applyPipeline($pipeline);
         }
     }
 
@@ -324,7 +440,16 @@ class GitlabExternalApi extends ExternalApi
             $issueIds = array_keys($branchesByIssueId);
             $issues = Issue::loadListByIds($issueIds);
 
-            $pipelineUrl = $this->findPushPipelineUrl($user, $repositoryId, $branchName, $data);
+            // Пуш в стабильную ветку ставит её на этот коммит: по нему
+            // комментарий о влитии находит состояние своей сборки
+            $mergedSha = empty($data['checkout_sha']) ? '' : (string)$data['checkout_sha'];
+
+            $pipeline = $this->findPushPipeline($user, $repositoryId, $branchName, $data);
+            // Пуш в стабильную ветку - это и есть влитие MR, так что найденная
+            // сборка закрывает состояние тех задач, чьи MR уже зарегистрированы
+            if (!empty($pipeline)) {
+                IssuePipeline::applyPipeline($pipeline);
+            }
 
             foreach ($issues as $issue) {
                 $branches = $branchesByIssueId[$issue->id];
@@ -339,13 +464,13 @@ class GitlabExternalApi extends ExternalApi
                 }
 
                 $commentText = implode("\n", $commentTextArr);
-                if (!empty($pipelineUrl)) {
-                    $commentText .= "\n\n" . $pipelineUrl;
+                if (!empty($pipeline) && !empty($pipeline->url)) {
+                    $commentText .= "\n\n" . $pipeline->url;
                 }
 
                 $comments->postComment($user, $issue, $commentText, true, true,
                     IssueCommentType::BRANCH_MERGED,
-                    IssueCommentBranchMergedData::serializeBy($branches));
+                    IssueCommentBranchMergedData::serializeBy($branches, $mergedSha));
 
                 // Проверяем права и вливаем только задачи, которые уже в тесте
                 if ($issue->checkEditPermit($user->userId) && $issue->status == Issue::STATUS_WAIT) {
@@ -362,26 +487,40 @@ class GitlabExternalApi extends ExternalApi
     }
 
     /**
-     * Возвращает URL пайплайна, запущенного пушем в стабильную ветку.
-     *
-     * В комментарий о влитии кладётся именно ссылка, а не состояние сборки:
-     * состояние меняется уже после публикации комментария, поэтому актуальное
-     * подтягивается по этой ссылке при просмотре задачи.
+     * Возвращает пайплайн, запущенный пушем в стабильную ветку.
      *
      * @param User $user Пользователь, от имени которого идёт запрос к GitLab.
      * @param int|string $repositoryId Идентификатор проекта на GitLab.
      * @param string $branchName Ветка, в которую сделан пуш.
      * @param array $data Данные события push.
-     * @return string|null URL пайплайна или null, если пайплайн для коммита
+     * @return GitlabPipeline|null Пайплайн или null, если пайплайн для коммита
      * так и не появился (в том числе если в проекте нет CI).
      */
-    private function findPushPipelineUrl(User $user, $repositoryId, $branchName, $data)
+    private function findPushPipeline(User $user, $repositoryId, $branchName, $data)
     {
         $sha = empty($data['checkout_sha']) ? null : $data['checkout_sha'];
         if (empty($sha)) {
             return null;
         }
 
+        return $this->findPipelineForCommit($user, $repositoryId, $branchName, $sha);
+    }
+
+    /**
+     * Возвращает пайплайн коммита, подождав, пока GitLab его создаст.
+     *
+     * Пайплайн создаётся тем же пушем, что вызвал хук, поэтому на момент
+     * первого запроса его может ещё не быть.
+     *
+     * @param User $user Пользователь, от имени которого идёт запрос к GitLab.
+     * @param int|string $repositoryId Идентификатор проекта на GitLab.
+     * @param string $ref Ветка, в которой находится коммит.
+     * @param string $sha SHA коммита.
+     * @return GitlabPipeline|null Пайплайн или null, если он так и не появился
+     * (в том числе если в проекте нет CI).
+     */
+    private function findPipelineForCommit(User $user, $repositoryId, $ref, $sha)
+    {
         $gitlab = GitlabIntegration::getInstance($user);
 
         for ($attempt = 1; $attempt <= self::PIPELINE_LOOKUP_ATTEMPTS; $attempt++) {
@@ -389,15 +528,15 @@ class GitlabExternalApi extends ExternalApi
                 sleep(self::PIPELINE_LOOKUP_RETRY_DELAY_SEC);
             }
 
-            $pipeline = $gitlab->getPipelineForCommit($repositoryId, $branchName, $sha);
+            $pipeline = $gitlab->getPipelineForCommit($repositoryId, $ref, $sha);
             if (!empty($pipeline) && !empty($pipeline->url)) {
-                return $pipeline->url;
+                return $pipeline;
             }
         }
 
-        LPMLog::debug('No pipeline for pushed commit', LPMLog::CH_GITLAB, [
+        LPMLog::debug('No pipeline for commit', LPMLog::CH_GITLAB, [
             'repositoryId' => $repositoryId,
-            'ref'          => $branchName,
+            'ref'          => $ref,
             'sha'          => $sha,
         ]);
 

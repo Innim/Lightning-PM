@@ -100,6 +100,15 @@ class PagePrinter
         echo implode('<br>', $errors);
     }
     
+    /**
+     * Печатает пункт главного меню.
+     * @param Link $link Ссылка пункта меню.
+     */
+    public static function mainMenuItem(Link $link)
+    {
+        PageConstructor::includePattern('components/main-menu-item', compact('link'));
+    }
+
     public static function issues($list)
     {
         PageConstructor::includePattern('issues', compact('list'));
@@ -325,6 +334,24 @@ class PagePrinter
     {
         PageConstructor::includePattern('comment-files', compact('comment'));
     }
+
+    /**
+     * Распечатывает состояния сборок по веткам, о влитии которых
+     * говорит комментарий.
+     *
+     * Ничего не выводит, если комментарий не о влитии веток или состояние
+     * сборок неизвестно.
+     * @param Comment $comment Комментарий.
+     */
+    public static function commentBranchPipelines(Comment $comment)
+    {
+        $pipelines = IssuePipeline::loadForMergedComment($comment);
+        if (empty($pipelines)) {
+            return;
+        }
+
+        PageConstructor::includePattern('comment-branch-pipelines', compact('pipelines'));
+    }
     
     /**
      * Распечатывает список видео.
@@ -439,10 +466,19 @@ class PagePrinter
      * @param $stickers
      * @param bool $addProjectName
      * @param bool $addClearBoard
+     * @param array $freeIssueIds Множество `issueId => true` задач, которые показываются
+     *                            свободными; пусто там, где свободных задач не бывает.
      */
-    public static function tableScrumBoard($stickers, $addProjectName = false, $addClearBoard = false)
-    {
-        PageConstructor::includePattern('scrum-board-table', compact('stickers', 'addProjectName', 'addClearBoard'));
+    public static function tableScrumBoard(
+        $stickers,
+        $addProjectName = false,
+        $addClearBoard = false,
+        $freeIssueIds = []
+    ) {
+        PageConstructor::includePattern(
+            'scrum-board-table',
+            compact('stickers', 'addProjectName', 'addClearBoard', 'freeIssueIds')
+        );
     }
     
     /**
@@ -521,6 +557,8 @@ class PagePrinter
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
             'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
             'priorityGroupStep' => Issue::PRIORITY_GROUP_STEP,
+            'passwordMinLength' => PASSWORD_MIN_LENGTH,
+            'passwordMaxLength' => PASSWORD_MAX_LENGTH,
             'roles' => [
                 'user' => User::ROLE_USER,
                 'admin' => User::ROLE_ADMIN,

@@ -259,6 +259,9 @@ let srv = {
         getCompressStatus: function (uids, onResult) {
             this.s._('getCompressStatus');
         },
+        retryCompress: function (uid, onResult) {
+            this.s._('retryCompress');
+        },
     },
     issue: {
         s: new BaseService('IssueService'),
@@ -354,6 +357,9 @@ let srv = {
         },
         resolveComment: function (commentId, onResult) {
             this.s._('resolveComment');
+        },
+        editComment: function (commentId, text, onResult) {
+            this.s._('editComment');
         }
     },
     project: {
@@ -799,6 +805,35 @@ lpm.validators = {
     // Допустимый идентификатор проекта: латинские буквы, цифры и дефис (1–255 символов).
     projectUid: function (uid) {
         return /^(([a-zA-Z0-9]){1}([a-zA-Z0-9\-]){0,254})$/u.test(uid);
+    },
+    /**
+     * Проверяет пароль при его установке - регистрация, смена в профиле.
+     * Ограничена только длина: содержимое пароля нигде не используется.
+     * Итоговое решение всё равно за сервером, здесь - быстрая подсказка.
+     * @param {string} pass
+     * @returns {?string} Текст ошибки или null, если пароль подходит.
+     */
+    password: function (pass) {
+        // NFKC - как на сервере: в хэш уйдёт нормализованная строка,
+        // и мерить длину надо по ней же.
+        const value = String(pass === null || pass === undefined ? '' : pass).normalize('NFKC');
+
+        if (/[\x00-\x1F\x7F]/.test(value)) {
+            return 'Пароль не должен содержать управляющие символы';
+        }
+
+        const min = lpmOptions.passwordMinLength;
+        const max = lpmOptions.passwordMaxLength;
+        // Меряем как сервер: минимум в символах, максимум в байтах UTF-8.
+        // String.length не годится - он считает code unit'ы UTF-16.
+        const chars = Array.from(value).length;
+        const bytes = new TextEncoder().encode(value).length;
+
+        if (chars < min || bytes > max) {
+            return 'Пароль должен быть от ' + min + ' до ' + max + ' символов';
+        }
+
+        return null;
     },
 };
 

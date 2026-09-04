@@ -518,7 +518,16 @@ SQL;
      */
     public static function countListByProjectFiltered($projectId, array $filters = [])
     {
-        $where = self::buildProjectFilterWhere($projectId, $filters);
+        return self::countFiltered(self::buildProjectFilterWhere($projectId, $filters));
+    }
+
+    /**
+     * Возвращает количество задач, подходящих под условие выборки.
+     * @param  string $where Условие выборки по полям таблицы задач (алиас `i`).
+     * @return int Количество задач.
+     */
+    private static function countFiltered($where)
+    {
         $sql = "SELECT COUNT(*) AS `count` FROM `%s` `i` WHERE `i`.`deleted` = '0' AND " . $where;
 
         $res = self::getDB()->queryt($sql, LPMTables::ISSUES);
@@ -534,13 +543,32 @@ SQL;
      *                          - `statuses` array<int> статусы задач;
      *                          - `types` array<int> типы задач;
      *                          - `labels` array<string> метки, каждая из которых должна быть у задачи;
-     *                          - `search` string подстрока имени или начало номера задачи в проекте.
+     *                          - `search` string поисковый запрос, см. buildSearchWhere().
      * @return string Условие выборки.
      */
     private static function buildProjectFilterWhere($projectId, array $filters)
     {
-        $db = self::getDB();
         $where = '`i`.`projectId` = ' . (int)$projectId;
+
+        if (!empty($filters['labels'])) {
+            $issueIds = self::loadIdsByLabels($projectId, $filters['labels']);
+            $where .= ' AND `i`.`id` IN (' . (empty($issueIds) ? '0' : implode(',', $issueIds)) . ')';
+        }
+
+        return $where . self::buildCommonFilterWhere($filters);
+    }
+
+    /**
+     * Формирует часть условия выборки, не зависящую от проекта задачи.
+     * @param  array $filters Фильтры выборки:
+     *                        - `statuses` array<int> статусы задач;
+     *                        - `types` array<int> типы задач;
+     *                        - `search` string поисковый запрос, см. buildSearchWhere().
+     * @return string Условие выборки, начинающееся с ` AND `, либо пустая строка.
+     */
+    private static function buildCommonFilterWhere(array $filters)
+    {
+        $where = '';
 
         if (!empty($filters['statuses'])) {
             $where .= ' AND `i`.`status` IN (' . implode(',', array_map('intval', $filters['statuses'])) . ')';
@@ -550,18 +578,72 @@ SQL;
             $where .= ' AND `i`.`type` IN (' . implode(',', array_map('intval', $filters['types'])) . ')';
         }
 
-        if (!empty($filters['labels'])) {
-            $issueIds = self::loadIdsByLabels($projectId, $filters['labels']);
-            $where .= ' AND `i`.`id` IN (' . (empty($issueIds) ? '0' : implode(',', $issueIds)) . ')';
-        }
-
-        $search = isset($filters['search']) ? (string)$filters['search'] : '';
+        $search = self::buildSearchWhere(isset($filters['search']) ? $filters['search'] : '');
         if ($search !== '') {
-            $needle = $db->escape4Search_t($search);
-            $where .= " AND (`i`.`idInProject` LIKE '$needle%%' OR `i`.`name` LIKE '%%$needle%%')";
+            $where .= ' AND ' . $search;
         }
 
         return $where;
+    }
+
+    /**
+     * Формирует условие поиска задачи по строке запроса.
+     *
+     * Запрос ищется как подстрока названия и описания задачи, без учёта
+     * регистра; спецсимволы шаблона (`%` и `_`) при этом ищутся буквально.
+     * Если запрос - число (можно с `#`), задача находится и по своему номеру
+     * в проекте: номер сравнивается целиком, иначе запрос «7» вернул бы все
+     * задачи, в номере которых есть семёрка.
+     *
+     * Область поиска - список условий, поэтому расширяется добавлением в него
+     * ещё одного (например, подзапроса по комментариям задачи).
+     * @param  string $search Поисковый запрос в исходном виде.
+     * @return string Условие выборки; пустая строка, если искать нечего.
+     */
+    private static function buildSearchWhere($search)
+    {
+        $needle = mb_substr(trim((string)$search), 0, ISSUE_SEARCH_MAX_LENGTH);
+        if ($needle === '') {
+            return '';
+        }
+
+        // Условие подставляется в запрос с форматированием имён таблиц,
+        // поэтому проценты в нём удвоены
+        $like = " LIKE '%%" . self::escapeSearchPattern($needle) . "%%'"
+            . " ESCAPE '" . self::SEARCH_ESCAPE_CHAR . "'";
+        $conditions = [
+            '`i`.`name`' . $like,
+            '`i`.`desc`' . $like,
+        ];
+
+        if (preg_match('/^#?(\d+)$/', $needle, $matches)) {
+            $conditions[] = '`i`.`idInProject` = ' . (int)$matches[1];
+        }
+
+        return '(' . implode(' OR ', $conditions) . ')';
+    }
+
+    /**
+     * Готовит поисковый запрос к подстановке в выражение LIKE.
+     *
+     * Спецсимволы шаблона (`%` и `_`) экранируются символом SEARCH_ESCAPE_CHAR,
+     * а не обратным слэшем: экранирование строки для БД снимает слэши, поэтому
+     * до запроса слэш не доживает. По той же причине слэши самого запроса
+     * заранее удваиваются.
+     * @param  string $needle Поисковый запрос.
+     * @return string Шаблон LIKE без окружающих процентов, готовый к подстановке
+     *         в запрос с форматированием имён таблиц.
+     */
+    private static function escapeSearchPattern($needle)
+    {
+        $escape = self::SEARCH_ESCAPE_CHAR;
+        $pattern = str_replace(
+            ['\\', $escape, '%', '_'],
+            ['\\\\', $escape . $escape, $escape . '%', $escape . '_'],
+            $needle
+        );
+
+        return self::getDB()->escape_string_t($pattern);
     }
 
     /**
@@ -638,37 +720,76 @@ WHERE;
         }
     }
     
+    /**
+     * Загружает незавершённые задачи неархивных проектов, в которых
+     * пользователь участвует - исполнителем либо тестировщиком.
+     *
+     * Незавершённые - это задачи в работе и задачи, ожидающие проверки:
+     * ушедшая в тест задача остаётся в списке и у исполнителя, и у тестировщика.
+     * @param  int $memberId Идентификатор пользователя.
+     * @return array<Issue>
+     */
     public static function getListByMember($memberId)
     {
         if (!isset(self::$_listByUser[$memberId])) {
             if (LightningEngine::getInstance()->isAuth()) {
-                /*$sql = "SELECT `%1\$s`.*,`%3\$s`.`uid` AS `projectUID`,
-                `%3\$s`.`name` AS `projectName`,`%4\$s`.* FROM `%1\$s`, `%2\$s`, `%3\$s`,`%4\$s`".
-                  "WHERE `%1\$s`.`id` = `%2\$s`.`instanceId` " .
-                  "AND `%4\$s`.`issueId` = `%1\$s`.`id` ".
-                  "AND `%3\$s`.`id` = `%1\$s`.`projectId` ".
-                 "AND `%2\$s`.`userId` = '" . $memberId . "'".
-                 "AND `%1\$s`.`status` = '0'".
-                 "AND `%1\$s`.`deleted` = '0'".
-                 "ORDER BY `%1\$s`.`idInProject` ";*/
+                // Участие проверяется подзапросом, а не присоединением таблицы:
+                // тот, кто в задаче и исполнитель, и тестировщик, дал бы
+                // на присоединении две строки, и задача попала бы в список дважды
+                $participationSql = self::buildQuery([
+                    'SELECT' => '1',
+                    'FROM'   => LPMTables::MEMBERS,
+                    'AS'     => 'm',
+                    'WHERE'  => [
+                        '`m`.`instanceId`'   => self::col('i.id'),
+                        '`m`.`instanceType`' => [
+                            LPMInstanceTypes::ISSUE,
+                            LPMInstanceTypes::ISSUE_FOR_TEST,
+                        ],
+                        '`m`.`userId`' => (int)$memberId,
+                    ],
+                ]);
 
-                self::$_listByUser[$memberId] = self::loadList(
-                    // только задачи, в которых я участник
-                    '`i`.`id` = `m`.`instanceId` AND `m`.`instanceType` = ' . LPMInstanceTypes::ISSUE .
-                    ' AND `m`.`userId` = ' . $memberId .
-                    // открытые
-                    ' AND `i`.`status` = ' . Issue::STATUS_IN_WORK .
+                $statuses = implode(', ', [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
+
+                $list = self::loadList(
+                    // только задачи, в которых я исполнитель или тестировщик
+                    "EXISTS ($participationSql)" .
+                    // незавершённые
+                    " AND `i`.`status` IN ($statuses)" .
                     // и проект не в архиве
-                    ' AND `p`.`isArchive` = 0',
-                    '',
-                    ['m' => LPMTables::MEMBERS]
+                    ' AND `p`.`isArchive` = 0'
                 );
+
+                self::$_listByUser[$memberId] = self::preloadParticipants($list);
             } else {
                 self::$_listByUser[$memberId] = array();
             }
         }
 
         return self::$_listByUser[$memberId];
+    }
+
+    /**
+     * Заранее загружает исполнителей и тестировщиков всех задач списка.
+     *
+     * Участники всех задач загружаются одним запросом. Мастера не загружаются.
+     * @param  array<Issue> $list
+     * @return array<Issue> Тот же список.
+     */
+    public static function preloadParticipants(array $list)
+    {
+        $issueIds = [];
+        foreach ($list as $issue) {
+            $issueIds[] = $issue->id;
+        }
+
+        $participants = Member::loadListAnyForIssues($issueIds, true, true, false);
+        foreach ($list as $issue) {
+            $issue->extractParticipantsFrom($participants, true, true, false);
+        }
+
+        return $list;
     }
 
     /**
@@ -774,19 +895,6 @@ WHERE;
                                 "AND `%2\$s`.`deleted` = 0)";
         $db = LPMGlobals::getInstance()->getDBConnect();
         $db->queryt($sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS);
-    }
-    
-    public static function updateImgsCounter($issueId, $count)
-    {
-        $sql = "INSERT INTO `%1\$s` (`issueId`, `imgsCount`) " .
-                                    "VALUES ('" . $issueId . "', '" . $count . "') " .
-                       "ON DUPLICATE KEY UPDATE `imgsCount` = " .
-                            "(SELECT COUNT(*) FROM `%2\$s` " .
-                              "WHERE `%2\$s`.`itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
-                                "AND `%2\$s`.`itemId` = '" . $issueId . "' ".
-                                "AND `%2\$s`.`deleted` = 0)";
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $db->queryt($sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES);
     }
 
     public static function getCountImportantIssues($userId, $projectId = null)
@@ -1089,6 +1197,10 @@ SQL;
 
     /**
      * Помечает задачу как удаленную.
+     *
+     * Вложения задачи и её комментариев при этом удаляются безвозвратно:
+     * удалённую задачу ни один загрузчик больше не отдаёт, поэтому добраться
+     * до её вложений уже нельзя.
      */
     public static function remove(User $user, Issue $issue)
     {
@@ -1099,6 +1211,8 @@ SQL;
         }
 
         Project::updateIssuesCount($issue->projectId);
+
+        UploadsCleanupManager::removeIssueUploads($issue->id);
 
         // Записываем лог
         UserLogEntry::create(
@@ -1170,34 +1284,69 @@ SQL;
 
     /**
      * Создаёт новую задачу в проекте и возвращает её идентификатор.
+     *
+     * Номер задачи внутри проекта («последний плюс один») вычисляется тем же
+     * запросом, который вставляет задачу, — иначе два одновременных создания
+     * в одном проекте выберут один и тот же номер. Пара «проект + номер»
+     * уникальна в базе: если номер всё же занят, вставка отклоняется,
+     * ничего после себя не оставляя, и повторяется — до ISSUE_CREATE_MAX_ATTEMPTS раз.
+     *
      * Значения передаются в «сыром» виде — экранирование выполняется внутри метода.
-     * @return int|null Идентификатор созданной задачи или null при ошибке записи.
+     * @return int|null Идентификатор созданной задачи или null при ошибке записи,
+     * в том числе если свободный номер не удалось занять за отведённое число попыток.
      */
     public static function createNew(Project $project, $name, $desc, $type, $priority, $hours, $completeDate, $authorId)
     {
         $db = self::getDB();
-        $idInProject = (int)self::getLastIssueId($project->id);
         $revision = self::getNewRevision();
 
         // Экранируем строки и удваиваем `%`, т.к. queryt() пропускает запрос через sprintf.
         $nameEsc = $db->real_escape_string(str_replace('%', '%%', (string)$name));
         $descEsc = $db->real_escape_string(str_replace('%', '%%', (string)$desc));
         $revisionEsc = $db->real_escape_string($revision);
+        $completeDateSql = empty($completeDate)
+            ? 'NULL'
+            : "'" . $db->real_escape_string($completeDate) . "'";
 
-        $sql = "INSERT INTO `%s` (`projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
+        $projectId = (int)$project->id;
+        $sql = "INSERT INTO `%1\$s` (`projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
                                     "`authorId`, `createDate`, `completeDate`, `priority`, `revision` ) " .
-                            "VALUES ('" . (int)$project->id . "', '" . $idInProject . "', " .
+                            "SELECT '" . $projectId . "', COALESCE(MAX(`idInProject`), 0) + 1, " .
                                         "'" . $nameEsc . "', '" . (float)$hours . "', '" . $descEsc . "', " .
                                         "'" . (int)$type . "', '" . (int)$authorId . "', " .
-                                        "'" . DateTimeUtils::mysqlDate() . "', " .
-                                        (empty($completeDate) ? 'NULL' : "'" . $db->real_escape_string($completeDate) . "'") . ", " .
-                                        "'" . (int)$priority . "', '" . $revisionEsc . "' )";
+                                        "'" . DateTimeUtils::mysqlDate() . "', " . $completeDateSql . ", " .
+                                        "'" . (int)$priority . "', '" . $revisionEsc . "' " .
+                              "FROM `%1\$s` WHERE `projectId` = '" . $projectId . "'";
 
-        if (!$db->queryt($sql, LPMTables::ISSUES)) {
-            return null;
+        $issueId = 0;
+        for ($attempt = 1; $attempt <= ISSUE_CREATE_MAX_ATTEMPTS; $attempt++) {
+            // Пауза со случайной длительностью разводит во времени запросы,
+            // столкнувшиеся на одном номере: без неё они повторяют попытку
+            // одновременно и снова выбирают один и тот же номер.
+            if ($attempt > 1) {
+                usleep(mt_rand(1, 5) * 1000 * ($attempt - 1));
+            }
+
+            if ($db->queryt($sql, LPMTables::ISSUES)) {
+                $issueId = (int)$db->insert_id;
+                break;
+            }
+
+            // ER_DUP_ENTRY — номер занял параллельный запрос; любая другая
+            // ошибка записи повтором не лечится.
+            if ($db->errno != self::DB_ERR_DUP_ENTRY) {
+                return null;
+            }
         }
 
-        $issueId = $db->insert_id;
+        if (empty($issueId)) {
+            LPMLog::error(
+                'Не удалось занять свободный номер задачи в проекте',
+                LPMLog::CH_DB,
+                ['projectId' => $projectId, 'attempts' => ISSUE_CREATE_MAX_ATTEMPTS]
+            );
+            return null;
+        }
 
         // Начальный слепок содержимого — с него начинается история задачи.
         IssueContentSnapshot::record($issueId, $authorId);
@@ -1533,6 +1682,11 @@ SQL;
     const IMPORTANT_PRIORITY = 79;
 
     /**
+     * Символ экранирования спецсимволов шаблона в поисковом запросе.
+     */
+    const SEARCH_ESCAPE_CHAR = '|';
+
+    /**
      * Метка в начале имени задачи: блок в квадратных скобках и пробелы за ним.
      *
      * Шаблон привязан к началу поиска (`A`), поэтому подряд идущие совпадения -
@@ -1550,6 +1704,11 @@ SQL;
      * Шаг (в процентах), с которым задачи разбиваются на группы по приоритету.
      */
     const PRIORITY_GROUP_STEP = 5;
+
+    /**
+     * Код ошибки MySQL «дубликат значения уникального ключа» (ER_DUP_ENTRY).
+     */
+    const DB_ERR_DUP_ENTRY = 1062;
     
     public $id            =  0;
     public $projectId     =  0;

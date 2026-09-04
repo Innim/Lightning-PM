@@ -41,19 +41,65 @@ class FilesService extends LPMBaseService
                     continue;
                 }
 
-                $files[] = [
-                    'uid'            => $file->uid,
-                    'compressStatus' => $file->compressStatus === null ? null : (int)$file->compressStatus,
-                    'mimeType'       => $file->mimeType,
-                    'name'           => $file->origName,
-                    'url'            => $file->getViewUrl(),
-                    'downloadUrl'    => $file->getDownloadUrl(),
-                ];
+                $files[] = $this->getCompressStateData($file);
             }
         }
 
         $this->add2Answer('files', $files);
 
         return $this->answer();
+    }
+
+    /**
+     * Ставит в очередь новую попытку сжатия видео, прошлая попытка которого
+     * завершилась ошибкой.
+     *
+     * Действие доступно всем, кто вправе видеть файл: оригинал сохраняется
+     * при любом исходе, а нагрузку на сервер ограничивает очередь. Файл, не
+     * находящийся в состоянии ошибки, остаётся как есть — ответ в любом
+     * случае содержит его актуальное состояние.
+     *
+     * @param string $uid uid файла
+     * @return array Ответ с полем `file`: uid, статус сжатия, MIME-тип, имя
+     *   файла и ссылки на просмотр и скачивание — состояние на момент ответа,
+     *   а не итог этого вызова.
+     */
+    public function retryCompress($uid)
+    {
+        $file = LPMFile::loadByUid((string)$uid);
+        if (!$file || $file->deleted || !$file->isVideo()) {
+            return $this->error('Файл не найден');
+        }
+
+        if ($file->checkViewPermit($this->_auth->getUserId()) !== true) {
+            return $this->error('Нет доступа к файлу');
+        }
+
+        VideoCompressor::retry($file->fileId);
+
+        // Перечитываем запись: статус мог измениться и не этим вызовом
+        // (тот же файл в очередь мог вернуть другой пользователь).
+        $actual = LPMFile::load($file->fileId);
+
+        $this->add2Answer('file', $this->getCompressStateData($actual ?: $file));
+
+        return $this->answer();
+    }
+
+    /**
+     * Состояние сжатия файла в виде, в котором его ждёт клиент.
+     * @param  LPMFile $file
+     * @return array
+     */
+    private function getCompressStateData(LPMFile $file)
+    {
+        return [
+            'uid'            => $file->uid,
+            'compressStatus' => $file->compressStatus === null ? null : (int)$file->compressStatus,
+            'mimeType'       => $file->mimeType,
+            'name'           => $file->origName,
+            'url'            => $file->getViewUrl(),
+            'downloadUrl'    => $file->getDownloadUrl(),
+        ];
     }
 }

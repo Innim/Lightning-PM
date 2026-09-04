@@ -2,17 +2,38 @@
 /*
 Требуются:
     $stickers - список стикеров
+    $freeIssueIds - множество `issueId => true` стикеров, показываемых свободными
+    $showFreeIssues - показываются ли на доске свободные задачи
 */
 ?>
 <div id="scrumBoard" class="mx-auto container-fluid px-4 py-4 hide-sp">
-    <h1>Моя SCRUM доска</h1>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h1>Моя SCRUM доска</h1>
+        <form method="post">
+            <?php lpm_print_csrf_field(); ?>
+            <input type="hidden" name="<?=ProjectsPage::FIELD_MY_BOARD_PREF;?>" value="1">
+            <div class="form-check form-switch">
+                <!-- Класс `board-pref-switch` используется JS для отправки формы -->
+                <input class="form-check-input board-pref-switch" type="checkbox" role="switch"
+                       id="showFreeIssues" name="<?=ProjectsPage::FIELD_SHOW_FREE_ISSUES;?>" value="1"
+                       <?php if ($showFreeIssues): ?>checked="checked"<?php endif; ?>>
+                <label class="form-check-label" for="showFreeIssues"
+                       title="Задачи в TO DO моих проектов, у которых нет исполнителя">Показывать свободные задачи</label>
+            </div>
+        </form>
+    </div>
     <h3>Всего задач:
         <span class="scrum-board-info">
             <span class="scrum-board-count"><span class="value"></span> шт</span>
             <span class="scrum-board-sp">, <span class="value"></span> SP</span>
         </span>
+        <span class="scrum-board-free" style="display:none;"
+                title="Свободные задачи — можно взять"> + <i class="far fa-hand-paper" aria-hidden="true"></i>
+            <span class="scrum-board-free-count"><span class="value"></span> шт</span><span
+                class="scrum-board-free-sp">, <span class="value"></span> SP</span>
+        </span>
     </h3>
     <?php
-        lpm_print_table_scrum_board($stickers, true, false);
+        lpm_print_table_scrum_board($stickers, true, false, $freeIssueIds);
     ?>
 </div>

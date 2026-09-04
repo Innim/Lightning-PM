@@ -39,3 +39,34 @@ a:hover {
 
 /* hide toggle button for collapsed elements */
 .hide-me[aria-expanded="true"] {display: none;}
+
+/* Пункт главного меню со своим выпадающим списком (класс проставляет
+   components/main-menu-item.html) - flex-строка: подпись и кнопка списка.
+   В свёрнутом меню Bootstrap показывает список в потоке, то есть отдельным
+   элементом этой строки - он должен занимать всю её ширину, а не тесниться
+   рядом с подписью. В развёрнутом меню список позиционируется абсолютно,
+   flex-элементом не является, и правило на него не влияет.
+   Утилиты Bootstrap тут не подходят: flex-basis утилит в 5.1 нет,
+   а w-100 на десктопе сжал бы список до ширины пункта меню. */
+.main-menu-item > .dropdown-menu {
+    flex-basis: 100%;
+}
+
+/* Текущий пункт выпадающего списка в главном меню отмечается узкой полоской
+   у левого края. Полоска - псевдоэлемент поверх внутреннего отступа пункта:
+   утилиты Bootstrap так не умеют, а border или padding сдвинули бы название
+   относительно остальных пунктов. Признаком служит aria-current, чтобы
+   отметка на экране не могла разойтись с той, что читает скринридер. */
+.main-menu-item .dropdown-item[aria-current] {
+    position: relative;
+}
+
+.main-menu-item .dropdown-item[aria-current]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background-color: var(--bs-primary);
+}

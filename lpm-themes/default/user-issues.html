@@ -1,3 +1,11 @@
+<?php
+/*
+Требуются:
+    внешних переменных нет - данные берутся через алиасы
+*/
+
+$userId = lpm_get_user()->userId;
+?>
 <div id="UserIssues" class="mx-auto container-fluid px-4 py-4">
     <table id="UserIssuesList" class="issues-list backward-capability">
         <h1>
@@ -8,6 +16,7 @@
                 <th>#</th>
                 <th>Тип</th>
                 <th>Название</th>
+                <th>Участники</th>
                 <th>Описание</th>
                 <th>Дата окончания</th>
                 <th>Проект</th>
@@ -15,7 +24,7 @@
         </thead>
         <tbody>
             <? foreach (lpm_get_user_issues() as $issue) {?>
-            <tr class="<?=$issue->isCompleted()?'completed-issue':'active-issue';?>">
+            <tr class="<?=IssueViewHelper::statusStateClass($issue->status);?>">
                 <td><a href="<?=$issue->getConstURL();?>"><?=$issue->getIdInProject();?></a></td>
                 <td>
                     <nobr>
@@ -24,11 +33,33 @@
                             <?=$issue->getPriorityDisplayValue();?></span><?=$issue->getType();?>
                     </nobr>
                 </td>
-                </td>
                 <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a>
                     <?if ($issue->commentsCount > 0):?>
                     &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
                     <?endif;?>
+                </td>
+                <td>
+                    <?php if ($issue->hasMembers()): ?>
+                    <div class="member-list">
+                        <span title="Исполнители"><i class="fas fa-wrench" aria-hidden="true"></i></span>
+                        <?php foreach ($issue->getMembers() as $i => $member):
+                        ?><?=$i > 0 ? ', ' : '';?><?php if ($member->userId == $userId):
+                        ?><strong><?=$member->getName();?></strong><?php else:
+                        ?><?=$member->getName();?><?php endif;
+                        endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($issue->hasTesters()): ?>
+                    <div class="tester-list">
+                        <span title="Тестировщики"><i class="fas fa-flask" aria-hidden="true"></i></span>
+                        <?php foreach ($issue->getTesters() as $i => $tester):
+                        ?><?=$i > 0 ? ', ' : '';?><?php if ($tester->userId == $userId):
+                        ?><strong><?=$tester->getName();?></strong><?php else:
+                        ?><?=$tester->getName();?><?php endif;
+                        endforeach; ?>
+                    </div>
+                    <?php endif; ?>
                 </td>
                 <td>
                     <p class="issue-list-item-desc my-3"><?=$issue->getShortDesc();?></p>

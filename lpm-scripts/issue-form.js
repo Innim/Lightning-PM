@@ -2,6 +2,7 @@ $(function ($) {
     document.addEventListener('paste', pasteClipboardImage);
     $('.images-list').on('click', '.pasted-img .remove-img', function () {
         $(this).parent('.pasted-img').remove();
+        issueForm.refreshImageSlots();
     });
     $('#issueForm').on('click', '.remove-upload-input', function (e) {
         e.preventDefault();
@@ -80,17 +81,7 @@ $(function ($) {
                     var reader = new FileReader();
 
                     reader.onload = function (event) {
-                        var img = new Image(150, 100);
-                        img.src = event.target.result;
-                        $('#issueForm .images-list input[type=file]').last().parent().before("<li id='current'><a></a></li>");
-                        $('li#current a').append(img);
-                        $('li#current').append("<a class='remove-btn remove-img' onclick='javascript: return false;'>");
-                        var input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'clipboardImg[]';
-                        input.value = img.src;
-                        $('li#current').append(input);
-                        $('li#current').removeAttr("id").addClass('pasted-img');
+                        issueForm.addPreparedImage(event.target.result);
                     }
 
                     reader.readAsDataURL(blob);
@@ -127,6 +118,10 @@ let issueForm = {
     masters: null,
     fileUploadTemplate: null,
     lockAcquired: false,
+    /**
+     * Отправка формы уже идёт: повторные отправки до её завершения запрещены.
+     */
+    submitting: false,
     acquireLock: function (issueId, revision, forced, onSuccess, onFail) {
         preloader.show();
 
@@ -275,22 +270,59 @@ let issueForm = {
     },
     onShow: function () {
         window.addEventListener('beforeunload', issueForm.blockClose);
-        $("#issueForm form").off('submit.issueForm').on('submit.issueForm', function (e) {
-            const $form = $(this);
-            const $submitBtn = $(".save-line button[type=submit]", $form);
+        window.addEventListener('pageshow', issueForm.onPageShow);
+        // Только сама форма задачи: внутри #issueForm лежат и другие формы
+        // (окно новой метки), их отправка форму задачи не затрагивает.
+        $("#issueForm > form").off('submit.issueForm').on('submit.issueForm', function (e) {
+            // Пока предыдущая отправка не завершилась, форма не уходит повторно:
+            // иначе быстрый повторный Enter или клик создаёт дубль задачи.
+            // Отключённой кнопки для этого мало: часть браузеров отправляет форму
+            // по Enter, даже когда кнопка отправки отключена.
+            if (issueForm.submitting) return issueForm.stopSubmit(e);
 
-            $submitBtn.prop('disabled', true);
+            if (!issueForm.validateIssueForm()) return issueForm.stopSubmit(e);
 
-            if (!issueForm.validateIssueForm()) {
-                e.preventDefault();
-                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
-                $submitBtn.prop('disabled', false);
-                return false;
-            }
+            issueForm.setSubmitting(true);
 
             // Allow navigation without unload warning on successful submit
             window.removeEventListener('beforeunload', issueForm.blockClose);
         });
+    },
+    /**
+     * Отменяет отправку формы.
+     * @param {Event} e Событие submit.
+     * @return {boolean} false - чтобы вернуть из обработчика submit.
+     */
+    stopSubmit: function (e) {
+        e.preventDefault();
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        return false;
+    },
+    /**
+     * Переводит форму в состояние отправки и обратно: в этом состоянии она
+     * не принимает новых отправок, кнопка сохранения отключена, а страница
+     * закрыта индикатором загрузки.
+     * @param {boolean} value Перевести форму в состояние отправки.
+     */
+    setSubmitting: function (value) {
+        if (issueForm.submitting === value) return;
+
+        issueForm.submitting = value;
+        $("#issueForm > form .save-line button[type=submit]").prop('disabled', value);
+
+        if (value) preloader.show();
+        else preloader.hide();
+    },
+    /**
+     * Возврат из кеша браузера (кнопка «Назад») оживляет уже отправленную форму -
+     * снимаем с неё состояние отправки, иначе отправить её снова будет нельзя.
+     * @param {PageTransitionEvent} e Событие pageshow.
+     */
+    onPageShow: function (e) {
+        if (!e.persisted || !issueForm.submitting) return;
+
+        issueForm.setSubmitting(false);
+        window.addEventListener('beforeunload', issueForm.blockClose);
     },
     onHide: function () {
         $('#issueForm > div.validateError').html('').hide();
@@ -331,6 +363,8 @@ let issueForm = {
             issueId: isEdit ? data.issueId : '',
             revision: isEdit ? data.revision : '',
             newImagesUrls: data.imgUrls,
+            preparedImages: data.clipboardImg,
+            preparedDraftImages: data.draftImg,
             imagesInfo: issueForm.getImagesFromPage(),
             isOnBoard: data.putToBoard,
         }, isEdit);
@@ -401,8 +435,6 @@ let issueForm = {
         issuePage.resetDescPreview($("#issueForm"));
         issuePage.updateDescCounter($("#issueForm"));
 
-        var imgsCount = 0
-
         // уже добавленные изображения
         let imgUploadLi = $("#issueForm form .images-list > li:has(input[type=file])");
         let imgs = value.imagesInfo;
@@ -411,15 +443,20 @@ let issueForm = {
             let imgLITmpl = $('#issueFormTemplates .image-item');
             imgs.forEach((img) => {
                 let imgLI = imgLITmpl.clone();
-                $('a.image-link', imgLI).attr('href', img.source);
+                // Группа просмотрщика ставится только на клоне: в заготовке
+                // шаблона она добавила бы в галерею пустой слайд. Группа
+                // своя, не как у картинок страницы: блок задачи остаётся
+                // в DOM скрытым, и общая группа дала бы каждой картинке
+                // формы дубль в просмотрщике.
+                $('a.image-link', imgLI)
+                    .attr('href', img.source)
+                    .attr('rel', 'iLoad|IssueFormScreenshots');
                 $('img.image-preview', imgLI).attr('src', img.preview);
                 $('input[name=imgId]', imgLI).val(img.imgId);
                 $('a.remove-img', imgLI).on('click', issueForm.removeImage);
 
                 imgsList.append(imgLI);
             });
-
-            imgsCount += imgs.length;
         }
         imgsList.append(imgUploadLi);
 
@@ -466,15 +503,21 @@ let issueForm = {
             newImgs.forEach((imgUrl) => {
                 if (imgUrl) {
                     issueForm.addImageByUrl(imgUrl);
-                    imgsCount++;
                 }
             });
         }
 
-        if (imgsCount >= window.lpmOptions.issueImgsCount) {
-            imgUploadLi.hide();
-            $("#issueForm form li a[name=imgByUrl]").hide();
-        }
+        // Изображения, приложенные до сохранения задачи: форма получает их
+        // обратно, когда восстанавливается после ошибки сохранения.
+        const addPreparedImages = (images, fromDraft) => (images || []).forEach((dataUri) => {
+            if (!dataUri) return;
+
+            issueForm.addPreparedImage(dataUri, fromDraft);
+        });
+        addPreparedImages(value.preparedImages, false);
+        addPreparedImages(value.preparedDraftImages, true);
+
+        issueForm.refreshImageSlots();
 
         $("#issueForm form input[name=baseIds]").val(value.baseIds?.join(',') ?? '');
         $("#issueForm form input[name=linkedIds]").val(value.linkedIds?.join(',') ?? '');
@@ -776,12 +819,29 @@ let issueForm = {
                 return;
             }
 
-            issueForm.applyDraft(res);
+            const attached = issueForm.applyDraft(res, images);
             issueForm.closeDraftDialog();
-            lpm.toast.show('Черновик собран — проверьте и поправьте поля');
+
+            let message = 'Черновик собран — проверьте и поправьте поля';
+            if (attached.skipped) {
+                message = 'Черновик собран, но изображение в неподдерживаемом формате'
+                    + ' приложить к задаче нельзя';
+            } else if (attached.count) {
+                message = 'Черновик собран, изображения приложены к задаче —'
+                    + ' проверьте и поправьте поля';
+            }
+            lpm.toast.show(message);
         });
     },
-    applyDraft: function (draft) {
+    /**
+     * Заполняет форму черновиком и прикладывает к задаче изображения,
+     * по которым он собран.
+     * @param {Object} draft Черновик: название, тип и описание.
+     * @param {string[]} images Изображения диалога строками data URI.
+     * @return {{count: number, skipped: number}} Сколько изображений приложено
+     * к задаче и сколько пропущено из-за неподходящего формата.
+     */
+    applyDraft: function (draft, images) {
         const $form = $('#issueForm form');
 
         $form.find('input[name=name]').val(draft.name);
@@ -791,6 +851,47 @@ let issueForm = {
 
         // Событие input обновляет счётчики символов и слов под полем описания.
         $form.find('textarea[name=desc]').val(draft.desc).trigger('input');
+
+        return issueForm.attachDraftImages(images || []);
+    },
+    /**
+     * Прикладывает к задаче изображения, по которым собран черновик.
+     *
+     * Приложенные прошлой сборкой изображения при этом снимаются: иначе
+     * вложения копились бы от каждой попытки. Всё, что пользователь приложил
+     * сам, остаётся на месте.
+     * @param {string[]} images Изображения строками data URI.
+     * @return {{count: number, skipped: number}} Сколько изображений приложено
+     * и сколько пропущено из-за формата, который задача не принимает.
+     */
+    attachDraftImages: function (images) {
+        $('#issueForm .images-list .draft-img').remove();
+
+        const attachableTypes = issueForm.draftAttachableTypes();
+        const result = { count: 0, skipped: 0 };
+
+        images.forEach(function (dataUri) {
+            const matches = String(dataUri).match(/^data:([^;,]*)/);
+            const type = matches ? matches[1].toLowerCase() : '';
+
+            if (attachableTypes.indexOf(type) === -1) {
+                result.skipped++;
+                return;
+            }
+
+            issueForm.addPreparedImage(dataUri, true);
+            result.count++;
+        });
+
+        issueForm.refreshImageSlots();
+
+        return result;
+    },
+    // Типы изображений, которые можно приложить к задаче: модель принимает
+    // и те форматы, которые вложением задачи стать не могут.
+    draftAttachableTypes: function () {
+        const types = $('#aiIssueDraftContent').data('attachableTypes');
+        return types ? String(types).split(',') : [];
     },
     closeDraftDialog: function () {
         // Ищем окно через draftDialog(), а не по .modal.show: этот класс
@@ -824,6 +925,69 @@ let issueForm = {
         $nameInput.val(name);
         issueFormLabels.update();
     },
+    /**
+     * Добавляет в форму изображение, которое будет загружено вместе с задачей:
+     * превью и скрытое поле с данными (см. ProjectPage::prepareImages()).
+     *
+     * Изображения черновика отправляются отдельным полем: по нему форма
+     * узнаёт их после восстановления, чтобы пересборка черновика заменяла
+     * прежний набор, а не добавляла к нему новый.
+     * @param {string} dataUri Изображение строкой data URI.
+     * @param {boolean} [fromDraft] Изображение приложено черновиком.
+     */
+    addPreparedImage: function (dataUri, fromDraft) {
+        if (!dataUri) return;
+
+        const img = new Image(150, 100);
+        img.src = dataUri;
+
+        const $li = $('<li class="pasted-img">')
+            .toggleClass('draft-img', !!fromDraft)
+            .append($('<a>').append(img))
+            .append('<a class="remove-btn remove-img" href="javascript:void(0)" aria-label="Убрать изображение">')
+            .append($('<input type="hidden">')
+                .attr('name', fromDraft ? 'draftImg[]' : 'clipboardImg[]')
+                .val(dataUri));
+
+        const $uploadLi = $('#issueForm .images-list input[type=file]').last().closest('li');
+        if ($uploadLi.length) {
+            $uploadLi.before($li);
+        } else {
+            $('#issueForm .images-list').append($li);
+        }
+
+        issueForm.refreshImageSlots();
+    },
+    /**
+     * Показывает или прячет поля добавления изображений: когда к задаче уже
+     * приложено предельное число картинок, добавлять больше некуда.
+     *
+     * Зовётся из всех путей, меняющих набор изображений формы, — и при
+     * добавлении, и при снятии, поэтому поля возвращаются, как только картинок
+     * снова стало меньше предела.
+     */
+    refreshImageSlots: function () {
+        const max = window.lpmOptions.issueImgsCount;
+
+        // Картинки, уже приложенные к форме. Выбранные в поле загрузки файлы
+        // сюда не входят: их число проверяется при отправке (validateIssueForm).
+        const count = $('#issueForm .images-list .image-item').length
+            + $('#issueForm .images-list .pasted-img').length
+            + $('#issueForm ul.images-url > li').not('.imgUrlTempl').length;
+        const hasFreeSlot = !max || count < max;
+
+        $('#issueForm .images-list > li:has(input[type=file])').each(function () {
+            const input = $('input[type=file]', this)[0];
+            const hasFiles = input && input.files && input.files.length > 0;
+
+            // Поле с уже выбранными файлами не прячем: вместе с ним пропали бы
+            // и сам выбор, и кнопка его снять.
+            $(this).toggle(hasFreeSlot || !!hasFiles);
+        });
+
+        // Ссылка добавления по URL лежит рядом со списком, а не внутри него.
+        $('#issueForm a[name=imgByUrl]').toggle(hasFreeSlot);
+    },
     addImageByUrl: function (imageUrl, autofocus = false) {
         const urlLI = $("#issueForm ul.images-url > li.imgUrlTempl").clone().show();
         const imgInput = $("#issueForm ul.images-url");
@@ -832,7 +996,12 @@ let issueForm = {
             $('input[name="imgUrls[]"]', urlLI).val(imageUrl);
         }
         imgInput.append(urlLI);
-        urlLI.find("a").on('click',  (event) => urlLI.remove());
+        urlLI.find("a").on('click',  (event) => {
+            urlLI.remove();
+            issueForm.refreshImageSlots();
+        });
+
+        issueForm.refreshImageSlots();
 
         if (autofocus) urlLI.find('input').trigger('focus');
     },
@@ -948,6 +1117,7 @@ let issueForm = {
                 if (val != '') val += ',';
                 val += imageId;
                 $('#issueForm form input[name=removedImages]').val(val);
+                issueForm.refreshImageSlots();
             }
         });
     },
@@ -1094,7 +1264,11 @@ let issueForm = {
         });
 
         const existingImagesCount = $("#issueForm .images-list .image-item").length;
-        if (newImagesCount + existingImagesCount > window.lpmOptions.issueImgsCount) {
+        // Изображения, приложенные до сохранения (вставка из буфера, черновик),
+        // занимают место наравне с выбранными в поле загрузки.
+        const preparedImagesCount = $("#issueForm .images-list .pasted-img").length;
+        if (newImagesCount + existingImagesCount + preparedImagesCount
+                > window.lpmOptions.issueImgsCount) {
             errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений');
         }
 

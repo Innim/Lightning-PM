@@ -29,6 +29,11 @@ class StatusPage extends LPMPage
 
         $this->addTmplVar('status', $status);
 
+        $this->addTmplVar('gitlabAvailable', $engine->gitlab()->isAvailable());
+        $this->addTmplVar('gitlabHookUrl', GitlabWebhookManager::getHookUrl());
+        $this->addTmplVar('gitlabHookAutoSetup', GitlabWebhookManager::isAutoSetupEnabled());
+        $this->addTmplVar('gitlabHookUrlIsLocal', GitlabWebhookManager::isHookUrlLocal());
+
         return $this;
     }
 }

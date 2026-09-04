@@ -9,6 +9,12 @@ $(document).ready(
             }
         });
 
+        // Настройки личной доски применяются перезагрузкой страницы:
+        // состав стикеров считается на сервере
+        $('.board-pref-switch').on('change', function () {
+            this.form.submit();
+        });
+
         sprintTarget.init();
     }
 );
@@ -152,7 +158,8 @@ let scrumBoard = {
         srv.issue.takeIssue(issueId, replace, function (res) {
             preloader.hide();
             if (res.success) {
-                $sticker.addClass('mine');
+                $sticker.addClass('mine').removeClass('free');
+                $('.sticker-free-mark', $sticker).remove();
                 const $members = $('.sticker-issue-members', $sticker);
                 if (replace) {
                     $members.empty();

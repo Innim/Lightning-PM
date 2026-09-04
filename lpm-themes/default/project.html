@@ -1,12 +1,25 @@
 <?php
-/* 
-Требуются: 
+/*
+Требуются:
 	$issues - список задач для отображения
+	$search - поисковый запрос, по которому отобран список (пустая строка - поиска не было)
+	$issuesCountLabel - подпись к количеству задач в отобранном списке
+		либо null, если показан весь список и уместна общая статистика проекта
+		(не null также включает подпись о пустой выдаче)
+	$searchForm - данные формы поиска либо null, если на подстранице поиска нет:
+		url - адрес списка задач без параметров поиска,
+		scope - область поиска по статусу задачи, в которой отобран список,
+		scopes - области поиска [значение => подпись], доступные для выбора;
+			пусто, если подраздел ищет только среди своих задач и выбора нет
 Необязательные:
     $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
 
-$project = lpm_get_project(); 
+$project = lpm_get_project();
+
+// Поиск считаем активным, когда список отобран, а не показан целиком: в этом
+// случае форма раскрыта, иначе непонятно, почему в списке не все задачи
+$searchActive = $searchForm !== null && $issuesCountLabel !== null;
 ?><div class="mx-auto container-fluid px-4 py-4">
 	<div class="col d-flex justify-content-between align-items-center">
 		<h1><?php lpm_print_header();?></h1>
@@ -20,14 +33,36 @@ $project = lpm_get_project();
             </span>
         </h3>
 		<div class="project-stat">
+			<?php if ($issuesCountLabel !== null): ?>
+			<?php /* класс issues-shown используется JS: он пересчитывает выборку
+			         после завершения или возврата задачи прямо из списка */ ?>
+			<span class="label"><?=$issuesCountLabel;?>:</span>
+			<span class="issues-shown value"><?=count($issues);?></span>
+			<?php else: ?>
 			<span class="label">Открыто:</span>
 			<span class="issues-opened value"></span>
 
 			<span class="project-opened-issue-hours"<?php if (($hours=$project->getSumOpenedIssuesHours()) == 0):?> style="display:none;"<?php endif;?>>(<span
 					class="issue-hours value"><?=$hours;?></span>&nbsp;<span class="issue-hours-label"><?=$project->getNormHoursLabel($hours);?></span>)</span>
 			из <span class="issues-total value"><?=$project->getTotalIssuesCount()?></span>
+			<?php endif; ?>
 		</div>
 		<div class="filters-line flex-wrap gap-3 mb-1">
+			<?php if ($searchForm !== null): ?>
+			<?php /* title на самой ссылке, а не на иконке: элемент уже держит Collapse, поэтому
+			         глобальный Tooltip его не берёт (селектор в lightning.js) и подсказка
+			         остаётся браузерной. Вариант с title на вложенной иконке даёт стилизованную
+			         подсказку, но её скрытие при раскрытии панели гасит и саму иконку.
+			         Нажатый вид кнопки вместе с подписью о размере выборки в статистике
+			         показывает, что список отобран, даже когда панель свёрнута */ ?>
+			<a class="btn btn-outline-secondary btn-sm<?=$searchActive ? ' active' : '';?>"
+				data-bs-toggle="collapse" href="#issuesSearchPanel" role="button"
+				aria-expanded="<?=$searchActive ? 'true' : 'false';?>" aria-controls="issuesSearchPanel"
+				title="<?=$searchActive ? 'Список отфильтрован поиском' : 'Искать задачи';?>"
+				aria-label="<?=$searchActive ? 'Показать форму поиска, список отфильтрован' : 'Искать задачи';?>">
+				<i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+			</a>
+			<?php endif; ?>
 			<div>
 				<?php lpm_print_issues_sort($issues); ?>
 			</div>
@@ -42,7 +77,52 @@ $project = lpm_get_project();
 				<i class="fas fa-tasks"></i> Добавить задачу
 			</a>
 		</div>
+		<?php if ($searchForm !== null): ?>
+		<?php /* панель стоит под строкой операций и очищена от флоата строки фильтров:
+		         так она встаёт над списком, который отбирает, а её раскрытие не сдвигает
+		         кнопки добавления задачи вбок */ ?>
+		<div class="collapse issues-search-panel mt-1 mb-2<?=$searchActive ? ' show' : '';?>" id="issuesSearchPanel">
+			<?php /* autocomplete="off" запрещает браузеру подставлять в поля
+			         прежний ввод, когда он заново собирает страницу из истории;
+			         возврат из кэша страниц этим не лечится - там поля
+			         приводит к разметке reset() в issues.js */ ?>
+			<form id="issuesSearchForm" class="d-flex align-items-center gap-2 bg-light border rounded py-2 px-2"
+				method="get" action="<?=$searchForm['url'];?>">
+				<div class="input-group input-group-sm">
+					<input type="search" name="search" class="form-control"
+						value="<?=HTMLHelper::escape($search);?>" placeholder="Поиск по названию и описанию задачи"
+						autocomplete="off" aria-label="Поиск по названию и описанию задачи">
+					<button type="submit" class="btn btn-outline-secondary" title="Найти" aria-label="Найти">
+						<i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+					</button>
+				</div>
+				<?php /* подраздел без выбора области ищет только среди своих задач,
+				         и выбирать в нём нечего */ ?>
+				<?php if (!empty($searchForm['scopes'])): ?>
+				<select name="scope" class="form-select form-select-sm w-auto flex-shrink-0"
+					autocomplete="off" aria-label="Статус задач">
+					<?php foreach ($searchForm['scopes'] as $scopeValue => $scopeLabel): ?>
+					<option value="<?=$scopeValue;?>"<?=$scopeValue === $searchForm['scope'] ? ' selected' : '';?>><?=$scopeLabel;?></option>
+					<?php endforeach; ?>
+				</select>
+				<?php endif; ?>
+				<?php if ($searchActive): ?>
+				<a class="btn btn-sm btn-outline-secondary flex-shrink-0" href="<?=$searchForm['url'];?>"
+					title="Сбросить поиск" aria-label="Сбросить поиск">
+					<i class="fas fa-ban" aria-hidden="true"></i>
+				</a>
+				<?php endif; ?>
+			</form>
+		</div>
+		<?php endif; ?>
 		<?php lpm_print_issues($issues); ?>
+		<?php if ($issuesCountLabel !== null): ?>
+		<?php /* класс issues-list-empty используется JS: подпись показывается,
+		         когда в выборке не осталось ни одной задачи */ ?>
+		<div class="issues-list-empty <?php if (!empty($issues)): ?>d-none <?php endif; ?>text-muted my-3">
+			Ничего не найдено.
+		</div>
+		<?php endif; ?>
 		<div class="operations-line mt-2">
 			<a href="#" class="btn btn-outline-danger my-1" onclick="issuePage.showAddForm(1); return false;">
 				<i class="fas fa-bug"></i> Добавить ошибку

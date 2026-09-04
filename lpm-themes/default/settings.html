@@ -4,6 +4,17 @@
     LPMOptions $options - настройки приложения
 */
 $cookieExpireDays = (int)($options->cookieExpire / 86400);
+$issueTextMaxLen = ISSUE_GUIDELINES_MAX_LENGTH;
+
+// В поля подставляется действующий текст, а не сохранённая настройка:
+// пустая настройка означает умолчание, и его тоже надо видеть и править.
+$descTemplateDefault = LPMOptions::getIssueTextDefault('issueDescTemplate');
+$descTemplateValue = LPMOptions::getIssueDescTemplate();
+$descTemplateIsDefault = LPMOptions::isIssueTextDefault('issueDescTemplate', $descTemplateValue);
+
+$guidelinesDefault = LPMOptions::getIssueTextDefault('issueGuidelines');
+$guidelinesValue = LPMOptions::getIssueGuidelines();
+$guidelinesIsDefault = LPMOptions::isIssueTextDefault('issueGuidelines', $guidelinesValue);
 ?>
 <div class="mx-auto container container-main px-4 py-4">
   <h1>Настройки</h1>
@@ -60,6 +71,52 @@ $cookieExpireDays = (int)($options->cookieExpire / 86400);
         <div class="mb-0">
           <label for="emailSubscript" class="form-label">Подпись писем</label>
           <textarea class="form-control" id="emailSubscript" name="emailSubscript" rows="3"><?=htmlspecialchars($options->emailSubscript);?></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">Оформление задач</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+            <label for="issueDescTemplate" class="form-label mb-0">Шаблон описания задачи</label>
+            <span class="badge <?=$descTemplateIsDefault ? 'bg-secondary' : 'bg-primary';?>"
+                  data-default-state="issueDescTemplate"><?=$descTemplateIsDefault
+                      ? 'По умолчанию' : 'Своё значение';?></span>
+            <button type="button" class="btn btn-link btn-sm p-0 ms-auto"
+                    data-default-reset="issueDescTemplate"
+                    <?=$descTemplateIsDefault ? 'disabled' : '';?>>Вернуть умолчание</button>
+          </div>
+          <textarea class="form-control font-monospace" id="issueDescTemplate" name="issueDescTemplate"
+                    rows="6" maxlength="<?=$issueTextMaxLen;?>"
+                    aria-describedby="issueDescTemplateHelp"
+                    data-default-text="<?=htmlspecialchars($descTemplateDefault, ENT_QUOTES);?>"><?=htmlspecialchars($descTemplateValue);?></textarea>
+          <div id="issueDescTemplateHelp" class="form-text">
+            Пустой скелет описания, который подставляет кнопка «Шаблон описания» в форме задачи.
+            В поле — действующий текст; пока он совпадает с умолчанием, шаблон будет
+            обновляться вместе с приложением.
+          </div>
+        </div>
+        <div class="mb-0">
+          <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+            <label for="issueGuidelines" class="form-label mb-0">Правила оформления задачи</label>
+            <span class="badge <?=$guidelinesIsDefault ? 'bg-secondary' : 'bg-primary';?>"
+                  data-default-state="issueGuidelines"><?=$guidelinesIsDefault
+                      ? 'По умолчанию' : 'Своё значение';?></span>
+            <button type="button" class="btn btn-link btn-sm p-0 ms-auto"
+                    data-default-reset="issueGuidelines"
+                    <?=$guidelinesIsDefault ? 'disabled' : '';?>>Вернуть умолчание</button>
+          </div>
+          <textarea class="form-control" id="issueGuidelines" name="issueGuidelines"
+                    rows="10" maxlength="<?=$issueTextMaxLen;?>"
+                    aria-describedby="issueGuidelinesHelp"
+                    data-default-text="<?=htmlspecialchars($guidelinesDefault, ENT_QUOTES);?>"><?=htmlspecialchars($guidelinesValue);?></textarea>
+          <div id="issueGuidelinesHelp" class="form-text">
+            Текстовые правила, которым следуют черновик задачи от ИИ и внешние клиенты API.
+            В поле — действующий текст; пока он совпадает с умолчанием, правила будут
+            обновляться вместе с приложением.
+          </div>
         </div>
       </div>
     </div>

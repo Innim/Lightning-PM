@@ -48,6 +48,13 @@ class ApiProjectController extends ApiControllerBase
             return $this->listLabels($project);
         }
 
+        if (count($path) === 2 && $path[1] === 'issue-guidelines') {
+            return ApiResponse::success(array_merge(
+                ['project' => $this->serializer()->project($project)],
+                $this->serializer()->issueGuidelines($project)
+            ));
+        }
+
         if (count($path) === 2 && $path[1] === 'repositories') {
             return ApiResponse::success([
                 'project' => $this->serializer()->project($project),
