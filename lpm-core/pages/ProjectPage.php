@@ -26,6 +26,27 @@ class ProjectPage extends LPMPage
     }
 
     /**
+     * Возвращает значение параметра строки запроса.
+     *
+     * $_GET к этому моменту уже разобран и удалён LPMParams - движок оставляет
+     * только заранее известные ему аргументы, а поиск задаётся параметрами
+     * одной страницы. Поэтому строка запроса читается напрямую, как это
+     * делает и внешнее API (ApiKey::getQueryArgs()).
+     * @param  string $name Имя параметра.
+     * @return string Значение параметра; пустая строка, если он не задан
+     *         или задан не строкой.
+     */
+    private static function getQueryParam($name)
+    {
+        $query = [];
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            parse_str((string)$_SERVER['QUERY_STRING'], $query);
+        }
+
+        return isset($query[$name]) && is_string($query[$name]) ? $query[$name] : '';
+    }
+
+    /**
      * Возвращает изображения, приложенные к форме до сохранения задачи.
      * @param  string $field Имя поля формы.
      * @return array Изображения строками base64.
@@ -53,6 +74,34 @@ class ProjectPage extends LPMPage
     const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum-board-snapshot';
     const PUID_SPRINT_STAT = 'sprint-stat';
     const PUID_SETTINGS = 'project-settings';
+
+    /** Параметр строки запроса с поисковым запросом по списку задач. */
+    const QUERY_ARG_SEARCH = 'search';
+    /** Параметр строки запроса с областью поиска по статусу задачи. */
+    const QUERY_ARG_SCOPE = 'scope';
+
+    const SEARCH_SCOPE_OPENED = 'opened';
+    const SEARCH_SCOPE_COMPLETED = 'completed';
+    const SEARCH_SCOPE_ALL = 'all';
+
+    /**
+     * Области поиска по статусу задачи: подпись для интерфейса
+     * и статусы задач, которые попадают в выборку (пусто - любые).
+     */
+    const SEARCH_SCOPES = [
+        self::SEARCH_SCOPE_OPENED => [
+            'label' => 'Открытые',
+            'statuses' => [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT],
+        ],
+        self::SEARCH_SCOPE_COMPLETED => [
+            'label' => 'Завершённые',
+            'statuses' => [Issue::STATUS_COMPLETED],
+        ],
+        self::SEARCH_SCOPE_ALL => [
+            'label' => 'Все',
+            'statuses' => [],
+        ],
+    ];
 
     /**
      *
@@ -284,12 +333,42 @@ class ProjectPage extends LPMPage
         }
     }
 
+    /**
+     * Готовит список задач проекта и форму поиска по нему.
+     *
+     * Показываются задачи выбранной области поиска, а если задан поисковый
+     * запрос - только найденные среди них.
+     */
     private function initIssues()
     {
-        // загружаем задачи
-        $openedIssues = $this->loadIssues([Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
-            
-        $this->addTmplVar('issues', $openedIssues);
+        $search = trim(self::getQueryParam(self::QUERY_ARG_SEARCH));
+        $scope = self::getQueryParam(self::QUERY_ARG_SCOPE);
+        if (!isset(self::SEARCH_SCOPES[$scope])) {
+            $scope = self::SEARCH_SCOPE_OPENED;
+        }
+
+        $scopes = [];
+        foreach (self::SEARCH_SCOPES as $value => $data) {
+            $scopes[$value] = $data['label'];
+        }
+
+        // Общая статистика проекта считает открытые задачи, поэтому к отобранному
+        // списку она не относится - вместо неё показываем размер самой выборки
+        $countLabel = null;
+        if ($search !== '') {
+            $countLabel = 'Найдено';
+        } elseif ($scope !== self::SEARCH_SCOPE_OPENED) {
+            $countLabel = 'Показано';
+        }
+
+        $this->addTmplVar('issues', $this->loadIssues(self::SEARCH_SCOPES[$scope]['statuses'], $search));
+        $this->addTmplVar('search', $search);
+        $this->addTmplVar('issuesCountLabel', $countLabel);
+        $this->addTmplVar('searchForm', [
+            'url' => $this->getUrl(),
+            'scope' => $scope,
+            'scopes' => $scopes,
+        ]);
     }
 
     private function initIssue()
@@ -372,9 +451,12 @@ class ProjectPage extends LPMPage
 
     private function initCompletedIssues()
     {
-        // загружаем  завершенные задачи
-        $completedIssues = $this->loadIssues([Issue::STATUS_COMPLETED]);
-        $this->addTmplVar('issues', $completedIssues);
+        // Своего поиска у подраздела нет: в основном списке задач можно искать
+        // и среди завершённых
+        $this->addTmplVar('issues', $this->loadIssues(self::SEARCH_SCOPES[self::SEARCH_SCOPE_COMPLETED]['statuses']));
+        $this->addTmplVar('search', '');
+        $this->addTmplVar('issuesCountLabel', null);
+        $this->addTmplVar('searchForm', null);
     }
 
     private function initComments()
@@ -530,9 +612,24 @@ class ProjectPage extends LPMPage
         return Issue::loadIssueId($this->_project->id, $idInProject);
     }
     
-    private function loadIssues($statuses) 
+    /**
+     * Загружает задачи проекта вместе с их исполнителями и тестировщиками.
+     * @param  array<int> $statuses Статусы задач (пустой список - любые).
+     * @param  string     $search   Поисковый запрос; пустой - без поиска.
+     * @return array<Issue> Массив задач.
+     */
+    private function loadIssues($statuses, $search = '')
     {
         $projectId = $this->_project->id;
+
+        if ($search !== '') {
+            // Участников грузим только для найденных задач, а не для всех
+            // задач проекта, как это делает выборка без поиска
+            return Issue::preloadParticipants(Issue::loadListByProjectFiltered(
+                $projectId,
+                ['statuses' => $statuses, 'search' => $search]
+            ));
+        }
 
         $loadMembers = true;
         $loadTesters = true;

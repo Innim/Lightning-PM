@@ -518,7 +518,16 @@ SQL;
      */
     public static function countListByProjectFiltered($projectId, array $filters = [])
     {
-        $where = self::buildProjectFilterWhere($projectId, $filters);
+        return self::countFiltered(self::buildProjectFilterWhere($projectId, $filters));
+    }
+
+    /**
+     * Возвращает количество задач, подходящих под условие выборки.
+     * @param  string $where Условие выборки по полям таблицы задач (алиас `i`).
+     * @return int Количество задач.
+     */
+    private static function countFiltered($where)
+    {
         $sql = "SELECT COUNT(*) AS `count` FROM `%s` `i` WHERE `i`.`deleted` = '0' AND " . $where;
 
         $res = self::getDB()->queryt($sql, LPMTables::ISSUES);
@@ -534,13 +543,32 @@ SQL;
      *                          - `statuses` array<int> статусы задач;
      *                          - `types` array<int> типы задач;
      *                          - `labels` array<string> метки, каждая из которых должна быть у задачи;
-     *                          - `search` string подстрока имени или начало номера задачи в проекте.
+     *                          - `search` string поисковый запрос, см. buildSearchWhere().
      * @return string Условие выборки.
      */
     private static function buildProjectFilterWhere($projectId, array $filters)
     {
-        $db = self::getDB();
         $where = '`i`.`projectId` = ' . (int)$projectId;
+
+        if (!empty($filters['labels'])) {
+            $issueIds = self::loadIdsByLabels($projectId, $filters['labels']);
+            $where .= ' AND `i`.`id` IN (' . (empty($issueIds) ? '0' : implode(',', $issueIds)) . ')';
+        }
+
+        return $where . self::buildCommonFilterWhere($filters);
+    }
+
+    /**
+     * Формирует часть условия выборки, не зависящую от проекта задачи.
+     * @param  array $filters Фильтры выборки:
+     *                        - `statuses` array<int> статусы задач;
+     *                        - `types` array<int> типы задач;
+     *                        - `search` string поисковый запрос, см. buildSearchWhere().
+     * @return string Условие выборки, начинающееся с ` AND `, либо пустая строка.
+     */
+    private static function buildCommonFilterWhere(array $filters)
+    {
+        $where = '';
 
         if (!empty($filters['statuses'])) {
             $where .= ' AND `i`.`status` IN (' . implode(',', array_map('intval', $filters['statuses'])) . ')';
@@ -550,18 +578,72 @@ SQL;
             $where .= ' AND `i`.`type` IN (' . implode(',', array_map('intval', $filters['types'])) . ')';
         }
 
-        if (!empty($filters['labels'])) {
-            $issueIds = self::loadIdsByLabels($projectId, $filters['labels']);
-            $where .= ' AND `i`.`id` IN (' . (empty($issueIds) ? '0' : implode(',', $issueIds)) . ')';
-        }
-
-        $search = isset($filters['search']) ? (string)$filters['search'] : '';
+        $search = self::buildSearchWhere(isset($filters['search']) ? $filters['search'] : '');
         if ($search !== '') {
-            $needle = $db->escape4Search_t($search);
-            $where .= " AND (`i`.`idInProject` LIKE '$needle%%' OR `i`.`name` LIKE '%%$needle%%')";
+            $where .= ' AND ' . $search;
         }
 
         return $where;
+    }
+
+    /**
+     * Формирует условие поиска задачи по строке запроса.
+     *
+     * Запрос ищется как подстрока названия и описания задачи, без учёта
+     * регистра; спецсимволы шаблона (`%` и `_`) при этом ищутся буквально.
+     * Если запрос - число (можно с `#`), задача находится и по своему номеру
+     * в проекте: номер сравнивается целиком, иначе запрос «7» вернул бы все
+     * задачи, в номере которых есть семёрка.
+     *
+     * Область поиска - список условий, поэтому расширяется добавлением в него
+     * ещё одного (например, подзапроса по комментариям задачи).
+     * @param  string $search Поисковый запрос в исходном виде.
+     * @return string Условие выборки; пустая строка, если искать нечего.
+     */
+    private static function buildSearchWhere($search)
+    {
+        $needle = mb_substr(trim((string)$search), 0, ISSUE_SEARCH_MAX_LENGTH);
+        if ($needle === '') {
+            return '';
+        }
+
+        // Условие подставляется в запрос с форматированием имён таблиц,
+        // поэтому проценты в нём удвоены
+        $like = " LIKE '%%" . self::escapeSearchPattern($needle) . "%%'"
+            . " ESCAPE '" . self::SEARCH_ESCAPE_CHAR . "'";
+        $conditions = [
+            '`i`.`name`' . $like,
+            '`i`.`desc`' . $like,
+        ];
+
+        if (preg_match('/^#?(\d+)$/', $needle, $matches)) {
+            $conditions[] = '`i`.`idInProject` = ' . (int)$matches[1];
+        }
+
+        return '(' . implode(' OR ', $conditions) . ')';
+    }
+
+    /**
+     * Готовит поисковый запрос к подстановке в выражение LIKE.
+     *
+     * Спецсимволы шаблона (`%` и `_`) экранируются символом SEARCH_ESCAPE_CHAR,
+     * а не обратным слэшем: экранирование строки для БД снимает слэши, поэтому
+     * до запроса слэш не доживает. По той же причине слэши самого запроса
+     * заранее удваиваются.
+     * @param  string $needle Поисковый запрос.
+     * @return string Шаблон LIKE без окружающих процентов, готовый к подстановке
+     *         в запрос с форматированием имён таблиц.
+     */
+    private static function escapeSearchPattern($needle)
+    {
+        $escape = self::SEARCH_ESCAPE_CHAR;
+        $pattern = str_replace(
+            ['\\', $escape, '%', '_'],
+            ['\\\\', $escape . $escape, $escape . '%', $escape . '_'],
+            $needle
+        );
+
+        return self::getDB()->escape_string_t($pattern);
     }
 
     /**
@@ -691,11 +773,11 @@ WHERE;
     /**
      * Заранее загружает исполнителей и тестировщиков всех задач списка.
      *
-     * Мастера не загружаются.
+     * Участники всех задач загружаются одним запросом. Мастера не загружаются.
      * @param  array<Issue> $list
      * @return array<Issue> Тот же список.
      */
-    private static function preloadParticipants(array $list)
+    public static function preloadParticipants(array $list)
     {
         $issueIds = [];
         foreach ($list as $issue) {
@@ -1598,6 +1680,11 @@ SQL;
     const DESC_MAX_LEN = 60000;
     const DEFAULT_PRIORITY = 49;
     const IMPORTANT_PRIORITY = 79;
+
+    /**
+     * Символ экранирования спецсимволов шаблона в поисковом запросе.
+     */
+    const SEARCH_ESCAPE_CHAR = '|';
 
     /**
      * Метка в начале имени задачи: блок в квадратных скобках и пробелы за ним.

@@ -109,7 +109,7 @@ Optional query parameters:
 - `status`: comma-separated `inWork`, `test`, `completed` (or `0`, `1`, `2`); any status by default.
 - `type`: comma-separated `develop`, `bug`, `support` (or `0`, `1`, `2`).
 - `label`: comma-separated labels (case-insensitive); an issue must have all of them.
-- `search`: substring of the issue name, or the beginning of `idInProject`.
+- `search`: substring of the issue name or description, case-insensitive; a plain number (or `#12`) also matches the issue with that `idInProject`.
 - `limit` (default `50`, max `200`) and `offset` for paging.
 
 Example:

@@ -14,6 +14,21 @@ $(document).ready(
             states.setState($(this).data('sort'));
         });
 
+        // Поиск идёт по всей базе задач проекта, а не по показанным строкам,
+        // поэтому смена области поиска перезапрашивает список с сервера
+        $(document).on('change', '#issuesSearchForm select[name=scope]', function () {
+            $(this).closest('form').submit();
+        });
+
+        // По кнопке «назад» браузер возвращает страницу такой, какой её оставили:
+        // в полях стоит то, что пользователь выбрал перед уходом, а список пришёл
+        // с сервера по адресу страницы. reset() возвращает полям значения из
+        // разметки, то есть ровно те, по которым список и отобран.
+        $(window).on('pageshow', function () {
+            const form = document.getElementById('issuesSearchForm');
+            if (form) form.reset();
+        });
+
         $(document).on('click', '#issuesList .member-list a', function (e) {
             const memberId = $(e.currentTarget).data('memberId');
             issuePage.showIssuesByUser(memberId);
@@ -797,6 +812,16 @@ issuePage.getPriorityTextColor = function (val) {
 
 issuePage.updateStat = function () {
     if ($("#projectView").length == 0) return;
+
+    // В отобранном списке (поиск или область по статусу) в статистике стоит размер
+    // выборки, а счётчиков открытых задач и часов проекта в разметке нет
+    const $shown = $(".project-stat .issues-shown");
+    if ($shown.length > 0) {
+        const count = $("#issuesList > tbody > tr").length;
+        $shown.text(count);
+        $(".issues-list-empty").toggleClass('d-none', count > 0);
+        return;
+    }
 
     $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
     $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
