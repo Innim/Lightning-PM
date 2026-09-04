@@ -35,8 +35,17 @@ class PassRecoveryPage extends LPMPage
                 'Страница устарела. Запросите письмо заново или откройте ссылку из письма ещё раз'
             );
         } elseif (!empty($_POST)) {
+            $rawPost = $_POST;
             foreach ($_POST as $key => $value) {
                 $_POST[$key] = is_string($value) ? trim($value) : $value;
+            }
+
+            // Пароль берём как есть: пробелы по краям - его часть,
+            // а сверяется хэш ровно от того, что ввёл пользователь.
+            foreach (['newPass', 'rePass'] as $passField) {
+                if (isset($rawPost[$passField]) && is_string($rawPost[$passField])) {
+                    $_POST[$passField] = $rawPost[$passField];
+                }
             }
             if (isset($_POST['remail'])) {
                 $this->requestRecoveryEmail((string)$_POST['remail']);
@@ -191,12 +200,9 @@ class PassRecoveryPage extends LPMPage
         $this->_userId = $userId;
         $this->_recoveryKey = (string)$key;
 
-        if (!Validation::checkPass($newPass, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, true)) {
-            $this->_engine->addError(sprintf(
-                'Пароль должен быть от %d до %d символов - используйте латинские буквы, цифры или знаки',
-                PASSWORD_MIN_LENGTH,
-                PASSWORD_MAX_LENGTH
-            ));
+        $passError = User::validatePassword($newPass);
+        if ($passError !== null) {
+            $this->_engine->addError($passError);
             $this->_show = 'changePassForm';
             return;
         }

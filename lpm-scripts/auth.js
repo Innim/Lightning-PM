@@ -47,8 +47,9 @@ function validateReg() {
 		errors.push('Пароли не совпадают');
 	}
 
-	if (!(/^([a-z0-9!"№;%:?*()_\+=\-~\/\\<{}\[\]]){1,24}$/i).test($('input[name=pass]', "#registrationForm").val())) {
-		errors.push('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
+	const passError = lpm.validators.password($('input[name=pass]', "#registrationForm").val());
+	if (passError) {
+		errors.push(passError);
 	}
 
 	var nick = $('input[name=nick]', "#registrationForm").val();

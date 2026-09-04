@@ -237,6 +237,40 @@ class User extends LPMBaseObject
         return $curRole <= $reqRole;
     }
 
+    /**
+     * Проверяет пароль на пригодность при установке - регистрация, смена
+     * в профиле, восстановление. Ограничена только длина: содержимое пароля
+     * в системе нигде не используется, хранится и сверяется его хэш.
+     *
+     * При входе этим проверять нельзя: пароли, заведённые до появления
+     * текущих ограничений, должны продолжать работать.
+     *
+     * @param  string $password Проверяемый пароль.
+     * @return string|null Текст ошибки или null, если пароль подходит.
+     */
+    public static function validatePassword($password)
+    {
+        $password = (string)$password;
+
+        // Управляющие символы в поле пароля не набираются - они признак
+        // испорченного ввода, а \0 ещё и обрывает пароль при хэшировании.
+        if (preg_match('/[\x00-\x1F\x7F]/', $password)) {
+            return 'Пароль не должен содержать управляющие символы';
+        }
+
+        // Минимум считаем в символах - столько их видит пользователь;
+        // максимум в байтах - bcrypt не учитывает то, что после 72-го байта.
+        if (mb_strlen($password) < PASSWORD_MIN_LENGTH || strlen($password) > PASSWORD_MAX_LENGTH) {
+            return sprintf(
+                'Пароль должен быть от %d до %d символов',
+                PASSWORD_MIN_LENGTH,
+                PASSWORD_MAX_LENGTH
+            );
+        }
+
+        return null;
+    }
+
     public static function blowfishSalt($cost = 13)
     {
         if (!is_numeric($cost) || $cost < 4 || $cost > 31) {
