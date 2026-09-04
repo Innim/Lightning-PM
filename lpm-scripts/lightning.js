@@ -814,7 +814,9 @@ lpm.validators = {
      * @returns {?string} Текст ошибки или null, если пароль подходит.
      */
     password: function (pass) {
-        const value = String(pass === null || pass === undefined ? '' : pass);
+        // NFKC - как на сервере: в хэш уйдёт нормализованная строка,
+        // и мерить длину надо по ней же.
+        const value = String(pass === null || pass === undefined ? '' : pass).normalize('NFKC');
 
         if (/[\x00-\x1F\x7F]/.test(value)) {
             return 'Пароль не должен содержать управляющие символы';
