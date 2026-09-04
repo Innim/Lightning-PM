@@ -27,6 +27,9 @@ class AdminService extends LPMBaseService
      * Принимает ассоциативный массив `имя_опции => значение`.
      * Неизвестные опции отклоняются с ошибкой.
      *
+     * Текст оформления задач, совпадающий с умолчанием, сохраняется
+     * как пустая настройка — то есть остаётся умолчанием.
+     *
      * @param array $data
      * @return
      */
@@ -62,7 +65,9 @@ class AdminService extends LPMBaseService
                         return $this->error($tooLong[$field]
                             . ISSUE_GUIDELINES_MAX_LENGTH . ' символов');
                     }
-                    $values[$field] = $text;
+                    // Текст, совпадающий с умолчанием, хранить не нужно: настройка
+                    // остаётся пустой, и умолчание продолжает обновляться с версией.
+                    $values[$field] = LPMOptions::isIssueTextDefault($field, $text) ? '' : $text;
                     break;
                 case 'fromEmail':
                     $email = trim((string)$value);
