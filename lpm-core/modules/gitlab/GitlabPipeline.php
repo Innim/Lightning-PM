@@ -35,6 +35,12 @@ class GitlabPipeline extends \GMFramework\StreamObject
     public $ref;
 
     /**
+     * Коммит, для которого создан пайплайн.
+     * @var string
+     */
+    public $sha;
+
+    /**
      * Статус пайплайна.
      * 
      * Возможные значения (см. STATUS_*): 

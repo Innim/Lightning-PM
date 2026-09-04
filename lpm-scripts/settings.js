@@ -20,6 +20,8 @@ function saveSettings(form) {
         fromEmail: form.querySelector('#fromEmail').value,
         fromName: form.querySelector('#fromName').value,
         emailSubscript: form.querySelector('#emailSubscript').value,
+        issueDescTemplate: form.querySelector('#issueDescTemplate').value,
+        issueGuidelines: form.querySelector('#issueGuidelines').value,
         newIssueView: form.querySelector('#newIssueView').checked ? 1 : 0,
     };
 

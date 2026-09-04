@@ -421,6 +421,12 @@ const comments = {
             }
         }
 
+        // В комментарии о влитии состояние сборки по каждой ветке уже отрисовано
+        // сервером, поэтому плашка по ссылке из текста была бы её дублем.
+        if ($item.closest('.comments-list-item').find('.branch-pipelines').length > 0) {
+            pipelines = [];
+        }
+
         if (mrs.length > 0) {
             const $ul = $('.merge-requests', $item.parent('.formatted-desc'));
 			mrs.forEach(function (url, i, arr) {

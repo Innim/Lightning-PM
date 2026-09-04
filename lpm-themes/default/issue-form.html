@@ -10,9 +10,11 @@
 $descMaxLen = Issue::DESC_MAX_LEN;
 $isHidden = !empty($isHidden);
 $aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
+$descTemplate = LPMOptions::getIssueDescTemplate();
 ?>
 <article id="issueForm" class="container-legacy" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>"
-    data-require-labels="<?=(int)$project->requireLabels;?>">
+    data-require-labels="<?=(int)$project->requireLabels;?>"
+    data-desc-template="<?=htmlspecialchars($descTemplate, ENT_QUOTES);?>">
     <h3></h3>
     <div class="alert alert-danger validateError" role="alert"><?php lpm_print_errors(); ?></div>
     <form class="row g-3" method="post" enctype="multipart/form-data">
@@ -500,8 +502,11 @@ $aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
     <?php endif; ?>
 
     <div id="issueFormTemplates" style="display:none">
+        <!-- Заготовка без rel просмотрщика: иначе она попадает в галерею
+             пустым слайдом. Группу проставляет клонирующий код
+             (issueForm.setIssueBy в lpm-scripts/issue-form.js). -->
         <li class="image-item my-2 position-relative">
-            <a href="" rel="iLoad|Screenshots" class="image-link"><img src="" class="image-preview border border-1 rounded-3"></a>
+            <a href="" class="image-link"><img src="" class="image-preview border border-1 rounded-3"></a>
             <input type="hidden" name="imgId" value="">
             <a href="javascript:;" class="remove-btn remove-img align-top ms-1"></a>
         </li>

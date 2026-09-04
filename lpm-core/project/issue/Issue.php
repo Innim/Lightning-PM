@@ -896,19 +896,6 @@ WHERE;
         $db = LPMGlobals::getInstance()->getDBConnect();
         $db->queryt($sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS);
     }
-    
-    public static function updateImgsCounter($issueId, $count)
-    {
-        $sql = "INSERT INTO `%1\$s` (`issueId`, `imgsCount`) " .
-                                    "VALUES ('" . $issueId . "', '" . $count . "') " .
-                       "ON DUPLICATE KEY UPDATE `imgsCount` = " .
-                            "(SELECT COUNT(*) FROM `%2\$s` " .
-                              "WHERE `%2\$s`.`itemType` = '" . LPMInstanceTypes::ISSUE . "' " .
-                                "AND `%2\$s`.`itemId` = '" . $issueId . "' ".
-                                "AND `%2\$s`.`deleted` = 0)";
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $db->queryt($sql, LPMTables::ISSUE_COUNTERS, LPMTables::IMAGES);
-    }
 
     public static function getCountImportantIssues($userId, $projectId = null)
     {

@@ -47,6 +47,23 @@ class AdminService extends LPMBaseService
                 case 'emailSubscript':
                     $values[$field] = trim((string)$value);
                     break;
+                case 'issueDescTemplate':
+                case 'issueGuidelines':
+                    // Переводы строк значимы: это многострочный текст,
+                    // а не однострочная настройка.
+                    $text = str_replace("\r\n", "\n", (string)$value);
+                    if (mb_strlen($text) > ISSUE_GUIDELINES_MAX_LENGTH) {
+                        // Обе настройки делят предел длины, но в ошибке должна быть
+                        // названа та, которую пользователь превысил.
+                        $tooLong = [
+                            'issueDescTemplate' => 'Шаблон описания задачи не должен быть длиннее ',
+                            'issueGuidelines' => 'Правила оформления задачи не должны быть длиннее ',
+                        ];
+                        return $this->error($tooLong[$field]
+                            . ISSUE_GUIDELINES_MAX_LENGTH . ' символов');
+                    }
+                    $values[$field] = $text;
+                    break;
                 case 'fromEmail':
                     $email = trim((string)$value);
                     if ($email !== '' && !Validation::checkEmail($email)) {

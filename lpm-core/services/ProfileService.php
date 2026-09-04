@@ -70,12 +70,9 @@ class ProfileService extends LPMBaseService
     public function newPass($currentPass, $newPass)
     {
         $newPass = (string)$newPass;
-        if (!Validation::checkPass($newPass, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, true)) {
-            return $this->error(sprintf(
-                'Пароль должен быть от %d до %d символов - используйте латинские буквы, цифры или знаки',
-                PASSWORD_MIN_LENGTH,
-                PASSWORD_MAX_LENGTH
-            ));
+        $passError = User::validatePassword($newPass);
+        if ($passError !== null) {
+            return $this->error($passError);
         }
 
         $userId = $this->getUserId();

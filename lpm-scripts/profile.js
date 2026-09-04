@@ -64,8 +64,9 @@ profilePage.validatePass = function () {
         errors.push('Пароли не совпадают');
     }
 
-    if (!(/^([a-z0-9!"№;%:?*()_\+=\-~\/\\<{}\[\]]){1,24}$/i).test($('input[name=newPass]', "#changePass").val())) {
-        errors.push('Введён недопустимый пароль - используйте латинские буквы, цифры или знаки');
+    const passError = lpm.validators.password($('input[name=newPass]', "#changePass").val());
+    if (passError) {
+        errors.push(passError);
     }
 
     $('#changePass > div.validateError').html(errors.join('<br/>'));

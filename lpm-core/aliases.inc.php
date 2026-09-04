@@ -207,6 +207,15 @@ function lpm_print_comment_files(Comment $comment)
 }
 
 /**
+ * Распечатывает состояния сборок по веткам, о влитии которых
+ * говорит комментарий.
+ */
+function lpm_print_comment_branch_pipelines(Comment $comment)
+{
+    return PagePrinter::commentBranchPipelines($comment);
+}
+
+/**
 * Распечатывает задачу
 */
 function lpm_print_issue_view()

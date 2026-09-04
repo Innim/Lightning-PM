@@ -237,6 +237,42 @@ class User extends LPMBaseObject
         return $curRole <= $reqRole;
     }
 
+    /**
+     * Проверяет пароль на пригодность при установке - регистрация, смена
+     * в профиле, восстановление. Ограничена только длина: содержимое пароля
+     * в системе нигде не используется, хранится и сверяется его хэш.
+     *
+     * При входе этим проверять нельзя: пароли, заведённые до появления
+     * текущих ограничений, должны продолжать работать.
+     *
+     * @param  string $password Проверяемый пароль.
+     * @return string|null Текст ошибки или null, если пароль подходит.
+     */
+    public static function validatePassword($password)
+    {
+        // Нормализуем до замеров: в хэш уйдёт именно эта строка, а NFKC
+        // меняет число символов и байт (лигатура ﬁ разворачивается в fi).
+        $password = self::normalizePassword($password);
+
+        // Управляющие символы в поле пароля не набираются - они признак
+        // испорченного ввода, а \0 ещё и обрывает пароль при хэшировании.
+        if (preg_match('/[\x00-\x1F\x7F]/', $password)) {
+            return 'Пароль не должен содержать управляющие символы';
+        }
+
+        // Минимум считаем в символах - столько их видит пользователь;
+        // максимум в байтах - bcrypt не учитывает то, что после 72-го байта.
+        if (mb_strlen($password) < PASSWORD_MIN_LENGTH || strlen($password) > PASSWORD_MAX_LENGTH) {
+            return sprintf(
+                'Пароль должен быть от %d до %d символов',
+                PASSWORD_MIN_LENGTH,
+                PASSWORD_MAX_LENGTH
+            );
+        }
+
+        return null;
+    }
+
     public static function blowfishSalt($cost = 13)
     {
         if (!is_numeric($cost) || $cost < 4 || $cost > 31) {
@@ -253,19 +289,60 @@ class User extends LPMBaseObject
         return $salt;
     }
     
+    /**
+     * Приводит пароль к нормальной форме Unicode NFKC.
+     *
+     * Один и тот же на вид символ набирается по-разному: готовым кодом
+     * или буквой с отдельным модификатором. Байты, а значит и хэш, у таких
+     * вариантов разные, поэтому пароль, заданный на одной раскладке или
+     * платформе, без приведения к общей форме не подошёл бы на другой.
+     *
+     * Если нормализация недоступна (нет расширения intl), пароль остаётся
+     * как есть: это улучшение, ради которого вход не должен переставать работать.
+     *
+     * @param  string $password Исходный пароль.
+     * @return string Нормализованный пароль либо исходный, если привести его не удалось.
+     */
+    private static function normalizePassword($password)
+    {
+        $password = (string)$password;
+
+        // Проверяем метод, а не класс: на инстанции без intl класса нет вовсе,
+        // а при disable_classes от него остаётся заглушка без методов.
+        if (!method_exists('Normalizer', 'normalize')) {
+            return $password;
+        }
+
+        // На строке с битой UTF-8 нормализация возвращает false - в этом
+        // случае пароль тоже должен остаться исходным, а не стать пустым.
+        $normalized = \Normalizer::normalize($password, \Normalizer::FORM_KC);
+
+        return is_string($normalized) ? $normalized : $password;
+    }
+
     public static function passwordHash($value, $salt = null)
     {
         //return password_hash($value);
         if (null === $salt) {
             $salt = self::blowfishSalt();
         }
-        return crypt($value, $salt);
+        return crypt(self::normalizePassword($value), $salt);
     }
 
     public static function passwordVerify($value, $hash)
     {
         //return password_verify($value, $hash);
-        return crypt($value, $hash) == $hash;
+        $value = (string)$value;
+        $normalized = self::normalizePassword($value);
+
+        if (crypt($normalized, $hash) == $hash) {
+            return true;
+        }
+
+        // Пароли, заданные до нормализации, хранят хэш от исходных байт.
+        // Второй crypt считаем, только когда форма отличается, чтобы
+        // не удваивать стоимость проверки на каждом неверном пароле.
+        return $normalized !== $value && crypt($value, $hash) == $hash;
     }
     
     const ROLE_USER      = 0;

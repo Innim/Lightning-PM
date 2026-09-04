@@ -19,12 +19,15 @@ class IssueCommentBranchMergedData
      * Сериализует данные всех веток, о влитии которых говорит комментарий.
      *
      * @param IssueBranch[] $issueBranches Влитые ветки.
+     * @param string $sha Коммит, которым ветки попали в целевую ветку:
+     * по нему состояние сборки привязывается именно к этому влитию, а не
+     * к более позднему влитию той же ветки.
      */
-    public static function serializeBy(array $issueBranches): string
+    public static function serializeBy(array $issueBranches, string $sha = ''): string
     {
         $branches = [];
         foreach ($issueBranches as $issueBranch) {
-            $branches[] = [$issueBranch->repositoryId, $issueBranch->name];
+            $branches[] = [$issueBranch->repositoryId, $issueBranch->name, $sha];
         }
 
         return serialize($branches);
@@ -35,7 +38,8 @@ class IssueCommentBranchMergedData
      *
      * Значения, записанные до появления нескольких веток в одном комментарии,
      * хранят одну пару [repositoryId, branchName] на верхнем уровне - такой
-     * формат тоже читается.
+     * формат тоже читается. Коммит влития появился ещё позже, поэтому у
+     * записанного раньше он пуст.
      *
      * @return array Список веток в формате {@see self::$branches}.
      */
@@ -58,6 +62,7 @@ class IssueCommentBranchMergedData
             $branches[] = [
                 'repositoryId' => $branch[0],
                 'branchName'   => $branch[1],
+                'sha'          => isset($branch[2]) ? (string)$branch[2] : '',
             ];
         }
 
@@ -67,7 +72,7 @@ class IssueCommentBranchMergedData
     /**
      * Влитые ветки, о которых говорит комментарий.
      *
-     * Каждый элемент - массив с ключами `repositoryId` и `branchName`.
+     * Каждый элемент - массив с ключами `repositoryId`, `branchName` и `sha`.
      *
      * @var array
      */

@@ -117,6 +117,11 @@ class AttachmentsService extends LPMBaseService
 
     /**
      * Возвращает информацию о Pipeline по URL.
+     *
+     * Побочный эффект: полученное от GitLab состояние сборки сохраняется
+     * у задач, merge request'ы которых влиты этим коммитом
+     * (см. {@see self::syncPipelineState()}).
+     *
      * @param  String $url URL pipeline'а
      * @return
      */
@@ -132,11 +137,42 @@ class AttachmentsService extends LPMBaseService
                     return $this->exception($e);
                 }
             }
+
+            if (!empty($data)) {
+                $this->syncPipelineState($data);
+            }
         }
 
         $this->add2Answer('data', $data);
 
         return $this->answer();
+    }
+
+    /**
+     * Сохраняет актуальное состояние сборки у задач влитых merge request'ов.
+     *
+     * Штатный источник состояния - событие пайплайна от GitLab, и потерянное
+     * событие иначе оставляет состояние в БД устаревшим навсегда. Здесь оно
+     * выправляется по уже полученным живым данным, без отдельного запроса
+     * к GitLab.
+     *
+     * Сбой синхронизации не должен ломать выдачу данных о пайплайне, поэтому
+     * ошибки только логируются.
+     *
+     * @param GitlabPipeline $pipeline Актуальные данные пайплайна.
+     */
+    private function syncPipelineState(GitlabPipeline $pipeline)
+    {
+        try {
+            if (IssuePipeline::applyPipeline($pipeline) > 0) {
+                LPMLog::info('Pipeline state restored from live data', LPMLog::CH_GITLAB, [
+                    'pipelineId' => $pipeline->id,
+                    'status'     => $pipeline->status,
+                ]);
+            }
+        } catch (Exception $e) {
+            LPMLog::exception($e, LPMLog::CH_GITLAB, ['pipelineId' => $pipeline->id]);
+        }
     }
 
     /**

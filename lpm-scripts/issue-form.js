@@ -443,7 +443,14 @@ let issueForm = {
             let imgLITmpl = $('#issueFormTemplates .image-item');
             imgs.forEach((img) => {
                 let imgLI = imgLITmpl.clone();
-                $('a.image-link', imgLI).attr('href', img.source);
+                // Группа просмотрщика ставится только на клоне: в заготовке
+                // шаблона она добавила бы в галерею пустой слайд. Группа
+                // своя, не как у картинок страницы: блок задачи остаётся
+                // в DOM скрытым, и общая группа дала бы каждой картинке
+                // формы дубль в просмотрщике.
+                $('a.image-link', imgLI)
+                    .attr('href', img.source)
+                    .attr('rel', 'iLoad|IssueFormScreenshots');
                 $('img.image-preview', imgLI).attr('src', img.preview);
                 $('input[name=imgId]', imgLI).val(img.imgId);
                 $('a.remove-img', imgLI).on('click', issueForm.removeImage);

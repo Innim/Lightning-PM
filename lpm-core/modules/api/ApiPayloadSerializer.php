@@ -235,6 +235,28 @@ class ApiPayloadSerializer
     }
 
     /**
+     * Правила оформления задачи проекта: скелет описания, текстовые правила
+     * и требования к названию.
+     *
+     * Скелет и правила пока общие для всех проектов, но отдаются в разрезе
+     * проекта: требования к названию у проектов уже разные.
+     * @param Project $project Проект, для которого заводится задача.
+     * @return array
+     */
+    public function issueGuidelines(Project $project)
+    {
+        return [
+            'descriptionTemplate' => LPMOptions::getIssueDescTemplate(),
+            'guidelines' => LPMOptions::getIssueGuidelines(),
+            'naming' => [
+                'requireTitle' => true,
+                'requireLabels' => (bool)$project->requireLabels,
+                'example' => '[api] Кнопка оплаты дублирует запрос',
+            ],
+        ];
+    }
+
+    /**
      * Метка (тег) задач с количеством использований.
      * @param array $label Данные метки, см. Project::getLabels().
      * @return array
