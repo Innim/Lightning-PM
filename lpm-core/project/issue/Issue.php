@@ -1215,34 +1215,69 @@ SQL;
 
     /**
      * Создаёт новую задачу в проекте и возвращает её идентификатор.
+     *
+     * Номер задачи внутри проекта («последний плюс один») вычисляется тем же
+     * запросом, который вставляет задачу, — иначе два одновременных создания
+     * в одном проекте выберут один и тот же номер. Пара «проект + номер»
+     * уникальна в базе: если номер всё же занят, вставка отклоняется,
+     * ничего после себя не оставляя, и повторяется — до ISSUE_CREATE_MAX_ATTEMPTS раз.
+     *
      * Значения передаются в «сыром» виде — экранирование выполняется внутри метода.
-     * @return int|null Идентификатор созданной задачи или null при ошибке записи.
+     * @return int|null Идентификатор созданной задачи или null при ошибке записи,
+     * в том числе если свободный номер не удалось занять за отведённое число попыток.
      */
     public static function createNew(Project $project, $name, $desc, $type, $priority, $hours, $completeDate, $authorId)
     {
         $db = self::getDB();
-        $idInProject = (int)self::getLastIssueId($project->id);
         $revision = self::getNewRevision();
 
         // Экранируем строки и удваиваем `%`, т.к. queryt() пропускает запрос через sprintf.
         $nameEsc = $db->real_escape_string(str_replace('%', '%%', (string)$name));
         $descEsc = $db->real_escape_string(str_replace('%', '%%', (string)$desc));
         $revisionEsc = $db->real_escape_string($revision);
+        $completeDateSql = empty($completeDate)
+            ? 'NULL'
+            : "'" . $db->real_escape_string($completeDate) . "'";
 
-        $sql = "INSERT INTO `%s` (`projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
+        $projectId = (int)$project->id;
+        $sql = "INSERT INTO `%1\$s` (`projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
                                     "`authorId`, `createDate`, `completeDate`, `priority`, `revision` ) " .
-                            "VALUES ('" . (int)$project->id . "', '" . $idInProject . "', " .
+                            "SELECT '" . $projectId . "', COALESCE(MAX(`idInProject`), 0) + 1, " .
                                         "'" . $nameEsc . "', '" . (float)$hours . "', '" . $descEsc . "', " .
                                         "'" . (int)$type . "', '" . (int)$authorId . "', " .
-                                        "'" . DateTimeUtils::mysqlDate() . "', " .
-                                        (empty($completeDate) ? 'NULL' : "'" . $db->real_escape_string($completeDate) . "'") . ", " .
-                                        "'" . (int)$priority . "', '" . $revisionEsc . "' )";
+                                        "'" . DateTimeUtils::mysqlDate() . "', " . $completeDateSql . ", " .
+                                        "'" . (int)$priority . "', '" . $revisionEsc . "' " .
+                              "FROM `%1\$s` WHERE `projectId` = '" . $projectId . "'";
 
-        if (!$db->queryt($sql, LPMTables::ISSUES)) {
-            return null;
+        $issueId = 0;
+        for ($attempt = 1; $attempt <= ISSUE_CREATE_MAX_ATTEMPTS; $attempt++) {
+            // Пауза со случайной длительностью разводит во времени запросы,
+            // столкнувшиеся на одном номере: без неё они повторяют попытку
+            // одновременно и снова выбирают один и тот же номер.
+            if ($attempt > 1) {
+                usleep(mt_rand(1, 5) * 1000 * ($attempt - 1));
+            }
+
+            if ($db->queryt($sql, LPMTables::ISSUES)) {
+                $issueId = (int)$db->insert_id;
+                break;
+            }
+
+            // ER_DUP_ENTRY — номер занял параллельный запрос; любая другая
+            // ошибка записи повтором не лечится.
+            if ($db->errno != self::DB_ERR_DUP_ENTRY) {
+                return null;
+            }
         }
 
-        $issueId = $db->insert_id;
+        if (empty($issueId)) {
+            LPMLog::error(
+                'Не удалось занять свободный номер задачи в проекте',
+                LPMLog::CH_DB,
+                ['projectId' => $projectId, 'attempts' => ISSUE_CREATE_MAX_ATTEMPTS]
+            );
+            return null;
+        }
 
         // Начальный слепок содержимого — с него начинается история задачи.
         IssueContentSnapshot::record($issueId, $authorId);
@@ -1595,6 +1630,11 @@ SQL;
      * Шаг (в процентах), с которым задачи разбиваются на группы по приоритету.
      */
     const PRIORITY_GROUP_STEP = 5;
+
+    /**
+     * Код ошибки MySQL «дубликат значения уникального ключа» (ER_DUP_ENTRY).
+     */
+    const DB_ERR_DUP_ENTRY = 1062;
     
     public $id            =  0;
     public $projectId     =  0;
