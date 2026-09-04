@@ -79,7 +79,7 @@ Query parameters (all optional):
 - `status` — comma-separated list of `inWork`, `test`, `completed` (or the numeric codes `0`, `1`, `2`). `all` or an omitted parameter means any status.
 - `type` — comma-separated list of `develop`, `bug`, `support` (or `0`, `1`, `2`).
 - `label` — comma-separated list of labels; an issue must have **all** of them. Matching ignores case and covers only the `[label]` prefixes of the issue name, so a label cannot itself contain a comma.
-- `search` — substring of the issue name, or the beginning of `idInProject`.
+- `search` — searches the issue name and description for this substring, ignoring case; `%` and `_` are matched literally. A plain number (optionally prefixed with `#`) also matches the issue with that `idInProject`.
 - `limit` — page size, `50` by default, `200` maximum.
 - `offset` — number of issues to skip, `0` by default.
 

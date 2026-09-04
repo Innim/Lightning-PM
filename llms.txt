@@ -10,7 +10,7 @@ Use the authenticated API instead of scraping HTML.
 - Load issue by id: `GET /api/v1/issues/{issueId}`
 - Create issue: `POST /api/v1/issues` (name must have a title besides `[label]` prefixes; some projects require at least one label; `priority` is the `1..100` value shown in the UI, default `50`; optional `board`: `true` puts the new issue on the scrum board by its status, a column key puts it in that column)
 - Add comment: `POST /api/v1/issues/{issueId}/comments`
-- List project issues: `GET /api/v1/projects/{projectId}/issues` (filters: `status`, `type`, `label`, `search`, `limit`, `offset`)
+- List project issues: `GET /api/v1/projects/{projectId}/issues` (filters: `status`, `type`, `label`, `search`, `limit`, `offset`; `search` looks through the issue name and description, and a plain number also matches that issue number in the project)
 - List project labels (tags): `GET /api/v1/projects/{projectId}/labels` (sorted by usage in this project)
 - Read project scrum board: `GET /api/v1/projects/{projectId}/board` (issues grouped by columns `todo`, `inProgress`, `testing`, `done`, in board order; `400` for a non-scrum project)
 - Put issue on the board / move between columns: `PUT /api/v1/issues/{issueId}/board` (optional `column` from the same set; without it the column follows the issue status, as the «На доску» button does; `testing` sends the issue to test, `done` completes it)
