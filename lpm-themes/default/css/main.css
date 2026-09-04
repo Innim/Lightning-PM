@@ -730,6 +730,13 @@ table.issues-list tr.test-ready .test-ready-check {
 	width: 70%;
 	font-size : smaller;
 }
+/* Панель поиска по задачам. clear выводит её из-под строки фильтров: та флоатится,
+   и без clear панель встала бы рядом с ней. Оба свойства заданы здесь, а не
+   утилитами: в Bootstrap 5.1 нет утилит ни для clear, ни для max-width. */
+#projectView .issues-search-panel {
+	clear: both;
+	max-width: 640px;
+}
 
 /* список задач и добавление/редактирование задачи */
 table.issues-list td {
