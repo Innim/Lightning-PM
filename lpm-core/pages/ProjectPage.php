@@ -831,11 +831,6 @@ class ProjectPage extends LPMPage
             if (!$this->updateScrumBoard($issue, $putOnBoard)) return;
         }
 
-        // обновляем счетчики изображений
-        if ($uploader->getLoadedCount() > 0 || $editMode) {
-            Issue::updateImgsCounter($issueId, $uploader->getLoadedCount());
-        }
-        
         // отсылаем оповещения
         $changes = null;
         if ($editMode && isset($curIssue)) {
