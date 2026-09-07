@@ -4,10 +4,11 @@
 - В списке задач и на Scrum доске у задачи в тесте видно состояние её сборки: идёт, упала или прошла ([#408](https://task.innim.ru/project/lightning-pm/issue/408)).
 ### Fixed
 - Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).
+- Тег, поставленный задаче через API, теперь попадает в справочник тегов проекта ([#447](https://task.innim.ru/project/lightning-pm/issue/447)).
+- Счётчик использований тега со знаком процента в названии больше не обнуляется ([#447](https://task.innim.ru/project/lightning-pm/issue/447)).
+- Значок с подсказкой больше не пропадает после раскрытия панели или меню ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
 ### Changed
 - У кнопки поиска задач в проекте подсказка теперь оформлена в стиле приложения ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
-
-- Значок с подсказкой больше не пропадает после раскрытия панели или меню ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
 
 ## 0.31.0 - 2026-09-04
 
