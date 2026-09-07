@@ -793,6 +793,40 @@ WHERE;
     }
 
     /**
+     * Заранее загружает сводные состояния сборок задач списка.
+     *
+     * Состояния всех задач загружаются одним запросом. Спрашиваются только
+     * задачи, ждущие проверки ({@see isAwaitingTest()}): у остальных сборка
+     * не показывается, а список задач бывает на тысячи строк.
+     * @param  array<Issue> $list
+     * @return array<Issue> Тот же список.
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function preloadBuildStates(array $list)
+    {
+        $issueIds = [];
+        foreach ($list as $issue) {
+            if ($issue->isAwaitingTest()) {
+                $issueIds[] = $issue->id;
+            }
+        }
+
+        if (empty($issueIds)) {
+            return $list;
+        }
+
+        $states = IssuePipeline::loadSummaryStatuses($issueIds);
+        foreach ($list as $issue) {
+            $issueId = (int)$issue->id;
+            if (isset($states[$issueId])) {
+                $issue->buildState = $states[$issueId];
+            }
+        }
+
+        return $list;
+    }
+
+    /**
      * Загружает список задач, связанных с указанной.
      * @param int $issueId Идентификатор задачи.
      * @return array<Issue>
@@ -1844,6 +1878,22 @@ SQL;
     public $testMrState;
 
     /**
+     * Сводное состояние сборок задачи в тесте
+     * (см. IssuePipelineStatus::*).
+     *
+     * Если по задаче несколько сборок - берётся самая неблагополучная:
+     * провал важнее идущей сборки, идущая важнее успеха.
+     *
+     * Заполняется только у задач, ждущих проверки ({@see isAwaitingTest()}) -
+     * у остальных сборка не показывается.
+     *
+     * Если null, то это означает, что данных нет: задача не ждёт проверки,
+     * по ней нет ни одной сборки либо данные не загружены.
+     * @var string
+     */
+    public $buildState;
+
+    /**
      * Проект, к которому относится задача
      * @var Project
      */
@@ -2408,6 +2458,22 @@ SQL;
     public function isTesting()
     {
         return $this->status == self::STATUS_WAIT;
+    }
+
+    /**
+     * Определяет, ждёт ли задача проверки: она в тесте, и её ещё не разметили
+     * отметкой поважнее - не нашли проблем, не взяли в проверку и не отметили
+     * прошедшей тестирование.
+     *
+     * Именно в этом состоянии тестировщику важна готовность задачи к проверке:
+     * влиты ли правки ({@see $testMrState}) и что со сборкой
+     * ({@see $buildState}).
+     * @return bool
+     */
+    public function isAwaitingTest()
+    {
+        return $this->isTesting() && !$this->hasPassTestMark
+            && !$this->isChangesRequested && !$this->isUnderTesting;
     }
 
     public function loadStream($hash)
