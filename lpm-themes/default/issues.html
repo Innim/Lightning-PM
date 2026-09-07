@@ -47,6 +47,8 @@ $userId = lpm_get_user()->userId;
 			if ($testMergeLevel = IssueViewHelper::testMergeLevel($issue)) {
 				$classes[] = 'test-' . $testMergeLevel;
 			}
+
+			$buildLevel = IssueViewHelper::buildLevel($issue);
 		?>
 		<tr class="<?=implode(' ', $classes);?>" data-id="<?=$issue->id;?>"
 			data-status="<?=$issue->status;?>" data-complete-date="<?=$issue->completeDate;?>"
@@ -93,6 +95,15 @@ $userId = lpm_get_user()->userId;
 				<i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
 				<i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>
 				<i class="fas fa-code-merge test-ready-check" title="Правки влиты — можно тестировать"></i>
+				<?php if ($buildLevel !== ''): ?>
+				<?php /* Подсказка висит на обёртке, а не на иконке: у голой иконки
+				         почти нулевая высота бокса, и всплывающая подсказка
+				         легла бы прямо на неё */ ?><span
+					class="build-state build-<?=$buildLevel;?>"
+					title="<?=IssueViewHelper::buildHint($buildLevel);?>"
+					aria-label="<?=IssueViewHelper::buildHint($buildLevel);?>"><i
+					class="<?=IssueViewHelper::buildIconClass($buildLevel);?>" aria-hidden="true"></i></span>
+				<?php endif; ?>
 				<i class="fas fa-calendar-times icon-deadline icon-deadline-outdated" title="Просрочена"></i>
 				<i class="fas fa-fire icon-deadline icon-deadline-urgent" title="Срочная"></i>
 				<i class="fas fa-calendar-alt icon-deadline icon-deadline-medium" title="Средней срочности"></i>

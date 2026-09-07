@@ -289,8 +289,10 @@ class ProjectsPage extends LPMPage
             }
         }
 
-        // Один запрос на участников для всего итогового списка
+        // По одному запросу на участников и на состояния сборок
+        // для всего итогового списка
         ScrumSticker::preloadParticipants($stickers);
+        ScrumSticker::preloadBuildStates($stickers);
 
         return [$stickers, $freeIssueIds];
     }

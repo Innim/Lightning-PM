@@ -710,6 +710,23 @@ table.issues-list tr td .test-ready-check {
 	color: #0d6efd;
 }
 
+/* Состояние сборки. Показывается рядом с состоянием правок, поэтому цвета
+   разведены с ним: синий занят отметкой «правки влиты», тёмно-янтарный —
+   отметкой «правки ещё не влиты».
+   На Scrum доске эти отметки цветом не красятся: цвет стикера там занят
+   оценкой задачи, и по насыщенному фону иконка не читается */
+table.issues-list tr td .build-state.build-running {
+	color: #fd7e14;
+}
+
+table.issues-list tr td .build-state.build-failed {
+	color: #dc3545;
+}
+
+table.issues-list tr td .build-state.build-success {
+	color: #198754;
+}
+
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
 table tr.deadline-urgent-issue td .icon-deadline.icon-deadline-urgent,
 table tr.deadline-medium-issue td .icon-deadline.icon-deadline-medium,

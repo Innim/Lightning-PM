@@ -624,7 +624,8 @@ class ProjectPage extends LPMPage
     }
     
     /**
-     * Загружает задачи проекта вместе с их исполнителями и тестировщиками.
+     * Загружает задачи проекта вместе с их исполнителями, тестировщиками
+     * и состояниями сборок.
      * @param  array<int> $statuses Статусы задач (пустой список - любые).
      * @param  string     $search   Поисковый запрос; пустой - без поиска.
      * @return array<Issue> Массив задач.
@@ -636,9 +637,11 @@ class ProjectPage extends LPMPage
         if ($search !== '') {
             // Участников грузим только для найденных задач, а не для всех
             // задач проекта, как это делает выборка без поиска
-            return Issue::preloadParticipants(Issue::loadListByProjectFiltered(
-                $projectId,
-                ['statuses' => $statuses, 'search' => $search]
+            return Issue::preloadBuildStates(Issue::preloadParticipants(
+                Issue::loadListByProjectFiltered(
+                    $projectId,
+                    ['statuses' => $statuses, 'search' => $search]
+                )
             ));
         }
 
@@ -652,7 +655,7 @@ class ProjectPage extends LPMPage
         foreach ($list as $issue) {
             $issue->extractParticipantsFrom($issueParticipants, $loadMembers, $loadTesters, $loadMasters);
         }
-        return $list;
+        return Issue::preloadBuildStates($list);
     }
     
     private function handleFormAction($editMode = false)

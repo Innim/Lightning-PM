@@ -17,7 +17,7 @@ class ScrumSticker extends LPMBaseObject
 `i`.`projectId` = ${projectId} AND `s`.`state` IN (${states})
 SQL;
 
-        return self::preloadParticipants(self::loadList($where));
+        return self::preloadBuildStates(self::preloadParticipants(self::loadList($where)));
     }
 
     /**
@@ -43,6 +43,29 @@ SQL;
         foreach ($list as $sticker) {
             $sticker->getIssue()->extractParticipantsFrom($participants, true, true, false);
         }
+
+        return $list;
+    }
+
+    /**
+     * Заранее загружает сводные состояния сборок задач списка одним запросом.
+     *
+     * Как и {@see preloadParticipants()}, вызывается один раз на итоговом
+     * списке: {@see loadUserStickersList()} и {@see loadFreeStickersList()}
+     * состояния не подгружают.
+     *
+     * @param  array<ScrumSticker> $list
+     * @return array<ScrumSticker> Тот же список.
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function preloadBuildStates(array $list)
+    {
+        $issues = [];
+        foreach ($list as $sticker) {
+            $issues[] = $sticker->getIssue();
+        }
+
+        Issue::preloadBuildStates($issues);
 
         return $list;
     }
