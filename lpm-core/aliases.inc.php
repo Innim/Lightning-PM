@@ -338,6 +338,14 @@ function lpm_print_issues_sort($list)
 }
 
 /**
+ * Печатает отметки состояния проверки задачи в списке задач.
+ */
+function lpm_print_issue_test_state($issue)
+{
+    return PagePrinter::issueTestState($issue);
+}
+
+/**
  * Печатает бейдж с давностью последней активности по задаче в тесте.
  */
 function lpm_print_issue_test_age($issue)
