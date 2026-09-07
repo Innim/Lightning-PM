@@ -1199,6 +1199,72 @@ SQL;
     }
 
     /**
+     * Регистрирует использование меток из имени задачи в справочнике: заводит
+     * недостающие метки проекта и начисляет им использование. Метки, уже
+     * присутствовавшие в $oldName, повторно не учитываются — вызывать при
+     * каждом сохранении имени задачи (создании или переименовании), а не
+     * только один раз при создании.
+     * Имена передаются в «сыром» виде, без экранирования — как в Issue::createNew().
+     * @param $name string Имя задачи после сохранения.
+     * @param $projectId int Идентификатор проекта, к которому относится задача.
+     * @param $oldName string|null Имя задачи до сохранения, либо null, если
+     * задача только создаётся.
+     */
+    // TODO: перенести в IssueLabel
+    public static function registerLabelsUsage($name, $projectId, $oldName = null)
+    {
+        $labels = self::getLabelsByName($name);
+
+        if ($oldName !== null) {
+            $oldLabels = self::getLabelsByName($oldName);
+            foreach ($labels as $key => $value) {
+                if (in_array($value, $oldLabels)) {
+                    unset($labels[$key]);
+                }
+            }
+        }
+
+        if (empty($labels)) {
+            return;
+        }
+
+        $allLabels = self::getLabels($projectId);
+        $countedLabels = [];
+        foreach ($allLabels as $value) {
+            $index = array_search($value['label'], $labels);
+            if ($index !== false) {
+                $countedLabels[] = $labels[$index];
+                unset($labels[$index]);
+            }
+        }
+
+        if (!empty($countedLabels)) {
+            self::addLabelsUsing(self::escapePercentForQueryt($countedLabels), $projectId);
+        }
+
+        if (!empty($labels)) {
+            // Создаём новые метки без использований, затем через addLabelsUsing
+            // начисляем использование и в общий счётчик, и в счётчик по проекту.
+            foreach ($labels as $newLabel) {
+                self::saveLabel(str_replace('%', '%%', $newLabel), $projectId, 0, 0);
+            }
+            self::addLabelsUsing(self::escapePercentForQueryt($labels), $projectId);
+        }
+    }
+
+    /**
+     * Экранирует знак процента в каждой строке списка для queryt().
+     * @param $values string[]
+     * @return string[]
+     */
+    private static function escapePercentForQueryt(array $values)
+    {
+        return array_map(function ($value) {
+            return str_replace('%', '%%', $value);
+        }, $values);
+    }
+
+    /**
      * Удаляет метку.
      * @param $id int Идентификатор метки.
      * @param $deleted bool Состояние удаления метки.
