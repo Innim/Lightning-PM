@@ -43,6 +43,16 @@ if ('undefined' == typeof Element.prototype.hide) {
     };
 };
 
+// jQuery.event.trigger finishes by calling the DOM method whose name matches the triggered event's
+// base type, so every Bootstrap `show.bs.*` / `hide.bs.*` event would invoke the polyfills above on
+// its target and rewrite that element's inline display (a deselected tab, a dropdown toggle, an icon
+// whose tooltip is being closed). A _default hook that returns anything but false claims the default
+// action for jQuery and suppresses that call; it must stay in place as long as show()/hide() are
+// defined on Element.
+const claimDefaultAction = { _default: function () { return true; } };
+$.event.special.show = claimDefaultAction;
+$.event.special.hide = claimDefaultAction;
+
 /**
  * Сервис для запросов на сервер
  * @class 
@@ -1046,15 +1056,9 @@ $(document).ready(
                 const instance = bootstrap.Tooltip.getInstance(trigger);
                 if (!instance) return;
 
-                // hide() fires hide.bs.tooltip, whose jQuery default action hides the trigger (see
-                // the handler below). That handler is delegated on <body> and cannot see a trigger
-                // that has already left the DOM — a detached node that gets re-attached later would
-                // come back with display:none — so restore the value here as well.
-                const display = trigger.style.display;
                 const tip = instance.tip;
                 if (tip) tip.classList.remove('fade');
                 instance.hide();
-                trigger.style.display = display;
                 if (tip) {
                     tip.remove();
                     tip.classList.add('fade');
@@ -1099,30 +1103,8 @@ $(document).ready(
         });
 
         $('body').on('hidden.bs.dropdown', function(e) {
-            // Force element to stay visible - some sort of bug in Bootstrap in conflict with jQuery
-            e.target.style.display = '';
             const instance = toggleIconTooltip(e.target);
             if (instance) instance.enable();
-        });
-
-        // Same conflict for tabs: jQuery invokes the Element.prototype.hide polyfill when Bootstrap
-        // fires hide.bs.tab, hiding the deselected tab button. Restore its display in a microtask so
-        // the change is reverted before the browser paints (waiting for hidden.bs.tab would flicker,
-        // as that only fires after the ~150ms fade transition).
-        $('body').on('hide.bs.tab', function(e) {
-            const el = e.target;
-            Promise.resolve().then(function() { el.style.display = ''; });
-        });
-
-        // Same conflict for tooltips: when hide.bs.tooltip fires, jQuery's default action calls the
-        // Element.prototype.hide polyfill on the tooltip's trigger element, hiding it. Restore the
-        // display value the trigger had BEFORE that (not ''), in a microtask that runs after the
-        // default action: the cleanup above closes tooltips of elements the app has just hidden
-        // itself, and blanking display there would put them back on screen.
-        $('body').on('hide.bs.tooltip', function(e) {
-            const el = e.target;
-            const display = el.style.display;
-            Promise.resolve().then(function() { el.style.display = display; });
         });
 
         window.lpInfo.userId = $('#curUserId').val();

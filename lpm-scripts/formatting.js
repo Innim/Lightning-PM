@@ -48,11 +48,6 @@ function initIssueLinkPreviews(root) {
                 return content;
             },
         });
-
-        el.addEventListener('hide.bs.popover', function () {
-            // Force element to stay visible - some sort of bug in Bootstrap in conflict with jQuery
-            this.style.display = '';
-        });
     });
 }
 

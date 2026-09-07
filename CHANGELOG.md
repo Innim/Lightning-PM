@@ -2,6 +2,11 @@
 
 ### Fixed
 - Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).
+### Changed
+- У кнопки поиска задач в проекте подсказка теперь оформлена в стиле приложения ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
+
+### Fixed
+- Значок с подсказкой больше не пропадает после раскрытия панели или меню ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
 
 ## 0.31.0 - 2026-09-04
 
