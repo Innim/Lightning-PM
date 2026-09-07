@@ -189,7 +189,13 @@ SQL;
 
     /**
      * Проверяет, существует ли хотя бы одна ветка для указанной задачи,
-     * для которой либо нет MR, либо есть MR, но он не влит.
+     * работа по которой еще не доведена до конца: у ветки либо нет ни одного
+     * MR, либо есть MR, который еще не влит.
+     *
+     * Закрытые MR в расчет не идут - от этих изменений отказались, поэтому
+     * рядом с влитым MR той же ветки закрытый ее не задерживает. Но ветку,
+     * по которой не влито ничего, отсутствие живых MR не освобождает: она
+     * считается незавершенной так же, как ветка, для которой MR еще не заводили.
      *
      * @param  int      $issueId Идентификатор задачи.
      * @param  int|null $exceptMrId Если не null, то этот MR будет игнорироваться в проверке.
@@ -198,6 +204,7 @@ SQL;
     public static function existBranchesWithoutMergedMRForIssue($issueId, $exceptMrId = null)
     {
         $mergedState = GitlabMergeRequest::STATE_MERGED;
+        $closedState = GitlabMergeRequest::STATE_CLOSED;
         $db = self::getDB();
 
         $mrWhere = "`mr`.`state` <> '$mergedState'";
@@ -211,6 +218,7 @@ SQL;
         ON `b`.`issueId` = `mr`.`issueId`
        AND `b`.`repositoryId` = `mr`.`repositoryId`
        AND `b`.`name` = `mr`.`branch`
+       AND `mr`.`state` <> '$closedState'
      WHERE `b`.`issueId` = $issueId 
        AND ($mrWhere OR `mr`.`state` IS NULL)
 SQL;
