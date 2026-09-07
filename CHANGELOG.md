@@ -1,5 +1,8 @@
 ## Next
 
+### Fixed
+- Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).
+
 ## 0.31.0 - 2026-09-04
 
 ### Added
