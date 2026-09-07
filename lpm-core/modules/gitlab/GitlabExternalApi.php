@@ -380,13 +380,16 @@ class GitlabExternalApi extends ExternalApi
 
                     $commentText = implode("\n\n", $commentParts);
 
+                    // Идентификатор MR нужен комментарию, чтобы показать
+                    // состояние сборки, которую запустит влитие
                     $engine->comments()->postComment(
                         $user,
                         $issue,
                         $commentText,
                         false,
                         true,
-                        IssueCommentType::MERGE_REQUEST
+                        IssueCommentType::MERGE_REQUEST,
+                        IssueCommentMergeRequestData::serialize($mr->id)
                     );
 
                     // Добавляем коммент со ссылкой на задачу в MR

@@ -164,6 +164,7 @@ $deleteLinkDataAttributesString = HTMLHelper::buildDataAttributes($deleteLinkDat
     <div class="card mt-3 <?=$bgColorClass;?> position-relative">
       <div class="card-body">
         <?php lpm_print_comment_text($comment->getText());?>
+        <?php lpm_print_comment_branch_pipelines($comment);?>
         <?php lpm_print_comment_files($comment);?>
         <?php if ($comment->isEdited()): ?>
         <div class="comment-edit-mark text-muted x-small mt-2">

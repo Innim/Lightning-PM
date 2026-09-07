@@ -1,6 +1,7 @@
 ## Next
 
 ### Added
+- В комментарии о merge request'е видно состояние его сборки ([#451](https://task.innim.ru/project/lightning-pm/issue/451)).
 - В списке задач и на Scrum доске у задачи в тесте видно состояние её сборки: идёт, упала или прошла ([#408](https://task.innim.ru/project/lightning-pm/issue/408)).
 ### Fixed
 - Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).

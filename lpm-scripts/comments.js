@@ -91,6 +91,53 @@ const comments = {
             $li.append(' <span class="small text-muted ms-2 fw-bold" title="Дата завершения">(<i class="far fa-calendar-check"></i> ' + lpm.format.date(p.finishedAt) + ')</span>');
         }
     },
+    // Подписи состояний сборки в комментарии: их же печатает сервер
+    // (comment-branch-pipelines.html).
+    branchPipelineLabels: {
+        success: 'успех',
+        failed: 'провал',
+        canceled: 'отменена',
+        skipped: 'пропущена',
+        running: 'идёт',
+        pending: 'в очереди',
+        created: 'в очереди',
+        scheduled: 'запланирована',
+        waiting_for_resource: 'ждёт ресурс',
+        preparing: 'готовится',
+        manual: 'ждёт запуска'
+    },
+    // Отрисовывает состояние сборки ветки в элемент $li: разметка повторяет
+    // серверную (comment-branch-pipelines.html), чтобы обновление на месте
+    // не меняло вид плашки. Имя ветки берётся из data-атрибута: в данных
+    // пайплайна его нет.
+    renderBranchPipeline: function ($li, p) {
+        const view = comments.gitlabStatusView(p.status);
+        const label = comments.branchPipelineLabels[p.status] || view.text;
+        const branch = $('<span>').text($li.data('branch') || '').html();
+        $li.attr('class', comments.gitlabStatusItemClass + ' flex-wrap').addClass(view.ctx.item)
+            .empty()
+            .append('<i class="fas ' + view.icon + ' me-2 ' + view.ctx.icon + '"></i>')
+            .append('<span title="Ветка"><i class="fas fa-code-branch"></i> ' + branch + '</span>');
+        if (p.url) {
+            $li.append('<a href="' + p.url + '" class="ms-2" title="Сборка">#' + p.id + '</a>');
+        } else if (p.id) {
+            $li.append('<span class="ms-2" title="Сборка">#' + p.id + '</span>');
+        }
+        $li.append('<span class="' + view.ctx.badge + ' ms-2">' + label + '</span>');
+    },
+    // Оживляет отрисованные сервером состояния сборок: незавершённая сборка
+    // обновляется на месте, пока не дойдёт до финального статуса.
+    initBranchPipelines: function ($scope) {
+        $('ul.branch-pipelines > li', $scope).each(function () {
+            const $li = $(this);
+            const url = $li.data('pipelineUrl');
+            if (!url || comments.isFinalGitlabStatus($li.data('pipelineStatus'))) return;
+
+            comments.watchGitlabStatus($li, function (onResult) {
+                srv.attachments.getPipelineInfo(url, onResult);
+            }, comments.renderBranchPipeline, 'Не удалось получить данные Pipeline.', true);
+        });
+    },
     // Отрисовывает статус Job в элемент $li (перерисовка на месте безопасна).
     renderJob: function ($li, j) {
         const view = comments.gitlabStatusView(j.status);
@@ -112,9 +159,11 @@ const comments = {
     },
     // Загружает статус pipeline/job в $li и, пока он не финальный, периодически
     // обновляет его на месте (без перезагрузки страницы). fetch(onResult) выполняет
-    // запрос, render($li, data) отрисовывает результат.
-    watchGitlabStatus: function ($li, fetch, render, notFoundText) {
-        let rendered = false;
+    // запрос, render($li, data) отрисовывает результат. isServerRendered означает,
+    // что состояние в $li уже отрисовал сервер: оно сохраняется, если данных
+    // от GitLab получить не удалось — у пользователя может не быть к нему доступа.
+    watchGitlabStatus: function ($li, fetch, render, notFoundText, isServerRendered) {
+        let rendered = isServerRendered === true;
         const poll = function () {
             fetch(function (res) {
                 // Блок удален из DOM (комментарии перерисованы) — прекращаем опрос.
@@ -127,7 +176,7 @@ const comments = {
                         if (!comments.isFinalGitlabStatus(res.data.status)) {
                             setTimeout(poll, comments.gitlabStatusPollMs);
                         }
-                    } else {
+                    } else if (!isServerRendered) {
                         $li.remove();
                     }
                 } else if (rendered) {
@@ -153,6 +202,7 @@ const comments = {
 		comments.initFileInputs();
 		comments.initAddForm();
 		comments.initEditForm();
+		comments.initBranchPipelines(document);
 	},
 	initEditForm: function () {
 		$(document).on('click', '.edit-comment', function () {
@@ -212,6 +262,7 @@ const comments = {
 
 			$item.html(res.html);
 			comments.updateAttachments($('.comment-text', $item));
+			comments.initBranchPipelines($item);
 			attachments.update($('.block-with-attachments', $item));
 			initIssueLinkPreviews($item);
 			highlightCodeBlocks($item);
@@ -421,8 +472,8 @@ const comments = {
             }
         }
 
-        // В комментарии о влитии состояние сборки по каждой ветке уже отрисовано
-        // сервером, поэтому плашка по ссылке из текста была бы её дублем.
+        // В комментарии о влитии и в комментарии о MR состояние сборки уже
+        // отрисовано сервером, поэтому плашка по ссылке из текста была бы дублем.
         if ($item.closest('.comments-list-item').find('.branch-pipelines').length > 0) {
             pipelines = [];
         }

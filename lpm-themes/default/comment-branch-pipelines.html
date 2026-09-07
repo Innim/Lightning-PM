@@ -1,14 +1,15 @@
 <?php
 /*
 Требуются:
-    $pipelines - array<IssuePipeline> состояния сборок влитых веток,
-                 в порядке перечисления веток в комментарии
+    $pipelines - array<IssuePipeline> состояния сборок комментария
 */
 
 // Вид плашки по статусу пайплайна GitLab: иконка, оформление строки,
 // цвет иконки, класс бейджа и подпись. Набор классов повторяет плашки,
 // которые рисует JS по ссылке на пайплайн (comments.js), чтобы состояния
 // сборок в комментариях выглядели одинаково.
+// Атрибуты data-* элемента списка читает comments.js: пока сборка
+// не завершена, он обновляет её состояние на месте.
 $statusViews = [
   GitlabPipeline::STATUS_SUCCESS => ['fa-check-circle', 'list-group-item-success', 'text-success', 'bg-success', 'успех'],
   GitlabPipeline::STATUS_FAILED => ['fa-times-circle', 'list-group-item-danger', 'text-danger', 'bg-danger', 'провал'],
@@ -31,7 +32,10 @@ $unknownStatusView = ['fa-question-circle', '', 'text-muted', 'bg-light text-dar
   list($iconClass, $itemClass, $iconColorClass, $badgeClass, $label) = $view;
   if ($label === '') $label = str_replace('_', ' ', $pipeline->status);
   ?>
-  <li class="list-group-item py-1 px-1 rounded-2 d-flex align-items-center flex-wrap <?=$itemClass;?>">
+  <li class="list-group-item py-1 px-1 rounded-2 d-flex align-items-center flex-wrap <?=$itemClass;?>"
+      data-branch="<?=htmlspecialchars($pipeline->branch, ENT_QUOTES, 'UTF-8');?>"
+      data-pipeline-status="<?=htmlspecialchars($pipeline->status, ENT_QUOTES, 'UTF-8');?>"
+      data-pipeline-url="<?=htmlspecialchars($pipeline->url, ENT_QUOTES, 'UTF-8');?>">
     <i class="fas <?=$iconClass;?> me-2 <?=$iconColorClass;?>"></i>
     <span title="Ветка"><i class="fas fa-code-branch"></i> <?=htmlspecialchars($pipeline->branch, ENT_QUOTES, 'UTF-8');?></span>
     <?php if (!empty($pipeline->url)): ?>

@@ -159,6 +159,104 @@ class IssuePipeline extends LPMBaseObject
     }
 
     /**
+     * Загружает состояния сборок, о которых говорит комментарий задачи.
+     *
+     * @param  Comment $comment Комментарий.
+     * @return array<IssuePipeline> Пустой массив, если состояний нет или
+     * комментарий не о влитии веток и не о merge request'е.
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function loadForComment(Comment $comment)
+    {
+        if ($comment->instanceType != LPMInstanceTypes::ISSUE || empty($comment->issueComment)) {
+            return [];
+        }
+
+        if ($comment->issueComment->isBranchMerged()) {
+            return self::loadForMergedComment($comment);
+        }
+
+        if ($comment->issueComment->isMergeRequest()) {
+            return self::loadForMrComment($comment);
+        }
+
+        return [];
+    }
+
+    /**
+     * Загружает состояние сборки merge request'а, о котором говорит
+     * комментарий.
+     *
+     * Целевая ветка роли не играет: сборка привязана к самому merge request'у,
+     * поэтому состояние видно и при влитии в тестовую ветку, где комментария
+     * о влитии не бывает.
+     *
+     * @param  Comment $comment Комментарий о merge request'е.
+     * @return array<IssuePipeline> Ноль или один элемент: на пару
+     * «задача — merge request» приходится одно состояние.
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function loadForMrComment(Comment $comment)
+    {
+        if ($comment->instanceType != LPMInstanceTypes::ISSUE || empty($comment->issueComment)) {
+            return [];
+        }
+
+        $issueId = (int)$comment->instanceId;
+        $mrId = self::detectCommentMrId($comment, $issueId);
+        if (empty($mrId)) {
+            return [];
+        }
+
+        $res = [];
+        foreach (self::loadForIssue($issueId) as $pipeline) {
+            if ($pipeline->mrId === $mrId && $pipeline->hasStatus()) {
+                $res[] = $pipeline;
+            }
+        }
+
+        return $res;
+    }
+
+    /**
+     * Определяет merge request, о котором говорит комментарий.
+     *
+     * У комментариев, записанных до того, как идентификатор MR стал
+     * сохраняться, данных нет - для них MR ищется по исходной ветке,
+     * названной в тексте.
+     *
+     * @param  Comment $comment Комментарий о merge request'е.
+     * @param  int     $issueId Идентификатор задачи комментария.
+     * @return int Идентификатор MR на GitLab
+     * ({@see GitlabMergeRequest::$id}); 0, если определить не удалось.
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    private static function detectCommentMrId(Comment $comment, $issueId)
+    {
+        $data = $comment->issueComment->getMergeRequestData();
+        if (!empty($data) && !empty($data->mrId)) {
+            return $data->mrId;
+        }
+
+        $branch = IssueCommentMergeRequestData::parseSourceBranch($comment->text);
+        if ($branch === '') {
+            return 0;
+        }
+
+        // Одну и ту же ветку задачи может закрывать несколько merge request'ов
+        // подряд: без идентификатора в комментарии их не различить, поэтому
+        // берём последнюю привязку
+        $mrId = 0;
+        foreach (IssueMR::loadForIssue($issueId) as $issueMr) {
+            if ($issueMr->branch === $branch) {
+                $mrId = $issueMr->mrId;
+            }
+        }
+
+        return $mrId;
+    }
+
+    /**
      * Загружает состояния сборок для веток, о влитии которых говорит
      * комментарий.
      *

@@ -5,6 +5,37 @@
 class IssueMR extends LPMBaseObject
 {
     /**
+     * Загруженные привязки в разрезе задач: issueId => IssueMR[].
+     *
+     * Страница задачи спрашивает merge request'ы задачи из каждого
+     * комментария о MR.
+     * @var array
+     */
+    private static $_loadedByIssue = [];
+
+    /**
+     * Загружает merge request'ы, привязанные к задаче.
+     *
+     * @param  int $issueId Идентификатор задачи.
+     * @return array<IssueMR> В порядке привязки к задаче.
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function loadForIssue($issueId)
+    {
+        $issueId = (int)$issueId;
+        if (!isset(self::$_loadedByIssue[$issueId])) {
+            self::$_loadedByIssue[$issueId] = self::loadAndParseV2([
+                'SELECT'   => '*',
+                'FROM'     => LPMTables::ISSUE_MR,
+                'WHERE'    => ['issueId' => $issueId],
+                'ORDER BY' => '`id`',
+            ], __CLASS__);
+        }
+
+        return self::$_loadedByIssue[$issueId];
+    }
+
+    /**
      * Загружает список идентификаторов задач для открытого MR.
      * @param  int $mrId Идентификатор MR.
      * @return array<int>
@@ -95,6 +126,8 @@ class IssueMR extends LPMBaseObject
      */
     public static function updateState($mrId, $state)
     {
+        self::$_loadedByIssue = [];
+
         $db = self::getDB();
         return $db->queryb([
             'UPDATE' => LPMTables::ISSUE_MR,
@@ -159,6 +192,8 @@ class IssueMR extends LPMBaseObject
      */
     public static function create($mrId, $issueId, $state, $repositoryId, $branch)
     {
+        self::$_loadedByIssue = [];
+
         $db = self::getDB();
         return $db->queryb([
             'INSERT' => compact('mrId', 'issueId', 'state', 'repositoryId', 'branch'),

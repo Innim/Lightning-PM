@@ -110,6 +110,14 @@ class IssueComment extends LPMBaseObject
     }
 
     /**
+     * Определяет, является ли комментарий информацией о merge request'е.
+     * @return bool
+     */
+    public function isMergeRequest() {
+        return $this->type == IssueCommentType::MERGE_REQUEST;
+    }
+
+    /**
      * Определяет, является ли комментарий автоматически созданным оповещением.
      * @return bool
      */
@@ -141,6 +149,25 @@ class IssueComment extends LPMBaseObject
         if ($this->isBranchMerged() && !empty($this->data)) {
             if (empty($this->_deserializedData)) {
                 $this->_deserializedData = new IssueCommentBranchMergedData($this->data);
+            }
+
+            return $this->_deserializedData;
+        }
+
+        return null;
+    }
+
+    /**
+     * Возвращает данные MR для коммента типа IssueCommentType::MERGE_REQUEST.
+     *
+     * Данных нет у комментариев, записанных до того, как идентификатор MR
+     * стал сохраняться, и у тех, которым тип проставлен по ссылке в тексте.
+     */
+    public function getMergeRequestData(): ?IssueCommentMergeRequestData
+    {
+        if ($this->isMergeRequest() && !empty($this->data)) {
+            if (empty($this->_deserializedData)) {
+                $this->_deserializedData = new IssueCommentMergeRequestData($this->data);
             }
 
             return $this->_deserializedData;
