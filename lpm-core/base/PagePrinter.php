@@ -151,6 +151,24 @@ class PagePrinter
     }
 
     /**
+     * Печатает отметки состояния проверки задачи в списке задач.
+     *
+     * Печатаются все отметки сразу, а показывается та, что соответствует
+     * состоянию задачи: видимость каждой включает класс на строке списка
+     * ({@see IssueViewHelper::testStateClasses()}).
+     * @param Issue $issue Задача.
+     */
+    public static function issueTestState(Issue $issue)
+    {
+        $buildLevel = IssueViewHelper::buildLevel($issue);
+
+        PageConstructor::includePattern(
+            'components/issue-test-state',
+            compact('buildLevel')
+        );
+    }
+
+    /**
      * Печатает бейдж с давностью последней активности по задаче в тесте.
      *
      * Ничего не печатает для задач не в тесте и для тех, по которым

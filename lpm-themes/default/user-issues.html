@@ -23,8 +23,14 @@ $userId = lpm_get_user()->userId;
             </tr>
         </thead>
         <tbody>
-            <? foreach (lpm_get_user_issues() as $issue) {?>
-            <tr class="<?=IssueViewHelper::statusStateClass($issue->status);?>">
+            <?php
+            foreach (lpm_get_user_issues() as $issue):
+                $classes = array_merge(
+                    [IssueViewHelper::statusStateClass($issue->status)],
+                    IssueViewHelper::testStateClasses($issue)
+                );
+            ?>
+            <tr class="<?=implode(' ', $classes);?>">
                 <td><a href="<?=$issue->getConstURL();?>"><?=$issue->getIdInProject();?></a></td>
                 <td>
                     <nobr>
@@ -33,7 +39,9 @@ $userId = lpm_get_user()->userId;
                             <?=$issue->getPriorityDisplayValue();?></span><?=$issue->getType();?>
                     </nobr>
                 </td>
-                <td><a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a>
+                <td>
+                    <?php lpm_print_issue_test_state($issue); ?>
+                    <a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a>
                     <?if ($issue->commentsCount > 0):?>
                     &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
                     <?endif;?>
@@ -67,7 +75,7 @@ $userId = lpm_get_user()->userId;
                 <td><?=$issue->getCompleteDate();?></td>
                 <td><a href="<?=$issue->getProjectUrl();?>"><?=$issue->projectName;?></a></td>
             </tr>
-            <? }?>
+            <?php endforeach;?>
         </tbody>
     </table>
 </div>
