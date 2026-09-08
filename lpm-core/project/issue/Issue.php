@@ -667,7 +667,8 @@ SQL;
         $where = '`i`.`projectId` = ' . (int)$projectId . " AND `i`.`deleted` = '0'" .
             " AND `i`.`name` LIKE '[%%'";
         foreach ($needles as $needle) {
-            $where .= " AND `i`.`name` LIKE '%%[" . $db->escape4Search_t($needle) . "]%%'";
+            $where .= " AND `i`.`name` LIKE '%%[" . self::escapeSearchPattern($needle) . "]%%'"
+                . " ESCAPE '" . self::SEARCH_ESCAPE_CHAR . "'";
         }
 
         $res = $db->queryt("SELECT `i`.`id`, `i`.`name` FROM `%s` AS `i` WHERE " . $where, LPMTables::ISSUES);
@@ -703,6 +704,8 @@ SQL;
 
     /**
      * Загружает список задач по части идентификатора в проекте.
+     *
+     * Спецсимволы шаблона (`%` и `_`) в запросе ищутся буквально, а не как подстановка.
      * @return array<Issue>
      */
     public static function searchListInProject($projectId, $needle)
@@ -710,11 +713,13 @@ SQL;
         if (empty($needle)) {
             return self::loadListByProject($projectId);
         } else {
-            $needle = self::getDB()->escape4Search_t($needle);
+            $escapeChar = self::SEARCH_ESCAPE_CHAR;
+            $needle = self::escapeSearchPattern($needle);
             $where = <<<WHERE
 (`i`.`projectId` = $projectId
 AND
-(`i`.`idInProject` LIKE '$needle%%' OR `i`.`name` LIKE '%%$needle%%'))
+(`i`.`idInProject` LIKE '$needle%%' ESCAPE '$escapeChar'
+ OR `i`.`name` LIKE '%%$needle%%' ESCAPE '$escapeChar'))
 WHERE;
             return self::loadList($where, '', null, '`i`.`idInProject` DESC');
         }
