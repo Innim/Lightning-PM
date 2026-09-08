@@ -354,16 +354,15 @@ class PagePrinter
     }
 
     /**
-     * Распечатывает состояния сборок по веткам, о влитии которых
-     * говорит комментарий.
+     * Распечатывает состояния сборок, о которых говорит комментарий:
+     * по каждой влитой ветке или по merge request'у комментария.
      *
-     * Ничего не выводит, если комментарий не о влитии веток или состояние
-     * сборок неизвестно.
+     * Ничего не выводит, если состояния сборок неизвестны.
      * @param Comment $comment Комментарий.
      */
     public static function commentBranchPipelines(Comment $comment)
     {
-        $pipelines = IssuePipeline::loadForMergedComment($comment);
+        $pipelines = IssuePipeline::loadForComment($comment);
         if (empty($pipelines)) {
             return;
         }

@@ -207,8 +207,8 @@ function lpm_print_comment_files(Comment $comment)
 }
 
 /**
- * Распечатывает состояния сборок по веткам, о влитии которых
- * говорит комментарий.
+ * Распечатывает состояния сборок, о которых говорит комментарий:
+ * по каждой влитой ветке или по merge request'у комментария.
  */
 function lpm_print_comment_branch_pipelines(Comment $comment)
 {
