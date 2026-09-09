@@ -300,7 +300,12 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                                 <span class="text-muted small issue-file-size"><?=FileSizeFormatter::format($file->size);?></span>
                             </div>
                         </div>
-                        <div class="ms-auto">
+                        <div class="ms-auto d-flex gap-2">
+                            <?php if ($file->isHtml()): ?>
+                            <a href="<?=$file->getViewPageUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
+                                <i class="fa-regular fa-file-code me-1" aria-hidden="true"></i>Открыть
+                            </a>
+                            <?php endif; ?>
                             <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$file->origName;?>">
                                 <i class="fas fa-download me-1" aria-hidden="true"></i>Скачать
                             </a>

@@ -4,6 +4,7 @@
 - В комментарии о merge request'е видно состояние его сборки ([#451](https://task.innim.ru/project/lightning-pm/issue/451)).
 - В списке задач и на Scrum доске у задачи в тесте видно состояние её сборки: идёт, упала или прошла ([#408](https://task.innim.ru/project/lightning-pm/issue/408)).
 - В разделе «Мои задачи» у задачи в тесте видно её состояние так же, как в списке задач проекта ([#444](https://task.innim.ru/project/lightning-pm/issue/444)).
+- Приложенный к задаче или комментарию HTML-отчёт открывается на отдельной странице просмотра, без скачивания ([#439](https://task.innim.ru/project/lightning-pm/issue/439)).
 ### Fixed
 - Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).
 - Тег, поставленный задаче через API, теперь попадает в справочник тегов проекта ([#447](https://task.innim.ru/project/lightning-pm/issue/447)).

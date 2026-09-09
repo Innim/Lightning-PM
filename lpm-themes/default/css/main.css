@@ -1838,3 +1838,11 @@ form.pass-test #passTestComment textarea.comment-text-field {
 .vc[data-vc-input] {
 	z-index: 1060;
 }
+
+/* Высота фрейма с содержимым приложенного файла: утилит для доли
+   высоты экрана в Bootstrap нет (vh-100 занял бы весь экран). */
+.file-view-frame {
+	display: block;
+	height: 75vh;
+	min-height: 400px;
+}
