@@ -477,8 +477,13 @@ class GitlabExternalApi extends ExternalApi
                     IssueCommentType::BRANCH_MERGED,
                     IssueCommentBranchMergedData::serializeBy($branches, $mergedSha));
 
-                // Проверяем права и вливаем только задачи, которые уже в тесте
-                if ($issue->checkEditPermit($user->userId) && $issue->status == Issue::STATUS_WAIT) {
+                // Завершаем только задачи, которые уже в тесте.
+                // Права пушившего здесь намеренно не проверяются: завершение -
+                // системное действие по событию "ветка влита", а не правка
+                // задачи человеком. Пушивший (релиз-менеджер, владелец общего
+                // репозитория) может вовсе не числиться участником проекта,
+                // и к факту влития его права отношения не имеют.
+                if ($issue->status == Issue::STATUS_WAIT) {
                     // Проверяем что все ветки этой задачи влиты
                     $isAllMerged = !IssueBranch::existNotMergedInDevelopForIssue($issue->id);
 
