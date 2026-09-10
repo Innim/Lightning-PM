@@ -5,34 +5,29 @@
     Issue   $issue - задача, к которой приложен файл
 */
 ?>
-<div class="mx-auto container-fluid px-4 py-3">
-  <div class="card shadow-sm">
-    <div class="card-header bg-white py-3">
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <h1 class="h5 mb-0 text-truncate">
-          <i class="fa-regular fa-file-code text-secondary me-2" aria-hidden="true"></i><?=lpm_escape($file->origName);?>
-        </h1>
-        <div class="d-flex flex-shrink-0 gap-2">
-          <a href="<?=$issue->getConstURL();?>" class="btn btn-outline-secondary btn-sm">
-            <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>К задаче
-          </a>
-          <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" download="<?=lpm_escape($file->origName);?>">
-            <i class="fa fa-download me-1" aria-hidden="true"></i>Скачать
-          </a>
-        </div>
-      </div>
-      <p class="small text-muted mb-0 mt-1">
-        Файл, приложенный к задаче
-        <a href="<?=$issue->getConstURL();?>">#<?=$issue->idInProject;?> <?=lpm_escape($issue->getName());?></a>.
-        Ниже показано его содержимое — это не страница Lightning PM, не вводите в неё пароли.
-      </p>
-    </div>
-    <div class="card-body p-0">
-      <?php /* sandbox дублирует заголовок ответа; allow-same-origin добавлять нельзя -
-              вместе с allow-scripts он снимает изоляцию содержимого от сессии */ ?>
-      <iframe class="file-view-frame w-100 border-0 bg-white" src="<?=$file->getViewUrl();?>"
-        sandbox="allow-scripts" referrerpolicy="no-referrer"
-        title="Содержимое файла <?=lpm_escape($file->origName);?>"></iframe>
-    </div>
+<?php /* Полоса над фреймом - единственный признак того, что открыт приложенный
+        файл, а не страница приложения: песочница не мешает содержимому нарисовать
+        что угодно, включая форму входа. Поэтому фон полосы намеренно отличается
+        от шапки приложения, а её текст называет задачу-источник. */ ?>
+<div class="file-view-page d-flex flex-column flex-grow-1">
+  <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom bg-warning bg-opacity-25 text-dark">
+    <span class="fw-semibold text-truncate">
+      <i class="fa-regular fa-file-code me-2" aria-hidden="true"></i><?=lpm_escape($file->origName);?>
+    </span>
+    <span class="small">
+      Вложение задачи
+      <a href="<?=$issue->getConstURL();?>">#<?=$issue->idInProject;?> <?=lpm_escape($issue->getName());?></a>
+      — не страница Lightning PM, не вводите здесь пароли.
+    </span>
+    <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm ms-auto flex-shrink-0" download="<?=lpm_escape($file->origName);?>">
+      <i class="fa fa-download me-1" aria-hidden="true"></i>Скачать
+    </a>
   </div>
+  <?php /* sandbox дублирует заголовок ответа; allow-same-origin добавлять нельзя -
+          вместе с allow-scripts он снимает изоляцию содержимого от сессии.
+          Доступное имя задаётся через aria-label: title вызвал бы подсказку,
+          которая не гаснет - курсор внутри фрейма не шлёт события наружу */ ?>
+  <iframe class="file-view-frame w-100 flex-grow-1 border-0 bg-white" src="<?=$file->getViewUrl();?>"
+    sandbox="allow-scripts" referrerpolicy="no-referrer"
+    aria-label="Содержимое файла <?=lpm_escape($file->origName);?>"></iframe>
 </div>
