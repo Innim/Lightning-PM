@@ -207,8 +207,8 @@ function lpm_print_comment_files(Comment $comment)
 }
 
 /**
- * Распечатывает состояния сборок по веткам, о влитии которых
- * говорит комментарий.
+ * Распечатывает состояния сборок, о которых говорит комментарий:
+ * по каждой влитой ветке или по merge request'у комментария.
  */
 function lpm_print_comment_branch_pipelines(Comment $comment)
 {
@@ -335,6 +335,14 @@ function lpm_print_csrf_field()
 function lpm_print_issues_sort($list)
 {
     return PagePrinter::issuesSort($list);
+}
+
+/**
+ * Печатает отметки состояния проверки задачи в списке задач.
+ */
+function lpm_print_issue_test_state($issue)
+{
+    return PagePrinter::issueTestState($issue);
 }
 
 /**

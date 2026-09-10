@@ -151,6 +151,24 @@ class PagePrinter
     }
 
     /**
+     * Печатает отметки состояния проверки задачи в списке задач.
+     *
+     * Печатаются все отметки сразу, а показывается та, что соответствует
+     * состоянию задачи: видимость каждой включает класс на строке списка
+     * ({@see IssueViewHelper::testStateClasses()}).
+     * @param Issue $issue Задача.
+     */
+    public static function issueTestState(Issue $issue)
+    {
+        $buildLevel = IssueViewHelper::buildLevel($issue);
+
+        PageConstructor::includePattern(
+            'components/issue-test-state',
+            compact('buildLevel')
+        );
+    }
+
+    /**
      * Печатает бейдж с давностью последней активности по задаче в тесте.
      *
      * Ничего не печатает для задач не в тесте и для тех, по которым
@@ -336,16 +354,15 @@ class PagePrinter
     }
 
     /**
-     * Распечатывает состояния сборок по веткам, о влитии которых
-     * говорит комментарий.
+     * Распечатывает состояния сборок, о которых говорит комментарий:
+     * по каждой влитой ветке или по merge request'у комментария.
      *
-     * Ничего не выводит, если комментарий не о влитии веток или состояние
-     * сборок неизвестно.
+     * Ничего не выводит, если состояния сборок неизвестны.
      * @param Comment $comment Комментарий.
      */
     public static function commentBranchPipelines(Comment $comment)
     {
-        $pipelines = IssuePipeline::loadForMergedComment($comment);
+        $pipelines = IssuePipeline::loadForComment($comment);
         if (empty($pipelines)) {
             return;
         }

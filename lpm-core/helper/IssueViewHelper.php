@@ -68,6 +68,40 @@ class IssueViewHelper
     }
 
     /**
+     * Классы состояния проверки задачи для строки списка задач.
+     *
+     * Отметки состояния всегда есть в разметке
+     * ({@see PagePrinter::issueTestState()}), а показывает нужную из них
+     * класс на строке - поэтому классы и отметки должны меняться вместе.
+     * @param  Issue $issue Задача.
+     * @return array<string> Список CSS-классов. Пустой, если задаче
+     * нечего уточнять.
+     */
+    public static function testStateClasses(Issue $issue)
+    {
+        $classes = [];
+
+        $substatus = $issue->getSubstatus();
+        if ($substatus === IssueSubstatus::PASS_TEST) {
+            $classes[] = 'pass-test';
+        }
+
+        if ($substatus === IssueSubstatus::UNDER_TESTING) {
+            $classes[] = 'under-testing';
+        }
+
+        if ($issue->isChangesRequested) {
+            $classes[] = 'changes-requested';
+        }
+
+        if ($testMergeLevel = self::testMergeLevel($issue)) {
+            $classes[] = 'test-' . $testMergeLevel;
+        }
+
+        return $classes;
+    }
+
+    /**
      * Состояние сборки задачи в тесте.
      *
      * Показывается рядом с состоянием правок и по тем же правилам

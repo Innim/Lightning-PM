@@ -137,6 +137,11 @@ class LPMImg extends LPMBaseObject
      */
     public $imgId = 0;
     public $name = '';
+    /**
+     * Исходное имя загруженного файла изображения, пустая строка если оно неизвестно
+     * (например, изображение получено загрузкой по URL, а не файлом)
+     * @var string
+     */
     public $origName = '';
     public $desc = '';
 

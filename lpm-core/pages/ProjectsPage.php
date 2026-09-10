@@ -77,6 +77,8 @@ class ProjectsPage extends LPMPage
                     return $this->projectsList(false);
                 case self::PUID_ARCH:
                     return $this->projectsList(true);
+                case self::PUID_USER_ISSUES:
+                    return $this->userIssues();
                 case self::PUID_STAT:
                     return $this->statByProjects();
                 case self::PUID_MY_SCRUM_BOARD:
@@ -192,6 +194,20 @@ class ProjectsPage extends LPMPage
             LightningEngine::go2URL($this->getUrl());
         }
         return true;
+    }
+
+    /**
+     * Готовит раздел «Мои задачи».
+     *
+     * Состояния сборок в список задач не входят и подгружаются отдельно.
+     * Шаблон берёт тот же список через `lpm_get_user_issues()`, поэтому
+     * дополнять его достаточно здесь.
+     * @return ProjectsPage
+     */
+    private function userIssues(): ProjectsPage
+    {
+        Issue::preloadBuildStates(PageConstructor::getUserIssues());
+        return $this;
     }
 
     private function statByProjects(): ProjectsPage
