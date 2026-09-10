@@ -149,15 +149,22 @@ SQL;
      * Загружает стикеры задач, в которых пользователь участвует.
      *
      * Участники не подгружаются, см. {@see preloadParticipants()}.
-     * @param  int $userId Идентификатор пользователя.
+     * @param  int        $userId        Идентификатор пользователя.
+     * @param  array<int> $instanceTypes Типы участия в задаче, которые считаются
+     *                                   участием пользователя; `null` - любое
+     *                                   участие, см. {@see LPMInstanceTypes}.
      * @return ScrumSticker[]
      */
-    public static function loadUserStickersList($userId)
+    public static function loadUserStickersList($userId, array $instanceTypes = null)
     {
+        if ($instanceTypes === null) {
+            $instanceTypes = [LPMInstanceTypes::ISSUE, LPMInstanceTypes::ISSUE_FOR_TEST];
+        }
+
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
-        $instanceType = implode(',', [LPMInstanceTypes::ISSUE, LPMInstanceTypes::ISSUE_FOR_TEST]);
-        
+        $instanceType = implode(',', array_map('intval', $instanceTypes));
+
         $where = <<<SQL
 `s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
 SQL;
@@ -201,6 +208,35 @@ SQL;
             ["`pm`.`instanceId` = `p`.`id` AND `pm`.`instanceType` = ${projectType} " .
                 "AND `pm`.`userId` = ${userId}"]
         );
+    }
+
+    /**
+     * Собирает стикеры задач, где пользователь указан тестировщиком,
+     * но которых нет на доске их проекта.
+     *
+     * Стикеров таких задач в БД нет - они собираются на лету ({@see isVirtual()}),
+     * и колонка выводится из статуса задачи. Поэтому берутся только незавершённые
+     * задачи: у завершённой колонки на доске уже нет.
+     *
+     * Участники не подгружаются, см. {@see preloadParticipants()}.
+     * @param  int $userId Идентификатор пользователя.
+     * @return ScrumSticker[]
+     */
+    public static function loadOffBoardTesterStickersList($userId)
+    {
+        $list = [];
+
+        foreach (Issue::getListOffBoardByTester($userId) as $issue) {
+            $sticker = new ScrumSticker();
+            $sticker->issueId = $issue->id;
+            $sticker->state = self::getStateForIssue($issue);
+            $sticker->_issue = $issue;
+            $sticker->_virtual = true;
+
+            $list[] = $sticker;
+        }
+
+        return $list;
     }
 
     /**
@@ -407,6 +443,8 @@ SQL;
 
     // Issue
     private $_issue;
+    // Собран для задачи вне доски, в БД такого стикера нет
+    private $_virtual = false;
 
     public function __construct($id = 0)
     {
@@ -439,10 +477,24 @@ SQL;
         return $this->_issue;
     }
 
+    /**
+     * Стикер собран для задачи, которой на доске нет: в БД его не существует,
+     * а колонка выведена из статуса задачи.
+     *
+     * Такой стикер показывается только на личной доске пользователя и не
+     * поддерживает действий, меняющих его положение.
+     * @return boolean
+     * @see    loadOffBoardTesterStickersList()
+     */
+    public function isVirtual()
+    {
+        return $this->_virtual;
+    }
+
     public function isOnBoard()
     {
         // return $this->state !== ScrumStickerState::BACKLOG;
-        return ScrumStickerState::isActiveState($this->state);
+        return !$this->_virtual && ScrumStickerState::isActiveState($this->state);
     }
 
     /**

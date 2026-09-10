@@ -4,6 +4,8 @@
 - В комментарии о merge request'е видно состояние его сборки ([#451](https://task.innim.ru/project/lightning-pm/issue/451)).
 - В списке задач и на Scrum доске у задачи в тесте видно состояние её сборки: идёт, упала или прошла ([#408](https://task.innim.ru/project/lightning-pm/issue/408)).
 - В разделе «Мои задачи» у задачи в тесте видно её состояние так же, как в списке задач проекта ([#444](https://task.innim.ru/project/lightning-pm/issue/444)).
+- На личной Scrum доске показываются незавершённые задачи, где вы тестировщик, даже если они сняты с доски проекта ([#391](https://task.innim.ru/project/lightning-pm/issue/391)).
+- Личную Scrum доску можно отфильтровать по своей роли в задаче ([#391](https://task.innim.ru/project/lightning-pm/issue/391)).
 - Приложенный к задаче или комментарию HTML-отчёт открывается на отдельной странице просмотра, без скачивания ([#439](https://task.innim.ru/project/lightning-pm/issue/439)).
 ### Fixed
 - Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).
@@ -11,6 +13,7 @@
 - Счётчик использований тега со знаком процента в названии больше не обнуляется ([#447](https://task.innim.ru/project/lightning-pm/issue/447)).
 - Значок с подсказкой больше не пропадает после раскрытия панели или меню ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
 - Знак процента и подчёркивание везде в поиске задач ищутся как обычные символы, а не как подстановка ([#441](https://task.innim.ru/project/lightning-pm/issue/441)).
+- Переход по ссылке на комментарий больше не сбрасывается в начало страницы, когда в задаче догрузятся вложения ([#453](https://task.innim.ru/project/lightning-pm/issue/453)).
 ### Changed
 - У кнопки поиска задач в проекте подсказка теперь оформлена в стиле приложения ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
 
