@@ -776,6 +776,45 @@ WHERE;
     }
 
     /**
+     * Загружает незавершённые задачи неархивных scrum проектов, в которых
+     * пользователь указан тестировщиком, но которых нет на доске их проекта.
+     *
+     * Незавершённые - это задачи в работе и задачи, ожидающие проверки:
+     * снятая с доски по окончании спринта задача тестировщику всё ещё нужна.
+     * @param  int $testerId Идентификатор пользователя.
+     * @return array<Issue>
+     */
+    public static function getListOffBoardByTester($testerId)
+    {
+        // Тестировщик проверяется подзапросом, а не присоединением таблицы:
+        // так задача не задваивается, если у неё несколько записей участия
+        $testerSql = self::buildQuery([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::MEMBERS,
+            'AS'     => 'm',
+            'WHERE'  => [
+                '`m`.`instanceId`'   => self::col('i.id'),
+                '`m`.`instanceType`' => LPMInstanceTypes::ISSUE_FOR_TEST,
+                '`m`.`userId`'       => (int)$testerId,
+            ],
+        ]);
+
+        $statuses = implode(', ', [self::STATUS_IN_WORK, self::STATUS_WAIT]);
+        $activeStates = implode(', ', ScrumStickerState::getActiveStates());
+
+        return self::loadList(
+            // только задачи, в которых я тестировщик
+            "EXISTS ($testerSql)" .
+            // незавершённые
+            " AND `i`.`status` IN ($statuses)" .
+            // проект не в архиве и со scrum доской
+            ' AND `p`.`isArchive` = 0 AND `p`.`scrum` = 1' .
+            // `st` - присоединённый в loadList() стикер задачи
+            " AND (`st`.`state` IS NULL OR `st`.`state` NOT IN ($activeStates))"
+        );
+    }
+
+    /**
      * Заранее загружает исполнителей и тестировщиков всех задач списка.
      *
      * Участники всех задач загружаются одним запросом. Мастера не загружаются.

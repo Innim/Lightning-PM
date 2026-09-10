@@ -559,17 +559,27 @@ var states = {
             else this.deactivateAll();
         }
     },
-    deactivateAll: function () {
+    /**
+     * Скрывает элементы всех зарегистрированных стейтов.
+     * @param {Object} [except] Стейт, элемент которого скрывать не нужно.
+     */
+    deactivateAll: function (except) {
+        // Элемент стейта, который тут же будет показан, не скрываем даже на мгновение:
+        // он занимает почти всю страницу, и пока он скрыт, её высота схлопывается до
+        // высоты окна, а браузер на ближайшем пересчёте раскладки обрезает позицию
+        // прокрутки до нуля и обратно её уже не возвращает.
+        // Один и тот же элемент может быть привязан к нескольким стейтам, поэтому
+        // сравниваем DOM-узлы, а не записи стейтов.
+        var exceptEl = except && except.el ? except.el[0] : null;
         for (var i = 0, len = this._list.length; i < len; i++) {
             var item = this._list[i];
-            if (item.el) item.el.hide();
+            if (item.el && item.el[0] !== exceptEl) item.el.hide();
             $('.info-message', item.el).hide();
-            //$( '.info-message', item.el ).hide();
         }
     },
     activateState: function (item, params) {
         try {
-            this.deactivateAll();
+            this.deactivateAll(item);
 
             if (item.sh) item.sh.apply(item.sh, params);
             if (item.el) item.el.show();

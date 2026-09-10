@@ -109,6 +109,7 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
                 $isFree = isset($freeIssueIds[$sticker->issueId]);
                 if ($isFree) $cssClasses[] = 'free';
+                $isOffBoard = $sticker->isVirtual();
                 $substatus = $issue->getSubstatus();
                 if ($substatus === IssueSubstatus::PASS_TEST) $cssClasses[] = 'pass-test';
                 if ($substatus === IssueSubstatus::UNDER_TESTING) $cssClasses[] = 'under-testing';
@@ -154,12 +155,19 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                 <?php if ($isFree): ?>
                     <span class="sticker-free-mark"><i class="far fa-hand-paper" aria-hidden="true"></i> свободна</span>
                 <?php endif; ?>
+                <?php if ($isOffBoard): ?>
+                    <span class="d-block small text-muted"
+                          title="Задача снята с доски проекта, колонка определена её статусом"><i
+                            class="fa fa-archive" aria-hidden="true"></i> не на доске</span>
+                <?php endif; ?>
                 <?php if ($deadlineLevel !== ''): ?>
                     <span class="sticker-issue-deadline deadline-<?=$deadlineLevel;?>"
                           title="<?=IssueViewHelper::deadlineHint($issue);?>"><i
                             class="<?=IssueViewHelper::deadlineIconClass($deadlineLevel);?>"
                             aria-hidden="true"></i> <?=$issue->getCompleteDate();?></span>
                 <?php endif; ?>
+                <?php /* Действия требуют стикера в БД: у задачи вне доски его нет */ ?>
+                <?php if (!$isOffBoard): ?>
                 <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                    class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
                 <div class="control-line">
@@ -172,6 +180,7 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                     <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                        class="sticker-control-next"><i class="fa fa-caret-right" aria-hidden="true"></i></a>
                 </div>
+                <?php endif; ?>
             </div>
             <?php endforeach;?>
             </div>
