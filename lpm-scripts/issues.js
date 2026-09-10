@@ -2077,14 +2077,16 @@ issuePage.applySortFromHash = function () {
 
 /**
  * Восстанавливает фильтр из адреса страницы.
- * Ключ `users` - исполнители, `testers` - тестировщики; ссылки без `testers`
- * (сохранённые до появления фильтра по тестировщикам) остаются рабочими.
+ * Ключ `users` - исполнители, `testers` - тестировщики, `multi` - отбор задач
+ * с несколькими исполнителями. Отсутствующий ключ означает выключённый фильтр,
+ * поэтому ссылки, сохранённые до его появления, остаются рабочими.
  */
 issuePage.handleFilterState = function (value) {
     const filters = value.trim() == '' ? [] : value.split(';');
     const tags = [];
     const memberIds = [];
     const testerIds = [];
+    let multiMemberOnly = false;
 
     filters.forEach(filter => {
         const [key, value] = filter.split('=');
@@ -2094,19 +2096,23 @@ issuePage.handleFilterState = function (value) {
             memberIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
         } else if (key === 'testers') {
             testerIds.push(...decodeURI(value).split(',').map(userId => parseInt(userId)));
+        } else if (key === 'multi') {
+            multiMemberOnly = value === '1';
         }
     });
 
     const filterVm = issuePage.filterVm;
     filterVm.selectedTags = tags;
+    filterVm.setMultiMemberOnly(multiMemberOnly);
     filterVm.selectUsers(memberIds, testerIds);
 }
 
 issuePage.onFilterChanged = function (filter)  {
     const tags = filter.tags
     const users = filter.users
+    const multiMemberOnly = filter.multiMemberOnly
     issuePage.scrumColUpdateInfo(tags);
-    if (tags.length || users.length)  {
+    if (tags.length || users.length || multiMemberOnly)  {
         let filters = [];
         if (tags.length) {
             filters.push(`tags=${encodeURI(tags.join(','))}`);
@@ -2126,6 +2132,10 @@ issuePage.onFilterChanged = function (filter)  {
             filters.push(`testers=${encodeURI(testerIds.join(','))}`);
         }
 
+        if (multiMemberOnly) {
+            filters.push('multi=1');
+        }
+
         states.setState('filter:' + filters.join(';'), true);
     } else {
         states.setState('', true);
@@ -2134,6 +2144,24 @@ issuePage.onFilterChanged = function (filter)  {
 
 issuePage.showIssuesByUser = function (memberId) {
     issuePage.filterVm.selectUsers([memberId], []);
+};
+
+/**
+ * Переприменяет фильтры к задачам страницы.
+ *
+ * Нужно после изменений, из-за которых задача могла перестать подходить под
+ * текущий отбор - например, сменился состав её исполнителей. Пересчёт счётчиков
+ * доски входит в переприменение, поэтому звать его отдельно не надо.
+ *
+ * На страницах без компонента фильтров (личная Scrum доска) пересчитываются
+ * только счётчики.
+ */
+issuePage.refreshFilteredIssues = function () {
+    if (issuePage.filterVm) {
+        issuePage.filterVm.applyFilters();
+    } else {
+        issuePage.scrumColUpdateInfo();
+    }
 };
 
 issuePage.scrumColUpdateInfo = function () {
