@@ -1,0 +1,33 @@
+<?php
+/*
+Требуются:
+    LPMFile $file  - приложенный файл, содержимое которого показывается
+    Issue   $issue - задача, к которой приложен файл
+*/
+?>
+<?php /* Полоса над фреймом - единственный признак того, что открыт приложенный
+        файл, а не страница приложения: песочница не мешает содержимому нарисовать
+        что угодно, включая форму входа. Поэтому фон полосы намеренно отличается
+        от шапки приложения, а её текст называет задачу-источник. */ ?>
+<div class="file-view-page d-flex flex-column flex-grow-1">
+  <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom bg-warning bg-opacity-25 text-dark">
+    <span class="fw-semibold text-truncate">
+      <i class="fa-regular fa-file-code me-2" aria-hidden="true"></i><?=lpm_escape($file->origName);?>
+    </span>
+    <span class="small">
+      Вложение задачи
+      <a href="<?=$issue->getConstURL();?>">#<?=$issue->idInProject;?> <?=lpm_escape($issue->getName());?></a>
+      — не страница Lightning PM, не вводите здесь пароли.
+    </span>
+    <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm ms-auto flex-shrink-0" download="<?=lpm_escape($file->origName);?>">
+      <i class="fa fa-download me-1" aria-hidden="true"></i>Скачать
+    </a>
+  </div>
+  <?php /* sandbox дублирует заголовок ответа; allow-same-origin добавлять нельзя -
+          вместе с allow-scripts он снимает изоляцию содержимого от сессии.
+          Доступное имя задаётся через aria-label: title вызвал бы подсказку,
+          которая не гаснет - курсор внутри фрейма не шлёт события наружу */ ?>
+  <iframe class="file-view-frame w-100 flex-grow-1 border-0 bg-white" src="<?=$file->getViewUrl();?>"
+    sandbox="allow-scripts" referrerpolicy="no-referrer"
+    aria-label="Содержимое файла <?=lpm_escape($file->origName);?>"></iframe>
+</div>

@@ -497,6 +497,16 @@ class LPMFile extends LPMBaseObject
         return Link::getFileViewUrl($this->uid, $this->origName);
     }
 
+    /**
+     * Возвращает URL страницы приложения, на которой файл показывается
+     * в изолированном фрейме.
+     * @return string
+     */
+    public function getViewPageUrl()
+    {
+        return FileViewPage::getUrlFor($this->uid);
+    }
+
     public function getAbsolutePath()
     {
         return FileUploadManager::getAbsolutePath($this->path);
@@ -530,6 +540,18 @@ class LPMFile extends LPMBaseObject
     }
 
     /**
+     * Проверяет, что файл — HTML-документ, который можно показать в браузере.
+     * Тип определяется по содержимому файла, а не по его имени.
+     * @return bool
+     */
+    public function isHtml()
+    {
+        $mimeType = strtolower(trim(strtok((string)$this->mimeType, ';')));
+
+        return $mimeType === 'text/html' || $mimeType === 'application/xhtml+xml';
+    }
+
+    /**
      * Проверяет, может ли пользователь просматривать/скачивать файл,
      * исходя из прав доступа к связанным сущностям (задача/комментарий).
      * @param int $userId
@@ -538,46 +560,69 @@ class LPMFile extends LPMBaseObject
      */
     public function checkViewPermit($userId)
     {
-        $links = self::loadInstanceLinks($this->fileId);
-        if (empty($links)) {
+        $issues = $this->loadLinkedIssues();
+        if (empty($issues)) {
             return null;
         }
 
-        $hasExistingInstances = false;
+        return $this->findViewableIssue($issues, $userId) !== false;
+    }
 
-        foreach ($links as $link) {
+    /**
+     * Возвращает задачу, через которую пользователю открыт доступ к файлу.
+     * @param  int $userId
+     * @return Issue|false false, если доступа к файлу нет.
+     */
+    public function loadViewableIssue($userId)
+    {
+        return $this->findViewableIssue($this->loadLinkedIssues(), $userId);
+    }
+
+    /**
+     * Возвращает задачи, к которым приложен файл — напрямую или через
+     * комментарий. Удалённые задачи и комментарии в список не попадают.
+     * @return Issue[]
+     */
+    public function loadLinkedIssues()
+    {
+        $issues = [];
+
+        foreach (self::loadInstanceLinks($this->fileId) as $link) {
+            $issue = false;
             switch ($link['itemType']) {
                 case LPMInstanceTypes::ISSUE:
                     $issue = Issue::load($link['itemId']);
-                    if (!$issue) {
-                        continue 2;
-                    }
-
-                    $hasExistingInstances = true;
-                    if ($issue->checkViewPermit($userId)) {
-                        return true;
-                    }
                     break;
                 case LPMInstanceTypes::COMMENT:
                     $comment = Comment::load($link['itemId']);
-                    if (!$comment || $comment->instanceType != LPMInstanceTypes::ISSUE) {
-                        continue 2;
-                    }
-
-                    $issue = Issue::load($comment->instanceId);
-                    if (!$issue) {
-                        continue 2;
-                    }
-
-                    $hasExistingInstances = true;
-                    if ($issue->checkViewPermit($userId)) {
-                        return true;
+                    if ($comment && $comment->instanceType == LPMInstanceTypes::ISSUE) {
+                        $issue = Issue::load($comment->instanceId);
                     }
                     break;
             }
+
+            if ($issue) {
+                $issues[] = $issue;
+            }
         }
 
-        return $hasExistingInstances ? false : null;
+        return $issues;
+    }
+
+    /**
+     * @param  Issue[] $issues
+     * @param  int     $userId
+     * @return Issue|false
+     */
+    private function findViewableIssue(array $issues, $userId)
+    {
+        foreach ($issues as $issue) {
+            if ($issue->checkViewPermit($userId)) {
+                return $issue;
+            }
+        }
+
+        return false;
     }
 
     /**
