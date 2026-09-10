@@ -4,22 +4,36 @@
     $stickers - список стикеров
     $freeIssueIds - множество `issueId => true` стикеров, показываемых свободными
     $showFreeIssues - показываются ли на доске свободные задачи
+    $roleFilter - выбранный фильтр по роли в задаче, см. ScrumBoardRoleFilter
 */
+$allowsFreeIssues = ScrumBoardRoleFilter::allowsFreeIssues($roleFilter);
 ?>
 <div id="scrumBoard" class="mx-auto container-fluid px-4 py-4 hide-sp">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h1>Моя SCRUM доска</h1>
-        <form method="post">
+        <form method="post" class="d-flex flex-wrap align-items-center gap-3">
             <?php lpm_print_csrf_field(); ?>
             <input type="hidden" name="<?=ProjectsPage::FIELD_MY_BOARD_PREF;?>" value="1">
+            <!-- Класс `board-pref-switch` используется JS для отправки формы -->
+            <select class="form-select form-select-sm w-auto board-pref-switch"
+                    name="<?=ProjectsPage::FIELD_BOARD_ROLE;?>" aria-label="Отбор задач по моей роли">
+                <?php foreach (ScrumBoardRoleFilter::getLabels() as $value => $label): ?>
+                    <option value="<?=$value;?>"
+                        <?php if ($value === $roleFilter): ?>selected="selected"<?php endif; ?>><?=$label;?></option>
+                <?php endforeach; ?>
+            </select>
+            <?php if ($allowsFreeIssues): ?>
+            <?php /* Маркер того, что переключатель показан: по нему сохранение
+                     отличает "снят флажок" от "переключателя не было" */ ?>
+            <input type="hidden" name="<?=ProjectsPage::FIELD_FREE_ISSUES_SHOWN;?>" value="1">
             <div class="form-check form-switch">
-                <!-- Класс `board-pref-switch` используется JS для отправки формы -->
                 <input class="form-check-input board-pref-switch" type="checkbox" role="switch"
                        id="showFreeIssues" name="<?=ProjectsPage::FIELD_SHOW_FREE_ISSUES;?>" value="1"
                        <?php if ($showFreeIssues): ?>checked="checked"<?php endif; ?>>
                 <label class="form-check-label" for="showFreeIssues"
                        title="Задачи в TO DO моих проектов, у которых нет исполнителя">Показывать свободные задачи</label>
             </div>
+            <?php endif; ?>
         </form>
     </div>
     <h3>Всего задач:
