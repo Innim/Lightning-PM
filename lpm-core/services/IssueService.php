@@ -163,10 +163,7 @@ class IssueService extends LPMBaseService
         $requestChanges = (bool)$requestChanges;
 
         try {
-            $issue = Issue::load($issueId);
-            if (!$issue) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
 
             $result = $this->postCommentWithResult(
                 $issue,
@@ -435,10 +432,7 @@ class IssueService extends LPMBaseService
         $complete = (bool)$complete;
 
         try {
-            $issue = Issue::load($issueId);
-            if (!$issue) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
 
             $comment = $this->postComment($issue, '`-> develop`', true, 
                 IssueCommentType::BRANCH_MERGED);
@@ -586,10 +580,7 @@ class IssueService extends LPMBaseService
         $issueId = (int)$issueId;
 
         try {
-            $issue = Issue::load($issueId);
-            if (!$issue) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
 
             if (empty($text)) {
                 $text = '**Прошла тестирование**';
@@ -693,10 +684,7 @@ class IssueService extends LPMBaseService
         }
 
         try {
-            $issue = Issue::load($issueId);
-            if (!$issue) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
 
             $project = $issue->getProject();
             $client = $this->requireGitlabIntegration($project);
@@ -782,10 +770,7 @@ class IssueService extends LPMBaseService
         $delta   = (int)$delta;
 
         try {
-            $issue = Issue::load($issueId);
-            if (!$issue) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
             Issue::changePriority($this->getUser(), $issue, $delta);
 
             $this->add2Answer('priority', $issue->priority);
@@ -808,10 +793,7 @@ class IssueService extends LPMBaseService
         $state   = (int)$state;
 
         try {
-            $issue = Issue::load($issueId);
-            if (empty($issue)) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
 
             ScrumBoardManager::changeState($issue, $state, $this->getUser());
         } catch (\GMFramework\ProviderSaveException $e) {
@@ -833,10 +815,7 @@ class IssueService extends LPMBaseService
         $issueId = (int)$issueId;
 
         try {
-            $issue = Issue::load($issueId);
-            if (empty($issue)) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
 
             ScrumBoardManager::putOnBoard($issue);
 
@@ -863,10 +842,10 @@ class IssueService extends LPMBaseService
         $transferOpened = (bool)$transferOpened;
 
         try {
-            // проверим, что существует такой проект
-            if (!Project::loadById($projectId)) {
-                return $this->error('Нет такого проекта');
-            }
+            // Доска приходит по идентификатору проекта, поэтому права
+            // на проект надо проверить здесь: архивация меняет стикеры
+            // всех его задач
+            $this->getProjectRequireReadPermission($projectId);
             
             // прежде чем отправлять все задачи в архив, делаем snapshot доски
             ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
@@ -905,10 +884,7 @@ class IssueService extends LPMBaseService
         $replace = (bool)$replace;
 
         try {
-            $issue = Issue::load($issueId);
-            if ($issue === null) {
-                return $this->error('Нет такой задачи');
-            }
+            $issue = $this->getIssueForEdit($issueId);
 
             if ($replace && !Member::deleteIssueMembers($issueId)) {
                 return $this->errorDBSave();
@@ -1096,6 +1072,14 @@ class IssueService extends LPMBaseService
      */
     public function addLabel($label, $isForAllProjects, $projectId)
     {
+        try {
+            // Права проверяем на проект, из справочника которого метку заводят:
+            // общая метка проекту не принадлежит, и ниже $projectId обнуляется
+            $this->getProjectRequireReadPermission($projectId);
+        } catch (Exception $e) {
+            return $this->exception($e);
+        }
+
         $db = LPMGlobals::getInstance()->getDBConnect();
         $projectId = $isForAllProjects ? 0 : $projectId;
 
@@ -1166,6 +1150,18 @@ class IssueService extends LPMBaseService
 
         if ($label == null) {
             return $this->error("Метка не найдена.");
+        }
+
+        try {
+            // Метка проекта принадлежит своему проекту, а не тому, что пришёл
+            // в аргументе: иначе права на свой проект хватало бы, чтобы удалить
+            // метку чужого. У общей метки проекта нет - там аргумент и решает,
+            // из какого проекта её убирают
+            $this->getProjectRequireReadPermission(
+                $label['projectId'] == 0 ? $projectId : (int)$label['projectId']
+            );
+        } catch (Exception $e) {
+            return $this->exception($e);
         }
 
         $state = ($label['projectId'] == 0) ? LabelState::DISABLED : LabelState::DELETED;
@@ -1330,6 +1326,12 @@ class IssueService extends LPMBaseService
         }
 
         try {
+            // Удаление комментария меняет задачу, поэтому требует тех же прав,
+            // что и её правка: проверки выше решают только, чей это комментарий.
+            if ($comment->instanceType == LPMInstanceTypes::ISSUE) {
+                $this->getIssueForEdit($comment->instanceId);
+            }
+
             Comment::remove($user, $comment);
             UploadsCleanupManager::removeCommentUploads($comment->id);
 
@@ -1572,6 +1574,15 @@ class IssueService extends LPMBaseService
         return $this->answer();
     }
 
+    /**
+     * Загружает задачу для изменяющего действия и требует на неё прав.
+     * @param  int $issueId Идентификатор задачи.
+     * @return Issue Задача.
+     * @throws Exception Если задачи нет либо у пользователя нет на неё прав.
+     */
+    // Через этот загрузчик должен идти каждый метод, меняющий задачу: она
+    // приходит по глобальному идентификатору, поэтому одной загрузки мало -
+    // без проверки метод сработал бы и для чужого проекта.
     private function getIssueForEdit($issueId)
     {
         $issue = Issue::load($issueId);

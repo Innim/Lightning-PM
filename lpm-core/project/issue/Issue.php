@@ -2053,24 +2053,36 @@ SQL;
         return $obj;
     }
     
+    /**
+     * Определяет, вправе ли пользователь видеть задачу.
+     *
+     * Задача доступна тому, кому доступен её проект: участнику проекта
+     * либо модератору ({@see Project::checkUserReadPermit()}). Автор задачи
+     * исключением не является - вне своего проекта он задачу не увидит.
+     *
+     * @param int $userId Идентификатор пользователя.
+     * @return bool `true`, если пользователю доступна задача.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
     public function checkViewPermit($userId)
     {
-        if ($userId == $this->authorId) {
-            return true;
-        }
-        
-        // TODO проверку прав
-        return true;
+        return Project::checkUserReadPermit($this->projectId, $userId);
     }
-    
+
+    /**
+     * Определяет, вправе ли пользователь изменять задачу.
+     *
+     * Права те же, что и на просмотр ({@see Issue::checkViewPermit()}):
+     * отдельного уровня прав на изменение задачи нет, а более узкие условия
+     * (статус задачи, роль в ней) проверяют вызывающие.
+     *
+     * @param int $userId Идентификатор пользователя.
+     * @return bool `true`, если пользователю доступно изменение задачи.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
     public function checkEditPermit($userId)
     {
-        if ($userId == $this->authorId) {
-            return true;
-        }
-        
-        // TODO проверку прав
-        return true;
+        return $this->checkViewPermit($userId);
     }
 
     public function getIdInProject()
