@@ -113,7 +113,9 @@ class LPMImgUpload
                 continue;
             }
 
-            $value = str_replace(['data:image/png;base64,', ' '], ['', '+'], $value);
+            // Пробелы появляются, если base64 прошёл через разбор формы,
+            // где `+` превращается в пробел.
+            $value = str_replace(' ', '+', $value);
             $filepath = $dirTempPath . DIRECTORY_SEPARATOR . SecureRandomHelper::str(10) . '.jpeg';
 
             if (!file_put_contents($filepath, base64_decode($value))) {
@@ -280,7 +282,8 @@ class LPMImgUpload
             IMAGETYPE_JPEG          => 'jpg',
             IMAGETYPE_JPEG2000      => 'jpeg',
             IMAGETYPE_PNG           => 'png',
-            IMG_GIF                 => 'gif',
+            IMAGETYPE_GIF           => 'gif',
+            IMAGETYPE_WEBP          => 'webp',
         ];
     }
 
