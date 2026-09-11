@@ -8,6 +8,8 @@
 - Личную Scrum доску можно отфильтровать по своей роли в задаче ([#391](https://task.innim.ru/project/lightning-pm/issue/391)).
 - Приложенный к задаче или комментарию HTML-отчёт открывается на отдельной странице просмотра, без скачивания ([#439](https://task.innim.ru/project/lightning-pm/issue/439)).
 - На Scrum доске проекта можно оставить только задачи с несколькими исполнителями ([#327](https://task.innim.ru/project/lightning-pm/issue/327)).
+- К задаче можно приложить изображение в формате webp ([#427](https://task.innim.ru/project/lightning-pm/issue/427)).
+- Подсказка «цитата» под описанием задачи теперь оформляет цитатой выбранные строки ([#233](https://task.innim.ru/project/lightning-pm/issue/233)).
 - У картинки, приложенной к задаче, видно исходное имя файла ([#449](https://task.innim.ru/project/lightning-pm/issue/449)).
 ### Fixed
 - Повторные Enter или клики в формах добавления проекта и регистрации больше не создают дублей ([#434](https://task.innim.ru/project/lightning-pm/issue/434)).
@@ -20,6 +22,7 @@
 - Переход по ссылке на комментарий больше не сбрасывается в начало страницы, когда в задаче догрузятся вложения ([#453](https://task.innim.ru/project/lightning-pm/issue/453)).
 - Превью картинки в формате webp, добавленной в комментарий по ссылке, теперь уменьшается, а не грузится в полном размере ([#442](https://task.innim.ru/project/lightning-pm/issue/442)).
 ### Changed
+- Повторное нажатие «цитаты» снимает её со строки ([#233](https://task.innim.ru/project/lightning-pm/issue/233)).
 - У кнопки поиска задач в проекте подсказка теперь оформлена в стиле приложения ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
 
 ## 0.31.0 - 2026-09-04
