@@ -329,7 +329,6 @@ function bindFormattingHotkeys(selector) {
                     insertFormattingMarker(this, '__');
                     break;
                 case 'KeyG':
-                    if (!hasSelection) return; // requires selection
                     insertFormattingMarker(this, '> ', true);
                     break;
                 case 'KeyH':
@@ -1031,29 +1030,84 @@ function insertFormattingMarker(input, marker, single) {
         insertHeaderAtLineStart(input, marker);
         return;
     }
-    // Special handling for blockquote: prefix every selected line with "> "
+    // Blockquote, like the header, is a line-level marker
     if (single && marker === '> ') {
-        const $input = $(input);
-        const el = $input[0];
-        const start = el.selectionStart;
-        const end = el.selectionEnd;
-
-        // Selected text only; do not auto-expand to full lines to keep behavior predictable
-        const selected = el.value.substring(start, end);
-
-        // Prefix every line (including empty) with marker
-        const transformed = selected.split('\n').map(function (line) { return marker + line; }).join('\n');
-
-        const newValue = el.value.substring(0, start) + transformed + el.value.substring(end);
-
-        $input.val(newValue).trigger('input');
-
-        // Place caret at the end of the inserted block
-        setCaretPosition(el, start + transformed.length);
+        toggleBlockquoteAtLineStarts(input, marker);
         return;
-    } else {
-        insertFormatting(input, marker, single ? "" : marker)
     }
+
+    insertFormatting(input, marker, single ? "" : marker)
+}
+
+/**
+ * Toggle the blockquote marker on every line touched by the selection.
+ *
+ * Markdown recognises the marker only at the start of a line, so the affected
+ * range is expanded to whole lines: a selection that begins or ends mid-line
+ * still covers the lines it touches, and with no selection the caret's own line
+ * is used.
+ *
+ * The direction is decided for the range as a whole: while at least one line is
+ * unquoted the marker is added to the lines that lack it, so repeating the
+ * action never builds up ">>"; once every line is quoted it is stripped from
+ * all of them instead. Stripping removes one marker and the single space that
+ * may follow it, so a deeper nesting level survives.
+ *
+ * @param {jQuery|HTMLTextAreaElement} input field being edited
+ * @param {string} marker blockquote marker, trailing space included
+ */
+function toggleBlockquoteAtLineStarts(input, marker) {
+    const $input = $(input);
+    const el = $input[0];
+    const value = el.value;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+
+    const blockStart = start === 0 ? 0 : value.lastIndexOf('\n', start - 1) + 1;
+    // A selection ending right after a line break stops before the next line,
+    // so that line is not part of the quote.
+    const searchFrom = end > start && value.charAt(end - 1) === '\n' ? end - 1 : end;
+    const lineBreak = value.indexOf('\n', searchFrom);
+    const blockEnd = lineBreak === -1 ? value.length : lineBreak;
+
+    // One level of quoting: the marker at the start of the line plus the single
+    // space that may follow it. An empty line matches nothing, so a blank line
+    // inside the range always counts as unquoted.
+    const quoteLevel = /^(\s*)>( ?)/;
+    const lines = value.substring(blockStart, blockEnd).split('\n');
+    const strip = lines.every(function (line) { return quoteLevel.test(line); });
+
+    // An empty line caught inside a selection gets the marker without its
+    // trailing space, so the quote stays a single block and no trailing
+    // whitespace is left behind. Without a selection the caret's line is where
+    // typing continues, so there the marker keeps its space.
+    const emptyLineMarker = start === end ? marker : marker.replace(/\s+$/, '');
+
+    let firstLineShift = 0;
+    const transformed = lines.map(function (line, i) {
+        let result;
+        if (strip) {
+            result = line.replace(quoteLevel, '$1');
+        } else if (quoteLevel.test(line)) {
+            result = line;
+        } else {
+            result = (line === '' ? emptyLineMarker : marker) + line;
+        }
+
+        if (i === 0) {
+            firstLineShift = result.length - line.length;
+        }
+
+        return result;
+    }).join('\n');
+
+    $input.val(value.substring(0, blockStart) + transformed + value.substring(blockEnd)).trigger('input');
+
+    // Without a selection the caret keeps its place in the line, so typing can
+    // continue right away; otherwise it goes after the changed block.
+    setCaretPosition(el, start === end
+        ? Math.max(blockStart, start + firstLineShift)
+        : blockStart + transformed.length);
 }
 
 function getSelectedText(input) {
