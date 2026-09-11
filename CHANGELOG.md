@@ -10,6 +10,7 @@
 - На Scrum доске проекта можно оставить только задачи с несколькими исполнителями ([#327](https://task.innim.ru/project/lightning-pm/issue/327)).
 - К задаче можно приложить изображение в формате webp ([#427](https://task.innim.ru/project/lightning-pm/issue/427)).
 - Подсказка «цитата» под описанием задачи теперь оформляет цитатой выбранные строки ([#233](https://task.innim.ru/project/lightning-pm/issue/233)).
+- У картинки, приложенной к задаче, видно исходное имя файла ([#449](https://task.innim.ru/project/lightning-pm/issue/449)).
 ### Fixed
 - Повторные Enter или клики в формах добавления проекта и регистрации больше не создают дублей ([#434](https://task.innim.ru/project/lightning-pm/issue/434)).
 - Задача доступна только участникам её проекта и модераторам ([#454](https://task.innim.ru/project/lightning-pm/issue/454)).
