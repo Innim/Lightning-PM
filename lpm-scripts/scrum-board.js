@@ -167,7 +167,9 @@ let scrumBoard = {
                     $members.append(', ');
                 }
                 $members.append(res.memberHtml);
-                issuePage.scrumColUpdateInfo();
+                // Состав исполнителей изменился - задача могла выйти
+                // из-под действующего фильтра по людям или по их числу
+                issuePage.refreshFilteredIssues();
             }
         });
     },

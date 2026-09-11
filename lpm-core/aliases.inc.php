@@ -474,10 +474,14 @@ function lpm_print_scrum_board_snapshots_list(Project $project, $snapshots)
 
 /**
  * Выводит шаблон компонента фильтров списка задач.
+ *
+ * @param string $elementId ID корневого элемента компонента.
+ * @param bool $showMultiMemberFilter Выводить ли переключатель, оставляющий
+ *                                    только задачи с несколькими исполнителями.
  */
-function lpm_print_issue_list_filters($elementId = 'issueListFilter')
+function lpm_print_issue_list_filters($elementId = 'issueListFilter', $showMultiMemberFilter = false)
 {
-    return PagePrinter::issueListFilter($elementId);
+    return PagePrinter::issueListFilter($elementId, $showMultiMemberFilter);
 }
 
 /**
