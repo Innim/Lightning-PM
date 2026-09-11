@@ -524,10 +524,14 @@ class PagePrinter
 
     /**
      * Распечатывает шаблон фильтра в списке задач.
+     *
+     * @param string $elementId ID корневого элемента компонента.
+     * @param bool $showMultiMemberFilter Выводить ли переключатель, оставляющий
+     *                                    только задачи с несколькими исполнителями.
      */
-    public static function issueListFilter($elementId = 'issueListFilter')
+    public static function issueListFilter($elementId = 'issueListFilter', $showMultiMemberFilter = false)
     {
-        PageConstructor::includePattern('issue-list-filter', compact('elementId'));
+        PageConstructor::includePattern('issue-list-filter', compact('elementId', 'showMultiMemberFilter'));
     }
     
     /**
