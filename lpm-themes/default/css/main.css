@@ -1869,3 +1869,11 @@ form.pass-test #passTestComment textarea.comment-text-field {
 	display: block;
 	min-height: 300px;
 }
+
+/* Переход к задаче по номеру (components/goto-issue.html): кнопка-компас
+   остаётся скрытой и на время сворачивания панели. Bootstrap сбрасывает
+   aria-expanded в начале анимации, поэтому правило .hide-me само по себе
+   вернуло бы кнопку в строку рядом с ещё не свёрнутой панелью. */
+.goto-issue-component:has(.collapsing) .hide-me {
+	display: none;
+}

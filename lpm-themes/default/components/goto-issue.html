@@ -4,11 +4,12 @@
  */
 $pid = $project->getID();
 ?>
-<div class="goto-issue-component">
-    <?php /* title is on the icon, not the toggle: a Bootstrap tooltip can't attach to an element
-             that already hosts a Collapse (Bootstrap allows one component instance per element) */ ?>
+<div class="goto-issue-component d-flex align-items-center">
+    <?php /* title is on the inner span, not the toggle: a Bootstrap tooltip can't attach to an element
+             that already hosts a Collapse (Bootstrap allows one component instance per element), and
+             a bare <i> has a sub-pixel box the tip would anchor flush to */ ?>
     <a class="btn btn-outline-secondary btn-sm hide-me" data-bs-toggle="collapse" href="#gotoIssueCollapse" role="button" aria-expanded="false" aria-controls="gotoIssueCollapse" aria-label="Перейти к задаче по номеру">
-        <i class="fa-regular fa-compass" aria-hidden="true" title="Перейти к задаче по номеру"></i>
+        <span title="Перейти к задаче по номеру"><i class="fa-regular fa-compass" aria-hidden="true"></i></span>
     </a>
     <div class="collapse collapse-horizontal" id="gotoIssueCollapse">
         <div class="d-flex flex-nowrap" style="width: 210px;">
