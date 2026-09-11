@@ -126,7 +126,27 @@ class LPMImg extends LPMBaseObject
     {
         return SITE_URL . UPLOAD_IMGS_DIR . $imgName;
     }
-    
+
+    /**
+     * Приводит имя файла к виду, пригодному для показа пользователю и для
+     * подстановки в имя скачиваемого файла: разделители пути и символы,
+     * недопустимые в имени файла, заменяются на `_`, управляющие символы
+     * вырезаются, длина ограничивается 255 символами.
+     * Правила те же, по которым чистится имя прикреплённого файла при загрузке.
+     * @param  string $name
+     * @return string Пустая строка, если чистить нечего или имя не разобрать.
+     */
+    private static function sanitizeName($name)
+    {
+        $name = trim((string)$name);
+        $name = preg_replace('/[\\\\\/\:\*\?"<>\|]+/', '_', $name);
+        // preg_replace() возвращает null, если в имени невалидный UTF-8 -
+        // такое имя считаем неизвестным
+        $name = preg_replace('/[\x00-\x1F\x7F]/u', '', (string)$name);
+
+        return null === $name ? '' : mb_substr($name, 0, 255);
+    }
+
     const SRC_DIR = 'src/';
     const PREVIEW_WIDTH = 150;
     const PREVIEW_HEIGHT = 100;
@@ -250,6 +270,18 @@ class LPMImg extends LPMBaseObject
         return self::getImgURL(self::SRC_DIR . $this->_srcImgName);
     }
     
+    /**
+     * Имя, под которым изображение было загружено, приведённое к безопасному
+     * для показа и для скачивания виду. Экранирование при выводе в HTML
+     * остаётся за вызывающим кодом.
+     * @return string Пустая строка, если исходное имя неизвестно: изображение
+     * загружено по URL либо загружено до того, как имя начали сохранять.
+     */
+    public function getDisplayName()
+    {
+        return self::sanitizeName($this->origName);
+    }
+
     public function getSrcImgName()
     {
         return $this->_srcImgName;

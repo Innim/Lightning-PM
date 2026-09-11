@@ -7,7 +7,9 @@
 - На личной Scrum доске показываются незавершённые задачи, где вы тестировщик, даже если они сняты с доски проекта ([#391](https://task.innim.ru/project/lightning-pm/issue/391)).
 - Личную Scrum доску можно отфильтровать по своей роли в задаче ([#391](https://task.innim.ru/project/lightning-pm/issue/391)).
 - Приложенный к задаче или комментарию HTML-отчёт открывается на отдельной странице просмотра, без скачивания ([#439](https://task.innim.ru/project/lightning-pm/issue/439)).
+- У картинки, приложенной к задаче, видно исходное имя файла ([#449](https://task.innim.ru/project/lightning-pm/issue/449)).
 ### Fixed
+- В просмотрщике картинки, приложенной к комментарию, видно её имя ([#449](https://task.innim.ru/project/lightning-pm/issue/449)).
 - Задача доступна только участникам её проекта и модераторам ([#454](https://task.innim.ru/project/lightning-pm/issue/454)).
 - Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).
 - Тег, поставленный задаче через API, теперь попадает в справочник тегов проекта ([#447](https://task.innim.ru/project/lightning-pm/issue/447)).
