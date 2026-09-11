@@ -170,6 +170,7 @@ class Project extends MembersInstance
         $aiSummary,
         $aiTestChecklist,
         $aiIssueDraft,
+        $aiIssueReview,
         $aiContext,
         $requireLabels
     )
@@ -184,6 +185,7 @@ class Project extends MembersInstance
             'aiSummary' => $aiSummary,
             'aiTestChecklist' => $aiTestChecklist,
             'aiIssueDraft' => $aiIssueDraft,
+            'aiIssueReview' => $aiIssueReview,
             'aiContext' => $aiContext,
             'requireLabels' => $requireLabels,
         ]);
@@ -613,6 +615,12 @@ SQL;
     public $aiIssueDraft = false;
 
     /**
+     * В проекте доступна проверка постановки задачи, выполняемая ИИ.
+     * @var Boolean
+     */
+    public $aiIssueReview = false;
+
+    /**
      * Описание предметной области проекта, которое подмешивается
      * в запросы к ИИ: что за продукт, для кого, на чём написан,
      * что означают принятые в команде термины.
@@ -719,6 +727,7 @@ SQL;
             'aiSummary',
             'aiTestChecklist',
             'aiIssueDraft',
+            'aiIssueReview',
             'requireLabels'
         );
 

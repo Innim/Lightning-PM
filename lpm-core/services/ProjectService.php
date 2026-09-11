@@ -497,6 +497,7 @@ class ProjectService extends LPMBaseService
         $aiSummary,
         $aiTestChecklist,
         $aiIssueDraft,
+        $aiIssueReview,
         $aiContext,
         $requireLabels
     ) {
@@ -512,6 +513,7 @@ class ProjectService extends LPMBaseService
         if (($scrum !== 0 && $scrum !== 1) || ($aiSummary !== 0 && $aiSummary !== 1)
             || ($aiTestChecklist !== 0 && $aiTestChecklist !== 1)
             || ($aiIssueDraft !== 0 && $aiIssueDraft !== 1)
+            || ($aiIssueReview !== 0 && $aiIssueReview !== 1)
             || ($requireLabels !== 0 && $requireLabels !== 1)
         ) {
             return $this->error('Неверные входные параметры');
@@ -521,6 +523,7 @@ class ProjectService extends LPMBaseService
         $aiSummary = (bool)$aiSummary;
         $aiTestChecklist = (bool)$aiTestChecklist;
         $aiIssueDraft = (bool)$aiIssueDraft;
+        $aiIssueReview = (bool)$aiIssueReview;
         $requireLabels = (bool)$requireLabels;
 
         // без настроенной интеграции настройки ИИ не отображаются
@@ -575,6 +578,7 @@ class ProjectService extends LPMBaseService
             $aiSummary = $project->aiSummary;
             $aiTestChecklist = $project->aiTestChecklist;
             $aiIssueDraft = $project->aiIssueDraft;
+            $aiIssueReview = $project->aiIssueReview;
             $aiContext = AiProjectContext::normalize($project->aiContext);
         }
 
@@ -586,6 +590,7 @@ class ProjectService extends LPMBaseService
             || $aiSummary !== $project->aiSummary
             || $aiTestChecklist !== $project->aiTestChecklist
             || $aiIssueDraft !== $project->aiIssueDraft
+            || $aiIssueReview !== $project->aiIssueReview
             || $aiContext !== AiProjectContext::normalize($project->aiContext)
             || $requireLabels !== $project->requireLabels
         ) {
@@ -598,6 +603,7 @@ class ProjectService extends LPMBaseService
                 $aiSummary,
                 $aiTestChecklist,
                 $aiIssueDraft,
+                $aiIssueReview,
                 $aiContext,
                 $requireLabels
             );

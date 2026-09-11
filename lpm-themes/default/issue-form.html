@@ -10,6 +10,7 @@
 $descMaxLen = Issue::DESC_MAX_LEN;
 $isHidden = !empty($isHidden);
 $aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
+$aiReviewAvailable = IssueReviewBuilder::isAvailableFor($project);
 $descTemplate = LPMOptions::getIssueDescTemplate();
 ?>
 <article id="issueForm" class="container-legacy" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>"
@@ -248,13 +249,22 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
                         </button>
                     </div>
                     <h6 class="desc-preview-title d-none mb-0">Предпросмотр описания</h6>
-                    <div class="d-flex gap-2 ms-auto">
+                    <div class="d-flex flex-wrap justify-content-end gap-2 ms-auto">
                         <button type="button" class="btn btn-sm btn-outline-secondary apply-desc-template" title="Вставить стандартный шаблон описания (Ctrl + Shift + M)">
                             <i class="fas fa-file-lines me-1"></i>Шаблон описания
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary toggle-desc-preview" title="Предпросмотр">
                             <i class="fas fa-eye me-1"></i>Предпросмотр
                         </button>
+                        <?php if ($aiReviewAvailable): ?>
+                        <?php /* Класс ai-issue-review-btn нужен JS: по нему кнопка
+                                 блокируется на время ответа модели (issue-form.js). */ ?>
+                        <button type="button" class="btn btn-sm btn-outline-primary ai-issue-review-btn"
+                                onclick="issueForm.checkIssueReview()"
+                                title="ИИ проверит, хватает ли в постановке контекста, чтобы взять задачу в работу">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1" aria-hidden="true"></i>Проверить постановку
+                        </button>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="card-body p-0">
