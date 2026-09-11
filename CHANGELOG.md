@@ -1,5 +1,7 @@
 ## Next
 
+## 0.32.0 - 2026-09-11
+
 ### Added
 - В комментарии о merge request'е видно состояние его сборки ([#451](https://task.innim.ru/project/lightning-pm/issue/451)).
 - В списке задач и на Scrum доске у задачи в тесте видно состояние её сборки: идёт, упала или прошла ([#408](https://task.innim.ru/project/lightning-pm/issue/408)).
