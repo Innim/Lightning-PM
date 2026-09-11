@@ -8,6 +8,7 @@
 - Личную Scrum доску можно отфильтровать по своей роли в задаче ([#391](https://task.innim.ru/project/lightning-pm/issue/391)).
 - Приложенный к задаче или комментарию HTML-отчёт открывается на отдельной странице просмотра, без скачивания ([#439](https://task.innim.ru/project/lightning-pm/issue/439)).
 ### Fixed
+- Подсказка «цитата» под описанием задачи теперь оформляет цитатой выбранные строки ([#233](https://task.innim.ru/project/lightning-pm/issue/233)).
 - Задача доступна только участникам её проекта и модераторам ([#454](https://task.innim.ru/project/lightning-pm/issue/454)).
 - Закрытый merge request больше не мешает задаче уйти в тест, если изменения его ветки всё же влиты другим merge request'ом ([#271](https://task.innim.ru/project/lightning-pm/issue/271)).
 - Тег, поставленный задаче через API, теперь попадает в справочник тегов проекта ([#447](https://task.innim.ru/project/lightning-pm/issue/447)).
@@ -16,6 +17,7 @@
 - Знак процента и подчёркивание везде в поиске задач ищутся как обычные символы, а не как подстановка ([#441](https://task.innim.ru/project/lightning-pm/issue/441)).
 - Переход по ссылке на комментарий больше не сбрасывается в начало страницы, когда в задаче догрузятся вложения ([#453](https://task.innim.ru/project/lightning-pm/issue/453)).
 ### Changed
+- Повторное нажатие «цитаты» снимает её со строки ([#233](https://task.innim.ru/project/lightning-pm/issue/233)).
 - У кнопки поиска задач в проекте подсказка теперь оформлена в стиле приложения ([#443](https://task.innim.ru/project/lightning-pm/issue/443)).
 
 ## 0.31.0 - 2026-09-04
