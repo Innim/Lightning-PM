@@ -157,8 +157,8 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                 <?php endif; ?>
                 <?php if ($isOffBoard): ?>
                     <span class="d-block small text-muted"
-                          title="Задача снята с доски проекта, колонка определена её статусом"><i
-                            class="fa fa-archive" aria-hidden="true"></i> не на доске</span>
+                          title="Задача не на доске проекта — колонка определена её статусом"><i
+                            class="fas fa-thumbtack-slash" aria-hidden="true"></i> не на доске</span>
                 <?php endif; ?>
                 <?php if ($deadlineLevel !== ''): ?>
                     <span class="sticker-issue-deadline deadline-<?=$deadlineLevel;?>"

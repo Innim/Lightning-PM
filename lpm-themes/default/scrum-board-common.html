@@ -15,13 +15,6 @@ $allowsFreeIssues = ScrumBoardRoleFilter::allowsFreeIssues($roleFilter);
             <?php lpm_print_csrf_field(); ?>
             <input type="hidden" name="<?=ProjectsPage::FIELD_MY_BOARD_PREF;?>" value="1">
             <!-- Класс `board-pref-switch` используется JS для отправки формы -->
-            <select class="form-select form-select-sm w-auto board-pref-switch"
-                    name="<?=ProjectsPage::FIELD_BOARD_ROLE;?>" aria-label="Отбор задач по моей роли">
-                <?php foreach (ScrumBoardRoleFilter::getLabels() as $value => $label): ?>
-                    <option value="<?=$value;?>"
-                        <?php if ($value === $roleFilter): ?>selected="selected"<?php endif; ?>><?=$label;?></option>
-                <?php endforeach; ?>
-            </select>
             <?php if ($allowsFreeIssues): ?>
             <?php /* Маркер того, что переключатель показан: по нему сохранение
                      отличает "снят флажок" от "переключателя не было" */ ?>
@@ -34,6 +27,13 @@ $allowsFreeIssues = ScrumBoardRoleFilter::allowsFreeIssues($roleFilter);
                        title="Задачи в TO DO моих проектов, у которых нет исполнителя">Показывать свободные задачи</label>
             </div>
             <?php endif; ?>
+            <select class="form-select form-select-sm w-auto board-pref-switch"
+                    name="<?=ProjectsPage::FIELD_BOARD_ROLE;?>" aria-label="Отбор задач по моей роли">
+                <?php foreach (ScrumBoardRoleFilter::getLabels() as $value => $label): ?>
+                    <option value="<?=$value;?>"
+                        <?php if ($value === $roleFilter): ?>selected="selected"<?php endif; ?>><?=$label;?></option>
+                <?php endforeach; ?>
+            </select>
         </form>
     </div>
     <h3>Всего задач:
