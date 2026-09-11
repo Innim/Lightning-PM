@@ -4,8 +4,17 @@ FROM php:7.3-apache-bullseye
 LABEL version="1.0"
 LABEL description="Legacy PHP 7.3 application with Apache"
 
+# Debian bullseye снят с поддержки, и его security-репозиторий больше не отдаёт
+# пакеты: security.debian.org отвечает 404 на сами .deb, а в archive.debian.org
+# bullseye-security ещё не выложен. Пока эта строка в списке источников, сборка
+# образа падает целиком, поэтому она удаляется. Обновлений для bullseye всё равно
+# больше не выходит; уход с этого базового образа - отдельная задача (#474).
+RUN sed -i '/security.debian.org/d' /etc/apt/sources.list
+
 # Install required PHP extensions and system packages
-RUN apt-get update && apt-get install -y \
+# Release-файлы bullseye просрочены, без Acquire::Check-Valid-Until=false
+# apt-get update завершается с кодом 100.
+RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y \
     libicu-dev \
     libldap2-dev \
     libmemcached-dev \
@@ -18,6 +27,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo-dev \
     libpng-dev \
     libfreetype6-dev \
+    libwebp-dev \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,7 +36,7 @@ RUN ln -fs /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
     && ln -fs /usr/lib/x86_64-linux-gnu/liblber.so /usr/lib/liblber.so
 
 # Configure and install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype-dir --with-jpeg-dir \
+RUN docker-php-ext-configure gd --with-freetype-dir --with-jpeg-dir --with-webp-dir \
     && docker-php-ext-configure ldap \
     && docker-php-ext-install -j$(nproc) \
         curl \
@@ -46,7 +56,7 @@ RUN pecl install memcached \
     && docker-php-ext-enable memcached
 
 # Install ffmpeg for background video compression
-RUN apt-get update && apt-get install -y ffmpeg \
+RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable required Apache modules

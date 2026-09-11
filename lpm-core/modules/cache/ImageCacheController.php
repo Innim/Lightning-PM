@@ -66,7 +66,7 @@ class ImageCacheController
     private function getCompressedImage(LPMImg $img) {
         // генерируем уменьшенное превью для типов:
         // jpeg, png, webp.
-        $allowedTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_JPEG2000, IMG_WEBP];
+        $allowedTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_JPEG2000, IMAGETYPE_WEBP];
         
         $filepath = $img->getSrcImg();
         list($width, $height, $type, $attr) = getimagesize($filepath);
