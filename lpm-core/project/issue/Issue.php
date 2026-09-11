@@ -667,7 +667,8 @@ SQL;
         $where = '`i`.`projectId` = ' . (int)$projectId . " AND `i`.`deleted` = '0'" .
             " AND `i`.`name` LIKE '[%%'";
         foreach ($needles as $needle) {
-            $where .= " AND `i`.`name` LIKE '%%[" . $db->escape4Search_t($needle) . "]%%'";
+            $where .= " AND `i`.`name` LIKE '%%[" . self::escapeSearchPattern($needle) . "]%%'"
+                . " ESCAPE '" . self::SEARCH_ESCAPE_CHAR . "'";
         }
 
         $res = $db->queryt("SELECT `i`.`id`, `i`.`name` FROM `%s` AS `i` WHERE " . $where, LPMTables::ISSUES);
@@ -703,6 +704,8 @@ SQL;
 
     /**
      * Загружает список задач по части идентификатора в проекте.
+     *
+     * Спецсимволы шаблона (`%` и `_`) в запросе ищутся буквально, а не как подстановка.
      * @return array<Issue>
      */
     public static function searchListInProject($projectId, $needle)
@@ -710,11 +713,13 @@ SQL;
         if (empty($needle)) {
             return self::loadListByProject($projectId);
         } else {
-            $needle = self::getDB()->escape4Search_t($needle);
+            $escapeChar = self::SEARCH_ESCAPE_CHAR;
+            $needle = self::escapeSearchPattern($needle);
             $where = <<<WHERE
 (`i`.`projectId` = $projectId
 AND
-(`i`.`idInProject` LIKE '$needle%%' OR `i`.`name` LIKE '%%$needle%%'))
+(`i`.`idInProject` LIKE '$needle%%' ESCAPE '$escapeChar'
+ OR `i`.`name` LIKE '%%$needle%%' ESCAPE '$escapeChar'))
 WHERE;
             return self::loadList($where, '', null, '`i`.`idInProject` DESC');
         }
@@ -771,6 +776,45 @@ WHERE;
     }
 
     /**
+     * Загружает незавершённые задачи неархивных scrum проектов, в которых
+     * пользователь указан тестировщиком, но которых нет на доске их проекта.
+     *
+     * Незавершённые - это задачи в работе и задачи, ожидающие проверки:
+     * снятая с доски по окончании спринта задача тестировщику всё ещё нужна.
+     * @param  int $testerId Идентификатор пользователя.
+     * @return array<Issue>
+     */
+    public static function getListOffBoardByTester($testerId)
+    {
+        // Тестировщик проверяется подзапросом, а не присоединением таблицы:
+        // так задача не задваивается, если у неё несколько записей участия
+        $testerSql = self::buildQuery([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::MEMBERS,
+            'AS'     => 'm',
+            'WHERE'  => [
+                '`m`.`instanceId`'   => self::col('i.id'),
+                '`m`.`instanceType`' => LPMInstanceTypes::ISSUE_FOR_TEST,
+                '`m`.`userId`'       => (int)$testerId,
+            ],
+        ]);
+
+        $statuses = implode(', ', [self::STATUS_IN_WORK, self::STATUS_WAIT]);
+        $activeStates = implode(', ', ScrumStickerState::getActiveStates());
+
+        return self::loadList(
+            // только задачи, в которых я тестировщик
+            "EXISTS ($testerSql)" .
+            // незавершённые
+            " AND `i`.`status` IN ($statuses)" .
+            // проект не в архиве и со scrum доской
+            ' AND `p`.`isArchive` = 0 AND `p`.`scrum` = 1' .
+            // `st` - присоединённый в loadList() стикер задачи
+            " AND (`st`.`state` IS NULL OR `st`.`state` NOT IN ($activeStates))"
+        );
+    }
+
+    /**
      * Заранее загружает исполнителей и тестировщиков всех задач списка.
      *
      * Участники всех задач загружаются одним запросом. Мастера не загружаются.
@@ -787,6 +831,40 @@ WHERE;
         $participants = Member::loadListAnyForIssues($issueIds, true, true, false);
         foreach ($list as $issue) {
             $issue->extractParticipantsFrom($participants, true, true, false);
+        }
+
+        return $list;
+    }
+
+    /**
+     * Заранее загружает сводные состояния сборок задач списка.
+     *
+     * Состояния всех задач загружаются одним запросом. Спрашиваются только
+     * задачи, ждущие проверки ({@see isAwaitingTest()}): у остальных сборка
+     * не показывается, а список задач бывает на тысячи строк.
+     * @param  array<Issue> $list
+     * @return array<Issue> Тот же список.
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function preloadBuildStates(array $list)
+    {
+        $issueIds = [];
+        foreach ($list as $issue) {
+            if ($issue->isAwaitingTest()) {
+                $issueIds[] = $issue->id;
+            }
+        }
+
+        if (empty($issueIds)) {
+            return $list;
+        }
+
+        $states = IssuePipeline::loadSummaryStatuses($issueIds);
+        foreach ($list as $issue) {
+            $issueId = (int)$issue->id;
+            if (isset($states[$issueId])) {
+                $issue->buildState = $states[$issueId];
+            }
         }
 
         return $list;
@@ -1162,6 +1240,72 @@ SQL;
             return $db->insert_id;
         }
         return null;
+    }
+
+    /**
+     * Регистрирует использование меток из имени задачи в справочнике: заводит
+     * недостающие метки проекта и начисляет им использование. Метки, уже
+     * присутствовавшие в $oldName, повторно не учитываются — вызывать при
+     * каждом сохранении имени задачи (создании или переименовании), а не
+     * только один раз при создании.
+     * Имена передаются в «сыром» виде, без экранирования — как в Issue::createNew().
+     * @param $name string Имя задачи после сохранения.
+     * @param $projectId int Идентификатор проекта, к которому относится задача.
+     * @param $oldName string|null Имя задачи до сохранения, либо null, если
+     * задача только создаётся.
+     */
+    // TODO: перенести в IssueLabel
+    public static function registerLabelsUsage($name, $projectId, $oldName = null)
+    {
+        $labels = self::getLabelsByName($name);
+
+        if ($oldName !== null) {
+            $oldLabels = self::getLabelsByName($oldName);
+            foreach ($labels as $key => $value) {
+                if (in_array($value, $oldLabels)) {
+                    unset($labels[$key]);
+                }
+            }
+        }
+
+        if (empty($labels)) {
+            return;
+        }
+
+        $allLabels = self::getLabels($projectId);
+        $countedLabels = [];
+        foreach ($allLabels as $value) {
+            $index = array_search($value['label'], $labels);
+            if ($index !== false) {
+                $countedLabels[] = $labels[$index];
+                unset($labels[$index]);
+            }
+        }
+
+        if (!empty($countedLabels)) {
+            self::addLabelsUsing(self::escapePercentForQueryt($countedLabels), $projectId);
+        }
+
+        if (!empty($labels)) {
+            // Создаём новые метки без использований, затем через addLabelsUsing
+            // начисляем использование и в общий счётчик, и в счётчик по проекту.
+            foreach ($labels as $newLabel) {
+                self::saveLabel(str_replace('%', '%%', $newLabel), $projectId, 0, 0);
+            }
+            self::addLabelsUsing(self::escapePercentForQueryt($labels), $projectId);
+        }
+    }
+
+    /**
+     * Экранирует знак процента в каждой строке списка для queryt().
+     * @param $values string[]
+     * @return string[]
+     */
+    private static function escapePercentForQueryt(array $values)
+    {
+        return array_map(function ($value) {
+            return str_replace('%', '%%', $value);
+        }, $values);
     }
 
     /**
@@ -1844,6 +1988,22 @@ SQL;
     public $testMrState;
 
     /**
+     * Сводное состояние сборок задачи в тесте
+     * (см. IssuePipelineStatus::*).
+     *
+     * Если по задаче несколько сборок - берётся самая неблагополучная:
+     * провал важнее идущей сборки, идущая важнее успеха.
+     *
+     * Заполняется только у задач, ждущих проверки ({@see isAwaitingTest()}) -
+     * у остальных сборка не показывается.
+     *
+     * Если null, то это означает, что данных нет: задача не ждёт проверки,
+     * по ней нет ни одной сборки либо данные не загружены.
+     * @var string
+     */
+    public $buildState;
+
+    /**
      * Проект, к которому относится задача
      * @var Project
      */
@@ -1932,24 +2092,36 @@ SQL;
         return $obj;
     }
     
+    /**
+     * Определяет, вправе ли пользователь видеть задачу.
+     *
+     * Задача доступна тому, кому доступен её проект: участнику проекта
+     * либо модератору ({@see Project::checkUserReadPermit()}). Автор задачи
+     * исключением не является - вне своего проекта он задачу не увидит.
+     *
+     * @param int $userId Идентификатор пользователя.
+     * @return bool `true`, если пользователю доступна задача.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
     public function checkViewPermit($userId)
     {
-        if ($userId == $this->authorId) {
-            return true;
-        }
-        
-        // TODO проверку прав
-        return true;
+        return Project::checkUserReadPermit($this->projectId, $userId);
     }
-    
+
+    /**
+     * Определяет, вправе ли пользователь изменять задачу.
+     *
+     * Права те же, что и на просмотр ({@see Issue::checkViewPermit()}):
+     * отдельного уровня прав на изменение задачи нет, а более узкие условия
+     * (статус задачи, роль в ней) проверяют вызывающие.
+     *
+     * @param int $userId Идентификатор пользователя.
+     * @return bool `true`, если пользователю доступно изменение задачи.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
     public function checkEditPermit($userId)
     {
-        if ($userId == $this->authorId) {
-            return true;
-        }
-        
-        // TODO проверку прав
-        return true;
+        return $this->checkViewPermit($userId);
     }
 
     public function getIdInProject()
@@ -2408,6 +2580,22 @@ SQL;
     public function isTesting()
     {
         return $this->status == self::STATUS_WAIT;
+    }
+
+    /**
+     * Определяет, ждёт ли задача проверки: она в тесте, и её ещё не разметили
+     * отметкой поважнее - не нашли проблем, не взяли в проверку и не отметили
+     * прошедшей тестирование.
+     *
+     * Именно в этом состоянии тестировщику важна готовность задачи к проверке:
+     * влиты ли правки ({@see $testMrState}) и что со сборкой
+     * ({@see $buildState}).
+     * @return bool
+     */
+    public function isAwaitingTest()
+    {
+        return $this->isTesting() && !$this->hasPassTestMark
+            && !$this->isChangesRequested && !$this->isUnderTesting;
     }
 
     public function loadStream($hash)

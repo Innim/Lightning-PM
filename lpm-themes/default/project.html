@@ -49,18 +49,16 @@ $searchActive = $searchForm !== null && $issuesCountLabel !== null;
 		</div>
 		<div class="filters-line flex-wrap gap-3 mb-1">
 			<?php if ($searchForm !== null): ?>
-			<?php /* title на самой ссылке, а не на иконке: элемент уже держит Collapse, поэтому
-			         глобальный Tooltip его не берёт (селектор в lightning.js) и подсказка
-			         остаётся браузерной. Вариант с title на вложенной иконке даёт стилизованную
-			         подсказку, но её скрытие при раскрытии панели гасит и саму иконку.
-			         Нажатый вид кнопки вместе с подписью о размере выборки в статистике
-			         показывает, что список отобран, даже когда панель свёрнута */ ?>
+			<?php /* title на вложенном span, а не на самой ссылке: ссылка уже держит Collapse,
+			         а Bootstrap допускает только один компонент на элемент, поэтому Tooltip
+			         на неё не встанет. Нажатый вид кнопки вместе с подписью о размере выборки
+			         в статистике показывает, что список отобран, даже когда панель свёрнута */ ?>
 			<a class="btn btn-outline-secondary btn-sm<?=$searchActive ? ' active' : '';?>"
 				data-bs-toggle="collapse" href="#issuesSearchPanel" role="button"
 				aria-expanded="<?=$searchActive ? 'true' : 'false';?>" aria-controls="issuesSearchPanel"
-				title="<?=$searchActive ? 'Список отфильтрован поиском' : 'Искать задачи';?>"
 				aria-label="<?=$searchActive ? 'Показать форму поиска, список отфильтрован' : 'Искать задачи';?>">
-				<i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+				<span title="<?=$searchActive ? 'Список отфильтрован поиском' : 'Искать задачи';?>"><i
+					class="fas fa-magnifying-glass" aria-hidden="true"></i></span>
 			</a>
 			<?php endif; ?>
 			<div>

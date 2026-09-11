@@ -53,9 +53,12 @@ $allowRegistration = LPMOptions::getInstance()->allowRegistration;
 			<div id="registrationForm" class="card shadow-sm">
 				<div class="card-body p-4">
 					<h1 class="h4 fw-normal text-center mb-4">Регистрация</h1>
-					<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['signUp'])) lpm_print_errors();?></div>
+					<?php /* Регистрационный POST узнаём по полю формы, а не по имени кнопки:
+					   на время отправки кнопка отключается и в POST не попадает.
+					   По этому же полю различает формы AuthPage. */ ?>
+					<div class="alert alert-danger validateError" role="alert"><?php if (isset($_POST['email'])) lpm_print_errors();?></div>
 
-					<form onsubmit="return validateReg();" action="#reg" method="post">
+					<form action="#reg" method="post">
 						<?php lpm_print_csrf_field(); ?>
 						<div class="mb-3">
 							<label for="regEmail" class="form-label">Email</label>

@@ -113,7 +113,9 @@ class LPMImgUpload
                 continue;
             }
 
-            $value = str_replace(['data:image/png;base64,', ' '], ['', '+'], $value);
+            // Пробелы появляются, если base64 прошёл через разбор формы,
+            // где `+` превращается в пробел.
+            $value = str_replace(' ', '+', $value);
             $filepath = $dirTempPath . DIRECTORY_SEPARATOR . SecureRandomHelper::str(10) . '.jpeg';
 
             if (!file_put_contents($filepath, base64_decode($value))) {
@@ -280,7 +282,8 @@ class LPMImgUpload
             IMAGETYPE_JPEG          => 'jpg',
             IMAGETYPE_JPEG2000      => 'jpeg',
             IMAGETYPE_PNG           => 'png',
-            IMG_GIF                 => 'gif',
+            IMAGETYPE_GIF           => 'gif',
+            IMAGETYPE_WEBP          => 'webp',
         ];
     }
 
@@ -459,7 +462,7 @@ class LPMImgUpload
         // Готовим запрос записи в БД
         $userId = $this->_userId;
         if ($this->_saveInDB &&
-            !($prepare = $this->_db->preparet("INSERT INTO `%s` (`url`, `userId`, `name`, `itemType`, `itemId`) VALUES (?, '{$userId}', ?, '{$this->_itemType}', '{$this->_itemId}')", LPMTables::IMAGES))) {
+            !($prepare = $this->_db->preparet("INSERT INTO `%s` (`url`, `userId`, `name`, `origName`, `itemType`, `itemId`) VALUES (?, '{$userId}', ?, ?, '{$this->_itemType}', '{$this->_itemId}')", LPMTables::IMAGES))) {
             return $this->error('Ошибка при записи в БД');
         } else {
             // Перебираем все файлы
@@ -545,7 +548,17 @@ class LPMImgUpload
 
         // Генерируем необходимые изображения
         $img = new LPMImg($srcFilename);
-        $img->origName = null === $originalName ? $originalName : '';
+        // Колонка origName - NOT NULL и хранит только BMP-символы (charset utf8mb3), поэтому
+        // при отсутствии имени пишем пустую строку, а 4-байтовые символы (например, эмодзи)
+        // из имени вырезаем, иначе вставка в БД будет отклонена по charset. preg_replace()
+        // возвращает null и на невалидном UTF-8 во входной строке - такое имя тоже заменяем
+        // пустой строкой, а не пишем null в NOT NULL колонку
+        if (null === $originalName) {
+            $img->origName = '';
+        } else {
+            $filtered = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $originalName);
+            $img->origName = null === $filtered ? '' : $filtered;
+        }
 
         if (null !== $this->_sizes) {
             foreach ($this->_sizes as $size) {
@@ -624,7 +637,7 @@ class LPMImgUpload
     private function saveInDB(LPMImg $img, mysqli_stmt $prepare)
     {
         $srcImgName = $img->getSrcImgName();
-        $prepare->bind_param('ss', $srcImgName, $img->origName);
+        $prepare->bind_param('sss', $srcImgName, $img->name, $img->origName);
         $prepare->execute();
         $img->imgId = $this->_db->insert_id;
     }

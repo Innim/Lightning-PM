@@ -50,6 +50,47 @@ $(function ($) {
     });
     document.addEventListener('paste', pasteDraftImage);
 
+    // Окно разбора постановки открывается не обязательно сразу: если в момент
+    // ответа модели открыт другой диалог, lpm.dialog ставит наш в очередь и
+    // показывает потом. Поэтому классы вешаем на событие открытия, а не следом
+    // за lpm.dialog.show() — в тот момент разметки отложенного окна ещё нет.
+    // modal-lg: в узком окне не помещается ни список пробелов, ни описание.
+    // modal-dialog-scrollable: при длинном списке прокручивается только тело,
+    // а шапка и кнопка «Подставить описание» остаются на виду.
+    $(document).on('show.bs.modal', '.modal', function (e) {
+        const $modal = $(this);
+        const $dialog = $modal.find('.modal-dialog');
+        const $body = $dialog.find('.ai-issue-review-body');
+        if (!$body.length) return;
+
+        // Пока окно стояло в очереди, форму могли закрыть или открыть заново —
+        // уже под другую задачу. Разбор относится к тексту, которого в форме
+        // больше нет, поэтому такое окно не показываем вовсе.
+        if (Number($body.attr('data-generation')) !== issueForm.generation) {
+            // show.bs.modal отменяемо: Bootstrap не станет открывать окно.
+            // Но тогда не будет и hidden.bs.modal, по которому lpm.dialog
+            // убирает разметку, снимает признак «окно открыто» и показывает
+            // следующее из очереди, — поэтому шлём это событие сами.
+            e.preventDefault();
+            setTimeout(function () {
+                $modal.trigger('hidden.bs.modal');
+            }, 0);
+            return;
+        }
+
+        // Описание могли поправить, пока модель отвечала или пока окно ждало
+        // в очереди. Разбор от этого не перестаёт быть полезным, но подставлять
+        // предложенный текст пользователь будет уже поверх других правок —
+        // предупреждаем об этом рядом с предупреждением о замене.
+        const $changed = $body.find('.ai-issue-review-changed');
+        if ($changed.length) {
+            const current = $('#issueForm form textarea[name=desc]').val().trim();
+            $changed.toggleClass('d-none', current === issueForm.reviewDescSnapshot);
+        }
+
+        $dialog.addClass('modal-lg modal-dialog-scrollable');
+    });
+
     function pasteDraftImage(event) {
         // Только для открытого диалога черновика. Вставка в саму форму задачи
         // обрабатывается отдельно (pasteClipboardImage ниже), а диалог живёт
@@ -269,6 +310,10 @@ let issueForm = {
         }
     },
     onShow: function () {
+        issueForm.generation++;
+        // Заново открытая форма не наследует ожидание от прошлого запроса:
+        // его ответ до неё уже не дойдёт (см. issueForm.generation).
+        issueForm.setReviewBusy(false);
         window.addEventListener('beforeunload', issueForm.blockClose);
         window.addEventListener('pageshow', issueForm.onPageShow);
         // Только сама форма задачи: внутри #issueForm лежат и другие формы
@@ -325,6 +370,7 @@ let issueForm = {
         window.addEventListener('beforeunload', issueForm.blockClose);
     },
     onHide: function () {
+        issueForm.generation++;
         $('#issueForm > div.validateError').html('').hide();
         window.removeEventListener('beforeunload', issueForm.blockClose);
     },
@@ -905,6 +951,182 @@ let issueForm = {
     },
     clearDraftError: function () {
         issueForm.draft$('.ai-issue-draft-error').hide().text('');
+    },
+
+    // --- Проверка постановки задачи от ИИ ---
+
+    /**
+     * Номер текущего открытия формы: растёт на каждом показе и закрытии.
+     *
+     * Ответа модели ждём секунды, и за это время форму могут закрыть или
+     * закрыть и открыть заново — уже под другую задачу. Разбор относится
+     * к тексту, которого в форме больше нет, поэтому такой ответ отбрасываем.
+     */
+    generation: 0,
+    /**
+     * Исходная разметка кнопки проверки, снятая перед первой блокировкой:
+     * по ней кнопка возвращается в рабочее состояние.
+     * @type {?string}
+     */
+    reviewBtnLabel: null,
+    /**
+     * Описание, ушедшее в модель на последнюю проверку: с ним сверяется поле
+     * формы, когда окно разбора выходит на экран.
+     * @type {string}
+     */
+    reviewDescSnapshot: '',
+    /**
+     * Переводит кнопку проверки постановки в состояние ожидания ответа модели
+     * и обратно. В этом состоянии кнопка заблокирована — второй запрос по ней
+     * не уйдёт, пока не вернётся первый.
+     * @param {boolean} busy Идёт ли запрос.
+     */
+    setReviewBusy: function (busy) {
+        const $btn = $('#issueForm .ai-issue-review-btn');
+        if (!$btn.length) return;
+
+        if (issueForm.reviewBtnLabel === null) {
+            issueForm.reviewBtnLabel = $btn.html();
+        }
+
+        $btn.prop('disabled', busy).html(busy
+            ? '<span class="spinner-border spinner-border-sm me-1" role="status"'
+                + ' aria-hidden="true"></span>Проверяем…'
+            : issueForm.reviewBtnLabel);
+    },
+    /**
+     * Отправляет введённую постановку на проверку модели и показывает разбор.
+     *
+     * Форму не трогает: разбор — подсказка автору, а предложенное описание
+     * подставляется отдельным действием ({@see issueForm.applyReviewDesc}).
+     */
+    checkIssueReview: function () {
+        if ($('#issueForm .ai-issue-review-btn').prop('disabled')) return;
+
+        const $form = $('#issueForm form');
+        const name = $form.find('input[name=name]').val().trim();
+        const desc = $form.find('textarea[name=desc]').val().trim();
+
+        if (!name && !desc) {
+            showError('Заполните название или описание задачи — проверять пока нечего');
+            return;
+        }
+
+        const type = $form.find('input:radio[name=type]:checked').val();
+
+        // Кнопка одна на форму, поэтому её же состояние и есть защита
+        // от повторного запроса, пока модель отвечает.
+        issueForm.setReviewBusy(true);
+
+        const generation = issueForm.generation;
+
+        srv.ai.issueReview($('#issueProjectID').val(), name, type, desc, function (res) {
+            // Форму успели закрыть (или закрыть и открыть заново) — разбирать
+            // уже нечего, и ответ никому не нужен. Кнопку при этом не трогаем:
+            // за ней может стоять уже следующий запрос, которому она и нужна
+            // заблокированной. Форму, открытую заново, разблокирует onShow().
+            if (issueForm.generation !== generation) return;
+
+            issueForm.setReviewBusy(false);
+
+            if (!res.success) {
+                srv.err(res);
+                return;
+            }
+
+            issueForm.showReviewDialog(res, generation, desc);
+        });
+    },
+    /**
+     * Показывает разбор постановки: вывод, пробелы с уточняющими вопросами
+     * и предложенное описание, если модель его составила.
+     *
+     * Окно может открыться не сразу: если в этот момент открыт другой диалог,
+     * lpm.dialog покажет его позже. Поэтому номер открытия формы уезжает
+     * в разметку окна и перепроверяется и при показе, и при подстановке.
+     *
+     * @param {Object} review Разбор постановки: ready, summary, gaps, desc.
+     * @param {number} generation Номер открытия формы, которой принадлежит
+     * разбор ({@see issueForm.generation}).
+     * @param {string} descSnapshot Описание, каким оно ушло в модель: по нему
+     * при показе окна видно, правил ли пользователь текст за время проверки.
+     */
+    showReviewDialog: function (review, generation, descSnapshot) {
+        const esc = lpm.utils.escapeHtml;
+        const gaps = review.gaps || [];
+        const desc = review.desc || '';
+
+        // Сверять снимок с полем надо в момент показа окна, а не сейчас: окно
+        // может полежать в очереди, и за это время текст изменится ещё раз.
+        issueForm.reviewDescSnapshot = String(descSnapshot === undefined ? '' : descSnapshot);
+
+        let html = '<div class="ai-issue-review-body" data-generation="'
+            + generation + '">';
+
+        if (review.summary) {
+            html += '<div class="alert ' + (review.ready ? 'alert-success' : 'alert-warning')
+                + ' py-2 mb-3" role="alert">' + esc(review.summary) + '</div>';
+        }
+
+        if (gaps.length) {
+            html += '<ol class="ps-3 mb-0">';
+            gaps.forEach(function (gap) {
+                html += '<li class="mb-2">' + esc(gap.title);
+                if (gap.question) {
+                    html += '<div class="text-muted">' + esc(gap.question) + '</div>';
+                }
+                html += '</li>';
+            });
+            html += '</ol>';
+        }
+
+        if (desc) {
+            html += '<h6 class="mt-3">Предлагаемое описание</h6>'
+                + '<div class="ai-issue-review-desc border rounded p-2 small"'
+                + ' style="white-space: pre-wrap; max-height: 260px; overflow: auto">'
+                + esc(desc) + '</div>'
+                + '<div class="form-text">Описание в форме будет заменено этим текстом.</div>'
+                // Показывается только если описание правили во время проверки:
+                // решает это обработчик показа окна (см. show.bs.modal выше).
+                + '<div class="ai-issue-review-changed form-text d-none">'
+                + 'После проверки описание в форме изменилось.</div>';
+        }
+
+        html += '</div>';
+
+        lpm.dialog.show({
+            title: 'Проверка постановки',
+            content: html,
+            primaryBtn: desc ? 'Подставить описание' : null,
+            secondaryBtn: 'Закрыть',
+            onPrimary: desc
+                ? function () {
+                    issueForm.applyReviewDesc(desc, generation);
+                }
+                : null,
+        });
+    },
+    /**
+     * Подставляет в форму описание, предложенное при проверке постановки.
+     * @param {string} desc Описание в разметке Markdown.
+     * @param {number} generation Номер открытия формы, для которой составлен
+     * разбор: в другую форму описание не подставляется.
+     */
+    applyReviewDesc: function (desc, generation) {
+        // Форму закрыли или открыли заново, пока окно разбора было на экране:
+        // подставлять описание уже некуда.
+        if (issueForm.generation !== generation) return;
+
+        const $form = $('#issueForm form');
+
+        // В режиме предпросмотра поле описания скрыто, и подстановка была бы
+        // видна только после переключения. Возвращаем форму к редактору, чтобы
+        // пользователь увидел то, что подставилось, и мог сразу поправить.
+        issuePage.resetDescPreview($form);
+
+        // Событие input обновляет счётчики символов и слов под полем описания.
+        $form.find('textarea[name=desc]').val(desc).trigger('input');
+        lpm.toast.show('Описание заменено — проверьте и поправьте');
     },
     addSprintNumToName: function () {
         $nameInput = $("#issueForm form input[name=name]");

@@ -297,9 +297,17 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
             <div class="info-list-item">
                 <ul class="images-line">
                     <?php foreach ($picture as $img): ?>
+                    <?php
+                    $imgName = lpm_escape($img->getDisplayName());
+                    ?>
+                    <?php /* title читает просмотрщик iLoad - это подпись к картинке, поэтому
+                            ссылка исключена из глобального тултипа (data-tooltip): он забирает
+                            title себе и подпись до просмотрщика не доходит.
+                            У картинок, загруженных до того, как имя начали сохранять, его нет -
+                            тогда атрибуты с именем не выводим вовсе. */ ?>
                     <li>
-                        <a href="<?=$img->getSource();?>" class="image-link" rel="iLoad|Screenshots"><img
-                                src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" /></a>
+                        <a href="<?=$img->getSource();?>" class="image-link" rel="iLoad|Screenshots"<?php if ($imgName !== ''): ?> title="<?=$imgName;?>" download="<?=$imgName;?>" data-tooltip<?php endif; ?>><img
+                                src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" alt="<?=$imgName !== '' ? $imgName : 'Прикреплённое изображение';?>" /></a>
                         <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
                     </li>
                     <?endforeach;?>
@@ -325,7 +333,12 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                                 <span class="text-muted small issue-file-size"><?=FileSizeFormatter::format($file->size);?></span>
                             </div>
                         </div>
-                        <div class="ms-auto">
+                        <div class="ms-auto d-flex gap-2">
+                            <?php if ($file->isHtml()): ?>
+                            <a href="<?=$file->getViewPageUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
+                                <i class="fa-regular fa-file-code me-1"></i>Открыть
+                            </a>
+                            <?php endif; ?>
                             <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$file->origName;?>">
                                 <i class="fas fa-download me-1"></i>Скачать
                             </a>

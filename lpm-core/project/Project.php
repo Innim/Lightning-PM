@@ -25,6 +25,13 @@ class Project extends MembersInstance
      */
     private static $_projectsColumns = null;
 
+    /**
+     * Проекты, в которых пользователь состоит участником, в виде
+     * `userId => [projectId => true]`.
+     * @var array<int, array<int, bool>>
+     */
+    private static $_memberProjectIds = [];
+
     public static function loadList($where = null)
     {
         return StreamObject::loadListDefault(
@@ -163,6 +170,7 @@ class Project extends MembersInstance
         $aiSummary,
         $aiTestChecklist,
         $aiIssueDraft,
+        $aiIssueReview,
         $aiContext,
         $requireLabels
     )
@@ -177,6 +185,7 @@ class Project extends MembersInstance
             'aiSummary' => $aiSummary,
             'aiTestChecklist' => $aiTestChecklist,
             'aiIssueDraft' => $aiIssueDraft,
+            'aiIssueReview' => $aiIssueReview,
             'aiContext' => $aiContext,
             'requireLabels' => $requireLabels,
         ]);
@@ -303,6 +312,83 @@ class Project extends MembersInstance
         }
         
         return self::$_availList[$cacheKey];
+    }
+
+    /**
+     * Определяет, вправе ли пользователь читать проект.
+     *
+     * Правило то же, что и у списка доступных проектов
+     * ({@see Project::getAvailList()}): проект доступен его участнику
+     * либо модератору (администратор - частный случай модератора,
+     * {@see User::isModerator()}).
+     *
+     * Членство пользователя читается из базы один раз за запрос, поэтому
+     * проверку можно вызывать в цикле по списку задач или файлов.
+     * Изменения состава участников, сделанные после первой проверки в этом же
+     * запросе, в результат не попадут.
+     *
+     * @param int $projectId Идентификатор проекта.
+     * @param int $userId Идентификатор пользователя.
+     * @return bool `true`, если пользователю доступен проект.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
+    public static function checkUserReadPermit($projectId, $userId)
+    {
+        $projectId = (int)$projectId;
+        $userId = (int)$userId;
+
+        if ($projectId <= 0 || $userId <= 0) {
+            return false;
+        }
+
+        $user = User::load($userId);
+        if (empty($user)) {
+            return false;
+        }
+
+        if ($user->isModerator()) {
+            return true;
+        }
+
+        $projectIds = self::getMemberProjectIds($userId);
+        return isset($projectIds[$projectId]);
+    }
+
+    /**
+     * Возвращает идентификаторы проектов, в которых пользователь состоит
+     * участником.
+     *
+     * Результат кэшируется на время запроса: проверки прав идут пачками
+     * (список задач, вложения задачи), а состав участников за один запрос
+     * не меняется.
+     *
+     * @param int $userId Идентификатор пользователя.
+     * @return array<int, bool> Идентификаторы проектов в ключах.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
+    private static function getMemberProjectIds($userId)
+    {
+        $userId = (int)$userId;
+
+        if (!isset(self::$_memberProjectIds[$userId])) {
+            $res = self::loadFromDV2([
+                'SELECT' => 'instanceId',
+                'FROM'   => LPMTables::MEMBERS,
+                'WHERE'  => [
+                    'instanceType' => LPMInstanceTypes::PROJECT,
+                    'userId'       => $userId,
+                ],
+            ]);
+
+            $ids = [];
+            while ($row = $res->fetch_assoc()) {
+                $ids[(int)$row['instanceId']] = true;
+            }
+
+            self::$_memberProjectIds[$userId] = $ids;
+        }
+
+        return self::$_memberProjectIds[$userId];
     }
 
     /**
@@ -529,6 +615,12 @@ SQL;
     public $aiIssueDraft = false;
 
     /**
+     * В проекте доступна проверка постановки задачи, выполняемая ИИ.
+     * @var Boolean
+     */
+    public $aiIssueReview = false;
+
+    /**
      * Описание предметной области проекта, которое подмешивается
      * в запросы к ИИ: что за продукт, для кого, на чём написан,
      * что означают принятые в команде термины.
@@ -635,6 +727,7 @@ SQL;
             'aiSummary',
             'aiTestChecklist',
             'aiIssueDraft',
+            'aiIssueReview',
             'requireLabels'
         );
 
@@ -756,6 +849,9 @@ SQL;
 
     /**
      * Определяет, есть ли у пользователя права на чтение проекта.
+     *
+     * Единственное определение правила - {@see Project::checkUserReadPermit()};
+     * этим же правилом определяется и доступ к задачам проекта.
      * @param  User    $user Пользователь.
      * @return boolean       true если есть права, в ином случае false.
      */
@@ -765,26 +861,8 @@ SQL;
             return true;
         }
 
-        if ($this->_members != null) {
-            foreach ($this->_members as $member) {
-                if ($user->userId == $member->userId) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            $sql = "SELECT `instanceId` FROM `%s` " .
-                             "WHERE `instanceId`   = '" . $this->id . "' " .
-                               "AND `instanceType` = '" . LPMInstanceTypes::PROJECT . "' " .
-                               "AND `userId`       = '" . $user->userId . "'";
-
-            $db = LPMGlobals::getInstance()->getDBConnect();
-            if (!$query = $db->queryt($sql, LPMTables::MEMBERS)) {
-                return false;
-            }
-
-            return $query->num_rows > 0;
-        }
+        $projectIds = self::getMemberProjectIds($user->userId);
+        return isset($projectIds[(int)$this->id]);
     }
     
     /**

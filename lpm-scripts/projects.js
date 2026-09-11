@@ -37,6 +37,48 @@
 			location.reload();
 		});
 	});
+
+	const addProjectForm = $('#addProjectForm form');
+	// Отправка формы уже идёт: повторные отправки до её завершения запрещены.
+	let addProjectSubmitting = false;
+
+	/**
+	 * Переводит форму добавления проекта в состояние отправки и обратно: в этом
+	 * состоянии она не принимает новых отправок, кнопка отправки отключена,
+	 * а страница закрыта индикатором загрузки.
+	 * @param {boolean} value Перевести форму в состояние отправки.
+	 */
+	const setAddProjectSubmitting = function (value) {
+		if (addProjectSubmitting === value) return;
+
+		addProjectSubmitting = value;
+		$('button[type=submit]', addProjectForm).prop('disabled', value);
+
+		if (value) preloader.show();
+		else preloader.hide();
+	};
+
+	addProjectForm.on('submit', function (e) {
+		// Пока предыдущая отправка не завершилась, форма не уходит повторно:
+		// иначе быстрый повторный Enter или клик создаёт дубль проекта.
+		// Отключённой кнопки для этого мало: часть браузеров отправляет форму
+		// по Enter, даже когда кнопка отправки отключена.
+		// Состояние отправки ставится после проверки полей, чтобы форма
+		// с ошибкой валидации осталась рабочей.
+		if (addProjectSubmitting || !validateAddProj()) {
+			e.preventDefault();
+			e.stopImmediatePropagation();
+			return false;
+		}
+
+		setAddProjectSubmitting(true);
+	});
+
+	// Возврат из кеша браузера («Назад») оживляет уже отправленную форму -
+	// снимаем с неё состояние отправки, иначе отправить её снова будет нельзя.
+	window.addEventListener('pageshow', function (e) {
+		if (e.persisted) setAddProjectSubmitting(false);
+	});
  });
 
 function showAddProjectForm() {

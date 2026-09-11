@@ -93,6 +93,7 @@ $(function () {
         const aiSummary = $('#aiSummaryCheckbox').prop('checked') ? 1 : 0;
         const aiTestChecklist = $('#aiTestChecklistCheckbox').prop('checked') ? 1 : 0;
         const aiIssueDraft = $('#aiIssueDraftCheckbox').prop('checked') ? 1 : 0;
+        const aiIssueReview = $('#aiIssueReviewCheckbox').prop('checked') ? 1 : 0;
         const aiContext = $aiContext.length ? $aiContext.val().trim() : '';
         const requireLabels = $('#requireLabelsCheckbox').prop('checked') ? 1 : 0;
 
@@ -117,6 +118,7 @@ $(function () {
             aiSummary,
             aiTestChecklist,
             aiIssueDraft,
+            aiIssueReview,
             aiContext,
             requireLabels,
             function (res) {

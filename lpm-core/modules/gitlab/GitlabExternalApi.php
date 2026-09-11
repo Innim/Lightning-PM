@@ -192,9 +192,11 @@ class GitlabExternalApi extends ExternalApi
                         }
                     } elseif ($issue->status == Issue::STATUS_IN_WORK) {
                         // Если задача в работе, то вполне возможно надо перевесить ее в тест,
-                        // но предварительно надо убедиться, что все MR задачи влиты.
-                        // А даже если все MR по задаче влиты, но возможно есть привязанные задачи,
-                        // для которых еще нет MR, тогда отправлять в тест не надо
+                        // но предварительно надо убедиться, что не осталось MR,
+                        // которые еще ждут влития.
+                        // А даже если таких MR нет, возможно есть привязанные ветки,
+                        // по которым в итоге ничего не влито, тогда отправлять
+                        // в тест не надо
                         if (!IssueMR::existOpenedMrForIssue($issueId, $mr->id) &&
                                 !IssueBranch::existBranchesWithoutMergedMRForIssue($issueId, $mr->id)) {
                             // Перевешиваем задачу в тест
@@ -378,13 +380,16 @@ class GitlabExternalApi extends ExternalApi
 
                     $commentText = implode("\n\n", $commentParts);
 
+                    // Идентификатор MR нужен комментарию, чтобы показать
+                    // состояние сборки, которую запустит влитие
                     $engine->comments()->postComment(
                         $user,
                         $issue,
                         $commentText,
                         false,
                         true,
-                        IssueCommentType::MERGE_REQUEST
+                        IssueCommentType::MERGE_REQUEST,
+                        IssueCommentMergeRequestData::serialize($mr->id)
                     );
 
                     // Добавляем коммент со ссылкой на задачу в MR
@@ -472,8 +477,13 @@ class GitlabExternalApi extends ExternalApi
                     IssueCommentType::BRANCH_MERGED,
                     IssueCommentBranchMergedData::serializeBy($branches, $mergedSha));
 
-                // Проверяем права и вливаем только задачи, которые уже в тесте
-                if ($issue->checkEditPermit($user->userId) && $issue->status == Issue::STATUS_WAIT) {
+                // Завершаем только задачи, которые уже в тесте.
+                // Права пушившего здесь намеренно не проверяются: завершение -
+                // системное действие по событию "ветка влита", а не правка
+                // задачи человеком. Пушивший (релиз-менеджер, владелец общего
+                // репозитория) может вовсе не числиться участником проекта,
+                // и к факту влития его права отношения не имеют.
+                if ($issue->status == Issue::STATUS_WAIT) {
                     // Проверяем что все ветки этой задачи влиты
                     $isAllMerged = !IssueBranch::existNotMergedInDevelopForIssue($issue->id);
 

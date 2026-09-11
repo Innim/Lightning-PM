@@ -624,7 +624,8 @@ class ProjectPage extends LPMPage
     }
     
     /**
-     * Загружает задачи проекта вместе с их исполнителями и тестировщиками.
+     * Загружает задачи проекта вместе с их исполнителями, тестировщиками
+     * и состояниями сборок.
      * @param  array<int> $statuses Статусы задач (пустой список - любые).
      * @param  string     $search   Поисковый запрос; пустой - без поиска.
      * @return array<Issue> Массив задач.
@@ -636,9 +637,11 @@ class ProjectPage extends LPMPage
         if ($search !== '') {
             // Участников грузим только для найденных задач, а не для всех
             // задач проекта, как это делает выборка без поиска
-            return Issue::preloadParticipants(Issue::loadListByProjectFiltered(
-                $projectId,
-                ['statuses' => $statuses, 'search' => $search]
+            return Issue::preloadBuildStates(Issue::preloadParticipants(
+                Issue::loadListByProjectFiltered(
+                    $projectId,
+                    ['statuses' => $statuses, 'search' => $search]
+                )
             ));
         }
 
@@ -652,7 +655,7 @@ class ProjectPage extends LPMPage
         foreach ($list as $issue) {
             $issue->extractParticipantsFrom($issueParticipants, $loadMembers, $loadTesters, $loadMasters);
         }
-        return $list;
+        return Issue::preloadBuildStates($list);
     }
     
     private function handleFormAction($editMode = false)
@@ -769,43 +772,8 @@ class ProjectPage extends LPMPage
                         '00:00:00';
         $priority = min(99, max(0, (int)$_POST['priority']));
 
-        // Обновляем меткам кол-во использований.
-        $origLabels = Issue::getLabelsByName($_POST['name']);
-        $labels = array_merge($origLabels);
-
-        if ($issueName != null) {
-            $oldLabels = Issue::getLabelsByName($issueName);
-            foreach ($labels as $key => $value) {
-                if (in_array($value, $oldLabels)) {
-                    unset($labels[$key]);
-                }
-            }
-        }
-
-        if (!empty($labels)) {
-            $allLabels = Issue::getLabels($projectId);
-            $countedLabels = [];
-            foreach ($allLabels as $value) {
-                $index = array_search($value['label'], $labels);
-                if ($index !== false) {
-                    $countedLabels[] = $labels[$index];
-                    unset($labels[$index]);
-                }
-            }
-
-            if (!empty($countedLabels)) {
-                Issue::addLabelsUsing($countedLabels, $this->_project->id);
-            }
-
-            if (!empty($labels)) {
-                // Создаём новые метки без использований, затем через addLabelsUsing
-                // начисляем использование и в общий счётчик, и в счётчик по проекту.
-                foreach ($labels as $newLabel) {
-                    Issue::saveLabel($newLabel, $this->_project->id, 0, 0);
-                }
-                Issue::addLabelsUsing($labels, $this->_project->id);
-            }
-        }
+        // Регистрируем в справочнике метки, впервые появившиеся в имени задачи.
+        Issue::registerLabelsUsage($rawName, $this->_project->id, $issueName);
 
         // Считаем SP
         $hours = $this->parseSP($_POST['hours']);

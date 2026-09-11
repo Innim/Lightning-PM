@@ -19,6 +19,18 @@ class ProjectsPage extends LPMPage
      * Поле формы с переключателем показа свободных задач.
      */
     const FIELD_SHOW_FREE_ISSUES = 'showFreeIssues';
+    /**
+     * Поле формы с фильтром доски по роли в задаче.
+     */
+    const FIELD_BOARD_ROLE = 'boardRole';
+    /**
+     * Поле-маркер: в отправленной форме был переключатель свободных задач.
+     *
+     * Печатается рядом с самим переключателем, поэтому отвечает на вопрос
+     * "была ли настройка доступна для правки" применительно к той форме,
+     * которую отправили, а не к фильтру, выбранному в ней.
+     */
+    const FIELD_FREE_ISSUES_SHOWN = 'freeIssuesShown';
 
     // Количество важных задач, открытых для меня по всем проектам
     private $_myIssuesCount = -1;
@@ -77,6 +89,8 @@ class ProjectsPage extends LPMPage
                     return $this->projectsList(false);
                 case self::PUID_ARCH:
                     return $this->projectsList(true);
+                case self::PUID_USER_ISSUES:
+                    return $this->userIssues();
                 case self::PUID_STAT:
                     return $this->statByProjects();
                 case self::PUID_MY_SCRUM_BOARD:
@@ -194,6 +208,20 @@ class ProjectsPage extends LPMPage
         return true;
     }
 
+    /**
+     * Готовит раздел «Мои задачи».
+     *
+     * Состояния сборок в список задач не входят и подгружаются отдельно.
+     * Шаблон берёт тот же список через `lpm_get_user_issues()`, поэтому
+     * дополнять его достаточно здесь.
+     * @return ProjectsPage
+     */
+    private function userIssues(): ProjectsPage
+    {
+        Issue::preloadBuildStates(PageConstructor::getUserIssues());
+        return $this;
+    }
+
     private function statByProjects(): ProjectsPage
     {
         list($month, $year) = StatHelper::parseMonthYearFromArg($this->getParam(2));
@@ -244,31 +272,52 @@ class ProjectsPage extends LPMPage
     private function myScrumBoard(): ProjectsPage
     {
         $engine = LightningEngine::getInstance();
-        $showFreeIssues = $engine->getUser()->pref->showFreeIssuesOnBoard;
+        $pref = $engine->getUser()->pref;
+        $roleFilter = ScrumBoardRoleFilter::sanitize($pref->myBoardRole);
+        // Настройка сохраняется, даже когда фильтр её не применяет: вернувшись
+        // к другому фильтру, пользователь получит переключатель в прежнем виде
+        $showFreeIssues = $pref->showFreeIssuesOnBoard;
+        $withFreeIssues = $showFreeIssues && ScrumBoardRoleFilter::allowsFreeIssues($roleFilter);
 
         list($stickers, $freeIssueIds) =
-            $this->loadMyScrumBoardStickers($engine->getUserId(), $showFreeIssues);
+            $this->loadMyScrumBoardStickers($engine->getUserId(), $roleFilter, $withFreeIssues);
 
         $this->addTmplVar('stickers', $stickers);
         $this->addTmplVar('freeIssueIds', $freeIssueIds);
         $this->addTmplVar('showFreeIssues', $showFreeIssues);
+        $this->addTmplVar('roleFilter', $roleFilter);
         return $this;
     }
 
     /**
      * Собирает стикеры личной scrum доски.
      *
+     * Кроме стикеров с досок проектов в список попадают задачи, где пользователь
+     * тестировщик, но которые с доски уже сняты: проверить их всё равно нужно.
+     *
      * Свободные идут в конец списка, поэтому в своей колонке показываются
      * после задач пользователя. Какие из них свободны - признак этой доски,
      * а не самих стикеров: на доске проекта та же задача свободной не считается.
      * Поэтому список свободных возвращается отдельно.
      * @param  int  $userId         Идентификатор пользователя.
+     * @param  int  $roleFilter     Фильтр по роли в задаче, {@see ScrumBoardRoleFilter}.
      * @param  bool $withFreeIssues Добавить ли свободные задачи из проектов пользователя.
      * @return array Пара: список стикеров и множество `issueId => true` свободных.
      */
-    private function loadMyScrumBoardStickers($userId, $withFreeIssues)
+    private function loadMyScrumBoardStickers($userId, $roleFilter, $withFreeIssues)
     {
-        $stickers = ScrumSticker::loadUserStickersList($userId);
+        $stickers = ScrumSticker::loadUserStickersList(
+            $userId,
+            ScrumBoardRoleFilter::getInstanceTypes($roleFilter)
+        );
+
+        if (ScrumBoardRoleFilter::withOffBoardTesterIssues($roleFilter)) {
+            $stickers = array_merge(
+                $stickers,
+                ScrumSticker::loadOffBoardTesterStickersList($userId)
+            );
+        }
+
         $freeIssueIds = [];
 
         if ($withFreeIssues) {
@@ -289,8 +338,10 @@ class ProjectsPage extends LPMPage
             }
         }
 
-        // Один запрос на участников для всего итогового списка
+        // По одному запросу на участников и на состояния сборок
+        // для всего итогового списка
         ScrumSticker::preloadParticipants($stickers);
+        ScrumSticker::preloadBuildStates($stickers);
 
         return [$stickers, $freeIssueIds];
     }
@@ -306,12 +357,20 @@ class ProjectsPage extends LPMPage
     private function saveMyScrumBoardPref($input): ProjectsPage
     {
         $userId = LightningEngine::getInstance()->getUserId();
+        $roleFilter = ScrumBoardRoleFilter::sanitize(
+            isset($input[self::FIELD_BOARD_ROLE]) ? $input[self::FIELD_BOARD_ROLE] : null
+        );
+
+        // Форму отправляет страница, отрисованная с прежним фильтром, поэтому
+        // о наличии переключателя свободных задач спрашиваем саму форму:
+        // по выбранному сейчас фильтру этого не узнать. Переключателя не было -
+        // прежнее значение настройки сохраняем, а не сбрасываем
+        $showFreeIssues = isset($input[self::FIELD_FREE_ISSUES_SHOWN])
+            ? !empty($input[self::FIELD_SHOW_FREE_ISSUES])
+            : null;
 
         try {
-            UserPref::saveShowFreeIssuesOnBoard(
-                $userId,
-                !empty($input[self::FIELD_SHOW_FREE_ISSUES])
-            );
+            UserPref::saveMyBoardPref($userId, $roleFilter, $showFreeIssues);
         } catch (\GMFramework\ProviderSaveException $e) {
             LightningEngine::getInstance()->addError('Не удалось сохранить настройку доски');
             return $this->myScrumBoard();

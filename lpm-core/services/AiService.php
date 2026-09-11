@@ -165,4 +165,53 @@ class AiService extends LPMBaseService
 
         return $this->answer();
     }
+
+    /**
+     * Проверяет постановку задачи: хватает ли в ней контекста, чтобы взять
+     * задачу в работу без уточнений.
+     *
+     * Требует прав на чтение проекта, которому принадлежит задача.
+     *
+     * Результат не сохраняется и ничего в задаче не меняет: это подсказка
+     * автору по тексту, который он правит в форме.
+     *
+     * @param int $projectId Идентификатор проекта.
+     * @param string $name Название задачи из формы.
+     * @param int $type Тип задачи из формы (одна из констант Issue::TYPE_*).
+     * @param string $desc Описание задачи из формы.
+     * @return [
+     *    ready: bool - можно ли взять задачу в работу без уточнений,
+     *    summary: string - вывод о постановке одной фразой,
+     *    gaps: array - пробелы постановки: [{title: string, question: string}],
+     *    desc: string - улучшенное описание в разметке Markdown
+     *          или пустая строка, если модель не предложила своей формулировки
+     * ]
+     */
+    public function issueReview($projectId, $name, $type, $desc)
+    {
+        $projectId = (int)$projectId;
+
+        try {
+            $project = $this->getProjectRequireReadPermission($projectId);
+
+            if (!IssueReviewBuilder::isAvailableFor($project)) {
+                return $this->error('Проверка постановки в этом проекте недоступна');
+            }
+
+            $result = IssueReviewBuilder::generate($project, $name, (int)$type, $desc);
+
+            $review = $result['review'];
+            $this->add2Answer('ready', $review['ready']);
+            $this->add2Answer('summary', $review['summary']);
+            $this->add2Answer('gaps', $review['gaps']);
+            $this->add2Answer('desc', IssueReviewBuilder::toDescText($review));
+        } catch (AiException $e) {
+            LPMLog::exception($e, LPMLog::CH_AI, ['projectId' => $projectId]);
+            return $this->error($e->getLocalizedMessage());
+        } catch (\Exception $e) {
+            return $this->exception($e);
+        }
+
+        return $this->answer();
+    }
 }

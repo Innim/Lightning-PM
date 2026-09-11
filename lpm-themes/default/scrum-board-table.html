@@ -109,12 +109,15 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                 if ($issue->isMember($user->userId)) $cssClasses[] = 'mine';
                 $isFree = isset($freeIssueIds[$sticker->issueId]);
                 if ($isFree) $cssClasses[] = 'free';
+                $isOffBoard = $sticker->isVirtual();
                 $substatus = $issue->getSubstatus();
                 if ($substatus === IssueSubstatus::PASS_TEST) $cssClasses[] = 'pass-test';
                 if ($substatus === IssueSubstatus::UNDER_TESTING) $cssClasses[] = 'under-testing';
                 if ($issue->isChangesRequested) $cssClasses[] = 'changes-requested';
                 if ($deadlineLevel !== '') $cssClasses[] = 'deadline-' . $deadlineLevel;
                 if ($testMergeLevel = IssueViewHelper::testMergeLevel($issue)) $cssClasses[] = 'test-' . $testMergeLevel;
+
+                $buildLevel = IssueViewHelper::buildLevel($issue);
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
@@ -131,6 +134,15 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                     <i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
                     <i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>
                     <i class="fas fa-code-merge test-ready-check" title="Правки влиты — можно тестировать"></i>
+                    <?php if ($buildLevel !== ''): ?>
+                    <?php /* Подсказка висит на обёртке, а не на иконке: у голой иконки
+                             почти нулевая высота бокса, и всплывающая подсказка
+                             легла бы прямо на неё */ ?><span
+                        class="build-state build-<?=$buildLevel;?>"
+                        title="<?=IssueViewHelper::buildHint($buildLevel);?>"
+                        aria-label="<?=IssueViewHelper::buildHint($buildLevel);?>"><i
+                        class="<?=IssueViewHelper::buildIconClass($buildLevel);?>" aria-hidden="true"></i></span>
+                    <?php endif; ?>
                     <span class="sticker-issue-title"><?=$sticker->getName();?></span>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
@@ -143,12 +155,19 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                 <?php if ($isFree): ?>
                     <span class="sticker-free-mark"><i class="far fa-hand-paper" aria-hidden="true"></i> свободна</span>
                 <?php endif; ?>
+                <?php if ($isOffBoard): ?>
+                    <span class="d-block small text-muted"
+                          title="Задача не на доске проекта — колонка определена её статусом"><i
+                            class="fas fa-thumbtack-slash" aria-hidden="true"></i> не на доске</span>
+                <?php endif; ?>
                 <?php if ($deadlineLevel !== ''): ?>
                     <span class="sticker-issue-deadline deadline-<?=$deadlineLevel;?>"
                           title="<?=IssueViewHelper::deadlineHint($issue);?>"><i
                             class="<?=IssueViewHelper::deadlineIconClass($deadlineLevel);?>"
                             aria-hidden="true"></i> <?=$issue->getCompleteDate();?></span>
                 <?php endif; ?>
+                <?php /* Действия требуют стикера в БД: у задачи вне доски его нет */ ?>
+                <?php if (!$isOffBoard): ?>
                 <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                    class="sticker-control-remove" title="Убрать с доски"><i class="fa fa-times" aria-hidden="true"></i></a>
                 <div class="control-line">
@@ -161,6 +180,7 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                     <a href="#" onclick="scrumBoard.changeScrumState(event); return false;"
                        class="sticker-control-next"><i class="fa fa-caret-right" aria-hidden="true"></i></a>
                 </div>
+                <?php endif; ?>
             </div>
             <?php endforeach;?>
             </div>

@@ -52,9 +52,7 @@ class IssueViewHelper
      */
     public static function testMergeLevel(Issue $issue)
     {
-        if (!$issue->isTesting() || $issue->hasPassTestMark
-            || $issue->isChangesRequested || $issue->isUnderTesting
-        ) {
+        if (!$issue->isAwaitingTest()) {
             return '';
         }
 
@@ -66,6 +64,93 @@ class IssueViewHelper
                 return 'ready';
             default:
                 return '';
+        }
+    }
+
+    /**
+     * Классы состояния проверки задачи для строки списка задач.
+     *
+     * Отметки состояния всегда есть в разметке
+     * ({@see PagePrinter::issueTestState()}), а показывает нужную из них
+     * класс на строке - поэтому классы и отметки должны меняться вместе.
+     * @param  Issue $issue Задача.
+     * @return array<string> Список CSS-классов. Пустой, если задаче
+     * нечего уточнять.
+     */
+    public static function testStateClasses(Issue $issue)
+    {
+        $classes = [];
+
+        $substatus = $issue->getSubstatus();
+        if ($substatus === IssueSubstatus::PASS_TEST) {
+            $classes[] = 'pass-test';
+        }
+
+        if ($substatus === IssueSubstatus::UNDER_TESTING) {
+            $classes[] = 'under-testing';
+        }
+
+        if ($issue->isChangesRequested) {
+            $classes[] = 'changes-requested';
+        }
+
+        if ($testMergeLevel = self::testMergeLevel($issue)) {
+            $classes[] = 'test-' . $testMergeLevel;
+        }
+
+        return $classes;
+    }
+
+    /**
+     * Состояние сборки задачи в тесте.
+     *
+     * Показывается рядом с состоянием правок и по тем же правилам
+     * ({@see testMergeLevel()}): пока у задачи есть отметка поважнее,
+     * готовность к тесту не показывается вовсе.
+     * @param  Issue $issue Задача.
+     * @return string Состояние (см. IssuePipelineStatus::*). Пустая строка,
+     * если показывать нечего.
+     */
+    public static function buildLevel(Issue $issue)
+    {
+        if (!$issue->isAwaitingTest() || empty($issue->buildState)) {
+            return '';
+        }
+
+        return $issue->buildState;
+    }
+
+    /**
+     * Классы иконки состояния сборки.
+     * @param  string $level Состояние из buildLevel().
+     * @return string Список CSS-классов FontAwesome.
+     */
+    public static function buildIconClass($level)
+    {
+        switch ($level) {
+            case IssuePipelineStatus::RUNNING:
+                return 'fa-solid fa-spinner fa-spin';
+            case IssuePipelineStatus::FAILED:
+                return 'fa-solid fa-circle-xmark';
+            default:
+                return 'fa-solid fa-circle-check';
+        }
+    }
+
+    /**
+     * Подсказка о том, что состояние сборки значит для проверки задачи.
+     * @param  string $level Состояние из buildLevel().
+     * @return string Текст подсказки.
+     */
+    public static function buildHint($level)
+    {
+        switch ($level) {
+            case IssuePipelineStatus::RUNNING:
+                return 'Сборка ещё идёт — тестировать рано';
+            case IssuePipelineStatus::FAILED:
+                return 'Сборка упала — тестировать рано';
+            default:
+                return 'Сборка прошла — можно тестировать';
         }
     }
 

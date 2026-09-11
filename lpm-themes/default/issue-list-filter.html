@@ -2,9 +2,12 @@
 /*
 Требуются: 
     $elementId - ID корневого HTML элемента
+    $showMultiMemberFilter - выводить ли переключатель «несколько исполнителей»
 */
 ?>
-<div id="<?=$elementId?>" class="mx-1 issue-list-filter">
+<?php /* По атрибуту `data-multi-member-filter` JS понимает, что переключатель
+         выведен: без него отбор по числу исполнителей недоступен */ ?>
+<div id="<?=$elementId?>" class="mx-1 issue-list-filter"<?=$showMultiMemberFilter ? ' data-multi-member-filter' : '';?>>
   <div class="row g-2 align-items-center">
     <div class="col-auto">
       <label class="form-label mb-0">Фильтры:</label>
@@ -57,6 +60,16 @@
         </template>
       </vue-multiselect>
     </div>
+    <?php if ($showMultiMemberFilter): ?>
+    <div class="col-auto">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch"
+               id="<?=$elementId?>MultiMember" v-model="multiMemberOnly">
+        <label class="form-check-label" for="<?=$elementId?>MultiMember"
+               title="Оставить только задачи, у которых больше одного исполнителя">Несколько исполнителей</label>
+      </div>
+    </div>
+    <?php endif; ?>
     <div class="col-auto">
       <button
         v-if="hasActiveFilters"

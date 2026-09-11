@@ -10,6 +10,7 @@
 $descMaxLen = Issue::DESC_MAX_LEN;
 $isHidden = !empty($isHidden);
 $aiDraftAvailable = IssueDraftBuilder::isAvailableFor($project);
+$aiReviewAvailable = IssueReviewBuilder::isAvailableFor($project);
 $descTemplate = LPMOptions::getIssueDescTemplate();
 ?>
 <article id="issueForm" class="container-legacy" style="<?php if ($isHidden):?>display: none;<?php endif;?>" data-project-scrum="<?=$project->scrum;?>" data-scrum-sprint-num="<?=$project->getCurrentSprintNum();?>"
@@ -248,7 +249,16 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
                         </button>
                     </div>
                     <h6 class="desc-preview-title d-none mb-0">Предпросмотр описания</h6>
-                    <div class="d-flex gap-2 ms-auto">
+                    <div class="d-flex flex-wrap justify-content-end gap-2 ms-auto">
+                        <?php if ($aiReviewAvailable): ?>
+                        <?php /* Класс ai-issue-review-btn нужен JS: по нему кнопка
+                                 блокируется на время ответа модели (issue-form.js). */ ?>
+                        <button type="button" class="btn btn-sm btn-outline-primary ai-issue-review-btn"
+                                onclick="issueForm.checkIssueReview()"
+                                title="ИИ проверит, хватает ли в постановке контекста, чтобы взять задачу в работу">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1" aria-hidden="true"></i>Проверить постановку
+                        </button>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-sm btn-outline-secondary apply-desc-template" title="Вставить стандартный шаблон описания (Ctrl + Shift + M)">
                             <i class="fas fa-file-lines me-1"></i>Шаблон описания
                         </button>
@@ -275,7 +285,8 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
                                     style="text-decoration:line-through;" data-marker="~">~зачеркнутый~</a>,
                                 <a class="tag h6 small" href="javascript:void(0)" title="Ctrl + H"
                                     data-single="1" data-marker="### ">### Заголовок</a>,
-                                <span class="tag quote" title="Ctrl + G">&gt; цитата</span>,
+                                <a class="tag quote" href="javascript:void(0)" title="Ctrl + G"
+                                    data-single="1" data-marker="&gt; ">&gt; цитата</a>,
                                 <a class="tag" href="javascript:void(0)"
                             style="text-decoration:underline;" data-type="link" title="Ctrl + K">[ссылка](url)</a>.</p>
                             <p class="pb-0 mb-0">Также используйте <kbd>`</kbd> для строчного кода и <kbd>```</kbd> для
