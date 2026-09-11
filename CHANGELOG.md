@@ -8,6 +8,7 @@
 - Личную Scrum доску можно отфильтровать по своей роли в задаче ([#391](https://task.innim.ru/project/lightning-pm/issue/391)).
 - Приложенный к задаче или комментарию HTML-отчёт открывается на отдельной странице просмотра, без скачивания ([#439](https://task.innim.ru/project/lightning-pm/issue/439)).
 - На Scrum доске проекта можно оставить только задачи с несколькими исполнителями ([#327](https://task.innim.ru/project/lightning-pm/issue/327)).
+- К задаче можно приложить изображение в формате webp ([#427](https://task.innim.ru/project/lightning-pm/issue/427)).
 - Подсказка «цитата» под описанием задачи теперь оформляет цитатой выбранные строки ([#233](https://task.innim.ru/project/lightning-pm/issue/233)).
 ### Fixed
 - Повторные Enter или клики в формах добавления проекта и регистрации больше не создают дублей ([#434](https://task.innim.ru/project/lightning-pm/issue/434)).
