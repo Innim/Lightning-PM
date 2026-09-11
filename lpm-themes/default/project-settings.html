@@ -114,6 +114,15 @@
                     </div>
                 </div>
 
+                <div class="form-check mb-3">
+                    <input id="aiIssueReviewCheckbox" class="form-check-input" type="checkbox" <?=$project->aiIssueReview ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="aiIssueReviewCheckbox">Проверка постановки от ИИ</label>
+                    <div class="form-text">
+                        В форме создания и редактирования задачи можно спросить у ИИ,
+                        хватает ли в постановке контекста, чтобы взять задачу в работу.
+                    </div>
+                </div>
+
                 <div class="mb-0">
                     <label for="aiContext" class="form-label">Контекст проекта</label>
                     <textarea id="aiContext" class="form-control" rows="6"
