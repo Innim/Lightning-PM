@@ -2,6 +2,27 @@
 
 class ApiIssueController extends ApiControllerBase
 {
+    /** Роль участника задачи: исполнитель. */
+    const ROLE_MEMBER = 'members';
+
+    /** Роль участника задачи: тестировщик. */
+    const ROLE_TESTER = 'testers';
+
+    /** Роль участника задачи: мастер. */
+    const ROLE_MASTER = 'masters';
+
+    /**
+     * Роли участников задачи: имя роли в адресе => тип участия в задаче.
+     *
+     * Имена ролей - единственные, которые понимает API.
+     * @see LPMInstanceTypes
+     */
+    const MEMBER_ROLES = [
+        self::ROLE_MEMBER => LPMInstanceTypes::ISSUE,
+        self::ROLE_TESTER => LPMInstanceTypes::ISSUE_FOR_TEST,
+        self::ROLE_MASTER => LPMInstanceTypes::ISSUE_FOR_MASTER,
+    ];
+
     public function dispatch(array $path)
     {
         $method = $this->request()->getMethod();
@@ -50,6 +71,20 @@ class ApiIssueController extends ApiControllerBase
 
         if ($method === 'DELETE' && count($path) === 2 && $path[1] === 'board') {
             return $this->removeIssueFromBoard($issue);
+        }
+
+        if (count($path) >= 2 && isset(self::MEMBER_ROLES[$path[1]])) {
+            if ($method === 'PUT' && count($path) === 2) {
+                return $this->replaceIssueParticipants($issue, $path[1]);
+            }
+
+            if ($method === 'POST' && count($path) === 2) {
+                return $this->addIssueParticipants($issue, $path[1]);
+            }
+
+            if ($method === 'DELETE' && count($path) === 3) {
+                return $this->removeIssueParticipant($issue, $path[1], $path[2]);
+            }
         }
 
         return ApiResponse::error('Route not found', 404);
@@ -111,6 +146,229 @@ class ApiIssueController extends ApiControllerBase
         }
 
         return $this->reloadedIssueResponse($issue);
+    }
+
+    /**
+     * Заменяет состав участников задачи в одной из ролей.
+     *
+     * Пустой список снимает с задачи всех участников этой роли.
+     * @param  Issue  $issue Задача.
+     * @param  string $role  Роль участников, см. {@see ApiIssueController::MEMBER_ROLES}.
+     * @return ApiResponse Обновлённая задача или ошибка разбора списка.
+     */
+    private function replaceIssueParticipants(Issue $issue, $role)
+    {
+        $userIds = $this->parseParticipants($issue, true);
+        if ($userIds instanceof ApiResponse) {
+            return $userIds;
+        }
+
+        return $this->saveIssueParticipants($issue, $role, $userIds);
+    }
+
+    /**
+     * Назначает участников задачи в одной из ролей, сохраняя назначенных ранее.
+     * @param  Issue  $issue Задача.
+     * @param  string $role  Роль участников, см. {@see ApiIssueController::MEMBER_ROLES}.
+     * @return ApiResponse Обновлённая задача или ошибка разбора списка.
+     */
+    private function addIssueParticipants(Issue $issue, $role)
+    {
+        $userIds = $this->parseParticipants($issue, false);
+        if ($userIds instanceof ApiResponse) {
+            return $userIds;
+        }
+
+        return $this->saveIssueParticipants(
+            $issue,
+            $role,
+            array_merge($this->participantIds($issue, $role), $userIds)
+        );
+    }
+
+    /**
+     * Снимает одного участника задачи с роли.
+     *
+     * Пользователь, в этой роли не назначенный, - не ошибка: состав участников
+     * и так тот, которого добивался запрос. Условия, при которых участника
+     * нельзя назначить (блокировка, потеря доступа к проекту), снятию
+     * не мешают - иначе такого участника было бы не убрать.
+     * @param  Issue  $issue  Задача.
+     * @param  string $role   Роль участников, см. {@see ApiIssueController::MEMBER_ROLES}.
+     * @param  string $userId Идентификатор снимаемого пользователя.
+     * @return ApiResponse Обновлённая задача или ошибка разбора идентификатора.
+     */
+    private function removeIssueParticipant(Issue $issue, $role, $userId)
+    {
+        if (!ctype_digit((string)$userId) || (int)$userId <= 0) {
+            return ApiResponse::error('Invalid user id, expected a positive integer', 400);
+        }
+
+        $userId = (int)$userId;
+        if (!User::load($userId)) {
+            return ApiResponse::error('User not found: ' . $userId, 404);
+        }
+
+        $userIds = array_diff($this->participantIds($issue, $role), [$userId]);
+
+        return $this->saveIssueParticipants($issue, $role, $userIds);
+    }
+
+    /**
+     * Разбирает список пользователей из параметра `users` тела запроса.
+     *
+     * Назначить участником можно только того, кому задача и так доступна:
+     * то же правило действует в интерфейсе, где пользователь добавляет себя
+     * в участники ({@see IssueService::addMeToIssue()}). Пользователь вне
+     * проекта и заблокированный пользователь - ошибка запроса, а не молча
+     * выброшенное из списка значение.
+     * @param  Issue $issue      Задача, к которой назначаются участники.
+     * @param  bool  $allowEmpty Допустим ли пустой список.
+     * @return array<int>|ApiResponse Идентификаторы пользователей без повторов
+     *         или ответ с ошибкой, если список назначить нельзя.
+     */
+    private function parseParticipants(Issue $issue, $allowEmpty)
+    {
+        $users = $this->request()->getBody('users');
+        if (!is_array($users)) {
+            return ApiResponse::error('users is required and must be an array of user ids', 400);
+        }
+
+        if (empty($users) && !$allowEmpty) {
+            return ApiResponse::error('users must not be empty', 400);
+        }
+
+        $userIds = [];
+        foreach ($users as $value) {
+            if (!is_numeric($value) || (int)$value != $value || (int)$value <= 0) {
+                return ApiResponse::error('Invalid user id, expected a positive integer', 400);
+            }
+
+            $userId = (int)$value;
+            $user = User::load($userId);
+            if (empty($user)) {
+                return ApiResponse::error('User not found: ' . $userId, 404);
+            }
+
+            if ($user->locked) {
+                return ApiResponse::error('User ' . $userId . ' is locked', 400);
+            }
+
+            if (!Project::checkUserReadPermit($issue->projectId, $userId)) {
+                return ApiResponse::error('User ' . $userId . ' has no access to the project', 400);
+            }
+
+            $userIds[] = $userId;
+        }
+
+        return array_values(array_unique($userIds));
+    }
+
+    /**
+     * Идентификаторы участников задачи в одной из ролей.
+     * @param  Issue  $issue Задача.
+     * @param  string $role  Роль участников, см. {@see ApiIssueController::MEMBER_ROLES}.
+     * @return array<int> Идентификаторы пользователей.
+     */
+    private function participantIds(Issue $issue, $role)
+    {
+        switch ($role) {
+            case self::ROLE_TESTER:
+                $ids = $issue->getTesterIds();
+                break;
+            case self::ROLE_MASTER:
+                $ids = $issue->getMasterIds();
+                break;
+            default:
+                $ids = $issue->getMemberIds();
+                break;
+        }
+
+        return array_map('intval', $ids);
+    }
+
+    /**
+     * Приводит состав участников задачи в одной из ролей к заданному.
+     *
+     * Записывается только разница, поэтому повторное назначение того же
+     * участника ничего не меняет и не порождает ни записи в журнале,
+     * ни оповещения.
+     * @param  Issue      $issue   Задача.
+     * @param  string     $role    Роль участников, см. {@see ApiIssueController::MEMBER_ROLES}.
+     * @param  array<int> $userIds Итоговый состав участников этой роли.
+     * @return ApiResponse Обновлённая задача.
+     * @throws Exception Если состав не удалось сохранить или перечитать задачу.
+     */
+    private function saveIssueParticipants(Issue $issue, $role, array $userIds)
+    {
+        $instanceType = self::MEMBER_ROLES[$role];
+        $userIds = array_values(array_unique(array_map('intval', $userIds)));
+
+        // Снимок состава - до записи в базу: списки участников грузятся
+        // лениво и кешируются в объекте задачи
+        $oldMemberIds = array_map('intval', $issue->getMemberIds());
+        $oldTesterIds = array_map('intval', $issue->getTesterIds());
+        $oldMasterIds = array_map('intval', $issue->getMasterIds());
+
+        $current = $this->participantIds($issue, $role);
+        $removed = array_values(array_diff($current, $userIds));
+        $added = array_values(array_diff($userIds, $current));
+
+        if (!empty($removed)) {
+            if (!Member::deleteMembers($instanceType, $issue->id, $removed)) {
+                throw new Exception('Failed to remove issue participants');
+            }
+
+            // Доля оценки задачи хранится отдельно от самого участия,
+            // поэтому снятый исполнитель уносит с собой и её
+            if ($role === self::ROLE_MEMBER && !IssueMember::deleteInfo($issue->id, $removed)) {
+                throw new Exception('Failed to remove issue members estimate');
+            }
+        }
+
+        if (!empty($added) && !Member::saveMembers($instanceType, $issue->id, $added)) {
+            throw new Exception('Failed to assign issue participants');
+        }
+
+        $updated = Issue::load($issue->id);
+        if (!$updated) {
+            throw new Exception('Failed to load issue');
+        }
+
+        if (!empty($removed) || !empty($added)) {
+            $user = $this->user();
+
+            // Отметку о взятии в тестирование держит тестировщик задачи,
+            // поэтому исключение его из тестировщиков снимает и отметку
+            if ($role === self::ROLE_TESTER) {
+                $updated->releaseFromTestingIfNotTester($user->getID());
+            }
+
+            $changes = IssueChangeSet::build(
+                $issue,
+                $oldMemberIds,
+                $oldTesterIds,
+                $oldMasterIds,
+                $updated
+            );
+
+            UserLogEntry::issueEdit(
+                $user->getID(),
+                $issue->id,
+                "Edit participants via api:\n" . $changes->asText()
+            );
+
+            Issue::notifyByEmail(
+                $updated,
+                IssueEmailFormatter::issueChangedSubject($updated),
+                IssueEmailFormatter::issueChangedText($updated, $user, $changes),
+                EmailNotifier::PREF_EDIT_ISSUE
+            );
+        }
+
+        return ApiResponse::success([
+            'issue' => $this->serializer()->issue($updated),
+        ]);
     }
 
     /**

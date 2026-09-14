@@ -44,6 +44,10 @@ class ApiProjectController extends ApiControllerBase
             return $this->showBoard($project);
         }
 
+        if (count($path) === 2 && $path[1] === 'members') {
+            return $this->listMembers($project);
+        }
+
         if (count($path) === 2 && $path[1] === 'labels') {
             return $this->listLabels($project);
         }
@@ -70,6 +74,27 @@ class ApiProjectController extends ApiControllerBase
         }
 
         return ApiResponse::error('Route not found', 404);
+    }
+
+    /**
+     * Участники проекта - те, кого можно назначить участником его задачи.
+     *
+     * Заблокированные пользователи в список не попадают: их и в интерфейсе
+     * нельзя выбрать участником задачи.
+     * @param  Project $project Проект.
+     * @return ApiResponse Проект и его участники.
+     */
+    private function listMembers(Project $project)
+    {
+        $members = [];
+        foreach ($project->getMembers(true) as $member) {
+            $members[] = $this->serializer()->user($member);
+        }
+
+        return ApiResponse::success([
+            'project' => $this->serializer()->project($project),
+            'members' => $members,
+        ]);
     }
 
     private function listProjects()

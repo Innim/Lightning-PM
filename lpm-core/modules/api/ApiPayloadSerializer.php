@@ -165,6 +165,9 @@ class ApiPayloadSerializer
             'createBranch' => $this->baseUrl . '/issues/' . $issue->id . '/branches',
             'repositories' => $this->baseUrl . '/projects/' . $issue->projectId . '/repositories',
             'board' => $this->baseUrl . '/issues/' . $issue->id . '/board',
+            'members' => $this->baseUrl . '/issues/' . $issue->id . '/members',
+            'testers' => $this->baseUrl . '/issues/' . $issue->id . '/testers',
+            'masters' => $this->baseUrl . '/issues/' . $issue->id . '/masters',
         ];
 
         return $obj;
