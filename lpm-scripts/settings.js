@@ -68,7 +68,6 @@ function saveSettings(form) {
         emailSubscript: form.querySelector('#emailSubscript').value,
         issueDescTemplate: form.querySelector('#issueDescTemplate').value,
         issueGuidelines: form.querySelector('#issueGuidelines').value,
-        newIssueView: form.querySelector('#newIssueView').checked ? 1 : 0,
     };
 
     const submitBtn = form.querySelector('button[type=submit]');

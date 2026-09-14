@@ -401,8 +401,7 @@ class ProjectPage extends LPMPage
         }
 
         $this->_title = $this->getTitleByIssue($issue);
-        // Обновлённый вид страницы задачи пока под экспериментальным флагом
-        $this->_pattern = LPMOptions::getInstance()->newIssueView ? 'issue' : 'issue-legacy';
+        $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
         $this->_js = array_merge(
             ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/create-from-issue', 'popups/add-issue-link', 'goto-issue'],

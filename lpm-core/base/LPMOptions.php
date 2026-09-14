@@ -209,13 +209,6 @@ TEXT;
     public $allowRegistration = true;
 
     /**
-     * Показывать ли обновлённый вид страницы задачи.
-     * Экспериментальная настройка: пока выключена, страница отдаётся в прежнем виде.
-     * @var bool
-     */
-    public $newIssueView = false;
-
-    /**
      * Скелет описания задачи: разделы, которые кнопка шаблона в форме задачи
      * подставляет в описание.
      *
@@ -246,7 +239,7 @@ TEXT;
         parent::initialization();
 
         $this->_typeConverter->addIntVars('cookieExpire');
-        $this->_typeConverter->addBoolVars('allowRegistration', 'newIssueView');
+        $this->_typeConverter->addBoolVars('allowRegistration');
     }
 
     protected function initOptions()
