@@ -1,6 +1,12 @@
 <?php
 /**
- * Состояние сборки, запущенной влитием merge request'а задачи.
+ * Состояние сборки задачи по итогам влития её merge request'а.
+ *
+ * Отметка отвечает на вопрос «можно ли брать задачу в тест сейчас», поэтому
+ * хранится не результат сборки самого влития, а последнее известное состояние:
+ * удачная сборка более позднего коммита той же ветки провал снимает
+ * (см. {@see self::loadRecoveredByPipeline()}). Цена такого выбора принята:
+ * то, что сборка именно этого влития падала, потом уже не видно.
  *
  * На пару «задача — merge request» приходится одна запись: у задачи бывает
  * несколько MR, в том числе в разных репозиториях, и один MR может закрывать
@@ -39,7 +45,7 @@ class IssuePipeline extends LPMBaseObject
      * @param  string $branch       Ветка merge request'а.
      * @param  string $ref          Ветка, в которую влит merge request:
      *                              в ней и идёт сборка.
-     * @param  string $sha          Коммит, для которого запущена сборка.
+     * @param  string $sha          Коммит, которым merge request влит в ветку.
      * @throws \GMFramework\ProviderSaveException Если не удалось сохранить.
      */
     public static function registerForMr($issueId, $mrId, $repositoryId, $branch, $ref, $sha)
@@ -82,6 +88,9 @@ class IssuePipeline extends LPMBaseObject
      * запись остаётся с прошлым результатом до конца новой попытки: её
      * завершение свежее сохранённого и применяется.
      *
+     * Кроме сборки своего коммита, удачная сборка снимает провал с записей той
+     * же ветки (см. {@see self::loadRecoveredByPipeline()}).
+     *
      * @param  GitlabPipeline $pipeline Данные пайплайна.
      * @return int Количество обновлённых записей.
      * @throws \GMFramework\ProviderLoadException Если не удалось прочитать состояния.
@@ -114,18 +123,12 @@ class IssuePipeline extends LPMBaseObject
                 continue;
             }
 
-            self::buildAndSaveToDbV2([
-                'UPDATE' => LPMTables::ISSUE_PIPELINE,
-                'SET'    => [
-                    'pipelineId' => (int)$pipeline->id,
-                    'status'     => (string)$pipeline->status,
-                    'url'        => (string)$pipeline->url,
-                    'finishedAt' => $finishedAt,
-                    'updatedAt'  => DateTimeUtils::mysqlDate(),
-                ],
-                'WHERE'  => ['id' => (int)$row->id],
-            ]);
+            self::saveState($row->id, $pipeline, $finishedAt);
+            $updated++;
+        }
 
+        foreach (self::loadRecoveredByPipeline($pipeline) as $row) {
+            self::saveState($row->id, $pipeline, $finishedAt);
             $updated++;
         }
 
@@ -134,6 +137,85 @@ class IssuePipeline extends LPMBaseObject
         }
 
         return $updated;
+    }
+
+    /**
+     * Загружает записи, с которых удачная сборка снимает провал.
+     *
+     * Отметка отвечает на вопрос «можно ли брать задачу в тест сейчас»,
+     * а не «какой была сборка этого влития». Провал часто вызван не самой
+     * задачей - конфликтом при влитии, который поправили в ветке, или
+     * поломкой от соседней задачи, - и чинит его сборка уже другого коммита.
+     * Поэтому удачная сборка снимает провал со всех записей своей ветки.
+     *
+     * Ветка целевая, то есть движется только вперёд, поэтому более поздняя
+     * сборка собирает коммит, в который влитие задачи уже входит. «Более
+     * поздняя» определяется по идентификатору пайплайна: он сквозной и растёт
+     * со временем.
+     *
+     * Обратное неверно: провал более поздней сборки на записи не переносится.
+     * Иначе одна поломка красила бы все задачи ветки разом, а отметка нужна
+     * на той задаче, влитие которой сборку и уронило.
+     *
+     * @param  GitlabPipeline $pipeline Данные пайплайна.
+     * @return array<IssuePipeline> Пустой массив, если сборка ничего не чинит.
+     * @throws \GMFramework\ProviderLoadException Если не удалось прочитать состояния.
+     */
+    private static function loadRecoveredByPipeline(GitlabPipeline $pipeline)
+    {
+        if (IssuePipelineStatus::fromGitlabStatus($pipeline->status) !== IssuePipelineStatus::SUCCESS) {
+            return [];
+        }
+
+        // Сборка по расписанию и дочерний пайплайн идут по той же ветке,
+        // но собирают не то же самое, что сборка влития: их успех о состоянии
+        // ветки не говорит
+        $source = (string)$pipeline->source;
+        if ($source === GitlabPipeline::SOURCE_SCHEDULE ||
+                $source === GitlabPipeline::SOURCE_PARENT_PIPELINE) {
+            return [];
+        }
+
+        // Вхождение коммитов задачи в эту сборку у GitLab не спрашиваем:
+        // монотонного pipelineId на целевой ветке для этого достаточно,
+        // а запрос связи коммитов шёл бы на каждое событие пайплайна
+        return self::loadAndParseV2([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::ISSUE_PIPELINE,
+            'WHERE'  => [
+                'repositoryId' => (int)$pipeline->projectId,
+                'ref'          => (string)$pipeline->ref,
+                'sha'          => ['<>' => (string)$pipeline->sha],
+                'status'       => IssuePipelineStatus::failedGitlabStatuses(),
+                // Пока сборка самого влития неизвестна (0), сравнить сборки
+                // по времени нечем - такие записи не чиним
+                'pipelineId'   => ['>' => 0, '<' => (int)$pipeline->id],
+            ],
+        ], __CLASS__);
+    }
+
+    /**
+     * Записывает состояние сборки.
+     *
+     * @param  int            $id         Идентификатор записи.
+     * @param  GitlabPipeline $pipeline   Данные пайплайна.
+     * @param  int            $finishedAt Время завершения сборки, unixtime;
+     *                                    0 - сборка не завершена.
+     * @throws \GMFramework\ProviderSaveException Если не удалось сохранить состояние.
+     */
+    private static function saveState($id, GitlabPipeline $pipeline, $finishedAt)
+    {
+        self::buildAndSaveToDbV2([
+            'UPDATE' => LPMTables::ISSUE_PIPELINE,
+            'SET'    => [
+                'pipelineId' => (int)$pipeline->id,
+                'status'     => (string)$pipeline->status,
+                'url'        => (string)$pipeline->url,
+                'finishedAt' => (int)$finishedAt,
+                'updatedAt'  => DateTimeUtils::mysqlDate(),
+            ],
+            'WHERE'  => ['id' => (int)$id],
+        ]);
     }
 
     /**
@@ -414,13 +496,14 @@ class IssuePipeline extends LPMBaseObject
     public $ref;
 
     /**
-     * Коммит, для которого запущена сборка.
+     * Коммит, которым merge request влит в ветку.
      * @var string
      */
     public $sha;
 
     /**
-     * GitlabPipeline::$id; 0, если пайплайн ещё не найден.
+     * GitlabPipeline::$id сборки, чьё состояние записано; 0, если пайплайн
+     * ещё не найден.
      * @var int
      */
     public $pipelineId;
