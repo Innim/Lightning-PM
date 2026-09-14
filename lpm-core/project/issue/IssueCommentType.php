@@ -38,6 +38,21 @@ class IssueCommentType
     const TEST_CHECKLIST = 'test_checklist';
 
     /**
+     * Задачу взяли в тестирование.
+     *
+     * Только запись в ленте о том, кто и когда это сделал: само состояние
+     * отметки задаёт журнал задачи (@see IssueEventType::TAKEN_FOR_TESTING).
+     */
+    const TAKEN_FOR_TESTING = 'taken_for_testing';
+
+    /**
+     * С задачи сняли отметку о взятии в тестирование.
+     *
+     * Как и {@see TAKEN_FOR_TESTING}, это запись в ленте, а не состояние.
+     */
+    const RELEASED_FROM_TESTING = 'released_from_testing';
+
+    /**
      * Комментарий о создании ветки.
      */
     const CREATE_BRANCH = 'create_branch';
