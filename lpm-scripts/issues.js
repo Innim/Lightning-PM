@@ -1472,12 +1472,7 @@ function setIssueInfo(issue, substatus) {
 
     const $issueInfo = $("#issueInfo");
 
-    // Разметка сама сообщает, какой вид открыт, — флаг настроек в JS не нужен
-    if ($issueInfo.hasClass('issue-card')) {
-        setIssueInfoCard(issue, $issueInfo, substatus);
-    } else {
-        setIssueInfoLegacy(issue, $issueInfo);
-    }
+    setIssueInfoCard(issue, $issueInfo, substatus);
 
     setIssueFormState(issue, $issueInfo);
 };
@@ -1510,7 +1505,7 @@ function setIssueFormState(issue, $issueInfo) {
 }
 
 /**
- * Обновляет обновлённый вид задачи (шаблон issue.html).
+ * Обновляет карточку задачи (шаблон issue.html).
  * @param {Issue} issue
  * @param {jQuery} $issueInfo
  * @param {Number} substatus Уточнение статуса, присланное сервером
@@ -1614,76 +1609,6 @@ function applyIssueSubstatus(res) {
 
     setIssueStatusBadge($issueInfo, $issueInfo.data('status'), res.substatus);
 }
-
-/* ======== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue-legacy.html) ========
-   Показывается, пока выключен экспериментальный флаг newIssueView.
-   Удаляется целиком вместе с шаблоном и одноимённым блоком в main.css. */
-
-/**
- * Обновляет прежний вид задачи (шаблон issue-legacy.html): значения полей
- * подставляются по их порядку в разметке, а состояние задачи задаётся
- * классами на .info-list и .buttons-bar.
- * @param {Issue} issue
- * @param {jQuery} $issueInfo
- */
-function setIssueInfoLegacy(issue, $issueInfo) {
-    $(".issue-name", $issueInfo).text(issue.name);
-
-    // В строках участников имена лежат во вложенном блоке,
-    // чтобы ссылка быстрого добавления себя не затиралась при обновлении
-    const fields = $("> .info-list > div > .value", $issueInfo).map(function () {
-        return $(this).children('.participants')[0] || this;
-    }).get();
-
-    $("#issueView").removeClass('issue-testing');
-
-    $(".info-list, .buttons-bar", $issueInfo)
-        .removeClass('active-issue verify-issue completed-issue');
-
-    if (issue.isCompleted()) {
-        $(".info-list, .buttons-bar", $issueInfo).addClass('completed-issue');
-    } else if (issue.isOpened()) {
-        $(".info-list, .buttons-bar", $issueInfo).addClass('active-issue');
-    } else if (issue.isVerify()) {
-        $(".info-list, .buttons-bar", $issueInfo).addClass('verify-issue');
-        $("#issueView").addClass('issue-testing');
-    }
-
-    const values = [
-        issue.getStatus(),
-        issue.getType(),
-        issue.getPriority(),
-        issue.getCreateDate(),
-        issue.getCompleteDate(),
-        issue.getCompletedDate(),
-        issue.getAuthor(),
-        issue.getMembers(),
-        issue.getTesters(),
-        issue.getMasters(),
-        issue.getDesc(true)
-    ];
-
-    for (var i = 0; i < values.length; i++) {
-        fields[i].innerHTML = values[i];
-    }
-
-    const $completeDate = $('.issue-complete-date-row', $issueInfo);
-    if (issue.hasCompleteDate()) {
-        $completeDate.show();
-    } else {
-        $completeDate.hide();
-    }
-
-    issuePage.updateAddMeLinks(issue);
-
-    issuePage.updatePriorityVals();
-
-    // Атрибут держим в паре с jQuery-хранилищем: .data() его больше не читает,
-    // и без этого разметка сохраняет статус, с которым страница загрузилась.
-    $issueInfo.attr('data-status', issue.status).data('status', issue.status);
-};
-
-/* ======== конец старого вида страницы задачи ======== */
 
 issuePage.createBranch = function () {
     createBranch.show(issuePage.projectId, issuePage.getIssueId(), issuePage.idInProject);
@@ -2365,15 +2290,6 @@ function Issue(obj) {
         return list.map(user => Issue.renderUser(user, withSp)).join('');
     };
 
-    // Списки участников простым текстом — нужны старому виду задачи
-    // (issue-legacy.html), в обновлённом виде выводятся плашки с аватарами
-    const getUsersStr = (list) => {
-        if (!list) {
-            return '';
-        }
-        return list.map(user => user.linkedName).join(', ');
-    };
-
     this.getCompleteDate = function () {
         return this.getDate(this.completeDate);
     };
@@ -2433,27 +2349,6 @@ function Issue(obj) {
 
     this.getMastersHtml = () => getUsersHtml(this.masters);
 
-    /* ==== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ: значения полей простым текстом ==== */
-
-    this.getAuthor = function () {
-        return this.author ? this.author.linkedName : '';
-    };
-
-    this.getMembers = function () {
-        if (!this.members || !this.members.length) {
-            return 'Не назначены';
-        }
-        return this.members
-            .map(member => member.linkedName + (member.sp ? ' (' + member.sp + ' SP)' : ''))
-            .join(', ');
-    };
-
-    this.getTesters = () => getUsersStr(this.testers) || 'Не назначены';
-
-    this.getMasters = () => getUsersStr(this.masters) || 'Не назначены';
-
-    /* ==== конец блока старого вида ==== */
-
     this.getMasterIds = function () {
         return (this.masters || []).map(master => master.userId);
     };
@@ -2480,10 +2375,6 @@ function Issue(obj) {
         return formatted ? this.formattedDesc : this.desc;
     };
 
-    this.getStatus = function () {
-        return Issue.getStatusLabel(this.status);
-    };
-
     this.getType = function () {
         switch (this.type) {
             case 1: return 'Ошибка';
@@ -2494,10 +2385,6 @@ function Issue(obj) {
 
     this.isCompleted = function () {
         return this.status == 2;
-    };
-
-    this.isOpened = function () {
-        return this.status == 0;
     };
 
     this.isVerify = function () {
