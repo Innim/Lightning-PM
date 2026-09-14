@@ -47,6 +47,16 @@ class IssuePipelineStatus
     ];
 
     /**
+     * Возвращает статусы GitLab, при которых сборка считается не пройденной.
+     *
+     * @return array<string> Статусы пайплайна (см. GitlabPipeline::STATUS_*).
+     */
+    public static function failedGitlabStatuses()
+    {
+        return self::$failedStatuses;
+    }
+
+    /**
      * Сворачивает статус пайплайна GitLab в состояние сборки.
      *
      * @param  string $gitlabStatus Статус пайплайна (см. GitlabPipeline::STATUS_*).
