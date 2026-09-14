@@ -64,10 +64,8 @@ class ImageCacheController
     }
 
     private function getCompressedImage(LPMImg $img) {
-        // генерируем уменьшенное превью для типов:
-        // jpeg, png, webp.
-        $allowedTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_JPEG2000, IMAGETYPE_WEBP];
-        
+        $allowedTypes = $this->getPreviewImageTypes();
+
         $filepath = $img->getSrcImg();
         list($width, $height, $type, $attr) = getimagesize($filepath);
         if (in_array($type, $allowedTypes) && !empty($width) && !empty($height) && 
@@ -86,6 +84,41 @@ class ImageCacheController
         }
 
         return $img->getSource();
+    }
+
+    /**
+     * Типы изображений, для которых имеет смысл создавать уменьшенное превью:
+     * форматы, превью для которых нам нужно (jpeg, png, webp), пересечённые
+     * с теми, которые умеет обрабатывать GD текущей сборки.
+     *
+     * Проверка возможностей GD обязательна: библиотека сжатия работает поверх
+     * GD и файл незнакомого ей формата не уменьшает, а копирует под именем
+     * превью - на диск ложится полноразмерный дубль, который выдаётся
+     * за превью. Поэтому в перечне нет jpeg2000: GD такой формат не читает
+     * ни в одной сборке.
+     *
+     * @return int[] Константы IMAGETYPE_*. Пустой массив, если GD недоступен.
+     */
+    private function getPreviewImageTypes() {
+        if (!function_exists('imagetypes')) {
+            return [];
+        }
+
+        $gdTypes = [
+            IMAGETYPE_JPEG => IMG_JPG,
+            IMAGETYPE_PNG  => IMG_PNG,
+            IMAGETYPE_WEBP => IMG_WEBP,
+        ];
+
+        $supported = imagetypes();
+        $types = [];
+        foreach ($gdTypes as $imageType => $gdType) {
+            if ($supported & $gdType) {
+                $types[] = $imageType;
+            }
+        }
+
+        return $types;
     }
 
     private function getFilePath($name) {
