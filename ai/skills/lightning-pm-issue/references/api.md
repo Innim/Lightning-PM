@@ -130,6 +130,16 @@ GET /api/v1/projects/{projectId}/labels
 
 The response is `{project, labels}`, where each label is `{id, label, uses, totalUses, isCommon}`, sorted by `uses` — how often the label is used in this project (`totalUses` counts all projects, `isCommon` marks labels shared between projects). Prefer existing labels over inventing new ones.
 
+## Listing Project Members
+
+List the users who belong to a project — the ones who can be assigned to its issues:
+
+```http
+GET /api/v1/projects/{projectId}/members
+```
+
+The response is `{project, members}`, where each member is a user in the common shape. Locked users are not listed, since they cannot be assigned. A moderator appears only if they are a member of the project, but can be assigned to its issues in any case.
+
 ## Reading the Scrum Board
 
 Read the scrum board of a project, e.g. to see what is in work right now and in which column:
@@ -173,6 +183,48 @@ DELETE /api/v1/issues/{issueId}/board
 Both requests answer with the updated issue payload (same shape as `GET /api/v1/issues/{issueId}`), so `isOnBoard` and `boardColumn` in it show the resulting position; `boardColumn` is `null` for an issue in the backlog. A non-scrum project is rejected with `400`, and so is an issue without labels in a project that requires them.
 
 Use the resolved global `id` as `{issueId}` here as well.
+
+## Assigning Issue Participants
+
+Assigning an issue is **out of scope for this skill** — see [Implementation Expectation](../SKILL.md#implementation-expectation). The endpoints are documented here because the user may ask for the assignment explicitly; do not call them on your own initiative.
+
+An issue has three independent sets of participants — `members` (who does the work), `testers` and `masters`. Each is a sub-resource of the issue and answers to the same three requests.
+
+Replace the whole set (an empty list clears it):
+
+```http
+PUT /api/v1/issues/{issueId}/members
+Content-Type: application/json
+
+{
+  "users": [60, 42]
+}
+```
+
+Add to the set, keeping whoever is already there (an empty list is rejected with `400`):
+
+```http
+POST /api/v1/issues/{issueId}/members
+Content-Type: application/json
+
+{
+  "users": [60]
+}
+```
+
+Take one participant off the issue:
+
+```http
+DELETE /api/v1/issues/{issueId}/members/{userId}
+```
+
+- `/testers` and `/masters` work exactly the same way — substitute the path segment.
+- Every request answers with the updated issue payload (same shape as `GET /api/v1/issues/{issueId}`), so the resulting `members`, `testers` and `masters` are in the response.
+- All three are idempotent: assigning someone already in the set, or removing someone who is not in it, changes nothing and still answers with the issue.
+- An unknown user id is rejected with `404`; a locked user, or one without access to the project, with `400` naming the user — nobody is silently dropped from the list. [Listing Project Members](#listing-project-members) tells you who a project can assign.
+- Those last two restrictions apply to assignment only: a participant who was locked or lost access to the project can still be taken off the issue.
+- Anyone who can read the project may change the participants of its issues.
+- Use the resolved global `id` as `{issueId}` here as well.
 
 ## Issue Guidelines
 
