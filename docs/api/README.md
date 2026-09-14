@@ -209,6 +209,9 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
           "completeDate": null,
           "completedDate": null,
           "author": {"id": 60, "name": "Ivan Petrov", "nick": "petrov", "firstName": "Ivan", "lastName": "Petrov", "avatarUrl": "...", "url": "..."},
+          "members": [{"id": 66, "name": "Elena Smirnova", "nick": "smirnova", "firstName": "Elena", "lastName": "Smirnova", "avatarUrl": "...", "url": "...", "sp": 0.5}],
+          "testers": [{"id": 39, "name": "Dmitry Bukachev", "nick": "", "firstName": "Dmitry", "lastName": "Bukachev", "avatarUrl": "...", "url": "..."}],
+          "masters": [],
           "stickerState": 1,
           "addedToBoard": "2025-07-29T11:21:37+03:00"
         }
@@ -223,7 +226,7 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
 
 All four columns are always present and come in board order: `todo`, `inProgress`, `testing`, `done`. A column carries its sticker `state` code, a machine-readable `key`, and the `name` shown in the web UI; an empty column has an empty `issues` list.
 
-Issues inside a column come in the same order as on the board. An item is the short issue payload of the issues endpoint plus two board fields: `stickerState` (equals the column `state`) and `addedToBoard` (the moment the issue was put on the board). Issues in the backlog are not on the board and never appear here — use `GET /api/v1/projects/{projectId}/issues` for the whole project.
+Issues inside a column come in the same order as on the board. An item is the short issue payload of the issues endpoint plus the issue participants (`members`, `testers`, `masters`, each in the common user shape) and two board fields: `stickerState` (equals the column `state`) and `addedToBoard` (the moment the issue was put on the board). All three participant lists are always present — an issue with nobody assigned reports empty lists, never a missing key. Issues in the backlog are not on the board and never appear here — use `GET /api/v1/projects/{projectId}/issues` for the whole project.
 
 ## Moving an issue on the scrum board
 

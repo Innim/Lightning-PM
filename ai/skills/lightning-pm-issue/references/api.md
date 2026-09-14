@@ -150,7 +150,7 @@ GET /api/v1/projects/{projectId}/board
 
 The response is `{project, columns}`. Columns always come in board order — `todo`, `inProgress`, `testing`, `done` — and each one is `{state, key, name, issues}`, where `state` is the numeric sticker state (`1`, `2`, `3`, `4`) and `name` is the column title from the web UI. An empty column still comes with an empty `issues` list.
 
-Each item of `issues` is the short issue payload of the issues endpoint plus `stickerState` (same as the column `state`) and `addedToBoard` (when the issue was put on the board). Issues come in the same order as on the board. Backlog issues have no sticker and are not returned here; use `GET /api/v1/projects/{projectId}/issues` to list all issues of the project.
+Each item of `issues` is the short issue payload of the issues endpoint plus the issue participants — `members`, `testers`, `masters`, each in the common user shape and always present (empty lists when nobody is assigned) — and `stickerState` (same as the column `state`) and `addedToBoard` (when the issue was put on the board). Issues come in the same order as on the board. Backlog issues have no sticker and are not returned here; use `GET /api/v1/projects/{projectId}/issues` to list all issues of the project.
 
 A non-scrum project is rejected with `400`, an unknown or inaccessible project with `404`.
 

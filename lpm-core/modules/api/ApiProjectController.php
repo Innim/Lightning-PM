@@ -159,7 +159,7 @@ class ApiProjectController extends ApiControllerBase
             return ApiResponse::error('Project has no scrum board', 400);
         }
 
-        $stickersByState = ScrumSticker::splitByStates(ScrumSticker::loadBoard($project->id));
+        $stickersByState = ScrumSticker::splitByStates(ScrumSticker::loadBoard($project->id, true));
 
         $columns = [];
         foreach (ApiPayloadSerializer::BOARD_COLUMNS as $state => $column) {
