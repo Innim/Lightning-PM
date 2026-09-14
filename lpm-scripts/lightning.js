@@ -53,6 +53,101 @@ const claimDefaultAction = { _default: function () { return true; } };
 $.event.special.show = claimDefaultAction;
 $.event.special.hide = claimDefaultAction;
 
+// Переход по якорю из адреса (`#comment-123`) на только что открытой странице.
+//
+// Bootstrap включает `scroll-behavior: smooth`, и браузер едет к якорю анимацией,
+// вычислив конечную позицию один раз, в её начале. Пока анимация идёт, содержимое
+// над якорем успевает вырасти (дозагружаются картинки вложений, приходят блоки
+// merge request'ов) - анимация доезжает до устаревшей позиции, и якорь оказывается
+// ниже верха окна, вплоть до выхода за нижнюю кромку.
+//
+// Неанимированную прокрутку браузер поправляет сам: пока страница грузится, он
+// продолжает подводить якорь к верху окна, а после загрузки рост над видимой
+// областью компенсирует scroll anchoring. Поэтому первый переход выполняем
+// мгновенно, а плавность возвращаем после загрузки - дальше по якорям ходит
+// уже пользователь.
+//
+// Блок должен выполняться до разбора `body` - иначе браузер успевает начать
+// анимацию, поэтому это код верхнего уровня, а не обработчик готовности.
+(function () {
+    // Сколько высота страницы должна не меняться, чтобы считать её догрузившейся.
+    var QUIET_MS = 400;
+    // Предел ожидания тишины: содержимое может приходить сколь угодно долго.
+    var MAX_WAIT_MS = 5000;
+
+    var hash = window.location.hash;
+    if (hash.length < 2) return;
+
+    var root = document.documentElement;
+    root.style.scrollBehavior = 'auto';
+
+    var settled = false;
+    var quietTimer = null;
+    var deadline = null;
+    var observer = null;
+
+    /** Прекращает доводку: снимает таймеры и отписывается от наблюдения. */
+    function stop() {
+        settled = true;
+        clearTimeout(quietTimer);
+        clearTimeout(deadline);
+        if (observer) observer.disconnect();
+    }
+
+    // Начал прокручивать сам - его позиция важнее нашей.
+    function cancel() {
+        stop();
+        root.style.scrollBehavior = '';
+    }
+    ['wheel', 'touchmove', 'keydown', 'mousedown'].forEach(function (type) {
+        window.addEventListener(type, cancel, { passive: true, once: true });
+    });
+
+    function onLoad() {
+        if (settled) return;
+
+        root.style.scrollBehavior = '';
+
+        var id = hash.substring(1);
+        var target = null;
+        try {
+            target = document.getElementById(decodeURIComponent(id));
+        } catch (e) {
+            target = document.getElementById(id);
+        }
+
+        // Якорем может быть не элемент, а имя стейта страницы (`#add-project`).
+        if (!target) return;
+
+        // В браузерах без scroll anchoring (WebKit) выросшее после загрузки
+        // содержимое сдвигает якорь вниз, и вернуть его некому. Доводка одна:
+        // ждём, пока высота страницы перестанет меняться, и правим позицию
+        // единожды - постоянного удержания тут нет.
+        var finish = function () {
+            if (settled) return;
+            stop();
+
+            var top = target.getBoundingClientRect().top;
+            if (Math.abs(top) > 1) {
+                window.scrollTo({ left: window.scrollX, top: window.scrollY + top, behavior: 'auto' });
+            }
+        };
+
+        var restartQuiet = function () {
+            clearTimeout(quietTimer);
+            quietTimer = setTimeout(finish, QUIET_MS);
+        };
+
+        observer = new ResizeObserver(restartQuiet);
+        observer.observe(root);
+        deadline = setTimeout(finish, MAX_WAIT_MS);
+        restartQuiet();
+    }
+
+    if (document.readyState === 'complete') onLoad();
+    else window.addEventListener('load', onLoad);
+})();
+
 /**
  * Сервис для запросов на сервер
  * @class 
