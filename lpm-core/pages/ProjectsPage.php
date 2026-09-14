@@ -248,8 +248,22 @@ class ProjectsPage extends LPMPage
             }
         }
 
-        usort($projectsStat, function ($a, $b) {
-            return $b->getSP() - $a->getSP();
+        // SP дробные (шаг 0.5), а usort приводит результат колбэка к int:
+        // разность вида 0.5 обнулилась бы, и такие пары считались бы равными.
+        usort($projectsStat, function (ProjectScrumStat $a, ProjectScrumStat $b) {
+            $bySp = $b->getSP() <=> $a->getSP();
+            if ($bySp !== 0) {
+                return $bySp;
+            }
+
+            // Без явного сравнения имён порядок проектов с равными SP был бы
+            // произвольным: сортировка в PHP 7 не стабильна. Сравниваем байты
+            // приведённых к нижнему регистру строк - ext-intl нет в
+            // зависимостях проекта, поэтому Collator недоступен.
+            return strcmp(
+                mb_strtolower($a->project->name),
+                mb_strtolower($b->project->name)
+            );
         });
 
         $totalSP = 0;
