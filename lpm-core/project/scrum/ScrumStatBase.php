@@ -16,7 +16,8 @@ abstract class ScrumStatBase extends LPMBaseObject
     /**
      * Количество SP, которое должно отображаться в статистике.
      *
-     * @return int
+     * Значение дробное: оценка задачи может быть кратна 0.5.
+     * @return float
      */
     abstract public function getSP();
 
@@ -81,7 +82,7 @@ abstract class ScrumStatBase extends LPMBaseObject
 
     /**
      * Возвращает количество сделанных SP по всем учтенным снимкам.
-     * @return int
+     * @return float
      */
     protected function getTotalDoneSP()
     {
