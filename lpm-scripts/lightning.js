@@ -956,6 +956,64 @@ lpm.validators = {
     },
 };
 
+lpm.forms = {
+    /**
+     * Не даёт отправить форму повторно, пока предыдущая отправка не завершилась:
+     * иначе быстрый повторный Enter или клик создаёт дубль.
+     *
+     * Защита висит на событии отправки формы, а не на кнопке: часть браузеров
+     * отправляет форму по Enter, даже когда кнопка отправки отключена. По той же
+     * причине серверный код не должен опознавать форму по имени кнопки отправки -
+     * отключённая кнопка в POST не попадает.
+     *
+     * Состояние отправки ставится после проверки полей, чтобы форма с ошибкой
+     * валидации осталась рабочей. Возврат из кеша браузера («Назад») оживляет
+     * уже отправленную форму - с неё это состояние снимается, иначе отправить
+     * её снова будет нельзя.
+     *
+     * Повторный вызов для той же формы ничего не меняет - защиту можно ставить
+     * из обработчика показа формы.
+     *
+     * @param {jQuery} $form Форма, которую нужно защитить.
+     * @param {function(): boolean} validate Проверка полей: false - отправку отменить.
+     * @param {function(boolean)} [onSubmittingChange] Вызывается при смене состояния
+     *        отправки - для того, что нужно только этой форме.
+     */
+    preventDoubleSubmit: function ($form, validate, onSubmittingChange) {
+        if ($form.data('lpmPreventDoubleSubmit')) return;
+        $form.data('lpmPreventDoubleSubmit', true);
+
+        // Отправка формы уже идёт: повторные отправки до её завершения запрещены.
+        let submitting = false;
+
+        const setSubmitting = function (value) {
+            if (submitting === value) return;
+
+            submitting = value;
+            $('button[type=submit]', $form).prop('disabled', value);
+
+            if (value) preloader.show();
+            else preloader.hide();
+
+            if (onSubmittingChange) onSubmittingChange(value);
+        };
+
+        $form.on('submit', function (e) {
+            if (submitting || !validate()) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            setSubmitting(true);
+        });
+
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) setSubmitting(false);
+        });
+    },
+};
+
 lpm.utils = {
     copyRichToClipboard: function (html, plain) {
         if (navigator.clipboard && window.isSecureContext) {
