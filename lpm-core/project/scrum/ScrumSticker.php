@@ -7,8 +7,12 @@ class ScrumSticker extends LPMBaseObject
 {
     /**
      * Загружаем список стикеров на доске для указанного проекта.
+     *
+     * @param  int  $projectId   Идентификатор проекта.
+     * @param  bool $loadMasters Загружать ли мастеров задач, см. {@see preloadParticipants()}.
+     * @return array<ScrumSticker>
      */
-    public static function loadBoard($projectId)
+    public static function loadBoard($projectId, $loadMasters = false)
     {
         $states = implode(',', [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS,
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
@@ -17,7 +21,7 @@ class ScrumSticker extends LPMBaseObject
 `i`.`projectId` = ${projectId} AND `s`.`state` IN (${states})
 SQL;
 
-        return self::preloadBuildStates(self::preloadParticipants(self::loadList($where)));
+        return self::preloadBuildStates(self::preloadParticipants(self::loadList($where), $loadMasters));
     }
 
     /**
@@ -29,19 +33,23 @@ SQL;
      * не подгружают: их результаты складывают в один список и вызывают этот
      * метод один раз на нём, иначе шаблон уйдёт в N+1.
      *
+     * Мастера загружаются только по запросу: доске они не нужны, а лишний тип
+     * участника добавляет строк в выборку.
+     *
      * @param  array<ScrumSticker> $list
+     * @param  bool                $loadMasters Загружать ли мастеров задач.
      * @return array<ScrumSticker> Тот же список.
      */
-    public static function preloadParticipants(array $list)
+    public static function preloadParticipants(array $list, $loadMasters = false)
     {
         $issueIds = [];
         foreach ($list as $sticker) {
             $issueIds[] = $sticker->issueId;
         }
 
-        $participants = Member::loadListAnyForIssues($issueIds, true, true, false);
+        $participants = Member::loadListAnyForIssues($issueIds, true, true, $loadMasters);
         foreach ($list as $sticker) {
-            $sticker->getIssue()->extractParticipantsFrom($participants, true, true, false);
+            $sticker->getIssue()->extractParticipantsFrom($participants, true, true, $loadMasters);
         }
 
         return $list;
