@@ -11,8 +11,6 @@
 		scope - область поиска по статусу задачи, в которой отобран список,
 		scopes - области поиска [значение => подпись], доступные для выбора;
 			пусто, если подраздел ищет только среди своих задач и выбора нет
-Необязательные:
-    $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
 */
 
 $project = lpm_get_project();
@@ -68,10 +66,10 @@ $searchActive = $searchForm !== null && $issuesCountLabel !== null;
 		</div>
 
 		<div class="operations-line">
-			<a href="#" class="btn btn-outline-danger my-1" onclick="issuePage.showAddForm(1); return false;">
+			<a href="<?=ProjectPage::getIssueFormUrl($project->uid, Issue::TYPE_BUG);?>" class="btn btn-outline-danger my-1">
 				<i class="fas fa-bug"></i> Добавить ошибку
 			</a>
-			<a href="#" class="btn btn-outline-primary ms-2 my-1" onclick="issuePage.showAddForm(); return false;">
+			<a href="<?=ProjectPage::getIssueFormUrl($project->uid);?>" class="btn btn-outline-primary ms-2 my-1">
 				<i class="fas fa-tasks"></i> Добавить задачу
 			</a>
 		</div>
@@ -122,14 +120,13 @@ $searchActive = $searchForm !== null && $issuesCountLabel !== null;
 		</div>
 		<?php endif; ?>
 		<div class="operations-line mt-2">
-			<a href="#" class="btn btn-outline-danger my-1" onclick="issuePage.showAddForm(1); return false;">
+			<a href="<?=ProjectPage::getIssueFormUrl($project->uid, Issue::TYPE_BUG);?>" class="btn btn-outline-danger my-1">
 				<i class="fas fa-bug"></i> Добавить ошибку
 			</a>
-			<a href="#" class="btn btn-outline-primary ms-2 my-1" onclick="issuePage.showAddForm(); return false;">
+			<a href="<?=ProjectPage::getIssueFormUrl($project->uid);?>" class="btn btn-outline-primary ms-2 my-1">
 				<i class="fas fa-tasks"></i> Добавить задачу
 			</a>
 		</div>
 	</div>
-	<?php lpm_print_issue_form($project, null, isset($input) ? $input : null, true); ?>
 	<?php lpm_print_issues_export_to_excel(); ?>
 </div>

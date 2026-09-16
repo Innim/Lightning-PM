@@ -1,0 +1,22 @@
+<?php
+/*
+Страница создания задачи.
+
+Требуются:
+    $project - проект, в котором создаётся задача
+    $issueType - аргумент адреса с типом задачи, под который открыта форма
+        (пустая строка - тип не задан)
+Необязательные:
+    $input - ввод пользователя, который нужно восстановить в форме (нужен в случае ошибки)
+*/
+?>
+<?php /* Идентификатор issueFormPage используется JS: по нему форма понимает,
+         что открыта отдельной страницей, а не поверх списка (issue-form.js) */ ?>
+<div id="issueFormPage" class="mx-auto container-fluid px-4 py-4"
+    data-issue-type="<?=$issueType;?>" data-return-url="<?=lpm_get_base_page_url();?>">
+    <h1 class="h6 mb-3 text-truncate">
+        <a class="link-secondary text-decoration-none"
+            href="<?=lpm_get_base_page_url();?>"><?php lpm_print_header();?></a>
+    </h1>
+    <?php lpm_print_issue_form($project, null, isset($input) ? $input : null, false); ?>
+</div>

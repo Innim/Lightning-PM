@@ -607,7 +607,10 @@ const issuePage = {
     createIssueBy: function (hash, mode, onProjectChanged) {
         const issueId = this.getIssueId();
         createFromIssue.show(this.projectId, issueId, (targetProject) => {
-            const url = targetProject.url + '#' + (typeof hash === 'function' ? hash(issueId) : hash + ':' + issueId);
+            // Форма создания задачи - отдельная страница проекта
+            // (ProjectPage::PUID_ISSUE_ADD), а задача-источник передаётся ей хэшем.
+            const url = targetProject.url + '/add-issue#'
+                + (typeof hash === 'function' ? hash(issueId) : hash + ':' + issueId);
             window.open(url, '_blank');
         }, mode, onProjectChanged);
     },
@@ -1412,47 +1415,6 @@ function showIssue(issueId) {
             }
         }
     );
-};
-
-issuePage.showAddForm = function (type) {
-    states.setState('add-issue');
-
-    if (typeof type != 'undefined') {
-        $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
-        $('form input:radio[value=1]', "#issueForm").prop('checked', true);
-
-        const bugTemplate = `### Описание
-
-📝 Описание проблемы
-
-### Предусловие
-
-📝 Начальные условия, при которых воспроизводится проблема
-
-### Шаги воспроизведения
-
-1. 📝  Шаги для воспроизведения
-2. 
-
-*ФР*: 📝  Фактический полученный результат
-
-*ОР*: 📝  Ожидаемый результат
-
-### Окружение
-
-📝 Укажите устройство, ОС, окружение и тп
-
-### Видео
-
-🎥 Приложите ссылку на видео, где показана проблема
-        `;
-        
-        $('form textarea[name=desc]', '#issueForm').html(bugTemplate).css('height', '500px');
-    } else {
-        $('form input:radio[name=type]:checked', "#issueForm").prop('checked', true);
-        $('form input:radio[value=0]', "#issueForm").prop('checked', true);
-        $('form textarea[name=desc]', '#issueForm').html('').css('height', '');
-    }
 };
 
 issuePage.showEditForm = function () {
