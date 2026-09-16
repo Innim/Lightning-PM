@@ -39,6 +39,12 @@ if (!empty($issueComment)) {
       $bgColorClass = 'bg-info bg-opacity-25';
       $bgIconClass = 'fa-list-check';
       break;
+    case IssueCommentType::TAKEN_FOR_TESTING:
+      $bgIconClass = 'fa-flask';
+      break;
+    case IssueCommentType::RELEASED_FROM_TESTING:
+      $bgIconClass = 'fa-rotate-left';
+      break;
   }
 
   $isAutoComment = $issueComment->isAutoComment();

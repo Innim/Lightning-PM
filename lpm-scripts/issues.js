@@ -1640,6 +1640,9 @@ issuePage.releaseFromTesting = function () {
 
 /**
  * Ставит или снимает отметку о взятии задачи в тестирование.
+ *
+ * Записи в ленте нет, когда сервис ничего не изменил: так отвечает
+ * запрос подтверждения перехвата задачи у другого проверяющего.
  * @param {Function} srvCall Вызов сервиса: (issueId, handler).
  * @param {Function} [onSuccess] Дополнительная обработка успешного ответа.
  */
@@ -1652,6 +1655,7 @@ issuePage.changeTestingMark = function (srvCall, onSuccess) {
             return;
         }
 
+        if (res.comment) issuePage.addComment(res.comment, res.html);
         applyIssueSubstatus(res);
         if (onSuccess) onSuccess(res);
     });
