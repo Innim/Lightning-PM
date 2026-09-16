@@ -142,8 +142,10 @@ SQL;
 
             // запись о новом снапшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `created`)
-                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${created}')
+                INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `startedUtc`,
+                    `created`, `createdUtc`)
+                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${started}',
+                    '${created}', '${created}')
 SQL;
 
             // если что-то пошло не так
@@ -155,9 +157,9 @@ SQL;
             
             // добавляем всю необходимую информацию по снапшоте
             $sql = <<<SQL
-                INSERT INTO `%s` (`sid`, `added`, `issue_uid`, `issue_pid`, `issue_name`,
-                    `issue_state`, `issue_sp`, `issue_members_sp`, `issue_priority`)
-                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO `%s` (`sid`, `added`, `addedUtc`, `issue_uid`, `issue_pid`,
+                    `issue_name`, `issue_state`, `issue_sp`, `issue_members_sp`, `issue_priority`)
+                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
             // подготавливаем запрос для вставки данных о стикерах снапшота
@@ -185,7 +187,8 @@ SQL;
                 $issuePriority = $issue->priority;
 
                 $prepare->bind_param(
-                    'sddsissi',
+                    'ssddsissi',
+                    $addedDate,
                     $addedDate,
                     $issueUid,
                     $issuePid,

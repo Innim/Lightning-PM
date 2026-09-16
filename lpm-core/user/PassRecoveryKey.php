@@ -48,6 +48,7 @@ class PassRecoveryKey extends LPMBaseObject
                 'userId'      => (int)$userId,
                 'recoveryKey' => $key,
                 'expDate'     => $expDate,
+                'expDateUtc'  => $expDate,
             ],
             'INTO'    => LPMTables::RECOVERY_EMAILS,
         ]);

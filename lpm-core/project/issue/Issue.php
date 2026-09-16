@@ -1185,13 +1185,17 @@ SQL;
             ? 'NULL'
             : "'" . $db->real_escape_string($completeDate) . "'";
 
+        $createDate = DateTimeUtils::mysqlDate();
+
         $projectId = (int)$project->id;
         $sql = "INSERT INTO `%1\$s` (`projectId`, `idInProject`, `name`, `hours`, `desc`, `type`, " .
-                                    "`authorId`, `createDate`, `completeDate`, `priority`, `revision` ) " .
+                                    "`authorId`, `createDate`, `createDateUtc`, `completeDate`, " .
+                                    "`priority`, `revision` ) " .
                             "SELECT '" . $projectId . "', COALESCE(MAX(`idInProject`), 0) + 1, " .
                                         "'" . $nameEsc . "', '" . (float)$hours . "', '" . $descEsc . "', " .
                                         "'" . (int)$type . "', '" . (int)$authorId . "', " .
-                                        "'" . DateTimeUtils::mysqlDate() . "', " . $completeDateSql . ", " .
+                                        "'" . $createDate . "', '" . $createDate . "', " .
+                                        $completeDateSql . ", " .
                                         "'" . (int)$priority . "', '" . $revisionEsc . "' " .
                               "FROM `%1\$s` WHERE `projectId` = '" . $projectId . "'";
 
@@ -1293,18 +1297,19 @@ SQL;
         if ($issue->status === Issue::STATUS_COMPLETED) {
             $issue->completedDate = (float)DateTimeUtils::date();
             $hash['SET']['completedDate'] = DateTimeUtils::mysqlDate($issue->completedDate);
+            $hash['SET']['completedDateUtc'] = DateTimeUtils::mysqlDate($issue->completedDate);
             $issue->autoSetMasters();
         } elseif ($issue->status === Issue::STATUS_IN_WORK) {
             // Сбрасываем дату завершения
             $issue->completedDate = null;
             $hash['SET']['completedDate'] = '0000-00-00 00:00:00';
+            $hash['SET']['completedDateUtc'] = null;
         } elseif ($issue->status === Issue::STATUS_WAIT) {
             $issue->autoSetTesters();
             $issue->autoSetMasters();
         }
 
-        $db = self::getDB();
-        if (!$db->queryb($hash)) {
+        if (!self::buildAndExecute($hash)) {
             throw new Exception('Status save failed', \GMFramework\ErrorCode::SAVE_DATA);
         }
     }

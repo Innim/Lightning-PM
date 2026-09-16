@@ -19,6 +19,7 @@ class LPMGlobals extends Globals
     {
         $db = parent::createDBConnect();
         $db->set_charset('utf8mb4');
+        AppTimeZone::applyToConnection($db);
         return $db;
     }
 }

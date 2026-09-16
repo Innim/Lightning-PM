@@ -324,8 +324,8 @@ SQL;
             $sql = "DELETE FROM `%s` WHERE `issueId` = ${issueId}";
         } else {
             $sql = <<<SQL
-		INSERT INTO `%s` (`issueId`, `state`, `added`)
-				  VALUES (${issueId}, ${state}, '${added}')
+		INSERT INTO `%s` (`issueId`, `state`, `added`, `addedUtc`)
+				  VALUES (${issueId}, ${state}, '${added}', '${added}')
   			ON DUPLICATE KEY UPDATE `state` = ${state}
 SQL;
         }
@@ -360,7 +360,7 @@ SQL;
         $sql = <<<SQL
     UPDATE `%1\$s` `s`
 INNER JOIN `%2\$s` `i` ON `i`.`id` = `s`.`issueId`
-       SET `s`.`added` = '${added}'
+       SET `s`.`added` = '${added}', `s`.`addedUtc` = '${added}'
      WHERE `i`.`projectId` = ${projectId}
 SQL;
 

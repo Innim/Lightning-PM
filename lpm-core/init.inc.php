@@ -4,6 +4,8 @@ require_once(__DIR__ . '/version.inc.php');
 require_once(__DIR__ . '/consts.inc.php');
 require_once(__DIR__ . '/aliases.inc.php');
 
+// Единственное место, где задаётся часовой пояс приложения: зону соединения
+// с БД считает по нему AppTimeZone, и расходиться они не должны.
 date_default_timezone_set('Etc/GMT-3');
 
 // подключаем фреймворк

@@ -59,6 +59,7 @@ class AuthPage extends LPMPage
                 } elseif ($this->validateSignUp($engine, $input)) {
                     $pass = User::passwordHash($input['pass']);
                     $cookieHash = LPMAuth::createCookieHash();
+                    $now = DateTimeUtils::mysqlDate();
                     
                     $values = [
                         'email' => $input['email'],
@@ -66,8 +67,10 @@ class AuthPage extends LPMPage
                         'firstName' => mb_substr($input['firstName'], 0, self::NAME_MAX_LENGTH),
                         'lastName' => mb_substr($input['lastName'], 0, self::NAME_MAX_LENGTH),
                         'nick' => empty($input['nick']) ? '' : mb_substr($input['nick'], 0, self::NICK_MAX_LENGTH),
-                        'lastVisit' => DateTimeUtils::mysqlDate(),
-                        'regDate' => DateTimeUtils::mysqlDate()
+                        'lastVisit' => $now,
+                        'lastVisitUtc' => $now,
+                        'regDate' => $now,
+                        'regDateUtc' => $now
                     ];
 
                     // пытаемся записать в базу
@@ -117,8 +120,10 @@ class AuthPage extends LPMPage
                             $engine->addError('Пользователь заблокирован');
                         } else {
                             $cookieHash = LPMAuth::createCookieHash();
-                            $sqlVisit = "update `%s` set `lastVisit` = '" . DateTimeUtils::mysqlDate() .
-                                "' where `userId` = '" . $userInfo['userId'] . "'";
+                            $lastVisit = DateTimeUtils::mysqlDate();
+                            $sqlVisit = "update `%s` set `lastVisit` = '" . $lastVisit . "', " .
+                                "`lastVisitUtc` = '" . $lastVisit . "'" .
+                                " where `userId` = '" . $userInfo['userId'] . "'";
 
                             if (!$db->queryt($sqlVisit, LPMTables::USERS)) {
                                 $engine->addError('Ошибка записи в базу');
