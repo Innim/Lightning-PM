@@ -548,17 +548,17 @@ class LPMImgUpload
 
         // Генерируем необходимые изображения
         $img = new LPMImg($srcFilename);
-        // Колонка origName - NOT NULL и хранит только BMP-символы (charset utf8mb3), поэтому
-        // при отсутствии имени пишем пустую строку, а 4-байтовые символы (например, эмодзи)
-        // из имени вырезаем, иначе вставка в БД будет отклонена по charset. preg_replace()
-        // возвращает null и на невалидном UTF-8 во входной строке - такое имя тоже заменяем
-        // пустой строкой, а не пишем null в NOT NULL колонку
-        if (null === $originalName) {
-            $img->origName = '';
-        } else {
-            $filtered = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $originalName);
-            $img->origName = null === $filtered ? '' : $filtered;
-        }
+        // Имя чистится по общим для вложений правилам: неизвестное имя даёт
+        // пустую строку, а колонка origName - NOT NULL. Дополнительно вырезаем
+        // 4-байтовые символы (например, эмодзи): колонка хранит только
+        // BMP-символы (charset utf8mb3), иначе вставка будет отклонена по charset.
+        // FileNameHelper::sanitize() возвращает валидный UTF-8, поэтому
+        // preg_replace() здесь null вернуть не может
+        $img->origName = preg_replace(
+            '/[\x{10000}-\x{10FFFF}]/u',
+            '',
+            FileNameHelper::sanitize($originalName)
+        );
 
         if (null !== $this->_sizes) {
             foreach ($this->_sizes as $size) {

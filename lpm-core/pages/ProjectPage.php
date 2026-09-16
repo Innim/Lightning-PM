@@ -647,7 +647,7 @@ class ProjectPage extends LPMPage
         $projectMembers = $project->getMembers(true);
         $projectTester = $project->getTester();
 
-        $labels = Issue::getLabels($project->id);
+        $labels = IssueLabel::getLabels($project->id);
         
         $this->addTmplVar('project', $project);
         $this->addTmplVar('projectMembers', $projectMembers);
@@ -914,7 +914,7 @@ class ProjectPage extends LPMPage
         $priority = min(99, max(0, (int)$_POST['priority']));
 
         // Регистрируем в справочнике метки, впервые появившиеся в имени задачи.
-        Issue::registerLabelsUsage($rawName, $this->_project->id, $issueName);
+        IssueLabel::registerLabelsUsage($rawName, $this->_project->id, $issueName);
 
         // Считаем SP
         $hours = $this->parseSP($_POST['hours']);
