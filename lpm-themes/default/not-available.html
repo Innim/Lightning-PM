@@ -1,0 +1,17 @@
+<?php
+/*
+Требуются:
+    string $message - что показать пользователю: почему страница не открылась
+    string $hint    - что ему делать дальше
+*/
+?>
+<div class="mx-auto container container-main px-4 py-5">
+	<div class="card text-center">
+		<div class="card-body py-5">
+			<i class="fa-solid fa-circle-exclamation fa-2x text-secondary mb-3" aria-hidden="true"></i>
+			<h1 class="h4 card-title mb-3"><?=HTMLHelper::escape($message);?></h1>
+			<p class="card-text text-muted"><?=HTMLHelper::escape($hint);?></p>
+			<a class="btn btn-primary mt-3" href="<?=lpm_get_site_url();?>">К списку проектов</a>
+		</div>
+	</div>
+</div>
