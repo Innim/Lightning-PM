@@ -194,7 +194,9 @@ class FileUploadManager
                 continue;
             }
 
-            $sanitizedName = self::sanitizeOriginalName($originalName);
+            // Имя хранится отдельно от файла и подставляется при скачивании,
+            // поэтому пустым остаться не может
+            $sanitizedName = FileNameHelper::sanitize($originalName, self::DEFAULT_NAME);
             $extension = self::buildStoredExtension($sanitizedName);
 
             do {
@@ -345,18 +347,6 @@ class FileUploadManager
         return in_array($extension, $executableExtensions, true) ? '' : $extension;
     }
 
-    private static function sanitizeOriginalName($name)
-    {
-        $name = trim((string)$name);
-        $name = preg_replace('/[\\\\\/\:\*\?"<>\|]+/', '_', $name);
-        $name = preg_replace('/[\x00-\x1F\x7F]/u', '', $name);
-        if ($name === '') {
-            $name = 'file';
-        }
-
-        return mb_substr($name, 0, 255);
-    }
-
     /**
      * Возвращает текст ошибки загрузки файла.
      * @param  int    $errorCode Код ошибки (одна из констант UPLOAD_ERR_*).
@@ -381,4 +371,10 @@ class FileUploadManager
                 return sprintf('Не удалось загрузить файл "%s"', $fileName);
         }
     }
+
+    /**
+     * Имя, под которым сохраняется файл, от имени которого после очистки
+     * ничего не осталось.
+     */
+    private const DEFAULT_NAME = 'file';
 }
