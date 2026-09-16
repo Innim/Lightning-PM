@@ -1108,7 +1108,7 @@ class IssueService extends LPMBaseService
         $db = LPMGlobals::getInstance()->getDBConnect();
         $projectId = $isForAllProjects ? 0 : $projectId;
 
-        $labels = Issue::getLabelsByLabelText($label);
+        $labels = IssueLabel::getLabelsByLabelText($label);
         $uses = 0;
         $id = 0;
         // Id проектных меток, использования которых нужно перенести на целевую (общую) метку.
@@ -1121,7 +1121,7 @@ class IssueService extends LPMBaseService
                     if ($labelData['projectId'] != 0 && $labelData['deleted'] == LabelState::ACTIVE) {
                         $uses += $labelData['countUses'];
                         $mergeFromIds[] = $labelData['id'];
-                        Issue::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
+                        IssueLabel::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
                     } elseif ($labelData['projectId'] == 0) {
                         if ($labelData['deleted'] == LabelState::ACTIVE) {
                             return $this->error("Метка уже существует");
@@ -1144,18 +1144,18 @@ class IssueService extends LPMBaseService
 
         // Была ли общая метка переиспользована (существовала ранее, но была отключена).
         $reuseId = (int) $id;
-        $id = Issue::saveLabel($label, $projectId, $id, $uses, LabelState::ACTIVE);
+        $id = IssueLabel::saveLabel($label, $projectId, $id, $uses, LabelState::ACTIVE);
         if ($id == null) {
             return $this->error($db->error);
         } else {
             // Переносим накопленную статистику проектных меток только при создании НОВОЙ
             // общей метки — чтобы её ранжирование по частоте в проектах не начиналось с нуля.
             // Если общая метка переиспользуется, её строки использований уже поддерживаются
-            // актуальными в Issue::addLabelsUsing() (счётчик обновляется и для отключённых
+            // актуальными в IssueLabel::addLabelsUsing() (счётчик обновляется и для отключённых
             // меток), поэтому повторный перенос привёл бы к двойному учёту.
             if ($reuseId == 0) {
                 foreach ($mergeFromIds as $fromId) {
-                    Issue::mergeLabelUses($fromId, (int) $id);
+                    IssueLabel::mergeLabelUses($fromId, (int) $id);
                 }
             }
             $this->add2Answer('id', $id);
@@ -1170,7 +1170,7 @@ class IssueService extends LPMBaseService
      */
     public function removeLabel($id, $projectId)
     {
-        $label = Issue::getLabel($id);
+        $label = IssueLabel::getLabel($id);
         $projectId = (int) $projectId;
 
         if ($label == null) {
@@ -1191,25 +1191,25 @@ class IssueService extends LPMBaseService
 
         $state = ($label['projectId'] == 0) ? LabelState::DISABLED : LabelState::DELETED;
         if ($label['projectId'] == 0) {
-            $labels = Issue::getLabelsByLabelText($label['label']);
+            $labels = IssueLabel::getLabelsByLabelText($label['label']);
             if (!empty($labels)) {
                 $count = count($labels);
                 while ($count-- > 0) {
                     $labelData = $labels[$count];
                     if ($labelData['projectId'] == 0 && $labelData['id'] != $label['id']) {
-                        Issue::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
+                        IssueLabel::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
                     } elseif ($labelData['projectId'] != 0 && $labelData['deleted'] == LabelState::DISABLED) {
                         if ($labelData['projectId'] != $projectId) {
-                            Issue::changeLabelDeleted($labelData['id'], LabelState::ACTIVE);
+                            IssueLabel::changeLabelDeleted($labelData['id'], LabelState::ACTIVE);
                         } else {
-                            Issue::changeLabelDeleted($labelData['id'], LabelState::DELETED);
+                            IssueLabel::changeLabelDeleted($labelData['id'], LabelState::DELETED);
                         }
                     }
                 }
             }
         }
 
-        if (Issue::changeLabelDeleted($label['id'], $state)) {
+        if (IssueLabel::changeLabelDeleted($label['id'], $state)) {
             return $this->answer();
         } else {
             $db = LPMGlobals::getInstance()->getDBConnect();

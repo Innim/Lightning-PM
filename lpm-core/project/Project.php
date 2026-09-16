@@ -1021,7 +1021,7 @@ SQL;
 
     private function loadLabels()
     {
-        $list = Issue::getLabels($this->id);
+        $list = IssueLabel::getLabels($this->id);
         if ($list === false) {
             throw new Exception('Ошибка при загрузке списка тегов');
         }

@@ -75,7 +75,7 @@ class PageConstructor
     public static function getIssueLabels()
     {
         $projectId = (Project::$currentProject != null) ? Project::$currentProject->id : 0;
-        return Issue::getLabels($projectId);
+        return IssueLabel::getLabels($projectId);
     }
 
     public static function getErrors()

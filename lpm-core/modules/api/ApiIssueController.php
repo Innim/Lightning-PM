@@ -510,7 +510,7 @@ class ApiIssueController extends ApiControllerBase
         // Регистрация меток в справочнике: общего места сохранения имени задачи
         // нет, поэтому каждый способ создать или отредактировать задачу делает
         // это сам (веб-форма — в ProjectPage::saveIssue()).
-        Issue::registerLabelsUsage($name, $project->id);
+        IssueLabel::registerLabelsUsage($name, $project->id);
 
         // Связи по упоминаниям в описании: общего места сохранения описания нет,
         // поэтому каждый способ создать или отредактировать задачу делает это сам
