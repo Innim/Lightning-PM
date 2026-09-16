@@ -123,14 +123,17 @@ class CommentTextSnapshot extends LPMBaseObject
      */
     private static function add($commentId, $text, $editorId, $date = 0)
     {
+        $createdAt = empty($date)
+            ? DateTimeUtils::mysqlDate()
+            : DateTimeUtils::mysqlDate($date);
+
         self::buildAndSaveToDbV2([
             'INSERT' => [
                 'commentId' => (int)$commentId,
                 'text' => (string)$text,
                 'editorId' => (int)$editorId,
-                'createdAt' => empty($date)
-                    ? DateTimeUtils::mysqlDate()
-                    : DateTimeUtils::mysqlDate($date),
+                'createdAt' => $createdAt,
+                'createdAtUtc' => $createdAt,
             ],
             'INTO' => LPMTables::COMMENT_TEXT_SNAPSHOTS,
         ]);

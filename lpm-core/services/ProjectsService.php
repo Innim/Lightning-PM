@@ -70,8 +70,10 @@ class ProjectsService extends LPMBaseService
             $userId = $user->userId;
     
             if ($isFixed) {
-                $sql = "REPLACE `%s` (`userId`, `instanceType`, `instanceId`, `dateFixed`) " .
-                    "VALUES ('" . $userId . "', '" . $instanceType . "', '" . $projectId . "', '" . DateTimeUtils::mysqlDate() . "')";
+                $dateFixed = DateTimeUtils::mysqlDate();
+                $sql = "REPLACE `%s` (`userId`, `instanceType`, `instanceId`, `dateFixed`, `dateFixedUtc`) " .
+                    "VALUES ('" . $userId . "', '" . $instanceType . "', '" . $projectId . "', " .
+                    "'" . $dateFixed . "', '" . $dateFixed . "')";
                 if (!$this->_db->queryt($sql, LPMTables::FIXED_INSTANCE)) {
                     return $this->error('Проект не зафиксирован. Ошибка записи в БД.');
                 }

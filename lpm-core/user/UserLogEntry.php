@@ -8,8 +8,10 @@ class UserLogEntry extends LPMBaseObject
     {
         $db = self::getDB();
         $date = DateTimeUtils::mysqlDate($date);
+        $dateUtc = $date;
+
         return $db->queryb([
-            'INSERT' => compact('userId', 'date', 'type', 'entityId', 'comment'),
+            'INSERT' => compact('userId', 'date', 'dateUtc', 'type', 'entityId', 'comment'),
             'INTO'   => LPMTables::USERS_LOG
         ]);
     }

@@ -45,6 +45,8 @@ class IssueSummary extends LPMBaseObject
      */
     public static function save($issueId, $sourceHash, array $summary, $model, ?AiUsage $usage = null)
     {
+        $createdAt = DateTimeUtils::mysqlDate();
+
         $fields = [
             'issueId' => (int)$issueId,
             'sourceHash' => (string)$sourceHash,
@@ -53,7 +55,8 @@ class IssueSummary extends LPMBaseObject
             'promptTokens' => $usage === null ? 0 : $usage->getPromptTokens(),
             'completionTokens' => $usage === null ? 0 : $usage->getCompletionTokens(),
             'totalTokens' => $usage === null ? 0 : $usage->getTotalTokens(),
-            'createdAt' => DateTimeUtils::mysqlDate(),
+            'createdAt' => $createdAt,
+            'createdAtUtc' => $createdAt,
         ];
 
         self::buildAndSaveToDbV2([
@@ -67,6 +70,7 @@ class IssueSummary extends LPMBaseObject
                 'completionTokens',
                 'totalTokens',
                 'createdAt',
+                'createdAtUtc',
             ],
         ]);
 

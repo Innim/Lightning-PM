@@ -48,12 +48,14 @@ class Project extends MembersInstance
     public static function addProject($uid, $name, $desc)
     {
         $db = self::getDB();
+        $date = DateTimeUtils::mysqlDate();
         $hash = [
             'INSERT' => [
                 'uid'  => $uid,
                 'name' => $name,
                 'desc' => $desc,
-                'date' => DateTimeUtils::mysqlDate(),
+                'date' => $date,
+                'dateUtc' => $date,
             ],
             'INTO'   => LPMTables::PROJECTS
         ];

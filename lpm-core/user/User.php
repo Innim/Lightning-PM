@@ -222,7 +222,11 @@ class User extends LPMBaseObject
      */
     public static function updateLastVisit($userId)
     {
-        return self::updateField($userId, 'lastVisit', DateTimeUtils::mysqlDate());
+        $lastVisit = DateTimeUtils::mysqlDate();
+        return self::updateFields($userId, [
+            'lastVisit' => $lastVisit,
+            'lastVisitUtc' => $lastVisit,
+        ]);
     }
 
     public static function checkCurRole($curRole, $reqRole)

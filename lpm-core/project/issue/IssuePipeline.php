@@ -50,6 +50,8 @@ class IssuePipeline extends LPMBaseObject
      */
     public static function registerForMr($issueId, $mrId, $repositoryId, $branch, $ref, $sha)
     {
+        $updatedAt = DateTimeUtils::mysqlDate();
+
         self::buildAndSaveToDbV2([
             'INSERT' => [
                 'issueId'      => (int)$issueId,
@@ -58,10 +60,11 @@ class IssuePipeline extends LPMBaseObject
                 'branch'       => (string)$branch,
                 'ref'          => (string)$ref,
                 'sha'          => (string)$sha,
-                'updatedAt'    => DateTimeUtils::mysqlDate(),
+                'updatedAt'    => $updatedAt,
+                'updatedAtUtc' => $updatedAt,
             ],
             'INTO'   => LPMTables::ISSUE_PIPELINE,
-            'ODKU'   => ['repositoryId', 'branch', 'ref', 'sha', 'updatedAt'],
+            'ODKU'   => ['repositoryId', 'branch', 'ref', 'sha', 'updatedAt', 'updatedAtUtc'],
         ]);
 
         self::$_loadedByIssue = [];
@@ -205,6 +208,8 @@ class IssuePipeline extends LPMBaseObject
      */
     private static function saveState($id, GitlabPipeline $pipeline, $finishedAt)
     {
+        $updatedAt = DateTimeUtils::mysqlDate();
+
         self::buildAndSaveToDbV2([
             'UPDATE' => LPMTables::ISSUE_PIPELINE,
             'SET'    => [
@@ -212,7 +217,8 @@ class IssuePipeline extends LPMBaseObject
                 'status'     => (string)$pipeline->status,
                 'url'        => (string)$pipeline->url,
                 'finishedAt' => (int)$finishedAt,
-                'updatedAt'  => DateTimeUtils::mysqlDate(),
+                'updatedAt'  => $updatedAt,
+                'updatedAtUtc' => $updatedAt,
             ],
             'WHERE'  => ['id' => (int)$id],
         ]);

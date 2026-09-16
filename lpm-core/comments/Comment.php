@@ -134,9 +134,11 @@ SQL;
         $text = $db->real_escape_string($text);
         $text = str_replace('%', '%%', $text);
 
-        $sql = "insert into `%s` (`instanceId`, `instanceType`, `authorId`, `date`, `text` ) " .
+        $date = DateTimeUtils::mysqlDate();
+
+        $sql = "insert into `%s` (`instanceId`, `instanceType`, `authorId`, `date`, `dateUtc`, `text` ) " .
             "values ( '" . $instanceId . "', '" . $instanceType . "', " .
-            "'" . $userId . "', '" . DateTimeUtils::mysqlDate() . "', " .
+            "'" . $userId . "', '" . $date . "', '" . $date . "', " .
             "'" . $text . "' )";
 
         if (!$db->queryt($sql, LPMTables::COMMENTS)) {
@@ -214,6 +216,7 @@ SQL;
                 'text'     => (string)$text,
                 'editorId' => (int)$editorId,
                 'editDate' => DateTimeUtils::mysqlDate($editDate),
+                'editDateUtc' => DateTimeUtils::mysqlDate($editDate),
             ],
             'WHERE'  => ['id' => (int)$comment->id],
         ]);
