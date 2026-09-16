@@ -161,11 +161,39 @@ class PagePrinter
     public static function issueTestState(Issue $issue)
     {
         $buildLevel = IssueViewHelper::buildLevel($issue);
+        $underTestingHint = self::underTestingHint($issue);
 
         PageConstructor::includePattern(
             'components/issue-test-state',
-            compact('buildLevel')
+            compact('buildLevel', 'underTestingHint')
         );
+    }
+
+    /**
+     * Подсказка отметки «Взята в тестирование»: кто проверяет задачу и с какого
+     * момента.
+     *
+     * Время даётся в двух видах: относительное отвечает на вопрос «давно ли»,
+     * точное - когда надо сверить момент. У задач, взятых в тестирование
+     * до появления этих данных, отметка остаётся без уточнения.
+     * @param  Issue $issue Задача.
+     * @return string Текст подсказки в чистом виде, без экранирования.
+     */
+    private static function underTestingHint(Issue $issue)
+    {
+        $label = 'Взята в тестирование';
+        if (!$issue->isUnderTesting || empty($issue->underTestingSince)) {
+            return $label;
+        }
+
+        $when = TimeAgoHelper::format($issue->underTestingSince)
+            . ' (' . $issue->getUnderTestingSince() . ')';
+
+        $user = User::load($issue->underTestingById);
+
+        return empty($user)
+            ? $label . ' ' . $when
+            : 'Проверяет ' . $user->getPlainName() . ', взята в тестирование ' . $when;
     }
 
     /**

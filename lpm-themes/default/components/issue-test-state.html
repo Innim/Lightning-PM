@@ -2,18 +2,21 @@
 /*
 Требуются:
     string $buildLevel - состояние сборки задачи, пустая строка - не показывать
+    string $underTestingHint - подсказка отметки о взятии в тестирование
 */
 ?>
-<i class="fas fa-flask under-testing-check" title="Взята в тестирование"></i>
+<?php /* Подсказки висят на обёртках, а не на иконках: у голой иконки
+         почти нулевая высота бокса, и всплывающая подсказка
+         легла бы прямо на неё */ ?><span class="under-testing-check"
+    title="<?=htmlspecialchars($underTestingHint, ENT_QUOTES);?>"
+    aria-label="<?=htmlspecialchars($underTestingHint, ENT_QUOTES);?>"><i
+    class="fas fa-flask" aria-hidden="true"></i></span>
 <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
 <i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
 <i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>
 <i class="fas fa-code-merge test-ready-check" title="Правки влиты — можно тестировать"></i>
 <?php if ($buildLevel !== ''): ?>
-<?php /* Подсказка висит на обёртке, а не на иконке: у голой иконки
-         почти нулевая высота бокса, и всплывающая подсказка
-         легла бы прямо на неё */ ?><span
-    class="build-state build-<?=$buildLevel;?>"
+<span class="build-state build-<?=$buildLevel;?>"
     title="<?=IssueViewHelper::buildHint($buildLevel);?>"
     aria-label="<?=IssueViewHelper::buildHint($buildLevel);?>"><i
     class="<?=IssueViewHelper::buildIconClass($buildLevel);?>" aria-hidden="true"></i></span>

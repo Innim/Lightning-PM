@@ -106,20 +106,22 @@ class Issue extends MembersInstance
      * Отметка о взятии живёт в журнале задачи, а снимающие её отметки
      * о проверке - в комментариях, поэтому состояние выводится сравнением дат:
      * задача взята, если событие взятия свежее последней отметки о проверке.
-     * Запрос отдаёт дату последнего события журнала о тестировании, если это
-     * взятие, и NULL, если отметку уже сняли.
+     * Запрос отдаёт запрошенное поле последнего события журнала
+     * о тестировании, если это взятие, и NULL, если отметку уже сняли.
      * @param  int|\GMFramework\DBColumn $issueId Идентификатор задачи либо
      *                                            колонка с ним - для подзапроса.
+     * @param  string $field Поле события: `date` - когда взяли,
+     *                       `userId` - кто взял.
      * @return array Описание запроса для конструктора.
      */
-    private static function getTakenForTestingSqlHash($issueId)
+    private static function getTakenForTestingSqlHash($issueId, $field = 'date')
     {
         $taken = IssueEventType::TAKEN_FOR_TESTING;
 
         return IssueEvent::getLastSqlHash(
             $issueId,
             [$taken, IssueEventType::RELEASED_FROM_TESTING],
-            "IF(`ev`.`type` = '$taken', `ev`.`date`, NULL)"
+            "IF(`ev`.`type` = '$taken', `ev`.`$field`, NULL)"
         );
     }
 
@@ -142,17 +144,23 @@ class Issue extends MembersInstance
     }
 
     /**
-     * Загружает момент, с которого задача считается взятой в тестирование.
+     * Загружает отметку о том, что задача взята в тестирование прямо сейчас:
+     * по ней известно, кто задачу взял и когда.
+     *
+     * Отметка о проверке (прошла тестирование, найдены проблемы) живёт
+     * в комментариях, поэтому здесь она не учитывается - снятой отметку
+     * считает {@see applyTestState()}.
      * @param  int $issueId Идентификатор задачи.
-     * @return string|null Дата события взятия либо null, если отметки нет.
+     * @return IssueEvent|null Событие взятия либо null, если последней
+     * отметкой было снятие или отметки не было вовсе.
      */
-    public static function loadTakenForTestingDate($issueId)
+    public static function loadTakenForTestingEvent($issueId)
     {
         $event = self::loadLastTestingEvent($issueId);
 
         return empty($event) || $event->type != IssueEventType::TAKEN_FOR_TESTING
             ? null
-            : DateTimeUtils::mysqlDate($event->date);
+            : $event;
     }
 
     /**
@@ -187,6 +195,8 @@ class Issue extends MembersInstance
             . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'), '`cm`.`date`')) . ')';
         $takenForTestingSql = '('
             . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'))) . ')';
+        $takenForTestingByIdSql = '('
+            . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'), 'userId')) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -202,6 +212,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     $testStateSql AS `t_testState`,
     IF(`i`.`status` = $statusWait, $testStateDateSql, NULL) AS `t_testStateDate`,
     IF(`i`.`status` = $statusWait, $takenForTestingSql, NULL) AS `t_takenAt`,
+    IF(`i`.`status` = $statusWait, $takenForTestingByIdSql, NULL) AS `t_takenById`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
          FROM `%6\$s` `cm`
@@ -324,6 +335,8 @@ SQL;
             . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'), '`cm`.`date`')) . ')';
         $takenForTestingSql = '('
             . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'))) . ')';
+        $takenForTestingByIdSql = '('
+            . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'), 'userId')) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -339,6 +352,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
     $testStateSql AS `t_testState`,
     IF(`i`.`status` = $statusWait, $testStateDateSql, NULL) AS `t_testStateDate`,
     IF(`i`.`status` = $statusWait, $takenForTestingSql, NULL) AS `t_takenAt`,
+    IF(`i`.`status` = $statusWait, $takenForTestingByIdSql, NULL) AS `t_takenById`,
     IF(`i`.`status` = $statusWait,
       (SELECT MAX(`cm`.`date`)
          FROM `%6\$s` `cm`
@@ -1685,6 +1699,24 @@ SQL;
     public $isUnderTesting;
 
     /**
+     * Момент, с которого задачу проверяют.
+     *
+     * Осмысленно только при поднятом {@see $isUnderTesting}: без отметки
+     * о взятии здесь 0.
+     * @var float
+     */
+    public $underTestingSince = 0;
+
+    /**
+     * Идентификатор того, кто взял задачу в тестирование.
+     *
+     * Осмысленно только при поднятом {@see $isUnderTesting}: без отметки
+     * о взятии здесь 0.
+     * @var float
+     */
+    public $underTestingById = 0;
+
+    /**
      * Состояние правок по задаче в тесте: состояние MR задачи
      * (см. GitlabMergeRequest::STATE_*).
      *
@@ -2157,6 +2189,16 @@ SQL;
         return self::getDateTimeStr($this->testActivityDate);
     }
 
+    /**
+     * Момент, с которого задачу проверяют, для показа пользователю.
+     * @return string Дата в формате «ДД.ММ.ГГГГ ЧЧ:ММ». Пустая строка,
+     * если отметки о взятии нет.
+     */
+    public function getUnderTestingSince()
+    {
+        return self::getDateTimeStr($this->underTestingSince);
+    }
+
     public function getCompletedDate()
     {
         return self::getDateStr($this->completedDate);
@@ -2248,10 +2290,12 @@ SQL;
     {
         if ($this->isTesting()) {
             $row = self::loadTestStateComment($this->id);
+            $event = self::loadTakenForTestingEvent($this->id);
             $this->applyTestState(
                 empty($row) ? null : $row['type'],
                 empty($row) ? null : $row['date'],
-                self::loadTakenForTestingDate($this->id)
+                empty($event) ? null : DateTimeUtils::mysqlDate($event->date),
+                empty($event) ? null : $event->userId
             );
             return;
         }
@@ -2270,9 +2314,15 @@ SQL;
      * @param string|null $testStateDate Дата этого комментария.
      * @param string|null $takenAt       Дата, с которой задача взята
      * в тестирование, либо null, если отметки о взятии нет.
+     * @param float|null  $takenById     Идентификатор того, кто взял задачу,
+     * либо null, если отметки о взятии нет.
      */
-    private function applyTestState($testState, $testStateDate = null, $takenAt = null)
-    {
+    private function applyTestState(
+        $testState,
+        $testStateDate = null,
+        $takenAt = null,
+        $takenById = null
+    ) {
         $this->hasPassTestMark = $testState == IssueCommentType::PASS_TEST;
         $this->isChangesRequested = $this->isTesting()
             && $testState == IssueCommentType::REQUEST_CHANGES;
@@ -2282,6 +2332,12 @@ SQL;
         $this->isUnderTesting = $this->isTesting()
             && !empty($takenAt)
             && (empty($testStateDate) || $takenAt > $testStateDate);
+
+        // Данные осмысленны, только пока отметка стоит: снятая её не сохраняет
+        $this->underTestingSince = $this->isUnderTesting
+            ? (float)DateTimeUtils::convertMysqlDate($takenAt)
+            : 0;
+        $this->underTestingById = $this->isUnderTesting ? (float)$takenById : 0;
     }
 
     /**
@@ -2334,7 +2390,8 @@ SQL;
             $this->applyTestState(
                 $hash['t_testState'],
                 isset($hash['t_testStateDate']) ? $hash['t_testStateDate'] : null,
-                isset($hash['t_takenAt']) ? $hash['t_takenAt'] : null
+                isset($hash['t_takenAt']) ? $hash['t_takenAt'] : null,
+                isset($hash['t_takenById']) ? $hash['t_takenById'] : null
             );
         }
 

@@ -17,7 +17,7 @@
                             <?php lpm_print_goto_issue($project); ?>
                         </div>
                         <div class="col">
-                            <a class="btn btn-outline-primary btn-sm" href="<?=Project::getURLByProjectUID($project->uid, 'add-issue');?>" role="button" title="Новая задача">
+                            <a class="btn btn-outline-primary btn-sm" href="<?=ProjectPage::getIssueFormUrl($project->uid);?>" role="button" title="Новая задача">
                                 <i class="fa-solid fa-plus"></i>
                             </a>
                         </div>

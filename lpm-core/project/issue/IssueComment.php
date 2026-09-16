@@ -118,11 +118,34 @@ class IssueComment extends LPMBaseObject
     }
 
     /**
+     * Определяет, является ли комментарий отметкой о взятии задачи
+     * в тестирование.
+     * @return bool
+     */
+    public function isTakenForTesting() {
+        return $this->type == IssueCommentType::TAKEN_FOR_TESTING;
+    }
+
+    /**
+     * Определяет, является ли комментарий отметкой о снятии задачи
+     * с тестирования.
+     * @return bool
+     */
+    public function isReleasedFromTesting() {
+        return $this->type == IssueCommentType::RELEASED_FROM_TESTING;
+    }
+
+    /**
      * Определяет, является ли комментарий автоматически созданным оповещением.
      * @return bool
      */
     public function isAutoComment() {
-        return in_array($this->type, [IssueCommentType::CREATE_BRANCH, IssueCommentType::BRANCH_MERGED]);
+        return in_array($this->type, [
+            IssueCommentType::CREATE_BRANCH,
+            IssueCommentType::BRANCH_MERGED,
+            IssueCommentType::TAKEN_FOR_TESTING,
+            IssueCommentType::RELEASED_FROM_TESTING,
+        ]);
     }
 
     /**

@@ -456,8 +456,12 @@ class IssueService extends LPMBaseService
     /**
      * Отмечает, что текущий пользователь взял задачу в тестирование.
      *
-     * Отметка живёт в журнале задачи, а не в комментариях: её надо уметь
-     * снимать, а комментарий из ленты не убрать. Взять задачу может любой,
+     * Состояние отметки держит журнал задачи, а не комментарий: отметку надо
+     * уметь снимать, а комментарий из ленты не убрать. В ленту при этом
+     * пишется запись о самом действии - она историю не задаёт, а показывает,
+     * поэтому её удаление отметку не трогает. Оповещений по этой записи
+     * не рассылаем: взятие и снятие происходят часто и адресату не важны.
+     * Взять задачу может любой,
      * кому она доступна: задача в тесте ничья, тестировщики разбирают
      * такие задачи сами. Взявший заодно добавляется в тестировщики задачи,
      * если его там ещё нет.
@@ -473,6 +477,8 @@ class IssueService extends LPMBaseService
      *     bool needConfirm     Нужно подтверждение перехвата: отметка не изменена.
      *     String holderName    Имя проверяющего задачу сейчас, экранированное
      *                          для вставки в HTML (при needConfirm).
+     *     Comment comment      Запись о взятии, добавленная в ленту.
+     *     String html          HTML код этой записи.
      *     int  substatus       Уточнение статуса задачи.
      *     bool testerAdded     Добавлен ли пользователь в тестировщики задачи.
      *     float  userId        Идентификатор добавленного тестировщика.
@@ -508,6 +514,14 @@ class IssueService extends LPMBaseService
             }
 
             IssueEvent::create($issueId, IssueEventType::TAKEN_FOR_TESTING, $userId);
+            $comment = $this->postComment(
+                $issue,
+                '**Взята в тестирование**',
+                true,
+                IssueCommentType::TAKEN_FOR_TESTING,
+                null,
+                true
+            );
 
             // Назначение тестировщиком - отдельный от отметки механизм: оно
             // переживает снятие отметки, поэтому здесь только добавляем
@@ -526,7 +540,7 @@ class IssueService extends LPMBaseService
             }
 
             $this->add2Answer('testerAdded', $testerAdded);
-            $this->answerTestingMark($issue);
+            $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -540,10 +554,13 @@ class IssueService extends LPMBaseService
      * Снять отметку может любой, кому доступна задача, и в любой момент:
      * иначе тот, кто взял задачу и пропал, заблокировал бы её насовсем.
      * Из тестировщиков задачи пользователь при этом не убирается - его могли
-     * назначить туда заранее и не этим действием.
+     * назначить туда заранее и не этим действием. Запись в ленте, как
+     * и при взятии, оповещений не рассылает.
      * @param   int $issueId Идентификатор задачи.
      * @return {
-     *     int substatus Уточнение статуса задачи.
+     *     Comment comment   Запись о снятии отметки, добавленная в ленту.
+     *     String  html      HTML код этой записи.
+     *     int     substatus Уточнение статуса задачи.
      * }
      */
     public function releaseFromTesting($issueId)
@@ -558,8 +575,16 @@ class IssueService extends LPMBaseService
             }
 
             IssueEvent::create($issueId, IssueEventType::RELEASED_FROM_TESTING, $this->getUserId());
+            $comment = $this->postComment(
+                $issue,
+                '**Снята отметка «Взята в тестирование»**',
+                true,
+                IssueCommentType::RELEASED_FROM_TESTING,
+                null,
+                true
+            );
 
-            $this->answerTestingMark($issue);
+            $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -1375,9 +1400,17 @@ class IssueService extends LPMBaseService
         $text,
         $ignoreSlackNotification = false,
         string $type = null,
-        string $data = null
+        string $data = null,
+        $ignoreEmailNotification = false
     ) {
-        $result = $this->postCommentWithResult($issue, $text, $ignoreSlackNotification, $type, $data);
+        $result = $this->postCommentWithResult(
+            $issue,
+            $text,
+            $ignoreSlackNotification,
+            $type,
+            $data,
+            $ignoreEmailNotification
+        );
 
         return $result['comment'];
     }
@@ -1390,7 +1423,8 @@ class IssueService extends LPMBaseService
         $text,
         $ignoreSlackNotification = false,
         string $type = null,
-        string $data = null
+        string $data = null,
+        $ignoreEmailNotification = false
     ) {
         return $this->_engine->comments()->postCommentWithResult(
             $this->getUser(),
@@ -1402,7 +1436,8 @@ class IssueService extends LPMBaseService
             $data,
             isset($_FILES['commentFiles']) && is_array($_FILES['commentFiles'])
                 ? $_FILES['commentFiles']
-                : null
+                : null,
+            $ignoreEmailNotification
         );
     }
 
@@ -1446,17 +1481,6 @@ class IssueService extends LPMBaseService
         $event = Issue::loadLastTestingEvent($issueId);
 
         return empty($event) ? false : User::load($event->userId);
-    }
-
-    /**
-     * Добавляет в ответ актуальное состояние отметки о взятии в тестирование.
-     * @param Issue $issue Задача, у которой отметка только что изменилась.
-     */
-    private function answerTestingMark(Issue $issue)
-    {
-        $issue->reloadSubstatusSources();
-
-        $this->addSubstatus2Answer($issue);
     }
 
     /**
