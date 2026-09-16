@@ -5,6 +5,30 @@
  */
 class LPMImg extends LPMBaseObject
 {
+    /**
+     * Загружает изображение по идентификатору.
+     * @param  int $imgId
+     * @return LPMImg|null `null`, если такого изображения нет или оно удалено.
+     * @throws \GMFramework\ProviderLoadException При ошибке чтения из базы.
+     */
+    public static function load($imgId)
+    {
+        $imgId = (int)$imgId;
+        if ($imgId <= 0) {
+            return null;
+        }
+
+        return self::loadAndParseSingleV2([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::IMAGES,
+            'WHERE'  => [
+                'imgId'   => $imgId,
+                'deleted' => 0,
+            ],
+            'LIMIT'  => 1,
+        ], __CLASS__);
+    }
+
     public static function loadListByInstance($instanceType, $instanceId)
     {
         return StreamObject::loadListDefault(
@@ -267,6 +291,31 @@ class LPMImg extends LPMBaseObject
     public function getDisplayName()
     {
         return FileNameHelper::sanitize($this->origName);
+    }
+
+    /**
+     * Возвращает url, по которому изображение отдаётся под исходным именем -
+     * тем, которое видно в {@see LPMImg::getDisplayName()}.
+     *
+     * Отличается от {@see LPMImg::getSource()} только именем сохраняемого
+     * файла: там браузер называет картинку по имени файла на диске, здесь -
+     * по тому, под которым её загрузили. Прямая ссылка на файл остаётся
+     * рабочей, поэтому для показа на странице годятся обе.
+     * @return string
+     */
+    public function getViewUrl()
+    {
+        return Link::getImageViewUrl($this->imgId, $this->getFileName());
+    }
+
+    /**
+     * Имя файла изображения на диске, вместе с расширением и без каталога.
+     * В отличие от {@see LPMImg::getSrcImgName()} каталог в него не входит.
+     * @return string
+     */
+    public function getFileName()
+    {
+        return $this->_imgName . '.' . $this->_imgExt;
     }
 
     public function getSrcImgName()

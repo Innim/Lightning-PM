@@ -21,6 +21,7 @@ class LightningEngine
     const API_PATH = 'api';
     const BADGES_PATH = 'badges';
     const FILES_PATH = 'file';
+    const IMAGES_PATH = 'img';
 
     /**
      * @return LightningEngine
@@ -173,6 +174,8 @@ class LightningEngine
             $this->staticGenerator();
         } elseif ($arg0 == self::FILES_PATH) {
             $this->fileDownload();
+        } elseif ($arg0 == self::IMAGES_PATH) {
+            $this->imageDownload();
         } else  {
             $this->createPage();
         }
@@ -297,6 +300,25 @@ class LightningEngine
         }
 
         $this->showNotAvailablePage($e);
+    }
+
+    private function imageDownload()
+    {
+        try {
+            $params = $this->_params;
+            $params->shiftArg();
+            $imgId = $params->shiftArg();
+
+            $controller = new ImageDownloadController();
+            $controller->handle($imgId);
+        } catch (LPMException $e) {
+            // Прав маршрут не проверяет, поэтому отказать он может только
+            // ненайденной картинкой - и показать это можно любому, кто пришёл.
+            $this->showNotAvailablePage($e);
+        } catch (Exception $e) {
+            $this->debugOnException($e);
+            die('Fatal image download error');
+        }
     }
 
     /**
