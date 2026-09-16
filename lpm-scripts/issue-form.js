@@ -1423,7 +1423,7 @@ let issueForm = {
     validateIssueForm: function () {
         var errors = [];
 
-        // Разбор тегов должен совпадать с серверным (Issue::LABELS_PATTERN),
+        // Разбор тегов должен совпадать с серверным (IssueLabel::LABELS_PATTERN),
         // иначе форма пропустит название, которое сервер не примет.
         const name = $.trim($("#issueForm form input[name=name]").val());
         const labelsStr = (name.match(/^(?:\[[^\]]*\]\s*)+/) || [''])[0];

@@ -181,7 +181,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Мастер не найден в участниках проекта');
         }
 
-        $label = Issue::getLabel($labelId);
+        $label = IssueLabel::getLabel($labelId);
         if (!$label) {
             return $this->error('Нет такого тега');
         }
@@ -226,7 +226,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Тестировщик не найден в участниках проекта');
         }
 
-        $label = Issue::getLabel($labelId);
+        $label = IssueLabel::getLabel($labelId);
         if (!$label) {
             return $this->error('Нет такого тега');
         }
