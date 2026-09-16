@@ -29,6 +29,14 @@ class FileViewPage extends LPMPage
         $this->_baseParamsCount = 2;
     }
 
+    /**
+     * Готовит страницу к показу.
+     * @return $this|false `false`, если открывать страницу некому:
+     *      пользователь не авторизован.
+     * @throws NotFoundException Если файла нет - вместо страницы будет
+     *      показан отказ ({@see NotAvailablePage}).
+     * @throws ForbiddenException Если файл есть, а доступа к нему нет.
+     */
     public function init()
     {
         if (!parent::init()) {
@@ -37,12 +45,28 @@ class FileViewPage extends LPMPage
 
         $file = LPMFile::loadByUid($this->getParam(1));
         if (!$file || $file->deleted || !$file->isHtml()) {
-            return $this->notFound();
+            throw NotFoundException::withMessage(
+                FileDownloadController::NOT_FOUND_MESSAGE,
+                'File not found'
+            );
         }
 
-        $issue = $file->loadViewableIssue($this->_engine->getUser()->getID());
+        $userId = $this->_engine->getUser()->getID();
+        $issue = $file->loadViewableIssue($userId);
         if (!$issue) {
-            return $this->notFound();
+            // Задач и комментариев у файла может уже не быть - тогда он не
+            // закрыт от пользователя, а просто ни к чему не приложен.
+            if ($file->checkViewPermit($userId) === null) {
+                throw NotFoundException::withMessage(
+                    FileDownloadController::NOT_FOUND_MESSAGE,
+                    'File has no linked items'
+                );
+            }
+
+            throw ForbiddenException::withMessage(
+                FileDownloadController::NO_ACCESS_MESSAGE,
+                'File is not available for the user'
+            );
         }
 
         $this->_title = $file->origName;
@@ -51,17 +75,5 @@ class FileViewPage extends LPMPage
         $this->addTmplVar('issue', $issue);
 
         return $this;
-    }
-
-    /**
-     * Про недоступный файл не сообщаем, есть он или нет: это раскрывало бы
-     * наличие файла тому, у кого нет доступа к задаче.
-     * @return false
-     */
-    private function notFound()
-    {
-        $this->_engine->addNextError('Файл не найден');
-
-        return false;
     }
 }

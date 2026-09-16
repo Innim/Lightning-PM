@@ -96,6 +96,26 @@ class ProjectPage extends LPMPage
     const PUID_SPRINT_STAT = 'sprint-stat';
     const PUID_SETTINGS = 'project-settings';
 
+    /**
+     * Сообщение о задаче, которой нет.
+     */
+    const ISSUE_NOT_FOUND_MESSAGE = 'Такой задачи нет - возможно, её удалили';
+
+    /**
+     * Сообщение о задаче, которая есть, но недоступна этому пользователю.
+     */
+    const ISSUE_NO_ACCESS_MESSAGE = 'У вас нет доступа к этой задаче';
+
+    /**
+     * Сообщение о проекте, которого нет.
+     */
+    const PROJECT_NOT_FOUND_MESSAGE = 'Такого проекта нет - возможно, его удалили';
+
+    /**
+     * Сообщение о проекте, который есть, но недоступен этому пользователю.
+     */
+    const PROJECT_NO_ACCESS_MESSAGE = 'У вас нет доступа к этому проекту';
+
     /** Параметр строки запроса с поисковым запросом по списку задач. */
     const QUERY_ARG_SEARCH = 'search';
     /** Параметр строки запроса с областью поиска по статусу задачи. */
@@ -203,7 +223,7 @@ class ProjectPage extends LPMPage
         // загружаем проект, на странице которого находимся
         if ($engine->getParams()->suid == ''
             || !$this->_project = Project::load($engine->getParams()->suid)) {
-            return false;
+            return $this->notFound('Project not found');
         }
 
         // Если это scrum проект - добавляем новый подраздел
@@ -256,7 +276,7 @@ class ProjectPage extends LPMPage
         }
 
         if (!$this->_project->hasReadPermission($user)) {
-            return false;
+            return $this->noAccess('Project is not available for the user');
         }
         
         $iCount = (int)$this->_project->getImportantIssuesCount();
@@ -306,7 +326,9 @@ class ProjectPage extends LPMPage
             case null: {
                 // может быть это страница просмотра задачи?
                 if ($this->getPUID() == self::PUID_ISSUE) {
-                    $this->initIssue();
+                    if (!$this->initIssue()) {
+                        return $this->notFound('Issue not found in the project');
+                    }
                     break;
                 }
                 // или страница создания задачи?
@@ -350,6 +372,54 @@ class ProjectPage extends LPMPage
         }
         
         return $this;
+    }
+
+    /**
+     * Прерывает открытие страницы, которой нет: вместо неё по тому же адресу
+     * будет показана страница отказа ({@see NotAvailablePage}) с кодом 404
+     * и сообщением, что такой записи не существует.
+     *
+     * Неавторизованному отказ не показываем: его отправляют авторизоваться,
+     * после чего он вернётся на эту же страницу.
+     * @param string $reason Причина отказа для лога - пользователь её не видит.
+     * @return false Если пользователь не авторизован.
+     * @throws NotFoundException Если авторизован.
+     */
+    private function notFound($reason)
+    {
+        if (!$this->_engine->isAuth()) {
+            return false;
+        }
+
+        $message = $this->getPUID() == self::PUID_ISSUE
+            ? self::ISSUE_NOT_FOUND_MESSAGE
+            : self::PROJECT_NOT_FOUND_MESSAGE;
+
+        throw NotFoundException::withMessage($message, $reason);
+    }
+
+    /**
+     * Прерывает открытие существующей страницы, к которой у пользователя нет
+     * доступа: вместо неё по тому же адресу будет показана страница отказа
+     * ({@see NotAvailablePage}) с кодом 403 и сообщением, что доступа нет.
+     *
+     * Неавторизованному отказ не показываем: его отправляют авторизоваться,
+     * после чего он вернётся на эту же страницу.
+     * @param string $reason Причина отказа для лога - пользователь её не видит.
+     * @return false Если пользователь не авторизован.
+     * @throws ForbiddenException Если авторизован.
+     */
+    private function noAccess($reason)
+    {
+        if (!$this->_engine->isAuth()) {
+            return false;
+        }
+
+        $message = $this->getPUID() == self::PUID_ISSUE
+            ? self::ISSUE_NO_ACCESS_MESSAGE
+            : self::PROJECT_NO_ACCESS_MESSAGE;
+
+        throw ForbiddenException::withMessage($message, $reason);
     }
 
     /**
@@ -421,11 +491,15 @@ class ProjectPage extends LPMPage
         $this->initIssuesList(self::SEARCH_SCOPE_OPENED, true);
     }
 
+    /**
+     * Готовит страницу просмотра задачи.
+     * @return bool `false`, если задачи в этом проекте нет.
+     */
     private function initIssue()
     {
         $issueId = $this->getCurrentIssueId((float)$this->getAddParam());
         if ($issueId <= 0 || !$issue = Issue::load((float)$issueId)) {
-            LightningEngine::go2URL($this->getUrl());
+            return false;
         }
         
         $issue->getMembers();
@@ -450,6 +524,8 @@ class ProjectPage extends LPMPage
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
+
+        return true;
     }
 
     /**

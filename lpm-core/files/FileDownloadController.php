@@ -50,6 +50,21 @@ class FileDownloadController
         return $dest === 'iframe' || $dest === 'frame';
     }
 
+    /**
+     * Сообщение о файле, которого нет.
+     */
+    public const NOT_FOUND_MESSAGE = 'Такого файла нет - возможно, его удалили';
+
+    /**
+     * Сообщение о файле, который есть, но недоступен этому пользователю.
+     */
+    public const NO_ACCESS_MESSAGE = 'У вас нет доступа к этому файлу';
+
+    /**
+     * Сообщение о файле, запрошенном без авторизации.
+     */
+    public const AUTH_REQUIRED_MESSAGE = 'Войдите в приложение, чтобы открыть файл';
+
     private const INLINE_MIME_TYPES = [
         'image/gif',
         'image/jpeg',
@@ -99,26 +114,35 @@ class FileDownloadController
     {
         $uid = trim((string)$uid);
         if ($uid === '') {
-            throw NotFoundException::withMessage('File not found', 'Invalid file identifier');
+            throw NotFoundException::withMessage(self::NOT_FOUND_MESSAGE, 'Invalid file identifier');
         }
 
         $file = LPMFile::loadByUid($uid);
         if (!$file || $file->deleted) {
-            throw NotFoundException::withMessage('File not found');
+            throw NotFoundException::withMessage(self::NOT_FOUND_MESSAGE, 'File not found');
         }
 
         if (!$this->engine->isAuth()) {
-            throw new ForbiddenException('Authentication required to download file');
+            throw ForbiddenException::withMessage(
+                self::AUTH_REQUIRED_MESSAGE,
+                'Authentication required to download file'
+            );
         }
 
         $user = $this->engine->getUser();
         $access = $this->canDownload($file, $user->getID());
         if ($access === null) {
-            throw new NotFoundException('Access check failed: related item not found');
+            throw NotFoundException::withMessage(
+                self::NOT_FOUND_MESSAGE,
+                'Access check failed: related item not found'
+            );
         }
 
         if (!$access) {
-            throw new ForbiddenException('You do not have permission to download this file');
+            throw ForbiddenException::withMessage(
+                self::NO_ACCESS_MESSAGE,
+                'You do not have permission to download this file'
+            );
         }
 
         $this->streamFile($file, $inline);
@@ -133,7 +157,7 @@ class FileDownloadController
     {
         $absolutePath = FileUploadManager::getAbsolutePath($file->path);
         if (!is_file($absolutePath)) {
-            throw NotFoundException::withMessage('File not found', 'File data is missing on server');
+            throw NotFoundException::withMessage(self::NOT_FOUND_MESSAGE, 'File data is missing on server');
         }
 
         $mimeType = empty($file->mimeType) ? 'application/octet-stream' : $file->mimeType;
