@@ -131,6 +131,16 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Name the change, don't enumerate its parts. Skip the list of UI elements it is made of (badge, frame, warning, button, counter), the per-case branches, the settings' default values and the "and also …" tail. A reader must learn *what is now different for them*, not how it was assembled — the rest they will see in the app.
 - If one change genuinely covers several independent user-visible things, prefer separate one-sentence entries over one entry with a list.
 
+### Picking the section
+
+Decide by **what stood in that place before the change**, never by how the issue was worded:
+
+- nothing stood there → `Added`;
+- the same thing stood there and worked as designed, and now behaves differently → `Changed`;
+- the same thing stood there and did something it was never meant to do → `Fixed`.
+
+Only the third case is `Fixed`. New functionality keeps landing in `Fixed` because issues are almost always filed as complaints — «пользователь не понимает, что произошло», «подсказка не работает», «задача навсегда остаётся в красном». That framing describes why the work started, not what the product does now, and it must not decide the section. Note that the commit type does not decide it either: a `fix` commit routinely produces an `Added` or `Changed` entry, because repairing a feature that never worked at all is new functionality for the reader.
+
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.
 - Wrap commands, paths, and identifiers in backticks.
