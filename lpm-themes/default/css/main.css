@@ -1,5 +1,38 @@
 @charset "UTF-8";
 
+/* Единый набор цветов состояний задачи: один цвет значит одно и то же
+   во всём приложении — и на бейдже фазы, и на иконке-сигнале в списке.
+   Значение цвета состояния берётся только отсюда.
+   Пять цветов есть среди утилит Bootstrap и ссылаются на его переменные,
+   чтобы бейдж на `bg-secondary`/`bg-primary`/`bg-success` и иконка того же
+   состояния не могли разойтись */
+:root {
+	--lpm-state-verified: var(--bs-success); /* проверено */
+	--lpm-state-ready: #0c7c8c; /* готово, можно брать */
+	--lpm-state-in-progress: var(--bs-primary); /* в работе */
+	--lpm-state-testing: var(--bs-purple); /* в тесте */
+	--lpm-state-waiting: var(--bs-secondary); /* ждёт */
+	--lpm-state-running: var(--bs-orange); /* идёт */
+	--lpm-state-problem: var(--bs-danger); /* что-то не так */
+	--lpm-state-completed: #0f5132; /* завершена */
+}
+
+/* Бейджи трёх состояний, под которые в Bootstrap 5.1.3 нет ни утилиты фона,
+   ни `text-bg-*` (она появилась в 5.2), поэтому фон и белый текст задаются
+   парой: на каждом из трёх фонов белый даёт контраст не ниже 4.5 */
+.badge-state-ready {
+	background-color: var(--lpm-state-ready);
+	color: #ffffff;
+}
+.badge-state-testing {
+	background-color: var(--lpm-state-testing);
+	color: #ffffff;
+}
+.badge-state-completed {
+	background-color: var(--lpm-state-completed);
+	color: #ffffff;
+}
+
 body {
 	padding    : 0px;
 	margin     : 0px;
@@ -469,9 +502,10 @@ a.add-me-to-issue .plus-icon {
 	display: inline-block;
 	margin-right: 5px;
 }
-/* Тот же цвет, что у значка взятой задачи в списке и на доске */
+/* Цвет состояния «в тесте» из общего набора — как у значка взятой задачи
+   в списке задач */
 .comments .links-bar .scrum-comments-shortcut a.under-testing {
-	color: #6f42c1;
+	color: var(--lpm-state-testing);
 }
 .comment-input-text-tabs .tab-content {
 	border: 1px solid #dee2e6;
@@ -689,42 +723,42 @@ table tr.pass-test a.issue-name  {
 	color: #00b100;
 }
 
+/* Иконки-сигналы состояния задачи берут цвет из общего набора `--lpm-state-*`.
+   Сборка показывается рядом с состоянием правок, поэтому «сборка прошла»
+   и «правки влиты» намеренно одного цвета: оба значат «можно брать в тест».
+   На Scrum доске эти отметки цветом не красятся: цвет стикера там занят
+   оценкой задачи, и по насыщенному фону цветная иконка не читается —
+   на красном стикере контраст падает до 1.3 при норме 4.5 */
 table.issues-list tr td .under-testing-check {
-	color: #6f42c1;
+	color: var(--lpm-state-testing);
 }
 
 table.issues-list tr td .pass-test-check {
-	color: #00b100;
+	color: var(--lpm-state-verified);
 }
 
 table.issues-list tr td .changes-requested-check {
-	color: #dc3545;
+	color: var(--lpm-state-problem);
 }
 
 table.issues-list tr td .test-wait-merge-check {
-	color: #b06000;
+	color: var(--lpm-state-waiting);
 }
 
-/* Зелёный в этом списке занят отметкой «прошла тестирование» */
 table.issues-list tr td .test-ready-check {
-	color: #0d6efd;
+	color: var(--lpm-state-ready);
 }
 
-/* Состояние сборки. Показывается рядом с состоянием правок, поэтому цвета
-   разведены с ним: синий занят отметкой «правки влиты», тёмно-янтарный —
-   отметкой «правки ещё не влиты».
-   На Scrum доске эти отметки цветом не красятся: цвет стикера там занят
-   оценкой задачи, и по насыщенному фону иконка не читается */
 table.issues-list tr td .build-state.build-running {
-	color: #fd7e14;
+	color: var(--lpm-state-running);
 }
 
 table.issues-list tr td .build-state.build-failed {
-	color: #dc3545;
+	color: var(--lpm-state-problem);
 }
 
 table.issues-list tr td .build-state.build-success {
-	color: #198754;
+	color: var(--lpm-state-ready);
 }
 
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,

@@ -2445,7 +2445,7 @@ Issue.getStatusLabel = function (status, substatus) {
  * Все классы бейджа статуса — снимаются перед тем, как поставить актуальный.
  */
 Issue.STATUS_BADGE_CLASSES =
-    'bg-primary bg-warning bg-success bg-secondary bg-info bg-opacity-50 bg-opacity-75 text-dark';
+    'bg-primary bg-success bg-secondary badge-state-ready badge-state-testing badge-state-completed';
 
 /**
  * Оформление бейджа статуса. Те же соответствия задаёт `IssueViewHelper` на сервере.
@@ -2455,15 +2455,15 @@ Issue.STATUS_BADGE_CLASSES =
 Issue.getStatusBadgeClass = function (status, substatus) {
     switch (substatus) {
         case Issue.SUBSTATUS_BACKLOG: return 'bg-secondary';
-        case Issue.SUBSTATUS_TODO: return 'bg-info text-dark';
+        case Issue.SUBSTATUS_TODO: return 'badge-state-ready';
         case Issue.SUBSTATUS_IN_PROGRESS: return 'bg-primary';
-        case Issue.SUBSTATUS_UNDER_TESTING: return 'bg-warning bg-opacity-50 text-dark';
-        case Issue.SUBSTATUS_PASS_TEST: return 'bg-success bg-opacity-75 text-dark';
+        case Issue.SUBSTATUS_UNDER_TESTING: return 'badge-state-testing';
+        case Issue.SUBSTATUS_PASS_TEST: return 'bg-success';
     }
 
     switch (status) {
-        case 1: return 'bg-warning text-dark';
-        case 2: return 'bg-success';
+        case 1: return 'badge-state-testing';
+        case 2: return 'badge-state-completed';
         default: return 'bg-primary';
     }
 };
