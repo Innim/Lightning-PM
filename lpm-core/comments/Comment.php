@@ -6,6 +6,11 @@ class Comment extends LPMBaseObject
 {
     const MAX_FILES_COUNT = 20;
 
+    /**
+     * Сколько секунд после публикации автор может удалить свой комментарий.
+     */
+    const DELETE_WINDOW_SECONDS = 600;
+
     private const ISSUE_COMMENT_PREFIX = 'ic_';
 
     protected static function loadList($where)
@@ -158,20 +163,6 @@ SQL;
         return StreamObject::singleLoad($id, __CLASS__, '', 'c`.`id');
     }
 
-    public static function setTimeToDeleteComment($comment, $time)
-    {
-        $name = 'comment' . $comment->id;
-        $value = $comment->id . '';
-
-        $_COOKIE[$name] = $value;
-        setcookie($name, $value, time() + $time, '/');
-    }
-
-    public static function checkDeleteCommentById($id)
-    {
-        return !empty($_COOKIE['comment' . $id]);
-    }
-
     public static function remove(User $user, Comment $comment)
     {
         $db = self::getDB();
@@ -180,8 +171,6 @@ SQL;
             throw new Exception('Remove comment failed', \GMFramework\ErrorCode::SAVE_DATA);
         }
 
-        self::setTimeToDeleteComment($comment, 0);
-        
         // Записываем лог
         UserLogEntry::create(
             $user->userId,
@@ -410,6 +399,28 @@ SQL;
         }
 
         return $user->isModerator() || $user->getID() == $this->authorId;
+    }
+
+    /**
+     * Определяет, может ли пользователь удалить комментарий.
+     *
+     * Автору комментарий доступен на удаление только первые
+     * {@see Comment::DELETE_WINDOW_SECONDS} секунд после публикации;
+     * модератору - всегда.
+     * @param User $user Пользователь, для которого проверяются права.
+     * @return bool
+     */
+    public function checkDeletePermit(User $user)
+    {
+        if ($user->isModerator()) {
+            return true;
+        }
+
+        if ($user->getID() != $this->authorId) {
+            return false;
+        }
+
+        return DateTimeUtils::$currentDate - $this->date <= self::DELETE_WINDOW_SECONDS;
     }
 
     /**
