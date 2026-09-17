@@ -41,10 +41,10 @@ SQL;
     {
         $db = self::getDB();
 
-        $dateWhere = self::whereBetween('created', $createFrom, $createdTo);
+        $dateWhere = self::whereBetween('createdUtc', $createFrom, $createdTo);
         $sql = <<<SQL
         SELECT * FROM `%1\$s` WHERE ${dateWhere}
-        ORDER BY `%1\$s`.`created` DESC, `%1\$s`.`pid` DESC
+        ORDER BY `%1\$s`.`createdUtc` DESC, `%1\$s`.`pid` DESC
 SQL;
 
         return StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);

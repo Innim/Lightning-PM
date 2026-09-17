@@ -23,8 +23,8 @@ class PassRecoveryKey extends LPMBaseObject
             'SELECT' => '`recoveryKey`',
             'FROM'   => LPMTables::RECOVERY_EMAILS,
             'WHERE'  => [
-                'userId'  => $userId,
-                'expDate' => ['>=' => DateTimeUtils::mysqlDate()],
+                'userId'     => $userId,
+                'expDateUtc' => ['>=' => DateTimeUtils::mysqlDate()],
             ],
             'LIMIT'  => 1,
         ]);
