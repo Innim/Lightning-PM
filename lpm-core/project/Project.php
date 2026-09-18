@@ -540,13 +540,6 @@ SQL;
         return Link::getUrl(ProjectPage::UID, [$projectUID, ProjectPage::PUID_SCRUM_BOARD], $hash);
     }
     
-    public static function checkDeleteComment($authorId, $commentId)
-    {
-        $user = LightningEngine::getInstance()->getUser();
-
-        return $user->isModerator() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
-    }
-    
     /**
      * Обновляет в БД цели спринта текущего scrum проекта.
      * @param int $projectId идентификатор проекта.

@@ -118,12 +118,25 @@ class PassRecoveryPage extends LPMPage
     private function requestRecoveryEmail($email)
     {
         // Форма публичная, поэтому проверяем формат до обращения к базе.
-        // Сообщение здесь то же, что и при отсутствии пользователя, чтобы
-        // по ответу нельзя было отличить одно от другого.
+        // Про формат сказать можно: он не зависит от того, зарегистрирован
+        // адрес или нет.
         if (!Validation::checkEmail($email)) {
-            $this->_engine->addError('Пользователь с таким email не зарегистрирован');
+            $this->_engine->addError('Введён некорректный email');
             return;
         }
+
+        $retryAfter = AuthThrottle::checkPassRecovery($email);
+        if ($retryAfter > 0) {
+            $this->_engine->addError(sprintf(
+                'Слишком много запросов на восстановление. Попробуйте через %s',
+                AuthThrottle::formatRetryAfter($retryAfter)
+            ));
+            return;
+        }
+
+        // Запрос считаем до того, как узнаем, есть ли такой пользователь:
+        // счётчик не должен зависеть от того, зарегистрирован адрес или нет.
+        AuthThrottle::registerPassRecoveryRequest($email);
 
         try {
             $user = User::loadByEmail($email);
@@ -132,16 +145,34 @@ class PassRecoveryPage extends LPMPage
             return;
         }
 
-        if (!$user) {
-            $this->_engine->addError('Пользователь с таким email не зарегистрирован');
-            return;
+        if ($user) {
+            $this->sendRecoveryEmail($user->userId, $user->firstName, $email);
         }
 
-        if ($this->sendRecoveryEmail($user->userId, $user->firstName, $email)) {
-            $this->_show = 'successEmail';
-        }
+        // Ответ один на все исходы - письмо ушло, пользователя нет, письмо ему
+        // уже отправляли, отправка не удалась: по разным ответам перебирается,
+        // кто зарегистрирован. Причины неудачи видны в логе.
+        //
+        // Время ответа при этом остаётся разным: зарегистрированному адресу
+        // письмо отправляется прямо в запросе, и это сотни миллисекунд.
+        // Выравнивать его здесь нечем - очереди писем в приложении нет,
+        // а под mod_php ответ не отдать до конца работы скрипта. Канал
+        // закрывается не тут, а ограничением числа запросов с одного адреса
+        // клиента. Оно работает только там, где этот адрес известен
+        // достоверно, то есть заданы доверенные прокси ({@see ClientIp});
+        // пока их нет, перебор адресов по времени ответа остаётся возможен.
+        $this->_show = 'successEmail';
     }
 
+    /**
+     * Отправляет письмо со ссылкой восстановления, если актуальной ссылки
+     * у пользователя ещё нет.
+     *
+     * Наружу неудача не выводится - о ней пишется в лог, см. вызывающий метод.
+     * @param int    $userId    Идентификатор пользователя.
+     * @param string $firstName Имя пользователя для обращения в письме.
+     * @param string $email     Адрес, на который уходит письмо.
+     */
     private function sendRecoveryEmail($userId, $firstName, $email)
     {
         $expFormat = mktime(date("H"), date("i"), date("s"), date("m"), date("d")+1, date("Y"));
@@ -151,14 +182,13 @@ class PassRecoveryPage extends LPMPage
         try {
             // Проверим, нет ли актуального письма
             if (PassRecoveryKey::loadActualKey($userId) !== null) {
-                $this->_engine->addError('Письмо уже было отправлено на данный email');
-                return false;
+                return;
             }
 
             PassRecoveryKey::save($userId, $key, $expDate);
         } catch (Exception $e) {
-            $this->_engine->addError('Ошибка записи в базу');
-            return false;
+            LPMLog::exception($e, LPMLog::CH_APP, ['userId' => $userId]);
+            return;
         }
 
         $href = "pass-recovery/reclink/" . $key . "/?userId=" . urlencode(base64_encode($userId));
@@ -172,13 +202,21 @@ class PassRecoveryPage extends LPMPage
         $subject = "Восстановление пароля";
         $message = implode("<br>", $lines);
 
-        if (EmailNotifier::getInstance()->send($email, $firstName, $subject, $message)) {
-            return true;
-        }
+        if (!EmailNotifier::getInstance()->send($email, $firstName, $subject, $message)) {
+            LPMLog::error('Не удалось отправить письмо восстановления пароля', LPMLog::CH_EMAIL, [
+                'userId' => $userId,
+            ]);
 
-        $this->_engine->addError('Не удалось отправить письмо, попробуйте позже или свяжитесь с администратором.');
-        // TODO: удалить из базы? или дать возможность запросить отправку еще раз
-        return false;
+            // Ключ живёт сутки, и пока он есть, письмо больше не отправляется.
+            // Неотправленный ключ поэтому надо убрать: иначе пользователь,
+            // которому письмо не дошло, весь день запрашивал бы его заново
+            // и получал бы в ответ ту же страницу, а письма бы не было.
+            try {
+                PassRecoveryKey::removeByKey($key);
+            } catch (Exception $e) {
+                LPMLog::exception($e, LPMLog::CH_APP, ['userId' => $userId]);
+            }
+        }
     }
     
     /**

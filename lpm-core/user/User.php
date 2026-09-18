@@ -348,7 +348,32 @@ class User extends LPMBaseObject
         // не удваивать стоимость проверки на каждом неверном пароле.
         return $normalized !== $value && crypt($value, $hash) == $hash;
     }
-    
+
+    /**
+     * Сверяет пароль вхолостую - с хэшем, которому не соответствует
+     * ни один пароль.
+     *
+     * Нужно там, где пользователя с таким email не нашлось: сверка хэша
+     * стоит заметно дороже, чем её отсутствие, и без холостой сверки
+     * незарегистрированный адрес отличается от зарегистрированного
+     * по одному только времени ответа.
+     *
+     * @param string $password Пароль, пришедший из формы.
+     */
+    public static function spendPasswordVerifyTime($password)
+    {
+        self::passwordVerify($password, self::NO_USER_PASSWORD_HASH);
+    }
+
+    /**
+     * Хэш, с которым сверяется пароль, когда пользователя с таким email нет.
+     *
+     * Пароля, дающего этот хэш, не существует - он посчитан от случайной
+     * строки. Стоимость та же (13), что задаёт новым паролям blowfishSalt(),
+     * поэтому холостая сверка стоит столько же, сколько настоящая.
+     */
+    const NO_USER_PASSWORD_HASH = '$2a$13$yCRAuVI8BzeMjeMy6Ohq2ei5hXm99BrWUBucrBnrGFdOZsN0Glarm';
+
     const ROLE_USER      = 0;
     const ROLE_ADMIN     = 1;
     const ROLE_MODERATOR = 2;

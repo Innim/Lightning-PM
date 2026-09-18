@@ -289,7 +289,7 @@ $(document).ready(
             $('.delete-comment').each(function (index) {
                 const elementId = $(this).attr('id');
                 const startTime = $(this).data('time');
-                hideElementAfterDelay(elementId, startTime);
+                hideElementAfterDelay(elementId, startTime, lpmOptions.commentDeleteWindow);
             });
         }
 
@@ -1861,7 +1861,7 @@ issuePage.passTest = function () {
 }
 
 issuePage.addComment = function (comment, html) {
-    let elementId = 'comment_' + comment.id;
+    let elementId = 'delete_comment_' + comment.id;
     let commentTime = comment.date;
     $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
     comments.clearFiles($('#issueView .comments form.add-comment'));
@@ -1877,7 +1877,10 @@ issuePage.addComment = function (comment, html) {
 
     comments.hideCommentForm();
 
-    hideElementAfterDelay(elementId, commentTime);
+    // Модератору удаление доступно всегда, остальным — только пока открыто окно.
+    if (!$('#is-moderator').val()) {
+        hideElementAfterDelay(elementId, commentTime, lpmOptions.commentDeleteWindow);
+    }
 };
 
 issuePage.handleLastCreatedSort = function () {
@@ -2653,7 +2656,7 @@ issuePage.resolveComment = (id, callback) => {
     )
 };
 
-function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds = 600) {
+function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds) {
     let delay = (Number(startTimeInSeconds) + Number(delayTimeInSeconds)) * 1000 - Date.now();
 
     if (delay >= 0) {

@@ -1339,15 +1339,10 @@ class IssueService extends LPMBaseService
 
         $user = $this->getUser();
 
-        if (!$this->checkRole(User::ROLE_MODERATOR)) {
-            if (!Comment::checkDeleteCommentById($id)) {
-                return $this->error('Время удаления истекло.');
-            }
-            
-            $authorId = $comment->authorId;
-            if ($authorId != $user->getID()) {
-                return $this->error('Вы не можете удалять комментарий');
-            }
+        if (!$comment->checkDeletePermit($user)) {
+            return $comment->authorId == $user->getID()
+                ? $this->error('Время удаления истекло.')
+                : $this->error('Вы не можете удалять комментарий');
         }
 
         try {

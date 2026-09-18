@@ -606,6 +606,7 @@ class PagePrinter
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
             'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
             'priorityGroupStep' => Issue::PRIORITY_GROUP_STEP,
+            'commentDeleteWindow' => Comment::DELETE_WINDOW_SECONDS,
             'passwordMinLength' => PASSWORD_MIN_LENGTH,
             'passwordMaxLength' => PASSWORD_MAX_LENGTH,
             'roles' => [
