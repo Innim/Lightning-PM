@@ -181,4 +181,8 @@ class LPMTables
      * Состояния сборок, запущенных влитием merge request'ов задач.
      */
     const ISSUE_PIPELINE = 'issue_pipeline';
+    /**
+     * Неудачные попытки входа и запросы восстановления пароля.
+     */
+    const AUTH_ATTEMPTS = 'auth_attempts';
 }
