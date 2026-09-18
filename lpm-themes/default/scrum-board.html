@@ -43,7 +43,10 @@
         </div>
     </div>
 
+    <!-- Атрибут data-sprint-num и класс sprint-num используются JS: доска закрывает
+         тот спринт, номер которого показан на странице -->
     <article id="scrumBoard" data-project-id="<?=$project->id;?>"
+             data-sprint-num="<?=$project->getCurrentSprintNum();?>"
              data-board-digest="<?=$boardDigest;?>" class="hide-sp">
         <?php /* Показывается автообновлением, когда доску перестало обновлять. Стоит до заголовка: он плавающий, и полоса после него обтекала бы его сбоку */ ?>
         <div id="scrumBoardStale" class="alert alert-warning d-none align-items-center py-2" role="alert">
@@ -54,7 +57,7 @@
 
         <h3 class="scrum-board-header">SCRUM доска.
             <span class="scrum-board-info">
-            <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSprintNum();?></span>
+            <span class="scrum-board-sprint-num">Спринт #<span class="sprint-num"><?=$project->getCurrentSprintNum();?></span></span>
             (<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp">, <span
                     class="value"></span> SP</span>)
         </span>
