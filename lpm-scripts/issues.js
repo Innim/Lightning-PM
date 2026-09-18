@@ -1,3 +1,9 @@
+// Меню копирования ссылок поднимается отдельным обработчиком готовности и первым:
+// оно есть на страницах, где часть остальной инициализации неприменима.
+$(document).ready(function () {
+    initIssueCopyMenus();
+});
+
 $(document).ready(
     function () {
         //$( '#issueView .comments form.add-comment' ).hide();
@@ -293,22 +299,33 @@ $(document).ready(
             });
         }
 
-        $('div.copy-tooltip').hover(
-            function () {
-                $(this).find('div').clearQueue().show();
-            },
-            function () {
-                $(this).find('div')
-                    .animate({ width: 'width' + 20, height: 'height' + 20 }, 150)
-                    .animate({ width: 'hide', height: 'hide' }, 1);
-            }
-        )
-
         bindFormattingHotkeys('#issueForm form textarea[name=desc]');
         bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
         bindFormattingHotkeys('form.pass-test #passTestComment textarea.comment-text-field');
     }
 );
+
+/**
+ * Инициализирует меню копирования ссылок на задачу (список задач, Scrum доска).
+ *
+ * Экземпляр Dropdown создаётся заранее только ради popperConfig: его нельзя задать
+ * data-атрибутом, а с настройками по умолчанию у нижней кромки окна Popper развернёт
+ * меню вверх и накроет им строку или стикер. Запасные позиции уводят меню вбок.
+ */
+function initIssueCopyMenus() {
+    document.querySelectorAll('.issue-copy > [data-bs-toggle="dropdown"]').forEach(function (toggle) {
+        new bootstrap.Dropdown(toggle, {
+            popperConfig: function (defaultConfig) {
+                return Object.assign({}, defaultConfig, {
+                    modifiers: defaultConfig.modifiers.concat([{
+                        name: 'flip',
+                        options: { fallbackPlacements: ['right-end', 'left-end', 'top-start'] }
+                    }])
+                });
+            }
+        });
+    });
+}
 
 function bindFormattingHotkeys(selector) {
     $(selector).keydown(function (e) {
@@ -952,7 +969,9 @@ issuePage.onClickCopyLinkedIssueTitle = function (event) {
     const text = issueTitle(idInProject, issueName);
 
     const plain = `${text} (${url})`;
-    const html = `<a href="${url}">${text}</a>`;
+    // Название задачи — произвольный текст: в html-вариант оно попадает экранированным,
+    // иначе угловые скобки в названии стали бы разметкой
+    const html = `<a href="${lpm.utils.escapeHtml(url)}">${lpm.utils.escapeHtml(text)}</a>`;
 
     lpm.utils.copyRichToClipboard(html, plain).then(() => {
         lpm.toast.show('Кликабельная ссылка скопирована');
@@ -2599,33 +2618,6 @@ Issue.getCompletionName = function (issueName, prefix = 'Доделать зад
         `${issueName.substring(0, lastTagIndex + 1)} ${prefix} ${issueName.substring(lastTagIndex + 1).trim()}`
         : `${prefix} ${issueName.trim()}`;
 }
-
-// Всплывающее окно скопировать commit сообщение
-
-jQuery(function ($) {
-
-    $('.issues-list > tbody > tr > td:first-of-type a').mouseenter(
-        function () {
-            $(this).next('.issue_copy.popup-menu').slideDown(180);
-        }
-    );
-
-    $('.issues-list > tbody > tr > td:first-of-type').mouseleave(
-        function () {
-            $('.issue_copy.popup-menu').slideUp(180);
-        }
-    );
-
-    $('.issue_copy.popup-menu').hover(
-        function () {
-            $(this).show();
-        },
-        function () {
-            $(this).slideUp(180);
-        }
-    );
-
-});
 
 issuePage.deleteComment = (id, deleteBranch, callback) => {
     srv.issue.deleteComment(

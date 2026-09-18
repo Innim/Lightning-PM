@@ -126,6 +126,14 @@ class PageConstructor
         include self::$_instance->getThemeDir() . 'css/' . $name . '.css';
     }*/
     
+    /**
+     * Подключает шаблон темы, передавая в него переменные из `$args`.
+     *
+     * Ключи `name` и `args` в `$args` использовать нельзя: они перекрывают
+     * собственные параметры метода, и шаблон подключится не тот.
+     * @param string $name Путь к шаблону внутри темы, без расширения.
+     * @param array|null $args Переменные, доступные шаблону.
+     */
     public static function includePattern($name, $args = null)
     {
         if (null !== $args) {
@@ -148,7 +156,6 @@ class PageConstructor
         'libs/jquery.validate.min',
         'libs/F2PInvoker',
         'libs/iLoad',
-        'libs/clipboard.min',
         'libs/vue@2',
         'libs/vue-multiselect.min',
         'lightning'

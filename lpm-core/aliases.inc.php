@@ -354,6 +354,14 @@ function lpm_print_issue_test_age($issue)
 }
 
 /**
+ * Печатает меню копирования ссылок на задачу.
+ */
+function lpm_print_issue_copy_menu($issue)
+{
+    return PagePrinter::issueCopyMenu($issue);
+}
+
+/**
  * Печатает блок связанных задач для страницы задачи.
  */
 function lpm_print_issue_linked($issue)

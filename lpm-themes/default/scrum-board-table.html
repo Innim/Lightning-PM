@@ -122,7 +122,6 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                  data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>"
                  data-priority-group="<?=$priorityGroup;?>"
                  data-tester-ids="<?=$issue->getTesterIdsStr();?>">
-                <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                 <?php if ($addProjectName): ?>
                     <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
                 <?php endif; ?>
@@ -131,6 +130,11 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                     <span class="sticker-issue-title"><?=$sticker->getName();?></span>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
+                <?php /* Чип позиционируется абсолютно, поэтому в разметке стоит после названия:
+                         так глиф меню копирования попадает в обход табом сразу за ссылкой на задачу.
+                         Пробела перед меню нет: в покое глиф скрыт, и пробел расширял бы чип */ ?>
+                <div class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;
+                    ?><?php lpm_print_issue_copy_menu($issue); ?></div>
                 <span class="sticker-issue-members"><?php
                     foreach ($members as $j => $member):
                         echo $j > 0 ? ', ' : '';
