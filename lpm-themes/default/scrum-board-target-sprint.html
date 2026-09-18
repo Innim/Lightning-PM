@@ -9,7 +9,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Цели спринта #<?=$project->getCurrentSprintNum();?></h5>
+        <!-- Класс sprint-num используется JS: после закрытия спринта номер обновляется -->
+        <h5 class="modal-title">Цели спринта #<span class="sprint-num"><?=$project->getCurrentSprintNum();?></span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
       <div class="modal-body">

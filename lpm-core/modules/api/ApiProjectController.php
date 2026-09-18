@@ -182,6 +182,8 @@ class ApiProjectController extends ApiControllerBase
 
         return ApiResponse::success([
             'project' => $this->serializer()->project($project),
+            // Номер спринта нужен, чтобы его можно было назвать при закрытии
+            'currentSprintNumber' => $project->getCurrentSprintNum(),
             'columns' => $columns,
         ]);
     }
@@ -211,6 +213,10 @@ class ApiProjectController extends ApiControllerBase
     /**
      * Закрывает текущий спринт проекта: доска уходит в архив спринтов.
      *
+     * Закрываемый спринт называет клиент - действие необратимо, поэтому
+     * закрывается именно тот спринт, который клиент видел, а не тот,
+     * что открыт сейчас.
+     *
      * Права те же, что у кнопки архивации на доске: закрыть спринт может
      * любой участник проекта.
      * @param  Project $project Проект со скрам-доской.
@@ -221,6 +227,19 @@ class ApiProjectController extends ApiControllerBase
     {
         if (!$project->scrum) {
             return ApiResponse::error('Project has no scrum board', 400);
+        }
+
+        $sprintNumber = $this->request()->getBody('sprintNumber');
+        if ($sprintNumber === null || $sprintNumber === '') {
+            return ApiResponse::error(
+                'sprintNumber is required: the number of the sprint to close, ' .
+                'see currentSprintNumber of GET /api/v1/projects/{projectId}/board',
+                400
+            );
+        }
+
+        if (!is_numeric($sprintNumber) || (int)$sprintNumber != $sprintNumber || (int)$sprintNumber <= 0) {
+            return ApiResponse::error('Invalid sprintNumber, expected a positive integer', 400);
         }
 
         $transferOpened = $this->request()->getBody('transferOpened');
@@ -234,7 +253,7 @@ class ApiProjectController extends ApiControllerBase
         }
 
         try {
-            $result = ScrumBoardManager::closeSprint($project, $transferOpened, $this->user());
+            $result = ScrumBoardManager::closeSprint($project, $sprintNumber, $transferOpened, $this->user());
         } catch (ScrumBoardException $e) {
             return ApiResponse::error($e->getMessage(), $e->getStatusCode());
         }

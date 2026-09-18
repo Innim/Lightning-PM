@@ -857,13 +857,17 @@ class IssueService extends LPMBaseService
     /**
      * Убирает в архив стикеры с доски - закрывает спринт.
      * @param int $projectId Идентификатор проекта
+     * @param int $sprintNum Номер закрываемого спринта - тот, который показан
+     *                       на доске. Если открыт уже другой спринт (доску успели
+     *                       закрыть в другой вкладке), закрытия не будет.
      * @param bool $transferOpened Определяет, будут ли перенесены но новый спринт
      *                             открытые задачи. Открытыми считаются задачи в TODO и работе.
      * @return
      */
-    public function removeStickersFromBoard($projectId, $transferOpened = false)
+    public function removeStickersFromBoard($projectId, $sprintNum, $transferOpened = false)
     {
         $projectId = (int)$projectId;
+        $sprintNum = (int)$sprintNum;
         $transferOpened = (bool)$transferOpened;
 
         try {
@@ -872,7 +876,7 @@ class IssueService extends LPMBaseService
             // всех его задач
             $project = $this->getProjectRequireReadPermission($projectId);
 
-            $result = ScrumBoardManager::closeSprint($project, $transferOpened, $this->getUser());
+            $result = ScrumBoardManager::closeSprint($project, $sprintNum, $transferOpened, $this->getUser());
         } catch (\GMFramework\ProviderSaveException $e) {
             return $this->errorDBSave();
         } catch (\Exception $e) {

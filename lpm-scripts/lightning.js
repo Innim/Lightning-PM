@@ -436,7 +436,7 @@ let srv = {
         putStickerOnBoard: function (issueId, onResult) {
             this.s._('putStickerOnBoard');
         },
-        removeStickersFromBoard: function (projectId, transferOpened, onResult) {
+        removeStickersFromBoard: function (projectId, sprintNum, transferOpened, onResult) {
             this.s._('removeStickersFromBoard');
         },
         takeIssue: function (issueId, replace, onResult) {

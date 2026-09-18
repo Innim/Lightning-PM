@@ -114,6 +114,11 @@ class ScrumBoardManager
     /**
      * Закрывает спринт: доска уходит в архив, а на её месте начинается новый спринт.
      *
+     * Закрываемый спринт называет вызывающий код: действие необратимо и задевает
+     * всю доску, поэтому закрывается именно тот спринт, который клиент видел,
+     * а не тот, что открыт сейчас. Номер сверяется с {@see Project::getCurrentSprintNum()} -
+     * тем же значением, которое показано на доске.
+     *
      * Снимок доски попадает в архив спринтов вместе с целями спринта, после чего
      * стикеры снимаются с доски. С $transferOpened стикеры колонок TO DO
      * и «В работе» остаются на доске и начинают новый спринт - у них обновляется
@@ -123,6 +128,7 @@ class ScrumBoardManager
      * и номер спринта не меняется.
      *
      * @param  Project $project        Проект со скрам-доской.
+     * @param  int     $sprintNumber   Номер закрываемого спринта.
      * @param  bool    $transferOpened Переносить ли незавершённые задачи
      *                                 (TO DO и «В работе») в новый спринт.
      * @param  User    $user           Пользователь, закрывающий спринт.
@@ -131,14 +137,24 @@ class ScrumBoardManager
      *         `currentSprintNumber` - номер спринта, идущего теперь,
      *         `archived` - снятые с доски стикеры, `transferred` - стикеры,
      *         оставшиеся на доске.
-     * @throws ScrumBoardException Если у проекта нет скрам-доски или доску
+     * @throws ScrumBoardException Если у проекта нет скрам-доски, закрывают
+     *                             не открытый сейчас спринт или доску
      *                             нельзя заархивировать.
      * @throws \GMFramework\ProviderSaveException Если не удалось снять стикеры.
      */
-    public static function closeSprint(Project $project, $transferOpened, User $user)
+    public static function closeSprint(Project $project, $sprintNumber, $transferOpened, User $user)
     {
         if (!$project->scrum) {
             throw new ScrumBoardException('У проекта нет скрам-доски');
+        }
+
+        $sprintNumber = (int)$sprintNumber;
+        $currentNumber = $project->getCurrentSprintNum();
+        if ($sprintNumber !== $currentNumber) {
+            throw new ScrumBoardException(
+                'Сейчас открыт спринт #' . $currentNumber . ', а не #' . $sprintNumber .
+                ' - закрыть можно только открытый спринт'
+            );
         }
 
         $transferOpened = (bool)$transferOpened;
@@ -148,14 +164,14 @@ class ScrumBoardManager
         // иначе отчёт описывал бы не ту доску, которую заархивировали
         $stickers = ScrumSticker::loadBoard($project->id);
 
-        $sprintNumber = null;
+        $closedNumber = null;
         $archived = [];
         $transferred = [];
 
         if (!empty($stickers)) {
             // Номер берём у самого снимка: предсказывать его отдельным
             // запросом - значит разойтись с тем, что записано в архив
-            $sprintNumber = ScrumStickerSnapshot::createSnapshot($project->id, $user->getID(), $stickers);
+            $closedNumber = ScrumStickerSnapshot::createSnapshot($project->id, $user->getID(), $stickers);
 
             $notRemoveStates = $transferOpened ? $transferStates : null;
             if (!ScrumSticker::removeStickersForProject($project->id, $notRemoveStates)) {
@@ -167,7 +183,7 @@ class ScrumBoardManager
             }
         }
 
-        if ($sprintNumber !== null) {
+        if ($closedNumber !== null) {
             foreach ($stickers as $sticker) {
                 if ($transferOpened && in_array($sticker->state, $transferStates)) {
                     $transferred[] = $sticker;
@@ -178,9 +194,11 @@ class ScrumBoardManager
         }
 
         return [
-            'closed' => $sprintNumber !== null,
-            'sprintNumber' => $sprintNumber,
-            'currentSprintNumber' => ScrumStickerSnapshot::getLastSnapshotId($project->id) + 1,
+            'closed' => $closedNumber !== null,
+            'sprintNumber' => $closedNumber,
+            // Новый спринт идёт сразу за закрытым; если закрывать было нечего,
+            // остаётся открытым тот же
+            'currentSprintNumber' => $closedNumber === null ? $currentNumber : $closedNumber + 1,
             'archived' => $archived,
             'transferred' => $transferred,
         ];
