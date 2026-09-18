@@ -183,6 +183,7 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
 ```json
 {
   "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "currentSprintNumber": 12,
   "columns": [
     {
       "state": 1,
@@ -224,6 +225,8 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
 }
 ```
 
+`currentSprintNumber` is the sprint the board belongs to — the number shown above the board in the web UI, and the number [closing the sprint](#closing-the-sprint) expects.
+
 All four columns are always present and come in board order: `todo`, `inProgress`, `testing`, `done`. A column carries its sticker `state` code, a machine-readable `key`, and the `name` shown in the web UI; an empty column has an empty `issues` list.
 
 Issues inside a column come in the same order as on the board. An item is the short issue payload of the issues endpoint plus the issue participants (`members`, `testers`, `masters`, each in the common user shape) and two board fields: `stickerState` (equals the column `state`) and `addedToBoard` (the moment the issue was put on the board). All three participant lists are always present — an issue with nobody assigned reports empty lists, never a missing key. Issues in the backlog are not on the board and never appear here — use `GET /api/v1/projects/{projectId}/issues` for the whole project.
@@ -254,6 +257,67 @@ DELETE /api/v1/issues/{issueId}/board
 ```
 
 Both requests answer with the updated issue payload, the same shape as `GET /api/v1/issues/{issueId}`. A non-scrum project is rejected with `400`. When the project requires labels, an issue without any label cannot be moved out of the backlog and the request is rejected with `400`.
+
+## Closing the sprint
+
+Close the current sprint of a project — the same action as the archive button on the scrum board:
+
+```http
+POST /api/v1/projects/{projectId}/board/close
+Content-Type: application/json
+
+{
+  "sprintNumber": 12,
+  "transferOpened": true
+}
+```
+
+- `sprintNumber` (required) — the sprint to close. It must be the sprint that runs now, the `currentSprintNumber` of the board endpoint; any other number is rejected with `400` naming the sprint that is actually open, and nothing is closed. The parameter is what makes the call safe to repeat: a second call carrying the same number is refused instead of closing the next sprint as well.
+- `transferOpened` (optional, default `false`) — keep the unfinished issues (columns `todo` and `inProgress`) on the board of the new sprint. With `false` the board is cleared completely.
+- Any member of the project may close its sprint, exactly as in the web UI.
+
+The board is archived as a sprint snapshot together with the sprint target, and a new sprint starts. The issues themselves keep their status: an archived issue that is not completed simply returns to the backlog.
+
+The response is:
+
+```json
+{
+  "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "closed": true,
+  "sprint": {"number": 12, "url": "https://example.com/project/demo/sprint-stat/12"},
+  "currentSprintNumber": 13,
+  "archived": [
+    {
+      "id": 25240,
+      "idInProject": 933,
+      "name": "[api] Operations list glitches while a new one is added",
+      "url": "https://example.com/project/demo/issue/933",
+      "status": 2,
+      "column": "done"
+    }
+  ],
+  "transferred": [
+    {
+      "id": 25241,
+      "idInProject": 934,
+      "name": "[api] Pull to refresh stalls",
+      "url": "https://example.com/project/demo/issue/934",
+      "status": 0,
+      "column": "todo"
+    }
+  ]
+}
+```
+
+`sprint` is the closed sprint and `currentSprintNumber` is the sprint that runs now. `archived` lists the issues taken off the board, `transferred` the ones kept on it for the new sprint (`column` is where the issue stood on the closed board); the sprint snapshot holds both lists.
+
+The action is not reversible and there is nothing to undo it with, which is what `sprintNumber` guards: a repeated call names a sprint that is already closed and is rejected. Closing the next sprint takes reading the board again and naming its new number.
+
+A call on an empty board is not an error: there is nothing to archive, so the answer is `closed: false`, `sprint: null` and the same `currentSprintNumber` that was asked for — the sprint stays open. It does not consume the number, so the next call may name it again.
+
+`sprintNumber` does not protect against two genuinely simultaneous calls: both see the same open sprint and both pass.
+
+A non-scrum project is rejected with `400`, and so is a board that cannot be archived — when an issue of several members in `testing` or `done` has its estimate not split between them, the sprint stays open and the message names the issue.
 
 ## Assigning issue participants
 
@@ -465,6 +529,7 @@ An issue URL of this Lightning PM instance written in `desc` or in a comment tex
 - List members of a project.
 - Read the scrum board of a project with its issues grouped by columns.
 - Put an issue on the scrum board, move it between columns, or take it off the board.
+- Close the current sprint of a project, with or without carrying the unfinished issues over.
 - Assign and unassign issue members, testers, and masters.
 - Read issue details by URL or issue id.
 - Read comments, images, and files of the issue and of its comments.

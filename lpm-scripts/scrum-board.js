@@ -173,6 +173,15 @@ let scrumBoard = {
             }
         });
     },
+    /**
+     * Показывает номер идущего спринта - после закрытия предыдущего
+     * страница должна говорить о новом, в том числе при следующем закрытии.
+     * @param {Number} num номер спринта
+     */
+    setSprintNum: function (num) {
+        $('#scrumBoard').data('sprintNum', num);
+        $('.sprint-num').text(num);
+    },
     changeSPVisibility: function (value) {
         if (value)
             $('#scrumBoard').removeClass('hide-sp');
@@ -180,14 +189,18 @@ let scrumBoard = {
             $('#scrumBoard').addClass('hide-sp');
     },
     clearBoard: function () {
-        const projectId = $('#scrumBoard').data('projectId');
+        const $board = $('#scrumBoard');
+        const projectId = $board.data('projectId');
+        // Закрываем именно тот спринт, который показан на этой странице:
+        // если его уже закрыли в другой вкладке, сервер откажет
+        const sprintNum = $board.data('sprintNum');
 
         const transferCols = ['col-todo', 'col-in_progress'];
         const columnsSelector = '#scrumBoard .scrum-board-table .scrum-board-col';
 
         const doClear = function (transfer) {
             preloader.show();
-            srv.issue.removeStickersFromBoard(projectId, transfer, function (res) {
+            srv.issue.removeStickersFromBoard(projectId, sprintNum, transfer, function (res) {
                 preloader.hide();
                 if (res.success) {
                     let $elements = $(columnsSelector);
@@ -200,6 +213,7 @@ let scrumBoard = {
                     scrumBoard.removeEmptyPriorityGroups();
                     sprintTarget.setValue('', '');
                     issuePage.scrumColUpdateInfo();
+                    scrumBoard.setSprintNum(res.numSprint);
                 } else {
                     srv.err(res);
                 }
