@@ -229,6 +229,30 @@ class ApiPayloadSerializer
     }
 
     /**
+     * Задача закрытого спринта: чем она была на доске в момент закрытия.
+     *
+     * Краткое представление задачи здесь не годится: стикеры закрытого спринта
+     * уже сняты с доски, а загруженная задача помнит прежнее положение на ней.
+     * @param  ScrumSticker $sticker Стикер задачи на закрытой доске.
+     * @return array
+     */
+    public function sprintIssue(ScrumSticker $sticker)
+    {
+        $issue = $sticker->getIssue();
+
+        return [
+            'id' => $issue->id,
+            'idInProject' => $issue->idInProject,
+            'name' => $issue->getName(),
+            'url' => $issue->getConstURL(),
+            'status' => $issue->status,
+            'column' => isset(self::BOARD_COLUMNS[$sticker->state])
+                ? self::BOARD_COLUMNS[$sticker->state]['key']
+                : null,
+        ];
+    }
+
+    /**
      * Правила оформления задачи проекта: скелет описания, текстовые правила
      * и требования к названию.
      *

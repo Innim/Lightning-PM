@@ -27,13 +27,21 @@ class ApiProjectController extends ApiControllerBase
             return $this->listProjects();
         }
 
-        if ($method !== 'GET' || count($path) < 2) {
+        if (count($path) < 2) {
             return ApiResponse::error('Route not found', 404);
         }
 
         $project = $this->loadProject($path[0]);
         if (!$project) {
             return ApiResponse::error('Project not found', 404);
+        }
+
+        if ($method === 'POST' && count($path) === 3 && $path[1] === 'board' && $path[2] === 'close') {
+            return $this->closeSprint($project);
+        }
+
+        if ($method !== 'GET') {
+            return ApiResponse::error('Route not found', 404);
         }
 
         if (count($path) === 2 && $path[1] === 'issues') {
@@ -195,6 +203,66 @@ class ApiProjectController extends ApiControllerBase
             foreach ($groupStickers as $sticker) {
                 $issues[] = $this->serializer()->boardIssue($sticker);
             }
+        }
+
+        return $issues;
+    }
+
+    /**
+     * Закрывает текущий спринт проекта: доска уходит в архив спринтов.
+     *
+     * Права те же, что у кнопки архивации на доске: закрыть спринт может
+     * любой участник проекта.
+     * @param  Project $project Проект со скрам-доской.
+     * @return ApiResponse Итог закрытия: номер закрытого спринта и то,
+     *         что ушло в архив и что перенесено.
+     */
+    private function closeSprint(Project $project)
+    {
+        if (!$project->scrum) {
+            return ApiResponse::error('Project has no scrum board', 400);
+        }
+
+        $transferOpened = $this->request()->getBody('transferOpened');
+        if ($transferOpened === null || $transferOpened === '') {
+            $transferOpened = false;
+        } elseif (!is_bool($transferOpened)) {
+            $transferOpened = filter_var($transferOpened, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($transferOpened === null) {
+                return ApiResponse::error('Invalid transferOpened value, expected a boolean', 400);
+            }
+        }
+
+        try {
+            $result = ScrumBoardManager::closeSprint($project, $transferOpened, $this->user());
+        } catch (ScrumBoardException $e) {
+            return ApiResponse::error($e->getMessage(), $e->getStatusCode());
+        }
+
+        $sprintNumber = $result['sprintNumber'];
+
+        return ApiResponse::success([
+            'project' => $this->serializer()->project($project),
+            'closed' => $result['closed'],
+            'sprint' => $sprintNumber === null ? null : [
+                'number' => $sprintNumber,
+                'url' => ScrumStickerSnapshot::getSprintStatUrl($project->uid, $sprintNumber),
+            ],
+            'currentSprintNumber' => $result['currentSprintNumber'],
+            'archived' => $this->serializeSprintIssues($result['archived']),
+            'transferred' => $this->serializeSprintIssues($result['transferred']),
+        ]);
+    }
+
+    /**
+     * @param  ScrumSticker[] $stickers Стикеры закрытой доски.
+     * @return array Список задач в представлении закрытого спринта.
+     */
+    private function serializeSprintIssues(array $stickers)
+    {
+        $issues = [];
+        foreach ($stickers as $sticker) {
+            $issues[] = $this->serializer()->sprintIssue($sticker);
         }
 
         return $issues;

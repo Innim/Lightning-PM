@@ -3,10 +3,11 @@
  * Правила изменения положения задачи на скрам-доске.
  *
  * Единственное место, где собраны постановка задачи на доску, перевод стикера
- * между колонками и снятие с доски: через этот класс работают и доска
- * с карточкой задачи ({@see IssueService}), и форма задачи
+ * между колонками, снятие с доски и закрытие спринта: через этот класс работают
+ * и доска с карточкой задачи ({@see IssueService}), и форма задачи
  * ({@see ProjectPage::updateScrumBoard()}), и внешнее API
- * ({@see ApiIssueController}), чтобы все представления вели себя одинаково.
+ * ({@see ApiIssueController}, {@see ApiProjectController}), чтобы все
+ * представления вели себя одинаково.
  *
  * Нарушение правил - {@see ScrumBoardException}, неудачное сохранение -
  * {@see \GMFramework\ProviderSaveException}.
@@ -108,6 +109,81 @@ class ScrumBoardManager
     public static function removeFromBoard(Issue $issue, $user)
     {
         self::changeState($issue, ScrumStickerState::BACKLOG, $user, true);
+    }
+
+    /**
+     * Закрывает спринт: доска уходит в архив, а на её месте начинается новый спринт.
+     *
+     * Снимок доски попадает в архив спринтов вместе с целями спринта, после чего
+     * стикеры снимаются с доски. С $transferOpened стикеры колонок TO DO
+     * и «В работе» остаются на доске и начинают новый спринт - у них обновляется
+     * дата добавления; в снимок закрытого спринта они всё равно попадают.
+     *
+     * Пустая доска - не ошибка: закрывать нечего, снимок не создаётся
+     * и номер спринта не меняется.
+     *
+     * @param  Project $project        Проект со скрам-доской.
+     * @param  bool    $transferOpened Переносить ли незавершённые задачи
+     *                                 (TO DO и «В работе») в новый спринт.
+     * @param  User    $user           Пользователь, закрывающий спринт.
+     * @return array Результат: `closed` - был ли закрыт спринт, `sprintNumber` -
+     *         номер закрытого спринта (null, если доска была пуста),
+     *         `currentSprintNumber` - номер спринта, идущего теперь,
+     *         `archived` - снятые с доски стикеры, `transferred` - стикеры,
+     *         оставшиеся на доске.
+     * @throws ScrumBoardException Если у проекта нет скрам-доски или доску
+     *                             нельзя заархивировать.
+     * @throws \GMFramework\ProviderSaveException Если не удалось снять стикеры.
+     */
+    public static function closeSprint(Project $project, $transferOpened, User $user)
+    {
+        if (!$project->scrum) {
+            throw new ScrumBoardException('У проекта нет скрам-доски');
+        }
+
+        $transferOpened = (bool)$transferOpened;
+        $transferStates = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS];
+
+        // Доска читается один раз: тот же состав и уходит в снимок,
+        // иначе отчёт описывал бы не ту доску, которую заархивировали
+        $stickers = ScrumSticker::loadBoard($project->id);
+
+        $sprintNumber = null;
+        $archived = [];
+        $transferred = [];
+
+        if (!empty($stickers)) {
+            // Номер берём у самого снимка: предсказывать его отдельным
+            // запросом - значит разойтись с тем, что записано в архив
+            $sprintNumber = ScrumStickerSnapshot::createSnapshot($project->id, $user->getID(), $stickers);
+
+            $notRemoveStates = $transferOpened ? $transferStates : null;
+            if (!ScrumSticker::removeStickersForProject($project->id, $notRemoveStates)) {
+                throw new \GMFramework\ProviderSaveException();
+            }
+
+            if ($transferOpened) {
+                ScrumSticker::updateStickerAdded($project->id);
+            }
+        }
+
+        if ($sprintNumber !== null) {
+            foreach ($stickers as $sticker) {
+                if ($transferOpened && in_array($sticker->state, $transferStates)) {
+                    $transferred[] = $sticker;
+                } else {
+                    $archived[] = $sticker;
+                }
+            }
+        }
+
+        return [
+            'closed' => $sprintNumber !== null,
+            'sprintNumber' => $sprintNumber,
+            'currentSprintNumber' => ScrumStickerSnapshot::getLastSnapshotId($project->id) + 1,
+            'archived' => $archived,
+            'transferred' => $transferred,
+        ];
     }
 
     /**

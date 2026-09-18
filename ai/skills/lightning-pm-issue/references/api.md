@@ -184,6 +184,26 @@ Both requests answer with the updated issue payload (same shape as `GET /api/v1/
 
 Use the resolved global `id` as `{issueId}` here as well.
 
+## Closing the Sprint
+
+Closing a sprint is **out of scope for this skill** and is irreversible — it archives the whole board of the project at once. Never call it on your own initiative; only on an explicit request.
+
+```http
+POST /api/v1/projects/{projectId}/board/close
+Content-Type: application/json
+
+{
+  "transferOpened": true
+}
+```
+
+- `transferOpened` (optional, default `false`): keep the unfinished issues (`todo` and `inProgress`) on the board of the new sprint; `false` clears the board completely.
+- The board goes to the sprint archive together with the sprint target, and a new sprint starts. Issue statuses do not change: an unfinished issue taken off the board returns to the backlog.
+- The response is `{project, closed, sprint, currentSprintNumber, archived, transferred}`, where `sprint` is `{number, url}` of the closed sprint, `archived` lists the issues taken off the board and `transferred` the ones kept for the new sprint. An item is `{id, idInProject, name, url, status, column}`, `column` being the column it stood in on the closed board.
+- A repeated call closes one more sprint. On an empty board nothing happens and the answer is `closed: false`, `sprint: null`.
+- A non-scrum project is rejected with `400`, and so is a board with an issue of several members in `testing` or `done` whose estimate is not split between them.
+- Any member of the project may close its sprint.
+
 ## Assigning Issue Participants
 
 Assigning an issue is **out of scope for this skill** — see [Implementation Expectation](../SKILL.md#implementation-expectation). The endpoints are documented here because the user may ask for the assignment explicitly; do not call them on your own initiative.

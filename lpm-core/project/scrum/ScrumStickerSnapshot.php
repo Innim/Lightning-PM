@@ -5,6 +5,20 @@
 class ScrumStickerSnapshot extends LPMBaseObject
 {
     /**
+     * URL страницы статистики спринта.
+     *
+     * В отличие от {@see getStatUrl()} не требует открытой страницы проекта,
+     * поэтому годится и для API.
+     * @param string $projectUid Строковый идентификатор проекта.
+     * @param int $idInProject Порядковый номер спринта в проекте.
+     * @return string
+     */
+    public static function getSprintStatUrl($projectUid, $idInProject)
+    {
+        return Link::getUrl(ProjectPage::UID, [$projectUid, ProjectPage::PUID_SPRINT_STAT, $idInProject]);
+    }
+
+    /**
      * Загружает список снапшотов по идентификатору проекта (вначале новые).
      * @param int $projectId
      * @return ScrumStickerSnapshot[]
@@ -83,14 +97,24 @@ SQL;
 
     /**
      * Создает snapshot по текущему состоянию доски для переданного проекта.
+     *
+     * Пустая доска в архив не попадает: снимок не создаётся.
      * @param int $projectId
      * @param $userId
-     * @throws Exception
+     * @param ScrumSticker[]|null $stickers Состав доски; если он уже прочитан
+     *        вызывающим кодом, надо передать его сюда, чтобы снимок и отчёт
+     *        о нём описывали одну и ту же доску. `null` - прочитать доску здесь.
+     * @return int|null Номер созданного снимка в проекте или null,
+     *         если доска была пуста и снимок не создавался.
+     * @throws ScrumBoardException Если доску нельзя заархивировать: у задачи
+     *         нескольких исполнителей не распределены SP.
+     * @throws Exception Если не удалось сохранить снимок.
      */
-    public static function createSnapshot($projectId, $userId)
+    public static function createSnapshot($projectId, $userId, array $stickers = null)
     {
-        // получаем список всех стикеров на текущей доске
-        $stickers = ScrumSticker::loadBoard($projectId);
+        if ($stickers === null) {
+            $stickers = ScrumSticker::loadBoard($projectId);
+        }
 
         // Проверяем, что для всех задач в тесте/готово указаны все SP по участникам
         $membersSpByIssueId = [];
@@ -116,7 +140,7 @@ SQL;
                         ];
                     }
                     if ($totalSp != $issue->hours) {
-                        throw new Exception("Не заполнены SP по исполнителям для задачи \"" .
+                        throw new ScrumBoardException("Не заполнены SP по исполнителям для задачи \"" .
                             $issue->name . "\"");
                     }
                     $membersSpByIssueId[$issue->id] = $membersSp;
@@ -240,6 +264,8 @@ SQL;
             } else {
                 // отменяем, т.к. на доске нет стикеров
                 $db->rollback();
+
+                return null;
             }
         } catch (Exception $ex) {
             // что-то пошло не так -> отменяем все изменения
@@ -247,6 +273,8 @@ SQL;
 
             throw $ex;
         }
+
+        return $idInProject;
     }
 
     /**
