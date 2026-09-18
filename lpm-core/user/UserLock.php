@@ -17,8 +17,19 @@ class UserLock extends LPMBaseObject
     protected static function create($userId, $instanceType, $instanceId, $expired)
     {
         $date = DateTimeUtils::mysqlDate();
+        $dateUtc = $date;
+        $expiredUtc = $expired;
+
         $hash = [
-            'INSERT' => compact('userId', 'instanceId', 'instanceType', 'date', 'expired'),
+            'INSERT' => compact(
+                'userId',
+                'instanceId',
+                'instanceType',
+                'date',
+                'dateUtc',
+                'expired',
+                'expiredUtc'
+            ),
             'INTO'    => LPMTables::USER_LOCKS
         ];
 

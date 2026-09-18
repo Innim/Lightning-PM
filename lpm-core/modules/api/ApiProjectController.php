@@ -27,7 +27,7 @@ class ApiProjectController extends ApiControllerBase
             return $this->listProjects();
         }
 
-        if ($method !== 'GET' || count($path) < 2) {
+        if (count($path) < 2) {
             return ApiResponse::error('Route not found', 404);
         }
 
@@ -36,12 +36,24 @@ class ApiProjectController extends ApiControllerBase
             return ApiResponse::error('Project not found', 404);
         }
 
+        if ($method === 'POST' && count($path) === 3 && $path[1] === 'board' && $path[2] === 'close') {
+            return $this->closeSprint($project);
+        }
+
+        if ($method !== 'GET') {
+            return ApiResponse::error('Route not found', 404);
+        }
+
         if (count($path) === 2 && $path[1] === 'issues') {
             return $this->listIssues($project);
         }
 
         if (count($path) === 2 && $path[1] === 'board') {
             return $this->showBoard($project);
+        }
+
+        if (count($path) === 2 && $path[1] === 'members') {
+            return $this->listMembers($project);
         }
 
         if (count($path) === 2 && $path[1] === 'labels') {
@@ -70,6 +82,27 @@ class ApiProjectController extends ApiControllerBase
         }
 
         return ApiResponse::error('Route not found', 404);
+    }
+
+    /**
+     * Участники проекта - те, кого можно назначить участником его задачи.
+     *
+     * Заблокированные пользователи в список не попадают: их и в интерфейсе
+     * нельзя выбрать участником задачи.
+     * @param  Project $project Проект.
+     * @return ApiResponse Проект и его участники.
+     */
+    private function listMembers(Project $project)
+    {
+        $members = [];
+        foreach ($project->getMembers(true) as $member) {
+            $members[] = $this->serializer()->user($member);
+        }
+
+        return ApiResponse::success([
+            'project' => $this->serializer()->project($project),
+            'members' => $members,
+        ]);
     }
 
     private function listProjects()
@@ -134,7 +167,7 @@ class ApiProjectController extends ApiControllerBase
             return ApiResponse::error('Project has no scrum board', 400);
         }
 
-        $stickersByState = ScrumSticker::splitByStates(ScrumSticker::loadBoard($project->id));
+        $stickersByState = ScrumSticker::splitByStates(ScrumSticker::loadBoard($project->id, true));
 
         $columns = [];
         foreach (ApiPayloadSerializer::BOARD_COLUMNS as $state => $column) {
@@ -149,6 +182,8 @@ class ApiProjectController extends ApiControllerBase
 
         return ApiResponse::success([
             'project' => $this->serializer()->project($project),
+            // Номер спринта нужен, чтобы его можно было назвать при закрытии
+            'currentSprintNumber' => $project->getCurrentSprintNum(),
             'columns' => $columns,
         ]);
     }
@@ -170,6 +205,83 @@ class ApiProjectController extends ApiControllerBase
             foreach ($groupStickers as $sticker) {
                 $issues[] = $this->serializer()->boardIssue($sticker);
             }
+        }
+
+        return $issues;
+    }
+
+    /**
+     * Закрывает текущий спринт проекта: доска уходит в архив спринтов.
+     *
+     * Закрываемый спринт называет клиент - действие необратимо, поэтому
+     * закрывается именно тот спринт, который клиент видел, а не тот,
+     * что открыт сейчас.
+     *
+     * Права те же, что у кнопки архивации на доске: закрыть спринт может
+     * любой участник проекта.
+     * @param  Project $project Проект со скрам-доской.
+     * @return ApiResponse Итог закрытия: номер закрытого спринта и то,
+     *         что ушло в архив и что перенесено.
+     */
+    private function closeSprint(Project $project)
+    {
+        if (!$project->scrum) {
+            return ApiResponse::error('Project has no scrum board', 400);
+        }
+
+        $sprintNumber = $this->request()->getBody('sprintNumber');
+        if ($sprintNumber === null || $sprintNumber === '') {
+            return ApiResponse::error(
+                'sprintNumber is required: the number of the sprint to close, ' .
+                'see currentSprintNumber of GET /api/v1/projects/{projectId}/board',
+                400
+            );
+        }
+
+        if (!is_numeric($sprintNumber) || (int)$sprintNumber != $sprintNumber || (int)$sprintNumber <= 0) {
+            return ApiResponse::error('Invalid sprintNumber, expected a positive integer', 400);
+        }
+
+        $transferOpened = $this->request()->getBody('transferOpened');
+        if ($transferOpened === null || $transferOpened === '') {
+            $transferOpened = false;
+        } elseif (!is_bool($transferOpened)) {
+            $transferOpened = filter_var($transferOpened, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($transferOpened === null) {
+                return ApiResponse::error('Invalid transferOpened value, expected a boolean', 400);
+            }
+        }
+
+        try {
+            $result = ScrumBoardManager::closeSprint($project, $sprintNumber, $transferOpened, $this->user());
+        } catch (ScrumBoardException $e) {
+            return ApiResponse::error($e->getMessage(), $e->getStatusCode());
+        }
+
+        $sprintNumber = $result['sprintNumber'];
+
+        return ApiResponse::success([
+            'project' => $this->serializer()->project($project),
+            'closed' => $result['closed'],
+            'sprint' => $sprintNumber === null ? null : [
+                'number' => $sprintNumber,
+                'url' => ScrumStickerSnapshot::getSprintStatUrl($project->uid, $sprintNumber),
+            ],
+            'currentSprintNumber' => $result['currentSprintNumber'],
+            'archived' => $this->serializeSprintIssues($result['archived']),
+            'transferred' => $this->serializeSprintIssues($result['transferred']),
+        ]);
+    }
+
+    /**
+     * @param  ScrumSticker[] $stickers Стикеры закрытой доски.
+     * @return array Список задач в представлении закрытого спринта.
+     */
+    private function serializeSprintIssues(array $stickers)
+    {
+        $issues = [];
+        foreach ($stickers as $sticker) {
+            $issues[] = $this->serializer()->sprintIssue($sticker);
         }
 
         return $issues;

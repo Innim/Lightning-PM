@@ -114,13 +114,16 @@ class LPMAuth
         $db = LPMGlobals::getInstance()->getDBConnect();
         $userAgent = $db->real_escape_string($_SERVER['HTTP_USER_AGENT']);
 
+        $hasCreated = DateTimeUtils::mysqlDate();
+
         if ($hashId != null) {
             $sqlUserData = "update `%s` set `cookieHash`='". $cookieHash ."',`userAgent`='". $userAgent ."',
-				`hasCreated`='". DateTimeUtils::mysqlDate() ."' where `userId` = '". $userId ."' and `id` = '". $hashId ."'";
+				`hasCreated`='". $hasCreated ."',`hasCreatedUtc`='". $hasCreated ."'
+				where `userId` = '". $userId ."' and `id` = '". $hashId ."'";
             $db->queryt($sqlUserData, LPMTables::USER_AUTH);
         } else {
-            $sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`,`hasCreated`) 
-                          values ('". $cookieHash ."','". $userId . "','". $userAgent ."','". DateTimeUtils::mysqlDate() ."')";
+            $sqlCookie = "insert into `%s`(`cookieHash`,`userId`,`userAgent`,`hasCreated`,`hasCreatedUtc`) 
+                          values ('". $cookieHash ."','". $userId . "','". $userAgent ."','". $hasCreated ."','". $hasCreated ."')";
             if (!$db->queryt($sqlCookie, LPMTables::USER_AUTH)) {
                 throw new Exception('Ошибка при сохранении данных авторизации');
             } else {

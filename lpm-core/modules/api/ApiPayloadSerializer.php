@@ -116,22 +116,7 @@ class ApiPayloadSerializer
      */
     public function issue(Issue $issue)
     {
-        $obj = $this->issueObject($issue);
-
-        $obj['members'] = [];
-        foreach ($issue->getMembers() as $member) {
-            $obj['members'][] = $this->member($member);
-        }
-
-        $obj['testers'] = [];
-        foreach ($issue->getTesters() as $tester) {
-            $obj['testers'][] = $this->user($tester);
-        }
-
-        $obj['masters'] = [];
-        foreach ($issue->getMasters() as $master) {
-            $obj['masters'][] = $this->user($master);
-        }
+        $obj = array_merge($this->issueObject($issue), $this->participants($issue));
 
         $obj['images'] = [];
         foreach ($issue->getImages() as $image) {
@@ -165,6 +150,9 @@ class ApiPayloadSerializer
             'createBranch' => $this->baseUrl . '/issues/' . $issue->id . '/branches',
             'repositories' => $this->baseUrl . '/projects/' . $issue->projectId . '/repositories',
             'board' => $this->baseUrl . '/issues/' . $issue->id . '/board',
+            'members' => $this->baseUrl . '/issues/' . $issue->id . '/members',
+            'testers' => $this->baseUrl . '/issues/' . $issue->id . '/testers',
+            'masters' => $this->baseUrl . '/issues/' . $issue->id . '/masters',
         ];
 
         return $obj;
@@ -220,18 +208,48 @@ class ApiPayloadSerializer
     }
 
     /**
-     * Задача на скрам-доске: краткое представление задачи, дополненное
-     * состоянием её стикера и датой добавления на доску.
+     * Задача на скрам-доске: краткое представление задачи, дополненное её
+     * участниками, состоянием её стикера и датой добавления на доску.
+     *
+     * Участники должны быть предзагружены для всей доски сразу
+     * ({@see ScrumSticker::loadBoard()} с мастерами), иначе выйдет по запросу
+     * на каждую задачу.
      * @param ScrumSticker $sticker Стикер доски с загруженной задачей.
      * @return array
      */
     public function boardIssue(ScrumSticker $sticker)
     {
-        $item = $this->issueBrief($sticker->getIssue());
+        $issue = $sticker->getIssue();
+
+        $item = array_merge($this->issueBrief($issue), $this->participants($issue));
         $item['stickerState'] = $sticker->state;
         $item['addedToBoard'] = self::dateTime($sticker->added);
 
         return $item;
+    }
+
+    /**
+     * Задача закрытого спринта: чем она была на доске в момент закрытия.
+     *
+     * Краткое представление задачи здесь не годится: стикеры закрытого спринта
+     * уже сняты с доски, а загруженная задача помнит прежнее положение на ней.
+     * @param  ScrumSticker $sticker Стикер задачи на закрытой доске.
+     * @return array
+     */
+    public function sprintIssue(ScrumSticker $sticker)
+    {
+        $issue = $sticker->getIssue();
+
+        return [
+            'id' => $issue->id,
+            'idInProject' => $issue->idInProject,
+            'name' => $issue->getName(),
+            'url' => $issue->getConstURL(),
+            'status' => $issue->status,
+            'column' => isset(self::BOARD_COLUMNS[$sticker->state])
+                ? self::BOARD_COLUMNS[$sticker->state]['key']
+                : null,
+        ];
     }
 
     /**
@@ -380,6 +398,37 @@ class ApiPayloadSerializer
             'created' => self::dateTime($file->created),
             'url' => $file->getDownloadUrl(),
             'requiresAuthentication' => true,
+        ];
+    }
+
+    /**
+     * Участники задачи: исполнители (`members`), тестировщики (`testers`)
+     * и мастера (`masters`).
+     *
+     * Все три списка отдаются всегда: у задачи без участников они пустые.
+     * @return array
+     */
+    private function participants(Issue $issue)
+    {
+        $members = [];
+        foreach ($issue->getMembers() as $member) {
+            $members[] = $this->member($member);
+        }
+
+        $testers = [];
+        foreach ($issue->getTesters() as $tester) {
+            $testers[] = $this->user($tester);
+        }
+
+        $masters = [];
+        foreach ($issue->getMasters() as $master) {
+            $masters[] = $this->user($master);
+        }
+
+        return [
+            'members' => $members,
+            'testers' => $testers,
+            'masters' => $masters,
         ];
     }
 

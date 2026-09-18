@@ -149,6 +149,8 @@ $(function ($) {
 
     issueForm.ensureFileUploadSlot();
     issueForm.refreshUploadRemoveButtons();
+
+    issueForm.initPage();
 });
 
 let issueForm = {
@@ -159,10 +161,6 @@ let issueForm = {
     masters: null,
     fileUploadTemplate: null,
     lockAcquired: false,
-    /**
-     * Отправка формы уже идёт: повторные отправки до её завершения запрещены.
-     */
-    submitting: false,
     acquireLock: function (issueId, revision, forced, onSuccess, onFail) {
         preloader.show();
 
@@ -222,7 +220,10 @@ let issueForm = {
         const issueId = issueForm.getIssueId();
         const leave = function () {
             issueForm.onHide();
-            showMain();
+            // Форма, открытая отдельной страницей, закрывается уходом с неё:
+            // показывать на этой странице больше нечего.
+            if (issueForm.pageReturnUrl) redirectTo(issueForm.pageReturnUrl);
+            else showMain();
         };
 
         if (issueId > 0) {
@@ -299,14 +300,154 @@ let issueForm = {
             }, true);
         }
     },
-    handleAddState: function () {
-        issueForm.onShow();  
+    /**
+     * @param {string} [type] Тип задачи, под который открыта форма
+     *        (аргумент адреса, см. ProjectPage::ISSUE_FORM_TYPES).
+     */
+    handleAddState: function (type) {
+        issueForm.onShow();
         if (!issueForm.restoreInput()) {
             issueForm.updateHeader(false);
 
             if (issueForm.defaultMemberId) {
                 issueForm.addIssueMemberById(issueForm.defaultMemberId);
             }
+
+            issueForm.applyType(type);
+        }
+    },
+    /**
+     * Заготовка описания ошибки: подставляется, когда форму открыли
+     * кнопкой «Добавить ошибку».
+     */
+    bugDescTemplate: `### Описание
+
+📝 Описание проблемы
+
+### Предусловие
+
+📝 Начальные условия, при которых воспроизводится проблема
+
+### Шаги воспроизведения
+
+1. 📝  Шаги для воспроизведения
+2. 
+
+*ФР*: 📝  Фактический полученный результат
+
+*ОР*: 📝  Ожидаемый результат
+
+### Окружение
+
+📝 Укажите устройство, ОС, окружение и тп
+
+### Видео
+
+🎥 Приложите ссылку на видео, где показана проблема
+        `,
+    /**
+     * Готовит пустую форму под заданный тип задачи: отмечает тип и подставляет
+     * заготовку описания, если она для него есть.
+     * @param {string} [type] Тип задачи (аргумент адреса, см.
+     *        ProjectPage::ISSUE_FORM_TYPES); пусто - тип не задан.
+     */
+    applyType: function (type) {
+        if (type !== 'bug') return;
+
+        const $form = $('#issueForm form');
+        $('input:radio[name=type][value=1]', $form).prop('checked', true);
+        $('textarea[name=desc]', $form)
+            .val(issueForm.bugDescTemplate)
+            .css('height', '500px')
+            .trigger('input');
+    },
+    /**
+     * Адрес, на который уводит отмена, когда форма открыта отдельной страницей;
+     * пустая строка, если форма показана поверх другой страницы.
+     */
+    pageReturnUrl: '',
+    /**
+     * Инициализирует форму, открытую отдельной страницей (шаблон
+     * issue-form-page.html): она показана сразу, а с чем её открыли, задано
+     * адресом - аргументом с типом задачи либо хэшем создания задачи по другой.
+     */
+    initPage: function () {
+        const $page = $('#issueFormPage');
+        if (!$page.length) return;
+
+        issueForm.pageReturnUrl = issueForm.getPageReturnUrl($page);
+
+        const state = window.location.hash.replace(/^#/, '').split(':');
+        switch (state[0]) {
+            case 'copy-issue':
+                issueForm.onShow();
+                issueForm.updateHeader(false);
+                issueForm.handleAddIssueByState(state[1], state[2]);
+                break;
+            case 'finished-issue':
+                issueForm.onShow();
+                issueForm.updateHeader(false);
+                issueForm.handleAddFinishedIssueByState(state[1], state[2]);
+                break;
+            default:
+                issueForm.handleAddState($page.data('issueType'));
+        }
+    },
+    /** Ключ, под которым страница формы держит адрес возврата в sessionStorage. */
+    pageReturnUrlKey: 'issueFormReturnUrl',
+    /**
+     * Адрес, на который уводит отмена: страница, с которой форму открыли.
+     *
+     * При входе на форму его даёт document.referrer; чужой сайт и сама эта
+     * страница не годятся - с них возвращаем к задачам проекта. Неудачная
+     * отправка приводит на ту же страницу POST-ом, и реферером к этому моменту
+     * значится сама форма, поэтому при входе адрес запоминается, а
+     * восстановленная после ошибки форма берёт его из хранилища. Каждый вход
+     * перезаписывает запомненное, так что адрес прошлого открытия формы
+     * в новое не попадает.
+     * @param {jQuery} $page Контейнер страницы формы.
+     * @return {string} Адрес страницы.
+     */
+    getPageReturnUrl: function ($page) {
+        const fallback = String($page.data('returnUrl') || '');
+
+        // Форма с восстановленным вводом - то же открытие, что и до отправки.
+        if (issueForm.inputForRestore) return issueForm.readPageReturnUrl() || fallback;
+
+        const referrer = document.referrer;
+        let url = fallback;
+        if (referrer
+            && referrer.indexOf(window.location.origin + '/') === 0
+            && referrer.split('#')[0] !== window.location.href.split('#')[0]) {
+            url = referrer;
+        }
+
+        issueForm.storePageReturnUrl(url);
+
+        return url;
+    },
+    /**
+     * Возвращает адрес возврата, запомненный при входе на страницу формы.
+     * @return {string} Адрес страницы; пустая строка, если он не запомнен.
+     */
+    readPageReturnUrl: function () {
+        try {
+            return String(window.sessionStorage.getItem(issueForm.pageReturnUrlKey) || '');
+        } catch (e) {
+            // Хранилище может быть недоступно (приватный режим, настройки
+            // браузера) - тогда адрес возврата не переживает отправку формы.
+            return '';
+        }
+    },
+    /**
+     * Запоминает адрес возврата на время работы с формой.
+     * @param {string} url Адрес страницы.
+     */
+    storePageReturnUrl: function (url) {
+        try {
+            window.sessionStorage.setItem(issueForm.pageReturnUrlKey, url);
+        } catch (e) {
+            // См. readPageReturnUrl.
         }
     },
     onShow: function () {
@@ -315,59 +456,24 @@ let issueForm = {
         // его ответ до неё уже не дойдёт (см. issueForm.generation).
         issueForm.setReviewBusy(false);
         window.addEventListener('beforeunload', issueForm.blockClose);
-        window.addEventListener('pageshow', issueForm.onPageShow);
+        // Повторная отправка формы задачи создаёт дубль задачи.
         // Только сама форма задачи: внутри #issueForm лежат и другие формы
         // (окно новой метки), их отправка форму задачи не затрагивает.
-        $("#issueForm > form").off('submit.issueForm').on('submit.issueForm', function (e) {
-            // Пока предыдущая отправка не завершилась, форма не уходит повторно:
-            // иначе быстрый повторный Enter или клик создаёт дубль задачи.
-            // Отключённой кнопки для этого мало: часть браузеров отправляет форму
-            // по Enter, даже когда кнопка отправки отключена.
-            if (issueForm.submitting) return issueForm.stopSubmit(e);
-
-            if (!issueForm.validateIssueForm()) return issueForm.stopSubmit(e);
-
-            issueForm.setSubmitting(true);
-
-            // Allow navigation without unload warning on successful submit
-            window.removeEventListener('beforeunload', issueForm.blockClose);
-        });
+        lpm.forms.preventDoubleSubmit(
+            $("#issueForm > form"),
+            issueForm.validateIssueForm,
+            issueForm.onSubmittingChange
+        );
     },
     /**
-     * Отменяет отправку формы.
-     * @param {Event} e Событие submit.
-     * @return {boolean} false - чтобы вернуть из обработчика submit.
+     * Отправленная форма уводит со страницы сама - на время отправки
+     * предупреждение о закрытии снимается. Если браузер вернул форму из кеша
+     * («Назад»), предупреждение возвращается.
+     * @param {boolean} submitting Форма перешла в состояние отправки.
      */
-    stopSubmit: function (e) {
-        e.preventDefault();
-        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
-        return false;
-    },
-    /**
-     * Переводит форму в состояние отправки и обратно: в этом состоянии она
-     * не принимает новых отправок, кнопка сохранения отключена, а страница
-     * закрыта индикатором загрузки.
-     * @param {boolean} value Перевести форму в состояние отправки.
-     */
-    setSubmitting: function (value) {
-        if (issueForm.submitting === value) return;
-
-        issueForm.submitting = value;
-        $("#issueForm > form .save-line button[type=submit]").prop('disabled', value);
-
-        if (value) preloader.show();
-        else preloader.hide();
-    },
-    /**
-     * Возврат из кеша браузера (кнопка «Назад») оживляет уже отправленную форму -
-     * снимаем с неё состояние отправки, иначе отправить её снова будет нельзя.
-     * @param {PageTransitionEvent} e Событие pageshow.
-     */
-    onPageShow: function (e) {
-        if (!e.persisted || !issueForm.submitting) return;
-
-        issueForm.setSubmitting(false);
-        window.addEventListener('beforeunload', issueForm.blockClose);
+    onSubmittingChange: function (submitting) {
+        if (submitting) window.removeEventListener('beforeunload', issueForm.blockClose);
+        else window.addEventListener('beforeunload', issueForm.blockClose);
     },
     onHide: function () {
         issueForm.generation++;
@@ -1462,7 +1568,7 @@ let issueForm = {
     validateIssueForm: function () {
         var errors = [];
 
-        // Разбор тегов должен совпадать с серверным (Issue::LABELS_PATTERN),
+        // Разбор тегов должен совпадать с серверным (IssueLabel::LABELS_PATTERN),
         // иначе форма пропустит название, которое сервер не примет.
         const name = $.trim($("#issueForm form input[name=name]").val());
         const labelsStr = (name.match(/^(?:\[[^\]]*\]\s*)+/) || [''])[0];

@@ -5,12 +5,13 @@
  */
 class CommentsManager
 {
-    const SECONDS_ON_COMMENT_DELETE = 600;
-
     /**
      * Публикация комментария к задаче.
      *
      * Упомянутые в тексте задачи автоматически связываются с текущей.
+     *
+     * Оповещения в Slack и по почте глушатся независимо друг от друга -
+     * параметрами $ignoreSlackNotification и $ignoreEmailNotification.
      *
      * @return Comment
      */
@@ -22,7 +23,8 @@ class CommentsManager
         $ignoreMr = false,
         string $type = null,
         string $data = null,
-        array $filesData = null
+        array $filesData = null,
+        $ignoreEmailNotification = false
     ) {
         $result = $this->postCommentWithResult(
             $user,
@@ -32,7 +34,8 @@ class CommentsManager
             $ignoreMr,
             $type,
             $data,
-            $filesData
+            $filesData,
+            $ignoreEmailNotification
         );
 
         return $result['comment'];
@@ -42,6 +45,9 @@ class CommentsManager
      * Публикация комментария к задаче с данными об изменениях, которые она повлекла.
      *
      * Упомянутые в тексте задачи автоматически связываются с текущей.
+     *
+     * Оповещения в Slack и по почте глушатся независимо друг от друга -
+     * параметрами $ignoreSlackNotification и $ignoreEmailNotification.
      *
      * @return array {
      *     Comment comment    Добавленный комментарий.
@@ -56,7 +62,8 @@ class CommentsManager
         $ignoreMr = false,
         string $type = null,
         string $data = null,
-        array $filesData = null
+        array $filesData = null,
+        $ignoreEmailNotification = false
     ) {
         $issueId = $issue->id;
         $hasUploads = $filesData !== null && FileUploadManager::hasUploads($filesData);
@@ -118,12 +125,14 @@ class CommentsManager
             $this->slackNotificationMentionedUsers($issue, $comment, $notifiedIds);
         }
 
-        Issue::notifyByEmail(
-            $issue,
-            IssueEmailFormatter::newCommentSubject($issue),
-            IssueEmailFormatter::newCommentText($comment, $issue, $user),
-            EmailNotifier::PREF_ISSUE_COMMENT
-        );
+        if (!$ignoreEmailNotification) {
+            Issue::notifyByEmail(
+                $issue,
+                IssueEmailFormatter::newCommentSubject($issue),
+                IssueEmailFormatter::newCommentText($comment, $issue, $user),
+                EmailNotifier::PREF_ISSUE_COMMENT
+            );
+        }
 
         // обновляем счетчик комментариев для задачи
         Issue::updateCommentsCounter($issueId);
@@ -131,8 +140,6 @@ class CommentsManager
         // Связи по упоминаниям создаём здесь: через этот метод проходят все способы
         // добавить комментарий (веб, внешний API, хуки GitLab)
         $addedLinks = IssueLinked::syncFromText($issue, $text, $user->userId);
-
-        Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
         return ['comment' => $comment, 'addedLinks' => $addedLinks];
     }

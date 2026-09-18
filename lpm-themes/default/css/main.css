@@ -1,5 +1,38 @@
 @charset "UTF-8";
 
+/* Единый набор цветов состояний задачи: один цвет значит одно и то же
+   во всём приложении — и на бейдже фазы, и на иконке-сигнале в списке.
+   Значение цвета состояния берётся только отсюда.
+   Пять цветов есть среди утилит Bootstrap и ссылаются на его переменные,
+   чтобы бейдж на `bg-secondary`/`bg-primary`/`bg-success` и иконка того же
+   состояния не могли разойтись */
+:root {
+	--lpm-state-verified: var(--bs-success); /* проверено */
+	--lpm-state-ready: #0c7c8c; /* готово, можно брать */
+	--lpm-state-in-progress: var(--bs-primary); /* в работе */
+	--lpm-state-testing: var(--bs-purple); /* в тесте */
+	--lpm-state-waiting: var(--bs-secondary); /* ждёт */
+	--lpm-state-running: var(--bs-orange); /* идёт */
+	--lpm-state-problem: var(--bs-danger); /* что-то не так */
+	--lpm-state-completed: #0f5132; /* завершена */
+}
+
+/* Бейджи трёх состояний, под которые в Bootstrap 5.1.3 нет ни утилиты фона,
+   ни `text-bg-*` (она появилась в 5.2), поэтому фон и белый текст задаются
+   парой: на каждом из трёх фонов белый даёт контраст не ниже 4.5 */
+.badge-state-ready {
+	background-color: var(--lpm-state-ready);
+	color: #ffffff;
+}
+.badge-state-testing {
+	background-color: var(--lpm-state-testing);
+	color: #ffffff;
+}
+.badge-state-completed {
+	background-color: var(--lpm-state-completed);
+	color: #ffffff;
+}
+
 body {
 	padding    : 0px;
 	margin     : 0px;
@@ -469,9 +502,10 @@ a.add-me-to-issue .plus-icon {
 	display: inline-block;
 	margin-right: 5px;
 }
-/* Тот же цвет, что у значка взятой задачи в списке и на доске */
+/* Цвет состояния «в тесте» из общего набора — как у значка взятой задачи
+   в списке задач */
 .comments .links-bar .scrum-comments-shortcut a.under-testing {
-	color: #6f42c1;
+	color: var(--lpm-state-testing);
 }
 .comment-input-text-tabs .tab-content {
 	border: 1px solid #dee2e6;
@@ -689,42 +723,42 @@ table tr.pass-test a.issue-name  {
 	color: #00b100;
 }
 
+/* Иконки-сигналы состояния задачи берут цвет из общего набора `--lpm-state-*`.
+   Сборка показывается рядом с состоянием правок, поэтому «сборка прошла»
+   и «правки влиты» намеренно одного цвета: оба значат «можно брать в тест».
+   На Scrum доске эти отметки цветом не красятся: цвет стикера там занят
+   оценкой задачи, и по насыщенному фону цветная иконка не читается —
+   на красном стикере контраст падает до 1.3 при норме 4.5 */
 table.issues-list tr td .under-testing-check {
-	color: #6f42c1;
+	color: var(--lpm-state-testing);
 }
 
 table.issues-list tr td .pass-test-check {
-	color: #00b100;
+	color: var(--lpm-state-verified);
 }
 
 table.issues-list tr td .changes-requested-check {
-	color: #dc3545;
+	color: var(--lpm-state-problem);
 }
 
 table.issues-list tr td .test-wait-merge-check {
-	color: #b06000;
+	color: var(--lpm-state-waiting);
 }
 
-/* Зелёный в этом списке занят отметкой «прошла тестирование» */
 table.issues-list tr td .test-ready-check {
-	color: #0d6efd;
+	color: var(--lpm-state-ready);
 }
 
-/* Состояние сборки. Показывается рядом с состоянием правок, поэтому цвета
-   разведены с ним: синий занят отметкой «правки влиты», тёмно-янтарный —
-   отметкой «правки ещё не влиты».
-   На Scrum доске эти отметки цветом не красятся: цвет стикера там занят
-   оценкой задачи, и по насыщенному фону иконка не читается */
 table.issues-list tr td .build-state.build-running {
-	color: #fd7e14;
+	color: var(--lpm-state-running);
 }
 
 table.issues-list tr td .build-state.build-failed {
-	color: #dc3545;
+	color: var(--lpm-state-problem);
 }
 
 table.issues-list tr td .build-state.build-success {
-	color: #198754;
+	color: var(--lpm-state-ready);
 }
 
 table tr.deadline-outdated-issue td .icon-deadline.icon-deadline-outdated,
@@ -813,6 +847,32 @@ table tr.completed-issue:hover td span.comments-count {
     background: #dddddd !important;
     color     : #999999;
 }
+/* Строка под курсором отмечается акцентной полоской слева. Полоска — внутренняя тень
+   первой ячейки: фон строки занят её статусом, а border или padding сдвинули бы
+   содержимое ячейки. Утилит для этого в Bootstrap нет.
+   Цвет — нейтральный тёмный, намеренно вне набора цветов состояний задачи
+   (синий, зелёный, бирюзовый, фиолетовый, серый, оранжевый, красный): полоска
+   означает «здесь курсор», а не состояние, и не должна читаться как статус. */
+table.issues-list > tbody > tr:hover > td:first-child {
+	box-shadow: inset 3px 0 0 #343a40;
+}
+/* Глиф меню копирования: место под него занято всегда (visibility, не display),
+   иначе появление глифа меняло бы высоту строки. Скрытый глиф выпадает из обхода
+   табом, поэтому его показывает и фокус внутри строки, а не только наведение.
+   Пока меню открыто, Bootstrap держит на тоггле класс `show` — глиф не должен
+   исчезать из-под раскрытого меню.
+   Отступ слева задан margin, а не пробелом в разметке: пробел — это точка
+   переноса, и глиф отрывался бы от названия или счётчика на следующую строку. */
+table.issues-list .issue-copy-toggle {
+	visibility: hidden;
+	margin-left: 8px;
+	font-size: 0.8em;
+}
+table.issues-list > tbody > tr:hover .issue-copy-toggle,
+table.issues-list > tbody > tr:focus-within .issue-copy-toggle,
+table.issues-list .issue-copy-toggle.show {
+	visibility: visible;
+}
 table.issues-list td .on-board-state {
 	position: absolute;
 	left: 1px;
@@ -883,7 +943,7 @@ table.issues-list tr.active-issue.tester {
 	background: #FFEC80;
 }*/
 
-/* просмотр задачи: общее для обоих видов */
+/* просмотр задачи */
 .linked-issues .card-body {
 	font-size: smaller;
 }
@@ -891,105 +951,7 @@ table.issues-list tr.active-issue.tester {
 	font-weight: bold;
 }
 
-/* ======== СТАРЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue-legacy.html) ========
-   Показывается, пока выключен экспериментальный флаг newIssueView.
-   Правила, чьи селекторы попадают и в новый вид, ограничены классами
-   .issue-view-legacy / .issue-legacy. Удаляется целиком вместе с шаблоном. */
-.issue-view-legacy a.back-link {
-	margin    : 0px;
-	text-align: left;
-	font-size : 10px;
-}
-.issue-view-legacy a.copy-issue-link {
-	float: right;
-	font-size: 12px;
-}
-.issue-view-legacy a.finished-issue-link {
-	margin-right: 7px;
-	float: right;
-	font-size: 12px;
-}
-.issue-view-legacy .buttons-bar {
-	text-align: center;
-}
-.container-legacy.issue-info {
-	width: 100%;
-}
-/* панелька с информацией */
-.info-list > .info-list-item {
-	margin: 10px 0px;
-}
-.info-list > .info-list-item span.label {
-	width      : 150px;
-	display: block;
-	float: left;
-	font-weight: bold;
-	font-size: smaller;
-}
-.info-list > .info-list-item span.label:after {
-	content: ":";
-}
-.info-list > .info-list-item span.value {
-	display: block;
-	margin-left: 155px;
-}
-.info-list > .info-list-item {
-	clear: both;
-}
-.info-list > .info-list-item.issue-complete-date-row.no-date {
-	display: none;
-}
-#issueView.issue-view-legacy > h1 {
-	float: left;
-}
-#issueView .info-list.completed-issue .issue-completed-date-row {
-	display: block;
-}
-#issueView .info-list .issue-completed-date-row {
-	display: none;
-}
-#issueView .buttons-bar.completed-issue button.complete-btn {
-	display: none;
-}
-#issueView .buttons-bar.completed-issue button.verify-btn {
-	display: none;
-}
-#issueView .buttons-bar.active-issue button.restore-btn {
-	display: none;
-}
-#issueView .buttons-bar.verify-issue button.verify-btn {
-	display: none;
-}
-#issueView .container-legacy {
-	box-sizing: content-box;
-	clear: both;
-	position: relative;
-}
-#issueView.issue-view-legacy .issue-actions {
-	position: absolute;
-	right: 0px;
-	margin-top: -15px;
-}
-#issueInfo.issue-legacy > h3 {
-	position: relative;
-}
-#issueInfo.issue-legacy > h3 .issues-hours-box {
-	display: inline-block;
-	margin-left: 5px;
-	font-size: .7em;
-}
-#issueInfo.issue-legacy > h3 .scrum-put-sticker {
-	position: absolute;
-	top: 50%;
-	right: 10px;
-	margin-top: -7px;
-	font-size: 16px;
-}
-/* ======== конец старого вида страницы задачи ======== */
-
-/* ======== НОВЫЙ ВИД СТРАНИЦЫ ЗАДАЧИ (шаблон issue.html) ========
-   Показывается при включённом флаге newIssueView. Удаляется целиком,
-   если от обновлённого вида откажутся. */
+/* ======== СТРАНИЦА ЗАДАЧИ (шаблон issue.html) ======== */
 /* Номер задачи копируется по клику — в Bootstrap 5.1 нет утилиты для курсора */
 #issueInfo.issue-card .issue-id {
 	cursor: pointer;
@@ -1025,7 +987,7 @@ table.issues-list tr.active-issue.tester {
 #issueInfo.issue-card.completed-issue .issue-completed-date-row {
 	display: inline;
 }
-/* ======== конец нового вида страницы задачи ======== */
+/* ======== конец страницы задачи ======== */
 
 
 #issueView .desc blockquote,
@@ -1135,33 +1097,6 @@ blockquote > p {
 }
 
 
-/*Меню скопировать в issue*/
-.popup-menu 
-{
-	background:#ffffff;
-	color:#000;
-	font-size: 0.8em;
-	border:solid #ccc 1px;
-	border-radius: 5px;
-	position: absolute;
-	margin-top:5px;
-	margin-left: -5px;
-	padding: 5px 10px;
-	display: none;
-	-moz-box-shadow:
-		0px 1px 3px rgba(000,000,000,0.5),
-		inset 0px 0px 1px rgba(255,255,255,1);
-	-webkit-box-shadow:
-		0px 1px 3px rgba(000,000,000,0.5),
-		inset 0px 0px 1px rgba(255,255,255,1);
-	box-shadow:
-		0px 1px 3px rgba(000,000,000,0.5),
-		inset 0px 0px 1px rgba(255,255,255,1);
-}
-.issue_copy a:hover, .issue_copy a.hover{
-    color: #999;
-   
-}
 .scrum-board-header {
 	float: left;
 }
@@ -1344,18 +1279,38 @@ blockquote > p {
 .scrum-board-sticker a {
 	text-decoration: none;
 }
-.scrum-board-sticker a:hover {
+/* Исключения — ссылки меню копирования: его пункты и тоггл держат свой цвет
+   (белый на чипе номера, штатный цвет пункта в выпадающем списке) */
+.scrum-board-sticker a:not(.issue-copy-toggle):not(.dropdown-item):hover {
 	color: initial;
 }
 .scrum-board-sticker .sticker-issue-id {
 	position: absolute;
 	left: 3px;
 	bottom: 2px;
+	/* `control-line` тоже прижата к низу стикера и тянется на всю его ширину, то есть
+	   перекрывает чип; без z-index клики по глифу меню копирования доставались бы ей */
+	z-index: 1;
 	font-size: 9px;
 	background-color: #333;
 	color: #fff;
 	padding: 1px 2px;
 	border-radius: 2px;
+}
+/* Глиф меню копирования в чипе номера задачи. В покое скрыт совсем (не visibility):
+   чип не должен становиться шире, пока на стикер не навели. Скрытый глиф выпадает
+   из обхода табом, поэтому его показывает и фокус внутри стикера, а не только
+   наведение. Пока меню открыто, Bootstrap держит на тоггле класс `show` — глиф
+   не должен исчезать из-под меню. */
+.scrum-board-sticker .issue-copy-toggle {
+	display: none;
+	margin-left: 3px;
+	color: inherit;
+}
+.scrum-board-sticker:hover .issue-copy-toggle,
+.scrum-board-sticker:focus-within .issue-copy-toggle,
+.scrum-board-sticker .issue-copy-toggle.show {
+	display: inline;
 }
 .scrum-board-sticker .sticker-issue-members {
 	display: block;
@@ -1645,22 +1600,6 @@ blockquote > p {
 	border-bottom: 2px solid #adb5bd;
 }
 
-.copy-tooltip div {
-	display: none;
-	position: absolute;
-	margin: 20px;
-	bottom: -1px;
-	left: -1px;
-	z-index: 1000;
-	padding: 8px 12px;
-	text-align: left;
-	font-size: 12px;
-	line-height: 16px;
-	color: #000;
-	box-shadow: 0 1px 3px #C4C4C4;
-	background: #f6fff7;
-	border-radius: 2px;
-}
 .btnSelect {
 	float: left;
 }

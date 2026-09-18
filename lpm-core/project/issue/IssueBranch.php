@@ -9,13 +9,22 @@ class IssueBranch extends LPMBaseObject
      *
      * Если запись уже создана - будет заменена.
      *
-     * @param  int    $issueId      Идентификатор задачи.
-     * @param  int    $repositoryId Идентификатор репозитория.
-     * @param  string $name         Имя ветки.
+     * @param  int    $issueId         Идентификатор задачи.
+     * @param  int    $repositoryId    Идентификатор репозитория.
+     * @param  string $name            Имя ветки.
+     * @param  int    $userId          Кто завёл ветку.
+     * @param  string $initialCommit   Коммит, от которого отведена ветка;
+     *                                 null - неизвестен.
+     * @param  string $lastCommit      Последний коммит ветки; null - неизвестен,
+     *                                 и при повторной записи не обновляется.
+     * @param  bool   $mergedInDevelop Влита ли ветка в develop; null - неизвестно,
+     *                                 и при повторной записи не обновляется.
+     * @throws \GMFramework\ProviderSaveException Если не удалось сохранить.
      */
     public static function create($issueId, $repositoryId, $name, $userId, $initialCommit = null, $lastCommit = null, $mergedInDevelop = null)
     {
         $date = DateTimeUtils::mysqlDate();
+        $dateUtc = $date;
 
         $fields4Update = [];
 
@@ -31,8 +40,13 @@ class IssueBranch extends LPMBaseObject
             $fields4Update[] = 'lastCommit';
         }
 
+        // Колонка NOT NULL: неизвестный коммит - это пустая строка, а не NULL.
+        if ($initialCommit === null) {
+            $initialCommit = '';
+        }
+
         $hash = [
-            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'initialCommit', 'lastCommit', 'mergedInDevelop', 'userId'),
+            'INSERT'  => compact('issueId', 'repositoryId', 'name', 'date', 'dateUtc', 'initialCommit', 'lastCommit', 'mergedInDevelop', 'userId'),
             'INTO'    => LPMTables::ISSUE_BRANCH
         ];
 
@@ -42,7 +56,7 @@ class IssueBranch extends LPMBaseObject
             $hash['ON DUPLICATE KEY UPDATE'] = $fields4Update;
         }
 
-        self::buildAndSaveToDb($hash);
+        self::buildAndSaveToDbV2($hash);
     }
 
     /**

@@ -230,10 +230,11 @@ class IssueViewHelper
      * Классы бейджа статуса задачи.
      *
      * Подстатус задаёт своё оформление: он уточняет статус и показывается
-     * вместо него. Цвет идёт по нарастанию готовности задачи:
-     * серый - голубой - синий - жёлтый - зелёный. Внутри жёлтого оттенок
-     * различает задачу в тесте: приглушённый - её проверяют прямо сейчас,
-     * насыщенный - она ждёт проверки.
+     * вместо него. Цвет берётся из общего набора состояний задачи
+     * (`--lpm-state-*` в `main.css`), где один цвет значит одно и то же
+     * во всём приложении: серый - ждёт, бирюзовый - готово, можно брать,
+     * синий - в работе, фиолетовый - в тесте, зелёный - проверено,
+     * тёмно-зелёный - завершена.
      * @param  int $status    Статус задачи.
      * @param  int $substatus Уточнение статуса (@see IssueSubstatus).
      * @return string Список CSS-классов.
@@ -244,20 +245,20 @@ class IssueViewHelper
             case IssueSubstatus::BACKLOG:
                 return 'bg-secondary';
             case IssueSubstatus::TODO:
-                return 'bg-info text-dark';
+                return 'badge-state-ready';
             case IssueSubstatus::IN_PROGRESS:
                 return 'bg-primary';
             case IssueSubstatus::UNDER_TESTING:
-                return 'bg-warning bg-opacity-50 text-dark';
+                return 'badge-state-testing';
             case IssueSubstatus::PASS_TEST:
-                return 'bg-success bg-opacity-75 text-dark';
+                return 'bg-success';
         }
 
         switch ((int)$status) {
             case Issue::STATUS_WAIT:
-                return 'bg-warning text-dark';
+                return 'badge-state-testing';
             case Issue::STATUS_COMPLETED:
-                return 'bg-success';
+                return 'badge-state-completed';
             default:
                 return 'bg-primary';
         }

@@ -53,6 +53,101 @@ const claimDefaultAction = { _default: function () { return true; } };
 $.event.special.show = claimDefaultAction;
 $.event.special.hide = claimDefaultAction;
 
+// Переход по якорю из адреса (`#comment-123`) на только что открытой странице.
+//
+// Bootstrap включает `scroll-behavior: smooth`, и браузер едет к якорю анимацией,
+// вычислив конечную позицию один раз, в её начале. Пока анимация идёт, содержимое
+// над якорем успевает вырасти (дозагружаются картинки вложений, приходят блоки
+// merge request'ов) - анимация доезжает до устаревшей позиции, и якорь оказывается
+// ниже верха окна, вплоть до выхода за нижнюю кромку.
+//
+// Неанимированную прокрутку браузер поправляет сам: пока страница грузится, он
+// продолжает подводить якорь к верху окна, а после загрузки рост над видимой
+// областью компенсирует scroll anchoring. Поэтому первый переход выполняем
+// мгновенно, а плавность возвращаем после загрузки - дальше по якорям ходит
+// уже пользователь.
+//
+// Блок должен выполняться до разбора `body` - иначе браузер успевает начать
+// анимацию, поэтому это код верхнего уровня, а не обработчик готовности.
+(function () {
+    // Сколько высота страницы должна не меняться, чтобы считать её догрузившейся.
+    var QUIET_MS = 400;
+    // Предел ожидания тишины: содержимое может приходить сколь угодно долго.
+    var MAX_WAIT_MS = 5000;
+
+    var hash = window.location.hash;
+    if (hash.length < 2) return;
+
+    var root = document.documentElement;
+    root.style.scrollBehavior = 'auto';
+
+    var settled = false;
+    var quietTimer = null;
+    var deadline = null;
+    var observer = null;
+
+    /** Прекращает доводку: снимает таймеры и отписывается от наблюдения. */
+    function stop() {
+        settled = true;
+        clearTimeout(quietTimer);
+        clearTimeout(deadline);
+        if (observer) observer.disconnect();
+    }
+
+    // Начал прокручивать сам - его позиция важнее нашей.
+    function cancel() {
+        stop();
+        root.style.scrollBehavior = '';
+    }
+    ['wheel', 'touchmove', 'keydown', 'mousedown'].forEach(function (type) {
+        window.addEventListener(type, cancel, { passive: true, once: true });
+    });
+
+    function onLoad() {
+        if (settled) return;
+
+        root.style.scrollBehavior = '';
+
+        var id = hash.substring(1);
+        var target = null;
+        try {
+            target = document.getElementById(decodeURIComponent(id));
+        } catch (e) {
+            target = document.getElementById(id);
+        }
+
+        // Якорем может быть не элемент, а имя стейта страницы (`#add-project`).
+        if (!target) return;
+
+        // В браузерах без scroll anchoring (WebKit) выросшее после загрузки
+        // содержимое сдвигает якорь вниз, и вернуть его некому. Доводка одна:
+        // ждём, пока высота страницы перестанет меняться, и правим позицию
+        // единожды - постоянного удержания тут нет.
+        var finish = function () {
+            if (settled) return;
+            stop();
+
+            var top = target.getBoundingClientRect().top;
+            if (Math.abs(top) > 1) {
+                window.scrollTo({ left: window.scrollX, top: window.scrollY + top, behavior: 'auto' });
+            }
+        };
+
+        var restartQuiet = function () {
+            clearTimeout(quietTimer);
+            quietTimer = setTimeout(finish, QUIET_MS);
+        };
+
+        observer = new ResizeObserver(restartQuiet);
+        observer.observe(root);
+        deadline = setTimeout(finish, MAX_WAIT_MS);
+        restartQuiet();
+    }
+
+    if (document.readyState === 'complete') onLoad();
+    else window.addEventListener('load', onLoad);
+})();
+
 /**
  * Сервис для запросов на сервер
  * @class 
@@ -68,11 +163,15 @@ function BaseService(service, f2p) {
      * @param {String} method вызываемый метод
      * @param {Array} params массив передаваемых параметров
      * @param {Function} onResult функция-обработчик ответа
+     * @param {Object} options параметры вызова, см. BaseService#_
      */
-    this.call = function (method, params, onResult) {
-        let f2p = this._f2p ?? srv.f2p;
+    this.call = function (method, params, onResult, options) {
+        // Фоновый вызов страница делает сама, без участия пользователя, поэтому
+        // идёт своим инвокером и не перезагружает страницу: см. backgroundInvoker
+        const background = !!options && options.background === true;
+        let f2p = background ? backgroundInvoker : (this._f2p ?? srv.f2p);
         params.unshift(this._service, method, function (obj) {
-            if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED) {
+            if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED && !background) {
                 window.location.reload();
             } else {
                 try {
@@ -137,7 +236,17 @@ function BaseService(service, f2p) {
         });
     };
 
-    this._ = function (name) {
+    /**
+     * Вызов метода из его обёртки в карте сервисов: аргументы берутся
+     * у вызывающей обёртки, последний из них считается обработчиком ответа.
+     * @param {String} name вызываемый метод
+     * @param {Object} options параметры вызова. Единственный на сегодня -
+     * background: вызов делает сама страница, а не пользователь. Такой вызов
+     * не занимает очередь пользовательских запросов и не перезагружает
+     * страницу на протухшей сессии, потому что стёр бы работу пользователя
+     * без его участия.
+     */
+    this._ = function (name, options) {
         var func = arguments.callee.caller;
         //name = defaultValue( name, func.caller.name );    
         var args = [];
@@ -147,7 +256,7 @@ function BaseService(service, f2p) {
 
         var onResult = args.pop();
 
-        this.call.apply(this, [name, args, onResult]);
+        this.call.apply(this, [name, args, onResult, options]);
     };
 };
 
@@ -230,6 +339,13 @@ ru.vbinc.net.F2PInvoker.defaultHeaders['X-CSRF-Token'] = window.lpmOptions.csrfT
 // собственный инвокер с запасом сверху (у общего таймаут 30 секунд).
 let aiInvoker = new ru.vbinc.net.F2PInvoker(gateway);
 aiInvoker.setTimeout((window.lpmOptions.aiRequestTimeout || 60) + 30);
+
+// Фоновые вызовы (см. BaseService#_) идут своим инвокером: у каждого инвокера
+// одна XHR и общая очередь, поэтому на общем застрявший фоновый запрос задержал
+// бы следующее действие пользователя на весь свой таймаут. Таймаут здесь
+// короче, чем у общего: зависший фоновый запрос должен отвалиться сам.
+let backgroundInvoker = new ru.vbinc.net.F2PInvoker(gateway);
+backgroundInvoker.setTimeout(10);
 
 let srv = {
     gateway: gateway,
@@ -341,7 +457,7 @@ let srv = {
         putStickerOnBoard: function (issueId, onResult) {
             this.s._('putStickerOnBoard');
         },
-        removeStickersFromBoard: function (projectId, transferOpened, onResult) {
+        removeStickersFromBoard: function (projectId, sprintNum, transferOpened, onResult) {
             this.s._('removeStickersFromBoard');
         },
         takeIssue: function (issueId, replace, onResult) {
@@ -440,6 +556,9 @@ let srv = {
         },
         setSprintTarget: function (projectId, textTarget, onResult) {
             this.s._('addSprintTarget');
+        },
+        refreshScrumBoard: function (projectId, digest, onResult) {
+            this.s._('refreshScrumBoard', { background: true });
         },
     },
     projects: {
@@ -861,6 +980,64 @@ lpm.validators = {
     },
 };
 
+lpm.forms = {
+    /**
+     * Не даёт отправить форму повторно, пока предыдущая отправка не завершилась:
+     * иначе быстрый повторный Enter или клик создаёт дубль.
+     *
+     * Защита висит на событии отправки формы, а не на кнопке: часть браузеров
+     * отправляет форму по Enter, даже когда кнопка отправки отключена. По той же
+     * причине серверный код не должен опознавать форму по имени кнопки отправки -
+     * отключённая кнопка в POST не попадает.
+     *
+     * Состояние отправки ставится после проверки полей, чтобы форма с ошибкой
+     * валидации осталась рабочей. Возврат из кеша браузера («Назад») оживляет
+     * уже отправленную форму - с неё это состояние снимается, иначе отправить
+     * её снова будет нельзя.
+     *
+     * Повторный вызов для той же формы ничего не меняет - защиту можно ставить
+     * из обработчика показа формы.
+     *
+     * @param {jQuery} $form Форма, которую нужно защитить.
+     * @param {function(): boolean} validate Проверка полей: false - отправку отменить.
+     * @param {function(boolean)} [onSubmittingChange] Вызывается при смене состояния
+     *        отправки - для того, что нужно только этой форме.
+     */
+    preventDoubleSubmit: function ($form, validate, onSubmittingChange) {
+        if ($form.data('lpmPreventDoubleSubmit')) return;
+        $form.data('lpmPreventDoubleSubmit', true);
+
+        // Отправка формы уже идёт: повторные отправки до её завершения запрещены.
+        let submitting = false;
+
+        const setSubmitting = function (value) {
+            if (submitting === value) return;
+
+            submitting = value;
+            $('button[type=submit]', $form).prop('disabled', value);
+
+            if (value) preloader.show();
+            else preloader.hide();
+
+            if (onSubmittingChange) onSubmittingChange(value);
+        };
+
+        $form.on('submit', function (e) {
+            if (submitting || !validate()) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            setSubmitting(true);
+        });
+
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) setSubmitting(false);
+        });
+    },
+};
+
 lpm.utils = {
     copyRichToClipboard: function (html, plain) {
         if (navigator.clipboard && window.isSecureContext) {
@@ -1122,8 +1299,6 @@ $(document).ready(
         });
 
         window.lpInfo.userId = $('#curUserId').val();
-        // Инициализация копирования в буфер
-        (new ClipboardJS('.copy-commit-message'));
     }
 );
 

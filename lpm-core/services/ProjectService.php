@@ -181,7 +181,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Мастер не найден в участниках проекта');
         }
 
-        $label = Issue::getLabel($labelId);
+        $label = IssueLabel::getLabel($labelId);
         if (!$label) {
             return $this->error('Нет такого тега');
         }
@@ -226,7 +226,7 @@ class ProjectService extends LPMBaseService
             return $this->error('Тестировщик не найден в участниках проекта');
         }
 
-        $label = Issue::getLabel($labelId);
+        $label = IssueLabel::getLabel($labelId);
         if (!$label) {
             return $this->error('Нет такого тега');
         }
@@ -748,6 +748,68 @@ class ProjectService extends LPMBaseService
             return $this->exception($e);
         }
         
+        return $this->answer();
+    }
+
+    /**
+     * Отдаёт состояние Scrum доски проекта, если оно изменилось.
+     *
+     * Метод для автообновления открытой доски: клиент присылает отпечаток
+     * состояния, которое у него уже отрисовано, и получает разметку, только
+     * если доска с тех пор изменилась. На неизменившейся доске ответ - это
+     * один отпечаток, поэтому опрашивать её можно часто.
+     *
+     * @param int    $projectId Идентификатор проекта.
+     * @param string $digest    Отпечаток состояния, которое уже отрисовано
+     *                          у клиента; пустая строка - разметка нужна всегда.
+     * @return [
+     *    digest: string,
+     *    changed: bool,
+     *    boardHtml: string|null,
+     *    sprintTargetHtml: string|null,
+     *    sprintTargetText: string|null,
+     *    sprintNum: int|null
+     * ]
+     */
+    public function refreshScrumBoard($projectId, $digest)
+    {
+        $projectId = (int)$projectId;
+        $digest = (string)$digest;
+
+        try {
+            $user = $this->getUser();
+            $project = Project::loadById($projectId);
+            // Загрузчик отдаёт false, если проекта нет
+            if (empty($project) || !$project->hasReadPermission($user)) {
+                return $this->error('Проект не существует или недостаточно прав');
+            }
+
+            if (!$project->scrum) {
+                return $this->error('У проекта нет скрам-доски');
+            }
+
+            $current = ScrumBoardDigest::load($projectId);
+            $this->add2Answer('digest', $current);
+
+            if ($current !== '' && $current === $digest) {
+                $this->add2Answer('changed', false);
+                return $this->answer();
+            }
+
+            $stickers = ScrumSticker::loadBoard($projectId);
+            $boardHtml = $this->getHtml(function () use ($stickers) {
+                PagePrinter::tableScrumBoard($stickers, false, true);
+            });
+
+            $this->add2Answer('changed', true);
+            $this->add2Answer('boardHtml', $boardHtml);
+            $this->add2Answer('sprintTargetHtml', $project->getSprintTargetHtml());
+            $this->add2Answer('sprintTargetText', $project->getSprintTarget());
+            $this->add2Answer('sprintNum', $project->getCurrentSprintNum());
+        } catch (Exception $e) {
+            return $this->exception($e);
+        }
+
         return $this->answer();
     }
 }

@@ -5,6 +5,30 @@
  */
 class LPMImg extends LPMBaseObject
 {
+    /**
+     * Загружает изображение по идентификатору.
+     * @param  int $imgId
+     * @return LPMImg|null `null`, если такого изображения нет или оно удалено.
+     * @throws \GMFramework\ProviderLoadException При ошибке чтения из базы.
+     */
+    public static function load($imgId)
+    {
+        $imgId = (int)$imgId;
+        if ($imgId <= 0) {
+            return null;
+        }
+
+        return self::loadAndParseSingleV2([
+            'SELECT' => '*',
+            'FROM'   => LPMTables::IMAGES,
+            'WHERE'  => [
+                'imgId'   => $imgId,
+                'deleted' => 0,
+            ],
+            'LIMIT'  => 1,
+        ], __CLASS__);
+    }
+
     public static function loadListByInstance($instanceType, $instanceId)
     {
         return StreamObject::loadListDefault(
@@ -127,26 +151,6 @@ class LPMImg extends LPMBaseObject
         return SITE_URL . UPLOAD_IMGS_DIR . $imgName;
     }
 
-    /**
-     * Приводит имя файла к виду, пригодному для показа пользователю и для
-     * подстановки в имя скачиваемого файла: разделители пути и символы,
-     * недопустимые в имени файла, заменяются на `_`, управляющие символы
-     * вырезаются, длина ограничивается 255 символами.
-     * Правила те же, по которым чистится имя прикреплённого файла при загрузке.
-     * @param  string $name
-     * @return string Пустая строка, если чистить нечего или имя не разобрать.
-     */
-    private static function sanitizeName($name)
-    {
-        $name = trim((string)$name);
-        $name = preg_replace('/[\\\\\/\:\*\?"<>\|]+/', '_', $name);
-        // preg_replace() возвращает null, если в имени невалидный UTF-8 -
-        // такое имя считаем неизвестным
-        $name = preg_replace('/[\x00-\x1F\x7F]/u', '', (string)$name);
-
-        return null === $name ? '' : mb_substr($name, 0, 255);
-    }
-
     const SRC_DIR = 'src/';
     const PREVIEW_WIDTH = 150;
     const PREVIEW_HEIGHT = 100;
@@ -158,8 +162,10 @@ class LPMImg extends LPMBaseObject
     public $imgId = 0;
     public $name = '';
     /**
-     * Исходное имя загруженного файла изображения, пустая строка если оно неизвестно
-     * (например, изображение получено загрузкой по URL, а не файлом)
+     * Исходное имя загруженного файла изображения, пустая строка если оно неизвестно.
+     *
+     * Изображению, полученному не файлом (по URL или вставкой из буфера),
+     * имя назначает сервер.
      * @var string
      */
     public $origName = '';
@@ -274,12 +280,42 @@ class LPMImg extends LPMBaseObject
      * Имя, под которым изображение было загружено, приведённое к безопасному
      * для показа и для скачивания виду. Экранирование при выводе в HTML
      * остаётся за вызывающим кодом.
+     *
+     * Имя чистится при загрузке, но в базе есть строки, записанные в обход
+     * этой очистки, и мигрировать их не планируется - поэтому очистка
+     * повторяется здесь. Она идемпотентна, так что уже очищенное имя
+     * проходит без изменений.
      * @return string Пустая строка, если исходное имя неизвестно: изображение
-     * загружено по URL либо загружено до того, как имя начали сохранять.
+     * загружено до того, как имя начали сохранять.
      */
     public function getDisplayName()
     {
-        return self::sanitizeName($this->origName);
+        return FileNameHelper::sanitize($this->origName);
+    }
+
+    /**
+     * Возвращает url, по которому изображение отдаётся под исходным именем -
+     * тем, которое видно в {@see LPMImg::getDisplayName()}.
+     *
+     * Отличается от {@see LPMImg::getSource()} только именем сохраняемого
+     * файла: там браузер называет картинку по имени файла на диске, здесь -
+     * по тому, под которым её загрузили. Прямая ссылка на файл остаётся
+     * рабочей, поэтому для показа на странице годятся обе.
+     * @return string
+     */
+    public function getViewUrl()
+    {
+        return Link::getImageViewUrl($this->imgId, $this->getFileName());
+    }
+
+    /**
+     * Имя файла изображения на диске, вместе с расширением и без каталога.
+     * В отличие от {@see LPMImg::getSrcImgName()} каталог в него не входит.
+     * @return string
+     */
+    public function getFileName()
+    {
+        return $this->_imgName . '.' . $this->_imgExt;
     }
 
     public function getSrcImgName()

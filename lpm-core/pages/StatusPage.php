@@ -27,6 +27,12 @@ class StatusPage extends LPMPage
         $cache = $engine->cache();
         $status->cacheEnabled = $cache->isEnabled();
 
+        $clientIp = ClientIp::getTrusted();
+        $status->remoteAddr = ClientIp::getRemoteAddr();
+        $status->clientIp = $clientIp;
+        $status->trustedProxiesConfigured = !empty(ClientIp::getTrustedProxies());
+        $status->loginIpLimitEnabled = $clientIp !== '';
+
         $this->addTmplVar('status', $status);
 
         $this->addTmplVar('gitlabAvailable', $engine->gitlab()->isAvailable());

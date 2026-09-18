@@ -16,6 +16,26 @@
 class ProjectPage extends LPMPage
 {
     /**
+     * Возвращает адрес страницы создания задачи в проекте.
+     * @param  string   $projectUID Строковый идентификатор проекта.
+     * @param  int|null $type       Тип задачи (Issue::TYPE_*), под который
+     *         открывается форма; `null` — тип не задан. Типы, для которых
+     *         у формы нет заготовки, в адрес не попадают.
+     * @return string Адрес страницы.
+     */
+    public static function getIssueFormUrl($projectUID, $type = null)
+    {
+        $args = [$projectUID, self::PUID_ISSUE_ADD];
+
+        $typeArg = $type === null ? false : array_search($type, self::ISSUE_FORM_TYPES, true);
+        if ($typeArg !== false) {
+            $args[] = $typeArg;
+        }
+
+        return Link::getUrl(self::UID, $args);
+    }
+
+    /**
      * Разбирает список идентификаторов файлов, переданный формой.
      * @param  string $fileIdsStr Идентификаторы, разделённые запятой.
      * @return array Массив идентификаторов.
@@ -70,15 +90,46 @@ class ProjectPage extends LPMPage
     const PUID_COMPLETED_ISSUES = 'completed';
     const PUID_COMMENTS  = 'comments';
     const PUID_ISSUE = 'issue';
+    const PUID_ISSUE_ADD = 'add-issue';
     const PUID_SCRUM_BOARD = 'scrum-board';
     const PUID_SCRUM_BOARD_SNAPSHOT = 'scrum-board-snapshot';
     const PUID_SPRINT_STAT = 'sprint-stat';
     const PUID_SETTINGS = 'project-settings';
 
+    /**
+     * Сообщение о задаче, которой нет.
+     */
+    const ISSUE_NOT_FOUND_MESSAGE = 'Такой задачи нет - возможно, её удалили';
+
+    /**
+     * Сообщение о задаче, которая есть, но недоступна этому пользователю.
+     */
+    const ISSUE_NO_ACCESS_MESSAGE = 'У вас нет доступа к этой задаче';
+
+    /**
+     * Сообщение о проекте, которого нет.
+     */
+    const PROJECT_NOT_FOUND_MESSAGE = 'Такого проекта нет - возможно, его удалили';
+
+    /**
+     * Сообщение о проекте, который есть, но недоступен этому пользователю.
+     */
+    const PROJECT_NO_ACCESS_MESSAGE = 'У вас нет доступа к этому проекту';
+
     /** Параметр строки запроса с поисковым запросом по списку задач. */
     const QUERY_ARG_SEARCH = 'search';
     /** Параметр строки запроса с областью поиска по статусу задачи. */
     const QUERY_ARG_SCOPE = 'scope';
+
+    /**
+     * Типы задачи, под которые можно сразу открыть форму создания:
+     * аргумент адреса => тип задачи (Issue::TYPE_*).
+     * Форму по этому аргументу заполняет issue-form.js — вместе с типом
+     * он подставляет и заготовку описания.
+     */
+    const ISSUE_FORM_TYPES = [
+        'bug' => Issue::TYPE_BUG,
+    ];
 
     const SEARCH_SCOPE_OPENED = 'opened';
     const SEARCH_SCOPE_COMPLETED = 'completed';
@@ -172,7 +223,7 @@ class ProjectPage extends LPMPage
         // загружаем проект, на странице которого находимся
         if ($engine->getParams()->suid == ''
             || !$this->_project = Project::load($engine->getParams()->suid)) {
-            return false;
+            return $this->notFound('Project not found');
         }
 
         // Если это scrum проект - добавляем новый подраздел
@@ -181,7 +232,10 @@ class ProjectPage extends LPMPage
                 self::PUID_SCRUM_BOARD,
                 'Scrum доска',
                 'scrum-board',
-                array_merge(['scrum-board', 'filters/scrum-board-filter', 'goto-issue'], $this->getIssueJs())
+                array_merge(
+                    ['scrum-board', 'scrum-board-autorefresh', 'filters/scrum-board-filter', 'goto-issue'],
+                    $this->getIssueJs()
+                )
             );
             $this->addSubPage(
                 self::PUID_SCRUM_BOARD_SNAPSHOT,
@@ -225,7 +279,7 @@ class ProjectPage extends LPMPage
         }
 
         if (!$this->_project->hasReadPermission($user)) {
-            return false;
+            return $this->noAccess('Project is not available for the user');
         }
         
         $iCount = (int)$this->_project->getImportantIssuesCount();
@@ -275,7 +329,14 @@ class ProjectPage extends LPMPage
             case null: {
                 // может быть это страница просмотра задачи?
                 if ($this->getPUID() == self::PUID_ISSUE) {
-                    $this->initIssue();
+                    if (!$this->initIssue()) {
+                        return $this->notFound('Issue not found in the project');
+                    }
+                    break;
+                }
+                // или страница создания задачи?
+                if ($this->getPUID() == self::PUID_ISSUE_ADD) {
+                    $this->initIssueForm();
                     break;
                 }
             }
@@ -314,6 +375,54 @@ class ProjectPage extends LPMPage
         }
         
         return $this;
+    }
+
+    /**
+     * Прерывает открытие страницы, которой нет: вместо неё по тому же адресу
+     * будет показана страница отказа ({@see NotAvailablePage}) с кодом 404
+     * и сообщением, что такой записи не существует.
+     *
+     * Неавторизованному отказ не показываем: его отправляют авторизоваться,
+     * после чего он вернётся на эту же страницу.
+     * @param string $reason Причина отказа для лога - пользователь её не видит.
+     * @return false Если пользователь не авторизован.
+     * @throws NotFoundException Если авторизован.
+     */
+    private function notFound($reason)
+    {
+        if (!$this->_engine->isAuth()) {
+            return false;
+        }
+
+        $message = $this->getPUID() == self::PUID_ISSUE
+            ? self::ISSUE_NOT_FOUND_MESSAGE
+            : self::PROJECT_NOT_FOUND_MESSAGE;
+
+        throw NotFoundException::withMessage($message, $reason);
+    }
+
+    /**
+     * Прерывает открытие существующей страницы, к которой у пользователя нет
+     * доступа: вместо неё по тому же адресу будет показана страница отказа
+     * ({@see NotAvailablePage}) с кодом 403 и сообщением, что доступа нет.
+     *
+     * Неавторизованному отказ не показываем: его отправляют авторизоваться,
+     * после чего он вернётся на эту же страницу.
+     * @param string $reason Причина отказа для лога - пользователь её не видит.
+     * @return false Если пользователь не авторизован.
+     * @throws ForbiddenException Если авторизован.
+     */
+    private function noAccess($reason)
+    {
+        if (!$this->_engine->isAuth()) {
+            return false;
+        }
+
+        $message = $this->getPUID() == self::PUID_ISSUE
+            ? self::ISSUE_NO_ACCESS_MESSAGE
+            : self::PROJECT_NO_ACCESS_MESSAGE;
+
+        throw ForbiddenException::withMessage($message, $reason);
     }
 
     /**
@@ -385,11 +494,15 @@ class ProjectPage extends LPMPage
         $this->initIssuesList(self::SEARCH_SCOPE_OPENED, true);
     }
 
+    /**
+     * Готовит страницу просмотра задачи.
+     * @return bool `false`, если задачи в этом проекте нет.
+     */
     private function initIssue()
     {
         $issueId = $this->getCurrentIssueId((float)$this->getAddParam());
         if ($issueId <= 0 || !$issue = Issue::load((float)$issueId)) {
-            LightningEngine::go2URL($this->getUrl());
+            return false;
         }
         
         $issue->getMembers();
@@ -401,12 +514,11 @@ class ProjectPage extends LPMPage
         }
 
         $this->_title = $this->getTitleByIssue($issue);
-        // Обновлённый вид страницы задачи пока под экспериментальным флагом
-        $this->_pattern = LPMOptions::getInstance()->newIssueView ? 'issue' : 'issue-legacy';
+        $this->_pattern = 'issue';
         ArrayUtils::remove($this->_js, 'project');
         $this->_js = array_merge(
             ['issue', 'popups/create-branch', 'popups/pass-test', 'popups/create-from-issue', 'popups/add-issue-link', 'goto-issue'],
-            $this->getIssueJs(),
+            $this->getIssueFormJs(),
             $this->getCommentJs()
         );
 
@@ -415,6 +527,25 @@ class ProjectPage extends LPMPage
 
         $this->addTmplVar('issue', $issue);
         $this->addTmplVar('comments', $comments);
+
+        return true;
+    }
+
+    /**
+     * Готовит страницу создания задачи: форма открывается сама по себе,
+     * без списка задач проекта.
+     */
+    private function initIssueForm()
+    {
+        $this->_title = 'Новая задача - ' . $this->_project->name;
+        $this->_pattern = 'issue-form-page';
+        ArrayUtils::remove($this->_js, 'project');
+        $this->_js = array_merge($this->_js, $this->getIssueFormJs());
+
+        $typeArg = (string)$this->getAddParam();
+
+        $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('issueType', isset(self::ISSUE_FORM_TYPES[$typeArg]) ? $typeArg : '');
     }
 
     /**
@@ -519,7 +650,7 @@ class ProjectPage extends LPMPage
         $projectMembers = $project->getMembers(true);
         $projectTester = $project->getTester();
 
-        $labels = Issue::getLabels($project->id);
+        $labels = IssueLabel::getLabels($project->id);
         
         $this->addTmplVar('project', $project);
         $this->addTmplVar('projectMembers', $projectMembers);
@@ -530,7 +661,14 @@ class ProjectPage extends LPMPage
 
     private function initScrumBoard()
     {
+        // Отпечаток снимается до выборки стикеров: тогда изменение, попавшее
+        // между двумя запросами, войдёт в разметку, но не в отпечаток, и первый
+        // же тик автообновления перерисует доску лишний раз. Обратный порядок
+        // это изменение потерял бы.
+        $digest = ScrumBoardDigest::load($this->_project->id);
+
         $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('boardDigest', $digest);
         $this->addTmplVar('stickers', ScrumSticker::loadBoard($this->_project->id));
     }
 
@@ -590,16 +728,29 @@ class ProjectPage extends LPMPage
         ];
     }
 
+    /**
+     * Скрипты, нужные везде, где показываются задачи.
+     * @return array<string> Список скриптов.
+     */
     private function getIssueJs()
     {
         return [
             'issues',
             'filters/issues-filter',
-            'issue-form',
             'libs/highlight.pack',
             'formatting',
             'libs/tribute',
         ];
+    }
+
+    /**
+     * Скрипты страниц, на которых есть форма задачи: сама форма живёт
+     * только на странице задачи (редактирование) и на странице её создания.
+     * @return array<string> Список скриптов.
+     */
+    private function getIssueFormJs()
+    {
+        return array_merge(['issue-form'], $this->getIssueJs());
     }
 
     private function getCommentJs()
@@ -773,7 +924,7 @@ class ProjectPage extends LPMPage
         $priority = min(99, max(0, (int)$_POST['priority']));
 
         // Регистрируем в справочнике метки, впервые появившиеся в имени задачи.
-        Issue::registerLabelsUsage($rawName, $this->_project->id, $issueName);
+        IssueLabel::registerLabelsUsage($rawName, $this->_project->id, $issueName);
 
         // Считаем SP
         $hours = $this->parseSP($_POST['hours']);

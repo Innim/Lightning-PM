@@ -116,36 +116,25 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                 if ($issue->isChangesRequested) $cssClasses[] = 'changes-requested';
                 if ($deadlineLevel !== '') $cssClasses[] = 'deadline-' . $deadlineLevel;
                 if ($testMergeLevel = IssueViewHelper::testMergeLevel($issue)) $cssClasses[] = 'test-' . $testMergeLevel;
-
-                $buildLevel = IssueViewHelper::buildLevel($issue);
             ?>
             <div id="scrum-sticker-<?=$sticker->issueId;?>"
                  class="scrum-board-sticker <?=implode(' ', $cssClasses);?>" data-issue-id="<?=$sticker->issueId;?>"
                  data-sticker-state="<?=$sticker->state;?>" data-sticker-sp="<?=$sp;?>"
                  data-priority-group="<?=$priorityGroup;?>"
                  data-tester-ids="<?=$issue->getTesterIdsStr();?>">
-                <span class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;?></span>
                 <?php if ($addProjectName): ?>
                     <a href="<?=$sticker->getIssue()->getProjectScrumUrl();?>" class="name-project"><?=$sticker->getIssue()->projectName;?></a>
                 <?php endif; ?>
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
-                    <i class="fas fa-flask under-testing-check" title="Взята в тестирование"></i>
-                    <i class="fas fa-check-square pass-test-check" title="Прошла тестирование"></i>
-                    <i class="fas fa-bug changes-requested-check" title="Найдены проблемы, требуется внесение правок"></i>
-                    <i class="fas fa-code-pull-request test-wait-merge-check" title="Правки ещё не влиты — тестировать рано"></i>
-                    <i class="fas fa-code-merge test-ready-check" title="Правки влиты — можно тестировать"></i>
-                    <?php if ($buildLevel !== ''): ?>
-                    <?php /* Подсказка висит на обёртке, а не на иконке: у голой иконки
-                             почти нулевая высота бокса, и всплывающая подсказка
-                             легла бы прямо на неё */ ?><span
-                        class="build-state build-<?=$buildLevel;?>"
-                        title="<?=IssueViewHelper::buildHint($buildLevel);?>"
-                        aria-label="<?=IssueViewHelper::buildHint($buildLevel);?>"><i
-                        class="<?=IssueViewHelper::buildIconClass($buildLevel);?>" aria-hidden="true"></i></span>
-                    <?php endif; ?>
+                    <?php lpm_print_issue_test_state($issue); ?>
                     <span class="sticker-issue-title"><?=$sticker->getName();?></span>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
+                <?php /* Чип позиционируется абсолютно, поэтому в разметке стоит после названия:
+                         так глиф меню копирования попадает в обход табом сразу за ссылкой на задачу.
+                         Пробела перед меню нет: в покое глиф скрыт, и пробел расширял бы чип */ ?>
+                <div class="sticker-issue-id">#<?=$sticker->getIssue()->idInProject;
+                    ?><?php lpm_print_issue_copy_menu($issue); ?></div>
                 <span class="sticker-issue-members"><?php
                     foreach ($members as $j => $member):
                         echo $j > 0 ? ', ' : '';

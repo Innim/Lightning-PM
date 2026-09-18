@@ -16,8 +16,10 @@ class IssueLinked extends LPMBaseObject
     public static function create($issueId, $linkedIssueId, $created = null)
     {
         $created = DateTimeUtils::mysqlDate($created);
+        $createdUtc = $created;
+
         $hash = [
-            'INSERT'  => compact('issueId', 'linkedIssueId', 'created'),
+            'INSERT'  => compact('issueId', 'linkedIssueId', 'created', 'createdUtc'),
             'INTO'    => LPMTables::ISSUE_LINKED,
             'IGNORE'  => '',
         ];

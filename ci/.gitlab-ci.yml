@@ -20,7 +20,7 @@ cache:
     - .cache/pip
 
 deploy to test:
-  image: python:3.8
+  image: python:3.12
   stage: deploy
   only:
     - pipe/test
@@ -48,7 +48,7 @@ deploy to test:
 
 
 deploy to prod:
-  image: python:3.8
+  image: python:3.12
   stage: deploy
   only:
     - master
@@ -73,7 +73,7 @@ deploy to prod:
     - python ./ci/main.py prod_deploy
     
 deploy to wip:
-  image: python:3.8
+  image: python:3.12
   stage: deploy
   only:
     - pipe/wip

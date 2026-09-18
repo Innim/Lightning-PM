@@ -161,11 +161,39 @@ class PagePrinter
     public static function issueTestState(Issue $issue)
     {
         $buildLevel = IssueViewHelper::buildLevel($issue);
+        $underTestingHint = self::underTestingHint($issue);
 
         PageConstructor::includePattern(
             'components/issue-test-state',
-            compact('buildLevel')
+            compact('buildLevel', 'underTestingHint')
         );
+    }
+
+    /**
+     * Подсказка отметки «Взята в тестирование»: кто проверяет задачу и с какого
+     * момента.
+     *
+     * Время даётся в двух видах: относительное отвечает на вопрос «давно ли»,
+     * точное - когда надо сверить момент. У задач, взятых в тестирование
+     * до появления этих данных, отметка остаётся без уточнения.
+     * @param  Issue $issue Задача.
+     * @return string Текст подсказки в чистом виде, без экранирования.
+     */
+    private static function underTestingHint(Issue $issue)
+    {
+        $label = 'Взята в тестирование';
+        if (!$issue->isUnderTesting || empty($issue->underTestingSince)) {
+            return $label;
+        }
+
+        $when = TimeAgoHelper::format($issue->underTestingSince)
+            . ' (' . $issue->getUnderTestingSince() . ')';
+
+        $user = User::load($issue->underTestingById);
+
+        return empty($user)
+            ? $label . ' ' . $when
+            : 'Проверяет ' . $user->getPlainName() . ', взята в тестирование ' . $when;
     }
 
     /**
@@ -434,6 +462,26 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает меню копирования ссылок на задачу: гиперссылки, адреса
+     * и Markdown-ссылки.
+     *
+     * Меню выпадающее, его открывает глиф-тоггл; показом глифа управляет вмещающий
+     * компонент (строка списка задач, стикер доски).
+     * @param Issue $issue Задача.
+     */
+    public static function issueCopyMenu(Issue $issue)
+    {
+        $url = $issue->getConstURL();
+        $idInProject = $issue->getIdInProject();
+        $issueName = htmlspecialchars($issue->getName(), ENT_QUOTES);
+
+        PageConstructor::includePattern(
+            'components/issue-copy-menu',
+            compact('url', 'idInProject', 'issueName')
+        );
+    }
+
+    /**
      * Распечатывает ссылку быстрого добавления текущего пользователя
      * к участникам задачи в указанной роли.
      *
@@ -578,6 +626,7 @@ class PagePrinter
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
             'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
             'priorityGroupStep' => Issue::PRIORITY_GROUP_STEP,
+            'commentDeleteWindow' => Comment::DELETE_WINDOW_SECONDS,
             'passwordMinLength' => PASSWORD_MIN_LENGTH,
             'passwordMaxLength' => PASSWORD_MAX_LENGTH,
             'roles' => [

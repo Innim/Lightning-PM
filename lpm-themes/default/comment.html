@@ -39,6 +39,12 @@ if (!empty($issueComment)) {
       $bgColorClass = 'bg-info bg-opacity-25';
       $bgIconClass = 'fa-list-check';
       break;
+    case IssueCommentType::TAKEN_FOR_TESTING:
+      $bgIconClass = 'fa-flask';
+      break;
+    case IssueCommentType::RELEASED_FROM_TESTING:
+      $bgIconClass = 'fa-rotate-left';
+      break;
   }
 
   $isAutoComment = $issueComment->isAutoComment();
@@ -93,7 +99,7 @@ $deleteLinkDataAttributesString = HTMLHelper::buildDataAttributes($deleteLinkDat
     </div>
       
       <div class="position-absolute bottom-0 end-0">
-        <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
+        <?php if ($comment->checkDeletePermit(lpm_get_user())): ?>
         <a href="javascript:void(0);" id="<?='delete_comment_' . $comment->id?>" class="delete-comment" title="Удалить"
           <?=$deleteLinkDataAttributesString?>>
           <i class="fas fa-trash-alt fa-sm"></i>
@@ -152,7 +158,7 @@ $deleteLinkDataAttributesString = HTMLHelper::buildDataAttributes($deleteLinkDat
            data-copy-toast="Текст комментария скопирован">
           <i class="fa-regular fa-copy fa-sm text-muted opacity-50"></i>
         </a>
-        <?php if (lpm_check_delete_comment($comment->authorId, $comment->id)): ?>
+        <?php if ($comment->checkDeletePermit(lpm_get_user())): ?>
         <a href="javascript:void(0);" id="<?='delete_comment_' . $comment->id?>" class="delete-comment" title="Удалить"
            <?=$deleteLinkDataAttributesString?>>
           <i class="fas fa-trash-alt"></i>

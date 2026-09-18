@@ -17,6 +17,21 @@ class GitlabPipeline extends \GMFramework\StreamObject
     const STATUS_SCHEDULED = 'scheduled';
 
     /**
+     * Пайплайн запущен пушем в ветку.
+     */
+    const SOURCE_PUSH = 'push';
+
+    /**
+     * Пайплайн запущен по расписанию.
+     */
+    const SOURCE_SCHEDULE = 'schedule';
+
+    /**
+     * Пайплайн порождён другим пайплайном (child pipeline).
+     */
+    const SOURCE_PARENT_PIPELINE = 'parent_pipeline';
+
+    /**
      * Идентификатор пайплайна.
      * @var int
      */
@@ -50,6 +65,16 @@ class GitlabPipeline extends \GMFramework\StreamObject
      * @var string
      */
     public $status;
+
+    /**
+     * Чем запущен пайплайн (см. SOURCE_*).
+     *
+     * Пустая строка, если источник неизвестен: в части ответов GitLab API
+     * этого поля нет.
+     *
+     * @var string
+     */
+    public $source;
 
     /**
      * URL веб-интерфейса пайплайна.

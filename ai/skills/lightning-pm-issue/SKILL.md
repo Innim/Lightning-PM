@@ -76,7 +76,7 @@ Always plan against the **checked-out issue branch**, never the pre-switch worki
 
 Pausing for plan approval on a non-trivial task is the one expected exception to the "continue into implementation" rule above — it is not a violation of it.
 
-Changing the issue's status or assignee/membership is **out of scope**. The board endpoints (`PUT` / `DELETE /api/v1/issues/{issueId}/board`) do move a ticket and change its status along with it, so this is a restriction of this skill, not a gap in the API: where a ticket sits on the board is the user's call on their own board, not a side effect of an agent picking up the issue. Do not move the ticket "in progress", and do not assign it or otherwise mutate issue metadata by guessing endpoints or scraping HTML — leave those actions to the user.
+Changing the issue's status or assignee/membership is **out of scope**. The API does support both — the board endpoints (`PUT` / `DELETE /api/v1/issues/{issueId}/board`) move a ticket and change its status along with it, and the participant endpoints (`PUT` / `POST` / `DELETE /api/v1/issues/{issueId}/members`, `/testers`, `/masters`) assign and unassign people — so this is a restriction of this skill, not a gap in the API: who the issue belongs to and where it sits on the board are the user's call on their own board, not a side effect of an agent picking up the issue. Do not move the ticket "in progress", and do not assign it or otherwise mutate issue metadata on your own initiative — leave those actions to the user.
 
 ## Creating a New Issue
 

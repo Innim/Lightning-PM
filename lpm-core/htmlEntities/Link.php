@@ -42,6 +42,24 @@ class Link
         return self::buildUrl([LightningEngine::FILES_PATH, $uid, 'view', rawurlencode($fileName)]);
     }
 
+    /**
+     * Возвращает URL, по которому изображение отдаётся под исходным именем.
+     * @param int $imgId Идентификатор изображения.
+     * @param string $fileName Имя файла картинки на диске: по нему выдача
+     *   проверяет, что адрес не подобран перебором идентификаторов, а клиент
+     *   узнаёт формат картинки. Без него изображение не отдаётся.
+     * @return string
+     */
+    public static function getImageViewUrl($imgId, $fileName)
+    {
+        $args = [LightningEngine::IMAGES_PATH, (int)$imgId];
+        if ($fileName !== '') {
+            $args[] = rawurlencode($fileName);
+        }
+
+        return self::buildUrl($args);
+    }
+
     protected static function buildUrl($args, $hash = '')
     {
         $url = SITE_URL . implode('/', $args);

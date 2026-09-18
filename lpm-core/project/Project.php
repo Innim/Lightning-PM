@@ -48,12 +48,14 @@ class Project extends MembersInstance
     public static function addProject($uid, $name, $desc)
     {
         $db = self::getDB();
+        $date = DateTimeUtils::mysqlDate();
         $hash = [
             'INSERT' => [
                 'uid'  => $uid,
                 'name' => $name,
                 'desc' => $desc,
-                'date' => DateTimeUtils::mysqlDate(),
+                'date' => $date,
+                'dateUtc' => $date,
             ],
             'INTO'   => LPMTables::PROJECTS
         ];
@@ -538,13 +540,6 @@ SQL;
         return Link::getUrl(ProjectPage::UID, [$projectUID, ProjectPage::PUID_SCRUM_BOARD], $hash);
     }
     
-    public static function checkDeleteComment($authorId, $commentId)
-    {
-        $user = LightningEngine::getInstance()->getUser();
-
-        return $user->isModerator() || $user->getID() == $authorId && Comment::checkDeleteCommentById($commentId);
-    }
-    
     /**
      * Обновляет в БД цели спринта текущего scrum проекта.
      * @param int $projectId идентификатор проекта.
@@ -1021,7 +1016,7 @@ SQL;
 
     private function loadLabels()
     {
-        $list = Issue::getLabels($this->id);
+        $list = IssueLabel::getLabels($this->id);
         if ($list === false) {
             throw new Exception('Ошибка при загрузке списка тегов');
         }

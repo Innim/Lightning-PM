@@ -21,6 +21,7 @@ class LightningEngine
     const API_PATH = 'api';
     const BADGES_PATH = 'badges';
     const FILES_PATH = 'file';
+    const IMAGES_PATH = 'img';
 
     /**
      * @return LightningEngine
@@ -173,6 +174,8 @@ class LightningEngine
             $this->staticGenerator();
         } elseif ($arg0 == self::FILES_PATH) {
             $this->fileDownload();
+        } elseif ($arg0 == self::IMAGES_PATH) {
+            $this->imageDownload();
         } else  {
             $this->createPage();
         }
@@ -262,18 +265,80 @@ class LightningEngine
             $controller = new FileDownloadController($this);
             $controller->handle($uid, $inline);
         } catch (LPMException $e) {
+            $this->fileDownloadFailed($e);
+        } catch (Exception $e) {
+            $this->debugOnException($e);
+            die('Fatal file download error');
+        }
+    }
+
+    /**
+     * Сообщает о том, что файл не отдан.
+     *
+     * Человеку показываем страницу отказа: голый ответ с кодом состояния
+     * ничего не объясняет и не похож на приложение. Клиент, пришедший
+     * с ключом API, ждёт кода состояния, а не страницы - ему отвечаем кодом.
+     * @param LPMException $e Причина отказа.
+     */
+    private function fileDownloadFailed(LPMException $e)
+    {
+        if (ApiKey::hasAuthDataInRequest()) {
             http_response_code($e->getStatusCode());
-            
+
             $output = $e->getLocalizedMessage();
             if (LPMGlobals::isDebugMode()) {
                 $output .= "<pre>[DEBUG INFORMATION]\n" . $this->debugExceptionString($e, false) . '</pre>';
             }
 
             die($output);
+        }
+
+        if (!$this->isAuth()) {
+            // Показывать отказ не за что: файл могли и не скрывать от этого
+            // человека - он просто ещё не вошёл.
+            self::go2URL();
+        }
+
+        $this->showNotAvailablePage($e);
+    }
+
+    private function imageDownload()
+    {
+        try {
+            $params = $this->_params;
+            $params->shiftArg();
+            $imgId = $params->shiftArg();
+
+            $controller = new ImageDownloadController();
+            $controller->handle($imgId);
+        } catch (LPMException $e) {
+            // Прав маршрут не проверяет, поэтому отказать он может только
+            // ненайденной картинкой - и показать это можно любому, кто пришёл.
+            $this->showNotAvailablePage($e);
         } catch (Exception $e) {
             $this->debugOnException($e);
-            die('Fatal file download error');
+            die('Fatal image download error');
         }
+    }
+
+    /**
+     * Показывает страницу отказа вместо запрошенной.
+     *
+     * Отвечаем по тому же адресу, по которому пришёл запрос: так страница
+     * перезагружается, ссылка остаётся рабочей, а «назад» ведёт туда, откуда
+     * пользователь пришёл. Что он увидит и с каким кодом, задаёт причина
+     * отказа: 404 - такой записи нет, 403 - она есть, но ему недоступна.
+     * @param LPMException $e Причина отказа.
+     */
+    private function showNotAvailablePage(LPMException $e)
+    {
+        http_response_code($e->getStatusCode());
+
+        $page = new NotAvailablePage($e);
+        $this->_curPage = $page->init();
+        $this->_constructor->createPage();
+
+        exit;
     }
 
     private function createPage()
@@ -290,6 +355,10 @@ class LightningEngine
 
         try {
             $this->_curPage = $this->initCurrentPage();
+        } catch (NotFoundException | ForbiddenException $e) {
+            // Страница сама решила, что показывать нечего - её место
+            // занимает отказ.
+            $this->showNotAvailablePage($e);
         } catch (Exception $e) {
             $this->debugOnException($e);
             die('Fatal error');

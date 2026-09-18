@@ -148,6 +148,8 @@ class IssueContentSnapshot extends LPMBaseObject
      */
     private static function add(Issue $issue, $editorId)
     {
+        $createdAt = DateTimeUtils::mysqlDate();
+
         self::buildAndSaveToDbV2([
             'INSERT' => [
                 'issueId' => (int)$issue->id,
@@ -159,7 +161,8 @@ class IssueContentSnapshot extends LPMBaseObject
                     ? null
                     : DateTimeUtils::mysqlDate($issue->completeDate),
                 'editorId' => (int)$editorId,
-                'createdAt' => DateTimeUtils::mysqlDate(),
+                'createdAt' => $createdAt,
+                'createdAtUtc' => $createdAt,
             ],
             'INTO' => LPMTables::ISSUE_CONTENT_SNAPSHOTS,
         ]);

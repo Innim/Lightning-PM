@@ -3,6 +3,7 @@
 Требуются: 
     $project - проект
     $stickers - список стикеров
+    $boardDigest - отпечаток состояния доски, от которого пляшет автообновление
 */
 ?>
 
@@ -17,7 +18,7 @@
                             <?php lpm_print_goto_issue($project); ?>
                         </div>
                         <div class="col">
-                            <a class="btn btn-outline-primary btn-sm" href="<?=Project::getURLByProjectUID($project->uid, 'add-issue');?>" role="button" title="Новая задача">
+                            <a class="btn btn-outline-primary btn-sm" href="<?=ProjectPage::getIssueFormUrl($project->uid);?>" role="button" title="Новая задача">
                                 <i class="fa-solid fa-plus"></i>
                             </a>
                         </div>
@@ -42,10 +43,21 @@
         </div>
     </div>
 
-    <article id="scrumBoard" data-project-id="<?=$project->id;?>" class="hide-sp">
+    <!-- Атрибут data-sprint-num и класс sprint-num используются JS: доска закрывает
+         тот спринт, номер которого показан на странице -->
+    <article id="scrumBoard" data-project-id="<?=$project->id;?>"
+             data-sprint-num="<?=$project->getCurrentSprintNum();?>"
+             data-board-digest="<?=$boardDigest;?>" class="hide-sp">
+        <?php /* Показывается автообновлением, когда доску перестало обновлять. Стоит до заголовка: он плавающий, и полоса после него обтекала бы его сбоку */ ?>
+        <div id="scrumBoardStale" class="alert alert-warning d-none align-items-center py-2" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2" aria-hidden="true"></i>
+            <span class="flex-grow-1">Доска не обновляется, данные могли устареть.</span>
+            <button type="button" class="btn btn-sm btn-outline-dark" data-action="refresh">Обновить</button>
+        </div>
+
         <h3 class="scrum-board-header">SCRUM доска.
             <span class="scrum-board-info">
-            <span class="scrum-board-sprint-num">Спринт #<?=$project->getCurrentSprintNum();?></span>
+            <span class="scrum-board-sprint-num">Спринт #<span class="sprint-num"><?=$project->getCurrentSprintNum();?></span></span>
             (<span class="scrum-board-count"><span class="value"></span> шт</span><span class="scrum-board-sp">, <span
                     class="value"></span> SP</span>)
         </span>

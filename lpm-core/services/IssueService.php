@@ -456,8 +456,12 @@ class IssueService extends LPMBaseService
     /**
      * Отмечает, что текущий пользователь взял задачу в тестирование.
      *
-     * Отметка живёт в журнале задачи, а не в комментариях: её надо уметь
-     * снимать, а комментарий из ленты не убрать. Взять задачу может любой,
+     * Состояние отметки держит журнал задачи, а не комментарий: отметку надо
+     * уметь снимать, а комментарий из ленты не убрать. В ленту при этом
+     * пишется запись о самом действии - она историю не задаёт, а показывает,
+     * поэтому её удаление отметку не трогает. Оповещений по этой записи
+     * не рассылаем: взятие и снятие происходят часто и адресату не важны.
+     * Взять задачу может любой,
      * кому она доступна: задача в тесте ничья, тестировщики разбирают
      * такие задачи сами. Взявший заодно добавляется в тестировщики задачи,
      * если его там ещё нет.
@@ -473,6 +477,8 @@ class IssueService extends LPMBaseService
      *     bool needConfirm     Нужно подтверждение перехвата: отметка не изменена.
      *     String holderName    Имя проверяющего задачу сейчас, экранированное
      *                          для вставки в HTML (при needConfirm).
+     *     Comment comment      Запись о взятии, добавленная в ленту.
+     *     String html          HTML код этой записи.
      *     int  substatus       Уточнение статуса задачи.
      *     bool testerAdded     Добавлен ли пользователь в тестировщики задачи.
      *     float  userId        Идентификатор добавленного тестировщика.
@@ -508,6 +514,14 @@ class IssueService extends LPMBaseService
             }
 
             IssueEvent::create($issueId, IssueEventType::TAKEN_FOR_TESTING, $userId);
+            $comment = $this->postComment(
+                $issue,
+                '**Взята в тестирование**',
+                true,
+                IssueCommentType::TAKEN_FOR_TESTING,
+                null,
+                true
+            );
 
             // Назначение тестировщиком - отдельный от отметки механизм: оно
             // переживает снятие отметки, поэтому здесь только добавляем
@@ -526,7 +540,7 @@ class IssueService extends LPMBaseService
             }
 
             $this->add2Answer('testerAdded', $testerAdded);
-            $this->answerTestingMark($issue);
+            $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -540,10 +554,13 @@ class IssueService extends LPMBaseService
      * Снять отметку может любой, кому доступна задача, и в любой момент:
      * иначе тот, кто взял задачу и пропал, заблокировал бы её насовсем.
      * Из тестировщиков задачи пользователь при этом не убирается - его могли
-     * назначить туда заранее и не этим действием.
+     * назначить туда заранее и не этим действием. Запись в ленте, как
+     * и при взятии, оповещений не рассылает.
      * @param   int $issueId Идентификатор задачи.
      * @return {
-     *     int substatus Уточнение статуса задачи.
+     *     Comment comment   Запись о снятии отметки, добавленная в ленту.
+     *     String  html      HTML код этой записи.
+     *     int     substatus Уточнение статуса задачи.
      * }
      */
     public function releaseFromTesting($issueId)
@@ -558,8 +575,16 @@ class IssueService extends LPMBaseService
             }
 
             IssueEvent::create($issueId, IssueEventType::RELEASED_FROM_TESTING, $this->getUserId());
+            $comment = $this->postComment(
+                $issue,
+                '**Снята отметка «Взята в тестирование»**',
+                true,
+                IssueCommentType::RELEASED_FROM_TESTING,
+                null,
+                true
+            );
 
-            $this->answerTestingMark($issue);
+            $this->setupCommentAnswer($comment);
         } catch (\Exception $e) {
             return $this->exception($e);
         }
@@ -830,44 +855,35 @@ class IssueService extends LPMBaseService
     }
 
     /**
-     * Убирает в архив стикеры с доски
+     * Убирает в архив стикеры с доски - закрывает спринт.
      * @param int $projectId Идентификатор проекта
+     * @param int $sprintNum Номер закрываемого спринта - тот, который показан
+     *                       на доске. Если открыт уже другой спринт (доску успели
+     *                       закрыть в другой вкладке), закрытия не будет.
      * @param bool $transferOpened Определяет, будут ли перенесены но новый спринт
      *                             открытые задачи. Открытыми считаются задачи в TODO и работе.
      * @return
      */
-    public function removeStickersFromBoard($projectId, $transferOpened = false)
+    public function removeStickersFromBoard($projectId, $sprintNum, $transferOpened = false)
     {
         $projectId = (int)$projectId;
+        $sprintNum = (int)$sprintNum;
         $transferOpened = (bool)$transferOpened;
 
         try {
             // Доска приходит по идентификатору проекта, поэтому права
             // на проект надо проверить здесь: архивация меняет стикеры
             // всех его задач
-            $this->getProjectRequireReadPermission($projectId);
-            
-            // прежде чем отправлять все задачи в архив, делаем snapshot доски
-            ScrumStickerSnapshot::createSnapshot($projectId, $this->getUser()->userId);
+            $project = $this->getProjectRequireReadPermission($projectId);
 
-            $notRemoveStates = $transferOpened
-                ? [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS]
-                : null;
-            if (!ScrumSticker::removeStickersForProject($projectId, $notRemoveStates)) {
-                return $this->errorDBSave();
-            }
-
-            if (!empty($notRemoveStates)) {
-                // Если какие-то стикеры остались на доске - надо им обновить время добавления
-                ScrumSticker::updateStickerAdded($projectId);
-            }
-            
-            $currentNumSprint = ScrumStickerSnapshot::getLastSnapshotId($projectId) + 1;
+            $result = ScrumBoardManager::closeSprint($project, $sprintNum, $transferOpened, $this->getUser());
+        } catch (\GMFramework\ProviderSaveException $e) {
+            return $this->errorDBSave();
         } catch (\Exception $e) {
             return $this->exception($e);
         }
-        
-        $this->add2Answer('numSprint', $currentNumSprint);
+
+        $this->add2Answer('numSprint', $result['currentSprintNumber']);
         return $this->answer();
     }
 
@@ -1083,7 +1099,7 @@ class IssueService extends LPMBaseService
         $db = LPMGlobals::getInstance()->getDBConnect();
         $projectId = $isForAllProjects ? 0 : $projectId;
 
-        $labels = Issue::getLabelsByLabelText($label);
+        $labels = IssueLabel::getLabelsByLabelText($label);
         $uses = 0;
         $id = 0;
         // Id проектных меток, использования которых нужно перенести на целевую (общую) метку.
@@ -1096,7 +1112,7 @@ class IssueService extends LPMBaseService
                     if ($labelData['projectId'] != 0 && $labelData['deleted'] == LabelState::ACTIVE) {
                         $uses += $labelData['countUses'];
                         $mergeFromIds[] = $labelData['id'];
-                        Issue::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
+                        IssueLabel::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
                     } elseif ($labelData['projectId'] == 0) {
                         if ($labelData['deleted'] == LabelState::ACTIVE) {
                             return $this->error("Метка уже существует");
@@ -1119,18 +1135,18 @@ class IssueService extends LPMBaseService
 
         // Была ли общая метка переиспользована (существовала ранее, но была отключена).
         $reuseId = (int) $id;
-        $id = Issue::saveLabel($label, $projectId, $id, $uses, LabelState::ACTIVE);
+        $id = IssueLabel::saveLabel($label, $projectId, $id, $uses, LabelState::ACTIVE);
         if ($id == null) {
             return $this->error($db->error);
         } else {
             // Переносим накопленную статистику проектных меток только при создании НОВОЙ
             // общей метки — чтобы её ранжирование по частоте в проектах не начиналось с нуля.
             // Если общая метка переиспользуется, её строки использований уже поддерживаются
-            // актуальными в Issue::addLabelsUsing() (счётчик обновляется и для отключённых
+            // актуальными в IssueLabel::addLabelsUsing() (счётчик обновляется и для отключённых
             // меток), поэтому повторный перенос привёл бы к двойному учёту.
             if ($reuseId == 0) {
                 foreach ($mergeFromIds as $fromId) {
-                    Issue::mergeLabelUses($fromId, (int) $id);
+                    IssueLabel::mergeLabelUses($fromId, (int) $id);
                 }
             }
             $this->add2Answer('id', $id);
@@ -1145,7 +1161,7 @@ class IssueService extends LPMBaseService
      */
     public function removeLabel($id, $projectId)
     {
-        $label = Issue::getLabel($id);
+        $label = IssueLabel::getLabel($id);
         $projectId = (int) $projectId;
 
         if ($label == null) {
@@ -1166,25 +1182,25 @@ class IssueService extends LPMBaseService
 
         $state = ($label['projectId'] == 0) ? LabelState::DISABLED : LabelState::DELETED;
         if ($label['projectId'] == 0) {
-            $labels = Issue::getLabelsByLabelText($label['label']);
+            $labels = IssueLabel::getLabelsByLabelText($label['label']);
             if (!empty($labels)) {
                 $count = count($labels);
                 while ($count-- > 0) {
                     $labelData = $labels[$count];
                     if ($labelData['projectId'] == 0 && $labelData['id'] != $label['id']) {
-                        Issue::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
+                        IssueLabel::changeLabelDeleted($labelData['id'], LabelState::DISABLED);
                     } elseif ($labelData['projectId'] != 0 && $labelData['deleted'] == LabelState::DISABLED) {
                         if ($labelData['projectId'] != $projectId) {
-                            Issue::changeLabelDeleted($labelData['id'], LabelState::ACTIVE);
+                            IssueLabel::changeLabelDeleted($labelData['id'], LabelState::ACTIVE);
                         } else {
-                            Issue::changeLabelDeleted($labelData['id'], LabelState::DELETED);
+                            IssueLabel::changeLabelDeleted($labelData['id'], LabelState::DELETED);
                         }
                     }
                 }
             }
         }
 
-        if (Issue::changeLabelDeleted($label['id'], $state)) {
+        if (IssueLabel::changeLabelDeleted($label['id'], $state)) {
             return $this->answer();
         } else {
             $db = LPMGlobals::getInstance()->getDBConnect();
@@ -1314,15 +1330,10 @@ class IssueService extends LPMBaseService
 
         $user = $this->getUser();
 
-        if (!$this->checkRole(User::ROLE_MODERATOR)) {
-            if (!Comment::checkDeleteCommentById($id)) {
-                return $this->error('Время удаления истекло.');
-            }
-            
-            $authorId = $comment->authorId;
-            if ($authorId != $user->getID()) {
-                return $this->error('Вы не можете удалять комментарий');
-            }
+        if (!$comment->checkDeletePermit($user)) {
+            return $comment->authorId == $user->getID()
+                ? $this->error('Время удаления истекло.')
+                : $this->error('Вы не можете удалять комментарий');
         }
 
         try {
@@ -1375,9 +1386,17 @@ class IssueService extends LPMBaseService
         $text,
         $ignoreSlackNotification = false,
         string $type = null,
-        string $data = null
+        string $data = null,
+        $ignoreEmailNotification = false
     ) {
-        $result = $this->postCommentWithResult($issue, $text, $ignoreSlackNotification, $type, $data);
+        $result = $this->postCommentWithResult(
+            $issue,
+            $text,
+            $ignoreSlackNotification,
+            $type,
+            $data,
+            $ignoreEmailNotification
+        );
 
         return $result['comment'];
     }
@@ -1390,7 +1409,8 @@ class IssueService extends LPMBaseService
         $text,
         $ignoreSlackNotification = false,
         string $type = null,
-        string $data = null
+        string $data = null,
+        $ignoreEmailNotification = false
     ) {
         return $this->_engine->comments()->postCommentWithResult(
             $this->getUser(),
@@ -1402,7 +1422,8 @@ class IssueService extends LPMBaseService
             $data,
             isset($_FILES['commentFiles']) && is_array($_FILES['commentFiles'])
                 ? $_FILES['commentFiles']
-                : null
+                : null,
+            $ignoreEmailNotification
         );
     }
 
@@ -1446,17 +1467,6 @@ class IssueService extends LPMBaseService
         $event = Issue::loadLastTestingEvent($issueId);
 
         return empty($event) ? false : User::load($event->userId);
-    }
-
-    /**
-     * Добавляет в ответ актуальное состояние отметки о взятии в тестирование.
-     * @param Issue $issue Задача, у которой отметка только что изменилась.
-     */
-    private function answerTestingMark(Issue $issue)
-    {
-        $issue->reloadSubstatusSources();
-
-        $this->addSubstatus2Answer($issue);
     }
 
     /**

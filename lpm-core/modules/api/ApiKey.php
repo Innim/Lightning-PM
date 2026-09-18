@@ -35,6 +35,7 @@ class ApiKey extends LPMBaseObject
 
         $name = trim((string)$name);
         $token = self::buildToken($userId);
+        $created = DateTimeUtils::mysqlDate();
 
         self::buildAndSaveToDbV2([
             'INSERT' => [
@@ -42,7 +43,8 @@ class ApiKey extends LPMBaseObject
                 'name' => $name,
                 'keyHash' => User::passwordHash($token),
                 'keyPreview' => self::buildPreview($token),
-                'created' => DateTimeUtils::mysqlDate(),
+                'created' => $created,
+                'createdUtc' => $created,
             ],
             'INTO' => LPMTables::API_KEYS,
         ]);

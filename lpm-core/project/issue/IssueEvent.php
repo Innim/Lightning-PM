@@ -20,11 +20,14 @@ class IssueEvent extends LPMBaseObject
      */
     public static function create($issueId, $type, $userId, $data = null)
     {
+        $date = DateTimeUtils::mysqlDate();
+
         $fields = [
             'issueId'  => (int)$issueId,
             'type'     => (string)$type,
             'userId'   => (float)$userId,
-            'date'     => DateTimeUtils::mysqlDate(),
+            'date'     => $date,
+            'dateUtc'  => $date,
             'data'     => (string)$data,
         ];
 

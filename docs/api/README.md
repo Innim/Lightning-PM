@@ -66,6 +66,16 @@ GET /api/v1/projects
 
 Add `?archive=1` to list archived projects instead of active ones. Each item has the shape `{id, uid, name, url, scrum}`. Moderators receive every project; other users receive only the projects they are members of.
 
+## Listing project members
+
+List the users who belong to a project — the users who can be assigned to its issues:
+
+```http
+GET /api/v1/projects/{projectId}/members
+```
+
+The response is `{project, members}`, where every member comes in the common user shape. Locked users are left out: they cannot be assigned to an issue. A moderator is listed only if they are a member of the project, but may be assigned to its issues in any case.
+
 ## Listing project issues
 
 List issues of a project:
@@ -173,6 +183,7 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
 ```json
 {
   "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "currentSprintNumber": 12,
   "columns": [
     {
       "state": 1,
@@ -199,6 +210,9 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
           "completeDate": null,
           "completedDate": null,
           "author": {"id": 60, "name": "Ivan Petrov", "nick": "petrov", "firstName": "Ivan", "lastName": "Petrov", "avatarUrl": "...", "url": "..."},
+          "members": [{"id": 66, "name": "Elena Smirnova", "nick": "smirnova", "firstName": "Elena", "lastName": "Smirnova", "avatarUrl": "...", "url": "...", "sp": 0.5}],
+          "testers": [{"id": 39, "name": "Dmitry Bukachev", "nick": "", "firstName": "Dmitry", "lastName": "Bukachev", "avatarUrl": "...", "url": "..."}],
+          "masters": [],
           "stickerState": 1,
           "addedToBoard": "2025-07-29T11:21:37+03:00"
         }
@@ -211,9 +225,11 @@ The project must be a scrum one, otherwise the request is rejected with `400`. T
 }
 ```
 
+`currentSprintNumber` is the sprint the board belongs to — the number shown above the board in the web UI, and the number [closing the sprint](#closing-the-sprint) expects.
+
 All four columns are always present and come in board order: `todo`, `inProgress`, `testing`, `done`. A column carries its sticker `state` code, a machine-readable `key`, and the `name` shown in the web UI; an empty column has an empty `issues` list.
 
-Issues inside a column come in the same order as on the board. An item is the short issue payload of the issues endpoint plus two board fields: `stickerState` (equals the column `state`) and `addedToBoard` (the moment the issue was put on the board). Issues in the backlog are not on the board and never appear here — use `GET /api/v1/projects/{projectId}/issues` for the whole project.
+Issues inside a column come in the same order as on the board. An item is the short issue payload of the issues endpoint plus the issue participants (`members`, `testers`, `masters`, each in the common user shape) and two board fields: `stickerState` (equals the column `state`) and `addedToBoard` (the moment the issue was put on the board). All three participant lists are always present — an issue with nobody assigned reports empty lists, never a missing key. Issues in the backlog are not on the board and never appear here — use `GET /api/v1/projects/{projectId}/issues` for the whole project.
 
 ## Moving an issue on the scrum board
 
@@ -241,6 +257,110 @@ DELETE /api/v1/issues/{issueId}/board
 ```
 
 Both requests answer with the updated issue payload, the same shape as `GET /api/v1/issues/{issueId}`. A non-scrum project is rejected with `400`. When the project requires labels, an issue without any label cannot be moved out of the backlog and the request is rejected with `400`.
+
+## Closing the sprint
+
+Close the current sprint of a project — the same action as the archive button on the scrum board:
+
+```http
+POST /api/v1/projects/{projectId}/board/close
+Content-Type: application/json
+
+{
+  "sprintNumber": 12,
+  "transferOpened": true
+}
+```
+
+- `sprintNumber` (required) — the sprint to close. It must be the sprint that runs now, the `currentSprintNumber` of the board endpoint; any other number is rejected with `400` naming the sprint that is actually open, and nothing is closed. The parameter is what makes the call safe to repeat: a second call carrying the same number is refused instead of closing the next sprint as well.
+- `transferOpened` (optional, default `false`) — keep the unfinished issues (columns `todo` and `inProgress`) on the board of the new sprint. With `false` the board is cleared completely.
+- Any member of the project may close its sprint, exactly as in the web UI.
+
+The board is archived as a sprint snapshot together with the sprint target, and a new sprint starts. The issues themselves keep their status: an archived issue that is not completed simply returns to the backlog.
+
+The response is:
+
+```json
+{
+  "project": {"id": 70, "uid": "demo", "name": "Demo", "url": "...", "scrum": true},
+  "closed": true,
+  "sprint": {"number": 12, "url": "https://example.com/project/demo/sprint-stat/12"},
+  "currentSprintNumber": 13,
+  "archived": [
+    {
+      "id": 25240,
+      "idInProject": 933,
+      "name": "[api] Operations list glitches while a new one is added",
+      "url": "https://example.com/project/demo/issue/933",
+      "status": 2,
+      "column": "done"
+    }
+  ],
+  "transferred": [
+    {
+      "id": 25241,
+      "idInProject": 934,
+      "name": "[api] Pull to refresh stalls",
+      "url": "https://example.com/project/demo/issue/934",
+      "status": 0,
+      "column": "todo"
+    }
+  ]
+}
+```
+
+`sprint` is the closed sprint and `currentSprintNumber` is the sprint that runs now. `archived` lists the issues taken off the board, `transferred` the ones kept on it for the new sprint (`column` is where the issue stood on the closed board); the sprint snapshot holds both lists.
+
+The action is not reversible and there is nothing to undo it with, which is what `sprintNumber` guards: a repeated call names a sprint that is already closed and is rejected. Closing the next sprint takes reading the board again and naming its new number.
+
+A call on an empty board is not an error: there is nothing to archive, so the answer is `closed: false`, `sprint: null` and the same `currentSprintNumber` that was asked for — the sprint stays open. It does not consume the number, so the next call may name it again.
+
+`sprintNumber` does not protect against two genuinely simultaneous calls: both see the same open sprint and both pass.
+
+A non-scrum project is rejected with `400`, and so is a board that cannot be archived — when an issue of several members in `testing` or `done` has its estimate not split between them, the sprint stays open and the message names the issue.
+
+## Assigning issue participants
+
+An issue has three independent sets of participants — `members` (who does the work), `testers` and `masters`. Each set is its own sub-resource of the issue and answers to the same three requests.
+
+Replace the whole set:
+
+```http
+PUT /api/v1/issues/{issueId}/members
+Content-Type: application/json
+
+{
+  "users": [60, 42]
+}
+```
+
+Add to the set, keeping whoever is already there:
+
+```http
+POST /api/v1/issues/{issueId}/members
+Content-Type: application/json
+
+{
+  "users": [60]
+}
+```
+
+Take one participant off the issue:
+
+```http
+DELETE /api/v1/issues/{issueId}/members/{userId}
+```
+
+- `users` (required) — user ids. `PUT` accepts an empty list and clears the set; `POST` rejects it with `400`.
+- `testers` and `masters` work exactly the same way — substitute the path segment.
+- Every request answers with the updated issue payload, the same shape as `GET /api/v1/issues/{issueId}`.
+- Assigning someone who is already in the set, or removing someone who is not, changes nothing and still answers with the issue: all three requests are idempotent.
+- An unknown user id is rejected with `404` by all three requests. A user who has no access to the project, and a locked user, are rejected with `400` naming the user — the API never drops an unassignable user from the list silently. `GET /api/v1/projects/{projectId}/members` lists who a project can assign.
+- Those two restrictions apply to assignment only: a participant who was locked or lost access to the project can still be taken off the issue.
+- Changing participants notifies the issue exactly as editing it in the web UI does.
+- Taking off the tester who is checking the issue right now also releases the issue from testing, the same as removing them in the web issue form.
+
+Anyone who can read the project may change the participants of its issues — the same rule the web UI applies.
 
 ## Core workflow
 
@@ -397,7 +517,7 @@ Fields:
 - `completeDate` (optional) — target date in `YYYY-MM-DD` format, the same shape it is returned in.
 - `board` (optional, default `false`) — put the new issue straight on the scrum board: `true` places it in the column matching its status, a column key (`todo`, `inProgress`, `testing`, `done`) places it in that column. A non-scrum project or an unknown column is rejected with `400` and no issue is created.
 
-The response returns the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with HTTP status `201`. Read the global `id` and `idInProject` from it for later requests. The issue is created without members and testers; assign those through the web UI if needed.
+The response returns the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with HTTP status `201`. Read the global `id` and `idInProject` from it for later requests. The issue is created without members and testers; assign them with the [participant endpoints](#assigning-issue-participants).
 
 An issue URL of this Lightning PM instance written in `desc` or in a comment text automatically links the two issues, the same as in the web UI.
 
@@ -406,8 +526,11 @@ An issue URL of this Lightning PM instance written in `desc` or in a comment tex
 - List projects available to the user.
 - List issues of a project with filters and paging.
 - List labels of a project with their popularity.
+- List members of a project.
 - Read the scrum board of a project with its issues grouped by columns.
 - Put an issue on the scrum board, move it between columns, or take it off the board.
+- Close the current sprint of a project, with or without carrying the unfinished issues over.
+- Assign and unassign issue members, testers, and masters.
 - Read issue details by URL or issue id.
 - Read comments, images, and files of the issue and of its comments.
 - List repositories and branches available to the user in GitLab integration.

@@ -16,14 +16,17 @@ class ProjectVisit extends LPMBaseObject
      */
     public static function registerVisit($userId, $projectId)
     {
+        $visitDate = self::now();
+
         self::buildAndSaveToDbV2([
             'INSERT' => [
                 'userId'    => (int)$userId,
                 'projectId' => (int)$projectId,
-                'visitDate' => self::now(),
+                'visitDate' => $visitDate,
+                'visitDateUtc' => $visitDate,
             ],
             'INTO'   => LPMTables::PROJECT_VISITS,
-            'ODKU'   => ['visitDate'],
+            'ODKU'   => ['visitDate', 'visitDateUtc'],
         ]);
     }
 

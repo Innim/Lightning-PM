@@ -1,8 +1,6 @@
 <?php
 /*
-Обновлённый вид страницы задачи. Показывается, когда в настройках включён
-экспериментальный флаг «Обновлённый вид страницы задачи» (LPMOptions::newIssueView).
-Прежний вид живёт отдельно в issue-legacy.html.
+Страница задачи.
 
 Требуются:
     $issue - текущая задача
@@ -33,7 +31,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
         </h1>
         <div class="header-operations-bar d-flex align-items-center gap-2 flex-shrink-0">
             <?php lpm_print_goto_issue($project); ?>
-            <a class="btn btn-outline-primary btn-sm" href="<?=$issue->getProjectUrl('add-issue');?>" role="button"
+            <a class="btn btn-outline-primary btn-sm" href="<?=ProjectPage::getIssueFormUrl($project->uid);?>" role="button"
                 title="Новая задача" aria-label="Новая задача">
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </a>
@@ -281,9 +279,12 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                             ссылка исключена из глобального тултипа (data-tooltip): он забирает
                             title себе и подпись до просмотрщика не доходит.
                             У картинок, загруженных до того, как имя начали сохранять, его нет -
-                            тогда атрибуты с именем не выводим вовсе. */ ?>
+                            тогда атрибуты с именем не выводим вовсе.
+                            Ссылка ведёт на getViewUrl(), а не на файл напрямую: просмотрщик
+                            показывает картинку по этому же адресу, а имя сохраняемого файла
+                            браузер берёт из ответа. */ ?>
                     <li>
-                        <a href="<?=$img->getSource();?>" class="image-link" rel="iLoad|Screenshots"<?php if ($imgName !== ''): ?> title="<?=$imgName;?>" download="<?=$imgName;?>" data-tooltip<?php endif; ?>><img
+                        <a href="<?=$img->getViewUrl();?>" class="image-link" rel="iLoad|Screenshots"<?php if ($imgName !== ''): ?> title="<?=$imgName;?>" download="<?=$imgName;?>" data-tooltip<?php endif; ?>><img
                                 src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" alt="<?=$imgName !== '' ? $imgName : 'Прикреплённое изображение';?>" /></a>
                         <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
                     </li>
