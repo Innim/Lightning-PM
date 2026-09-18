@@ -847,6 +847,32 @@ table tr.completed-issue:hover td span.comments-count {
     background: #dddddd !important;
     color     : #999999;
 }
+/* Строка под курсором отмечается акцентной полоской слева. Полоска — внутренняя тень
+   первой ячейки: фон строки занят её статусом, а border или padding сдвинули бы
+   содержимое ячейки. Утилит для этого в Bootstrap нет.
+   Цвет — нейтральный тёмный, намеренно вне набора цветов состояний задачи
+   (синий, зелёный, бирюзовый, фиолетовый, серый, оранжевый, красный): полоска
+   означает «здесь курсор», а не состояние, и не должна читаться как статус. */
+table.issues-list > tbody > tr:hover > td:first-child {
+	box-shadow: inset 3px 0 0 #343a40;
+}
+/* Глиф меню копирования: место под него занято всегда (visibility, не display),
+   иначе появление глифа меняло бы высоту строки. Скрытый глиф выпадает из обхода
+   табом, поэтому его показывает и фокус внутри строки, а не только наведение.
+   Пока меню открыто, Bootstrap держит на тоггле класс `show` — глиф не должен
+   исчезать из-под раскрытого меню.
+   Отступ слева задан margin, а не пробелом в разметке: пробел — это точка
+   переноса, и глиф отрывался бы от названия или счётчика на следующую строку. */
+table.issues-list .issue-copy-toggle {
+	visibility: hidden;
+	margin-left: 8px;
+	font-size: 0.8em;
+}
+table.issues-list > tbody > tr:hover .issue-copy-toggle,
+table.issues-list > tbody > tr:focus-within .issue-copy-toggle,
+table.issues-list .issue-copy-toggle.show {
+	visibility: visible;
+}
 table.issues-list td .on-board-state {
 	position: absolute;
 	left: 1px;
@@ -1071,33 +1097,6 @@ blockquote > p {
 }
 
 
-/*Меню скопировать в issue*/
-.popup-menu 
-{
-	background:#ffffff;
-	color:#000;
-	font-size: 0.8em;
-	border:solid #ccc 1px;
-	border-radius: 5px;
-	position: absolute;
-	margin-top:5px;
-	margin-left: -5px;
-	padding: 5px 10px;
-	display: none;
-	-moz-box-shadow:
-		0px 1px 3px rgba(000,000,000,0.5),
-		inset 0px 0px 1px rgba(255,255,255,1);
-	-webkit-box-shadow:
-		0px 1px 3px rgba(000,000,000,0.5),
-		inset 0px 0px 1px rgba(255,255,255,1);
-	box-shadow:
-		0px 1px 3px rgba(000,000,000,0.5),
-		inset 0px 0px 1px rgba(255,255,255,1);
-}
-.issue_copy a:hover, .issue_copy a.hover{
-    color: #999;
-   
-}
 .scrum-board-header {
 	float: left;
 }
@@ -1280,18 +1279,38 @@ blockquote > p {
 .scrum-board-sticker a {
 	text-decoration: none;
 }
-.scrum-board-sticker a:hover {
+/* Исключения — ссылки меню копирования: его пункты и тоггл держат свой цвет
+   (белый на чипе номера, штатный цвет пункта в выпадающем списке) */
+.scrum-board-sticker a:not(.issue-copy-toggle):not(.dropdown-item):hover {
 	color: initial;
 }
 .scrum-board-sticker .sticker-issue-id {
 	position: absolute;
 	left: 3px;
 	bottom: 2px;
+	/* `control-line` тоже прижата к низу стикера и тянется на всю его ширину, то есть
+	   перекрывает чип; без z-index клики по глифу меню копирования доставались бы ей */
+	z-index: 1;
 	font-size: 9px;
 	background-color: #333;
 	color: #fff;
 	padding: 1px 2px;
 	border-radius: 2px;
+}
+/* Глиф меню копирования в чипе номера задачи. В покое скрыт совсем (не visibility):
+   чип не должен становиться шире, пока на стикер не навели. Скрытый глиф выпадает
+   из обхода табом, поэтому его показывает и фокус внутри стикера, а не только
+   наведение. Пока меню открыто, Bootstrap держит на тоггле класс `show` — глиф
+   не должен исчезать из-под меню. */
+.scrum-board-sticker .issue-copy-toggle {
+	display: none;
+	margin-left: 3px;
+	color: inherit;
+}
+.scrum-board-sticker:hover .issue-copy-toggle,
+.scrum-board-sticker:focus-within .issue-copy-toggle,
+.scrum-board-sticker .issue-copy-toggle.show {
+	display: inline;
 }
 .scrum-board-sticker .sticker-issue-members {
 	display: block;
@@ -1581,22 +1600,6 @@ blockquote > p {
 	border-bottom: 2px solid #adb5bd;
 }
 
-.copy-tooltip div {
-	display: none;
-	position: absolute;
-	margin: 20px;
-	bottom: -1px;
-	left: -1px;
-	z-index: 1000;
-	padding: 8px 12px;
-	text-align: left;
-	font-size: 12px;
-	line-height: 16px;
-	color: #000;
-	box-shadow: 0 1px 3px #C4C4C4;
-	background: #f6fff7;
-	border-radius: 2px;
-}
 .btnSelect {
 	float: left;
 }

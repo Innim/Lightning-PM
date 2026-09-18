@@ -1275,8 +1275,6 @@ $(document).ready(
         });
 
         window.lpInfo.userId = $('#curUserId').val();
-        // Инициализация копирования в буфер
-        (new ClipboardJS('.copy-commit-message'));
     }
 );
 
