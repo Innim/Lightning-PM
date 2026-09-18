@@ -154,26 +154,24 @@ $.event.special.hide = claimDefaultAction;
  * @param {F2PInvoker} invoker класс для отсылки запросов
  * @param {String} service название сервиса
  */
-function BaseService(service, f2p, reloadOnAuthFail) {
+function BaseService(service, f2p) {
     this._service = service;
     this._f2p = f2p;
-    // Протухшая сессия перезагружает страницу - иначе пользователь остался бы
-    // на экране, где ничего не работает. Фоновым сервисам, которые пользователь
-    // не вызывал, это отключают: перезагрузка стёрла бы его работу без его
-    // участия (см. srv.board).
-    this._reloadOnAuthFail = reloadOnAuthFail !== false;
 
     /**
      * Вызов метода
      * @param {String} method вызываемый метод
      * @param {Array} params массив передаваемых параметров
      * @param {Function} onResult функция-обработчик ответа
+     * @param {Object} options параметры вызова, см. BaseService#_
      */
-    this.call = function (method, params, onResult) {
-        let f2p = this._f2p ?? srv.f2p;
-        const reloadOnAuthFail = this._reloadOnAuthFail;
+    this.call = function (method, params, onResult, options) {
+        // Фоновый вызов страница делает сама, без участия пользователя, поэтому
+        // идёт своим инвокером и не перезагружает страницу: см. backgroundInvoker
+        const background = !!options && options.background === true;
+        let f2p = background ? backgroundInvoker : (this._f2p ?? srv.f2p);
         params.unshift(this._service, method, function (obj) {
-            if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED && reloadOnAuthFail) {
+            if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED && !background) {
                 window.location.reload();
             } else {
                 try {
@@ -238,7 +236,17 @@ function BaseService(service, f2p, reloadOnAuthFail) {
         });
     };
 
-    this._ = function (name) {
+    /**
+     * Вызов метода из его обёртки в карте сервисов: аргументы берутся
+     * у вызывающей обёртки, последний из них считается обработчиком ответа.
+     * @param {String} name вызываемый метод
+     * @param {Object} options параметры вызова. Единственный на сегодня -
+     * background: вызов делает сама страница, а не пользователь. Такой вызов
+     * не занимает очередь пользовательских запросов и не перезагружает
+     * страницу на протухшей сессии, потому что стёр бы работу пользователя
+     * без его участия.
+     */
+    this._ = function (name, options) {
         var func = arguments.callee.caller;
         //name = defaultValue( name, func.caller.name );    
         var args = [];
@@ -248,7 +256,7 @@ function BaseService(service, f2p, reloadOnAuthFail) {
 
         var onResult = args.pop();
 
-        this.call.apply(this, [name, args, onResult]);
+        this.call.apply(this, [name, args, onResult, options]);
     };
 };
 
@@ -332,22 +340,16 @@ ru.vbinc.net.F2PInvoker.defaultHeaders['X-CSRF-Token'] = window.lpmOptions.csrfT
 let aiInvoker = new ru.vbinc.net.F2PInvoker(gateway);
 aiInvoker.setTimeout((window.lpmOptions.aiRequestTimeout || 60) + 30);
 
-// Фоновое обновление доски идёт своим инвокером: у каждого инвокера одна XHR
-// и общая очередь, поэтому на общем тик, застрявший в сети, задержал бы
-// следующее действие пользователя на весь свой таймаут. Таймаут здесь короче
-// интервала опроса - зависший тик должен отвалиться до следующего.
-let boardInvoker = new ru.vbinc.net.F2PInvoker(gateway);
-boardInvoker.setTimeout(10);
+// Фоновые вызовы (см. BaseService#_) идут своим инвокером: у каждого инвокера
+// одна XHR и общая очередь, поэтому на общем застрявший фоновый запрос задержал
+// бы следующее действие пользователя на весь свой таймаут. Таймаут здесь
+// короче, чем у общего: зависший фоновый запрос должен отвалиться сам.
+let backgroundInvoker = new ru.vbinc.net.F2PInvoker(gateway);
+backgroundInvoker.setTimeout(10);
 
 let srv = {
     gateway: gateway,
     f2p: new ru.vbinc.net.F2PInvoker(gateway),
-    board: {
-        s: new BaseService('ProjectService', boardInvoker, false),
-        refreshScrumBoard: function (projectId, digest, onResult) {
-            this.s._('refreshScrumBoard');
-        },
-    },
     attachments: {
         s: new ParallelService('AttachmentsService'),
         getMRInfo: function (url, onResult) {
@@ -554,6 +556,9 @@ let srv = {
         },
         setSprintTarget: function (projectId, textTarget, onResult) {
             this.s._('addSprintTarget');
+        },
+        refreshScrumBoard: function (projectId, digest, onResult) {
+            this.s._('refreshScrumBoard', { background: true });
         },
     },
     projects: {

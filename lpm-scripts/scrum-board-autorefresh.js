@@ -87,7 +87,7 @@ const scrumBoardAutoRefresh = {
         }
 
         this._requesting = true;
-        srv.board.refreshScrumBoard(this._projectId, this._digest, (res) => {
+        srv.project.refreshScrumBoard(this._projectId, this._digest, (res) => {
             this._requesting = false;
             this.handleResult(res);
         });
