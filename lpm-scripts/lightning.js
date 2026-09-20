@@ -163,11 +163,15 @@ function BaseService(service, f2p) {
      * @param {String} method вызываемый метод
      * @param {Array} params массив передаваемых параметров
      * @param {Function} onResult функция-обработчик ответа
+     * @param {Object} options параметры вызова, см. BaseService#_
      */
-    this.call = function (method, params, onResult) {
-        let f2p = this._f2p ?? srv.f2p;
+    this.call = function (method, params, onResult, options) {
+        // Фоновый вызов страница делает сама, без участия пользователя, поэтому
+        // идёт своим инвокером и не перезагружает страницу: см. backgroundInvoker
+        const background = !!options && options.background === true;
+        let f2p = background ? backgroundInvoker : (this._f2p ?? srv.f2p);
         params.unshift(this._service, method, function (obj) {
-            if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED) {
+            if (obj.errno == F2PInvoker.ERRNO_AUTH_BLOCKED && !background) {
                 window.location.reload();
             } else {
                 try {
@@ -232,7 +236,17 @@ function BaseService(service, f2p) {
         });
     };
 
-    this._ = function (name) {
+    /**
+     * Вызов метода из его обёртки в карте сервисов: аргументы берутся
+     * у вызывающей обёртки, последний из них считается обработчиком ответа.
+     * @param {String} name вызываемый метод
+     * @param {Object} options параметры вызова. Единственный на сегодня -
+     * background: вызов делает сама страница, а не пользователь. Такой вызов
+     * не занимает очередь пользовательских запросов и не перезагружает
+     * страницу на протухшей сессии, потому что стёр бы работу пользователя
+     * без его участия.
+     */
+    this._ = function (name, options) {
         var func = arguments.callee.caller;
         //name = defaultValue( name, func.caller.name );    
         var args = [];
@@ -242,7 +256,7 @@ function BaseService(service, f2p) {
 
         var onResult = args.pop();
 
-        this.call.apply(this, [name, args, onResult]);
+        this.call.apply(this, [name, args, onResult, options]);
     };
 };
 
@@ -325,6 +339,13 @@ ru.vbinc.net.F2PInvoker.defaultHeaders['X-CSRF-Token'] = window.lpmOptions.csrfT
 // собственный инвокер с запасом сверху (у общего таймаут 30 секунд).
 let aiInvoker = new ru.vbinc.net.F2PInvoker(gateway);
 aiInvoker.setTimeout((window.lpmOptions.aiRequestTimeout || 60) + 30);
+
+// Фоновые вызовы (см. BaseService#_) идут своим инвокером: у каждого инвокера
+// одна XHR и общая очередь, поэтому на общем застрявший фоновый запрос задержал
+// бы следующее действие пользователя на весь свой таймаут. Таймаут здесь
+// короче, чем у общего: зависший фоновый запрос должен отвалиться сам.
+let backgroundInvoker = new ru.vbinc.net.F2PInvoker(gateway);
+backgroundInvoker.setTimeout(10);
 
 let srv = {
     gateway: gateway,
@@ -436,7 +457,7 @@ let srv = {
         putStickerOnBoard: function (issueId, onResult) {
             this.s._('putStickerOnBoard');
         },
-        removeStickersFromBoard: function (projectId, transferOpened, onResult) {
+        removeStickersFromBoard: function (projectId, sprintNum, transferOpened, onResult) {
             this.s._('removeStickersFromBoard');
         },
         takeIssue: function (issueId, replace, onResult) {
@@ -535,6 +556,9 @@ let srv = {
         },
         setSprintTarget: function (projectId, textTarget, onResult) {
             this.s._('addSprintTarget');
+        },
+        refreshScrumBoard: function (projectId, digest, onResult) {
+            this.s._('refreshScrumBoard', { background: true });
         },
     },
     projects: {
@@ -1275,8 +1299,6 @@ $(document).ready(
         });
 
         window.lpInfo.userId = $('#curUserId').val();
-        // Инициализация копирования в буфер
-        (new ClipboardJS('.copy-commit-message'));
     }
 );
 

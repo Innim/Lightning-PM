@@ -78,7 +78,7 @@ This file tells the coding assistant how to safely and efficiently work in this 
 - Don't put `title` on a bare FontAwesome `<i>` icon: its rendered box height is sub-pixel (~0.8px, the glyph is a `::before`), so the tooltip anchors flush and overlaps the icon, making it hard to click. Put `title` on the wrapping element (`<a>`/`<button>` — real line-box height) so the tip clears the top edge; keep `aria-label` on that wrapper for the accessible name and `aria-hidden="true"` on the `<i>`. Do NOT "fix" tooltip spacing by adding a global `offset` — Bootstrap's delegated tooltip ignores per-element `data-bs-offset` (`_getDelegateConfig` uses only the shared config), and changing the shared offset shifts every tooltip in the app.
 - `window.lpmOptions` (emitted by `PagePrinter::jsOptions()`, called via the `lpm_print_js_options()` alias in `page.html` before the app scripts) exposes server constants to JS — `url`/`themeUrl`/`gitlabUrl`, image/file limits (`issueImgsCount`, `issueFilesCount`, `issueFileMaxSizeMb`), `aiRequestTimeout` (= `AiIntegration::getRequestTimeout()`), `priorityGroupStep` (= `Issue::PRIORITY_GROUP_STEP`, the step of scrum-board priority grouping), URL-detection pattern arrays `videoUrlPatterns`/`imageUrlPatterns` (from `AttachmentVideoHelper`/`AttachmentImageHelper::URL_PATTERNS`), `roles` (`{user, admin, moderator}`), and `issueUrlPattern` (= `OwnUrlHelper::getIssueUrlPattern()`; group 1 = project uid, group 2 = idInProject). Use it (e.g. `new RegExp('^' + lpmOptions.issueUrlPattern + '$')` to detect/parse an issue URL client-side) instead of re-deriving these values.
 - Bootstrap 5 allows only ONE component instance per element (`Data.set`). A `[title]` element that also hosts another Bootstrap component (a `data-bs-toggle="dropdown"`/`"collapse"`/`"modal"`/… toggle) therefore CANNOT also get a Tooltip — the instance is silently not stored and the tip never hides (stays stuck open). Such toggles are excluded from the global tooltip (hence the selector above; `data-bs-toggle="tooltip"` is re-included because it hosts no conflicting component). To give such a toggle a styled tooltip anyway, put the `title` on an inner `<span>` wrapping the icon (no component there, and a real line box — see the next bullet) and keep an `aria-label` on the toggle for its accessible name — see the `.` menu in `issue.html`, `main-menu-item.html` and `project.html`. `lightning.js` hides that inner tooltip on `show.bs.dropdown`/`show.bs.collapse` so it doesn't linger over the opened menu/panel, and the inner element stays visible while the menu/panel is open — nothing extra is needed to keep it on screen.
-- Don't use the `.tooltip` class for custom widgets — Bootstrap's tooltip element owns it. The homegrown hover widget on the issue-id cell uses `.copy-tooltip` for this reason.
+- Don't use the `.tooltip` class for custom widgets — Bootstrap's tooltip element owns it. Give a homegrown hover widget its own class name instead.
 - Copy-to-clipboard: for a static value, put it on any element as `data-copy="<value>"` (optional `data-copy-toast="<msg>"` overrides the default "Скопировано" toast) — a global delegated handler in `lpm-scripts/lightning.js` copies it and shows the toast, no per-widget JS needed. For dynamic/computed text use `lpm.utils.copyToClipboard(text)` / `lpm.utils.copyRichToClipboard(html, plain)` then `lpm.toast.show(...)`.
 - Bootstrap+jQuery gotcha: `lpm-scripts/lightning.js` polyfills `Element.prototype.hide()`/`show()` to set `style.display`. Because jQuery invokes an element's native method matching a triggered event's base type, Bootstrap's `hide.bs.*`/`show.bs.*` events would make jQuery call `.hide()`/`.show()` on the event target — hiding deselected tabs, dropdown toggles, tooltip anchors. This is neutralised once, next to the polyfills, by `$.event.special.show`/`hide` hooks that claim the default action so jQuery never makes that call. Do NOT add per-event `display` restores in `hide.bs.*`/`hidden.bs.*` handlers: they are unnecessary, and two of them racing over the same `style.display` is what broke the tooltip-on-inner-icon pattern. If a `show()`/`hide()` polyfill is ever added for another element method, register the matching `_default` hook with it.
 - Keep templates minimal: templates in `lpm-themes/` should only contain markup-related code. Move business logic and data shaping into PHP classes/services. For example, use model helpers like `LPMFile::isVideo()` to check file types instead of MIME checks in templates, and prefer rendering via `PagePrinter` methods.
@@ -140,6 +140,32 @@ Decide by **what stood in that place before the change**, never by how the issue
 - the same thing stood there and did something it was never meant to do → `Fixed`.
 
 Only the third case is `Fixed`. New functionality keeps landing in `Fixed` because issues are almost always filed as complaints — «пользователь не понимает, что произошло», «подсказка не работает», «задача навсегда остаётся в красном». That framing describes why the work started, not what the product does now, and it must not decide the section. Note that the commit type does not decide it either: a `fix` commit routinely produces an `Added` or `Changed` entry, because repairing a feature that never worked at all is new functionality for the reader.
+
+### Section order — fixed, never by arrival
+
+Sections of a release always appear in this order, and only the ones that have entries appear at all:
+
+1. `Added`
+2. `Changed`
+3. `Removed`
+4. `Fixed`
+5. `Security`
+
+The first three describe what the product is now made of, the last two what was repaired. `Removed` sits next to `Changed` because dropping a feature is a change in what exists. `Security` comes last as a deliberate callout — an ordinary security fix still belongs in `Fixed`; use `Security` only when the reader must act (rotate a token, re-check access). This matches the Keep a Changelog order, so `Deprecated` — if ever needed — goes between `Changed` and `Removed`.
+
+The order has been drifting release to release; it is fixed now, so a reader finds the same shape every time.
+
+### Order inside a section — most important first
+
+Within a section entries are ordered by how much the change matters to the reader, not by when it was merged. The one that changes the most people's day goes on top.
+
+### API entries
+
+Changes to the external HTTP API are marked and kept together, because they concern a different audience than the rest of the product: nobody reading about the interface needs to wade through endpoint changes, and nobody integrating needs to guess which entries are theirs.
+
+- Start the entry with the `API: ` prefix, then the description: `- API: у задачи отдаётся подстатус — …`. Do not write «Через внешнее API можно …» — the prefix carries that.
+- Keep all API entries of a section in **one block at the end of that section**, after the entries about the interface. Being last is not a judgement of importance; it keeps one audience's entries from splitting the other's.
+- Inside the API block the usual rule applies: the more important entry goes higher.
 
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.

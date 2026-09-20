@@ -232,7 +232,10 @@ class ProjectPage extends LPMPage
                 self::PUID_SCRUM_BOARD,
                 'Scrum доска',
                 'scrum-board',
-                array_merge(['scrum-board', 'filters/scrum-board-filter', 'goto-issue'], $this->getIssueJs())
+                array_merge(
+                    ['scrum-board', 'scrum-board-autorefresh', 'filters/scrum-board-filter', 'goto-issue'],
+                    $this->getIssueJs()
+                )
             );
             $this->addSubPage(
                 self::PUID_SCRUM_BOARD_SNAPSHOT,
@@ -658,7 +661,14 @@ class ProjectPage extends LPMPage
 
     private function initScrumBoard()
     {
+        // Отпечаток снимается до выборки стикеров: тогда изменение, попавшее
+        // между двумя запросами, войдёт в разметку, но не в отпечаток, и первый
+        // же тик автообновления перерисует доску лишний раз. Обратный порядок
+        // это изменение потерял бы.
+        $digest = ScrumBoardDigest::load($this->_project->id);
+
         $this->addTmplVar('project', $this->_project);
+        $this->addTmplVar('boardDigest', $digest);
         $this->addTmplVar('stickers', ScrumSticker::loadBoard($this->_project->id));
     }
 

@@ -1,3 +1,9 @@
+// Меню копирования ссылок поднимается отдельным обработчиком готовности и первым:
+// оно есть на страницах, где часть остальной инициализации неприменима.
+$(document).ready(function () {
+    initIssueCopyMenus();
+});
+
 $(document).ready(
     function () {
         //$( '#issueView .comments form.add-comment' ).hide();
@@ -289,26 +295,37 @@ $(document).ready(
             $('.delete-comment').each(function (index) {
                 const elementId = $(this).attr('id');
                 const startTime = $(this).data('time');
-                hideElementAfterDelay(elementId, startTime);
+                hideElementAfterDelay(elementId, startTime, lpmOptions.commentDeleteWindow);
             });
         }
-
-        $('div.copy-tooltip').hover(
-            function () {
-                $(this).find('div').clearQueue().show();
-            },
-            function () {
-                $(this).find('div')
-                    .animate({ width: 'width' + 20, height: 'height' + 20 }, 150)
-                    .animate({ width: 'hide', height: 'hide' }, 1);
-            }
-        )
 
         bindFormattingHotkeys('#issueForm form textarea[name=desc]');
         bindFormattingHotkeys('form.add-comment textarea[name=commentText]');
         bindFormattingHotkeys('form.pass-test #passTestComment textarea.comment-text-field');
     }
 );
+
+/**
+ * Инициализирует меню копирования ссылок на задачу (список задач, Scrum доска).
+ *
+ * Экземпляр Dropdown создаётся заранее только ради popperConfig: его нельзя задать
+ * data-атрибутом, а с настройками по умолчанию у нижней кромки окна Popper развернёт
+ * меню вверх и накроет им строку или стикер. Запасные позиции уводят меню вбок.
+ */
+function initIssueCopyMenus() {
+    document.querySelectorAll('.issue-copy > [data-bs-toggle="dropdown"]').forEach(function (toggle) {
+        new bootstrap.Dropdown(toggle, {
+            popperConfig: function (defaultConfig) {
+                return Object.assign({}, defaultConfig, {
+                    modifiers: defaultConfig.modifiers.concat([{
+                        name: 'flip',
+                        options: { fallbackPlacements: ['right-end', 'left-end', 'top-start'] }
+                    }])
+                });
+            }
+        });
+    });
+}
 
 function bindFormattingHotkeys(selector) {
     $(selector).keydown(function (e) {
@@ -952,7 +969,9 @@ issuePage.onClickCopyLinkedIssueTitle = function (event) {
     const text = issueTitle(idInProject, issueName);
 
     const plain = `${text} (${url})`;
-    const html = `<a href="${url}">${text}</a>`;
+    // Название задачи — произвольный текст: в html-вариант оно попадает экранированным,
+    // иначе угловые скобки в названии стали бы разметкой
+    const html = `<a href="${lpm.utils.escapeHtml(url)}">${lpm.utils.escapeHtml(text)}</a>`;
 
     lpm.utils.copyRichToClipboard(html, plain).then(() => {
         lpm.toast.show('Кликабельная ссылка скопирована');
@@ -1861,7 +1880,7 @@ issuePage.passTest = function () {
 }
 
 issuePage.addComment = function (comment, html) {
-    let elementId = 'comment_' + comment.id;
+    let elementId = 'delete_comment_' + comment.id;
     let commentTime = comment.date;
     $('#issueView .comments form.add-comment textarea[name=commentText]').val('');
     comments.clearFiles($('#issueView .comments form.add-comment'));
@@ -1877,7 +1896,10 @@ issuePage.addComment = function (comment, html) {
 
     comments.hideCommentForm();
 
-    hideElementAfterDelay(elementId, commentTime);
+    // Модератору удаление доступно всегда, остальным — только пока открыто окно.
+    if (!$('#is-moderator').val()) {
+        hideElementAfterDelay(elementId, commentTime, lpmOptions.commentDeleteWindow);
+    }
 };
 
 issuePage.handleLastCreatedSort = function () {
@@ -2445,7 +2467,7 @@ Issue.getStatusLabel = function (status, substatus) {
  * Все классы бейджа статуса — снимаются перед тем, как поставить актуальный.
  */
 Issue.STATUS_BADGE_CLASSES =
-    'bg-primary bg-warning bg-success bg-secondary bg-info bg-opacity-50 bg-opacity-75 text-dark';
+    'bg-primary bg-success bg-secondary badge-state-ready badge-state-testing badge-state-completed';
 
 /**
  * Оформление бейджа статуса. Те же соответствия задаёт `IssueViewHelper` на сервере.
@@ -2455,15 +2477,15 @@ Issue.STATUS_BADGE_CLASSES =
 Issue.getStatusBadgeClass = function (status, substatus) {
     switch (substatus) {
         case Issue.SUBSTATUS_BACKLOG: return 'bg-secondary';
-        case Issue.SUBSTATUS_TODO: return 'bg-info text-dark';
+        case Issue.SUBSTATUS_TODO: return 'badge-state-ready';
         case Issue.SUBSTATUS_IN_PROGRESS: return 'bg-primary';
-        case Issue.SUBSTATUS_UNDER_TESTING: return 'bg-warning bg-opacity-50 text-dark';
-        case Issue.SUBSTATUS_PASS_TEST: return 'bg-success bg-opacity-75 text-dark';
+        case Issue.SUBSTATUS_UNDER_TESTING: return 'badge-state-testing';
+        case Issue.SUBSTATUS_PASS_TEST: return 'bg-success';
     }
 
     switch (status) {
-        case 1: return 'bg-warning text-dark';
-        case 2: return 'bg-success';
+        case 1: return 'badge-state-testing';
+        case 2: return 'badge-state-completed';
         default: return 'bg-primary';
     }
 };
@@ -2597,33 +2619,6 @@ Issue.getCompletionName = function (issueName, prefix = 'Доделать зад
         : `${prefix} ${issueName.trim()}`;
 }
 
-// Всплывающее окно скопировать commit сообщение
-
-jQuery(function ($) {
-
-    $('.issues-list > tbody > tr > td:first-of-type a').mouseenter(
-        function () {
-            $(this).next('.issue_copy.popup-menu').slideDown(180);
-        }
-    );
-
-    $('.issues-list > tbody > tr > td:first-of-type').mouseleave(
-        function () {
-            $('.issue_copy.popup-menu').slideUp(180);
-        }
-    );
-
-    $('.issue_copy.popup-menu').hover(
-        function () {
-            $(this).show();
-        },
-        function () {
-            $(this).slideUp(180);
-        }
-    );
-
-});
-
 issuePage.deleteComment = (id, deleteBranch, callback) => {
     srv.issue.deleteComment(
         id,
@@ -2653,7 +2648,7 @@ issuePage.resolveComment = (id, callback) => {
     )
 };
 
-function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds = 600) {
+function hideElementAfterDelay(elementId, startTimeInSeconds, delayTimeInSeconds) {
     let delay = (Number(startTimeInSeconds) + Number(delayTimeInSeconds)) * 1000 - Date.now();
 
     if (delay >= 0) {

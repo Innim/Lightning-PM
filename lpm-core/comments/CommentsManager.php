@@ -5,8 +5,6 @@
  */
 class CommentsManager
 {
-    const SECONDS_ON_COMMENT_DELETE = 600;
-
     /**
      * Публикация комментария к задаче.
      *
@@ -142,8 +140,6 @@ class CommentsManager
         // Связи по упоминаниям создаём здесь: через этот метод проходят все способы
         // добавить комментарий (веб, внешний API, хуки GitLab)
         $addedLinks = IssueLinked::syncFromText($issue, $text, $user->userId);
-
-        Comment::setTimeToDeleteComment($comment, self::SECONDS_ON_COMMENT_DELETE);
 
         return ['comment' => $comment, 'addedLinks' => $addedLinks];
     }

@@ -462,6 +462,26 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает меню копирования ссылок на задачу: гиперссылки, адреса
+     * и Markdown-ссылки.
+     *
+     * Меню выпадающее, его открывает глиф-тоггл; показом глифа управляет вмещающий
+     * компонент (строка списка задач, стикер доски).
+     * @param Issue $issue Задача.
+     */
+    public static function issueCopyMenu(Issue $issue)
+    {
+        $url = $issue->getConstURL();
+        $idInProject = $issue->getIdInProject();
+        $issueName = htmlspecialchars($issue->getName(), ENT_QUOTES);
+
+        PageConstructor::includePattern(
+            'components/issue-copy-menu',
+            compact('url', 'idInProject', 'issueName')
+        );
+    }
+
+    /**
      * Распечатывает ссылку быстрого добавления текущего пользователя
      * к участникам задачи в указанной роли.
      *
@@ -606,6 +626,7 @@ class PagePrinter
             'issueUrlPattern' => OwnUrlHelper::getIssueUrlPattern(),
             'aiRequestTimeout' => AiIntegration::getRequestTimeout(),
             'priorityGroupStep' => Issue::PRIORITY_GROUP_STEP,
+            'commentDeleteWindow' => Comment::DELETE_WINDOW_SECONDS,
             'passwordMinLength' => PASSWORD_MIN_LENGTH,
             'passwordMaxLength' => PASSWORD_MAX_LENGTH,
             'roles' => [

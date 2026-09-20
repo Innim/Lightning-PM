@@ -44,17 +44,7 @@ $userId = lpm_get_user()->userId;
 				<?php if ($issue->isOnBoard()):?>
 				<span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
 				<?php endif; ?>
-				<div class="copy-tooltip">
-					<div class="commit-message-list">
-						<a class='copy-commit-message'
-						    href='javascript: void(0);'
-							data-clipboard-text='Issue #<?=$issue->getIdInProject() . '>
-							: ' . $issue->getName();?>'>
-							Копировать коммит сообщение
-						</a>
-					</div>
-					<a class="id-issue" href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
-				</div>
+				<a class="id-issue" href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
 			</td>
 			<td>
 				<div class="priority-title-owner" title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->getPriorityDisplayValue();?>)">
@@ -78,14 +68,18 @@ $userId = lpm_get_user()->userId;
 				<i class="fas fa-fire icon-deadline icon-deadline-urgent" title="Срочная"></i>
 				<i class="fas fa-calendar-alt icon-deadline icon-deadline-medium" title="Средней срочности"></i>
 				<i class="fas fa-calendar-alt icon-deadline icon-deadline-low" title="Несрочная"></i>
-				<a class="issue-name" href="<?=$issue->getURL4View();?>">
-					<span class="issue-name"><?=$issue->getName();?></span>
-					<?php if ($issue->hours > 0): ?> (<span class="issue-hours"><?=$issue->getStrHours();?></span>
-					<?=$issue->getNormHoursLabel(true);?>)<?php endif;?>
-				</a>
-				<?if ($issue->commentsCount > 0):?>
-				&nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span>
-				<?php endif; ?>
+				<?php /* Меню копирования идёт последним — после счётчика комментариев. Перед ним
+				         не должно быть пробела: пробел — это точка переноса, и глиф отрывался бы
+				         на следующую строку; отступ от счётчика задан в CSS. По той же причине
+				         нет пробела и внутри ссылки перед `</a>` */ ?>
+				<a class="issue-name" href="<?=$issue->getURL4View();?>"><span
+					class="issue-name"><?=$issue->getName();?></span><?php
+					if ($issue->hours > 0): ?> (<span class="issue-hours"><?=$issue->getStrHours();?></span>
+					<?=$issue->getNormHoursLabel(true);?>)<?php endif;?></a><?php
+				if ($issue->commentsCount > 0): ?>
+				&nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span><?php
+				endif;
+				lpm_print_issue_copy_menu($issue); ?>
 				<?php lpm_print_issue_test_age($issue); ?>
 			</td>
 			<td>

@@ -15,6 +15,14 @@ class AuthPage extends LPMPage
 
     const NAME_MAX_LENGTH = 128;
 
+    /**
+     * Сообщение об отказе во входе.
+     *
+     * Одно и то же и когда пользователя с таким email нет, и когда пароль
+     * неверный: по разным сообщениям перебирается, кто зарегистрирован.
+     */
+    const AUTH_FAILED_ERROR = 'Неверный email или пароль';
+
     public function __construct()
     {
         parent::__construct('auth', 'Авторизация', false, true);
@@ -105,6 +113,11 @@ class AuthPage extends LPMPage
             } else {
                 if (empty($input['aemail']) || empty($input['apass'])) {
                     $engine->addError('Введите email и пароль для входа');
+                } elseif ($retryAfter = AuthThrottle::checkLogin($input['aemail'])) {
+                    $engine->addError(sprintf(
+                        'Слишком много попыток входа. Попробуйте через %s',
+                        AuthThrottle::formatRetryAfter($retryAfter)
+                    ));
                 } else {
                     // авторизация
                     $pass  = $input['apass'];
@@ -113,26 +126,31 @@ class AuthPage extends LPMPage
                     $sql = "select `userId`, `pass`, `locked` from `%s` where `email` = '" . $email . "'";
                     if (!$query = $db->queryt($sql, LPMTables::USERS)) {
                         $engine->addError('Ошибка чтения из базы');
-                    } elseif ($userInfo = $query->fetch_assoc()) {
-                        if (!User::passwordVerify($pass, $userInfo['pass'])) {
-                            $engine->addError('Неверный пароль');
-                        } elseif ($userInfo['locked']) {
-                            $engine->addError('Пользователь заблокирован');
-                        } else {
-                            $cookieHash = LPMAuth::createCookieHash();
-                            $lastVisit = DateTimeUtils::mysqlDate();
-                            $sqlVisit = "update `%s` set `lastVisit` = '" . $lastVisit . "', " .
-                                "`lastVisitUtc` = '" . $lastVisit . "'" .
-                                " where `userId` = '" . $userInfo['userId'] . "'";
-
-                            if (!$db->queryt($sqlVisit, LPMTables::USERS)) {
-                                $engine->addError('Ошибка записи в базу');
-                            } else {
-                                $this->auth($userInfo['userId'], $email, $cookieHash);
-                            }
-                        }
+                    } elseif (!$userInfo = $query->fetch_assoc()) {
+                        // Сверка вхолостую: без неё ответ незарегистрированному
+                        // адресу приходит заметно раньше, и адреса перебираются
+                        // по времени ответа, а не по тексту ошибки.
+                        User::spendPasswordVerifyTime($pass);
+                        AuthThrottle::registerLoginFailure($input['aemail']);
+                        $engine->addError(self::AUTH_FAILED_ERROR);
+                    } elseif (!User::passwordVerify($pass, $userInfo['pass'])) {
+                        AuthThrottle::registerLoginFailure($input['aemail']);
+                        $engine->addError(self::AUTH_FAILED_ERROR);
+                    } elseif ($userInfo['locked']) {
+                        $engine->addError('Пользователь заблокирован');
                     } else {
-                        $engine->addError('Пользователь с таким email не зарегистрирован');
+                        $cookieHash = LPMAuth::createCookieHash();
+                        $lastVisit = DateTimeUtils::mysqlDate();
+                        $sqlVisit = "update `%s` set `lastVisit` = '" . $lastVisit . "', " .
+                            "`lastVisitUtc` = '" . $lastVisit . "'" .
+                            " where `userId` = '" . $userInfo['userId'] . "'";
+
+                        if (!$db->queryt($sqlVisit, LPMTables::USERS)) {
+                            $engine->addError('Ошибка записи в базу');
+                        } else {
+                            AuthThrottle::registerLoginSuccess($input['aemail']);
+                            $this->auth($userInfo['userId'], $email, $cookieHash);
+                        }
                     }
                 }
             }
