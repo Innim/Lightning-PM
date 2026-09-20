@@ -75,9 +75,9 @@ class UserLock extends LPMBaseObject
                 'instanceType' => $instanceType,
                 'instanceId'   => $instanceId,
                 'deleted'      => 0,
-                'expired'      => ['>' => $now],
+                'expiredUtc'   => ['>' => $now],
             ],
-            'ORDER BY'  => '`expired` DESC',
+            'ORDER BY'  => '`expiredUtc` DESC',
             'LIMIT'     => $limit,
         ]);
 

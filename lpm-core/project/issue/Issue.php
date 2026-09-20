@@ -501,10 +501,10 @@ SQL;
             $args = " AND `i`.`status` IN(" . implode(',', $issueStatus) . ')';
         }
         if (!empty($fromCompletedDate)) {
-            $args .= " AND `i`.`completedDate` >= '" . $fromCompletedDate . "'";
+            $args .= " AND `i`.`completedDateUtc` >= '" . $fromCompletedDate . "'";
         }
         if (!empty($toCompletedDate)) {
-            $args .= " AND `i`.`completedDate` <= '" . $toCompletedDate . "'";
+            $args .= " AND `i`.`completedDateUtc` <= '" . $toCompletedDate . "'";
         }
 
         $where .= $args;
