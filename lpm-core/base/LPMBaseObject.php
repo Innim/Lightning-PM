@@ -4,6 +4,12 @@
  */
 class LPMBaseObject extends StreamObject
 {
+    /**
+     * Суффикс имени колонки, хранящей момент абсолютным временем.
+     * @see LPMBaseObject::setVar()
+     */
+    private const UTC_COLUMN_SUFFIX = 'Utc';
+
     private static $_queryBuilder;
 
     /**
@@ -226,5 +232,62 @@ class LPMBaseObject extends StreamObject
     public function parseData($hash)
     {
         return $this->loadStream($hash);
+    }
+
+    /**
+     * Загружает значение колонки выборки в свойство модели.
+     *
+     * Колонка `<имя>Utc` наполняет свойство `<имя>`, если у модели есть такое
+     * свойство и нет своего `<имя>Utc`. Значение колонки-близнеца при этом
+     * сильнее значения одноимённого свойству столбца, а пустой близнец
+     * оставляет свойству то, что уже было в него загружено.
+     *
+     * @param  string $var   Имя колонки выборки.
+     * @param  mixed  $value Значение колонки.
+     * @return bool true, если значение записано в свойство модели.
+     */
+    protected function setVar($var, $value)
+    {
+        $localField = $this->getFieldByUtcColumn($var);
+        if ($localField !== null) {
+            // Близнец перекрывает старую колонку, потому что в выборке идёт
+            // сразу за ней. Пустой близнец - это либо отсутствие момента, либо
+            // строка, записанная до его появления: решает старая колонка.
+            if ($value === null) {
+                return false;
+            }
+
+            $var = $localField;
+        }
+
+        return parent::setVar($var, $value);
+    }
+
+    /**
+     * Возвращает свойство модели, которому соответствует колонка с абсолютным
+     * временем.
+     *
+     * Пары «старая колонка - близнец» перечислены в миграции
+     * `..._dates_absolute_timestamp_columns.php`.
+     *
+     * @param  string $column Имя колонки выборки.
+     * @return string|null Имя свойства либо null, если колонка не является
+     * близнецом свойства модели.
+     */
+    private function getFieldByUtcColumn($column)
+    {
+        $suffixLength = strlen(self::UTC_COLUMN_SUFFIX);
+        if (substr($column, -$suffixLength) !== self::UTC_COLUMN_SUFFIX) {
+            return null;
+        }
+
+        // Собственное свойство с таким именем сильнее: значение принадлежит ему.
+        if (property_exists($this, $column)) {
+            return null;
+        }
+
+        $field = substr($column, 0, -$suffixLength);
+
+        return $field !== '' && property_exists($this, $field) ? $field : null;
     }
 }

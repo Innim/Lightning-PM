@@ -141,6 +141,32 @@ Decide by **what stood in that place before the change**, never by how the issue
 
 Only the third case is `Fixed`. New functionality keeps landing in `Fixed` because issues are almost always filed as complaints — «пользователь не понимает, что произошло», «подсказка не работает», «задача навсегда остаётся в красном». That framing describes why the work started, not what the product does now, and it must not decide the section. Note that the commit type does not decide it either: a `fix` commit routinely produces an `Added` or `Changed` entry, because repairing a feature that never worked at all is new functionality for the reader.
 
+### Section order — fixed, never by arrival
+
+Sections of a release always appear in this order, and only the ones that have entries appear at all:
+
+1. `Added`
+2. `Changed`
+3. `Removed`
+4. `Fixed`
+5. `Security`
+
+The first three describe what the product is now made of, the last two what was repaired. `Removed` sits next to `Changed` because dropping a feature is a change in what exists. `Security` comes last as a deliberate callout — an ordinary security fix still belongs in `Fixed`; use `Security` only when the reader must act (rotate a token, re-check access). This matches the Keep a Changelog order, so `Deprecated` — if ever needed — goes between `Changed` and `Removed`.
+
+The order has been drifting release to release; it is fixed now, so a reader finds the same shape every time.
+
+### Order inside a section — most important first
+
+Within a section entries are ordered by how much the change matters to the reader, not by when it was merged. The one that changes the most people's day goes on top.
+
+### API entries
+
+Changes to the external HTTP API are marked and kept together, because they concern a different audience than the rest of the product: nobody reading about the interface needs to wade through endpoint changes, and nobody integrating needs to guess which entries are theirs.
+
+- Start the entry with the `API: ` prefix, then the description: `- API: у задачи отдаётся подстатус — …`. Do not write «Через внешнее API можно …» — the prefix carries that.
+- Keep all API entries of a section in **one block at the end of that section**, after the entries about the interface. Being last is not a judgement of importance; it keeps one audience's entries from splitting the other's.
+- Inside the API block the usual rule applies: the more important entry goes higher.
+
 ## File Reference Style (for assistant responses)
 - Use clickable paths (e.g., `lpm-core/base/LightningEngine.php:42`). No ranges.
 - Wrap commands, paths, and identifiers in backticks.
