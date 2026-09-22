@@ -99,6 +99,13 @@ SQL;
      * Создает snapshot по текущему состоянию доски для переданного проекта.
      *
      * Пустая доска в архив не попадает: снимок не создаётся.
+     *
+     * Номер снимка в проекте присваивается в той же транзакции, что и сама
+     * запись; пару «проект - номер» защищает уникальный индекс, поэтому
+     * два снимка с одним номером в проект не попадут. Очередь между
+     * одновременными закрытиями спринта держит
+     * {@see ScrumBoardManager::closeSprint()}.
+     *
      * @param int $projectId
      * @param $userId
      * @param ScrumSticker[]|null $stickers Состав доски; если он уже прочитан
@@ -107,7 +114,8 @@ SQL;
      * @return int|null Номер созданного снимка в проекте или null,
      *         если доска была пуста и снимок не создавался.
      * @throws ScrumBoardException Если доску нельзя заархивировать: у задачи
-     *         нескольких исполнителей не распределены SP.
+     *         нескольких исполнителей не распределены SP, или снимок с этим
+     *         номером уже создан параллельным закрытием спринта.
      * @throws Exception Если не удалось сохранить снимок.
      */
     public static function createSnapshot($projectId, $userId, array $stickers = null)
@@ -158,11 +166,11 @@ SQL;
         $db = self::getDB();
 
         try {
-            // получаем идентификатор снапшота в проекте
-            $idInProject = self::getLastSnapshotId($projectId) + 1;
-
             // начинаем транзакцию
             $db->begin_transaction();
+
+            // получаем идентификатор снапшота в проекте
+            $idInProject = self::getLastSnapshotId($projectId) + 1;
 
             // запись о новом снапшоте
             $sql = <<<SQL
@@ -174,6 +182,14 @@ SQL;
 
             // если что-то пошло не так
             if (!$db->queryt($sql, LPMTables::SCRUM_SNAPSHOT_LIST)) {
+                // Уникальный индекс по паре «проект - номер»: снимок
+                // с этим номером уже создало параллельное закрытие спринта
+                if ($db->errno === self::DB_ERR_DUP_ENTRY) {
+                    throw new ScrumBoardException(
+                        'Спринт #' . $idInProject . ' этого проекта уже закрыт'
+                    );
+                }
+
                 throw new DBException($db, "Ошибка при сохранении нового снапшота");
             }
 
@@ -253,14 +269,13 @@ SQL;
 
             // вроде бы все ок -> завершаем транзакцию
             if ($added) {
-                $db->commit();
-    
-                // TODO: добавить в транзакцию
                 // сохраняем в БД id Snapshot в таблице целей
                 $result = self::setSnapshotIdForTarget($projectId, $sid);
                 if (!$result) {
                     throw new DBException($db, "Ошибка при сохранении целей снапшота " . $db->error);
                 }
+
+                $db->commit();
             } else {
                 // отменяем, т.к. на доске нет стикеров
                 $db->rollback();
@@ -319,7 +334,12 @@ SQL;
                         'instanceType' => $projectType],
         ]);
     }
-    
+
+    /**
+     * Код ошибки MySQL «дубликат значения уникального ключа» (ER_DUP_ENTRY).
+     */
+    const DB_ERR_DUP_ENTRY = 1062;
+
     /**
      * Идентификатор snapshot-а.
      * @var int
