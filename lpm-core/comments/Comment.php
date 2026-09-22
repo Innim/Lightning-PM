@@ -42,6 +42,46 @@ SQL;
     }
 
     /**
+     * Возвращает описание запроса по ленте комментариев к задачам проекта.
+     *
+     * Это единственное определение состава ленты: его используют и выборка
+     * страницы {@see getIssuesListByProject()}, и проверка наличия следующей
+     * страницы {@see hasIssuesCommentsByProject()}, иначе условия двух
+     * запросов разошлись бы.
+     * @param  int $projectId
+     * @param  string $select Список полей выборки.
+     * @return array Описание запроса для конструктора.
+     */
+    private static function getIssuesCommentsSqlHash($projectId, $select)
+    {
+        return [
+            'SELECT' => $select,
+            'FROM'   => LPMTables::COMMENTS,
+            'AS'     => 'c',
+            'JOINS'  => [
+                [
+                    'INNER JOIN' => LPMTables::ISSUES,
+                    'AS'         => 'i',
+                    'ON'         => [
+                        '`i`.`id`'      => self::col('c.instanceId'),
+                        '`i`.`deleted`' => 0,
+                    ],
+                ],
+                [
+                    'INNER JOIN' => LPMTables::USERS,
+                    'AS'         => 'u',
+                    'ON'         => ['`u`.`userId`' => self::col('c.authorId')],
+                ],
+            ],
+            'WHERE'  => [
+                '`c`.`deleted`'      => 0,
+                '`c`.`instanceType`' => LPMInstanceTypes::ISSUE,
+                '`i`.`projectId`'    => (int)$projectId,
+            ],
+        ];
+    }
+
+    /**
      * Возвращает комментарии к задачам проекта, начиная с самых свежих.
      * Комментарии удалённых задач в выборку не попадают: до самой задачи
      * добраться уже нельзя, а её вложения удалены вместе с ней.
@@ -52,23 +92,34 @@ SQL;
      */
     public static function getIssuesListByProject($projectId, $from = 0, $limit = 0)
     {
-        $instanceType = LPMInstanceTypes::ISSUE;
-        $limitStr = $limit > 0 ? 'LIMIT ' . $from . ',' . $limit : '';
+        $hash = self::getIssuesCommentsSqlHash($projectId, '`c`.*, `u`.*');
+        // Комментарии одной секунды разводим по id: иначе на границе страниц
+        // порядок произволен и комментарий может задвоиться или пропасть
+        $hash['ORDER BY'] = ['`c`.`date` DESC', '`c`.`id` DESC'];
+        if ($limit > 0) {
+            $hash['LIMIT'] = max(0, (int)$from) . ',' . (int)$limit;
+        }
 
-        $sql = <<<SQL
-			SELECT `c`.*, `u`.* 
-			  FROM `%1\$s` `c`, `%2\$s` `u`, `%3\$s` `p`, `%4\$s` `i`
-			 WHERE `c`.`deleted` = 0 AND `c`.`instanceType` = {$instanceType} 
-			   AND `c`.`authorId` = `u`.`userId` AND `i`.`id` = `c`.`instanceId`
-			   AND `i`.`deleted` = 0
-			   AND `i`.`projectId` = `p`.`id` AND `p`.`id` = {$projectId}
-		  ORDER BY `c`.`date` DESC
-			{$limitStr}
-SQL;
-        $comments = StreamObject::loadObjList(self::getDB(), array($sql, LPMTables::COMMENTS,
-                LPMTables::USERS, LPMTables::PROJECTS, LPMTables::ISSUES), __CLASS__);
+        $comments = self::loadAndParseV2($hash, __CLASS__);
         self::loadFilesForComments($comments);
         return $comments;
+    }
+
+    /**
+     * Есть ли в ленте комментариев к задачам проекта хотя бы один комментарий,
+     * начиная с указанного смещения.
+     * @param int $projectId
+     * @param int $from Смещение от начала выборки.
+     * @return bool
+     * @throws \GMFramework\ProviderLoadException
+     */
+    public static function hasIssuesCommentsByProject($projectId, $from)
+    {
+        $hash = self::getIssuesCommentsSqlHash($projectId, '`c`.`id`');
+        $hash['LIMIT'] = max(0, (int)$from) . ',1';
+
+        $res = self::loadFromDV2($hash);
+        return $res->num_rows > 0;
     }
 
     public static function getListByInstance($instanceType, $instanceId = null)
