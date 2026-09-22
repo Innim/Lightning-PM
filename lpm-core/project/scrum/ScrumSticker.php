@@ -156,6 +156,9 @@ SQL;
     /**
      * Загружает стикеры задач, в которых пользователь участвует.
      *
+     * В список попадают только доступные пользователю задачи
+     * ({@see Issue::checkViewPermit()}).
+     *
      * Участники не подгружаются, см. {@see preloadParticipants()}.
      * @param  int        $userId        Идентификатор пользователя.
      * @param  array<int> $instanceTypes Типы участия в задаче, которые считаются
@@ -176,12 +179,19 @@ SQL;
         $where = <<<SQL
 `s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
 SQL;
-        return self::loadList(
+        $list = self::loadList(
             $where,
             '',
             ['m' => LPMTables::MEMBERS],
             ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
         );
+
+        // Участие в задаче сохраняется и после вывода человека из проекта,
+        // а права на задачу - нет: доступ проверяется отдельно от участия
+        return array_values(array_filter($list, function (ScrumSticker $sticker) use ($userId) {
+            $issue = $sticker->getIssue();
+            return !empty($issue) && $issue->checkViewPermit($userId);
+        }));
     }
 
     /**
@@ -225,6 +235,9 @@ SQL;
      * Стикеров таких задач в БД нет - они собираются на лету ({@see isVirtual()}),
      * и колонка выводится из статуса задачи. Поэтому берутся только незавершённые
      * задачи: у завершённой колонки на доске уже нет.
+     *
+     * В список попадают только доступные пользователю задачи,
+     * {@see Issue::getListOffBoardByTester()}.
      *
      * Участники не подгружаются, см. {@see preloadParticipants()}.
      * @param  int $userId Идентификатор пользователя.

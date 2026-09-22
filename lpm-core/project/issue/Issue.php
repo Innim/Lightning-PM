@@ -745,8 +745,12 @@ WHERE;
      *
      * Незавершённые - это задачи в работе и задачи, ожидающие проверки:
      * ушедшая в тест задача остаётся в списке и у исполнителя, и у тестировщика.
+     *
+     * В список попадают только задачи, которые пользователю доступны
+     * ({@see Issue::checkViewPermit()}).
      * @param  int $memberId Идентификатор пользователя.
      * @return array<Issue>
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
      */
     public static function getListByMember($memberId)
     {
@@ -780,6 +784,13 @@ WHERE;
                     ' AND `p`.`isArchive` = 0'
                 );
 
+                // Участие в задаче сохраняется и после вывода человека
+                // из проекта, а права на задачу - нет: доступ проверяется
+                // отдельно от участия
+                $list = array_values(array_filter($list, function (Issue $issue) use ($memberId) {
+                    return $issue->checkViewPermit($memberId);
+                }));
+
                 self::$_listByUser[$memberId] = self::preloadParticipants($list);
             } else {
                 self::$_listByUser[$memberId] = array();
@@ -795,8 +806,12 @@ WHERE;
      *
      * Незавершённые - это задачи в работе и задачи, ожидающие проверки:
      * снятая с доски по окончании спринта задача тестировщику всё ещё нужна.
+     *
+     * В список попадают только задачи, которые пользователю доступны
+     * ({@see Issue::checkViewPermit()}).
      * @param  int $testerId Идентификатор пользователя.
      * @return array<Issue>
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
      */
     public static function getListOffBoardByTester($testerId)
     {
@@ -816,7 +831,7 @@ WHERE;
         $statuses = implode(', ', [self::STATUS_IN_WORK, self::STATUS_WAIT]);
         $activeStates = implode(', ', ScrumStickerState::getActiveStates());
 
-        return self::loadList(
+        $list = self::loadList(
             // только задачи, в которых я тестировщик
             "EXISTS ($testerSql)" .
             // незавершённые
@@ -826,6 +841,11 @@ WHERE;
             // `st` - присоединённый в loadList() стикер задачи
             " AND (`st`.`state` IS NULL OR `st`.`state` NOT IN ($activeStates))"
         );
+
+        // Участие в задаче правами на неё не является, см. getListByMember()
+        return array_values(array_filter($list, function (Issue $issue) use ($testerId) {
+            return $issue->checkViewPermit($testerId);
+        }));
     }
 
     /**
@@ -989,9 +1009,45 @@ WHERE;
         $db->queryt($sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS);
     }
 
+    /**
+     * Считает важные задачи в работе, в которых пользователь исполнитель.
+     *
+     * Учитываются только доступные пользователю задачи - по тому же правилу,
+     * что и в {@see Issue::checkViewPermit()}: участник проекта либо модератор.
+     * @param  int      $userId    Идентификатор пользователя.
+     * @param  int|null $projectId Ограничить подсчёт одним проектом; `null` -
+     *                             считать по всем неархивным проектам.
+     * @return int Количество задач.
+     */
     public static function getCountImportantIssues($userId, $projectId = null)
     {
+        $userId = (int)$userId;
         $projectId = (int)$projectId;
+
+        $user = User::load($userId);
+        if (empty($user)) {
+            return 0;
+        }
+
+        // Доступ проверяется условием запроса, а не фильтрацией результата:
+        // счётчик печатается в меню на каждой странице, и загрузка списка задач
+        // ради подсчёта обошлась бы дороже.
+        // Модератору доступны все проекты, поэтому для него членство не ищем
+        $accessWhere = '';
+        if (!$user->isModerator()) {
+            $projectMemberSql = self::buildQuery([
+                'SELECT' => '1',
+                'FROM'   => LPMTables::MEMBERS,
+                'AS'     => 'pm',
+                'WHERE'  => [
+                    '`pm`.`instanceId`'   => self::col('i.projectId'),
+                    '`pm`.`instanceType`' => LPMInstanceTypes::PROJECT,
+                    '`pm`.`userId`'       => $userId,
+                ],
+            ]);
+
+            $accessWhere = "AND EXISTS ($projectMemberSql)";
+        }
 
         $issueType = LPMInstanceTypes::ISSUE;
         $statusInWork = self::STATUS_IN_WORK;
@@ -1017,6 +1073,7 @@ INNER JOIN `%2\$s` `m`
        AND `i`.`priority` >= $minPriority
        AND `i`.`status` = $statusInWork
        AND `i`.`deleted` = 0
+       $accessWhere
 SQL;
 
         $db = self::getDB();
