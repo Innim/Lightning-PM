@@ -147,6 +147,7 @@ class ApiPayloadSerializer
 
         $obj['actions'] = [
             'comment' => $this->baseUrl . '/issues/' . $issue->id . '/comments',
+            'update' => $this->baseUrl . '/issues/' . $issue->id,
             'createBranch' => $this->baseUrl . '/issues/' . $issue->id . '/branches',
             'repositories' => $this->baseUrl . '/projects/' . $issue->projectId . '/repositories',
             'board' => $this->baseUrl . '/issues/' . $issue->id . '/board',

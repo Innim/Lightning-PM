@@ -1,5 +1,9 @@
 ## Next
 
+### Added
+- API: к задаче можно приложить картинку и файл ([#495](https://task.innim.ru/project/lightning-pm/issue/495)).
+- API: к комментарию можно приложить файл ([#495](https://task.innim.ru/project/lightning-pm/issue/495)).
+
 ## 0.33.1 - 2026-09-20
 
 ### Fixed

@@ -2,6 +2,29 @@
 
 class ApiIssueController extends ApiControllerBase
 {
+    /**
+     * Считает файлы, действительно переданные в поле запроса.
+     *
+     * Позиции поля без файла в счёт не идут: поле формы, где файл не выбран,
+     * PHP всё равно описывает.
+     * @param  array $filesData Данные поля запроса, {@see ApiRequest::getFiles()}.
+     * @return int
+     */
+    private static function countUploads(array $filesData)
+    {
+        $count = 0;
+        foreach ($filesData['tmp_name'] as $index => $tmpName) {
+            $errorCode = isset($filesData['error'][$index]) ? $filesData['error'][$index] : UPLOAD_ERR_OK;
+            if ($errorCode === UPLOAD_ERR_NO_FILE || (empty($tmpName) && $errorCode === UPLOAD_ERR_OK)) {
+                continue;
+            }
+
+            $count++;
+        }
+
+        return $count;
+    }
+
     /** Роль участника задачи: исполнитель. */
     const ROLE_MEMBER = 'members';
 
@@ -22,6 +45,40 @@ class ApiIssueController extends ApiControllerBase
         self::ROLE_TESTER => LPMInstanceTypes::ISSUE_FOR_TEST,
         self::ROLE_MASTER => LPMInstanceTypes::ISSUE_FOR_MASTER,
     ];
+
+    /** Имя поля multipart-запроса, в котором передаются файлы создаваемой задачи или комментария. */
+    const FILES_FIELD = 'files';
+
+    /**
+     * Имя поля multipart-запроса, в котором передаются изображения
+     * создаваемой задачи.
+     *
+     * Вложения задачи разделены так же, как в форме интерфейса: изображение
+     * попадает в галерею задачи и показывается превью, файл - в список файлов
+     * и отдаётся на скачивание оригиналом. Хранятся они в разных местах,
+     * поэтому выбор поля определяет, чем вложение станет.
+     */
+    const IMAGES_FIELD = 'images';
+
+    /**
+     * Имя поля multipart-запроса, в котором передаются файлы, добавляемые
+     * к существующей задаче.
+     *
+     * Названо иначе, чем поле при создании: в частичном изменении задачи
+     * скалярное поле замещает прежнее значение, а файлы добавляются
+     * к уже приложенным, и одно имя на два поведения путало бы.
+     */
+    const ADD_FILES_FIELD = 'addFiles';
+
+    /**
+     * Имя поля multipart-запроса, в котором передаются изображения,
+     * добавляемые к существующей задаче.
+     *
+     * Отличается от поля при создании по той же причине, что и у файлов,
+     * а от {@see ApiIssueController::ADD_FILES_FIELD} - тем, куда вложение
+     * попадёт ({@see ApiIssueController::IMAGES_FIELD}).
+     */
+    const ADD_IMAGES_FIELD = 'addImages';
 
     public function dispatch(array $path)
     {
@@ -55,6 +112,10 @@ class ApiIssueController extends ApiControllerBase
             return ApiResponse::success([
                 'issue' => $this->serializer()->issue($issue),
             ]);
+        }
+
+        if ($method === 'POST' && count($path) === 1) {
+            return $this->updateIssue($issue);
         }
 
         if ($method === 'POST' && count($path) === 2 && $path[1] === 'comments') {
@@ -390,6 +451,37 @@ class ApiIssueController extends ApiControllerBase
     }
 
     /**
+     * Приводит значение параметра `board` к одному из трёх его состояний.
+     *
+     * У параметра их три: не задан, `true` (колонка по статусу задачи) и имя
+     * колонки. В multipart-запросе значение поля - всегда строка, поэтому
+     * логическое значение приходит как `"true"` или `"false"`, и без разбора
+     * строки `"false"` означала бы постановку на доску, а не отказ от неё.
+     * Имена колонок с этими словами не пересекаются, так что разбор
+     * их не затрагивает.
+     * @param  mixed $board Значение параметра из тела запроса.
+     * @return mixed Значение в том виде, в каком его разбирает
+     *         {@see ApiIssueController::parseCreateBoard()}.
+     */
+    private function normalizeBoardValue($board)
+    {
+        if (!is_string($board)) {
+            return $board;
+        }
+
+        $value = trim(strtolower($board));
+        if ($value === 'true' || $value === '1') {
+            return true;
+        }
+
+        if ($value === 'false' || $value === '0') {
+            return false;
+        }
+
+        return $board;
+    }
+
+    /**
      * Разбирает параметр `board` запроса на создание задачи.
      * @param  Project $project Проект создаваемой задачи.
      * @return bool|int|ApiResponse `false` - задача создаётся без стикера,
@@ -399,7 +491,7 @@ class ApiIssueController extends ApiControllerBase
      */
     private function parseCreateBoard(Project $project)
     {
-        $board = $this->request()->getBody('board');
+        $board = $this->normalizeBoardValue($this->request()->getBody('board'));
         if ($board === null || $board === false || $board === '' || $board === 0) {
             return false;
         }
@@ -496,6 +588,20 @@ class ApiIssueController extends ApiControllerBase
             return $board;
         }
 
+        // По той же причине проверяем вложения: непригодное вложение не должно
+        // оставлять после себя созданную задачу
+        $imagesData = $this->request()->getFiles(self::IMAGES_FIELD);
+        $error = $this->validateImages($imagesData, self::IMAGES_FIELD, Issue::MAX_IMAGES_COUNT);
+        if ($error !== null) {
+            return ApiResponse::error($error, 400);
+        }
+
+        $filesData = $this->request()->getFiles(self::FILES_FIELD);
+        $error = $this->validateAttachments($filesData, Issue::MAX_FILES_COUNT, Issue::MAX_FILES_COUNT);
+        if ($error !== null) {
+            return ApiResponse::error($error, 400);
+        }
+
         $user = $this->user();
         $issueId = Issue::createNew($project, $name, $desc, $type, $priority, $hours, $completeDate, $user->getID());
         if (!$issueId) {
@@ -534,6 +640,39 @@ class ApiIssueController extends ApiControllerBase
             $issue->id
         );
 
+        // Вложения сохраняем до оповещения, чтобы открывший письмо о новой задаче
+        // увидел её уже с ними. Запрос проверен выше, поэтому дойти сюда может
+        // только сбой сохранения - задачу он не отменяет, и клиенту остаётся
+        // добавить вложения изменением задачи
+        // ({@see ApiIssueController::updateIssue()})
+        if ($imagesData !== null) {
+            $error = $this->uploadImages($issue, self::IMAGES_FIELD, Issue::MAX_IMAGES_COUNT);
+            if ($error !== null) {
+                throw new ApiException(
+                    'Issue ' . $issue->id . ' is created, but its images are not saved: ' . $error,
+                    500
+                );
+            }
+        }
+
+        if ($filesData !== null) {
+            $result = FileUploadManager::upload(
+                LPMInstanceTypes::ISSUE,
+                $issue->id,
+                $user->getID(),
+                $filesData,
+                Issue::MAX_FILES_COUNT,
+                Issue::MAX_FILES_COUNT
+            );
+
+            if (!empty($result['errors'])) {
+                throw new ApiException(
+                    'Issue ' . $issue->id . ' is created, but its files are not saved: ' . $result['errors'][0],
+                    500
+                );
+            }
+        }
+
         Issue::notifyAdded($issue, $user);
 
         if ($board !== false) {
@@ -545,19 +684,207 @@ class ApiIssueController extends ApiControllerBase
         ], 201);
     }
 
+    /**
+     * Добавляет комментарий к задаче.
+     *
+     * Файлы передаются multipart-запросом в поле {@see ApiIssueController::FILES_FIELD};
+     * комментарий, к которому приложен файл, может быть и без текста - как
+     * и в интерфейсе.
+     * @return ApiResponse Добавленный комментарий или ошибка проверки запроса.
+     */
     private function createComment(Issue $issue)
     {
+        $filesData = $this->request()->getFiles(self::FILES_FIELD);
         $text = trim((string)$this->request()->getBody('text'));
-        if ($text === '') {
+        if ($text === '' && $filesData === null) {
             return ApiResponse::error('Comment text is required', 400);
         }
 
-        $type = $this->request()->getBody('requestChanges') ? IssueCommentType::REQUEST_CHANGES : null;
-        $comment = $this->engine()->comments()->postComment($this->user(), $issue, $text, false, false, $type);
+        // Проверяем до публикации: иначе непригодный файл придётся откатывать
+        // вместе с уже созданным комментарием
+        $error = $this->validateAttachments($filesData, Comment::MAX_FILES_COUNT, Comment::MAX_FILES_COUNT);
+        if ($error !== null) {
+            return ApiResponse::error($error, 400);
+        }
+
+        $type = $this->request()->getBodyFlag('requestChanges') ? IssueCommentType::REQUEST_CHANGES : null;
+        $comment = $this->engine()->comments()->postComment(
+            $this->user(),
+            $issue,
+            $text,
+            false,
+            false,
+            $type,
+            null,
+            $filesData
+        );
 
         return ApiResponse::success([
             'comment' => $this->serializer()->comment($comment),
         ], 201);
+    }
+
+    /**
+     * Частичное изменение задачи: меняется только то, что передано в запросе.
+     *
+     * Пока поддерживаются два поля - добавляемые изображения и файлы, которые
+     * передаются multipart-запросом в полях {@see ApiIssueController::ADD_IMAGES_FIELD}
+     * и {@see ApiIssueController::ADD_FILES_FIELD}; остальные поля задачи
+     * появятся в этом же маршруте. Уже приложенные вложения занимают места
+     * из лимитов задачи, но сохранению новых не мешают, пока места остаются.
+     *
+     * Изменение задачи оповещает её участников - так же, как правка
+     * из интерфейса ({@see ProjectPage::notifyAboutIssueChange()}).
+     * @return ApiResponse Обновлённая задача или ошибка запроса.
+     * @throws ApiException Если вложения не удалось сохранить.
+     * @throws Exception Если задачу не удалось перечитать.
+     */
+    private function updateIssue(Issue $issue)
+    {
+        $imagesData = $this->request()->getFiles(self::ADD_IMAGES_FIELD);
+        $filesData = $this->request()->getFiles(self::ADD_FILES_FIELD);
+        if ($imagesData === null && $filesData === null) {
+            return ApiResponse::error(
+                'Nothing to change: send the images to add as multipart/form-data in the "'
+                . self::ADD_IMAGES_FIELD . '" field, the files to add in the "'
+                . self::ADD_FILES_FIELD . '" field',
+                400
+            );
+        }
+
+        $imageSlots = Issue::MAX_IMAGES_COUNT - LPMImg::loadCountByInstance(LPMInstanceTypes::ISSUE, $issue->id);
+        $error = $this->validateImages($imagesData, self::ADD_IMAGES_FIELD, $imageSlots);
+        if ($error !== null) {
+            return ApiResponse::error($error, 400);
+        }
+
+        $fileSlots = Issue::MAX_FILES_COUNT - LPMFile::countByInstance(LPMInstanceTypes::ISSUE, $issue->id);
+        $error = $this->validateAttachments($filesData, $fileSlots, Issue::MAX_FILES_COUNT);
+        if ($error !== null) {
+            return ApiResponse::error($error, 400);
+        }
+
+        $user = $this->user();
+
+        // Запрос проверен выше, поэтому дальше доходит только сбой сохранения,
+        // а он на стороне сервера
+        if ($imagesData !== null) {
+            $error = $this->uploadImages($issue, self::ADD_IMAGES_FIELD, $imageSlots);
+            if ($error !== null) {
+                throw new ApiException('Images are not saved: ' . $error, 500);
+            }
+        }
+
+        if ($filesData !== null) {
+            $result = FileUploadManager::upload(
+                LPMInstanceTypes::ISSUE,
+                $issue->id,
+                $user->getID(),
+                $filesData,
+                $fileSlots,
+                Issue::MAX_FILES_COUNT
+            );
+
+            if (!empty($result['errors'])) {
+                throw new ApiException('Files are not saved: ' . $result['errors'][0], 500);
+            }
+        }
+
+        UserLogEntry::issueEdit($user->getID(), $issue->id, 'Add attachments via api');
+
+        $updated = Issue::load($issue->id);
+        if (!$updated) {
+            throw new Exception('Failed to load issue');
+        }
+
+        Issue::notifyByEmail(
+            $updated,
+            IssueEmailFormatter::issueChangedSubject($updated),
+            IssueEmailFormatter::issueChangedText($updated, $user),
+            EmailNotifier::PREF_EDIT_ISSUE
+        );
+
+        return ApiResponse::success([
+            'issue' => $this->serializer()->issue($updated),
+        ]);
+    }
+
+    /**
+     * Проверяет приложенные к запросу файлы - по тем же правилам, что
+     * и форма в интерфейсе, и до того, как хоть что-то будет сохранено.
+     * @param  array|null $filesData      Данные поля запроса с файлами.
+     * @param  int        $availableSlots Сколько файлов ещё можно приложить.
+     * @param  int        $totalLimit     Максимальное количество файлов.
+     * @return string|null Текст первой ошибки или null, если файлы можно загружать.
+     */
+    private function validateAttachments($filesData, $availableSlots, $totalLimit)
+    {
+        if ($filesData === null) {
+            return null;
+        }
+
+        $errors = FileUploadManager::validateUploads($filesData, $availableSlots, $totalLimit);
+
+        return empty($errors) ? null : $errors[0];
+    }
+
+    /**
+     * Проверяет приложенные к запросу изображения - по тем же правилам, что
+     * и форма в интерфейсе (свои размер и форматы, {@see LPMImgUpload}),
+     * и до того, как хоть что-то будет сохранено.
+     * @param  array|null $imagesData     Данные поля запроса с изображениями.
+     * @param  string     $field          Имя поля запроса.
+     * @param  int        $availableSlots Сколько изображений ещё можно приложить.
+     * @return string|null Текст первой ошибки или null, если изображения можно загружать.
+     */
+    private function validateImages($imagesData, $field, $availableSlots)
+    {
+        if ($imagesData === null) {
+            return null;
+        }
+
+        // Лимит количества проверяем сами: загрузчик изображений молча
+        // отбрасывает лишние, а для API это потеря без объяснения
+        if (self::countUploads($imagesData) > max(0, (int)$availableSlots)) {
+            return sprintf('Вы не можете прикрепить больше %d изображений', Issue::MAX_IMAGES_COUNT);
+        }
+
+        $errors = LPMImgUpload::validateUploadedFiles($field);
+
+        return empty($errors) ? null : $errors[0];
+    }
+
+    /**
+     * Сохраняет приложенные к запросу изображения задачи.
+     *
+     * Загружает их тем же способом, что и форма в интерфейсе
+     * ({@see ProjectPage::saveImages4Issue()}): изображение попадает
+     * в галерею задачи вместе с превью.
+     * @param  Issue  $issue          Задача, к которой прикладываются изображения.
+     * @param  string $field          Имя поля запроса.
+     * @param  int    $availableSlots Сколько изображений ещё можно приложить.
+     * @return string|null Текст ошибки или null, если всё сохранено.
+     */
+    private function uploadImages(Issue $issue, $field, $availableSlots)
+    {
+        $uploader = new LPMImgUpload(
+            max(0, (int)$availableSlots),
+            true,
+            [LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT],
+            'issues',
+            'scr_',
+            LPMInstanceTypes::ISSUE,
+            $issue->id,
+            false
+        );
+
+        if ($uploader->uploadViaFiles($field)) {
+            return null;
+        }
+
+        $errors = $uploader->getErrors();
+
+        return empty($errors) ? 'Не удалось загрузить изображение' : $errors[0];
     }
 
     private function createBranch(Issue $issue)
