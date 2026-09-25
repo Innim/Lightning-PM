@@ -451,6 +451,12 @@ let srv = {
         changePriority: function (issueId, delta, onResult) {
             this.s._('changePriority');
         },
+        loadProjectIssues: function (projectId, scope, search, filter, sort, offset, limit, onResult) {
+            this.s._('loadProjectIssues');
+        },
+        loadIssueRow: function (issueId, onResult) {
+            this.s._('loadIssueRow');
+        },
         changeScrumState: function (issueId, state, onResult) {
             this.s._('changeScrumState');
         },

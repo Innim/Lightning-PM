@@ -3,8 +3,6 @@
 Требуются: 
 	$list - список задач
 */
-
-$userId = lpm_get_user()->userId;
 ?>
 <table id="issuesList" class="issues-list backward-capability">
 	<thead>
@@ -19,99 +17,6 @@ $userId = lpm_get_user()->userId;
 		</tr>
 	</thead>
 	<tbody>
-		<?php
-		foreach ($list as $issue):
-			$classes = [IssueViewHelper::statusStateClass($issue->status)];
-
-			if ($issue->isTester($userId)) {
-				$classes[] = 'tester';
-			}
-
-			if ($deadlineLevel = IssueViewHelper::deadlineLevel($issue)) {
-				$classes[] = 'deadline-' . $deadlineLevel . '-issue';
-			}
-
-			$classes = array_merge($classes, IssueViewHelper::testStateClasses($issue));
-		?>
-		<tr class="<?=implode(' ', $classes);?>" data-id="<?=$issue->id;?>"
-			data-status="<?=$issue->status;?>" data-complete-date="<?=$issue->completeDate;?>"
-			data-create-date="<?=$issue->createDate;?>"
-			data-priority="<?=$issue->priority;?>"
-			data-test-activity="<?=$issue->testActivityDate;?>"
-			data-labels="<?=implode(',', $issue->getLabelNames());?>"
-			data-tester-ids="<?=$issue->getTesterIdsStr();?>">
-			<td>
-				<?php if ($issue->isOnBoard()):?>
-				<span class="on-board-state"><i class="far fa-sticky-note" title="Добавлена на SCRUM доску"></i></span>
-				<?php endif; ?>
-				<a class="id-issue" href="<?=$issue->getURL4View();?>"><?=$issue->getIdInProject();?></a>
-			</td>
-			<td>
-				<div class="priority-title-owner" title="Приоритет: <?=$issue->getPriorityStr();?> (<?=$issue->getPriorityDisplayValue();?>)">
-					<nobr>
-						<?php /* Обёртка задаёт точку отсчёта для стрелок: они центрируются
-						         по кружку, ширина которого зависит от режима сортировки */ ?>
-						<span class="priority-val-box"><span href="#" class="priority-val circle"
-								data-value="<?=$issue->priority;?>"><?=$issue->getPriorityDisplayValue();?></span><?php
-							if (!$issue->isCompleted()): ?><span class="priority-change-bar"><i
-									class="fas fa-caret-up priority-control priority-up"
-									onclick="issuePage.changePriority(event);"></i><i
-									class="fas fa-caret-down priority-control priority-down"
-									onclick="issuePage.changePriority(event);"></i></span><?php
-							endif;?></span><?=$issue->getType();?>
-					</nobr>
-				</div>
-			</td>
-			<td>
-				<?php lpm_print_issue_test_state($issue); ?>
-				<i class="fas fa-calendar-times icon-deadline icon-deadline-outdated" title="Просрочена"></i>
-				<i class="fas fa-fire icon-deadline icon-deadline-urgent" title="Срочная"></i>
-				<i class="fas fa-calendar-alt icon-deadline icon-deadline-medium" title="Средней срочности"></i>
-				<i class="fas fa-calendar-alt icon-deadline icon-deadline-low" title="Несрочная"></i>
-				<?php /* Меню копирования идёт последним — после счётчика комментариев. Перед ним
-				         не должно быть пробела: пробел — это точка переноса, и глиф отрывался бы
-				         на следующую строку; отступ от счётчика задан в CSS. По той же причине
-				         нет пробела и внутри ссылки перед `</a>` */ ?>
-				<a class="issue-name" href="<?=$issue->getURL4View();?>"><span
-					class="issue-name"><?=$issue->getName();?></span><?php
-					if ($issue->hours > 0): ?> (<span class="issue-hours"><?=$issue->getStrHours();?></span>
-					<?=$issue->getNormHoursLabel(true);?>)<?php endif;?></a><?php
-				if ($issue->commentsCount > 0): ?>
-				&nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span><?php
-				endif;
-				lpm_print_issue_copy_menu($issue); ?>
-				<?php lpm_print_issue_test_age($issue); ?>
-			</td>
-			<td>
-				<?php if ($issue->hasMembers()): ?>
-				<div class="member-list">
-					<i class="fas fa-wrench" title="Разработчик"></i>
-					<?php foreach ($issue->getMembers() as $i => $member): 
-					?><?=$i>0?', ':''?><a href="javascript:;"
-						data-member-id="<?=$member->getID();?>"><?=$member->getName();?></a><?php 
-					endforeach; ?>
-				</div>
-				<?php endif; ?>
-
-				<?php if ($issue->hasTesters()): ?>
-				<div>
-					<i class="fas fa-flask" title="Тестировщик"></i>
-					<?php foreach ($issue->getTesters() as $i => $member):
-					?><?=$i>0?', ':''?><?=$member->getName();?><?php 
-					endforeach; ?>
-				</div>
-				<?php endif; ?>
-			</td>
-			<td>
-				<p class="issue-list-item-desc my-3"><?=$issue->getShortDesc();?></p>
-			</td>
-			<td><?=($issue->isCompleted()?$issue->getCompletedDate():$issue->getCompleteDate());?></td>
-			<td>
-				<input type="hidden" name="issueId" value="<?=$issue->id;?>" />
-				<button onclick="restoreIssue( event );" class="btn btn-secondary restore-btn">Открыть</button>
-				<button onclick="completeIssue( event );" class="btn btn-success complete-btn">Завершить</button>
-			</td>
-		</tr>
-		<?php endforeach;?>
+		<?php lpm_print_issue_rows($list); ?>
 	</tbody>
 </table>

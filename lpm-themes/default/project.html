@@ -5,7 +5,15 @@
 	$search - поисковый запрос, по которому отобран список (пустая строка - поиска не было)
 	$issuesCountLabel - подпись к количеству задач в отобранном списке
 		либо null, если показан весь список и уместна общая статистика проекта
-		(не null также включает подпись о пустой выдаче)
+	$issuesPaging - состояние выборки, из которой показана первая порция:
+		scope - область поиска по статусу задачи,
+		search - поисковый запрос,
+		statuses - статусы задач этой области (пусто - любые),
+		pageSize - размер порции подгрузки,
+		maxPageSize - предельный размер порции, который отдаёт сервер,
+		loaded - сколько задач показано,
+		total - сколько задач в выборке всего,
+		opened - сколько задач выборки открыто
 	$searchForm - данные формы поиска либо null, если на подстранице поиска нет:
 		url - адрес списка задач без параметров поиска,
 		scope - область поиска по статусу задачи, в которой отобран список,
@@ -30,20 +38,23 @@ $searchActive = $searchForm !== null && $issuesCountLabel !== null;
                         class="fa fa-file-excel" aria-hidden="true"></i></a>
             </span>
         </h3>
+		<?php /* выведены оба вида статистики: отбор фильтром включается уже на
+		         открытой странице, и JS переключает вид, не перезагружая её.
+		         Классы issues-selection, issues-summary, issues-shown и issues-opened
+		         используются JS */ ?>
 		<div class="project-stat">
-			<?php if ($issuesCountLabel !== null): ?>
-			<?php /* класс issues-shown используется JS: он пересчитывает выборку
-			         после завершения или возврата задачи прямо из списка */ ?>
-			<span class="label"><?=$issuesCountLabel;?>:</span>
-			<span class="issues-shown value"><?=count($issues);?></span>
-			<?php else: ?>
-			<span class="label">Открыто:</span>
-			<span class="issues-opened value"></span>
+			<span class="issues-selection<?=$issuesCountLabel === null ? ' d-none' : '';?>">
+				<span class="label"><?=$issuesCountLabel === null ? 'Показано' : $issuesCountLabel;?>:</span>
+				<span class="issues-shown value"><?=$issuesPaging['total'];?></span>
+			</span>
+			<span class="issues-summary<?=$issuesCountLabel !== null ? ' d-none' : '';?>">
+				<span class="label">Открыто:</span>
+				<span class="issues-opened value"><?=$issuesPaging['opened'];?></span>
 
-			<span class="project-opened-issue-hours"<?php if (($hours=$project->getSumOpenedIssuesHours()) == 0):?> style="display:none;"<?php endif;?>>(<span
-					class="issue-hours value"><?=$hours;?></span>&nbsp;<span class="issue-hours-label"><?=$project->getNormHoursLabel($hours);?></span>)</span>
-			из <span class="issues-total value"><?=$project->getTotalIssuesCount()?></span>
-			<?php endif; ?>
+				<span class="project-opened-issue-hours"<?php if (($hours=$project->getSumOpenedIssuesHours()) == 0):?> style="display:none;"<?php endif;?>>(<span
+						class="issue-hours value"><?=$hours;?></span>&nbsp;<span class="issue-hours-label"><?=$project->getNormHoursLabel($hours);?></span>)</span>
+				из <span class="issues-total value"><?=$project->getTotalIssuesCount()?></span>
+			</span>
 		</div>
 		<div class="filters-line flex-wrap gap-3 mb-1">
 			<?php if ($searchForm !== null): ?>
@@ -112,13 +123,28 @@ $searchActive = $searchForm !== null && $issuesCountLabel !== null;
 		</div>
 		<?php endif; ?>
 		<?php lpm_print_issues($issues); ?>
-		<?php if ($issuesCountLabel !== null): ?>
 		<?php /* класс issues-list-empty используется JS: подпись показывается,
 		         когда в выборке не осталось ни одной задачи */ ?>
 		<div class="issues-list-empty <?php if (!empty($issues)): ?>d-none <?php endif; ?>text-muted my-3">
 			Ничего не найдено.
 		</div>
-		<?php endif; ?>
+		<?php /* data-атрибуты задают JS исходное состояние выборки: он догружает
+		         следующие порции и пересчитывает статистику по ответам сервера */ ?>
+		<div id="issuesListPaging" class="my-3<?=$issuesPaging['loaded'] >= $issuesPaging['total'] ? ' d-none' : '';?>"
+			data-scope="<?=HTMLHelper::escape($issuesPaging['scope']);?>"
+			data-search="<?=HTMLHelper::escape($issuesPaging['search']);?>"
+			data-statuses="<?=implode(',', $issuesPaging['statuses']);?>"
+			data-page-size="<?=$issuesPaging['pageSize'];?>"
+			data-max-page-size="<?=$issuesPaging['maxPageSize'];?>"
+			data-loaded="<?=$issuesPaging['loaded'];?>"
+			data-total="<?=$issuesPaging['total'];?>"
+			data-opened="<?=$issuesPaging['opened'];?>">
+			<button type="button" class="btn btn-outline-primary issues-load-more"
+				onclick="issuePage.loadMoreIssues();">Показать ещё</button>
+			<span class="issues-load-more-info text-muted ms-2">Показано
+				<span class="issues-loaded-count"><?=$issuesPaging['loaded'];?></span> из
+				<span class="issues-selection-count"><?=$issuesPaging['total'];?></span></span>
+		</div>
 		<div class="operations-line mt-2">
 			<a href="<?=ProjectPage::getIssueFormUrl($project->uid, Issue::TYPE_BUG);?>" class="btn btn-outline-danger my-1">
 				<i class="fas fa-bug"></i> Добавить ошибку
