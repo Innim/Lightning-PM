@@ -4,8 +4,13 @@
  * 
  * Для работы интеграции требуется приложение со следующими scope:
  * - incoming-webhook
- * - groups:history
  * - users.profile:read
+ *
+ * Историю канала интеграция не читает: метку ветки обсуждения задачи она
+ * хранит у себя (см. SlackIssueThread). Право на саму отправку по-прежнему
+ * определяется типом токена: user-токен пишет только в каналы, где состоит
+ * его владелец, а приложению, чтобы писать в публичный канал, в котором оно
+ * не состоит, нужен scope chat:write.public.
  */
 class SlackIntegration
 {
@@ -24,6 +29,12 @@ class SlackIntegration
 
         return self::$_instance;
     }
+
+    /** Сообщение журнала о неудачной отправке оповещения. */
+    private const MSG_POST_FAILED = 'Не удалось отправить сообщение в Slack';
+
+    /** Сообщение журнала о неудачной отправке оповещения в ветку. */
+    private const MSG_THREAD_POST_FAILED = 'Не удалось отправить сообщение в ветку Slack';
 
     private $_token;
 
@@ -216,6 +227,12 @@ class SlackIntegration
         return $text;
     }
 
+    /**
+     * Отправляет оповещение по задаче в канал её проекта.
+     *
+     * Все оповещения по задаче собираются в одну ветку: первое сообщение
+     * её открывает, метка ветки сохраняется и дальше используется напрямую.
+     */
     private function postMessageForIssue(Issue $issue, $text, $attachments = null)
     {
         $project = $issue->getProject();
@@ -223,51 +240,136 @@ class SlackIntegration
             return;
         }
 
-        // Ищем сообщение, которое будет как базовое для ветки
-        $prefix = $this->getIssuePrefix($issue);
-        $client = $this->getClient();
+        $issueId = (int)$issue->id;
 
-        $threadTs = null;
-        $res = $client->conversationsHistory(['channel' => $channel, 'limit' => 50]);
-        if ($res->getOk()) {
-            $messages = $res->getMessages();
-            foreach ($messages as $message) {
-                $msgText = $message->getText();
-                if (mb_strpos($msgText, $prefix) !== false) {
-                    $threadTs = $message->getThreadTs();
-                    if (empty($threadTs)) {
-                        $threadTs = $message->getTs();
-                    }
-                    break;
-                }
-            }
-        } else {
-            LPMLog::error('Не удалось получить историю канала Slack', LPMLog::CH_SLACK, [
-                'channel' => $channel,
-                'error' => method_exists($res, 'getError') ? $res->getError() : null,
-            ]);
-        }
-
-        $this->postMessage($channel, $text, $attachments, $threadTs);
-    }
-
-    private function postMessage($channel, $text, $attachments = null, $threadTs = null)
-    {
-        $client = $this->getClient();
         $args = ['channel' => $channel, 'text' => $text];
         if (!empty($attachments)) {
             $args['attachments'] = json_encode($attachments);
         }
-        if (!empty($threadTs)) {
+
+        $threadTs = $this->loadThreadTs($issueId, $channel);
+
+        try {
+            $res = $this->sendMessage($args, $threadTs);
+        } catch (\JoliCode\Slack\Exception\SlackErrorResponse $e) {
+            if ($threadTs === null) {
+                $this->logError(self::MSG_POST_FAILED, $e, $channel);
+
+                return;
+            }
+
+            // Slack отказался писать в ветку - обычно потому, что сообщение,
+            // которое её открывало, удалили. Отдельного кода ошибки для этого
+            // в справочнике chat.postMessage нет, поэтому повторяем отправку
+            // вне ветки при любом отказе, названном самим Slack. Сбои связи
+            // сюда не попадают: там неизвестно, дошёл ли запрос.
+            $this->logError(self::MSG_THREAD_POST_FAILED, $e, $channel);
+
+            try {
+                $res = $this->sendMessage($args, null);
+            } catch (\Throwable $retryError) {
+                $this->logError(self::MSG_POST_FAILED, $retryError, $channel);
+
+                return;
+            }
+
+            // Вне ветки сообщение прошло - значит прежняя ветка непригодна,
+            // и дальше задача ведётся от только что отправленного сообщения.
+            $threadTs = null;
+        } catch (\Throwable $e) {
+            $this->logError(self::MSG_POST_FAILED, $e, $channel);
+
+            return;
+        }
+
+        // Метку запоминаем только у сообщения, которое открыло ветку:
+        // ответ в уже существующей ветке возвращает собственную метку.
+        if ($threadTs === null) {
+            $this->rememberThreadTs($issueId, $channel, $res);
+        }
+    }
+
+    /**
+     * Отправляет сообщение в канал.
+     *
+     * @param  array       $args Аргументы chat.postMessage.
+     * @param  String|null $threadTs Метка ветки или null, чтобы отправить
+     *                               сообщение отдельно, вне ветки.
+     * @return JoliCode\Slack\Api\Model\ChatPostMessagePostResponse200 Ответ Slack.
+     * @throws JoliCode\Slack\Exception\SlackErrorResponse В случае ошибки в ответ на запрос.
+     */
+    private function sendMessage(array $args, $threadTs)
+    {
+        if ($threadTs !== null) {
             $args['thread_ts'] = $threadTs;
         }
-        $res = $client->chatPostMessage($args);
-        if (!$res->getOk()) {
-            LPMLog::error('Не удалось отправить сообщение в Slack', LPMLog::CH_SLACK, [
+
+        return $this->getClient()->chatPostMessage($args);
+    }
+
+    /**
+     * Метка ветки задачи в канале.
+     *
+     * @return String|null Метка или null, если ветки ещё нет либо
+     *                     прочитать её не удалось.
+     */
+    private function loadThreadTs($issueId, $channel)
+    {
+        try {
+            return SlackIssueThread::loadTs($issueId, $channel);
+        } catch (\Throwable $e) {
+            LPMLog::error('Не удалось прочитать метку ветки Slack', LPMLog::CH_SLACK, [
                 'channel' => $channel,
-                'error' => method_exists($res, 'getError') ? $res->getError() : null,
+                'issueId' => $issueId,
+                'error' => get_class($e) . ': ' . $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Запоминает метку ветки, открытой отправленным сообщением.
+     *
+     * @param JoliCode\Slack\Api\Model\ChatPostMessagePostResponse200 $res Ответ Slack.
+     */
+    private function rememberThreadTs($issueId, $channel, $res)
+    {
+        $threadTs = $res === null ? null : $res->getTs();
+        if (empty($threadTs)) {
+            return;
+        }
+
+        try {
+            SlackIssueThread::saveTs($issueId, $channel, $threadTs);
+        } catch (\Throwable $e) {
+            // Не запомнили метку - следующее оповещение просто начнёт новую
+            // ветку. Прерывать из-за этого действие пользователя незачем.
+            LPMLog::error('Не удалось сохранить метку ветки Slack', LPMLog::CH_SLACK, [
+                'channel' => $channel,
+                'issueId' => $issueId,
+                'error' => get_class($e) . ': ' . $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Записывает в журнал неудачное обращение к Slack API.
+     *
+     * @param String     $message Что не удалось сделать.
+     * @param \Throwable $e Ошибка, с которой завершилось обращение.
+     * @param String     $channel Идентификатор канала.
+     */
+    private function logError($message, \Throwable $e, $channel)
+    {
+        $error = $e instanceof \JoliCode\Slack\Exception\SlackErrorResponse
+            ? $e->getErrorCode()
+            : get_class($e) . ': ' . $e->getMessage();
+
+        LPMLog::error($message, LPMLog::CH_SLACK, [
+            'channel' => $channel,
+            'error' => $error,
+        ]);
     }
 
     private function getIssuePrefix(Issue $issue)
