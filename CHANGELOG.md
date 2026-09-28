@@ -4,6 +4,17 @@
 - API: к задаче можно приложить картинку и файл ([#495](https://task.innim.ru/project/lightning-pm/issue/495)).
 - API: к комментарию можно приложить файл ([#495](https://task.innim.ru/project/lightning-pm/issue/495)).
 
+### Changed
+- «Отмена» в форме задачи спрашивает подтверждение, если в форме есть несохранённые изменения ([#500](https://task.innim.ru/project/lightning-pm/issue/500)).
+- Кнопка «Отмена» в форме задачи отодвинута от «Сохранить» ([#500](https://task.innim.ru/project/lightning-pm/issue/500)).
+
+### Fixed
+- Спринт закрывается и после того, как доска обновилась сама ([#501](https://task.innim.ru/project/lightning-pm/issue/501)).
+- Два одновременных закрытия спринта больше не разносят один спринт по двум снимкам архива — второе закрытие отклоняется ([#501](https://task.innim.ru/project/lightning-pm/issue/501)).
+- В ленте комментариев проекта переход «Раньше» больше не приводит на пустую страницу ([#423](https://task.innim.ru/project/lightning-pm/issue/423)).
+- Имя приложенного файла со спецсимволами показывается на странице задачи без искажений ([#494](https://task.innim.ru/project/lightning-pm/issue/494)).
+- Просмотр приложенного HTML-файла сообщает, что содержимого файла нет на диске ([#479](https://task.innim.ru/project/lightning-pm/issue/479)).
+
 ## 0.33.1 - 2026-09-20
 
 ### Fixed

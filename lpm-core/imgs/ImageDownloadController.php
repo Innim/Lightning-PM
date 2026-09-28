@@ -72,6 +72,25 @@ class ImageDownloadController
     }
 
     /**
+     * Запрошена ли картинка как часть страницы, а не переходом по её адресу.
+     *
+     * Такой ответ читает браузер, а не человек: страницу с объяснением он
+     * выбросит и нарисует значок битой картинки, так что отказ ему довольно
+     * сообщить кодом состояния. Браузер, который назначение запроса не
+     * сообщает, причисляем к переходам: показать человеку лишнюю страницу
+     * безобиднее, чем промолчать в ответ на переход.
+     * @return bool
+     */
+    private static function isEmbeddedRequest()
+    {
+        $dest = strtolower(trim(
+            isset($_SERVER['HTTP_SEC_FETCH_DEST']) ? $_SERVER['HTTP_SEC_FETCH_DEST'] : ''
+        ));
+
+        return $dest === 'image';
+    }
+
+    /**
      * Есть ли у браузера актуальная копия картинки.
      * @param  int $modified Время последнего изменения файла (unix).
      * @return bool
@@ -114,9 +133,31 @@ class ImageDownloadController
      *   ещё и именем файла картинки на диске - без него изображение не
      *   отдаётся.
      * @throws NotFoundException Изображения нет, оно удалено, адрес не
-     *   сходится с именем файла или файл не найден на диске.
+     *   сходится с именем файла или файл не найден на диске - и по адресу
+     *   перешли, а не вставили картинку в страницу: тогда вместо картинки
+     *   будет показан отказ ({@see NotAvailablePage}). Картинке внутри
+     *   страницы вместо этого отвечаем кодом 404 с пустым телом.
      */
     public function handle($imgId)
+    {
+        try {
+            $this->sendImage($imgId);
+        } catch (NotFoundException $e) {
+            if (!self::isEmbeddedRequest()) {
+                throw $e;
+            }
+
+            http_response_code($e->getStatusCode());
+            header('Content-Length: 0');
+        }
+    }
+
+    /**
+     * Находит изображение и отдаёт его содержимое.
+     * @param  int $imgId Идентификатор изображения.
+     * @throws NotFoundException Картинки нет или её нечем отдать.
+     */
+    private function sendImage($imgId)
     {
         $img = LPMImg::load($imgId);
         // Несовпадение имени отвечает так же, как отсутствие картинки: иначе

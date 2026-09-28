@@ -198,8 +198,9 @@ const scrumBoardAutoRefresh = {
 
         sprintTarget.setValue(res.sprintTargetText, res.sprintTargetHtml);
 
-        const sprintNum = this._board.querySelector('.scrum-board-sprint-num');
-        if (sprintNum) sprintNum.textContent = 'Спринт #' + res.sprintNum;
+        // Номер спринта ставится только через scrumBoard: закрытие спринта
+        // берёт его из data-атрибута доски, а не из заголовка
+        scrumBoard.setSprintNum(res.sprintNum);
 
         // Фильтр доски клиентский: приехавшие стикеры про него не знают.
         // Счётчики колонок пересчитываются следом, внутри применения фильтров.
