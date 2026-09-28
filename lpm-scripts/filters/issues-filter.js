@@ -63,12 +63,20 @@ lpm.components.issueListFilter = {
     /**
      * Создаёт компонент фильтра.
      *
+     * Отбор выполняется одним из двух способов. По умолчанию компонент скрывает
+     * не подошедшие элементы прямо на странице - это годится там, где показаны
+     * все задачи сразу. Если передан `onApply`, отбор уходит ему: там, где
+     * список показан по частям, фильтровать можно только на сервере, иначе
+     * отбор молча ограничится загруженной частью.
+     *
      * @param {string} selector Селектор корневого элемента фильтра.
      * @param {function(): Iterable<Element>} getIssueElements Элементы задач, которые фильтруются.
      * @param {function(Element, Array<string>, Array<number>, Array<number>): boolean} filter
      *        Предикат показа: (элемент, теги, id исполнителей, id тестировщиков).
+     * @param {function(Object)} [onApply] Обработчик отбора: получает текущий выбор
+     *        фильтров и сам приводит список в соответствие с ним.
      */
-    init: function ({selector = '#issueListFilter', getIssueElements, filter}) {
+    init: function ({selector = '#issueListFilter', getIssueElements, filter, onApply = null}) {
         const component = this;
         // Переключатель «несколько исполнителей» выводится не на всех страницах;
         // о его наличии шаблон сообщает атрибутом на корневом элементе
@@ -152,40 +160,48 @@ lpm.components.issueListFilter = {
                      * Текущий выбор фильтров - то, что уходит подписчику
                      * и сохраняется в адресе страницы.
                      *
-                     * @returns {{tags: Array<string>, users: Array<Object>, multiMemberOnly: boolean}}
+                     * @returns {{tags: Array<string>, users: Array<Object>,
+                     *           memberIds: Array<number>, testerIds: Array<number>,
+                     *           multiMemberOnly: boolean}}
                      */
                     filterState() {
                         return {
                             tags: this.selectedTags,
                             users: this.selectedUsers,
+                            memberIds: this.selectedIdsByRole('member'),
+                            testerIds: this.selectedIdsByRole('tester'),
                             multiMemberOnly: this.multiMemberOnly
                         };
                     },
 
                     applyFilters() {
-                        const hasTagFilter = this.selectedTags.length > 0;
-                        const hasUserFilter = this.selectedUsers.length > 0;
-                        const multiMemberOnly = this.multiMemberOnly;
+                        const state = this.filterState();
+
+                        if (onApply) {
+                            onApply(state);
+                            onChange(state);
+                            return;
+                        }
+
+                        const hasTagFilter = state.tags.length > 0;
+                        const hasUserFilter = state.users.length > 0;
+                        const multiMemberOnly = state.multiMemberOnly;
 
                         if (!hasTagFilter && !hasUserFilter && !multiMemberOnly) {
                             this.showAllIssues();
-                            onChange(this.filterState());
+                            onChange(state);
                             return;
                         }
-                        
-                        const selectedTags = this.selectedTags;
-                        const memberIds = this.selectedIdsByRole('member');
-                        const testerIds = this.selectedIdsByRole('tester');
 
                         // Условия складываются: задача остаётся, только если проходит
                         // и по числу исполнителей, и по тегам с людьми
                         this.getIssueElements().forEach((el) => {
                             const show = (!multiMemberOnly || component.hasSeveralMembers(el))
-                                && filter(el, selectedTags, memberIds, testerIds);
+                                && filter(el, state.tags, state.memberIds, state.testerIds);
                             this.showElement(el, show);
                         });
 
-                        onChange(this.filterState());
+                        onChange(state);
                     },
 
                     showAllIssues() {

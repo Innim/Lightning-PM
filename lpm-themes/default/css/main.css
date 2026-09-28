@@ -927,13 +927,26 @@ table.issues-list td .priority-change-animation {
 	position: absolute;
 	user-select: none;
 }
-/* Кратковременная подсветка строки/блока для привлечения внимания (гаснет). */
+/* Кратковременная подсветка блока для привлечения внимания (гаснет). */
 @keyframes highlight-fade {
 	from { background-color: #e0cffc; }
 	to   { background-color: #fff; }
 }
-.highlight-fade {
+.highlight-fade:not(tr) {
 	animation: highlight-fade 3s ease;
+}
+/* Строку таблицы подсвечиваем внутренней тенью её ячеек, а не фоном строки:
+   фон завершённых задач и задач в проверке задан с !important, а важное
+   объявление всегда выигрывает у значений анимации - фоновая подсветка на таких
+   строках не появилась бы вовсе. Тень ложится поверх любого фона и с ним не спорит.
+   Гаснет в прозрачность того же цвета: переход в `transparent` идёт через чёрный
+   и давал бы серый налёт. */
+@keyframes highlight-fade-cells {
+	from { box-shadow: inset 0 0 0 9999px #e0cffc; }
+	to   { box-shadow: inset 0 0 0 9999px rgba(224, 207, 252, 0); }
+}
+tr.highlight-fade > td {
+	animation: highlight-fade-cells 3s ease;
 }
 table.issues-list tr.verify-issue.tester {
 	background: #FFEC80 !important;
