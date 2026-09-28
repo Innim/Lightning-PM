@@ -775,21 +775,21 @@ WHERE;
 
                 $statuses = implode(', ', [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT]);
 
+                // Участие в задаче сохраняется и после вывода человека
+                // из проекта, а права на задачу - нет: доступ проверяется
+                // отдельно от участия
+                $accessSql = Project::readPermitSqlCondition($memberId, 'i.projectId');
+
                 $list = self::loadList(
                     // только задачи, в которых я исполнитель или тестировщик
                     "EXISTS ($participationSql)" .
+                    // и только те, к которым у меня есть доступ
+                    " AND ($accessSql)" .
                     // незавершённые
                     " AND `i`.`status` IN ($statuses)" .
                     // и проект не в архиве
                     ' AND `p`.`isArchive` = 0'
                 );
-
-                // Участие в задаче сохраняется и после вывода человека
-                // из проекта, а права на задачу - нет: доступ проверяется
-                // отдельно от участия
-                $list = array_values(array_filter($list, function (Issue $issue) use ($memberId) {
-                    return $issue->checkViewPermit($memberId);
-                }));
 
                 self::$_listByUser[$memberId] = self::preloadParticipants($list);
             } else {
@@ -831,9 +831,14 @@ WHERE;
         $statuses = implode(', ', [self::STATUS_IN_WORK, self::STATUS_WAIT]);
         $activeStates = implode(', ', ScrumStickerState::getActiveStates());
 
-        $list = self::loadList(
+        // Участие в задаче правами на неё не является, см. getListByMember()
+        $accessSql = Project::readPermitSqlCondition($testerId, 'i.projectId');
+
+        return self::loadList(
             // только задачи, в которых я тестировщик
             "EXISTS ($testerSql)" .
+            // и только те, к которым у меня есть доступ
+            " AND ($accessSql)" .
             // незавершённые
             " AND `i`.`status` IN ($statuses)" .
             // проект не в архиве и со scrum доской
@@ -841,11 +846,6 @@ WHERE;
             // `st` - присоединённый в loadList() стикер задачи
             " AND (`st`.`state` IS NULL OR `st`.`state` NOT IN ($activeStates))"
         );
-
-        // Участие в задаче правами на неё не является, см. getListByMember()
-        return array_values(array_filter($list, function (Issue $issue) use ($testerId) {
-            return $issue->checkViewPermit($testerId);
-        }));
     }
 
     /**
@@ -1010,6 +1010,39 @@ WHERE;
     }
 
     /**
+     * Условие выборки важных задач в работе, в которых пользователь исполнитель.
+     *
+     * Единственное определение того, какая задача считается важной и открытой
+     * для пользователя: на него опираются оба счётчика важных задач.
+     *
+     * @param  int $userId Идентификатор пользователя.
+     * @return string Условие для `WHERE` по таблице задач с алиасом `i`.
+     */
+    private static function importantIssuesSqlCondition($userId)
+    {
+        // Исполнитель проверяется подзапросом, а не присоединением таблицы:
+        // при нескольких записях участия задача посчиталась бы несколько раз
+        $memberSql = self::buildQuery([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::MEMBERS,
+            'AS'     => 'im',
+            'WHERE'  => [
+                '`im`.`instanceId`'   => self::col('i.id'),
+                '`im`.`instanceType`' => LPMInstanceTypes::ISSUE,
+                '`im`.`userId`'       => (int)$userId,
+            ],
+        ]);
+
+        $statusInWork = self::STATUS_IN_WORK;
+        $minPriority = self::IMPORTANT_PRIORITY;
+
+        return "EXISTS ($memberSql)"
+            . " AND `i`.`priority` >= $minPriority"
+            . " AND `i`.`status` = $statusInWork"
+            . ' AND `i`.`deleted` = 0';
+    }
+
+    /**
      * Считает важные задачи в работе, в которых пользователь исполнитель.
      *
      * Учитываются только доступные пользователю задачи - по тому же правилу,
@@ -1018,67 +1051,103 @@ WHERE;
      * @param  int|null $projectId Ограничить подсчёт одним проектом; `null` -
      *                             считать по всем неархивным проектам.
      * @return int Количество задач.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
      */
     public static function getCountImportantIssues($userId, $projectId = null)
     {
         $userId = (int)$userId;
         $projectId = (int)$projectId;
 
-        $user = User::load($userId);
-        if (empty($user)) {
+        if ($userId <= 0) {
             return 0;
         }
 
-        // Доступ проверяется условием запроса, а не фильтрацией результата:
-        // счётчик печатается в меню на каждой странице, и загрузка списка задач
-        // ради подсчёта обошлась бы дороже.
-        // Модератору доступны все проекты, поэтому для него членство не ищем
-        $accessWhere = '';
-        if (!$user->isModerator()) {
-            $projectMemberSql = self::buildQuery([
-                'SELECT' => '1',
-                'FROM'   => LPMTables::MEMBERS,
-                'AS'     => 'pm',
-                'WHERE'  => [
-                    '`pm`.`instanceId`'   => self::col('i.projectId'),
-                    '`pm`.`instanceType`' => LPMInstanceTypes::PROJECT,
-                    '`pm`.`userId`'       => $userId,
-                ],
-            ]);
+        $where = self::importantIssuesSqlCondition($userId);
 
-            $accessWhere = "AND EXISTS ($projectMemberSql)";
-        }
-
-        $issueType = LPMInstanceTypes::ISSUE;
-        $statusInWork = self::STATUS_IN_WORK;
-        $minPriority = self::IMPORTANT_PRIORITY;
+        $hash = [
+            'SELECT' => 'COUNT(`i`.`id`) AS `count`',
+            'FROM'   => LPMTables::ISSUES,
+            'AS'     => 'i',
+        ];
 
         if (empty($projectId)) {
-            $projectFrom = "INNER JOIN `%3\$s` `p` ON `p`.`id` = `i`.`projectId`";
-            $projectWhere = 'AND `p`.`isArchive` = 0';
+            // Проекты заранее не известны, поэтому доступ к ним проверяется
+            // условием запроса
+            $accessSql = Project::readPermitSqlCondition($userId, 'i.projectId');
+
+            $where .= " AND ($accessSql) AND `p`.`isArchive` = 0";
+            $hash['JOINS'] = [[
+                'INNER JOIN' => LPMTables::PROJECTS,
+                'AS'         => 'p',
+                'ON'         => ['`p`.`id`' => self::col('i.projectId')],
+            ]];
         } else {
-            $projectFrom = '';
-            $projectWhere = "AND `i`.`projectId` = $projectId";
+            // Доступ к известному проекту проверяется по множеству проектов
+            // пользователя, закэшированному на время запроса, - это не стоит
+            // ни одного запроса, и при отказе база не опрашивается вовсе
+            if (!Project::checkUserReadPermit($projectId, $userId)) {
+                return 0;
+            }
+
+            $where .= " AND `i`.`projectId` = $projectId";
         }
 
-        $sql = <<<SQL
-    SELECT COUNT(`i`.`id`) AS `count`
-      FROM `%1\$s` `i`
-INNER JOIN `%2\$s` `m`
-        ON `m`.`instanceId` = `i`.`id`
-           $projectFrom
-     WHERE `m`.`userId` = $userId
-       AND `m`.`instanceType` = $issueType
-       $projectWhere
-       AND `i`.`priority` >= $minPriority
-       AND `i`.`status` = $statusInWork
-       AND `i`.`deleted` = 0
-       $accessWhere
-SQL;
+        $hash['WHERE'] = $where;
 
-        $db = self::getDB();
-        $res = $db->queryt($sql, LPMTables::ISSUES, LPMTables::MEMBERS, LPMTables::PROJECTS);
-        return $res ? (int)$res->fetch_assoc()['count'] : 0;
+        $row = self::loadFromDV2($hash)->fetch_assoc();
+        return $row ? (int)$row['count'] : 0;
+    }
+
+    /**
+     * Считает важные задачи в работе, в которых пользователь исполнитель,
+     * по каждому из указанных проектов - одним запросом.
+     *
+     * Важной считается та же задача, что и в
+     * {@see Issue::getCountImportantIssues()}; недоступные пользователю
+     * проекты в подсчёт не попадают.
+     *
+     * @param  int        $userId     Идентификатор пользователя.
+     * @param  array<int> $projectIds Идентификаторы проектов.
+     * @return array<int, int> Количество задач по идентификатору проекта.
+     *                         Проектов, в которых таких задач нет, в результате
+     *                         тоже нет.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
+    public static function getImportantIssuesCountByProjects($userId, array $projectIds)
+    {
+        $userId = (int)$userId;
+
+        $ids = [];
+        foreach ($projectIds as $projectId) {
+            $projectId = (int)$projectId;
+            // Проекты известны, поэтому доступ к ним проверяется по
+            // закэшированному множеству проектов пользователя, без запросов
+            if ($projectId > 0 && Project::checkUserReadPermit($projectId, $userId)) {
+                $ids[$projectId] = $projectId;
+            }
+        }
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $where = self::importantIssuesSqlCondition($userId)
+            . ' AND `i`.`projectId` IN (' . implode(', ', $ids) . ')';
+
+        $res = self::loadFromDV2([
+            'SELECT'   => '`i`.`projectId` AS `projectId`, COUNT(`i`.`id`) AS `count`',
+            'FROM'     => LPMTables::ISSUES,
+            'AS'       => 'i',
+            'WHERE'    => $where,
+            'GROUP BY' => '`i`.`projectId`',
+        ]);
+
+        $counts = [];
+        while ($row = $res->fetch_assoc()) {
+            $counts[(int)$row['projectId']] = (int)$row['count'];
+        }
+
+        return $counts;
     }
 
     /**

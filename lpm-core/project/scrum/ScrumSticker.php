@@ -176,22 +176,20 @@ SQL;
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
         $instanceType = implode(',', array_map('intval', $instanceTypes));
 
+        // Участие в задаче сохраняется и после вывода человека из проекта,
+        // а права на задачу - нет: доступ проверяется отдельно от участия
+        $accessSql = Project::readPermitSqlCondition($userId, 'i.projectId');
+
         $where = <<<SQL
 `s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
+                AND (${accessSql})
 SQL;
-        $list = self::loadList(
+        return self::loadList(
             $where,
             '',
             ['m' => LPMTables::MEMBERS],
             ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
         );
-
-        // Участие в задаче сохраняется и после вывода человека из проекта,
-        // а права на задачу - нет: доступ проверяется отдельно от участия
-        return array_values(array_filter($list, function (ScrumSticker $sticker) use ($userId) {
-            $issue = $sticker->getIssue();
-            return !empty($issue) && $issue->checkViewPermit($userId);
-        }));
     }
 
     /**
