@@ -1,5 +1,8 @@
 ## Next
 
+### Added
+- В блоке связанных задач у каждой задачи виден её статус ([#497](https://task.innim.ru/project/lightning-pm/issue/497)).
+
 ### Fixed
 - Спринт закрывается и после того, как доска обновилась сама ([#501](https://task.innim.ru/project/lightning-pm/issue/501)).
 - Два одновременных закрытия спринта больше не разносят один спринт по двум снимкам архива — второе закрытие отклоняется ([#501](https://task.innim.ru/project/lightning-pm/issue/501)).
