@@ -149,6 +149,7 @@ $(function ($) {
 
     issueForm.ensureFileUploadSlot();
     issueForm.refreshUploadRemoveButtons();
+    issueForm.initPriority();
 
     issueForm.initPage();
 });
@@ -338,6 +339,44 @@ let issueForm = {
     getIssueId: () => parseInt($("#issueForm input[name=issueId]").val()),
     getRevision: () => $("#issueForm input[name=revision]").val(),
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
+    /**
+     * Включает управление приоритетом в форме задачи: подпись со значением
+     * и список готовых значений рядом с ползунком.
+     */
+    initPriority: function () {
+        $('#issueForm #priority-values > li').on('click', function () {
+            // В подписи пункта стоит отображаемое значение приоритета —
+            // оно на единицу больше самого приоритета.
+            issueForm.setPriorityVal($(this).text().match(/\d+/) - 1);
+        });
+
+        issueForm.setPriorityVal($('#issueForm #priority').val());
+    },
+    /**
+     * Ставит приоритет задачи в форме и обновляет подпись рядом с ползунком.
+     * @param {Number|String} value Приоритет задачи (0..99).
+     */
+    setPriorityVal: function (value) {
+        const valueInt = parseInt(value);
+        const title = Issue.getPriorityStr(valueInt);
+        const displayVal = Issue.getPriorityDisplayVal(valueInt);
+
+        $('#priority').val(valueInt);
+        $('#priorityVal')
+            .html('<i class="fa-solid fa-angles-up" aria-hidden="true"></i> '
+                + title + ' (' + displayVal + ')')
+            .css('backgroundColor', issuePage.getPriorityColor(valueInt));
+    },
+    /** Поднимает приоритет задачи в форме на единицу. */
+    upPriorityVal: function () {
+        const value = parseInt($('#priority').val());
+        if (value < 99) issueForm.setPriorityVal(value + 1);
+    },
+    /** Опускает приоритет задачи в форме на единицу. */
+    downPriorityVal: function () {
+        const value = parseInt($('#priority').val());
+        if (value > 0) issueForm.setPriorityVal(value - 1);
+    },
     handleEditState: function () {
         issueForm.onShow();
         if (issueForm.restoreInput()) {
@@ -648,7 +687,7 @@ let issueForm = {
         $('form input:radio[name=type][value=' + value.type + ']', "#issueForm").prop('checked', true);
         // приоритет
         $("#issueForm form input[name=priority]").val(value.priority);
-        issuePage.setPriorityVal(value.priority);
+        issueForm.setPriorityVal(value.priority);
         // дата окончания
         lpm.datePicker.setValue($("#issueForm form input[name=completeDate]")[0], value.completeDate);
         // исполнители
