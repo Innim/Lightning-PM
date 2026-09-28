@@ -1,5 +1,8 @@
 ## Next
 
+### Added
+- В блоке связанных задач у каждой задачи виден её статус ([#497](https://task.innim.ru/project/lightning-pm/issue/497)).
+
 ### Changed
 - «Отмена» в форме задачи спрашивает подтверждение, если в форме есть несохранённые изменения ([#500](https://task.innim.ru/project/lightning-pm/issue/500)).
 - Кнопка «Отмена» в форме задачи отодвинута от «Сохранить» ([#500](https://task.innim.ru/project/lightning-pm/issue/500)).

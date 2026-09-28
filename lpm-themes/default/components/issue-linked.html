@@ -19,12 +19,16 @@
             . $item->getIdInProject() . '. ' . $item->getName();
     ?>
         <div class="linked-issue-item card-text d-flex justify-content-between align-items-start">
-            <a href="<?=$item->getConstURL();?>">
-                <?php if ($item->projectId != $issue->projectId):?>
-                <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
-                <?php endif;?>
-                <?=$item->getIdInProject();?>. <?=$item->getName();?>
-            </a>
+            <div>
+                <a href="<?=$item->getConstURL();?>">
+                    <?php if ($item->projectId != $issue->projectId):?>
+                    <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
+                    <?php endif;?>
+                    <?=$item->getIdInProject();?>. <?=$item->getName();?>
+                </a>
+                <?php $itemSubstatus = $item->getSubstatus(); ?>
+                <span class="badge ms-1 <?=IssueViewHelper::statusBadgeClass($item->status, $itemSubstatus);?>"><?=IssueViewHelper::statusLabel($item->status, $itemSubstatus);?></span>
+            </div>
             <a href="#" class="link-secondary remove-linked-issue ms-2"
                 onclick="issuePage.removeLink(<?=$item->getID();?>, <?=htmlspecialchars(json_encode($linkLabel), ENT_QUOTES);?>); return false;"
                 title="Удалить связь" aria-label="Удалить связь">
