@@ -1,5 +1,8 @@
 ## Next
 
+### Fixed
+- Просмотр приложенного HTML-файла сообщает, что содержимого файла нет на диске ([#479](https://task.innim.ru/project/lightning-pm/issue/479)).
+
 ## 0.33.1 - 2026-09-20
 
 ### Fixed
