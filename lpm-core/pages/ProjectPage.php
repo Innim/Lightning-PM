@@ -603,7 +603,7 @@ class ProjectPage extends LPMPage
 
     private function initComments()
     {
-        $page = $this->getProjectedCommentsPage();
+        $page = max(1, $this->getProjectedCommentsPage());
         $commentsPerPage = 100;
 
         $comments = Comment::getIssuesListByProject(
@@ -636,8 +636,10 @@ class ProjectPage extends LPMPage
         if ($page > 1) {
             $this->addTmplVar('prevPageUrl', $this->getUrl('page', $page - 1));
         }
-        // Упрощенная проверка, да, есть косяк если общее кол-во комментов делиться нацело
-        if (count($comments) === $commentsPerPage) {
+        // Наличие следующей страницы проверяем запросом: по числу набранных
+        // строк её не определить - полная страница может оказаться последней,
+        // и тогда ссылка вела бы на пустую страницу
+        if (Comment::hasIssuesCommentsByProject($this->_project->id, $page * $commentsPerPage)) {
             $this->addTmplVar('nextPageUrl', $this->getUrl('page', $page + 1));
         }
     }

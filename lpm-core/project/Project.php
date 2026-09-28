@@ -812,12 +812,19 @@ SQL;
 
     /**
      * Возвращает номер текущего спринта (с 1), если проект является SCRUM проектом, иначе - 0.
+     *
+     * Номер читается из базы один раз за запрос: в пределах одного запроса
+     * спринт не меняется. Исключение - само закрытие спринта, которое ждёт
+     * очереди и должно видеть номер, актуальный после ожидания.
+     *
+     * @param bool $forceReload Перечитать номер из базы, не используя
+     * прочитанный ранее.
      * @return int
      */
-    public function getCurrentSprintNum()
+    public function getCurrentSprintNum($forceReload = false)
     {
         if ($this->scrum) {
-            if ($this->_currentSprintNum === -1) {
+            if ($forceReload || $this->_currentSprintNum === -1) {
                 $this->_currentSprintNum = ScrumStickerSnapshot::getLastSnapshotId($this->id) + 1;
             }
             
