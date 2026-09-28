@@ -299,12 +299,13 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <h3 class="h6 text-uppercase text-muted fw-semibold mb-2">Файлы</h3>
                 <ul class="issue-files-list list-group">
                     <?php foreach ($files as $file): ?>
+                    <?php $fileName = lpm_escape($file->origName); ?>
                     <li class="issue-file-item list-group-item d-flex align-items-center justify-content-between gap-3">
                         <div class="d-flex align-items-start gap-3">
                             <span class="text-secondary pt-1"><i class="fas fa-paperclip" aria-hidden="true"></i></span>
                             <div class="d-flex flex-column">
-                                <a href="<?=$file->getDownloadUrl();?>" class="issue-file-link fw-semibold" target="_blank" rel="noopener" download="<?=$file->origName;?>">
-                                    <span class="file-name"><?=$file->origName;?></span>
+                                <a href="<?=$file->getDownloadUrl();?>" class="issue-file-link fw-semibold" target="_blank" rel="noopener" download="<?=$fileName;?>">
+                                    <span class="file-name"><?=$fileName;?></span>
                                 </a>
                                 <span class="text-muted small issue-file-size"><?=FileSizeFormatter::format($file->size);?></span>
                             </div>
@@ -315,7 +316,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                                 <i class="fa-regular fa-file-code me-1" aria-hidden="true"></i>Открыть
                             </a>
                             <?php endif; ?>
-                            <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$file->origName;?>">
+                            <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$fileName;?>">
                                 <i class="fas fa-download me-1" aria-hidden="true"></i>Скачать
                             </a>
                         </div>
