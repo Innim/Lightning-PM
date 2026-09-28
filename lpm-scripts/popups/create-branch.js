@@ -6,6 +6,17 @@ const createBranch = {
     currentProjectId: null,
     currentIssueId: null,
     modal: null,
+    /**
+     * Приводит имя ветки к допустимому виду: нижний регистр, а группа пробельных
+     * символов и подчёркиваний вместе с прилегающими к ней дефисами — один дефис.
+     * Дефисы, идущие подряд сами по себе, сохраняются как есть.
+     *
+     * @param {string} value Имя ветки, как его ввёл пользователь.
+     * @returns {string} Нормализованное имя.
+     */
+    normalizeName: function (value) {
+        return value.toLowerCase().replace(/[-\s_]*[\s_][-\s_]*/g, '-');
+    },
     init: function () {
         const $el = $("#createBranch");
         const el = document.getElementById('createBranch');
@@ -25,17 +36,36 @@ const createBranch = {
             $branchName.trigger('focus');
         });
 
-        $branchName.on('input', () => {
-            const el = $branchName[0];
-            const selectionStart = el.selectionStart;
-            const name = $branchName.val();
-            const res = name.replace(/[_ ]/, '-').toLowerCase();
+        $branchName.on('input', (e) => {
+            // Отмену и повтор ввода пропускаем: иначе нормализация сразу же
+            // возвращала бы восстановленный текст обратно и поле залипало бы
+            // на последней правке. Перед отправкой имя нормализуется в save().
+            const inputType = e.originalEvent ? e.originalEvent.inputType : null;
+            if (inputType === 'historyUndo' || inputType === 'historyRedo') return;
 
-            if (name != res) {
-                $branchName.val(res);
-                el.selectionStart = selectionStart;
-                el.selectionEnd = selectionStart;
+            const el = $branchName[0];
+            const name = el.value;
+            const res = createBranch.normalizeName(name);
+
+            if (name === res) return;
+
+            // Каретка встаёт за нормализованным текстом, который был перед ней:
+            // при схлопывании символов её прежний индекс уже не подходит.
+            const caret = createBranch.normalizeName(name.slice(0, el.selectionStart)).length;
+
+            // Заменяем только отличающийся фрагмент и через execCommand,
+            // чтобы у поля сохранился штатный стек отмены.
+            let start = 0;
+            const max = Math.min(name.length, res.length);
+            while (start < max && name[start] === res[start]) start++;
+            let end = 0;
+            while (end < max - start && name[name.length - 1 - end] === res[res.length - 1 - end]) end++;
+
+            el.setSelectionRange(start, name.length - end);
+            if (!document.execCommand('insertText', false, res.slice(start, res.length - end))) {
+                el.value = res;
             }
+            el.setSelectionRange(caret, caret);
         });
     },
     show: function (projectId, issueId, issueIdInProject) {
@@ -71,7 +101,7 @@ const createBranch = {
     save: function () {
         const $el = $("#createBranch");
 
-        const branchName = $("#branchName", $el).val();
+        const branchName = createBranch.normalizeName($("#branchName", $el).val());
         const repoId = $("#repository", $el).val();
         const parentBranch = $("#parentBranch", $el).val();
 

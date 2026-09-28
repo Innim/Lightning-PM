@@ -36,6 +36,21 @@ class ProjectPage extends LPMPage
     }
 
     /**
+     * Оставляет из статусов задач только те, что считаются открытыми.
+     *
+     * Пустой результат означает, что открытых задач в выборке нет по самому
+     * её условию, и отличается от пустого аргумента - тот значит «любые статусы».
+     * @param  array<int> $statuses Статусы задач (пустой список - любые).
+     * @return array<int> Открытые статусы из числа заданных.
+     */
+    public static function getOpenedStatuses(array $statuses)
+    {
+        $opened = [Issue::STATUS_IN_WORK, Issue::STATUS_WAIT];
+
+        return empty($statuses) ? $opened : array_values(array_intersect($statuses, $opened));
+    }
+
+    /**
      * Разбирает список идентификаторов вложений (файлов или изображений),
      * переданный формой.
      * @param  string $idsStr Идентификаторы, разделённые запятой.
@@ -504,9 +519,26 @@ class ProjectPage extends LPMPage
             $countLabel = 'Показано';
         }
 
-        $this->addTmplVar('issues', $this->loadIssues(self::SEARCH_SCOPES[$scope]['statuses'], $search));
+        $statuses = self::SEARCH_SCOPES[$scope]['statuses'];
+        $issues = $this->loadIssues($statuses, $search, PROJECT_ISSUES_PAGE_SIZE);
+
+        // Пустой список открытых статусов означает, что открытых задач в выборке
+        // нет по самому её условию - считать в базе нечего
+        $openedStatuses = self::getOpenedStatuses($statuses);
+
+        $this->addTmplVar('issues', $issues);
         $this->addTmplVar('search', $search);
         $this->addTmplVar('issuesCountLabel', $countLabel);
+        $this->addTmplVar('issuesPaging', [
+            'scope' => $scope,
+            'search' => $search,
+            'statuses' => $statuses,
+            'pageSize' => PROJECT_ISSUES_PAGE_SIZE,
+            'maxPageSize' => PROJECT_ISSUES_MAX_PAGE_SIZE,
+            'loaded' => count($issues),
+            'total' => $this->countIssues($statuses, $search),
+            'opened' => empty($openedStatuses) ? 0 : $this->countIssues($openedStatuses, $search),
+        ]);
         $this->addTmplVar('searchForm', [
             'url' => $this->getUrl(),
             'scope' => $scope,
@@ -802,38 +834,38 @@ class ProjectPage extends LPMPage
     }
     
     /**
-     * Загружает задачи проекта вместе с их исполнителями, тестировщиками
+     * Загружает порцию задач проекта вместе с их исполнителями, тестировщиками
      * и состояниями сборок.
      * @param  array<int> $statuses Статусы задач (пустой список - любые).
      * @param  string     $search   Поисковый запрос; пустой - без поиска.
+     * @param  int        $limit    Максимальное количество задач (0 - без ограничения).
      * @return array<Issue> Массив задач.
      */
-    private function loadIssues($statuses, $search = '')
+    private function loadIssues($statuses, $search = '', $limit = 0)
     {
-        $projectId = $this->_project->id;
+        // Участников грузим только для задач порции, а не для всех задач проекта:
+        // на странице их полсотни, а в проекте бывают тысячи
+        return Issue::preloadBuildStates(Issue::preloadParticipants(
+            Issue::loadListByProjectFiltered(
+                $this->_project->id,
+                ['statuses' => $statuses, 'search' => $search],
+                $limit
+            )
+        ));
+    }
 
-        if ($search !== '') {
-            // Участников грузим только для найденных задач, а не для всех
-            // задач проекта, как это делает выборка без поиска
-            return Issue::preloadBuildStates(Issue::preloadParticipants(
-                Issue::loadListByProjectFiltered(
-                    $projectId,
-                    ['statuses' => $statuses, 'search' => $search]
-                )
-            ));
-        }
-
-        $loadMembers = true;
-        $loadTesters = true;
-        $loadMasters = false;
-        // Загружаем всех участников задач (для оптимизации)
-        $issueParticipants = Member::loadListAnyForIssuesInProject($projectId, $statuses, $loadMembers, $loadTesters, $loadMasters);
-
-        $list = Issue::loadListByProject($projectId, $statuses);
-        foreach ($list as $issue) {
-            $issue->extractParticipantsFrom($issueParticipants, $loadMembers, $loadTesters, $loadMasters);
-        }
-        return Issue::preloadBuildStates($list);
+    /**
+     * Возвращает количество задач проекта, подходящих под условия выборки.
+     * @param  array<int> $statuses Статусы задач (пустой список - любые).
+     * @param  string     $search   Поисковый запрос; пустой - без поиска.
+     * @return int Количество задач.
+     */
+    private function countIssues($statuses, $search = '')
+    {
+        return Issue::countListByProjectFiltered(
+            $this->_project->id,
+            ['statuses' => $statuses, 'search' => $search]
+        );
     }
     
     private function handleFormAction($editMode = false)
