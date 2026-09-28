@@ -1,8 +1,14 @@
 /**
  * Компонент фильтра по тегам и пользователям в списке задач.
+ *
+ * Список показан по частям, поэтому отбор уходит на сервер: скрытием строк
+ * отфильтровалась бы только загруженная часть, а счётчики показали бы её размер.
  */
 document.addEventListener('DOMContentLoaded', () => {
     issuePage.filterVm = lpm.components.issueListFilter.init({
+        onApply: function (state) {
+            issuePage.issuesList.applyFilter(state);
+        },
         filter: function (row, tags, memberIds, testerIds) {
             let showRow = true;
 

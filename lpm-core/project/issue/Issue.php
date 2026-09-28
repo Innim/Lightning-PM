@@ -22,6 +22,100 @@ class Issue extends MembersInstance
     }
 
     /**
+     * Возвращает выражение даты последней активности по задаче в тесте.
+     *
+     * Для задачи с багом это дата последнего бага. Если комментариев нет вообще -
+     * берётся дата изменения самой задачи (в том числе перевода в тест), чтобы
+     * только что отправленная в тест старая задача не считалась застоявшейся.
+     *
+     * Выражение опирается на поля выборки `t_testState`, `t_lastBugDate`
+     * и `t_lastCommentDate`, поэтому применимо только к запросам {@see loadList()}.
+     * @return string Часть SQL запроса.
+     */
+    private static function getTestActivitySql()
+    {
+        $requestChangesType = IssueCommentType::REQUEST_CHANGES;
+
+        return "COALESCE(IF(`t_testState` = '$requestChangesType', "
+            . "`t_lastBugDate`, `t_lastCommentDate`), "
+            . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
+    }
+
+    /**
+     * Возвращает порядок сортировки списка задач по умолчанию.
+     * @return string Содержимое выражения ORDER BY.
+     */
+    private static function getDefaultOrderBySql()
+    {
+        $statusWait = Issue::STATUS_WAIT;
+        $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
+        $testStatesOrderDesc = "'" . implode("', '", [
+            IssueCommentType::REQUEST_CHANGES,
+            IssueCommentType::PASS_TEST,
+        ]) . "'";
+        $testActivity = self::getTestActivitySql();
+
+        // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
+        // сортируются по стареющему приоритету: каждые N дней простоя добавляют
+        // задаче пункт приоритета, но не больше потолка. Так важные задачи остаются
+        // выше, а забытые постепенно всплывают и не тонут навсегда.
+        // Неизвестная дата активности считается максимальным простоем.
+        $agingDays = ISSUE_TEST_AGING_DAYS_PER_POINT;
+        $agingMax = ISSUE_TEST_AGING_MAX_BONUS;
+        $agingUnknown = $agingMax * $agingDays;
+
+        return <<<SQL
+            FIELD(`i`.`status`, $statusesOrder),
+            `realCompleted` DESC,
+            IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
+            IF(`i`.`status` = $statusWait,
+               `i`.`priority` + LEAST(GREATEST(COALESCE(DATEDIFF(NOW(), $testActivity),
+                                                        $agingUnknown), 0) DIV $agingDays, $agingMax),
+               NULL) DESC,
+            IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC,
+            `i`.`priority` DESC,
+            `i`.`completeDate` ASC, `id` ASC
+            SQL;
+    }
+
+    /**
+     * Возвращает порядок сортировки списка задач по выбранному режиму.
+     *
+     * Режимы задач в тесте поднимают их над остальными задачами; порядок
+     * остальных при этом остаётся сортировкой по умолчанию.
+     * @param  string $sort Режим сортировки, одна из констант SORT_*.
+     *                      Неизвестное значение считается сортировкой по умолчанию.
+     * @return string|null Содержимое выражения ORDER BY либо `null`
+     *                     для сортировки по умолчанию.
+     */
+    public static function getListOrderBy($sort)
+    {
+        if ($sort === self::SORT_LAST_CREATED) {
+            return '`i`.`createDate` DESC, `i`.`id` DESC';
+        }
+
+        if ($sort !== self::SORT_TEST_PRIORITY && $sort !== self::SORT_TEST_STALE) {
+            return null;
+        }
+
+        $statusWait = Issue::STATUS_WAIT;
+        $testActivity = self::getTestActivitySql();
+        $byPriority = "IF(`i`.`status` = $statusWait, `i`.`priority`, NULL) DESC";
+        $byActivity = "IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC";
+        $testOrder = $sort === self::SORT_TEST_PRIORITY
+            ? $byPriority . ', ' . $byActivity
+            : $byActivity . ', ' . $byPriority;
+
+        // Задачи в тесте упорядочены по «сырому» приоритету, без надбавки за простой:
+        // режим и нужен, чтобы увидеть проставленный приоритет.
+        // Отдельный первый терм обязателен: у остальных задач термы режима дают NULL,
+        // а NULL в ASC становится первым - и по давности активности нетестовые задачи
+        // оказались бы выше тестовых
+        return "IF(`i`.`status` = $statusWait, 0, 1) ASC, " . $testOrder
+            . ', ' . self::getDefaultOrderBySql();
+    }
+
+    /**
      * Возвращает список состояний MR для FIELD() в порядке возрастания
      * "завершённости": в выборке состояния задачи побеждает самый незавершённый MR,
      * т.к. пока есть невлитый MR - правки по задаче ещё не в стабильной ветке.
@@ -188,7 +282,6 @@ class Issue extends MembersInstance
     ) {
         $instanceType = LPMInstanceTypes::ISSUE;
 
-        $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
         $testStateSql = '(' . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'))) . ')';
         $testStateDateSql = '('
@@ -270,36 +363,7 @@ SQL;
         }
 
         if (empty($orderBy)) {
-            $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
-            $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
-            // Дата последней активности по задаче в тесте. Для задачи с багом это дата
-            // последнего бага. Если комментариев нет вообще - берем дату изменения самой
-            // задачи (в том числе перевода в тест), чтобы только что отправленная в тест
-            // старая задача не считалась застоявшейся.
-            $testActivity = "COALESCE(IF(`t_testState` = '$requestChangesType', "
-                . "`t_lastBugDate`, `t_lastCommentDate`), "
-                . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
-
-            // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
-            // сортируются по стареющему приоритету: каждые N дней простоя добавляют
-            // задаче пункт приоритета, но не больше потолка. Так важные задачи остаются
-            // выше, а забытые постепенно всплывают и не тонут навсегда.
-            // Неизвестная дата активности считается максимальным простоем.
-            $agingDays = ISSUE_TEST_AGING_DAYS_PER_POINT;
-            $agingMax = ISSUE_TEST_AGING_MAX_BONUS;
-            $agingUnknown = $agingMax * $agingDays;
-            $orderBy = <<<SQL
-            FIELD(`i`.`status`, $statusesOrder),
-            `realCompleted` DESC,
-            IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
-            IF(`i`.`status` = $statusWait,
-               `i`.`priority` + LEAST(GREATEST(COALESCE(DATEDIFF(NOW(), $testActivity),
-                                                        $agingUnknown), 0) DIV $agingDays, $agingMax),
-               NULL) DESC,
-            IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC,
-            `i`.`priority` DESC,
-            `i`.`completeDate` ASC, `id` ASC
-            SQL;
+            $orderBy = self::getDefaultOrderBySql();
         }
 
         $sql .= " AND `i`.`authorId` = `u`.`userId` ORDER BY " . $orderBy;
@@ -328,7 +392,6 @@ SQL;
     {
         $instanceType = LPMInstanceTypes::ISSUE;
 
-        $passTestType = IssueCommentType::PASS_TEST;
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
         $testStateSql = '(' . self::buildQuery(self::getTestStateSqlHash(self::col('i.id'))) . ')';
         $testStateDateSql = '('
@@ -415,36 +478,7 @@ SQL;
         }
 
         if (empty($orderBy)) {
-            $statusesOrder = implode(', ', [Issue::STATUS_WAIT, Issue::STATUS_IN_WORK, Issue::STATUS_COMPLETED]);
-            $testStatesOrderDesc = "'" . implode("', '", [$requestChangesType, $passTestType]) . "'";
-            // Дата последней активности по задаче в тесте. Для задачи с багом это дата
-            // последнего бага. Если комментариев нет вообще - берем дату изменения самой
-            // задачи (в том числе перевода в тест), чтобы только что отправленная в тест
-            // старая задача не считалась застоявшейся.
-            $testActivity = "COALESCE(IF(`t_testState` = '$requestChangesType', "
-                . "`t_lastBugDate`, `t_lastCommentDate`), "
-                . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
-
-            // Задачи в тесте внутри своей группы (прошла тест / есть баг / без отметки)
-            // сортируются по стареющему приоритету: каждые N дней простоя добавляют
-            // задаче пункт приоритета, но не больше потолка. Так важные задачи остаются
-            // выше, а забытые постепенно всплывают и не тонут навсегда.
-            // Неизвестная дата активности считается максимальным простоем.
-            $agingDays = ISSUE_TEST_AGING_DAYS_PER_POINT;
-            $agingMax = ISSUE_TEST_AGING_MAX_BONUS;
-            $agingUnknown = $agingMax * $agingDays;
-            $orderBy = <<<SQL
-            FIELD(`i`.`status`, $statusesOrder),
-            `realCompleted` DESC,
-            IF(`i`.`status` = $statusWait, FIELD(`t_testState`, $testStatesOrderDesc), 0) DESC,
-            IF(`i`.`status` = $statusWait,
-               `i`.`priority` + LEAST(GREATEST(COALESCE(DATEDIFF(NOW(), $testActivity),
-                                                        $agingUnknown), 0) DIV $agingDays, $agingMax),
-               NULL) DESC,
-            IF(`i`.`status` = $statusWait, $testActivity, NULL) ASC,
-            `i`.`priority` DESC,
-            `i`.`completeDate` ASC, `id` ASC
-            SQL;
+            $orderBy = self::getDefaultOrderBySql();
         }
 
         $sql .= " ORDER BY " . $orderBy;
@@ -513,15 +547,28 @@ SQL;
 
     /**
      * Загружает список задач проекта с фильтрацией и постраничной выборкой.
-     * @param  int   $projectId Идентификатор проекта.
-     * @param  array $filters   Фильтры выборки, см. buildProjectFilterWhere().
-     * @param  int   $limit     Максимальное количество задач (0 - без ограничения).
-     * @param  int   $offset    Смещение выборки.
+     * @param  int    $projectId Идентификатор проекта.
+     * @param  array  $filters   Фильтры выборки, см. buildProjectFilterWhere().
+     * @param  int    $limit     Максимальное количество задач (0 - без ограничения).
+     * @param  int    $offset    Смещение выборки.
+     * @param  string $sort      Режим сортировки, см. getListOrderBy().
      * @return array<Issue> Массив загруженных задач.
      */
-    public static function loadListByProjectFiltered($projectId, array $filters = [], $limit = 0, $offset = 0)
-    {
-        return self::loadList(self::buildProjectFilterWhere($projectId, $filters), '', null, null, $limit, $offset);
+    public static function loadListByProjectFiltered(
+        $projectId,
+        array $filters = [],
+        $limit = 0,
+        $offset = 0,
+        $sort = self::SORT_DEFAULT
+    ) {
+        return self::loadList(
+            self::buildProjectFilterWhere($projectId, $filters),
+            '',
+            null,
+            self::getListOrderBy($sort),
+            $limit,
+            $offset
+        );
     }
 
     /**
@@ -551,25 +598,129 @@ SQL;
     /**
      * Формирует условие выборки задач проекта по фильтрам.
      *
-     * Условие использует только поля таблицы задач (алиас `i`).
+     * Условие использует только поля таблицы задач (алиас `i`), поэтому годится
+     * и для выборки списка, и для подсчёта её размера.
      * @param  int   $projectId Идентификатор проекта.
      * @param  array $filters   Фильтры выборки:
      *                          - `statuses` array<int> статусы задач;
      *                          - `types` array<int> типы задач;
      *                          - `labels` array<string> метки, каждая из которых должна быть у задачи;
+     *                          - `labelsAny` array<string> метки, хотя бы одна из которых
+     *                            должна быть у задачи;
+     *                          - `members` array<int> исполнители, хотя бы один из которых
+     *                            должен быть у задачи;
+     *                          - `testers` array<int> тестировщики, хотя бы один из которых
+     *                            должен быть у задачи;
+     *                          - `multiMemberOnly` bool оставить только задачи,
+     *                            у которых больше одного исполнителя;
      *                          - `search` string поисковый запрос, см. buildSearchWhere().
+     *                          Заданные вместе `members` и `testers` складываются по «или»:
+     *                          задаче достаточно совпасть по любой из двух ролей.
      * @return string Условие выборки.
      */
     private static function buildProjectFilterWhere($projectId, array $filters)
     {
         $where = '`i`.`projectId` = ' . (int)$projectId;
 
-        if (!empty($filters['labels'])) {
-            $issueIds = self::loadIdsByLabels($projectId, $filters['labels']);
+        $labelModes = ['labels' => true, 'labelsAny' => false];
+        foreach ($labelModes as $key => $matchAll) {
+            if (empty($filters[$key])) {
+                continue;
+            }
+
+            $issueIds = self::loadIdsByLabels($projectId, $filters[$key], $matchAll);
             $where .= ' AND `i`.`id` IN (' . (empty($issueIds) ? '0' : implode(',', $issueIds)) . ')';
         }
 
+        $where .= self::buildParticipantsFilterWhere($filters);
+
+        if (!empty($filters['multiMemberOnly'])) {
+            $where .= ' AND (' . self::buildParticipantsCountSql(LPMInstanceTypes::ISSUE) . ') > 1';
+        }
+
         return $where . self::buildCommonFilterWhere($filters);
+    }
+
+    /**
+     * Формирует часть условия выборки по участникам задачи.
+     *
+     * Совпадения по исполнителям и тестировщикам складываются по «или»: человек
+     * выбирается в фильтре вместе с ролью, и задача подходит, если совпала хотя бы
+     * по одной из них.
+     * @param  array $filters Фильтры выборки, см. buildProjectFilterWhere().
+     * @return string Условие выборки, начинающееся с ` AND `, либо пустая строка.
+     */
+    private static function buildParticipantsFilterWhere(array $filters)
+    {
+        $conditions = [];
+        $roles = [
+            'members' => LPMInstanceTypes::ISSUE,
+            'testers' => LPMInstanceTypes::ISSUE_FOR_TEST,
+        ];
+
+        foreach ($roles as $key => $instanceType) {
+            if (empty($filters[$key])) {
+                continue;
+            }
+
+            $userIds = array_map('intval', $filters[$key]);
+            $conditions[] = 'EXISTS (' . self::buildParticipationSql($instanceType, $userIds) . ')';
+        }
+
+        return empty($conditions) ? '' : ' AND (' . implode(' OR ', $conditions) . ')';
+    }
+
+    /**
+     * Возвращает запрос, проверяющий участие кого-либо из пользователей в задаче.
+     *
+     * Участие проверяется подзапросом, а не присоединением таблицы: тот, кто
+     * в задаче и исполнитель, и тестировщик, дал бы на присоединении две строки,
+     * и задача попала бы в выборку дважды.
+     * @param  int        $instanceType Роль участия (LPMInstanceTypes::ISSUE*).
+     * @param  array<int> $userIds      Идентификаторы пользователей.
+     * @return string SQL запрос для подстановки в EXISTS.
+     */
+    private static function buildParticipationSql($instanceType, array $userIds)
+    {
+        return self::buildQuery([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::MEMBERS,
+            'AS'     => 'pm',
+            'WHERE'  => [
+                '`pm`.`instanceId`'   => self::col('i.id'),
+                '`pm`.`instanceType`' => $instanceType,
+                '`pm`.`userId`'       => $userIds,
+            ],
+        ]);
+    }
+
+    /**
+     * Возвращает запрос, считающий участников задачи в указанной роли.
+     *
+     * Пользователи присоединяются, чтобы счёт совпадал с тем, что показано
+     * в задаче: в таблице участия встречаются строки без существующего
+     * пользователя, и загрузчик участников их отбрасывает.
+     * @param  int $instanceType Роль участия (LPMInstanceTypes::ISSUE*).
+     * @return string SQL запрос для подстановки в условие выборки.
+     */
+    private static function buildParticipantsCountSql($instanceType)
+    {
+        return self::buildQuery([
+            'SELECT' => 'COUNT(*)',
+            'FROM'   => LPMTables::MEMBERS,
+            'AS'     => 'pc',
+            'JOINS'  => [
+                [
+                    'INNER JOIN' => LPMTables::USERS,
+                    'AS'         => 'pu',
+                    'ON'         => ['`pu`.`userId`' => self::col('pc.userId')],
+                ],
+            ],
+            'WHERE'  => [
+                '`pc`.`instanceId`'   => self::col('i.id'),
+                '`pc`.`instanceType`' => $instanceType,
+            ],
+        ]);
     }
 
     /**
@@ -661,16 +812,18 @@ SQL;
     }
 
     /**
-     * Возвращает идентификаторы задач проекта, у которых есть все указанные метки.
+     * Возвращает идентификаторы задач проекта, отобранных по меткам.
      *
      * Метки задачи - это только блоки в квадратных скобках в начале её имени, поэтому
      * выборка по имени в запросе дает лишь кандидатов: точное совпадение проверяется
      * разбором имени. Регистр меток не учитывается.
      * @param  int           $projectId Идентификатор проекта.
-     * @param  array<string> $labels    Метки, каждая из которых должна быть у задачи.
+     * @param  array<string> $labels    Метки для отбора.
+     * @param  bool          $matchAll  Должны ли у задачи быть все указанные метки.
+     *                                  Если нет - достаточно любой из них.
      * @return array<int> Идентификаторы задач.
      */
-    private static function loadIdsByLabels($projectId, array $labels)
+    private static function loadIdsByLabels($projectId, array $labels, $matchAll = true)
     {
         $db = self::getDB();
         $needles = [];
@@ -678,22 +831,27 @@ SQL;
             $needles[] = mb_strtolower($label);
         }
 
-        $where = '`i`.`projectId` = ' . (int)$projectId . " AND `i`.`deleted` = '0'" .
-            " AND `i`.`name` LIKE '[%%'";
+        $conditions = [];
         foreach ($needles as $needle) {
-            $where .= " AND `i`.`name` LIKE '%%[" . self::escapeSearchPattern($needle) . "]%%'"
+            $conditions[] = "`i`.`name` LIKE '%%[" . self::escapeSearchPattern($needle) . "]%%'"
                 . " ESCAPE '" . self::SEARCH_ESCAPE_CHAR . "'";
         }
+
+        $where = '`i`.`projectId` = ' . (int)$projectId . " AND `i`.`deleted` = '0'" .
+            " AND `i`.`name` LIKE '[%%'" .
+            ' AND (' . implode($matchAll ? ' AND ' : ' OR ', $conditions) . ')';
 
         $res = $db->queryt("SELECT `i`.`id`, `i`.`name` FROM `%s` AS `i` WHERE " . $where, LPMTables::ISSUES);
         if (!$res) {
             return [];
         }
 
+        $needlesCount = count($needles);
         $issueIds = [];
         while ($row = $res->fetch_assoc()) {
             $issueLabels = array_map('mb_strtolower', IssueLabel::getLabelsByName($row['name']));
-            if (count(array_intersect($needles, $issueLabels)) === count($needles)) {
+            $matched = count(array_intersect($needles, $issueLabels));
+            if ($matchAll ? $matched === $needlesCount : $matched > 0) {
                 $issueIds[] = (int)$row['id'];
             }
         }
@@ -1688,6 +1846,16 @@ WHERE;
     const DESC_MAX_LEN = 60000;
     const DEFAULT_PRIORITY = 49;
     const IMPORTANT_PRIORITY = 79;
+
+    /**
+     * Режимы сортировки списка задач. Значения используются и в адресе
+     * страницы (состояние списка), и в меню сортировки, поэтому менять их
+     * нельзя - сохранённые ссылки перестанут открывать нужный порядок.
+     */
+    const SORT_DEFAULT = '';
+    const SORT_LAST_CREATED = 'last-created';
+    const SORT_TEST_PRIORITY = 'test-priority';
+    const SORT_TEST_STALE = 'test-stale';
 
     /**
      * Символ экранирования спецсимволов шаблона в поисковом запросе.
