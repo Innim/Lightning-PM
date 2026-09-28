@@ -64,7 +64,9 @@ define('TIMEADJUST', 0);
 // на другом. Допустимы только латинские буквы, цифры и "_".
 // define('SESSION_COOKIE_NAME', 'PHPSESSID_8806');
 
-// Token для интеграции со Slack
+// Бот-токен приложения Slack (xoxb-...) для оповещений и аватаров.
+// Какие scope нужны приложению, как выпустить токен и как указать канал
+// проекта - docs/slack-integration.md
 define('SLACK_TOKEN', '');
 // Оповещать по Slack
 // define('SLACK_NOTIFICATION_ENABLED', true);
