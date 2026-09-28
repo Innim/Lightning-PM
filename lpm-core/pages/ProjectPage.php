@@ -36,13 +36,14 @@ class ProjectPage extends LPMPage
     }
 
     /**
-     * Разбирает список идентификаторов файлов, переданный формой.
-     * @param  string $fileIdsStr Идентификаторы, разделённые запятой.
+     * Разбирает список идентификаторов вложений (файлов или изображений),
+     * переданный формой.
+     * @param  string $idsStr Идентификаторы, разделённые запятой.
      * @return array Массив идентификаторов.
      */
-    private static function parseFileIds($fileIdsStr)
+    private static function parseAttachmentIds($idsStr)
     {
-        return array_filter(array_map('intval', explode(',', (string)$fileIdsStr)));
+        return array_filter(array_map('intval', explode(',', (string)$idsStr)));
     }
 
     /**
@@ -82,6 +83,30 @@ class ProjectPage extends LPMPage
         return array_map(function ($value) {
             return preg_replace('~^data:[^,]*,~', '', (string)$value);
         }, $_POST[$field]);
+    }
+
+    /**
+     * Возвращает изображения, приложенные к форме помимо поля загрузки:
+     * вставленные из буфера обмена, перенесённые из черновика задачи
+     * и добавленные по URL.
+     *
+     * Перечень полей запроса задан здесь и только здесь: подсчёт занимаемых
+     * мест ({@see ProjectPage::countPostedImages()}) и сама загрузка
+     * ({@see ProjectPage::prepareImages()}) обязаны видеть одно и то же,
+     * иначе новый источник изображений разойдётся между ними молча.
+     * @return array Ассоциативный массив: `images` - изображения строками
+     *         base64, `urls` - адреса изображений.
+     */
+    private static function getPostedImageSources()
+    {
+        return [
+            'images' => array_merge(
+                self::getPostedImages('clipboardImg'),
+                self::getPostedImages('draftImg')
+            ),
+            'urls'   => isset($_POST['imgUrls']) && is_array($_POST['imgUrls'])
+                ? $_POST['imgUrls'] : [],
+        ];
     }
 
     const UID = 'project';
@@ -1023,17 +1048,8 @@ class ProjectPage extends LPMPage
             $this->removeImagesFromIssue($issueId, $_POST["removedImages"]);
         }
 
-        // загружаем изображения
-        if ($editMode) {
-            // если задача редактируется
-            // считаем из базы кол-во картинок, имеющихся для задачи
-            $loadedImgs = LPMImg::loadCountByInstance(LPMInstanceTypes::ISSUE, $issueId);
-        } else {
-            // если добавляется
-            $loadedImgs = 0;
-        }
-
-        $uploader = $this->saveImages4Issue($issueId, $loadedImgs);
+        // Удаляемые изображения уже сняты выше, поэтому места они больше не занимают
+        $uploader = $this->saveImages4Issue($issueId, $this->getAvailableImageSlots($issueId, $editMode));
 
         if ($uploader === false) {
             // Причина уже добавлена к ошибкам в saveImages4Issue
@@ -1197,7 +1213,12 @@ class ProjectPage extends LPMPage
      */
     private function validateAttachments($issueId, $editMode)
     {
-        $errors = LPMImgUpload::validateUploadedFiles('images');
+        $errors = LPMImgUpload::validateUploadedFiles(
+            'images',
+            $this->getAvailableImageSlots($issueId, $editMode),
+            Issue::MAX_IMAGES_COUNT,
+            $this->countPostedImages()
+        );
 
         if (isset($_FILES['issueFiles']) && is_array($_FILES['issueFiles'])) {
             $errors = array_merge($errors, FileUploadManager::validateUploads(
@@ -1244,12 +1265,80 @@ class ProjectPage extends LPMPage
             return 0;
         }
 
-        $fileIds = self::parseFileIds($_POST['removedFiles']);
+        $fileIds = self::parseAttachmentIds($_POST['removedFiles']);
         if (empty($fileIds)) {
             return 0;
         }
 
         return count(LPMFile::loadListByInstance(LPMInstanceTypes::ISSUE, $issueId, $fileIds));
+    }
+
+    /**
+     * Определяет, сколько изображений ещё можно прикрепить к задаче.
+     * Изображения, удаляемые этим же запросом, освобождают места.
+     * @param  float $issueId  Идентификатор задачи (при редактировании).
+     * @param  bool  $editMode Задача редактируется, а не создаётся.
+     * @return int
+     */
+    private function getAvailableImageSlots($issueId, $editMode)
+    {
+        $availableSlots = Issue::MAX_IMAGES_COUNT;
+
+        if ($editMode) {
+            $images = LPMImg::loadListByInstance(LPMInstanceTypes::ISSUE, $issueId);
+            $availableSlots -= max(0, count($images) - $this->countRemovedImages($images));
+        }
+
+        return max(0, $availableSlots);
+    }
+
+    /**
+     * Считает изображения, приложенные к форме помимо поля загрузки
+     * ({@see ProjectPage::getPostedImageSources()}) - они занимают места
+     * из лимита наравне с выбранными в поле.
+     * Пустые значения не в счёт: их пропускает и сама загрузка
+     * ({@see LPMImgUpload::prepareImages()}).
+     * @return int
+     */
+    private function countPostedImages()
+    {
+        $sources = self::getPostedImageSources();
+        $values = array_merge($sources['images'], $sources['urls']);
+
+        $count = 0;
+        foreach ($values as $value) {
+            if (trim((string)$value) !== '') {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Считает изображения задачи, которые удаляются текущим запросом.
+     * @param  LPMImg[] $images Изображения, приложенные к задаче сейчас.
+     * @return int
+     */
+    private function countRemovedImages(array $images)
+    {
+        if (empty($_POST['removedImages'])) {
+            return 0;
+        }
+
+        $imgIds = self::parseAttachmentIds($_POST['removedImages']);
+        if (empty($imgIds)) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($images as $image) {
+            if (in_array((int)$image->imgId, $imgIds, true)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**
@@ -1281,14 +1370,9 @@ class ProjectPage extends LPMPage
     {
         $errors = [];
 
-        $images = array_merge(
-            self::getPostedImages('clipboardImg'),
-            self::getPostedImages('draftImg')
-        );
-        $urls = isset($_POST['imgUrls']) && is_array($_POST['imgUrls'])
-            ? $_POST['imgUrls'] : [];
+        $sources = self::getPostedImageSources();
 
-        $this->_preparedImages = LPMImgUpload::prepareImages($images, $urls, $errors);
+        $this->_preparedImages = LPMImgUpload::prepareImages($sources['images'], $sources['urls'], $errors);
 
         foreach ($errors as $error) {
             $this->addError($error);
@@ -1407,18 +1491,16 @@ class ProjectPage extends LPMPage
         return $issueId;
     }
 
-    private function saveImages4Issue($issueId, $hasCnt = 0)
+    /**
+     * Сохраняет изображения, приложенные к форме задачи.
+     * @param  float $issueId        Идентификатор задачи.
+     * @param  int   $availableSlots Сколько изображений ещё можно приложить.
+     * @return LPMImgUpload|false false, если хотя бы одно изображение
+     *         не удалось загрузить; причина добавлена к ошибкам страницы.
+     */
+    private function saveImages4Issue($issueId, $availableSlots)
     {
-        $uploader = new LPMImgUpload(
-            Issue::MAX_IMAGES_COUNT - $hasCnt,
-            true,
-            [LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT],
-            'issues',
-            'scr_',
-            LPMInstanceTypes::ISSUE,
-            $issueId,
-            false
-        );
+        $uploader = LPMImgUpload::createForIssue($issueId, $availableSlots);
 
         // Выполняем загрузку для изображений из поля загрузки
         // и подготовленных заранее (вставленных из буфера и добавленных по URL)
@@ -1471,21 +1553,12 @@ class ProjectPage extends LPMPage
 
     private function removeImagesFromIssue($issueId, $imagesIdsStr)
     {
-        $delImg = explode(',', $imagesIdsStr);
-        $imgIds = [];
-        foreach ($delImg as $imgId) {
-            $imgId = (int)$imgId;
-            if ($imgId > 0) {
-                $imgIds[] = $imgId;
-            }
-        }
-
-        LPMImg::removeByIds(LPMInstanceTypes::ISSUE, $issueId, $imgIds);
+        LPMImg::removeByIds(LPMInstanceTypes::ISSUE, $issueId, self::parseAttachmentIds($imagesIdsStr));
     }
 
     private function removeFilesFromIssue($issueId, $filesIdsStr)
     {
-        $fileIds = self::parseFileIds($filesIdsStr);
+        $fileIds = self::parseAttachmentIds($filesIdsStr);
         if (empty($fileIds)) {
             return;
         }

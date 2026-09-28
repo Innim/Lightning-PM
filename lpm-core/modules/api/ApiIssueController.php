@@ -2,29 +2,6 @@
 
 class ApiIssueController extends ApiControllerBase
 {
-    /**
-     * Считает файлы, действительно переданные в поле запроса.
-     *
-     * Позиции поля без файла в счёт не идут: поле формы, где файл не выбран,
-     * PHP всё равно описывает.
-     * @param  array $filesData Данные поля запроса, {@see ApiRequest::getFiles()}.
-     * @return int
-     */
-    private static function countUploads(array $filesData)
-    {
-        $count = 0;
-        foreach ($filesData['tmp_name'] as $index => $tmpName) {
-            $errorCode = isset($filesData['error'][$index]) ? $filesData['error'][$index] : UPLOAD_ERR_OK;
-            if ($errorCode === UPLOAD_ERR_NO_FILE || (empty($tmpName) && $errorCode === UPLOAD_ERR_OK)) {
-                continue;
-            }
-
-            $count++;
-        }
-
-        return $count;
-    }
-
     /** Роль участника задачи: исполнитель. */
     const ROLE_MEMBER = 'members';
 
@@ -591,7 +568,12 @@ class ApiIssueController extends ApiControllerBase
         // По той же причине проверяем вложения: непригодное вложение не должно
         // оставлять после себя созданную задачу
         $imagesData = $this->request()->getFiles(self::IMAGES_FIELD);
-        $error = $this->validateImages($imagesData, self::IMAGES_FIELD, Issue::MAX_IMAGES_COUNT);
+        $error = $this->validateImages(
+            $imagesData,
+            self::IMAGES_FIELD,
+            Issue::MAX_IMAGES_COUNT,
+            Issue::MAX_IMAGES_COUNT
+        );
         if ($error !== null) {
             return ApiResponse::error($error, 400);
         }
@@ -753,7 +735,12 @@ class ApiIssueController extends ApiControllerBase
         }
 
         $imageSlots = Issue::MAX_IMAGES_COUNT - LPMImg::loadCountByInstance(LPMInstanceTypes::ISSUE, $issue->id);
-        $error = $this->validateImages($imagesData, self::ADD_IMAGES_FIELD, $imageSlots);
+        $error = $this->validateImages(
+            $imagesData,
+            self::ADD_IMAGES_FIELD,
+            $imageSlots,
+            Issue::MAX_IMAGES_COUNT
+        );
         if ($error !== null) {
             return ApiResponse::error($error, 400);
         }
@@ -835,21 +822,16 @@ class ApiIssueController extends ApiControllerBase
      * @param  array|null $imagesData     Данные поля запроса с изображениями.
      * @param  string     $field          Имя поля запроса.
      * @param  int        $availableSlots Сколько изображений ещё можно приложить.
+     * @param  int        $totalLimit     Максимальное количество изображений.
      * @return string|null Текст первой ошибки или null, если изображения можно загружать.
      */
-    private function validateImages($imagesData, $field, $availableSlots)
+    private function validateImages($imagesData, $field, $availableSlots, $totalLimit)
     {
         if ($imagesData === null) {
             return null;
         }
 
-        // Лимит количества проверяем сами: загрузчик изображений молча
-        // отбрасывает лишние, а для API это потеря без объяснения
-        if (self::countUploads($imagesData) > max(0, (int)$availableSlots)) {
-            return sprintf('Вы не можете прикрепить больше %d изображений', Issue::MAX_IMAGES_COUNT);
-        }
-
-        $errors = LPMImgUpload::validateUploadedFiles($field);
+        $errors = LPMImgUpload::validateUploadedFiles($field, $availableSlots, $totalLimit);
 
         return empty($errors) ? null : $errors[0];
     }
@@ -857,8 +839,8 @@ class ApiIssueController extends ApiControllerBase
     /**
      * Сохраняет приложенные к запросу изображения задачи.
      *
-     * Загружает их тем же способом, что и форма в интерфейсе
-     * ({@see ProjectPage::saveImages4Issue()}): изображение попадает
+     * Загружает их тем же загрузчиком, что и форма в интерфейсе
+     * ({@see LPMImgUpload::createForIssue()}): изображение попадает
      * в галерею задачи вместе с превью.
      * @param  Issue  $issue          Задача, к которой прикладываются изображения.
      * @param  string $field          Имя поля запроса.
@@ -867,16 +849,7 @@ class ApiIssueController extends ApiControllerBase
      */
     private function uploadImages(Issue $issue, $field, $availableSlots)
     {
-        $uploader = new LPMImgUpload(
-            max(0, (int)$availableSlots),
-            true,
-            [LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT],
-            'issues',
-            'scr_',
-            LPMInstanceTypes::ISSUE,
-            $issue->id,
-            false
-        );
+        $uploader = LPMImgUpload::createForIssue($issue->id, $availableSlots);
 
         if ($uploader->uploadViaFiles($field)) {
             return null;
