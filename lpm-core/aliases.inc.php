@@ -168,6 +168,14 @@ function lpm_print_issues($list)
 }
 
 /**
+* Распечатывает строки списка задач - без таблицы вокруг них
+*/
+function lpm_print_issue_rows($list)
+{
+    return PagePrinter::issueRows($list);
+}
+
+/**
 * Распечатывает форму добавления/редактирования задачи для текущего проекта
 */
 function lpm_print_issue_form($project, $issue = null, $input = null, $isHidden = null)

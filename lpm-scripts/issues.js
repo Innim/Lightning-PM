@@ -314,6 +314,10 @@ $(document).ready(
  */
 function initIssueCopyMenus() {
     document.querySelectorAll('.issue-copy > [data-bs-toggle="dropdown"]').forEach(function (toggle) {
+        // Функцию зовут заново после каждой подгруженной порции списка, а Bootstrap
+        // допускает только один компонент на элемент: уже поднятые меню пропускаем
+        if (bootstrap.Dropdown.getInstance(toggle)) return;
+
         new bootstrap.Dropdown(toggle, {
             popperConfig: function (defaultConfig) {
                 return Object.assign({}, defaultConfig, {
@@ -840,21 +844,385 @@ issuePage.getPriorityTextColor = function (val) {
     return luma * 0.8 + 255 * 0.2 < 140 ? '#ffffff' : '#000000';
 };
 
+/**
+ * Постраничный вывод списка задач проекта.
+ *
+ * Список бывает на тысячи задач, поэтому показывается порциями. Весь отбор -
+ * поиск, область по статусу, фильтр по тегам и людям, сортировка - выполняется
+ * на сервере, и счётчики берутся оттуда же: по показанным строкам ни отобрать,
+ * ни посчитать правильно нельзя, пока показана лишь часть списка.
+ */
+issuePage.issuesList = {
+    /** Блок подгрузки; его отсутствие означает страницу без списка задач. */
+    el: null,
+    projectId: 0,
+    scope: '',
+    search: '',
+    sort: '',
+    /** Статусы задач области поиска; пустой список - любые. */
+    statuses: [],
+    pageSize: 0,
+    maxPageSize: 0,
+    filter: { tags: [], memberIds: [], testerIds: [], multiMemberOnly: false },
+    /** Сколько задач выборки уже запрошено у сервера. */
+    offset: 0,
+    /** Сколько задач показано на странице. Меньше offset, если порции пересеклись. */
+    loaded: 0,
+    total: 0,
+    opened: 0,
+    /** Отобран ли список сервером (поиск или область по статусу). */
+    serverSelection: false,
+    /** Выборка кончилась: сервер вернул пустую порцию. */
+    exhausted: false,
+    /**
+     * Порядок выборки на сервере изменился после того, как список был показан.
+     * Смещение порции по такому списку больше не годится - см. loadMore().
+     */
+    reordered: false,
+    /** Идёт ли сейчас запрос порции. */
+    loading: false,
+    /** Номер последнего запроса: ответы на устаревшие запросы отбрасываются. */
+    requestId: 0,
+    reloadTimer: null,
+    initialized: false,
+
+    /**
+     * Поднимает состояние выборки из разметки страницы при первом обращении.
+     *
+     * Состояние берётся лениво, а не по готовности документа: обработчики
+     * готовности страниц списка зарегистрированы раньше этого файла и уже
+     * спрашивают счётчики.
+     * @returns {boolean} Есть ли на странице список задач.
+     */
+    ensureInit: function () {
+        if (this.initialized) return this.el !== null;
+        this.initialized = true;
+
+        const el = document.getElementById('issuesListPaging');
+        if (!el) return false;
+
+        this.el = el;
+        this.projectId = parseInt($('#projectView').data('projectId'));
+        this.scope = el.getAttribute('data-scope') || '';
+        this.search = el.getAttribute('data-search') || '';
+        this.statuses = (el.getAttribute('data-statuses') || '')
+            .split(',').filter((v) => v !== '').map((v) => parseInt(v));
+        this.pageSize = parseInt(el.getAttribute('data-page-size')) || 0;
+        this.maxPageSize = parseInt(el.getAttribute('data-max-page-size')) || 0;
+        this.loaded = parseInt(el.getAttribute('data-loaded')) || 0;
+        this.offset = this.loaded;
+        this.total = parseInt(el.getAttribute('data-total')) || 0;
+        this.opened = parseInt(el.getAttribute('data-opened')) || 0;
+        this.serverSelection = !$('.project-stat .issues-selection').hasClass('d-none');
+
+        return true;
+    },
+
+    /** Отобран ли список - тогда в статистике стоит размер выборки. */
+    isSelection: function () {
+        if (!this.ensureInit()) return false;
+
+        return this.serverSelection || this.hasFilter();
+    },
+
+    hasFilter: function () {
+        const filter = this.filter;
+        return filter.tags.length > 0 || filter.memberIds.length > 0
+            || filter.testerIds.length > 0 || filter.multiMemberOnly;
+    },
+
+    /** Применяет выбор фильтров: выборка меняется, поэтому список берётся заново. */
+    applyFilter: function (state) {
+        if (!this.ensureInit()) return;
+
+        this.filter = {
+            tags: state.tags.slice(),
+            memberIds: state.memberIds.slice(),
+            testerIds: state.testerIds.slice(),
+            multiMemberOnly: state.multiMemberOnly
+        };
+        this.reload();
+    },
+
+    /** Включает режим сортировки. Повторный выбор того же режима запрос не делает. */
+    setSort: function (sort) {
+        if (!this.ensureInit() || sort === this.sort) return;
+
+        this.sort = sort;
+        this.reload();
+    },
+
+    /**
+     * Запрашивает список заново, с первой порции.
+     *
+     * Запрос откладывается до конца такта: восстановление фильтра из адреса
+     * задаёт теги и людей по отдельности, и это должно дать один запрос.
+     */
+    reload: function () {
+        const self = this;
+        clearTimeout(this.reloadTimer);
+        this.reloadTimer = setTimeout(function () {
+            self.request(0, 0, false);
+        }, 0);
+    },
+
+    /** Догружает следующую порцию к показанному списку. */
+    loadMore: function () {
+        if (!this.ensureInit() || this.loading) return;
+
+        // Если порядок выборки успели изменить (приоритет или статус задачи),
+        // смещение уже не указывает на нужное место: задачи могли переставиться
+        // и выше показанного окна, и тогда часть из них запрос бы проскочил.
+        // Поэтому выборка запрашивается с начала - вместе с новой порцией, - но
+        // добавлением: уже показанные строки отсеет дедупликация и останутся
+        // стоять там, где стоят, а смещение снова станет верным.
+        // Так можно, только пока показанное умещается в предельный размер порции.
+        // Выше потолка сервер обрежет ответ, смещение откатилось бы к потолку,
+        // и следующий запрос вернул бы уже показанное - кнопка перестала бы
+        // добавлять что-либо вовсе. Поэтому там просто идём дальше по смещению:
+        // редкий пропуск одной задачи лучше, чем застрявшая догрузка
+        const whole = this.loaded + this.pageSize;
+        if (this.reordered && whole <= this.maxPageSize) {
+            this.request(0, whole, true);
+            return;
+        }
+
+        this.request(this.offset, 0, true);
+    },
+
+    /**
+     * Отменяет незавершённый запрос порции.
+     *
+     * Ответ на него придёт с устаревшим номером и будет отброшен, поэтому
+     * список освобождается здесь, а не в его обработчике.
+     */
+    cancelPending: function () {
+        if (!this.loading) return;
+
+        this.requestId++;
+        this.loading = false;
+        $('.issues-load-more', this.el).prop('disabled', false);
+    },
+
+    request: function (offset, limit, append) {
+        const self = this;
+        const requestId = ++this.requestId;
+
+        this.loading = true;
+        $('.issues-load-more', this.el).prop('disabled', true);
+        preloader.show();
+
+        srv.issue.loadProjectIssues(
+            this.projectId,
+            this.scope,
+            this.search,
+            {
+                tags: this.filter.tags,
+                members: this.filter.memberIds,
+                testers: this.filter.testerIds,
+                multiMemberOnly: this.filter.multiMemberOnly
+            },
+            this.sort,
+            offset,
+            limit,
+            function (res) {
+                // Прячем всегда: показы preloader считаются, и пропущенный hide
+                // оставил бы его висеть навсегда
+                preloader.hide();
+
+                // Ответ на запрос, который успели отменить более новым. Такой ответ
+                // не только не рисует свою порцию, но и не объявляет список свободным:
+                // иначе кнопка подгрузки ожила бы посреди ещё идущего запроса
+                // и догрузила порцию поверх списка, который вот-вот заменят
+                if (requestId !== self.requestId) return;
+
+                $('.issues-load-more', self.el).prop('disabled', false);
+                self.loading = false;
+
+                if (!res.success) {
+                    srv.err(res);
+                    return;
+                }
+
+                self.render(res, offset, append);
+            }
+        );
+    },
+
+    render: function (res, offset, append) {
+        const tbody = document.querySelector('#issuesList > tbody');
+        if (!tbody) return;
+
+        if (append) {
+            const added = this.appendRows(tbody, res.rows);
+            // Пришедшая задача уже показана, только на другом месте - значит,
+            // выборка переставилась, и смещение опять устареет
+            if (added < res.count && offset > 0) {
+                this.reordered = true;
+            } else if (offset === 0) {
+                // Выборку перечитали с начала: смещение снова верное
+                this.reordered = false;
+            }
+
+            this.loaded += added;
+            this.exhausted = res.count === 0;
+        } else {
+            this.disposeTooltips(tbody);
+            tbody.innerHTML = res.rows;
+            this.loaded = res.count;
+            this.exhausted = false;
+            this.reordered = false;
+        }
+
+        this.offset = offset + res.count;
+
+        this.total = res.total;
+        this.opened = res.opened;
+
+        // Разметка строк пришла с сервера: кружки приоритета и меню копирования
+        // в ней ещё не подняты
+        issuePage.updatePriorityVals();
+        initIssueCopyMenus();
+        this.updateView();
+    },
+
+    /**
+     * Снимает подсказки со строк, которые сейчас будут убраны.
+     *
+     * Подсказка, открытая над удалённой строкой, скрывать себя уже не по чему
+     * и осталась бы висеть над списком.
+     */
+    disposeTooltips: function (tbody) {
+        $(tbody).find('[title], [data-bs-original-title]').each(function () {
+            const tooltip = bootstrap.Tooltip.getInstance(this);
+            if (tooltip) tooltip.dispose();
+        });
+    },
+
+    /**
+     * Добавляет строки порции к списку, пропуская уже показанные задачи.
+     *
+     * Задача приходит повторно, если между запросами порций у неё изменился
+     * приоритет и она переехала через границу окна выборки.
+     * @returns {number} Сколько строк добавлено.
+     */
+    appendRows: function (tbody, html) {
+        const shown = {};
+        [...tbody.children].forEach(function (row) {
+            shown[row.getAttribute('data-id')] = true;
+        });
+
+        const holder = document.createElement('tbody');
+        holder.innerHTML = html;
+
+        let added = 0;
+        [...holder.children].forEach(function (row) {
+            if (shown[row.getAttribute('data-id')]) return;
+            tbody.appendChild(row);
+            added++;
+        });
+
+        return added;
+    },
+
+    /** Входит ли задача с таким статусом в выборку области поиска. */
+    matchesScope: function (status) {
+        return this.statuses.length === 0 || this.statuses.indexOf(status) !== -1;
+    },
+
+    /**
+     * Отмечает, что порядок выборки на сервере изменился.
+     *
+     * Зовётся при смене приоритета: задача переезжает по списку, и все задачи
+     * между её прежним и новым местом сдвигаются.
+     */
+    noteReordered: function () {
+        if (!this.ensureInit()) return;
+
+        // Идущий запрос отобран по прежнему порядку: его ответ принесёт
+        // и чужие строки, и счётчики, снятые до изменения
+        this.cancelPending();
+        this.reordered = true;
+    },
+
+    /**
+     * Учитывает смену статуса задачи, строка которой осталась на месте.
+     *
+     * Строку не переставляем: пользователь должен видеть, что именно он изменил,
+     * и мочь сразу отменить. Поэтому на экране задача остаётся там, где была,
+     * а верными держим счётчики выборки и её смещение.
+     * @param {number} wasStatus Статус задачи до изменения.
+     * @param {number} nowStatus Статус задачи после изменения.
+     */
+    noteStatusChanged: function (wasStatus, nowStatus) {
+        if (!this.ensureInit()) return;
+
+        // Идущий запрос отобран до смены статуса: его ответ принёс бы
+        // счётчики прежней выборки
+        this.cancelPending();
+
+        const completed = lpmOptions.issueStatuses.completed;
+        const wasIn = this.matchesScope(wasStatus);
+        const nowIn = this.matchesScope(nowStatus);
+        const wasOpened = wasIn && wasStatus != completed;
+        const nowOpened = nowIn && nowStatus != completed;
+
+        if (wasIn === nowIn) {
+            // Задача из выборки не выпала, но встала в ней на другое место -
+            // значит, смещение следующей порции устарело
+            if (nowIn) {
+                this.reordered = true;
+            }
+        } else {
+            // Задача вошла в выборку или выпала из неё: выборка стала длиннее
+            // или короче, и всё, что было за этой задачей, сдвинулось на позицию.
+            // Шаг двусторонний: строка остаётся на странице, поэтому действие
+            // можно тут же отменить с неё же
+            const step = nowIn ? 1 : -1;
+            this.loaded = Math.max(0, this.loaded + step);
+            this.offset = Math.max(0, this.offset + step);
+            this.total = Math.max(0, this.total + step);
+        }
+
+        this.opened = Math.max(0, this.opened + (nowOpened ? 1 : 0) - (wasOpened ? 1 : 0));
+
+        this.updateView();
+    },
+
+    /** Приводит кнопку подгрузки и счётчики в соответствие с состоянием выборки. */
+    updateView: function () {
+        if (!this.ensureInit()) return;
+
+        // Считаем по показанному, а не по смещению: из-за отброшенных повторов
+        // смещение может дойти до размера выборки раньше, чем список показан весь
+        const hasMore = !this.exhausted && this.loaded < this.total;
+        this.el.classList.toggle('d-none', !hasMore);
+        $('.issues-loaded-count', this.el).text(this.loaded);
+        $('.issues-selection-count', this.el).text(this.total);
+        // Считаем по строкам на экране, а не по размеру выборки: задача, выпавшая
+        // из выборки после смены статуса, со страницы никуда не девается
+        const shownRows = $('#issuesList > tbody > tr').length;
+        $('.issues-list-empty').toggleClass('d-none', shownRows > 0);
+
+        const selection = this.isSelection();
+        $('.project-stat .issues-selection').toggleClass('d-none', !selection);
+        $('.project-stat .issues-summary').toggleClass('d-none', selection);
+        $('.project-stat .issues-shown').text(this.total);
+        $('.project-stat .issues-opened').text(this.opened);
+    }
+};
+
+issuePage.loadMoreIssues = function () {
+    issuePage.issuesList.loadMore();
+};
+
 issuePage.updateStat = function () {
     if ($("#projectView").length == 0) return;
 
-    // В отобранном списке (поиск или область по статусу) в статистике стоит размер
-    // выборки, а счётчиков открытых задач и часов проекта в разметке нет
-    const $shown = $(".project-stat .issues-shown");
-    if ($shown.length > 0) {
-        const count = $("#issuesList > tbody > tr").length;
-        $shown.text(count);
-        $(".issues-list-empty").toggleClass('d-none', count > 0);
-        return;
-    }
+    issuePage.issuesList.updateView();
 
-    $(".project-stat .issues-opened").text($("#issuesList > tbody > tr.active-issue,tr.verify-issue").size());
-    $(".project-stat .issues-completed").text($("#issuesList > tbody > tr.completed-issue").size());
+    // В отобранном списке показан его размер, а часов проекта рядом нет
+    if (issuePage.issuesList.isSelection()) return;
 
     // Перезапрашиваем сумму часов
     const isScrum = $("#projectView").data('scrum') == 1;
@@ -1212,7 +1580,7 @@ function completeIssue(e) {
                     preloader.hide();
                     if (res.success) {
                         if ($('#issuesList').length > 0) {
-                            $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
+                            refreshIssueRow(issueId, lpmOptions.issueStatuses.completed);
                             showMain();
                         } else if ($('#issueView').length > 0) {
                             setIssueInfo(new Issue(res.issue), res.substatus);
@@ -1227,6 +1595,42 @@ function completeIssue(e) {
     });
 }
 
+/**
+ * Показывает задачу в новом состоянии, не сдвигая её строку с места.
+ *
+ * Строка перерисовывается разметкой с сервера: её вид зависит от статуса
+ * целиком - цвет, кнопки, стрелки приоритета, дата завершения. На своё
+ * настоящее место в списке задача встанет при следующей загрузке страницы.
+ * @param {number} issueId   Идентификатор задачи.
+ * @param {number} newStatus Статус, в который задача перешла.
+ */
+function refreshIssueRow(issueId, newStatus) {
+    const $row = $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])");
+    if ($row.length === 0) return;
+
+    issuePage.issuesList.noteStatusChanged($row.data('status'), newStatus);
+
+    srv.issue.loadIssueRow(issueId, function (res) {
+        if (!res.success) {
+            srv.err(res);
+            return;
+        }
+
+        // Разбираем через tbody: строка таблицы вне таблицы разбирается
+        // по-разному, а так разметка попадает в тот же контекст, что и порция
+        const holder = document.createElement('tbody');
+        holder.innerHTML = res.row;
+        const fresh = holder.querySelector('tr');
+        if (!fresh) return;
+
+        issuePage.issuesList.disposeTooltips($row[0]);
+        $row[0].replaceWith(fresh);
+        issuePage.updatePriorityVals();
+        initIssueCopyMenus();
+        highlightIssueRow($(fresh));
+    });
+}
+
 issuePage.changePriority = function (e) {
     var $control = $(e.currentTarget);
     var $row = $control.parents('tr');
@@ -1236,6 +1640,10 @@ issuePage.changePriority = function (e) {
     if (issueId > 0) {
         srv.issue.changePriority(issueId, delta, function (res) {
             if (res.success) {
+                // Задача переехала по списку: смещение подгрузки по прежнему
+                // порядку выборки больше не годится
+                issuePage.issuesList.noteReordered();
+
                 let priority = res.priority;
                 let priorityStr = Issue.getPriorityStr(priority);
                 let priorityVal = Issue.getPriorityDisplayVal(priority);
@@ -1268,54 +1676,9 @@ issuePage.changePriority = function (e) {
                             $(this).remove();
                         });
 
-                var status = $row.data("status");
-                var date = $row.data("completeDate");
-                var compare = function ($r) {
-                    if ($r.data("status") != status)
-                        return 0;
-                    var p = parseInt($(".priority-val", $r).data("value"));
-                    if (p != priority)
-                        return priority - p;
-                    else if ($r.data("completeDate") != date)
-                        return $r.data("completeDate") - date;
-                    else
-                        return $r.data("id") - issueId;
-                }
-
-                if (delta < 0) {
-                    var $next = $row;
-                    var $last = null;
-                    while ($next) {
-                        var $next = $next.next();
-
-                        if (compare($next) < 0) {
-                            $last = $next;
-                        }
-                        else {
-                            if ($last) {
-                                $last.after($row);
-                                highlightIssueRow($row);
-                            }
-                            break;
-                        }
-                    }
-                } else {
-                    var $prev = $row;
-                    var $first = null;
-                    while ($prev) {
-                        var $prev = $prev.prev();
-                        if (compare($prev) > 0) {
-                            $first = $prev;
-                        }
-                        else {
-                            if ($first) {
-                                $first.before($row);
-                                highlightIssueRow($row);
-                            }
-                            break;
-                        }
-                    }
-                }
+                // Строку не переставляем: пользователь должен видеть, какую задачу
+                // тронул, и мочь сразу отменить. На своё место в списке задача
+                // встанет при следующей загрузке страницы
             } else {
                 srv.err(res);
             }
@@ -1334,7 +1697,7 @@ function restoreIssue(e) {
             preloader.hide();
             if (res.success) {
                 if ($('#issuesList').length > 0) {
-                    $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])").remove();
+                    refreshIssueRow(issueId, lpmOptions.issueStatuses.inWork);
                     showMain();
                 } else if ($('#issueView').length > 0) {
                     setIssueInfo(new Issue(res.issue), res.substatus);
@@ -1902,105 +2265,39 @@ issuePage.addComment = function (comment, html) {
     }
 };
 
+/**
+ * Режимы сортировки списка задач. Значения совпадают с константами Issue::SORT_*
+ * и используются как состояние в адресе страницы, поэтому менять их нельзя -
+ * сохранённые ссылки перестанут открывать нужный порядок.
+ */
+issuePage.sortKeys = ['last-created', 'test-priority', 'test-stale'];
+
 issuePage.handleLastCreatedSort = function () {
-    issuePage.sortIssues('last-created');
+    issuePage.setSort('last-created');
 }
 
 issuePage.handleTestPrioritySort = function () {
-    issuePage.sortIssues('test-priority');
+    issuePage.setSort('test-priority');
 }
 
 issuePage.handleTestStaleSort = function () {
-    issuePage.sortIssues('test-stale');
+    issuePage.setSort('test-stale');
 }
 
-/**
- * Компараторы строк списка задач по ключу сортировки.
- * Режимы «в тесте» переставляют только задачи в тесте, порядок остальных
- * задач при этом сохраняется (компаратор возвращает для них 0).
- */
-issuePage.sortComparators = {
-    'last-created': function (a, b) {
-        return $(b).data('createDate') - $(a).data('createDate');
-    },
-    'test-priority': function (a, b) {
-        return issuePage.compareTestIssues(a, b, function ($a, $b) {
-            return $b.data('priority') - $a.data('priority')
-                || issuePage.testActivity($a) - issuePage.testActivity($b);
-        });
-    },
-    'test-stale': function (a, b) {
-        return issuePage.compareTestIssues(a, b, function ($a, $b) {
-            return issuePage.testActivity($a) - issuePage.testActivity($b)
-                || $b.data('priority') - $a.data('priority');
-        });
-    }
-};
-
-/**
- * Сравнивает две строки списка для режимов сортировки задач в тесте:
- * задачи в тесте поднимаются выше остальных и упорядочиваются переданной
- * функцией, порядок остальных задач не меняется.
- */
-issuePage.compareTestIssues = function (a, b, compare) {
-    var $a = $(a);
-    var $b = $(b);
-    var aInTest = $a.data('status') === lpmOptions.issueStatuses.test;
-    var bInTest = $b.data('status') === lpmOptions.issueStatuses.test;
-
-    if (!aInTest && !bInTest) return 0;
-    if (aInTest != bInTest) return aInTest ? -1 : 1;
-
-    return compare($a, $b);
-};
-
-// Дата последней активности по задаче в тесте (для задачи с багом - дата бага).
-// Если активность неизвестна - считаем ей дату создания задачи.
-issuePage.testActivity = function ($row) {
-    return $row.data('testActivity') || $row.data('createDate');
-};
-
-/**
- * Возвращает строки списка задач в порядке по умолчанию, запоминая его
- * при первом обращении, чтобы к нему можно было вернуться и чтобы любая
- * сортировка выполнялась именно от него.
- * Запоминаются сами строки, а не их разметка: состояние строки меняется
- * на месте (цвет кружка приоритета, скрытие фильтром), и снимок разметки
- * это состояние терял бы. Удалённые со страницы строки отбрасываются.
- * @param {jQuery} $body тело таблицы списка задач
- * @returns {Element[]}
- */
-issuePage.getDefaultIssues = function ($body) {
-    if (window.defaultIssues === undefined) {
-        window.defaultIssues = $body.children('tr').get();
-    } else {
-        window.defaultIssues = window.defaultIssues.filter(function (row) {
-            return $.contains(document.documentElement, row);
-        });
-    }
-
-    return window.defaultIssues;
-};
-
-/**
- * Сортирует список задач заданным режимом.
- */
-issuePage.sortIssues = function (sortKey) {
-    var $body = $('#issuesList > tbody');
-    $body.append(issuePage.getDefaultIssues($body).slice()
-        .sort(issuePage.sortComparators[sortKey]));
-    issuePage.applySortView(sortKey);
-};
-
 issuePage.sortDefault = function () {
-    if (window.defaultIssues !== undefined) {
-        var $body = $('#issuesList > tbody');
-        $body.append(issuePage.getDefaultIssues($body));
-        // Порядок по умолчанию меняется прямо на странице (изменение приоритета
-        // переставляет строку), поэтому он запоминается заново при следующей сортировке.
-        window.defaultIssues = undefined;
-    }
-    issuePage.applySortView('');
+    issuePage.setSort('');
+};
+
+/**
+ * Включает режим сортировки списка.
+ *
+ * Сортирует сервер: упорядочить можно только всю выборку, а на странице
+ * показана лишь её часть - сортировка показанных строк переставляла бы задачи
+ * внутри загруженной порции и выдавала бы это за порядок всего списка.
+ */
+issuePage.setSort = function (sortKey) {
+    issuePage.applySortView(sortKey);
+    issuePage.issuesList.setSort(sortKey);
 };
 
 /**
@@ -2033,13 +2330,12 @@ issuePage.updateSortMenu = function (sortKey) {
  */
 issuePage.applySortFromHash = function () {
     var sortKey = window.location.hash.replace(/^#/, '');
-    if (!/^[a-z-]+$/.test(sortKey)
-            || !Object.prototype.hasOwnProperty.call(issuePage.sortComparators, sortKey)
+    if (issuePage.sortKeys.indexOf(sortKey) === -1
             || !$('#issuesSortMenu ~ .dropdown-menu [data-sort="' + sortKey + '"]').length) {
         return;
     }
 
-    issuePage.sortIssues(sortKey);
+    issuePage.setSort(sortKey);
 };
 
 /**
@@ -2076,25 +2372,20 @@ issuePage.handleFilterState = function (value) {
 
 issuePage.onFilterChanged = function (filter)  {
     const tags = filter.tags
-    const users = filter.users
+    const memberIds = filter.memberIds
+    const testerIds = filter.testerIds
     const multiMemberOnly = filter.multiMemberOnly
     issuePage.scrumColUpdateInfo(tags);
-    if (tags.length || users.length || multiMemberOnly)  {
+    if (tags.length || memberIds.length || testerIds.length || multiMemberOnly)  {
         let filters = [];
         if (tags.length) {
             filters.push(`tags=${encodeURI(tags.join(','))}`);
         }
 
-        const idsByRole = (role) => users
-            .filter((user) => user.role === role)
-            .map((user) => user.userId);
-
-        const memberIds = idsByRole('member');
         if (memberIds.length) {
             filters.push(`users=${encodeURI(memberIds.join(','))}`);
         }
 
-        const testerIds = idsByRole('tester');
         if (testerIds.length) {
             filters.push(`testers=${encodeURI(testerIds.join(','))}`);
         }
