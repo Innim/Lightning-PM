@@ -366,9 +366,12 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
         <input type="hidden" value="<?=$project->getID();?>" id="issueProjectID">
         <input type="hidden" name="revision" value="<?=$issue ? $issue->revision : '';?>" />
 
-        <div class="col-12 text-center save-line">
+        <?php /* Отмена - type="button": подтверждение закрытия спрашивается
+                 асинхронно, а type="reset" сбросил бы форму, не дожидаясь
+                 ответа (issueForm.cancel в issue-form.js). */ ?>
+        <div class="col-12 save-line d-flex justify-content-center gap-4">
             <button type="submit" class="btn btn-primary">Сохранить</button>
-            <button type="reset" class="btn btn-secondary" onclick="issueForm.cancel();">Отмена</button>
+            <button type="button" class="btn btn-secondary" onclick="issueForm.cancel();">Отмена</button>
         </div>
     </form>
 

@@ -216,10 +216,44 @@ let issueForm = {
             }
         });
     },
+    /**
+     * Закрывает форму по кнопке «Отмена».
+     *
+     * Набранный, но не сохранённый ввод закрывать молча нельзя: кнопка стоит
+     * рядом с «Сохранить», и случайный клик по ней терял бы работу. Поэтому
+     * закрытие изменённой формы подтверждается диалогом, а неизменённая
+     * закрывается сразу — лишний вопрос там только мешает.
+     */
     cancel: function () {
+        if (!issueForm.hasUnsavedChanges()) {
+            issueForm.close();
+            return;
+        }
+
+        lpm.dialog.show({
+            title: 'Задача не сохранена',
+            text: 'Всё, что введено в форме, будет потеряно.',
+            primaryBtn: 'Вернуться к форме',
+            secondaryBtn: 'Не сохранять',
+            secondaryBtnClass: 'btn-danger',
+            onSecondary: issueForm.close,
+        });
+    },
+    /**
+     * Закрывает форму задачи: снимает блокировку и уводит с формы.
+     *
+     * Ввод при этом теряется без предупреждения, поэтому зовётся либо после
+     * подтверждения ({@see issueForm.cancel}), либо когда форму нельзя оставить
+     * открытой (не удалось получить блокировку задачи).
+     */
+    close: function () {
         const issueId = issueForm.getIssueId();
         const leave = function () {
             issueForm.onHide();
+            // Форму очищаем сами: кнопка «Отмена» не может быть type="reset" —
+            // браузер сбросил бы ввод ещё до ответа на подтверждение.
+            const form = $('#issueForm > form')[0];
+            if (form) form.reset();
             // Форма, открытая отдельной страницей, закрывается уходом с неё:
             // показывать на этой странице больше нечего.
             if (issueForm.pageReturnUrl) redirectTo(issueForm.pageReturnUrl);
@@ -242,6 +276,64 @@ let issueForm = {
         } else {
             leave();
         }
+    },
+    /**
+     * Ввод формы на момент, когда её открыли: с ним сверяется отмена.
+     *
+     * null означает, что исходное состояние неизвестно — такую форму отмена
+     * считает изменённой.
+     */
+    initialState: null,
+    /**
+     * Запоминает текущий ввод формы как исходный.
+     *
+     * Зовётся, когда форма заполнена тем, с чем её открывают: сохранёнными
+     * значениями задачи при редактировании и значениями по умолчанию при
+     * создании. Позже этого - уже правки пользователя.
+     */
+    captureInitialState: function () {
+        issueForm.initialState = issueForm.formSnapshot();
+    },
+    /**
+     * Отличается ли ввод формы от того, с которым её открыли.
+     *
+     * Пока исходное состояние не снято (форма восстановлена после неудачного
+     * сохранения или не успела заполниться), изменения считаются возможными:
+     * потерять ввод молча хуже, чем задать лишний вопрос.
+     * @return {boolean} Форма изменена.
+     */
+    hasUnsavedChanges: function () {
+        return issueForm.initialState === null
+            || issueForm.initialState !== issueForm.formSnapshot();
+    },
+    /**
+     * Снимок ввода формы задачи, сравнимый как строка.
+     *
+     * Берутся все поля основной формы - вместе со скрытыми, в которых лежат
+     * исполнители, метки и приложения. От поля выбора файлов берётся число
+     * выбранных файлов, от вложенного изображения - длина данных: значения
+     * этих полей браузер либо не отдаёт, либо отдаёт целиком.
+     * @return {string} Снимок ввода.
+     */
+    formSnapshot: function () {
+        const parts = [];
+
+        $('#issueForm > form').find('input, textarea, select').each(function () {
+            let value;
+            if (this.type === 'file') {
+                value = this.files ? this.files.length : 0;
+            } else if (this.type === 'checkbox' || this.type === 'radio') {
+                value = this.checked ? 1 : 0;
+            } else if (String(this.value).indexOf('data:') === 0) {
+                value = this.value.length;
+            } else {
+                value = this.value;
+            }
+
+            parts.push(this.name + '\u001f' + value);
+        });
+
+        return parts.join('\u001e');
     },
     getIssueId: () => parseInt($("#issueForm input[name=issueId]").val()),
     getRevision: () => $("#issueForm input[name=revision]").val(),
@@ -277,7 +369,7 @@ let issueForm = {
                     revision, 
                     false, 
                     () => {},
-                    () => issueForm.cancel(), 
+                    () => issueForm.close(),
                 );
             }
 
@@ -298,6 +390,8 @@ let issueForm = {
                 filesInfo: issueForm.getFilesFromPage(),
                 isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
             }, true);
+
+            issueForm.captureInitialState();
         }
     },
     /**
@@ -314,6 +408,7 @@ let issueForm = {
             }
 
             issueForm.applyType(type);
+            issueForm.captureInitialState();
         }
     },
     /**
@@ -382,11 +477,15 @@ let issueForm = {
             case 'copy-issue':
                 issueForm.onShow();
                 issueForm.updateHeader(false);
+                // Форма заполнится ответом сервера; пока он не пришёл, исходным
+                // считается пустая форма - заполнение снимет состояние заново.
+                issueForm.captureInitialState();
                 issueForm.handleAddIssueByState(state[1], state[2]);
                 break;
             case 'finished-issue':
                 issueForm.onShow();
                 issueForm.updateHeader(false);
+                issueForm.captureInitialState();
                 issueForm.handleAddFinishedIssueByState(state[1], state[2]);
                 break;
             default:
@@ -477,6 +576,7 @@ let issueForm = {
     },
     onHide: function () {
         issueForm.generation++;
+        issueForm.initialState = null;
         $('#issueForm > div.validateError').html('').hide();
         window.removeEventListener('beforeunload', issueForm.blockClose);
     },
@@ -723,6 +823,7 @@ let issueForm = {
                         linkedIds: issue.getLinkedChildrenIds(),
                     });
 
+                    issueForm.captureInitialState();
                 } else {
                     srv.err(res);
                 }
@@ -788,6 +889,7 @@ let issueForm = {
                     };
 
                     issueForm.setIssueBy(data);
+                    issueForm.captureInitialState();
                 } else {
                     srv.err(res);
                 }
