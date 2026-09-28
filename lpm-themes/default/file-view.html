@@ -1,8 +1,10 @@
 <?php
 /*
 Требуются:
-    LPMFile $file  - приложенный файл, содержимое которого показывается
-    Issue   $issue - задача, к которой приложен файл
+    LPMFile $file       - приложенный файл, содержимое которого показывается
+    Issue   $issue      - задача, к которой приложен файл
+    bool    $fileExists - есть ли содержимое файла на диске; если нет,
+                          вместо фрейма показывается сообщение об этом
 */
 ?>
 <?php /* Полоса над фреймом - единственный признак того, что открыт приложенный
@@ -16,13 +18,19 @@
     </span>
     <span class="small">
       Вложение задачи
-      <a href="<?=$issue->getConstURL();?>">#<?=$issue->idInProject;?> <?=lpm_escape($issue->getName());?></a>
-      — не страница Lightning PM, не вводите здесь пароли.
+      <a href="<?=$issue->getConstURL();?>">#<?=$issue->idInProject;?> <?=lpm_escape($issue->getName());?></a><?php
+      /* Предупреждение и скачивание - только когда файл есть: без содержимого
+         предостерегать не от чего, а скачивание закончилось бы отказом. */
+      if ($fileExists): ?>
+      — не страница Lightning PM, не вводите здесь пароли.<?php endif; ?>
     </span>
+    <?php if ($fileExists): ?>
     <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm ms-auto flex-shrink-0" download="<?=lpm_escape($file->origName);?>">
       <i class="fa fa-download me-1" aria-hidden="true"></i>Скачать
     </a>
+    <?php endif; ?>
   </div>
+  <?php if ($fileExists): ?>
   <?php /* sandbox дублирует заголовок ответа; allow-same-origin добавлять нельзя -
           вместе с allow-scripts он снимает изоляцию содержимого от сессии.
           Доступное имя задаётся через aria-label: title вызвал бы подсказку,
@@ -30,4 +38,20 @@
   <iframe class="file-view-frame w-100 flex-grow-1 border-0 bg-white" src="<?=$file->getViewUrl();?>"
     sandbox="allow-scripts" referrerpolicy="no-referrer"
     aria-label="Содержимое файла <?=lpm_escape($file->origName);?>"></iframe>
+  <?php else: ?>
+  <div class="container flex-grow-1 py-4">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="alert alert-warning text-center mb-0" role="alert">
+          <i class="fa-solid fa-triangle-exclamation fa-2x mb-3" aria-hidden="true"></i>
+          <p class="fw-bold mb-1">Содержимое файла не найдено</p>
+          <p class="mb-0">
+            Самого файла на диске нет: он мог не догрузиться или быть удалён после
+            того, как его приложили. Если файл нужен, приложите его к задаче заново.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 </div>
