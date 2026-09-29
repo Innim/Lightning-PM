@@ -10,18 +10,60 @@
 class LPMImgUpload
 {
     /**
-     * Проверяет файлы, выбранные в форме, не сохраняя их.
-     * Позволяет отсечь некорректные изображения до записи каких-либо данных.
-     * @param  string $name Имя поля с файлами для загрузки.
+     * Создаёт загрузчик изображений задачи.
+     *
+     * Любой способ приложить картинку к задаче - форма, внешнее API -
+     * обязан брать загрузчик отсюда. Иначе у одной и той же задачи картинки
+     * будут сохраняться по-разному в зависимости от того, откуда пришли,
+     * и разойдётся это молча.
+     *
+     * Загрузчик принимает и файлы из поля запроса
+     * ({@see LPMImgUpload::uploadViaFiles()}), и подготовленные заранее
+     * ({@see LPMImgUpload::uploadPrepared()}) - вставленные из буфера
+     * и добавленные по URL.
+     * @param  int $issueId        Идентификатор задачи.
+     * @param  int $availableSlots Сколько изображений ещё можно приложить;
+     *         отрицательное значение равнозначно нулю.
+     * @return LPMImgUpload
+     */
+    public static function createForIssue($issueId, $availableSlots)
+    {
+        return new self(
+            max(0, (int)$availableSlots),
+            true,
+            [LPMImg::PREVIEW_WIDTH, LPMImg::PREVIEW_HEIGHT],
+            'issues',
+            'scr_',
+            LPMInstanceTypes::ISSUE,
+            $issueId,
+            false
+        );
+    }
+
+    /**
+     * Проверяет выбранные в поле запроса изображения, не сохраняя их.
+     * Позволяет отсечь непригодные изображения до записи каких-либо данных.
+     *
+     * Правило одно на все способы приложить изображение - и форму,
+     * и внешнее API: иначе загрузчик молча отбросит лишние изображения
+     * там, где проверки не оказалось.
+     * @param  string $name           Имя поля с файлами для загрузки.
+     * @param  int    $availableSlots Сколько изображений ещё можно приложить.
+     * @param  int    $totalLimit     Максимальное количество изображений.
+     * @param  int    $preparedCount  Сколько изображений того же запроса займут места
+     *         помимо этого поля: вставленные из буфера и добавленные по URL
+     *         ({@see LPMImgUpload::prepareImages()}). Их тоже загружает
+     *         этот загрузчик, поэтому в лимит они входят наравне с полем.
      * @return array Массив сообщений об ошибках. Пустой, если всё в порядке.
      */
-    public static function validateUploadedFiles($name)
+    public static function validateUploadedFiles($name, $availableSlots, $totalLimit, $preparedCount = 0)
     {
         $errors = [];
+        $newCount = max(0, (int)$preparedCount);
 
         if (!isset($_FILES[$name]) || !isset($_FILES[$name]['tmp_name'])
                 || !is_array($_FILES[$name]['tmp_name'])) {
-            return $errors;
+            return self::checkCount($newCount, $availableSlots, $totalLimit, $errors);
         }
 
         $files = $_FILES[$name];
@@ -33,6 +75,8 @@ class LPMImgUpload
                 continue;
             }
 
+            $newCount++;
+
             if ($errorCode !== UPLOAD_ERR_OK) {
                 $errors[] = FileUploadManager::translateUploadError($errorCode, $originalName);
                 continue;
@@ -42,6 +86,26 @@ class LPMImgUpload
             if ($error !== null) {
                 $errors[] = $error;
             }
+        }
+
+        return self::checkCount($newCount, $availableSlots, $totalLimit, $errors);
+    }
+
+    /**
+     * Добавляет ошибку, если изображения не помещаются в оставшиеся места.
+     * @param  int   $newCount       Сколько изображений прикладывается запросом.
+     * @param  int   $availableSlots Сколько изображений ещё можно приложить.
+     * @param  int   $totalLimit     Максимальное количество изображений.
+     * @param  array $errors         Собранные ошибки.
+     * @return array Ошибки вместе с ошибкой лимита, если он превышен.
+     */
+    private static function checkCount($newCount, $availableSlots, $totalLimit, array $errors)
+    {
+        if ($newCount > max(0, (int)$availableSlots)) {
+            $errors[] = sprintf(
+                'Вы не можете прикрепить больше %d изображений',
+                FileUploadManager::getAttachmentsLimit($availableSlots, $totalLimit)
+            );
         }
 
         return $errors;
