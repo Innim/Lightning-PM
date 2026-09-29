@@ -14,7 +14,6 @@ $(document).ready(
         }
         issuePage.updatePriorityVals();
         issuePage.scrumColUpdateInfo();
-        var dd = new DropDown($('#dropdown'));
 
         $(document).on('click', '#issuesSortMenu ~ .dropdown-menu [data-sort]', function () {
             states.setState($(this).data('sort'));
@@ -549,25 +548,6 @@ function setupPasteTransformer(inputSelectors) {
     });
 }
 
-function DropDown(el) {
-    this.dd = el;
-    //this.placeholder = this.dd.children('span');
-    this.opts = this.dd.find('ul#priority-values > li');
-    this.val = '';
-    this.initEvents();
-}
-DropDown.prototype = {
-    initEvents: function () {
-        var obj = this;
-
-        obj.opts.click(function () {
-            var opt = $(this);
-            obj.val = opt.text();
-            issuePage.setPriorityVal(obj.val.match(/\d+/) - 1);
-        });
-    }
-}
-
 const issuePage = {
     projectId: null,
     idInProject: null,
@@ -748,9 +728,12 @@ issuePage.updateAddMeLinks = function (issue) {
     });
 };
 
+/**
+ * Перекрашивает кружки приоритета в списке задач - все, что есть на странице.
+ * Приоритет в форме задачи к списку не относится и живёт отдельно
+ * ({@see issueForm.setPriorityVal} в issue-form.js).
+ */
 issuePage.updatePriorityVals = function () {
-    issuePage.setPriorityVal($('input[type=range]#priority').val());
-    //issuePage.setPriorityVal( $('input[type=range]#priority').val() );
     $('.priority-val.circle').each(function (i) {
         issuePage.updatePriorityVal($(this), parseInt($(this).data('value')));
         $(this).text('');
@@ -771,33 +754,6 @@ issuePage.updatePriorityVal = function ($el, priority) {
     // Значение выводится из атрибута средствами CSS: внутри кружка оно должно
     // появляться только в режиме сортировки по приоритету.
     $el.attr('data-value-label', Issue.getPriorityDisplayVal(priority));
-}
-
-issuePage.setPriorityVal = function (value) {
-    let valueInt = parseInt(value);
-    let title = Issue.getPriorityStr(valueInt);
-    let displayVal = Issue.getPriorityDisplayVal(valueInt);
-    $('#priority').val(valueInt);
-
-    $('#priorityVal').html('<i class="fa-solid fa-angles-up" aria-hidden="true"></i> '
-        + title + ' (' + displayVal + ')');
-    $('#priorityVal').css('backgroundColor', issuePage.getPriorityColor(valueInt));
-};
-
-issuePage.upPriorityVal = function () {
-    var value = $('#priority').val();
-    if (value < 99) {
-        value++;
-        issuePage.setPriorityVal(value);
-    };
-}
-
-issuePage.downPriorityVal = function () {
-    var value = $('#priority').val();
-    if (value > 0) {
-        value--;
-        issuePage.setPriorityVal(value);
-    };
 }
 
 /**
