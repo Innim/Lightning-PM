@@ -435,6 +435,8 @@ Content-Type: application/json
 
 Do not post routine progress comments such as branch creation or "implementation started". Use comments for handoff details, tester instructions, limitations, or clarifications that are not obvious from the issue itself.
 
+To attach a file to the comment, send the same request as `multipart/form-data` instead — see [Attaching images and files](#attaching-images-and-files).
+
 ## Attachments
 
 Attachments live in two places of the issue payload: `files` holds the files attached to the issue itself, and `comments[].files` holds the files attached to that comment. Both use the same item shape, so one parser covers them:
@@ -454,6 +456,66 @@ Attachments live in two places of the issue payload: `files` holds the files att
 ```
 
 An image attached to a comment arrives here as a regular file with an image `mimeType`; the separate `images` collection of the issue payload never contains comment attachments. `requiresAuthentication: true` means `url` needs the same auth header as any other API request.
+
+## Attaching images and files
+
+An attachment goes to one of two places, and the request decides which — exactly as the two fields of the web form do:
+
+- **images** are for what is meant to be looked at: a screenshot, a mockup, a diagram. They land in the issue gallery, get a preview, and open in the viewer;
+- **files** are for what is meant to be downloaded: a log, an archive, a document — or an image when the original file itself is the point.
+
+Put a screenshot in `files` and it stays a line in the file list, with no preview and no viewer. That is the rare case, not the default.
+
+Attachments travel as `multipart/form-data`, in a repeatable field (a single field without `[]` works too). The field names differ by endpoint:
+
+| Request | Images | Files |
+| --- | --- | --- |
+| `POST /api/v1/issues` — with the new issue | `images[]` | `files[]` |
+| `POST /api/v1/issues/{issueId}` — [to an issue that exists](#changing-an-issue) | `addImages[]` | `addFiles[]` |
+| `POST /api/v1/issues/{issueId}/comments` — with the new comment | — | `files[]` |
+
+```bash
+# a new issue with a screenshot in the gallery and a log in the files
+curl -X POST 'https://example.com/api/v1/issues' \
+  -H 'X-LPM-API-Key: lpm_u123_...' \
+  -F 'projectId=demo' \
+  -F 'name=[api] Payment retry duplicates the request' \
+  -F 'desc=Double-clicking the pay button sends the purchase request twice.' \
+  -F 'images[]=@/tmp/screenshot.png' \
+  -F 'files[]=@/tmp/server.log'
+
+# the same two kinds added to an issue that already exists
+curl -X POST 'https://example.com/api/v1/issues/4567' \
+  -H 'X-LPM-API-Key: lpm_u123_...' \
+  -F 'addImages[]=@/tmp/screenshot.png' \
+  -F 'addFiles[]=@/tmp/server.log'
+
+# a comment with a screenshot
+curl -X POST 'https://example.com/api/v1/issues/4567/comments' \
+  -H 'X-LPM-API-Key: lpm_u123_...' \
+  -F 'text=Вот как выглядит экран после исправления.' \
+  -F 'files[]=@/tmp/screenshot.png'
+```
+
+The `add` prefix on the middle row is not decoration: `POST /api/v1/issues/{issueId}` is not an upload endpoint but [a partial change of the issue](#changing-an-issue), and there attachments are *added* to the ones already there, while a scalar field of the issue replaces its value. On the other two rows the issue or comment is being created, so there is nothing to add to.
+
+A comment has one attachment field and no gallery of its own: an image attached to a comment is shown with its preview and opens in the viewer anyway, decided by its type. `images[]` means nothing on the comment endpoint — a request that sends only that field is answered as a comment with no text and no files, that is `400`.
+
+`POST /api/v1/issues` and `POST /api/v1/issues/{issueId}` answer with the issue payload, `images` and `files` filled in; `POST /api/v1/issues/{issueId}/comments` answers with the created comment. A comment carrying files may have no `text` at all, exactly as in the web UI.
+
+Send the attachments with the request that creates the issue rather than adding them afterwards: the issue then reaches its readers complete, and its history does not open with an edit of a task one second old.
+
+Upload runs through the same code as the web form, so the limits are the web form's and not the API's own — and images have their own, separate from the files':
+
+- an issue holds at most 10 images **and** at most 10 files, a comment at most 20 files; what is already attached takes up the issue's slots;
+- an image may be at most 10 MB and must be a `jpg`, `jpeg`, `png`, `gif` or `webp`; anything else is refused;
+- the files of one request may total at most 128 MB. A file has no size limit of its own and no type restriction;
+- at most 20 attachments fit in one request, **images and files counted together**: PHP parses no more than that and drops the rest before Lightning PM sees them, without a word about it — the web form behaves the same way. So 10 images plus 10 files in a single request already sit on that ceiling; go over it and the extras vanish silently. Split a bigger set across requests;
+- a file whose extension the web server could execute is stored without that extension; the original name is kept and used on download.
+
+A request that breaks one of the limits Lightning PM checks is answered with `400` and changes nothing: neither the attachments, nor the issue or comment they came with, are saved. A request larger than the server's `post_max_size` is answered with `413`.
+
+Only `POST` accepts `multipart/form-data`; any other method answers `400`. Every other endpoint keeps taking its JSON body as before. Note that multipart carries every field as a string, so a flag is false only as `false`, `0` or an empty value — that covers `requestChanges` of a comment and `board` of a new issue, which also takes `true` as a string.
 
 ## Issue guidelines
 
@@ -517,9 +579,28 @@ Fields:
 - `completeDate` (optional) — target date in `YYYY-MM-DD` format, the same shape it is returned in.
 - `board` (optional, default `false`) — put the new issue straight on the scrum board: `true` places it in the column matching its status, a column key (`todo`, `inProgress`, `testing`, `done`) places it in that column. A non-scrum project or an unknown column is rejected with `400` and no issue is created.
 
+To attach a screenshot or a file to the issue, send this same request as `multipart/form-data` with an `images[]` and/or a `files[]` field — see [Attaching images and files](#attaching-images-and-files). Every field then arrives as a string, which changes nothing for the fields above except `board`: it takes `true` and `false` as strings too.
+
 The response returns the created issue payload (same shape as `GET /api/v1/issues/{issueId}`) with HTTP status `201`. Read the global `id` and `idInProject` from it for later requests. The issue is created without members and testers; assign them with the [participant endpoints](#assigning-issue-participants).
 
 An issue URL of this Lightning PM instance written in `desc` or in a comment text automatically links the two issues, the same as in the web UI.
+
+## Changing an issue
+
+```http
+POST /api/v1/issues/{issueId}
+```
+
+Changes an issue in part: whatever the request carries is changed, everything else is left alone. The endpoint is meant to grow, and today it understands two fields:
+
+- `addImages[]` — images for the issue gallery;
+- `addFiles[]` — files for the issue file list.
+
+Both are added to what is already attached, which is why neither is called `images`/`files`: a scalar field of the issue, when one is added here, will replace the current value instead. Send them as `multipart/form-data`, see [Attaching images and files](#attaching-images-and-files).
+
+A request that carries neither field changes nothing and is answered with `400`. `POST` is the method because `multipart/form-data` reaches a PHP application only through it.
+
+The answer is the updated issue payload. Participants of the issue are notified of the change, exactly as they are when it is edited in the web UI.
 
 ## Scope of v1
 
@@ -538,3 +619,5 @@ An issue URL of this Lightning PM instance written in `desc` or in a comment tex
 - Create an issue in a project.
 - Create a branch for an issue.
 - Add a comment to an issue.
+- Attach images and files to an issue — when creating it or later — and files to a comment.
+- Change an existing issue in part.
