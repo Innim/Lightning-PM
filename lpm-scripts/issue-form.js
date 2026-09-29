@@ -149,6 +149,7 @@ $(function ($) {
 
     issueForm.ensureFileUploadSlot();
     issueForm.refreshUploadRemoveButtons();
+    issueForm.initPriority();
 
     issueForm.initPage();
 });
@@ -338,6 +339,44 @@ let issueForm = {
     getIssueId: () => parseInt($("#issueForm input[name=issueId]").val()),
     getRevision: () => $("#issueForm input[name=revision]").val(),
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
+    /**
+     * Включает управление приоритетом в форме задачи: подпись со значением
+     * и список готовых значений рядом с ползунком.
+     */
+    initPriority: function () {
+        $('#issueForm #priority-values > li').on('click', function () {
+            // В подписи пункта стоит отображаемое значение приоритета —
+            // оно на единицу больше самого приоритета.
+            issueForm.setPriorityVal($(this).text().match(/\d+/) - 1);
+        });
+
+        issueForm.setPriorityVal($('#issueForm #priority').val());
+    },
+    /**
+     * Ставит приоритет задачи в форме и обновляет подпись рядом с ползунком.
+     * @param {Number|String} value Приоритет задачи (0..99).
+     */
+    setPriorityVal: function (value) {
+        const valueInt = parseInt(value);
+        const title = Issue.getPriorityStr(valueInt);
+        const displayVal = Issue.getPriorityDisplayVal(valueInt);
+
+        $('#priority').val(valueInt);
+        $('#priorityVal')
+            .html('<i class="fa-solid fa-angles-up" aria-hidden="true"></i> '
+                + title + ' (' + displayVal + ')')
+            .css('backgroundColor', issuePage.getPriorityColor(valueInt));
+    },
+    /** Поднимает приоритет задачи в форме на единицу. */
+    upPriorityVal: function () {
+        const value = parseInt($('#priority').val());
+        if (value < 99) issueForm.setPriorityVal(value + 1);
+    },
+    /** Опускает приоритет задачи в форме на единицу. */
+    downPriorityVal: function () {
+        const value = parseInt($('#priority').val());
+        if (value > 0) issueForm.setPriorityVal(value - 1);
+    },
     handleEditState: function () {
         issueForm.onShow();
         if (issueForm.restoreInput()) {
@@ -648,7 +687,7 @@ let issueForm = {
         $('form input:radio[name=type][value=' + value.type + ']', "#issueForm").prop('checked', true);
         // приоритет
         $("#issueForm form input[name=priority]").val(value.priority);
-        issuePage.setPriorityVal(value.priority);
+        issueForm.setPriorityVal(value.priority);
         // дата окончания
         lpm.datePicker.setValue($("#issueForm form input[name=completeDate]")[0], value.completeDate);
         // исполнители
@@ -1389,6 +1428,32 @@ let issueForm = {
         issueForm.refreshImageSlots();
     },
     /**
+     * Считает изображения, уже приложенные к форме: сохранённые у задачи,
+     * вставленные из буфера обмена, перенесённые из черновика и добавленные
+     * по URL. Выбранные в поле загрузки файлы сюда не входят — их добавляет
+     * к счёту только проверка перед отправкой (validateIssueForm).
+     *
+     * Перечень источников задан здесь и только здесь: и возврат полей
+     * (refreshImageSlots), и проверка перед отправкой обязаны видеть одно
+     * и то же, иначе новый источник изображений разойдётся между ними молча.
+     *
+     * Расходятся они лишь в незаполненных строках URL: такая строка занимает
+     * место, которое пользователь вот-вот заполнит, но изображением ещё
+     * не является, и сервер её не считает (ProjectPage::countPostedImages()).
+     * @returns {{occupied: number, attached: number}} occupied — вместе
+     *          с пустыми строками URL, attached — только сами изображения.
+     */
+    countAttachedImages: function () {
+        const inList = $('#issueForm .images-list .image-item').length
+            + $('#issueForm .images-list .pasted-img').length;
+        const $urls = $('#issueForm ul.images-url > li').not('.imgUrlTempl');
+        const filledUrls = $urls.filter(function () {
+            return $.trim($('input[name="imgUrls[]"]', this).val() || '') !== '';
+        }).length;
+
+        return { occupied: inList + $urls.length, attached: inList + filledUrls };
+    },
+    /**
      * Показывает или прячет поля добавления изображений: когда к задаче уже
      * приложено предельное число картинок, добавлять больше некуда.
      *
@@ -1398,12 +1463,7 @@ let issueForm = {
      */
     refreshImageSlots: function () {
         const max = window.lpmOptions.issueImgsCount;
-
-        // Картинки, уже приложенные к форме. Выбранные в поле загрузки файлы
-        // сюда не входят: их число проверяется при отправке (validateIssueForm).
-        const count = $('#issueForm .images-list .image-item').length
-            + $('#issueForm .images-list .pasted-img').length
-            + $('#issueForm ul.images-url > li').not('.imgUrlTempl').length;
+        const count = issueForm.countAttachedImages().occupied;
         const hasFreeSlot = !max || count < max;
 
         $('#issueForm .images-list > li:has(input[type=file])').each(function () {
@@ -1693,11 +1753,9 @@ let issueForm = {
             if (files) newImagesCount += files.length;
         });
 
-        const existingImagesCount = $("#issueForm .images-list .image-item").length;
-        // Изображения, приложенные до сохранения (вставка из буфера, черновик),
-        // занимают место наравне с выбранными в поле загрузки.
-        const preparedImagesCount = $("#issueForm .images-list .pasted-img").length;
-        if (newImagesCount + existingImagesCount + preparedImagesCount
+        // Уже приложенные изображения занимают места наравне с выбранными
+        // в поле загрузки файлами.
+        if (newImagesCount + issueForm.countAttachedImages().attached
                 > window.lpmOptions.issueImgsCount) {
             errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений');
         }

@@ -57,7 +57,7 @@ class FileUploadManager
         }
 
         if ($newCount > max(0, (int)$availableSlots)) {
-            $errors[] = sprintf('Вы не можете прикрепить больше %d файлов', self::getFilesLimit($availableSlots, $totalLimit));
+            $errors[] = sprintf('Вы не можете прикрепить больше %d файлов', self::getAttachmentsLimit($availableSlots, $totalLimit));
         }
 
         $totalError = self::checkTotalSize($filesData);
@@ -69,12 +69,14 @@ class FileUploadManager
     }
 
     /**
-     * Определяет количество файлов для сообщения о превышении лимита.
-     * @param  int $availableSlots Количество файлов, которые ещё можно прикрепить.
-     * @param  int $totalLimit     Максимальное количество файлов.
+     * Определяет количество вложений для сообщения о превышении лимита.
+     * Общее для всех видов вложений, в том числе изображений
+     * ({@see LPMImgUpload::validateUploadedFiles()}).
+     * @param  int $availableSlots Количество вложений, которые ещё можно прикрепить.
+     * @param  int $totalLimit     Максимальное количество вложений.
      * @return int
      */
-    private static function getFilesLimit($availableSlots, $totalLimit)
+    public static function getAttachmentsLimit($availableSlots, $totalLimit)
     {
         $limit = $totalLimit > 0 ? (int)$totalLimit : (int)$availableSlots;
 
@@ -178,7 +180,7 @@ class FileUploadManager
             if ($availableSlots <= 0) {
                 $result['errors'][] = sprintf(
                     'Вы не можете прикрепить больше %d файлов',
-                    self::getFilesLimit($availableSlots, $totalLimit)
+                    self::getAttachmentsLimit($availableSlots, $totalLimit)
                 );
                 break;
             }
