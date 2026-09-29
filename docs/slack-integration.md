@@ -4,13 +4,6 @@ The app posts issue notifications into a Slack channel and reads user avatars
 from Slack profiles. It is optional: with no token configured, nothing is sent
 and no Slack API call is made.
 
-What it sends:
-
-- an issue moved to testing, completed, or passed testing;
-- a comment from a tester to the members, or from a member to the testers;
-- a mention of a user in a comment;
-- a merge request of an issue that was merged.
-
 All notifications about one issue are grouped into a single Slack thread: the
 first message opens it, and the app remembers that message so later
 notifications reply to it.
@@ -30,8 +23,27 @@ answers `not_in_channel` — "Cannot post user messages to a channel they are no
 in" — so with a user token notifications reach only the channels its owner has
 joined. An install still on a user token should be moved to a bot token.
 
-For a **private** channel no scope is enough: the app has to be a member, so
-invite it to the channel (`/invite @<app name>`).
+`incoming-webhook` is **not** needed: the app talks to the Web API
+(`chat.postMessage`, `users.profile.get`) and never posts through a webhook URL.
+
+## Private channels
+
+`chat:write.public` covers **public** channels only — that is what the scope
+means. There is no scope that lets an app write into a private channel it is not
+a member of, so the app has to be invited into every private channel it should
+post to, once per channel:
+
+```
+/invite @<app name>
+```
+
+Until then Slack refuses the message with `channel_not_found` — from outside, a
+private channel is indistinguishable from one that does not exist.
+
+The project settings page shows the app name to invite and has a **Проверить**
+button that posts a test message into the channel and reports what came back, so
+a moderator sees the problem while setting the channel up instead of noticing
+that notifications never arrived.
 
 ## Issuing the token
 
@@ -60,6 +72,11 @@ Notifications can be switched off without removing the token:
 define('SLACK_NOTIFICATION_ENABLED', false);
 ```
 
+The switch stops the automatic notifications only. The **Проверить** button in
+the project settings still posts its test message, so a channel can be set up
+and verified before notifications are turned on; the result says plainly that
+they are off.
+
 Never commit the token. `lpm-config.inc.template.php` is a template and must
 keep `SLACK_TOKEN` empty.
 
@@ -83,7 +100,7 @@ channel ID and the error Slack returned.
 
 | error | meaning |
 |---|---|
-| `not_in_channel` | the token may not post there: a user token whose owner has not joined the channel, or a bot missing `chat:write.public`, or a private channel the app was not invited to |
-| `channel_not_found` | the value in the project settings is not a channel ID of this workspace |
+| `not_in_channel` | the token may not post there: a user token whose owner has not joined the channel, or a bot missing `chat:write.public` |
+| `channel_not_found` | the app was not invited into that private channel, or the value in the project settings is not a channel ID of this workspace |
 | `missing_scope` | the token was issued before a scope was added — re-install the app |
 | `invalid_auth`, `token_revoked` | the token is no longer valid and has to be re-issued |

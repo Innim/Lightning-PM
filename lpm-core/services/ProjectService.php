@@ -505,7 +505,7 @@ class ProjectService extends LPMBaseService
         $uid  = strtolower(trim((string)$uid));
         $name = trim((string)$name);
         $desc = trim((string)$desc);
-        $slackNotifyChannel = (string)$slackNotifyChannel;
+        $slackNotifyChannel = trim((string)$slackNotifyChannel);
         $gitlabGroupId = (int)$gitlabGroupId;
         $gitlabProjectIds = (string)$gitlabProjectIds;
         $aiContext = AiProjectContext::normalize($aiContext);
@@ -619,6 +619,188 @@ class ProjectService extends LPMBaseService
         $this->add2Answer('url', Link::getUrl(ProjectPage::UID, [$uid, ProjectPage::PUID_SETTINGS]));
 
         return $this->answer();
+    }
+
+    /**
+     * Подсказка к полю канала оповещений Slack: кого пригласить в канал
+     * и команда, которой это делается.
+     *
+     * Имя приложения запрашивается у Slack, поэтому подсказка грузится
+     * отдельным запросом - страница настроек не должна ждать Slack.
+     *
+     * Выключатель оповещений подсказку не прячет: она нужна ровно для того,
+     * чтобы настроить канал, в том числе заранее.
+     *
+     * В ответе: `message` - текст подсказки, `invite` - команда `/invite`
+     * или пустая строка, если приглашать пока некого, `note` - приписка
+     * после команды или пустая строка.
+     */
+    public function getSlackChannelHint()
+    {
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $slack = SlackIntegration::getInstance();
+
+        if (!$slack->isConfigured()) {
+            return $this->slackHintAnswer($this->getSlackNotConfiguredMessage(), '');
+        }
+
+        $botName = $slack->getBotName();
+        if (empty($botName)) {
+            return $this->slackHintAnswer(
+                'Не удалось узнать имя приложения в Slack. В приватный канал оповещения'
+                . ' придут только после того, как приложение пригласят в этот канал -'
+                . ' обратитесь к администратору таск-трекера.',
+                '',
+                $this->getSlackNotificationOffNote()
+            );
+        }
+
+        return $this->slackHintAnswer(
+            'Оповещения отправляет приложение @' . $botName . '. В приватный канал оно'
+            . ' писать не сможет, пока его туда не пригласят - выполните в канале команду:',
+            $this->getSlackInviteCommand($botName),
+            $this->getSlackNotificationOffNote()
+        );
+    }
+
+    /**
+     * Отправляет в указанный канал Slack проверочное сообщение и сообщает,
+     * дошло ли оно.
+     *
+     * Канал берётся из формы, а не из настроек проекта: проверить нужно
+     * то значение, которое модератор собирается сохранить.
+     *
+     * В ответе, кроме `message` и `invite`, отдаётся `status` - одна
+     * из констант SlackIntegration::CHECK_*.
+     *
+     * @param int    $projectId Идентификатор проекта.
+     * @param string $channel Идентификатор канала Slack.
+     */
+    public function checkSlackChannel($projectId, $channel)
+    {
+        $projectId = (int)$projectId;
+        $channel = trim((string)$channel);
+
+        if (!$this->checkRole(User::ROLE_MODERATOR)) {
+            return $this->error('Недостаточно прав');
+        }
+
+        $project = Project::loadById($projectId);
+        if (!$project) {
+            return $this->error('Проект не найден');
+        }
+
+        if ($channel === '') {
+            return $this->error('Укажите ID канала');
+        }
+
+        $slack = SlackIntegration::getInstance();
+        $status = $slack->checkChannel($channel, $this->getSlackCheckText($project));
+        $invite = '';
+
+        switch ($status) {
+            case SlackIntegration::CHECK_OK:
+                $message = 'Проверочное сообщение отправлено в канал ' . $channel
+                    . ' - оповещения по проекту будут приходить туда.';
+                break;
+            case SlackIntegration::CHECK_OK_NOTIFICATION_OFF:
+                $message = 'Проверочное сообщение отправлено в канал ' . $channel
+                    . ' - канал указан верно. Но автоматические оповещения в Slack'
+                    . ' на этой установке выключены, поэтому сообщений по задачам'
+                    . ' в канале пока не будет.';
+                break;
+            case SlackIntegration::CHECK_NOT_INVITED:
+                $botName = $slack->getBotName();
+                $message = 'Slack не пустил сообщение в канал ' . $channel . ': приложение'
+                    . (empty($botName) ? '' : ' @' . $botName) . ' в этом канале не состоит'
+                    . ' либо канала с таким ID нет. Если канал приватный - пригласите'
+                    . ' в него приложение' . (empty($botName) ? '.' : ' командой:');
+                $invite = empty($botName) ? '' : $this->getSlackInviteCommand($botName);
+                break;
+            case SlackIntegration::CHECK_NOT_CONFIGURED:
+                $message = $this->getSlackNotConfiguredMessage();
+                break;
+            case SlackIntegration::CHECK_AUTH_FAILED:
+                $message = 'Slack не принял доступ приложения - обратитесь'
+                    . ' к администратору таск-трекера.';
+                break;
+            default:
+                $message = 'Не удалось отправить сообщение в Slack, причина записана'
+                    . ' в журнал - обратитесь к администратору таск-трекера.';
+                break;
+        }
+
+        $this->add2Answer('status', $status);
+        $this->add2Answer('message', $message);
+        $this->add2Answer('invite', $invite);
+
+        return $this->answer();
+    }
+
+    /**
+     * Текст проверочного сообщения: в канале должно быть понятно,
+     * откуда оно и кто его вызвал.
+     */
+    private function getSlackCheckText(Project $project)
+    {
+        $text = 'Проверка канала: сюда будут приходить оповещения по проекту «'
+            . $project->name . '».';
+
+        $user = $this->getUser();
+        if ($user) {
+            $text .= ' Проверку запустил ' . $user->getPlainShortName() . '.';
+        }
+
+        return $text;
+    }
+
+    /**
+     * Ответ с подсказкой к полю канала.
+     *
+     * @param String $message Текст подсказки.
+     * @param String $invite Команда `/invite` или пустая строка.
+     * @param String $note Приписка после команды или пустая строка.
+     */
+    private function slackHintAnswer($message, $invite, $note = '')
+    {
+        $this->add2Answer('message', $message);
+        $this->add2Answer('invite', $invite);
+        $this->add2Answer('note', $note);
+
+        return $this->answer();
+    }
+
+    private function getSlackNotConfiguredMessage()
+    {
+        return 'Интеграция со Slack не настроена, оповещения не отправляются -'
+            . ' обратитесь к администратору таск-трекера.';
+    }
+
+    /**
+     * Приписка о том, что автоматические оповещения выключены: канал настроить
+     * можно и сейчас, но сообщений по задачам в нём не будет.
+     *
+     * @return String Пустая строка, если оповещения включены.
+     */
+    private function getSlackNotificationOffNote()
+    {
+        if (SlackIntegration::getInstance()->isNotificationEnabled()) {
+            return '';
+        }
+
+        return 'Учтите: автоматические оповещения в Slack на этой установке выключены,'
+            . ' поэтому сообщений по задачам в канале пока не будет.';
+    }
+
+    /**
+     * Команда Slack, которой приложение приглашают в канал.
+     */
+    private function getSlackInviteCommand($botName)
+    {
+        return '/invite @' . $botName;
     }
 
     /**

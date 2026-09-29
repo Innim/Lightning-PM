@@ -551,6 +551,15 @@ let srv = {
         ) {
             this.s._('saveProject');
         },
+        getSlackChannelHint: function (onResult) {
+            // Подсказку страница запрашивает сама при загрузке, и ответа ждёт
+            // Slack, поэтому вызов идёт фоновым инвокером: на общем он задержал
+            // бы следующее действие пользователя на весь свой таймаут.
+            this.s._('getSlackChannelHint', { background: true });
+        },
+        checkSlackChannel: function (projectId, channel, onResult) {
+            this.s._('checkSlackChannel');
+        },
         searchIssueNames: function (projectId, idInProjectPart, onResult) {
             this.s._('searchIssueNames');
         },
