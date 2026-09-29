@@ -16,6 +16,12 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
        class="scrum-board-actions-show-sp"><i class="fa fa-eye" aria-hidden="true"></i></a>
     <a href="#" onclick="scrumBoard.changeSPVisibility(false); return false;" title="Скрыть SP по стикерам"
        class="scrum-board-actions-hide-sp"><i class="fa fa-eye-slash" aria-hidden="true"></i></a>
+    <a href="#" onclick="scrumBoard.changeTestersVisibility(true); return false;"
+       title="Показать тестировщиков по стикерам" aria-label="Показать тестировщиков по стикерам"
+       class="scrum-board-actions-show-testers"><i class="fas fa-flask" aria-hidden="true"></i></a>
+    <a href="#" onclick="scrumBoard.changeTestersVisibility(false); return false;"
+       title="Скрыть тестировщиков по стикерам" aria-label="Скрыть тестировщиков по стикерам"
+       class="scrum-board-actions-hide-testers"><i class="fas fa-flask" aria-hidden="true"></i></a>
     <?php if ($addClearBoard): ?>
         <a href="#" onclick="scrumBoard.clearBoard(event); return false;" title="Убрать все стикеры с доски"><i
                 class="fa fa-archive" aria-hidden="true"></i></a>
@@ -101,6 +107,7 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
 
                 $issue = $sticker->getIssue();
                 $members = $issue->getMembers();
+                $testers = $issue->getTesters();
 
                 $deadlineLevel = IssueViewHelper::deadlineLevel($issue);
 
@@ -141,6 +148,17 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                         echo lpm_print_table_scrum_board_issue_member($member);
                     endforeach;
                 ?></span>
+                <?php /* Тестировщики не помечаются `data-member-id`: по этому атрибуту
+                         фильтр задач определяет исполнителей */ ?>
+                <?php if (!empty($testers)): ?>
+                    <span class="sticker-issue-testers" title="Тестировщики"><i class="fas fa-flask"
+                            aria-hidden="true"></i> <?php
+                        foreach ($testers as $j => $tester):
+                            echo $j > 0 ? ', ' : '';
+                            ?><span class="sticker-issue-tester"><?=$tester->getShortName();?></span><?php
+                        endforeach;
+                    ?></span>
+                <?php endif; ?>
                 <?php if ($isFree): ?>
                     <span class="sticker-free-mark"><i class="far fa-hand-paper" aria-hidden="true"></i> свободна</span>
                 <?php endif; ?>
