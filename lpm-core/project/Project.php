@@ -357,6 +357,46 @@ class Project extends MembersInstance
     }
 
     /**
+     * Возвращает условие SQL, оставляющее в выборке только строки,
+     * относящиеся к доступным пользователю проектам.
+     *
+     * Правило то же, что и у {@see Project::checkUserReadPermit()}, но
+     * применяется в запросе: выборку со своим лимитом нельзя отфильтровать
+     * после - лимит отсчитается до фильтрации, и результат молча укоротится.
+     *
+     * @param int    $userId          Идентификатор пользователя.
+     * @param string $projectIdColumn Колонка выборки с идентификатором проекта,
+     *                                например `i.projectId`.
+     * @return string Условие для `WHERE`: `1`, если пользователю доступны все
+     *                проекты (модератор), `0`, если не доступно ничего.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
+    public static function readPermitSqlCondition($userId, $projectIdColumn)
+    {
+        $userId = (int)$userId;
+
+        $user = $userId > 0 ? User::load($userId) : false;
+        if (empty($user)) {
+            return '0';
+        }
+
+        if ($user->isModerator()) {
+            return '1';
+        }
+
+        return 'EXISTS (' . self::buildQuery([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::MEMBERS,
+            'AS'     => 'pm',
+            'WHERE'  => [
+                '`pm`.`instanceId`'   => self::col($projectIdColumn),
+                '`pm`.`instanceType`' => LPMInstanceTypes::PROJECT,
+                '`pm`.`userId`'       => $userId,
+            ],
+        ]) . ')';
+    }
+
+    /**
      * Возвращает идентификаторы проектов, в которых пользователь состоит
      * участником.
      *
@@ -397,14 +437,14 @@ class Project extends MembersInstance
      * Получает из БД список всех проектов, доступные пользователю.
      * @param User $user
      * @param bool $isArchive
-     * @param bool $loadImportantCount
+     * @param bool $loadImportantCount Заполнить счётчик важных задач
+     *                                 пользователя, {@see getImportantIssuesCount()}.
      * @return array<Project>
      */
     private static function getInstanceList(User $user, bool $isArchive, bool $loadImportantCount = false)
     {
-        // TODO: добавить счетчик сюда 
         $isModerator = $user->isModerator();
-        $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE, LPMTables::MEMBERS, LPMTables::ISSUES];
+        $tables = [LPMTables::PROJECTS, LPMTables::FIXED_INSTANCE, LPMTables::MEMBERS];
 
         $instanceProject = LPMInstanceTypes::PROJECT;
         $archive = $isArchive ? 1 : 0;
@@ -414,28 +454,6 @@ class Project extends MembersInstance
            IF (`fixed`.`instanceId` IS NULL, 0, 1) AS `fixedInstance`, 
            `fixed`.`dateFixed` AS `dateFixed`
 SQL;
-        if ($loadImportantCount) {
-            $issueType = LPMInstanceTypes::ISSUE;
-            $statusInWork = Issue::STATUS_IN_WORK;
-            $minPriority = Issue::IMPORTANT_PRIORITY;
-
-            $sql .= <<<SQL
-,
-           (SELECT COUNT(`i`.`id`) AS `count` 
-              FROM `%4\$s` `i`
-        INNER JOIN `%3\$s` `m`
-                ON `m`.`instanceId` = `i`.`id`
-             WHERE `m`.`userId` = $user->userId
-               AND `m`.`instanceType` = $issueType
-               AND `i`.`projectId` = `p`.`id`
-               AND `i`.`priority` >= $minPriority
-               AND `i`.`status` = $statusInWork
-               AND `i`.`deleted` = 0) AS `importantIssuesCount`
-
-SQL;
-            $tables[] = LPMTables::MEMBERS;
-        }
-
         $sql .= <<<SQL
       FROM `%1\$s` AS `p` 
 SQL;
@@ -458,7 +476,36 @@ SQL;
   ORDER BY `dateFixed` DESC, `p`.`lastUpdate` DESC
 SQL;
 
-        return StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
+        $list = StreamObject::loadObjList(self::getDB(), array_merge((array)$sql, $tables), __CLASS__);
+
+        if ($loadImportantCount) {
+            self::fillImportantIssuesCounts($list, $user->userId);
+        }
+
+        return $list;
+    }
+
+    /**
+     * Заполняет проектам списка счётчик важных задач пользователя одним
+     * запросом, чтобы шаблон списка не делал по запросу на каждый проект.
+     *
+     * @param array<Project> $list   Проекты.
+     * @param int            $userId Идентификатор пользователя.
+     * @throws \GMFramework\ProviderLoadException При ошибке выборки.
+     */
+    private static function fillImportantIssuesCounts(array $list, $userId)
+    {
+        $projectIds = [];
+        foreach ($list as $project) {
+            $projectIds[] = $project->id;
+        }
+
+        $counts = Issue::getImportantIssuesCountByProjects($userId, $projectIds);
+
+        foreach ($list as $project) {
+            $project->_importantIssuesCount = isset($counts[(int)$project->id])
+                ? $counts[(int)$project->id] : 0;
+        }
     }
 
     public static function updateIssuesCount($projectId)
@@ -974,15 +1021,6 @@ SQL;
         return empty($this->gitlabProjectIds) ? [] : explode(',', $this->gitlabProjectIds);
     }
 
-	protected function setVar($var, $value)
-	{
-        if ($var === 'importantIssuesCount') {
-            $this->_importantIssuesCount = (int)$value;
-            return true;
-        }
-        return parent::setVar($var, $value);
-    }
-    
     protected function loadMembers()
     {
         if (!$this->_members = Member::loadListByProject($this->id)) {
