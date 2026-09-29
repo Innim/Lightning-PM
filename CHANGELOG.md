@@ -5,6 +5,8 @@
 - Фильтры и сортировка в списке задач выполняются на сервере и относятся ко всей выборке, а не только к загруженной части ([#498](https://task.innim.ru/project/lightning-pm/issue/498)).
 - На скрам-доске можно включить показ тестировщиков на стикерах ([#151](https://task.innim.ru/project/lightning-pm/issue/151)).
 - В блоке связанных задач у каждой задачи виден её статус ([#497](https://task.innim.ru/project/lightning-pm/issue/497)).
+- API: к задаче можно приложить картинку и файл ([#495](https://task.innim.ru/project/lightning-pm/issue/495)).
+- API: к комментарию можно приложить файл ([#495](https://task.innim.ru/project/lightning-pm/issue/495)).
 
 ### Changed
 - «Отмена» в форме задачи спрашивает подтверждение, если в форме есть несохранённые изменения ([#500](https://task.innim.ru/project/lightning-pm/issue/500)).
@@ -12,6 +14,7 @@
 - Завершённая или возвращённая в работу задача остаётся в списке на своём месте и меняет вид ([#498](https://task.innim.ru/project/lightning-pm/issue/498)).
 
 ### Fixed
+- Форма задачи не теряет молча изображения сверх лимита — сохранение отклоняется с сообщением ([#495](https://task.innim.ru/project/lightning-pm/issue/495)).
 - Спринт закрывается и после того, как доска обновилась сама ([#501](https://task.innim.ru/project/lightning-pm/issue/501)).
 - Два одновременных закрытия спринта больше не разносят один спринт по двум снимкам архива — второе закрытие отклоняется ([#501](https://task.innim.ru/project/lightning-pm/issue/501)).
 - В ленте комментариев проекта переход «Раньше» больше не приводит на пустую страницу ([#423](https://task.innim.ru/project/lightning-pm/issue/423)).

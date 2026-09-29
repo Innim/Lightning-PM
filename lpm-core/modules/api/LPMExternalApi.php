@@ -26,6 +26,8 @@ class LPMExternalApi extends ExternalApi
             $router = new ApiRouter($this->engine(), $request, $this->getUrl());
 
             return $router->handle()->output();
+        } catch (ApiException $e) {
+            return ApiResponse::error($e->getMessage(), $e->getStatusCode())->output();
         } catch (Exception $e) {
             return ApiResponse::error($e->getMessage(), 500)->output();
         }
