@@ -37,7 +37,7 @@ class ImageDownloadController
             return 'inline';
         }
 
-        return 'inline; filename="' . str_replace('"', '\"', $name) . '"' .
+        return 'inline; filename="' . FileNameHelper::asciiFileName($name) . '"' .
                 "; filename*=UTF-8''" . rawurlencode($name);
     }
 

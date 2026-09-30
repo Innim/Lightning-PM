@@ -304,14 +304,15 @@ class LPMImgUpload
     /**
      * Проверяет, что файл может быть загружен как изображение.
      * @param  string $filepath     Путь до файла.
-     * @param  string $originalName Оригинальное имя файла - для сообщения об ошибке.
+     * @param  string $originalName Имя файла из `$_FILES` - для сообщения об ошибке.
      * @param  int    $type         Тип изображения (одна из констант IMAGETYPE_*),
      *                              заполняется, если файл корректен.
      * @return string|null Текст ошибки или null, если файл может быть загружен.
      */
     public static function checkImageFile($filepath, $originalName = null, &$type = null)
     {
-        $label = empty($originalName) ? '' : ' "' . $originalName . '"';
+        $displayName = FileNameHelper::displayNameFromUpload($originalName);
+        $label = '' === $displayName ? '' : ' "' . $displayName . '"';
 
         if (!file_exists($filepath)) {
             return 'Не удалось загрузить файл' . $label;
@@ -612,16 +613,17 @@ class LPMImgUpload
 
         // Генерируем необходимые изображения
         $img = new LPMImg($srcFilename);
-        // Имя чистится по общим для вложений правилам: неизвестное имя даёт
-        // пустую строку, а колонка origName - NOT NULL. Дополнительно вырезаем
-        // 4-байтовые символы (например, эмодзи): колонка хранит только
-        // BMP-символы (charset utf8mb3), иначе вставка будет отклонена по charset.
-        // FileNameHelper::sanitize() возвращает валидный UTF-8, поэтому
-        // preg_replace() здесь null вернуть не может
+        // Имя приводится к отображаемому виду по общим для вложений правилам:
+        // неизвестное имя даёт пустую строку, а колонка origName - NOT NULL.
+        // Дополнительно вырезаем 4-байтовые символы (например, эмодзи): колонка
+        // хранит только BMP-символы (charset utf8mb3), иначе вставка будет
+        // отклонена по charset. FileNameHelper::displayNameFromUpload()
+        // возвращает валидный UTF-8, поэтому preg_replace() здесь null вернуть
+        // не может
         $img->origName = preg_replace(
             '/[\x{10000}-\x{10FFFF}]/u',
             '',
-            FileNameHelper::sanitize($originalName)
+            FileNameHelper::displayNameFromUpload($originalName)
         );
 
         if (null !== $this->_sizes) {

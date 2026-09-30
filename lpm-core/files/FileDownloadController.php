@@ -161,8 +161,11 @@ class FileDownloadController
         }
 
         $mimeType = empty($file->mimeType) ? 'application/octet-stream' : $file->mimeType;
-        $asciiName = str_replace('"', '\"', $file->origName);
-        $utfName = rawurlencode($file->origName);
+        // Имя передаётся дважды: ASCII-вариант понимают все клиенты,
+        // а из filename* браузер берёт имя, под которым файл загрузили
+        $displayName = FileNameHelper::normalizeDisplayName($file->origName, FileNameHelper::DEFAULT_NAME);
+        $asciiName = FileNameHelper::asciiFileName($displayName);
+        $utfName = rawurlencode($displayName);
 
         $contentType = $mimeType;
         $disposition = 'attachment';
@@ -179,7 +182,8 @@ class FileDownloadController
 
         header('Content-Type: ' . $contentType);
         header('Content-Length: ' . $file->size);
-        header('Content-Disposition: ' . $disposition . '; filename="' . $asciiName . '"; filename*=UTF-8\'' . '\'' . $utfName);
+        header('Content-Disposition: ' . $disposition . '; filename="' . $asciiName . '"' .
+                "; filename*=UTF-8''" . $utfName);
         header('X-Content-Type-Options: nosniff');
 
         readfile($absolutePath);
