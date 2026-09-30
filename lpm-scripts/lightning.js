@@ -454,6 +454,9 @@ let srv = {
         loadProjectIssues: function (projectId, scope, search, filter, sort, offset, limit, onResult) {
             this.s._('loadProjectIssues');
         },
+        loadIssuePosition: function (projectId, scope, search, filter, sort, issueId, onResult) {
+            this.s._('loadIssuePosition');
+        },
         loadIssueRow: function (issueId, onResult) {
             this.s._('loadIssueRow');
         },

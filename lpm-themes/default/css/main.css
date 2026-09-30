@@ -789,6 +789,15 @@ table.issues-list tr.test-ready .test-ready-check {
 	max-width: 640px;
 }
 
+/* Полоса подгрузки под таблицей списка задач: рамка того же цвета, что у таблицы,
+   и без верхней границы - полоса стыкуется с таблицей. Задано здесь, а не
+   утилитами: в Bootstrap 5.1 цвет рамки утилитой не переопределить. */
+.issues-list-paging {
+	border: 1px solid #cccccc;
+	border-top: none;
+	background-color: #f7f7f7;
+}
+
 /* список задач и добавление/редактирование задачи */
 table.issues-list td {
 	position: relative;

@@ -526,6 +526,8 @@ class ProjectPage extends LPMPage
         // нет по самому её условию - считать в базе нечего
         $openedStatuses = self::getOpenedStatuses($statuses);
 
+        $total = $this->countIssues($statuses, $search);
+
         $this->addTmplVar('issues', $issues);
         $this->addTmplVar('search', $search);
         $this->addTmplVar('issuesCountLabel', $countLabel);
@@ -536,7 +538,8 @@ class ProjectPage extends LPMPage
             'pageSize' => PROJECT_ISSUES_PAGE_SIZE,
             'maxPageSize' => PROJECT_ISSUES_MAX_PAGE_SIZE,
             'loaded' => count($issues),
-            'total' => $this->countIssues($statuses, $search),
+            'remaining' => max(0, min(PROJECT_ISSUES_PAGE_SIZE, $total - count($issues))),
+            'total' => $total,
             'opened' => empty($openedStatuses) ? 0 : $this->countIssues($openedStatuses, $search),
         ]);
         $this->addTmplVar('searchForm', [

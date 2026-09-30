@@ -280,6 +280,32 @@ class Issue extends MembersInstance
         $limit = 0,
         $offset = 0
     ) {
+        list($sql, $args) = self::buildListQuery($where, $extraSelect, $extraTables);
+
+        if (empty($orderBy)) {
+            $orderBy = self::getDefaultOrderBySql();
+        }
+
+        $sql .= ' ORDER BY ' . $orderBy . self::getLimitSql($limit, $offset);
+
+        array_unshift($args, $sql);
+
+        return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
+    }
+
+    /**
+     * Собирает запрос выборки задач без порядка и постраничности.
+     *
+     * Выделен из {@see loadList()}, потому что та же выборка нужна и для
+     * подсчёта места задачи в списке {@see getPositionInProjectFiltered()}.
+     * @param  string $where       Условие выборки.
+     * @param  string $extraSelect Дополнительная строка полей для выборки.
+     * @param  array  $extraTables Ассоциативный массив дополнительных таблиц для выборки
+     *                             [алиас => таблица].
+     * @return array Запрос и список таблиц к нему: [SQL, array<string>].
+     */
+    private static function buildListQuery($where, $extraSelect = '', $extraTables = null)
+    {
         $instanceType = LPMInstanceTypes::ISSUE;
 
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
@@ -362,17 +388,9 @@ SQL;
             $sql  .= " AND " . $where;
         }
 
-        if (empty($orderBy)) {
-            $orderBy = self::getDefaultOrderBySql();
-        }
+        $sql .= " AND `i`.`authorId` = `u`.`userId`";
 
-        $sql .= " AND `i`.`authorId` = `u`.`userId` ORDER BY " . $orderBy;
-
-        $sql .= self::getLimitSql($limit, $offset);
-
-        array_unshift($args, $sql);
-        
-        return StreamObject::loadObjList(self::getDB(), $args, __CLASS__);
+        return [$sql, $args];
     }
 
     /**
@@ -569,6 +587,57 @@ SQL;
             $limit,
             $offset
         );
+    }
+
+    /**
+     * Возвращает место задачи в выборке задач проекта.
+     *
+     * Место считается тем же выражением порядка, которым отбирается сам список,
+     * поэтому совпадает с номером строки, на которой задача окажется при его
+     * загрузке. Нужно, чтобы поставить строку на место после изменения
+     * приоритета, не перечитывая показанную часть списка.
+     * @param  int    $projectId Идентификатор проекта.
+     * @param  float  $issueId   Идентификатор задачи.
+     * @param  array  $filters   Фильтры выборки, см. buildProjectFilterWhere().
+     * @param  string $sort      Режим сортировки, см. getListOrderBy().
+     * @return int Место задачи, считая с единицы; 0 - задачи в выборке нет.
+     * @throws \GMFramework\ProviderLoadException Если не удалось посчитать место.
+     */
+    public static function getPositionInProjectFiltered(
+        $projectId,
+        $issueId,
+        array $filters = [],
+        $sort = self::SORT_DEFAULT
+    ) {
+        list($listSql, $args) = self::buildListQuery(self::buildProjectFilterWhere($projectId, $filters));
+
+        $orderBy = self::getListOrderBy($sort);
+        if (empty($orderBy)) {
+            $orderBy = self::getDefaultOrderBySql();
+        }
+
+        // Нумеруем поверх выборки списка, а не внутри неё: в OVER() не видны
+        // псевдонимы её полей, а выражение порядка на них опирается - снаружи
+        // это уже обычные столбцы. Псевдоним `i` выборке оставлен: через него
+        // то же выражение обращается к полям задачи
+        $sql = 'SELECT `pos` FROM ('
+             . 'SELECT `id` AS `positionIssueId`,'
+             . ' ROW_NUMBER() OVER (ORDER BY ' . $orderBy . ') AS `pos`'
+             . ' FROM (' . $listSql . ') AS `i`'
+             . ') AS `positions` WHERE `positionIssueId` = ' . (int)$issueId;
+
+        array_unshift($args, $sql);
+        $res = call_user_func_array([self::getDB(), 'queryt'], $args);
+
+        // Сбой запроса нельзя отдать нулём: ноль значит, что задачи в выборке
+        // нет, и список по такому ответу убрал бы её строку
+        if (!$res) {
+            throw new \GMFramework\ProviderLoadException();
+        }
+
+        $row = $res->fetch_assoc();
+
+        return empty($row) ? 0 : (int)$row['pos'];
     }
 
     /**

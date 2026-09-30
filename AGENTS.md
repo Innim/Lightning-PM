@@ -20,6 +20,17 @@ This file tells the coding assistant how to safely and efficiently work in this 
 ## Architecture Notes
 - Two frameworks coexist: a legacy one bundled in `lpm-libs/gm-framework-v1.1.1.phar` and the newer `GMFramework\*` under `lpm-libs/framework/`. The project is migrating off the legacy one. Watch for classes that still extend legacy bases (e.g. `LPMOptions extends Options` resolves to the phar's `Options`, which has no `saveOptions()`/`change()`).
 - DB access: new code uses the V2 query builder `\GMFramework\DBQueryBuilder` via `LPMBaseObject` helpers `buildAndSaveToDbV2($sqlHash)` and `loadFromDV2()`/`loadAndParseV2()`. Do NOT hand-write SQL strings or use the legacy `DBConnect::queryt()`/`preparet()`. Hash form: `['INSERT' => $assoc, 'INTO' => LPMTables::X, 'ODKU' => ['field']]` (upsert), `['UPDATE' => ..., 'SET' => [...], 'WHERE' => [...]]`, `['DELETE' => ..., 'WHERE' => [...]]`. The builder backticks table/column names (reserved words like `option`/`value` are safe) and escapes values; throw `\GMFramework\ProviderSaveException` on failure. Canonical connection: `LPMGlobals::getInstance()->getDBConnect()`.
+  - **The one exception**: a query the builder cannot express at all. It has no
+    window functions and no derived tables — `FROM` is assembled from a list of
+    table names — so `ROW_NUMBER() OVER (…)` over a subquery has to be written by
+    hand (see `Issue::getPositionInProjectFiltered()`, and the pre-existing
+    `Issue::loadList()`/`countFiltered()` around it). Forcing such a query through
+    the builder would mean restating the whole selection and ordering a second
+    time, which is worse than the raw SQL: two definitions of the same thing drift
+    apart silently. When you take this exception, say so in a comment at the
+    query, keep the ordering/selection expression in ONE place and reuse it, and
+    still throw the provider exceptions (`\GMFramework\ProviderLoadException`)
+    so callers cannot mistake a failure for an empty result.
 - Service layer (AJAX): JS calls `srv.<service>.<method>(args, onResult)`, which dispatch to a PHP service extending `LPMBaseService`. **There is NO dynamic dispatch: every method needs an explicit wrapper in the service map in `lpm-scripts/lightning.js`, otherwise the call throws `TypeError` before any request.** Read `docs/agents/frontend-js.md` before adding or changing a service call.
 - Model load misses return `false`, not `null`: `Issue::load()`, `Issue::loadByIdInProject()`, `Project::load()`, and similar `StreamObject::singleLoad`-backed loaders return `false` when nothing is found. Guard with `empty()`/truthy checks (`if (!$x)` / `empty($x)`), NOT `=== null` — a `false` result slips past a `!== null` guard and fatals on the next method call.
 - Page routing: pages extend `LPMPage`; constructor is `(uid, title, needAuth, notInMenu, pattern, label, reqRole)`, and are registered manually in `PagesManager::__construct`. Restrict a page to admins with `reqRole = User::ROLE_ADMIN`; the menu auto-filters by `checkUserRole()`. Page/model classes are autoloaded via `lpm-core/classes.dump` (auto-regenerated on cache miss, not git-tracked), so new classes are picked up without manual registration in the autoloader. Render a template by setting `$this->_pattern` and passing data with `addTmplVar()`.
