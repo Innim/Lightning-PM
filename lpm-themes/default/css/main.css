@@ -1137,6 +1137,19 @@ blockquote > p {
 #scrumBoard.hide-sp .scrum-board-actions-hide-sp {
 	display: none;
 }
+/* Цвет общий с меткой тестировщика на стикере (`.scrum-board-sticker.tester`)
+   и должен меняться вместе с ней. Селектор с `#scrumBoard` обязателен:
+   без него `a:hover` перебьёт цвет и состояния переключателя совпадут */
+#scrumBoard .scrum-board-actions-hide-testers {
+	display: none;
+	color: #EE82EE;
+}
+#scrumBoard.show-testers .scrum-board-actions-hide-testers {
+	display: inline-block;
+}
+#scrumBoard.show-testers .scrum-board-actions-show-testers {
+	display: none;
+}
 .scrum-board-table {
 	clear: both;
 }
@@ -1329,6 +1342,15 @@ blockquote > p {
 	display: block;
 	margin-top: 3px;
 	font-size: 9px;
+}
+.scrum-board-sticker .sticker-issue-testers {
+	display: none;
+	margin-top: 2px;
+	font-size: 9px;
+	font-style: italic;
+}
+#scrumBoard.show-testers .scrum-board-sticker .sticker-issue-testers {
+	display: block;
 }
 .scrum-board-sticker .snapshot-sticker-issue-sp {
 	display: inline-block;

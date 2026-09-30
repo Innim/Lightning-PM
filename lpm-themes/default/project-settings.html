@@ -67,7 +67,15 @@
                         title="Для получения кликните правой клавишей мыши по имени канала и выберите 'Copy link'. Последняя часть в скопированном URL и есть искомый ID канала.">
                         ID канала оповещений в Slack
                     </label>
-                    <input id="slackСhannel" type="text" class="form-control" value="<?=$project->slackNotifyChannel; ?>">
+                    <div class="input-group">
+                        <input id="slackСhannel" type="text" class="form-control"
+                            value="<?=lpm_escape($project->slackNotifyChannel);?>">
+                        <button id="checkSlackChannel" class="btn btn-outline-secondary" type="button">
+                            Проверить
+                        </button>
+                    </div>
+                    <div id="slackChannelHint" class="form-text d-none"></div>
+                    <div id="slackChannelCheckResult" class="alert d-none mt-2 mb-0" role="alert"></div>
                 </div>
 
                 <div class="form-check mb-3">

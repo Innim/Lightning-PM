@@ -185,4 +185,8 @@ class LPMTables
      * Неудачные попытки входа и запросы восстановления пароля.
      */
     const AUTH_ATTEMPTS = 'auth_attempts';
+    /**
+     * Ветки обсуждения задач в каналах Slack.
+     */
+    const SLACK_ISSUE_THREAD = 'slack_issue_thread';
 }

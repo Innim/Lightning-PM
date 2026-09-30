@@ -199,6 +199,17 @@ let scrumBoard = {
         else
             $('#scrumBoard').addClass('hide-sp');
     },
+    /**
+     * Показывает или скрывает тестировщиков на стикерах доски.
+     *
+     * Состояние хранится классом на самой доске, а не на стикерах, поэтому
+     * стикеры, попавшие на доску позже - переносом между колонками или
+     * автообновлением, - подхватывают его сами.
+     * @param {Boolean} value показывать ли тестировщиков
+     */
+    changeTestersVisibility: function (value) {
+        $('#scrumBoard').toggleClass('show-testers', value);
+    },
     clearBoard: function () {
         const $board = $('#scrumBoard');
         const projectId = $board.data('projectId');
