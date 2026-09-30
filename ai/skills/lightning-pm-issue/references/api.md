@@ -118,7 +118,7 @@ Example:
 GET /api/v1/projects/demo/issues?status=inWork,test&label=api&limit=20
 ```
 
-The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, substatus, priority, hours, hoursUnit, labels, commentsCount, isOnBoard, boardColumn, createDate, modifiedDate, completeDate, completedDate, author}`, with `priority` in the same `1..100` scale the web UI shows. Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments.
+The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, substatus, priority, hours, hoursUnit, labels, commentsCount, isOnBoard, boardColumn, createDate, modifiedDate, completeDate, completedDate, author}`, with `priority` in the same `1..100` scale the web UI shows. Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments. `commentsCount` counts the discussion only — automatic feed entries (`create_branch`, `branch_merged`, `taken_for_testing`, `released_from_testing`) are not counted; the full issue payload has no `commentsCount`, it carries the whole `comments` feed instead.
 
 ## Listing Project Labels
 

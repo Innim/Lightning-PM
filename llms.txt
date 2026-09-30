@@ -34,6 +34,8 @@ The issue payload reports its board position as `isOnBoard` and `boardColumn` (`
 
 The issue estimate is `hours`, and `hoursUnit` says what it means: `storyPoints` in a scrum project, `hours` in any other one.
 
+`commentsCount` comes only with the short issue payload of the lists and the board, and counts the discussion: automatic feed entries (`type` of `create_branch`, `branch_merged`, `taken_for_testing`, `released_from_testing`) are left out. The full issue payload has no such field — it carries the whole `comments` feed, so count it there yourself if you need the number.
+
 Attachments come in the issue payload as `files` (attached to the issue) and `comments[].files` (attached to a comment), both with the same item shape `{fileId, uid, name, mimeType, size, sizeFormatted, created, url, requiresAuthentication}`. A `url` with `requiresAuthentication: true` needs the same auth header as any other request.
 
 Comments should be high-signal only: use them for tester instructions, caveats, or implementation details not already clear from the issue. Do not post routine progress updates such as branch creation or "implementation started".

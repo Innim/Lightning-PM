@@ -1154,17 +1154,63 @@ WHERE;
         }
     }
     
+    /**
+     * Пересчитывает сохранённый счётчик комментариев задачи.
+     *
+     * Считаются только содержательные комментарии: служебные записи ленты
+     * (@see IssueComment::getAutoCommentTypes()) в счёт не идут, поэтому
+     * результат совпадает с тем, что показывает страница задачи.
+     *
+     * @param int $issueId Идентификатор задачи.
+     */
     public static function updateCommentsCounter($issueId)
     {
-        $sql = "INSERT INTO `%1\$s` (`issueId`, `commentsCount`) " .
-                                    "VALUES ('" . $issueId . "', '1') " .
-                       "ON DUPLICATE KEY UPDATE `commentsCount` = " .
-                            "(SELECT COUNT(*) FROM `%2\$s` " .
-                              "WHERE `%2\$s`.`instanceType` = '" . LPMInstanceTypes::ISSUE . "' " .
-                                "AND `%2\$s`.`instanceId` = '" . $issueId . "' " .
-                                "AND `%2\$s`.`deleted` = 0)";
-        $db = LPMGlobals::getInstance()->getDBConnect();
-        $db->queryt($sql, LPMTables::ISSUE_COUNTERS, LPMTables::COMMENTS);
+        $issueId = (int)$issueId;
+
+        // Подсчёт подзапросом, а не отдельным запросом: счётчик должен
+        // получить значение и при первой вставке строки, и при обновлении
+        $countSql = self::commentsCountSql($issueId);
+
+        self::buildAndSaveToDbV2([
+            'INSERT' => ['issueId', 'commentsCount'],
+            'INTO'   => LPMTables::ISSUE_COUNTERS,
+            'VALUES' => $issueId . ', (' . $countSql . ')',
+            'ODKU'   => ['commentsCount'],
+        ]);
+    }
+
+    /**
+     * Запрос, возвращающий количество содержательных комментариев задачи.
+     *
+     * @param  int $issueId Идентификатор задачи.
+     * @return string SQL запрос выборки одного числа.
+     */
+    private static function commentsCountSql($issueId)
+    {
+        return self::buildQuery([
+            'SELECT' => 'COUNT(*)',
+            'FROM'   => LPMTables::COMMENTS,
+            'AS'     => 'c',
+            'JOINS'  => [
+                [
+                    'LEFT JOIN' => LPMTables::ISSUE_COMMENT,
+                    'AS'        => 'ic',
+                    'ON'        => ['`ic`.`commentId`' => self::col('c.id')],
+                ],
+            ],
+            'WHERE'  => [
+                '`c`.`instanceType`' => LPMInstanceTypes::ISSUE,
+                '`c`.`instanceId`'   => (int)$issueId,
+                '`c`.`deleted`'      => 0,
+                // NOT IN по NULL даёт NULL, поэтому комментарии без записи
+                // о типе проверяются отдельным условием
+                [
+                    'OR',
+                    '`ic`.`commentId`' => null,
+                    '`ic`.`type`'      => ['<>' => IssueComment::getAutoCommentTypes()],
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -1919,6 +1965,12 @@ WHERE;
      */
     public $revision;
 
+    /**
+     * Количество содержательных комментариев задачи.
+     *
+     * Служебные записи ленты (отметки о ветках и о тестировании) не считаются.
+     * @var int
+     */
     public $commentsCount = 0;
 
     /**

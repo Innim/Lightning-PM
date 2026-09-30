@@ -129,6 +129,8 @@ Issues come in the same order as in the web UI: issues in test first, then in wo
 
 `priority` is the value shown in the web UI, an integer `1..100`. Items carry no description, comments, or attachments — request `GET /api/v1/issues/{issueId}` for the full issue.
 
+`commentsCount` counts the discussion only: automatic entries of the comment feed — branch created, branch merged, taken for testing, released from testing — are not counted. It is there because the short payload carries no comments; the full issue payload omits it and gives the feed itself instead.
+
 ### Estimate
 
 `hours` is the issue estimate and `hoursUnit` says what the number means, exactly as the web UI labels it: `storyPoints` in a scrum project, `hours` in any other one. The unit follows the project, not the issue, so every issue of one project reports the same `hoursUnit`.
@@ -384,7 +386,7 @@ Example:
 
 2. Read the issue description, comments, images, and files from the JSON response.
 
-The full issue payload of `GET /api/v1/issues/{issueId}` — the same payload `resolve`, `POST /api/v1/issues` and both board endpoints answer with — is the short payload above plus:
+The full issue payload of `GET /api/v1/issues/{issueId}` — the same payload `resolve`, `POST /api/v1/issues` and both board endpoints answer with — is the short payload above, without `commentsCount`, plus:
 
 - `desc` — the issue description as Markdown source;
 - `members`, `testers`, `masters` — users assigned to the issue, in the common user shape;
@@ -392,7 +394,7 @@ The full issue payload of `GET /api/v1/issues/{issueId}` — the same payload `r
 - `files` — files attached to the issue, see [Attachments](#attachments);
 - `linked` — issues linked to this one, each in the short payload plus `desc` and `isBaseLinked`;
 - `project` — the project of the issue, `{id, uid, name, url, scrum}`;
-- `comments` — every comment of the issue, `{id, text, createdAt, author, type, meta, files, url}`;
+- `comments` — every comment of the issue, `{id, text, createdAt, author, type, meta, files, url}`; the feed includes the automatic entries, whose `type` is one of `create_branch`, `branch_merged`, `taken_for_testing`, `released_from_testing` — drop those to count the discussion the way `commentsCount` of the short payload does;
 - `actions` — API URLs for the operations available on this issue.
 
 3. List repositories for the project:

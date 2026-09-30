@@ -111,12 +111,18 @@ class ApiPayloadSerializer
     /**
      * Полное представление задачи.
      *
+     * Счётчика комментариев здесь нет: вся лента отдаётся рядом, в `comments`,
+     * и каждая запись несёт свой `type` - по нему обсуждение отделяется от
+     * служебных записей. Счётчик остаётся в кратком представлении, где ленты
+     * нет и узнать о наличии обсуждения больше неоткуда.
+     *
      * Приоритет отдаётся в отображаемой шкале (1..100), как в интерфейсе.
      * @return array
      */
     public function issue(Issue $issue)
     {
         $obj = array_merge($this->issueObject($issue), $this->participants($issue));
+        unset($obj['commentsCount']);
 
         $obj['images'] = [];
         foreach ($issue->getImages() as $image) {
