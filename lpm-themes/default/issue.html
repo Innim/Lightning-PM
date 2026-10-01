@@ -245,7 +245,15 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     <a href="javascript:void(0);" class="ms-auto"
                         onclick="issuePage.showEditForm();">Добавить</a>
                 </div>
-                <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>
+                <?php /* Служебное поле: исходный Markdown описания читает JS — issues.js через
+                         .val(), issue-form.js через .text(). Содержимое textarea парсится как
+                         RCDATA (до первого закрывающего тега, но с разбором HTML-сущностей),
+                         поэтому экранирование обязательно и при этом не искажает текст.
+                         Перенос строки сразу после открывающего тега HTML-парсер отбрасывает —
+                         он нужен, чтобы сохранить пустую первую строку описания, а текст должен
+                         начинаться с начала строки, иначе отступ попадёт в значение. */ ?>
+                <textarea class="raw-desc" style="display: none;">
+<?=lpm_escape($issue->desc);?></textarea>
             </div>
             <div class="attachments"></div>
             <?php

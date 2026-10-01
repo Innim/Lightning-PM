@@ -1317,6 +1317,12 @@ $(document).ready(
         });
 
         window.lpInfo.userId = $('#curUserId').val();
+
+        // Ошибки, сформированные сервером, приходят текстом в разметке (#serverErrors
+        // в page.html) — читаем их как текст, не как код.
+        $('#serverErrors .server-error').each(function () {
+            showError(this.textContent);
+        });
     }
 );
 
