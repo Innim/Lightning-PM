@@ -673,11 +673,16 @@ class PagePrinter
 
     /**
      * Возвращает JS строку, представляющую объект.
+     *
+     * Результат безопасно печатать внутрь тега `<script>`: никакие данные
+     * не разорвут блок скрипта и не продлят его — в том числе
+     * последовательности, которые иначе переводят разбор HTML в состояние,
+     * где закрывающий тег блок уже не закрывает.
      */
     public static function toJSObject($data)
     {
-        $str = addcslashes(json_encode($data), '"\\');
-        return 'JSON.parse("' . $str . '")';
+        $json = json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        return 'JSON.parse("' . addcslashes($json, '"\\') . '")';
     }
 
     /**
