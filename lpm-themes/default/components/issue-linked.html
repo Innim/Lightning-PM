@@ -24,7 +24,7 @@
                     <?php if ($item->projectId != $issue->projectId):?>
                     <span class="linked-issue-project"><?=$item->getProject()->name;?></span>:
                     <?php endif;?>
-                    <?=$item->getIdInProject();?>. <?=$item->getName();?>
+                    <?=$item->getIdInProject();?>. <?=lpm_escape($item->getName());?>
                 </a>
                 <?php $itemSubstatus = $item->getSubstatus(); ?>
                 <span class="badge ms-1 <?=IssueViewHelper::statusBadgeClass($item->status, $itemSubstatus);?>"><?=IssueViewHelper::statusLabel($item->status, $itemSubstatus);?></span>
