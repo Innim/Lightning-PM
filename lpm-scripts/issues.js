@@ -372,7 +372,19 @@ function bindFormattingHotkeys(selector) {
     });
 }
 
+/**
+ * Подключает автодополнение к полям ввода, которые уже есть в разметке.
+ * Если ни одного такого поля на странице нет, не делает ничего.
+ * @param {string[]} selectors Селекторы полей ввода.
+ */
 function setupAutoComplete(selectors) {
+    const fields = $(selectors.join(', ')).get();
+    if (!fields.length) {
+        // Без полей объект автодополнения не создаётся, поэтому страница,
+        // на которой библиотека не подключена, не падает.
+        return;
+    }
+
     let tribute = new Tribute({
         collection: [
             createMembersAutoComplete(),
@@ -380,9 +392,7 @@ function setupAutoComplete(selectors) {
         ]
     });
 
-    for (var i = 0; i < selectors.length; i++) {
-        tribute.attach($(selectors[i]).get());
-    }
+    tribute.attach(fields);
 }
 
 
