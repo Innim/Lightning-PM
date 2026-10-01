@@ -797,6 +797,12 @@ table.issues-list tr.test-ready .test-ready-check {
 	border-top: none;
 	background-color: #f7f7f7;
 }
+/* Отступ равен тому, на сколько отодвинут от края кнопки её текст: подложка
+   .btn (.75rem) плюс её прозрачная рамка (1px). Менять вместе с ними.
+   Утилитой не задать: в наборе отступов Bootstrap 5.1 такой величины нет. */
+.issues-list-paging .issues-load-more-info {
+	margin-left: calc(.75rem + 1px);
+}
 
 /* список задач и добавление/редактирование задачи */
 table.issues-list td {
