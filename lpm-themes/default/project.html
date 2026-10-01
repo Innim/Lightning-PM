@@ -12,6 +12,7 @@
 		pageSize - размер порции подгрузки,
 		maxPageSize - предельный размер порции, который отдаёт сервер,
 		loaded - сколько задач показано,
+		remaining - сколько задач добавит одно нажатие кнопки подгрузки,
 		total - сколько задач в выборке всего,
 		opened - сколько задач выборки открыто
 	$searchForm - данные формы поиска либо null, если на подстранице поиска нет:
@@ -129,8 +130,10 @@ $searchActive = $searchForm !== null && $issuesCountLabel !== null;
 			Ничего не найдено.
 		</div>
 		<?php /* data-атрибуты задают JS исходное состояние выборки: он догружает
-		         следующие порции и пересчитывает статистику по ответам сервера */ ?>
-		<div id="issuesListPaging" class="my-3<?=$issuesPaging['loaded'] >= $issuesPaging['total'] ? ' d-none' : '';?>"
+		         следующие порции и пересчитывает статистику по ответам сервера.
+		         Классы issues-load-more, issues-load-more-info, issues-remaining-count,
+		         issues-loaded-count и issues-selection-count используются JS */ ?>
+		<div id="issuesListPaging" class="issues-list-paging text-center py-2<?=$issuesPaging['loaded'] >= $issuesPaging['total'] ? ' d-none' : '';?>"
 			data-scope="<?=HTMLHelper::escape($issuesPaging['scope']);?>"
 			data-search="<?=HTMLHelper::escape($issuesPaging['search']);?>"
 			data-statuses="<?=implode(',', $issuesPaging['statuses']);?>"
@@ -139,13 +142,14 @@ $searchActive = $searchForm !== null && $issuesCountLabel !== null;
 			data-loaded="<?=$issuesPaging['loaded'];?>"
 			data-total="<?=$issuesPaging['total'];?>"
 			data-opened="<?=$issuesPaging['opened'];?>">
-			<button type="button" class="btn btn-outline-primary issues-load-more"
-				onclick="issuePage.loadMoreIssues();">Показать ещё</button>
-			<span class="issues-load-more-info text-muted ms-2">Показано
+			<button type="button" class="btn btn-link issues-load-more"
+				onclick="issuePage.loadMoreIssues();">Показать ещё
+				<span class="issues-remaining-count"><?=$issuesPaging['remaining'];?></span></button>
+			<span class="issues-load-more-info text-muted small">&middot; показано
 				<span class="issues-loaded-count"><?=$issuesPaging['loaded'];?></span> из
 				<span class="issues-selection-count"><?=$issuesPaging['total'];?></span></span>
 		</div>
-		<div class="operations-line mt-2">
+		<div class="operations-line mt-4 pt-3 border-top">
 			<a href="<?=ProjectPage::getIssueFormUrl($project->uid, Issue::TYPE_BUG);?>" class="btn btn-outline-danger my-1">
 				<i class="fas fa-bug"></i> Добавить ошибку
 			</a>

@@ -1320,6 +1320,64 @@ class IssueService extends LPMBaseService
     }
 
     /**
+     * Возвращает место задачи в списке задач проекта.
+     *
+     * Нужен, чтобы поставить строку задачи на её место после изменения
+     * приоритета, не перечитывая показанную часть списка: порядок выборки
+     * знает только сервер, а размер ответа от длины списка не зависит.
+     * Выборка задаётся теми же параметрами, что и в loadProjectIssues(): место
+     * считается в том же списке, в котором задача показана.
+     * @param  int    $projectId Идентификатор проекта.
+     * @param  string $scope     Область поиска по статусу задачи
+     *                           (ProjectPage::SEARCH_SCOPES).
+     * @param  string $search    Поисковый запрос.
+     * @param  array  $filter    Отбор по тегам и людям, см. loadProjectIssues().
+     * @param  string $sort      Режим сортировки (Issue::SORT_*).
+     * @param  float  $issueId   Идентификатор задачи.
+     * @return {
+     *    int position Место задачи в выборке, считая с единицы;
+     *                 0 - задачи в этой выборке нет.
+     * }
+     */
+    public function loadIssuePosition($projectId, $scope, $search, $filter, $sort, $issueId)
+    {
+        $projectId = (int)$projectId;
+        $project = Project::loadById($projectId);
+        if (empty($project)) {
+            return $this->error('Не найден проект с идентификатором ' . $projectId);
+        }
+
+        if (!$project->hasReadPermission($this->getUser())) {
+            return $this->error('Нет прав на просмотр задач проекта');
+        }
+
+        if (!isset(ProjectPage::SEARCH_SCOPES[$scope])) {
+            return $this->error('Неизвестная область поиска');
+        }
+
+        $filters = $this->buildIssuesFilters(
+            ProjectPage::SEARCH_SCOPES[$scope]['statuses'],
+            $search,
+            $filter
+        );
+
+        try {
+            $position = Issue::getPositionInProjectFiltered(
+                $projectId,
+                (float)$issueId,
+                $filters,
+                (string)$sort
+            );
+        } catch (Exception $e) {
+            return $this->exception($e);
+        }
+
+        $this->add2Answer('position', $position);
+
+        return $this->answer();
+    }
+
+    /**
      * Возвращает разметку строки списка для одной задачи.
      *
      * Нужен, чтобы показать задачу в новом состоянии, не перечитывая весь

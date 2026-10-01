@@ -835,11 +835,40 @@ issuePage.issuesList = {
      * Смещение порции по такому списку больше не годится - см. loadMore().
      */
     reordered: false,
+    /**
+     * Строка, оставленная на месте после смены статуса, выбивает окно
+     * из порядка выборки отдельно от перестановок по приоритету: та, применив
+     * место, снимает только свою пометку. Снимается перечитыванием списка.
+     */
+    statusReordered: false,
     /** Идёт ли сейчас запрос порции. */
     loading: false,
     /** Номер последнего запроса: ответы на устаревшие запросы отбрасываются. */
     requestId: 0,
+    /**
+     * Счётчик изменений порядка выборки: приоритет или статус любой задачи.
+     * Место, посчитанное до очередного изменения, к новому порядку уже
+     * не относится.
+     */
+    orderRevision: 0,
     reloadTimer: null,
+    /**
+     * Незаконченные перестановки строк: задача -> состояние запроса её места.
+     * `timer` - отложенный запрос, `sent` - номер последнего отправленного
+     * запроса, `applied` - номер последнего отработанного ответа,
+     * `retries` - сколько раз запрос уже откладывался.
+     */
+    positions: {},
+    /** Присланные места, которые ещё не применены: задача -> место в выборке. */
+    positionResults: {},
+    /** Задержка запроса места после смены приоритета, мс. */
+    reorderDelay: 400,
+    /**
+     * Сколько раз запрос места можно отложить, пока список занят.
+     * Предел нужен, чтобы запрос не откладывался бесконечно, если список
+     * меняют чаще, чем считается место.
+     */
+    maxPositionRetries: 3,
     initialized: false,
 
     /**
@@ -916,6 +945,9 @@ issuePage.issuesList = {
      */
     reload: function () {
         const self = this;
+        // Список придёт от сервера уже в нужном порядке, и переставлять в нём
+        // что-либо по прежним ответам незачем
+        this.cancelPositions();
         clearTimeout(this.reloadTimer);
         this.reloadTimer = setTimeout(function () {
             self.request(0, 0, false);
@@ -960,13 +992,22 @@ issuePage.issuesList = {
         $('.issues-load-more', this.el).prop('disabled', false);
     },
 
-    request: function (offset, limit, append) {
+    /**
+     * Запрашивает порцию выборки у сервера.
+     * @param {number}  offset Смещение порции в выборке.
+     * @param {number}  limit  Размер порции; 0 - размер по умолчанию.
+     * @param {boolean} append Добавить порцию к списку, а не заменить список ею.
+     * @param {boolean} silent Не показывать общий индикатор загрузки: он
+     *        затемняет страницу и перехватывает нажатия, а запрос сделан вслед
+     *        за другим действием, а не по нажатию кнопки подгрузки.
+     */
+    request: function (offset, limit, append, silent) {
         const self = this;
         const requestId = ++this.requestId;
 
         this.loading = true;
         $('.issues-load-more', this.el).prop('disabled', true);
-        preloader.show();
+        if (!silent) preloader.show();
 
         srv.issue.loadProjectIssues(
             this.projectId,
@@ -984,7 +1025,7 @@ issuePage.issuesList = {
             function (res) {
                 // Прячем всегда: показы preloader считаются, и пропущенный hide
                 // оставил бы его висеть навсегда
-                preloader.hide();
+                if (!silent) preloader.hide();
 
                 // Ответ на запрос, который успели отменить более новым. Такой ответ
                 // не только не рисует свою порцию, но и не объявляет список свободным:
@@ -1018,6 +1059,7 @@ issuePage.issuesList = {
             } else if (offset === 0) {
                 // Выборку перечитали с начала: смещение снова верное
                 this.reordered = false;
+                this.statusReordered = false;
             }
 
             this.loaded += added;
@@ -1028,6 +1070,7 @@ issuePage.issuesList = {
             this.loaded = res.count;
             this.exhausted = false;
             this.reordered = false;
+            this.statusReordered = false;
         }
 
         this.offset = offset + res.count;
@@ -1081,37 +1124,314 @@ issuePage.issuesList = {
         return added;
     },
 
-    /** Входит ли задача с таким статусом в выборку области поиска. */
+    /**
+     * Входит ли задача с таким статусом в выборку области поиска.
+     *
+     * Список одной области - только открытые или только завершённые - отбирает
+     * задачи по статусу, и сменившая статус задача под это условие больше
+     * не подходит. В смешанной выборке (область «Все») условия на статус нет,
+     * и подходит любая задача.
+     */
     matchesScope: function (status) {
+        if (!this.ensureInit()) return true;
+
         return this.statuses.length === 0 || this.statuses.indexOf(status) !== -1;
     },
 
     /**
-     * Отмечает, что порядок выборки на сервере изменился.
+     * Ставит задачу на её новое место после изменения приоритета.
      *
-     * Зовётся при смене приоритета: задача переезжает по списку, и все задачи
-     * между её прежним и новым местом сдвигаются.
+     * Порядок выборки задаёт сервер, и по загруженной части его не повторить:
+     * место задачи зависит и от того, чего на странице нет. Но и перечитывать
+     * ради этого весь показанный список незачем - у сервера спрашивается только
+     * место одной задачи, а переставляет строку уже клиент. Ответ не зависит
+     * от длины списка, а порядок остаётся целиком за сервером.
+     *
+     * Запрос отложен: приоритет меняют щелчками подряд, и строка не должна
+     * уезжать из-под курсора после каждого.
+     * @param {number|string} issueId Задача, у которой изменён приоритет.
      */
-    noteReordered: function () {
+    notePriorityChanged: function (issueId) {
         if (!this.ensureInit()) return;
 
         // Идущий запрос отобран по прежнему порядку: его ответ принесёт
         // и чужие строки, и счётчики, снятые до изменения
         this.cancelPending();
+
+        // Пока место не применено, показанное окно может уже не быть началом
+        // выборки: задача, уехавшая за его край, оставляет в окне себя вместо
+        // той, что въехала на её место. Пометку снимает перестановка последней
+        // из тронутых задач (см. applyIssuePosition()) либо замена списка
+        // целиком (см. render())
         this.reordered = true;
+        this.orderRevision++;
+
+        this.schedulePosition(issueId);
     },
 
     /**
-     * Учитывает смену статуса задачи, строка которой осталась на месте.
+     * Откладывает запрос места задачи.
      *
-     * Строку не переставляем: пользователь должен видеть, что именно он изменил,
-     * и мочь сразу отменить. Поэтому на экране задача остаётся там, где была,
-     * а верными держим счётчики выборки и её смещение.
+     * Отсрочка своя у каждой задачи: щелчки подряд по одной задаче дают один
+     * запрос, а тронутая до этого соседняя строка всё равно встаёт на место.
+     * @param {number|string} issueId Задача, у которой изменён приоритет.
+     */
+    schedulePosition: function (issueId) {
+        const self = this;
+        const key = String(issueId);
+        const state = this.positions[key]
+            || (this.positions[key] = { timer: null, sent: 0, applied: 0, retries: 0 });
+
+        clearTimeout(state.timer);
+        state.timer = setTimeout(function () {
+            state.timer = null;
+            self.requestPosition(issueId);
+        }, this.reorderDelay);
+    },
+
+    /**
+     * Отменяет ждущую перестановку строки одной задачи.
+     *
+     * Зовётся при смене статуса: место задачи теперь определяет не приоритет,
+     * а новое состояние, и в смешанной выборке строка должна остаться там, где
+     * стоит (см. refreshIssueRow()).
+     * @param {number|string} issueId Задача, чью перестановку отменяем.
+     */
+    forgetIssuePosition: function (issueId) {
+        const key = String(issueId);
+        delete this.positionResults[key];
+
+        const state = this.positions[key];
+        if (!state) return;
+
+        // Ответ на уже отправленный запрос отбросит проверка состояния
+        clearTimeout(state.timer);
+        delete this.positions[key];
+    },
+
+    /** Отменяет незаконченные перестановки строк. */
+    cancelPositions: function () {
+        for (const key in this.positions) {
+            clearTimeout(this.positions[key].timer);
+        }
+
+        this.positions = {};
+        this.positionResults = {};
+    },
+
+    /** Остались ли задачи, которые ещё не встали на своё место. */
+    hasPendingPositions: function () {
+        return Object.keys(this.positions).length > 0;
+    },
+
+    /**
+     * Забывает задачу, по которой больше нечего ждать.
+     *
+     * Состояние живёт, пока по задаче есть отложенный или неотвеченный запрос:
+     * по нему отличается ответ, пришедший после более нового.
+     * @param {string} key Идентификатор задачи строкой.
+     */
+    forgetPosition: function (key) {
+        const state = this.positions[key];
+        if (state && state.timer === null && state.sent === state.applied) {
+            delete this.positions[key];
+        }
+    },
+
+    /**
+     * Спрашивает у сервера место задачи в выборке и применяет его к списку.
+     * @param {number|string} issueId Задача, у которой изменён приоритет.
+     */
+    requestPosition: function (issueId) {
+        const self = this;
+        const key = String(issueId);
+        const state = this.positions[key];
+        if (!state) return;
+
+        // Список сейчас заменят ответом на идущий запрос, и место, посчитанное
+        // для прежнего окна, к нему не подойдёт: ждём, пока список освободится
+        if (this.loading) {
+            this.deferPosition(issueId, state);
+            return;
+        }
+
+        // Номер запроса списка не увеличиваем: запрос места ничего не отменяет.
+        // Он нужен, чтобы заметить, что список с тех пор запросили заново,
+        // а счётчик изменений порядка - что выборка успела переставиться
+        const listRequestId = this.requestId;
+        const orderRevision = this.orderRevision;
+        const sent = ++state.sent;
+
+        srv.issue.loadIssuePosition(
+            this.projectId,
+            this.scope,
+            this.search,
+            {
+                tags: this.filter.tags,
+                members: this.filter.memberIds,
+                testers: this.filter.testerIds,
+                multiMemberOnly: this.filter.multiMemberOnly
+            },
+            this.sort,
+            issueId,
+            function (res) {
+                // Перестановки отменили совсем либо по этой задаче уже
+                // отработан более новый ответ: этот - не о том месте
+                const state = self.positions[key];
+                if (!state || sent <= state.applied) return;
+
+                state.applied = sent;
+
+                if (!res.success) {
+                    self.forgetPosition(key);
+                    self.drainPositions();
+                    srv.err(res);
+                    return;
+                }
+
+                // Пока считалось место, список запросили заново или порядок
+                // выборки успели изменить ещё раз - значит, оно посчитано
+                // не для того списка. Спрашиваем ещё раз
+                if (listRequestId !== self.requestId || orderRevision !== self.orderRevision) {
+                    self.deferPosition(issueId, state);
+                    return;
+                }
+
+                // Этот ответ - последний и посчитан для нынешнего порядка,
+                // поэтому отложенные попытки по той же задаче уже ни к чему
+                clearTimeout(state.timer);
+                state.timer = null;
+                self.positionResults[key] = res.position;
+                self.forgetPosition(key);
+                self.drainPositions();
+            }
+        );
+    },
+
+    /**
+     * Откладывает запрос места ещё раз, пока список не успокоится.
+     *
+     * Откладывать бесконечно нельзя: если список меняют чаще, чем считается
+     * место, строка остаётся там, где стоит, а порядок выборки так и остаётся
+     * помеченным изменившимся - подгрузка это учтёт.
+     * @param {number|string} issueId Задача, у которой изменён приоритет.
+     * @param {Object}        state   Состояние запроса места этой задачи.
+     */
+    deferPosition: function (issueId, state) {
+        if (state.retries >= this.maxPositionRetries) {
+            delete this.positions[String(issueId)];
+            this.drainPositions();
+            return;
+        }
+
+        state.retries++;
+        this.schedulePosition(issueId);
+    },
+
+    /**
+     * Применяет полученные места, когда ждать больше нечего.
+     *
+     * Зовётся на любом исходе запроса, а не только на удачном: иначе место,
+     * присланное по одной задаче, осталось бы неприменённым из-за сбоя запроса
+     * по соседней.
+     */
+    drainPositions: function () {
+        if (this.hasPendingPositions()) return;
+
+        this.applyPositions();
+    },
+
+    /**
+     * Ставит строки на присланные сервером места.
+     *
+     * Одну строку переставляем сами. Если же мест пришло несколько, новый
+     * порядок строк - это одна перестановка, и собрать её независимыми
+     * переносами нельзя: каждый следующий сдвигает уже расставленные строки,
+     * и результат зависит от того, в каком порядке пришли ответы. Такой список
+     * перечитывается у сервера - это редкий случай, когда приоритет успели
+     * поменять сразу у нескольких задач.
+     */
+    applyPositions: function () {
+        const results = this.positionResults;
+        this.positionResults = {};
+
+        const ids = Object.keys(results);
+        if (ids.length === 0) return;
+
+        if (ids.length === 1) {
+            this.applyIssuePosition(ids[0], results[ids[0]]);
+            return;
+        }
+
+        // Выше потолка порции перечитать показанное нечем: строки остаются
+        // там, где стоят, а порядок выборки - помеченным изменившимся
+        if (this.loaded <= 0 || this.loaded > this.maxPageSize) return;
+
+        this.request(0, this.loaded, false, true);
+    },
+
+    /**
+     * Ставит строку задачи на её место в списке.
+     *
+     * Показанная часть - это начало выборки, поэтому место за её концом значит,
+     * что задачи в списке больше нет: на её место въехала задача, стоявшая сразу
+     * за ним, а показано стало на строку меньше. Место внутри окна набор строк
+     * не меняет, и смещение подгрузки остаётся верным само собой.
+     * @param {number|string} issueId  Задача, у которой изменён приоритет.
+     * @param {number}        position Место задачи в выборке, считая с единицы;
+     *        0 - задачи в выборке нет.
+     */
+    applyIssuePosition: function (issueId, position) {
+        const tbody = document.querySelector('#issuesList > tbody');
+        if (!tbody) return;
+
+        const row = tbody.querySelector('tr[data-id="' + issueId + '"]');
+        if (!row) return;
+
+        // Пометку снимаем, только если окно больше ничто не выбивает из порядка
+        // выборки: ни задачи, которые ещё не встали на место, ни строка,
+        // оставленная на месте после смены статуса
+        if (!this.hasPendingPositions() && !this.statusReordered) {
+            this.reordered = false;
+        }
+
+        if (position < 1 || position > this.loaded) {
+            this.disposeTooltips(row);
+            row.remove();
+            this.loaded = Math.max(0, this.loaded - 1);
+            this.offset = Math.max(0, this.offset - 1);
+            this.updateView();
+            return;
+        }
+
+        const index = position - 1;
+        if ([...tbody.children].indexOf(row) !== index) {
+            // Строку сначала вынимаем: пока она в списке, она же сдвигает
+            // нумерацию соседей, и вставка встала бы на позицию мимо
+            row.remove();
+            tbody.insertBefore(row, tbody.children[index] || null);
+        }
+
+        highlightIssueRow($(row));
+    },
+
+    /**
+     * Приводит состояние выборки в соответствие со сменой статуса задачи.
+     *
+     * Задача, выпавшая из выборки, укорачивает её, и всё, что стояло за задачей,
+     * сдвигается на позицию; смену статуса внутри выборки видно только в её
+     * порядке. Строку из списка убирает вызывающий - см. refreshIssueRow().
      * @param {number} wasStatus Статус задачи до изменения.
      * @param {number} nowStatus Статус задачи после изменения.
      */
     noteStatusChanged: function (wasStatus, nowStatus) {
         if (!this.ensureInit()) return;
+
+        // Статус - первый терм порядка выборки: места, посчитанные до этой
+        // смены, к новому порядку уже не относятся. Неотвеченные запросы
+        // заметят это по счётчику и спросят заново
+        this.orderRevision++;
+        this.positionResults = {};
 
         // Идущий запрос отобран до смены статуса: его ответ принёс бы
         // счётчики прежней выборки
@@ -1128,12 +1448,11 @@ issuePage.issuesList = {
             // значит, смещение следующей порции устарело
             if (nowIn) {
                 this.reordered = true;
+                this.statusReordered = true;
             }
         } else {
             // Задача вошла в выборку или выпала из неё: выборка стала длиннее
-            // или короче, и всё, что было за этой задачей, сдвинулось на позицию.
-            // Шаг двусторонний: строка остаётся на странице, поэтому действие
-            // можно тут же отменить с неё же
+            // или короче, и всё, что было за этой задачей, сдвинулось на позицию
             const step = nowIn ? 1 : -1;
             this.loaded = Math.max(0, this.loaded + step);
             this.offset = Math.max(0, this.offset + step);
@@ -1153,6 +1472,10 @@ issuePage.issuesList = {
         // смещение может дойти до размера выборки раньше, чем список показан весь
         const hasMore = !this.exhausted && this.loaded < this.total;
         this.el.classList.toggle('d-none', !hasMore);
+        // В кнопке - сколько добавит одно нажатие, а не весь остаток выборки:
+        // остаток и так виден в подписи рядом
+        $('.issues-remaining-count', this.el)
+            .text(Math.min(this.pageSize, Math.max(0, this.total - this.loaded)));
         $('.issues-loaded-count', this.el).text(this.loaded);
         $('.issues-selection-count', this.el).text(this.total);
         // Считаем по строкам на экране, а не по размеру выборки: задача, выпавшая
@@ -1552,11 +1875,14 @@ function completeIssue(e) {
 }
 
 /**
- * Показывает задачу в новом состоянии, не сдвигая её строку с места.
+ * Показывает задачу в новом состоянии: либо убирает её строку из списка, либо
+ * перерисовывает на месте.
  *
- * Строка перерисовывается разметкой с сервера: её вид зависит от статуса
- * целиком - цвет, кнопки, стрелки приоритета, дата завершения. На своё
- * настоящее место в списке задача встанет при следующей загрузке страницы.
+ * Задачу, которую список больше не отбирает, он и не показывает - строка уходит
+ * (см. issuesList.matchesScope()). В смешанной выборке задача остаётся на своём
+ * месте и только меняет вид: пользователь должен видеть, что именно он изменил,
+ * и мочь сразу отменить. Строка перерисовывается разметкой с сервера - её вид
+ * зависит от статуса целиком: цвет, кнопки, стрелки приоритета, дата завершения.
  * @param {number} issueId   Идентификатор задачи.
  * @param {number} newStatus Статус, в который задача перешла.
  */
@@ -1564,7 +1890,22 @@ function refreshIssueRow(issueId, newStatus) {
     const $row = $("#issuesList > tbody > tr:has( td > input[name=issueId][value=" + issueId + "])");
     if ($row.length === 0) return;
 
-    issuePage.issuesList.noteStatusChanged($row.data('status'), newStatus);
+    const list = issuePage.issuesList;
+    const wasStatus = $row.data('status');
+    const stays = list.matchesScope(newStatus);
+
+    list.forgetIssuePosition(issueId);
+
+    // Строка убирается до пересчёта: подпись «Ничего не найдено» показывается
+    // по строкам на экране
+    if (!stays) {
+        list.disposeTooltips($row[0]);
+        $row.remove();
+    }
+
+    list.noteStatusChanged(wasStatus, newStatus);
+
+    if (!stays) return;
 
     srv.issue.loadIssueRow(issueId, function (res) {
         if (!res.success) {
@@ -1596,9 +1937,9 @@ issuePage.changePriority = function (e) {
     if (issueId > 0) {
         srv.issue.changePriority(issueId, delta, function (res) {
             if (res.success) {
-                // Задача переехала по списку: смещение подгрузки по прежнему
-                // порядку выборки больше не годится
-                issuePage.issuesList.noteReordered();
+                // Задача переехала по списку: он перестроится, а смещение
+                // подгрузки по прежнему порядку выборки больше не годится
+                issuePage.issuesList.notePriorityChanged(issueId);
 
                 let priority = res.priority;
                 let priorityStr = Issue.getPriorityStr(priority);
@@ -1618,6 +1959,9 @@ issuePage.changePriority = function (e) {
                     tooltipHost.removeAttribute('data-bs-original-title');
                 }
 
+                // Строка остаётся прежним узлом, только переезжает по списку,
+                // поэтому её приоритет обновляем в разметке сами
+                $row.attr('data-priority', priority);
                 $('.priority-val', $row).data("value", priority);
                 issuePage.updatePriorityVal($('.priority-val', $row), priority);
 
@@ -1631,10 +1975,6 @@ issuePage.changePriority = function (e) {
                         }, 500, function () {
                             $(this).remove();
                         });
-
-                // Строку не переставляем: пользователь должен видеть, какую задачу
-                // тронул, и мочь сразу отменить. На своё место в списке задача
-                // встанет при следующей загрузке страницы
             } else {
                 srv.err(res);
             }
