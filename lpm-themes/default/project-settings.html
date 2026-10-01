@@ -63,12 +63,12 @@
                 </div>
 
                 <div class="mb-3">
-                    <label id="slackСhannelLabel" for="slackСhannel" class="form-label"
+                    <label id="slackChannelLabel" for="slackChannel" class="form-label"
                         title="Для получения кликните правой клавишей мыши по имени канала и выберите 'Copy link'. Последняя часть в скопированном URL и есть искомый ID канала.">
                         ID канала оповещений в Slack
                     </label>
                     <div class="input-group">
-                        <input id="slackСhannel" type="text" class="form-control"
+                        <input id="slackChannel" type="text" class="form-control"
                             value="<?=lpm_escape($project->slackNotifyChannel);?>">
                         <button id="checkSlackChannel" class="btn btn-outline-secondary" type="button">
                             Проверить

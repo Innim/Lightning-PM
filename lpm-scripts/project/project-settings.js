@@ -67,7 +67,7 @@ $(function () {
     // Подсказка и проверка канала оповещений Slack.
     // Имя приложения известно только Slack, поэтому подсказку забираем
     // отдельным запросом — открытие страницы его не ждёт.
-    const $slackChannel = $('#slackСhannel');
+    const $slackChannel = $('#slackChannel');
     const $slackHint = $('#slackChannelHint');
     const $slackCheckResult = $('#slackChannelCheckResult');
     const $slackCheckBtn = $('#checkSlackChannel');
@@ -211,7 +211,7 @@ $(function () {
             name,
             desc,
             scrum,
-            $('#slackСhannel').val(),
+            $('#slackChannel').val(),
             $('#gitlabGroupId').val(),
             gitlabProjectIds,
             aiSummary,
