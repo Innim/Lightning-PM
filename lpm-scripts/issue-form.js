@@ -1823,6 +1823,9 @@ let issueForm = {
 };
 
 let issueFormLabels = {
+    // Метки - идущие подряд блоки [..] в начале имени задачи, между ними
+    // допустимы пробелы. Должно совпадать с IssueLabel::LABELS_PATTERN на бэкенде.
+    labelsPattern: /^(?:\[[^\]]*\]\s*)+/,
     openAdd: function () {
         $("#addIssueLabelForm")[0].reset();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('addIssueLabelFormContainer')).show();
@@ -1837,7 +1840,7 @@ let issueFormLabels = {
                 preloader.hide();
                 if (res.success) {
                     issueFormLabels.clear(label);
-                    issueFormLabels.create(label, (checked ? 0 : projectId), res.id);
+                    issueFormLabels.create(label, res.id, (checked ? 0 : projectId));
                     issueFormLabels.addToName(label);
                 } else {
                     srv.err(res);
@@ -1932,11 +1935,9 @@ let issueFormLabels = {
             issueLabels = [];
         var index = issueLabels.indexOf(labelName);
         var isAddingLabel = index == -1;
-        var strPos = 0;
         var resultLabels = "";
         for (var i = 0, len = issueLabels.length; i < len; ++i) {
             var str = issueLabels[i];
-            strPos += str.length + 2;
             if (index == i) { // на случай, если несколько одинаковых меток у задачи, ну мало ли кто накосячил.
                 issueLabels.splice(index, 1);
                 len--;
@@ -1952,8 +1953,9 @@ let issueFormLabels = {
             issueLabels.push(labelName);
         }
 
-        var name = $("#issueForm form input[name=name]").val();
-        name = (resultLabels.length > 0 ? resultLabels + " " : "") + $.trim(name.substr(strPos));
+        var name = $.trim($("#issueForm form input[name=name]").val());
+        var text = $.trim(name.replace(issueFormLabels.labelsPattern, ""));
+        name = (resultLabels.length > 0 ? resultLabels + " " : "") + text;
 
         $("#issueForm form input[name=name]").val(name);
         issueFormLabels.update();
