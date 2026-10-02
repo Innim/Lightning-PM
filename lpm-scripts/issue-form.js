@@ -25,6 +25,23 @@ $(function ($) {
         });
     });
 
+    // Название метки берётся из data-label, а не из аргумента onclick: в атрибуте
+    // оно прошло бы два разбора подряд (HTML, затем строка JS), и апостроф в метке
+    // вышел бы из строки. Обработчики делегированные — метки добавляются на лету.
+    $(document).on('click', '.issue-labels-container a.issue-label', function () {
+        issueFormLabels.addToName(this.dataset.label);
+    });
+    $(document).on('click', '#removeIssuesLabelContainer button[data-label]', function () {
+        // Метки нет в списке проекта (она только в названии задачи) — тогда у кнопки
+        // нет data-label-id, и confirmRemove вызывается без второго аргумента.
+        var labelId = this.dataset.labelId;
+        if (labelId === undefined) {
+            issueFormLabels.confirmRemove(this.dataset.label);
+        } else {
+            issueFormLabels.confirmRemove(this.dataset.label, Number(labelId));
+        }
+    });
+
     // Диалог черновика показывается через lpm.dialog, т.е. его разметка
     // добавляется и удаляется на лету — обработчики только делегированные.
     $(document).on('change', '.modal.show #aiIssueDraftImages', function () {
@@ -1889,21 +1906,34 @@ let issueFormLabels = {
         }
     },
     create: function (label, id, projectId) {
+        // Разметка собирается через DOM API, а не склейкой HTML-строки: название
+        // метки задаёт пользователь, и в строке разметки оно стало бы разметкой.
         $(".add-issue-label").before(
-            "<a href=\"javascript:void(0)\" class=\"issue-label\" onclick=\"issueFormLabels.addToName('"
-            + label + "');\">" + label + "</a>");
+            $('<a>', { href: 'javascript:void(0)', 'class': 'issue-label', text: label })
+                .attr('data-label', label));
 
-        $("#removeIssuesLabelContainer tbody").append("<tr>" +
-            "<td class=\"label-name\">" + label + "</td>" +
-            "<td class=\"text-center\">0</td>" +
-            "<td class=\"text-center\">0</td>" +
-            "<td class=\"text-center\">" + (projectId == 0 ? "<i class=\"fas fa-check text-success\" aria-hidden=\"true\" title=\"Общая метка\"></i>" : "") + "</td>" +
-            "<td class=\"text-end\">" +
-            "<button type=\"button\" class=\"btn btn-sm btn-outline-danger\" title=\"Удалить метку\" onclick=\"issueFormLabels.confirmRemove('" + label + (id != 0 ? "', " + id : "") + ");\">" +
-            "<i class=\"far fa-trash-can\" aria-hidden=\"true\"></i>" +
-            "</button>" +
-            "</td>" +
-            "</tr>");
+        var $removeBtn = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-outline-danger',
+            title: 'Удалить метку'
+        }).attr('data-label', label)
+            .append($('<i>', { 'class': 'far fa-trash-can' }).attr('aria-hidden', 'true'));
+        if (id != 0) {
+            $removeBtn.attr('data-label-id', id);
+        }
+
+        var $commonCell = $('<td>', { 'class': 'text-center' });
+        if (projectId == 0) {
+            $commonCell.append($('<i>', { 'class': 'fas fa-check text-success', title: 'Общая метка' })
+                .attr('aria-hidden', 'true'));
+        }
+
+        $("#removeIssuesLabelContainer tbody").append($('<tr>').append(
+            $('<td>', { 'class': 'label-name', text: label }),
+            $('<td>', { 'class': 'text-center', text: '0' }),
+            $('<td>', { 'class': 'text-center', text: '0' }),
+            $commonCell,
+            $('<td>', { 'class': 'text-end' }).append($removeBtn)));
         issueFormLabels.updateEmptyState();
     },
     clear: function (labelName) {

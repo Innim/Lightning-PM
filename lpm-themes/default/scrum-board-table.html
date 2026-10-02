@@ -134,7 +134,7 @@ if (!isset($freeIssueIds)) $freeIssueIds = [];
                 <?php endif; ?>
                 <a href="<?=$sticker->getIssue()->getConstURL();?>">
                     <?php lpm_print_issue_test_state($issue); ?>
-                    <span class="sticker-issue-title"><?=$sticker->getName();?></span>
+                    <span class="sticker-issue-title"><?=lpm_escape($sticker->getName());?></span>
                     <span class="sticker-issue-sp"> (<?=$spStr;?> SP)</span>
                 </a>
                 <?php /* Чип позиционируется абсолютно, поэтому в разметке стоит после названия:
