@@ -288,16 +288,14 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     ?>
                     <?php /* title читает просмотрщик iLoad - это подпись к картинке, поэтому
                             ссылка исключена из глобального тултипа (data-tooltip): он забирает
-                            title себе и подпись до просмотрщика не доходит. Подпись просмотрщик
-                            собирает через innerHTML, поэтому имя для title экранируется иначе,
-                            чем для остальных атрибутов (см. FileNameHelper).
+                            title себе и подпись до просмотрщика не доходит.
                             У картинок, загруженных до того, как имя начали сохранять, его нет -
                             тогда атрибуты с именем не выводим вовсе.
                             Ссылка ведёт на getViewUrl(), а не на файл напрямую: просмотрщик
                             показывает картинку по этому же адресу, а имя сохраняемого файла
                             браузер берёт из ответа. */ ?>
                     <li>
-                        <a href="<?=$img->getViewUrl();?>" class="image-link" rel="iLoad|Screenshots"<?php if ($imgFileName !== ''): ?> title="<?=FileNameHelper::escapeForImageViewer($imgFileName);?>" download="<?=$imgName;?>" data-tooltip<?php endif; ?>><img
+                        <a href="<?=$img->getViewUrl();?>" class="image-link" rel="iLoad|Screenshots"<?php if ($imgFileName !== ''): ?> title="<?=$imgName;?>" download="<?=$imgName;?>" data-tooltip<?php endif; ?>><img
                                 src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" alt="<?=$imgFileName !== '' ? $imgName : 'Прикреплённое изображение';?>" /></a>
                         <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
                     </li>
