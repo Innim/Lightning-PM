@@ -441,14 +441,9 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
     </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=$userId;?>">
-<?php
-$labelsJson = json_encode($issue -> getLabelNames());
-echo <<<HTML
 <script type="text/javascript">
-    var issueLabels = $labelsJson;
+    var issueLabels = <?=lpm_get_js_object($issue->getLabelNames());?>;
 </script>
-HTML;
-?>
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null, true); ?>
 
 <div class="modal fade" id="createBranch" tabindex="-1" aria-labelledby="createBranchLabel" aria-hidden="true">
