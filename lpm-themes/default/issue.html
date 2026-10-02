@@ -42,14 +42,16 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
         class="issue-info issue-card card shadow-sm block-with-attachments <?=IssueViewHelper::statusStateClass($issue->status);?>"
         data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
-        data-labels="<?=implode(',', $issue->getLabelNames());?>" data-issue-id="<?=$issue->id;?>">
+        data-labels="<?=lpm_escape(implode(',', $issue->getLabelNames()));?>" data-issue-id="<?=$issue->id;?>">
         <div class="issue-header card-header bg-white">
             <div class="d-flex align-items-start gap-3">
                 <h2 class="issue-title h5 mb-0 flex-grow-1 text-break">
                     <span class="issue-id font-monospace text-muted" data-copy="<?=$issue->getIdInProject();?>"
                         data-copy-toast="Номер задачи скопирован"
                         title="Копировать номер задачи">#<?=$issue->getIdInProject();?></span>
-                    <span class="issue-name"><?=$issue->getName();?></span>
+                    <?php /* Класс issue-name нужен JS: форма редактирования берёт
+                             название задачи из текста этого элемента */ ?>
+                    <span class="issue-name"><?=lpm_escape($issue->getName());?></span>
                 </h2>
 
                 <div class="issue-actions d-flex align-items-center gap-1 flex-shrink-0">
@@ -245,7 +247,15 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                     <a href="javascript:void(0);" class="ms-auto"
                         onclick="issuePage.showEditForm();">Добавить</a>
                 </div>
-                <textarea class="raw-desc" style="display: none;"><?=$issue->desc;?></textarea>
+                <?php /* Служебное поле: исходный Markdown описания читает JS — issues.js через
+                         .val(), issue-form.js через .text(). Содержимое textarea парсится как
+                         RCDATA (до первого закрывающего тега, но с разбором HTML-сущностей),
+                         поэтому экранирование обязательно и при этом не искажает текст.
+                         Перенос строки сразу после открывающего тега HTML-парсер отбрасывает —
+                         он нужен, чтобы сохранить пустую первую строку описания, а текст должен
+                         начинаться с начала строки, иначе отступ попадёт в значение. */ ?>
+                <textarea class="raw-desc" style="display: none;">
+<?=lpm_escape($issue->desc);?></textarea>
             </div>
             <div class="attachments"></div>
             <?php
@@ -273,7 +283,8 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <ul class="images-line">
                     <?php foreach ($picture as $img): ?>
                     <?php
-                    $imgName = lpm_escape($img->getDisplayName());
+                    $imgFileName = $img->getDisplayName();
+                    $imgName = lpm_escape($imgFileName);
                     ?>
                     <?php /* title читает просмотрщик iLoad - это подпись к картинке, поэтому
                             ссылка исключена из глобального тултипа (data-tooltip): он забирает
@@ -284,8 +295,8 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                             показывает картинку по этому же адресу, а имя сохраняемого файла
                             браузер берёт из ответа. */ ?>
                     <li>
-                        <a href="<?=$img->getViewUrl();?>" class="image-link" rel="iLoad|Screenshots"<?php if ($imgName !== ''): ?> title="<?=$imgName;?>" download="<?=$imgName;?>" data-tooltip<?php endif; ?>><img
-                                src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" alt="<?=$imgName !== '' ? $imgName : 'Прикреплённое изображение';?>" /></a>
+                        <a href="<?=$img->getViewUrl();?>" class="image-link" rel="iLoad|Screenshots"<?php if ($imgFileName !== ''): ?> title="<?=$imgName;?>" download="<?=$imgName;?>" data-tooltip<?php endif; ?>><img
+                                src="<?=$img->getPreview();?>" class="image-preview border border-1 rounded-3" alt="<?=$imgFileName !== '' ? $imgName : 'Прикреплённое изображение';?>" /></a>
                         <input type="hidden" name="imgId" value="<?=$img->imgId;?>">
                     </li>
                     <?endforeach;?>
@@ -299,12 +310,13 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                 <h3 class="h6 text-uppercase text-muted fw-semibold mb-2">Файлы</h3>
                 <ul class="issue-files-list list-group">
                     <?php foreach ($files as $file): ?>
+                    <?php $fileName = lpm_escape($file->origName); ?>
                     <li class="issue-file-item list-group-item d-flex align-items-center justify-content-between gap-3">
                         <div class="d-flex align-items-start gap-3">
                             <span class="text-secondary pt-1"><i class="fas fa-paperclip" aria-hidden="true"></i></span>
                             <div class="d-flex flex-column">
-                                <a href="<?=$file->getDownloadUrl();?>" class="issue-file-link fw-semibold" target="_blank" rel="noopener" download="<?=$file->origName;?>">
-                                    <span class="file-name"><?=$file->origName;?></span>
+                                <a href="<?=$file->getDownloadUrl();?>" class="issue-file-link fw-semibold" target="_blank" rel="noopener" download="<?=$fileName;?>">
+                                    <span class="file-name"><?=$fileName;?></span>
                                 </a>
                                 <span class="text-muted small issue-file-size"><?=FileSizeFormatter::format($file->size);?></span>
                             </div>
@@ -315,7 +327,7 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                                 <i class="fa-regular fa-file-code me-1" aria-hidden="true"></i>Открыть
                             </a>
                             <?php endif; ?>
-                            <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$file->origName;?>">
+                            <a href="<?=$file->getDownloadUrl();?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" download="<?=$fileName;?>">
                                 <i class="fas fa-download me-1" aria-hidden="true"></i>Скачать
                             </a>
                         </div>
@@ -429,14 +441,9 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
     </article>
 </article>
 <input id='user-id-hidden' type="hidden" value="<?=$userId;?>">
-<?php
-$labelsJson = json_encode($issue -> getLabelNames());
-echo <<<HTML
 <script type="text/javascript">
-    var issueLabels = $labelsJson;
+    var issueLabels = <?=lpm_get_js_object($issue->getLabelNames());?>;
 </script>
-HTML;
-?>
 <?php lpm_print_issue_form($project, $issue, isset($input) ? $input : null, true); ?>
 
 <div class="modal fade" id="createBranch" tabindex="-1" aria-labelledby="createBranchLabel" aria-hidden="true">

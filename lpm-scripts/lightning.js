@@ -451,6 +451,15 @@ let srv = {
         changePriority: function (issueId, delta, onResult) {
             this.s._('changePriority');
         },
+        loadProjectIssues: function (projectId, scope, search, filter, sort, offset, limit, onResult) {
+            this.s._('loadProjectIssues');
+        },
+        loadIssuePosition: function (projectId, scope, search, filter, sort, issueId, onResult) {
+            this.s._('loadIssuePosition');
+        },
+        loadIssueRow: function (issueId, onResult) {
+            this.s._('loadIssueRow');
+        },
         changeScrumState: function (issueId, state, onResult) {
             this.s._('changeScrumState');
         },
@@ -544,6 +553,15 @@ let srv = {
             onResult
         ) {
             this.s._('saveProject');
+        },
+        getSlackChannelHint: function (onResult) {
+            // Подсказку страница запрашивает сама при загрузке, и ответа ждёт
+            // Slack, поэтому вызов идёт фоновым инвокером: на общем он задержал
+            // бы следующее действие пользователя на весь свой таймаут.
+            this.s._('getSlackChannelHint', { background: true });
+        },
+        checkSlackChannel: function (projectId, channel, onResult) {
+            this.s._('checkSlackChannel');
         },
         searchIssueNames: function (projectId, idInProjectPart, onResult) {
             this.s._('searchIssueNames');
@@ -1299,6 +1317,12 @@ $(document).ready(
         });
 
         window.lpInfo.userId = $('#curUserId').val();
+
+        // Ошибки, сформированные сервером, приходят текстом в разметке (#serverErrors
+        // в page.html) — читаем их как текст, не как код.
+        $('#serverErrors .server-error').each(function () {
+            showError(this.textContent);
+        });
     }
 );
 

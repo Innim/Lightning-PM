@@ -16,9 +16,9 @@ if ($hasPreview && $previewModeEnabled):
     $imgClasses[] = 'image-preview';
     $imgClasses[] = 'border border-1 rounded-3';
 ?>
-<a href="<?=$image->url;?>" class="image-link" rel="iLoad|Screenshots">
+<a href="<?=lpm_escape($image->url);?>" class="image-link" rel="iLoad|Screenshots">
 <?php endif; ?>
-<img src="<?=$imgUrl;?>"  class="<?=implode(' ', $imgClasses);?>">
+<img src="<?=lpm_escape($imgUrl);?>"  class="<?=implode(' ', $imgClasses);?>">
 <?php if ($hasPreview && $previewModeEnabled): ?>
 </a>
 <?php endif; ?>

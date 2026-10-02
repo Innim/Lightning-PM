@@ -64,9 +64,108 @@ $(function () {
         });
     });
 
+    // Подсказка и проверка канала оповещений Slack.
+    // Имя приложения известно только Slack, поэтому подсказку забираем
+    // отдельным запросом — открытие страницы его не ждёт.
+    const $slackChannel = $('#slackChannel');
+    const $slackHint = $('#slackChannelHint');
+    const $slackCheckResult = $('#slackChannelCheckResult');
+    const $slackCheckBtn = $('#checkSlackChannel');
+    const slackCheckBtnText = $slackCheckBtn.text().trim();
+
+    // Классы Bootstrap для результата проверки: приглашение приложения в канал
+    // модератор делает сам, остальные отказы — повод идти к администратору.
+    const SLACK_ALERT_CLASS = {
+        ok: 'alert-success',
+        okNotificationOff: 'alert-warning',
+        notInvited: 'alert-warning',
+    };
+
+    // Показывает текст, готовую к копированию команду `/invite` и приписку
+    // после неё — команду и приписку выводим, только если они пришли.
+    function renderSlackNote($target, message, invite, note) {
+        $target.empty().append($('<span>').text(message));
+
+        if (invite) {
+            $target.append(' ').append(
+                $('<code>')
+                    .attr('role', 'button')
+                    .attr('title', 'Нажмите, чтобы скопировать')
+                    .attr('data-copy', invite)
+                    .attr('data-copy-toast', 'Команда скопирована')
+                    .text(invite)
+            );
+        }
+
+        if (note) {
+            $target.append(' ').append($('<span>').text(note));
+        }
+
+        $target.removeClass('d-none');
+    }
+
+    function showSlackCheckResult(alertClass, message, invite) {
+        renderSlackNote($slackCheckResult, message, invite, '');
+        $slackCheckResult
+            .removeClass('alert-success alert-warning alert-danger')
+            .addClass(alertClass);
+    }
+
+    function hideSlackCheckResult() {
+        $slackCheckResult.addClass('d-none');
+    }
+
+    if ($slackHint.length) {
+        srv.project.getSlackChannelHint((res) => {
+            if (!res.success) return;
+
+            renderSlackNote($slackHint, res.message, res.invite, res.note);
+        });
+    }
+
+    // Результат относится к тому каналу, который был в поле на момент проверки.
+    // Стоит его поменять — прежний ответ уже ни о чём не говорит.
+    $slackChannel.on('input', hideSlackCheckResult);
+
+    $slackCheckBtn.on('click', () => {
+        const channel = $slackChannel.val().trim();
+        hideSlackCheckResult();
+
+        if (!channel) {
+            showSlackCheckResult('alert-danger', 'Укажите ID канала.', '');
+            return;
+        }
+
+        $slackCheckBtn.prop('disabled', true).text('Проверяем…');
+
+        srv.project.checkSlackChannel($('#projectId').val(), channel, (res) => {
+            $slackCheckBtn.prop('disabled', false).text(slackCheckBtnText);
+
+            if ($slackChannel.val().trim() !== channel) {
+                return;
+            }
+
+            if (!res.success) {
+                showSlackCheckResult(
+                    'alert-danger',
+                    res.error || 'Ошибка при запросе к серверу',
+                    ''
+                );
+                return;
+            }
+
+            showSlackCheckResult(
+                SLACK_ALERT_CLASS[res.status] || 'alert-danger',
+                res.message,
+                res.invite
+            );
+        });
+    });
+
     // По сбросу формы возвращаем идентификатор в заблокированное состояние.
     $('button#saveProject').closest('form').on('reset', () => {
         hideError();
+        hideSlackCheckResult();
         lockUid();
     });
 
@@ -112,7 +211,7 @@ $(function () {
             name,
             desc,
             scrum,
-            $('#slackСhannel').val(),
+            $('#slackChannel').val(),
             $('#gitlabGroupId').val(),
             gitlabProjectIds,
             aiSummary,

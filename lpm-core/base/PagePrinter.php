@@ -115,6 +115,18 @@ class PagePrinter
     }
 
     /**
+     * Распечатывает строки списка задач - без таблицы вокруг них.
+     *
+     * Нужен, чтобы подгруженную порцию списка можно было добавить к уже
+     * показанной таблице той же разметкой, какой отрисована первая порция.
+     * @param array<Issue> $list Список задач.
+     */
+    public static function issueRows($list)
+    {
+        PageConstructor::includePattern('issues-rows', compact('list'));
+    }
+
+    /**
      * Печатает меню выбора сортировки списка задач.
      *
      * Пункты для задач в тесте печатаются, только если такие задачи
@@ -661,11 +673,16 @@ class PagePrinter
 
     /**
      * Возвращает JS строку, представляющую объект.
+     *
+     * Результат безопасно печатать внутрь тега `<script>`: никакие данные
+     * не разорвут блок скрипта и не продлят его — в том числе
+     * последовательности, которые иначе переводят разбор HTML в состояние,
+     * где закрывающий тег блок уже не закрывает.
      */
     public static function toJSObject($data)
     {
-        $str = addcslashes(json_encode($data), '"\\');
-        return 'JSON.parse("' . $str . '")';
+        $json = json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        return 'JSON.parse("' . addcslashes($json, '"\\') . '")';
     }
 
     /**

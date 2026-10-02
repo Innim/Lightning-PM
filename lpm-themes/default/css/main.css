@@ -789,6 +789,21 @@ table.issues-list tr.test-ready .test-ready-check {
 	max-width: 640px;
 }
 
+/* Полоса подгрузки под таблицей списка задач: рамка того же цвета, что у таблицы,
+   и без верхней границы - полоса стыкуется с таблицей. Задано здесь, а не
+   утилитами: в Bootstrap 5.1 цвет рамки утилитой не переопределить. */
+.issues-list-paging {
+	border: 1px solid #cccccc;
+	border-top: none;
+	background-color: #f7f7f7;
+}
+/* Отступ равен тому, на сколько отодвинут от края кнопки её текст: подложка
+   .btn (.75rem) плюс её прозрачная рамка (1px). Менять вместе с ними.
+   Утилитой не задать: в наборе отступов Bootstrap 5.1 такой величины нет. */
+.issues-list-paging .issues-load-more-info {
+	margin-left: calc(.75rem + 1px);
+}
+
 /* список задач и добавление/редактирование задачи */
 table.issues-list td {
 	position: relative;
@@ -927,13 +942,26 @@ table.issues-list td .priority-change-animation {
 	position: absolute;
 	user-select: none;
 }
-/* Кратковременная подсветка строки/блока для привлечения внимания (гаснет). */
+/* Кратковременная подсветка блока для привлечения внимания (гаснет). */
 @keyframes highlight-fade {
 	from { background-color: #e0cffc; }
 	to   { background-color: #fff; }
 }
-.highlight-fade {
+.highlight-fade:not(tr) {
 	animation: highlight-fade 3s ease;
+}
+/* Строку таблицы подсвечиваем внутренней тенью её ячеек, а не фоном строки:
+   фон завершённых задач и задач в проверке задан с !important, а важное
+   объявление всегда выигрывает у значений анимации - фоновая подсветка на таких
+   строках не появилась бы вовсе. Тень ложится поверх любого фона и с ним не спорит.
+   Гаснет в прозрачность того же цвета: переход в `transparent` идёт через чёрный
+   и давал бы серый налёт. */
+@keyframes highlight-fade-cells {
+	from { box-shadow: inset 0 0 0 9999px #e0cffc; }
+	to   { box-shadow: inset 0 0 0 9999px rgba(224, 207, 252, 0); }
+}
+tr.highlight-fade > td {
+	animation: highlight-fade-cells 3s ease;
 }
 table.issues-list tr.verify-issue.tester {
 	background: #FFEC80 !important;
@@ -1122,6 +1150,19 @@ blockquote > p {
 	display: inline-block;
 }
 #scrumBoard.hide-sp .scrum-board-actions-hide-sp {
+	display: none;
+}
+/* Цвет общий с меткой тестировщика на стикере (`.scrum-board-sticker.tester`)
+   и должен меняться вместе с ней. Селектор с `#scrumBoard` обязателен:
+   без него `a:hover` перебьёт цвет и состояния переключателя совпадут */
+#scrumBoard .scrum-board-actions-hide-testers {
+	display: none;
+	color: #EE82EE;
+}
+#scrumBoard.show-testers .scrum-board-actions-hide-testers {
+	display: inline-block;
+}
+#scrumBoard.show-testers .scrum-board-actions-show-testers {
 	display: none;
 }
 .scrum-board-table {
@@ -1316,6 +1357,15 @@ blockquote > p {
 	display: block;
 	margin-top: 3px;
 	font-size: 9px;
+}
+.scrum-board-sticker .sticker-issue-testers {
+	display: none;
+	margin-top: 2px;
+	font-size: 9px;
+	font-style: italic;
+}
+#scrumBoard.show-testers .scrum-board-sticker .sticker-issue-testers {
+	display: block;
 }
 .scrum-board-sticker .snapshot-sticker-issue-sp {
 	display: inline-block;

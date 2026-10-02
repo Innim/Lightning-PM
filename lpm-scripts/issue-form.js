@@ -25,6 +25,23 @@ $(function ($) {
         });
     });
 
+    // Название метки берётся из data-label, а не из аргумента onclick: в атрибуте
+    // оно прошло бы два разбора подряд (HTML, затем строка JS), и апостроф в метке
+    // вышел бы из строки. Обработчики делегированные — метки добавляются на лету.
+    $(document).on('click', '.issue-labels-container a.issue-label', function () {
+        issueFormLabels.addToName(this.dataset.label);
+    });
+    $(document).on('click', '#removeIssuesLabelContainer button[data-label]', function () {
+        // Метки нет в списке проекта (она только в названии задачи) — тогда у кнопки
+        // нет data-label-id, и confirmRemove вызывается без второго аргумента.
+        var labelId = this.dataset.labelId;
+        if (labelId === undefined) {
+            issueFormLabels.confirmRemove(this.dataset.label);
+        } else {
+            issueFormLabels.confirmRemove(this.dataset.label, Number(labelId));
+        }
+    });
+
     // Диалог черновика показывается через lpm.dialog, т.е. его разметка
     // добавляется и удаляется на лету — обработчики только делегированные.
     $(document).on('change', '.modal.show #aiIssueDraftImages', function () {
@@ -149,6 +166,7 @@ $(function ($) {
 
     issueForm.ensureFileUploadSlot();
     issueForm.refreshUploadRemoveButtons();
+    issueForm.initPriority();
 
     issueForm.initPage();
 });
@@ -216,10 +234,44 @@ let issueForm = {
             }
         });
     },
+    /**
+     * Закрывает форму по кнопке «Отмена».
+     *
+     * Набранный, но не сохранённый ввод закрывать молча нельзя: кнопка стоит
+     * рядом с «Сохранить», и случайный клик по ней терял бы работу. Поэтому
+     * закрытие изменённой формы подтверждается диалогом, а неизменённая
+     * закрывается сразу — лишний вопрос там только мешает.
+     */
     cancel: function () {
+        if (!issueForm.hasUnsavedChanges()) {
+            issueForm.close();
+            return;
+        }
+
+        lpm.dialog.show({
+            title: 'Задача не сохранена',
+            text: 'Всё, что введено в форме, будет потеряно.',
+            primaryBtn: 'Вернуться к форме',
+            secondaryBtn: 'Не сохранять',
+            secondaryBtnClass: 'btn-danger',
+            onSecondary: issueForm.close,
+        });
+    },
+    /**
+     * Закрывает форму задачи: снимает блокировку и уводит с формы.
+     *
+     * Ввод при этом теряется без предупреждения, поэтому зовётся либо после
+     * подтверждения ({@see issueForm.cancel}), либо когда форму нельзя оставить
+     * открытой (не удалось получить блокировку задачи).
+     */
+    close: function () {
         const issueId = issueForm.getIssueId();
         const leave = function () {
             issueForm.onHide();
+            // Форму очищаем сами: кнопка «Отмена» не может быть type="reset" —
+            // браузер сбросил бы ввод ещё до ответа на подтверждение.
+            const form = $('#issueForm > form')[0];
+            if (form) form.reset();
             // Форма, открытая отдельной страницей, закрывается уходом с неё:
             // показывать на этой странице больше нечего.
             if (issueForm.pageReturnUrl) redirectTo(issueForm.pageReturnUrl);
@@ -243,9 +295,105 @@ let issueForm = {
             leave();
         }
     },
+    /**
+     * Ввод формы на момент, когда её открыли: с ним сверяется отмена.
+     *
+     * null означает, что исходное состояние неизвестно — такую форму отмена
+     * считает изменённой.
+     */
+    initialState: null,
+    /**
+     * Запоминает текущий ввод формы как исходный.
+     *
+     * Зовётся, когда форма заполнена тем, с чем её открывают: сохранёнными
+     * значениями задачи при редактировании и значениями по умолчанию при
+     * создании. Позже этого - уже правки пользователя.
+     */
+    captureInitialState: function () {
+        issueForm.initialState = issueForm.formSnapshot();
+    },
+    /**
+     * Отличается ли ввод формы от того, с которым её открыли.
+     *
+     * Пока исходное состояние не снято (форма восстановлена после неудачного
+     * сохранения или не успела заполниться), изменения считаются возможными:
+     * потерять ввод молча хуже, чем задать лишний вопрос.
+     * @return {boolean} Форма изменена.
+     */
+    hasUnsavedChanges: function () {
+        return issueForm.initialState === null
+            || issueForm.initialState !== issueForm.formSnapshot();
+    },
+    /**
+     * Снимок ввода формы задачи, сравнимый как строка.
+     *
+     * Берутся все поля основной формы - вместе со скрытыми, в которых лежат
+     * исполнители, метки и приложения. От поля выбора файлов берётся число
+     * выбранных файлов, от вложенного изображения - длина данных: значения
+     * этих полей браузер либо не отдаёт, либо отдаёт целиком.
+     * @return {string} Снимок ввода.
+     */
+    formSnapshot: function () {
+        const parts = [];
+
+        $('#issueForm > form').find('input, textarea, select').each(function () {
+            let value;
+            if (this.type === 'file') {
+                value = this.files ? this.files.length : 0;
+            } else if (this.type === 'checkbox' || this.type === 'radio') {
+                value = this.checked ? 1 : 0;
+            } else if (String(this.value).indexOf('data:') === 0) {
+                value = this.value.length;
+            } else {
+                value = this.value;
+            }
+
+            parts.push(this.name + '\u001f' + value);
+        });
+
+        return parts.join('\u001e');
+    },
     getIssueId: () => parseInt($("#issueForm input[name=issueId]").val()),
     getRevision: () => $("#issueForm input[name=revision]").val(),
     getSprintNum: () => $('#issueForm').data('scrumSprintNum'),
+    /**
+     * Включает управление приоритетом в форме задачи: подпись со значением
+     * и список готовых значений рядом с ползунком.
+     */
+    initPriority: function () {
+        $('#issueForm #priority-values > li').on('click', function () {
+            // В подписи пункта стоит отображаемое значение приоритета —
+            // оно на единицу больше самого приоритета.
+            issueForm.setPriorityVal($(this).text().match(/\d+/) - 1);
+        });
+
+        issueForm.setPriorityVal($('#issueForm #priority').val());
+    },
+    /**
+     * Ставит приоритет задачи в форме и обновляет подпись рядом с ползунком.
+     * @param {Number|String} value Приоритет задачи (0..99).
+     */
+    setPriorityVal: function (value) {
+        const valueInt = parseInt(value);
+        const title = Issue.getPriorityStr(valueInt);
+        const displayVal = Issue.getPriorityDisplayVal(valueInt);
+
+        $('#priority').val(valueInt);
+        $('#priorityVal')
+            .html('<i class="fa-solid fa-angles-up" aria-hidden="true"></i> '
+                + title + ' (' + displayVal + ')')
+            .css('backgroundColor', issuePage.getPriorityColor(valueInt));
+    },
+    /** Поднимает приоритет задачи в форме на единицу. */
+    upPriorityVal: function () {
+        const value = parseInt($('#priority').val());
+        if (value < 99) issueForm.setPriorityVal(value + 1);
+    },
+    /** Опускает приоритет задачи в форме на единицу. */
+    downPriorityVal: function () {
+        const value = parseInt($('#priority').val());
+        if (value > 0) issueForm.setPriorityVal(value - 1);
+    },
     handleEditState: function () {
         issueForm.onShow();
         if (issueForm.restoreInput()) {
@@ -277,7 +425,7 @@ let issueForm = {
                     revision, 
                     false, 
                     () => {},
-                    () => issueForm.cancel(), 
+                    () => issueForm.close(),
                 );
             }
 
@@ -298,6 +446,8 @@ let issueForm = {
                 filesInfo: issueForm.getFilesFromPage(),
                 isOnBoard: $("#issueInfo").data('isOnBoard') == 1,
             }, true);
+
+            issueForm.captureInitialState();
         }
     },
     /**
@@ -314,6 +464,7 @@ let issueForm = {
             }
 
             issueForm.applyType(type);
+            issueForm.captureInitialState();
         }
     },
     /**
@@ -382,11 +533,15 @@ let issueForm = {
             case 'copy-issue':
                 issueForm.onShow();
                 issueForm.updateHeader(false);
+                // Форма заполнится ответом сервера; пока он не пришёл, исходным
+                // считается пустая форма - заполнение снимет состояние заново.
+                issueForm.captureInitialState();
                 issueForm.handleAddIssueByState(state[1], state[2]);
                 break;
             case 'finished-issue':
                 issueForm.onShow();
                 issueForm.updateHeader(false);
+                issueForm.captureInitialState();
                 issueForm.handleAddFinishedIssueByState(state[1], state[2]);
                 break;
             default:
@@ -477,6 +632,7 @@ let issueForm = {
     },
     onHide: function () {
         issueForm.generation++;
+        issueForm.initialState = null;
         $('#issueForm > div.validateError').html('').hide();
         window.removeEventListener('beforeunload', issueForm.blockClose);
     },
@@ -548,7 +704,7 @@ let issueForm = {
         $('form input:radio[name=type][value=' + value.type + ']', "#issueForm").prop('checked', true);
         // приоритет
         $("#issueForm form input[name=priority]").val(value.priority);
-        issuePage.setPriorityVal(value.priority);
+        issueForm.setPriorityVal(value.priority);
         // дата окончания
         lpm.datePicker.setValue($("#issueForm form input[name=completeDate]")[0], value.completeDate);
         // исполнители
@@ -723,6 +879,7 @@ let issueForm = {
                         linkedIds: issue.getLinkedChildrenIds(),
                     });
 
+                    issueForm.captureInitialState();
                 } else {
                     srv.err(res);
                 }
@@ -788,6 +945,7 @@ let issueForm = {
                     };
 
                     issueForm.setIssueBy(data);
+                    issueForm.captureInitialState();
                 } else {
                     srv.err(res);
                 }
@@ -1287,6 +1445,32 @@ let issueForm = {
         issueForm.refreshImageSlots();
     },
     /**
+     * Считает изображения, уже приложенные к форме: сохранённые у задачи,
+     * вставленные из буфера обмена, перенесённые из черновика и добавленные
+     * по URL. Выбранные в поле загрузки файлы сюда не входят — их добавляет
+     * к счёту только проверка перед отправкой (validateIssueForm).
+     *
+     * Перечень источников задан здесь и только здесь: и возврат полей
+     * (refreshImageSlots), и проверка перед отправкой обязаны видеть одно
+     * и то же, иначе новый источник изображений разойдётся между ними молча.
+     *
+     * Расходятся они лишь в незаполненных строках URL: такая строка занимает
+     * место, которое пользователь вот-вот заполнит, но изображением ещё
+     * не является, и сервер её не считает (ProjectPage::countPostedImages()).
+     * @returns {{occupied: number, attached: number}} occupied — вместе
+     *          с пустыми строками URL, attached — только сами изображения.
+     */
+    countAttachedImages: function () {
+        const inList = $('#issueForm .images-list .image-item').length
+            + $('#issueForm .images-list .pasted-img').length;
+        const $urls = $('#issueForm ul.images-url > li').not('.imgUrlTempl');
+        const filledUrls = $urls.filter(function () {
+            return $.trim($('input[name="imgUrls[]"]', this).val() || '') !== '';
+        }).length;
+
+        return { occupied: inList + $urls.length, attached: inList + filledUrls };
+    },
+    /**
      * Показывает или прячет поля добавления изображений: когда к задаче уже
      * приложено предельное число картинок, добавлять больше некуда.
      *
@@ -1296,12 +1480,7 @@ let issueForm = {
      */
     refreshImageSlots: function () {
         const max = window.lpmOptions.issueImgsCount;
-
-        // Картинки, уже приложенные к форме. Выбранные в поле загрузки файлы
-        // сюда не входят: их число проверяется при отправке (validateIssueForm).
-        const count = $('#issueForm .images-list .image-item').length
-            + $('#issueForm .images-list .pasted-img').length
-            + $('#issueForm ul.images-url > li').not('.imgUrlTempl').length;
+        const count = issueForm.countAttachedImages().occupied;
         const hasFreeSlot = !max || count < max;
 
         $('#issueForm .images-list > li:has(input[type=file])').each(function () {
@@ -1591,11 +1770,9 @@ let issueForm = {
             if (files) newImagesCount += files.length;
         });
 
-        const existingImagesCount = $("#issueForm .images-list .image-item").length;
-        // Изображения, приложенные до сохранения (вставка из буфера, черновик),
-        // занимают место наравне с выбранными в поле загрузки.
-        const preparedImagesCount = $("#issueForm .images-list .pasted-img").length;
-        if (newImagesCount + existingImagesCount + preparedImagesCount
+        // Уже приложенные изображения занимают места наравне с выбранными
+        // в поле загрузки файлами.
+        if (newImagesCount + issueForm.countAttachedImages().attached
                 > window.lpmOptions.issueImgsCount) {
             errors.push('Вы не можете прикрепить больше ' + window.lpmOptions.issueImgsCount + ' изображений');
         }
@@ -1663,6 +1840,9 @@ let issueForm = {
 };
 
 let issueFormLabels = {
+    // Метки - идущие подряд блоки [..] в начале имени задачи, между ними
+    // допустимы пробелы. Должно совпадать с IssueLabel::LABELS_PATTERN на бэкенде.
+    labelsPattern: /^(?:\[[^\]]*\]\s*)+/,
     openAdd: function () {
         $("#addIssueLabelForm")[0].reset();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('addIssueLabelFormContainer')).show();
@@ -1677,7 +1857,7 @@ let issueFormLabels = {
                 preloader.hide();
                 if (res.success) {
                     issueFormLabels.clear(label);
-                    issueFormLabels.create(label, (checked ? 0 : projectId), res.id);
+                    issueFormLabels.create(label, res.id, (checked ? 0 : projectId));
                     issueFormLabels.addToName(label);
                 } else {
                     srv.err(res);
@@ -1726,21 +1906,34 @@ let issueFormLabels = {
         }
     },
     create: function (label, id, projectId) {
+        // Разметка собирается через DOM API, а не склейкой HTML-строки: название
+        // метки задаёт пользователь, и в строке разметки оно стало бы разметкой.
         $(".add-issue-label").before(
-            "<a href=\"javascript:void(0)\" class=\"issue-label\" onclick=\"issueFormLabels.addToName('"
-            + label + "');\">" + label + "</a>");
+            $('<a>', { href: 'javascript:void(0)', 'class': 'issue-label', text: label })
+                .attr('data-label', label));
 
-        $("#removeIssuesLabelContainer tbody").append("<tr>" +
-            "<td class=\"label-name\">" + label + "</td>" +
-            "<td class=\"text-center\">0</td>" +
-            "<td class=\"text-center\">0</td>" +
-            "<td class=\"text-center\">" + (projectId == 0 ? "<i class=\"fas fa-check text-success\" aria-hidden=\"true\" title=\"Общая метка\"></i>" : "") + "</td>" +
-            "<td class=\"text-end\">" +
-            "<button type=\"button\" class=\"btn btn-sm btn-outline-danger\" title=\"Удалить метку\" onclick=\"issueFormLabels.confirmRemove('" + label + (id != 0 ? "', " + id : "") + ");\">" +
-            "<i class=\"far fa-trash-can\" aria-hidden=\"true\"></i>" +
-            "</button>" +
-            "</td>" +
-            "</tr>");
+        var $removeBtn = $('<button>', {
+            type: 'button',
+            'class': 'btn btn-sm btn-outline-danger',
+            title: 'Удалить метку'
+        }).attr('data-label', label)
+            .append($('<i>', { 'class': 'far fa-trash-can' }).attr('aria-hidden', 'true'));
+        if (id != 0) {
+            $removeBtn.attr('data-label-id', id);
+        }
+
+        var $commonCell = $('<td>', { 'class': 'text-center' });
+        if (projectId == 0) {
+            $commonCell.append($('<i>', { 'class': 'fas fa-check text-success', title: 'Общая метка' })
+                .attr('aria-hidden', 'true'));
+        }
+
+        $("#removeIssuesLabelContainer tbody").append($('<tr>').append(
+            $('<td>', { 'class': 'label-name', text: label }),
+            $('<td>', { 'class': 'text-center', text: '0' }),
+            $('<td>', { 'class': 'text-center', text: '0' }),
+            $commonCell,
+            $('<td>', { 'class': 'text-end' }).append($removeBtn)));
         issueFormLabels.updateEmptyState();
     },
     clear: function (labelName) {
@@ -1772,11 +1965,9 @@ let issueFormLabels = {
             issueLabels = [];
         var index = issueLabels.indexOf(labelName);
         var isAddingLabel = index == -1;
-        var strPos = 0;
         var resultLabels = "";
         for (var i = 0, len = issueLabels.length; i < len; ++i) {
             var str = issueLabels[i];
-            strPos += str.length + 2;
             if (index == i) { // на случай, если несколько одинаковых меток у задачи, ну мало ли кто накосячил.
                 issueLabels.splice(index, 1);
                 len--;
@@ -1792,8 +1983,9 @@ let issueFormLabels = {
             issueLabels.push(labelName);
         }
 
-        var name = $("#issueForm form input[name=name]").val();
-        name = (resultLabels.length > 0 ? resultLabels + " " : "") + $.trim(name.substr(strPos));
+        var name = $.trim($("#issueForm form input[name=name]").val());
+        var text = $.trim(name.replace(issueFormLabels.labelsPattern, ""));
+        name = (resultLabels.length > 0 ? resultLabels + " " : "") + text;
 
         $("#issueForm form input[name=name]").val(name);
         issueFormLabels.update();

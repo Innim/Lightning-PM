@@ -4,6 +4,33 @@ use \GMFramework\DateTimeUtils as DTU;
 
 class IssueService extends LPMBaseService
 {
+    /**
+     * Приводит параметр запроса к массиву, включая вложенные значения.
+     *
+     * Шлюз разбирает параметры вызова json_decode() без ассоциативного режима
+     * ({@see \GMFramework\Flash2PHP}), поэтому объект JSON доезжает до сервиса
+     * как stdClass, а не как массив. Приведение рекурсивное: объектом может
+     * оказаться и значение внутри параметра.
+     * @param  mixed $value Значение параметра.
+     * @return mixed Массив вместо объекта; значения других типов без изменений.
+     */
+    private static function paramToArray($value)
+    {
+        if ($value instanceof \stdClass) {
+            $value = get_object_vars($value);
+        }
+
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        foreach ($value as $key => $item) {
+            $value[$key] = self::paramToArray($item);
+        }
+
+        return $value;
+    }
+
 
     /**
      * Завершаем задачу
@@ -1206,6 +1233,215 @@ class IssueService extends LPMBaseService
             $db = LPMGlobals::getInstance()->getDBConnect();
             return $this->error($db->error);
         }
+    }
+
+    /**
+     * Возвращает порцию списка задач проекта.
+     *
+     * Отбор целиком выполняется на сервере: список бывает на тысячи задач и
+     * показывается по частям, поэтому фильтровать и считать по показанным
+     * строкам нельзя. Задачи отдаются готовой разметкой строк таблицы - той же,
+     * какой страница рисует первую порцию.
+     * @param  int    $projectId Идентификатор проекта.
+     * @param  string $scope     Область поиска по статусу задачи
+     *                           (ProjectPage::SEARCH_SCOPE_*).
+     * @param  string $search    Поисковый запрос; пустой - без поиска.
+     * @param  array  $filter    Отбор по тегам и людям:
+     *                           - `tags` array<string> метки;
+     *                           - `members` array<int> исполнители;
+     *                           - `testers` array<int> тестировщики;
+     *                           - `multiMemberOnly` bool только задачи,
+     *                             у которых больше одного исполнителя.
+     * @param  string $sort      Режим сортировки (Issue::SORT_*).
+     * @param  int    $offset    Сколько задач выборки уже показано.
+     * @param  int    $limit     Сколько задач вернуть; 0 - размер порции по умолчанию.
+     *                           Больше PROJECT_ISSUES_MAX_PAGE_SIZE не отдаётся.
+     * @return {
+     *    string rows   Разметка строк таблицы для найденных задач.
+     *    int    count  Количество задач в этой порции.
+     *    int    total  Размер всей выборки.
+     *    int    opened Сколько задач выборки открыто.
+     * }
+     */
+    public function loadProjectIssues($projectId, $scope, $search, $filter, $sort, $offset, $limit = 0)
+    {
+        $projectId = (int)$projectId;
+        $project = Project::loadById($projectId);
+        if (empty($project)) {
+            return $this->error('Не найден проект с идентификатором ' . $projectId);
+        }
+
+        if (!$project->hasReadPermission($this->getUser())) {
+            return $this->error('Нет прав на просмотр задач проекта');
+        }
+
+        if (!isset(ProjectPage::SEARCH_SCOPES[$scope])) {
+            return $this->error('Неизвестная область поиска');
+        }
+
+        $statuses = ProjectPage::SEARCH_SCOPES[$scope]['statuses'];
+        $filters = $this->buildIssuesFilters($statuses, $search, $filter);
+
+        $limit = (int)$limit;
+        $limit = $limit <= 0
+            ? PROJECT_ISSUES_PAGE_SIZE
+            : min($limit, PROJECT_ISSUES_MAX_PAGE_SIZE);
+
+        try {
+            $list = Issue::preloadBuildStates(Issue::preloadParticipants(
+                Issue::loadListByProjectFiltered(
+                    $projectId,
+                    $filters,
+                    $limit,
+                    max(0, (int)$offset),
+                    (string)$sort
+                )
+            ));
+
+            $openedStatuses = ProjectPage::getOpenedStatuses($statuses);
+            $opened = empty($openedStatuses) ? 0 : Issue::countListByProjectFiltered(
+                $projectId,
+                array_merge($filters, ['statuses' => $openedStatuses])
+            );
+
+            ob_start();
+            PagePrinter::issueRows($list);
+            $rows = ob_get_clean();
+        } catch (Exception $e) {
+            return $this->exception($e);
+        }
+
+        $this->add2Answer('rows', $rows);
+        $this->add2Answer('count', count($list));
+        $this->add2Answer('total', Issue::countListByProjectFiltered($projectId, $filters));
+        $this->add2Answer('opened', $opened);
+
+        return $this->answer();
+    }
+
+    /**
+     * Возвращает место задачи в списке задач проекта.
+     *
+     * Нужен, чтобы поставить строку задачи на её место после изменения
+     * приоритета, не перечитывая показанную часть списка: порядок выборки
+     * знает только сервер, а размер ответа от длины списка не зависит.
+     * Выборка задаётся теми же параметрами, что и в loadProjectIssues(): место
+     * считается в том же списке, в котором задача показана.
+     * @param  int    $projectId Идентификатор проекта.
+     * @param  string $scope     Область поиска по статусу задачи
+     *                           (ProjectPage::SEARCH_SCOPES).
+     * @param  string $search    Поисковый запрос.
+     * @param  array  $filter    Отбор по тегам и людям, см. loadProjectIssues().
+     * @param  string $sort      Режим сортировки (Issue::SORT_*).
+     * @param  float  $issueId   Идентификатор задачи.
+     * @return {
+     *    int position Место задачи в выборке, считая с единицы;
+     *                 0 - задачи в этой выборке нет.
+     * }
+     */
+    public function loadIssuePosition($projectId, $scope, $search, $filter, $sort, $issueId)
+    {
+        $projectId = (int)$projectId;
+        $project = Project::loadById($projectId);
+        if (empty($project)) {
+            return $this->error('Не найден проект с идентификатором ' . $projectId);
+        }
+
+        if (!$project->hasReadPermission($this->getUser())) {
+            return $this->error('Нет прав на просмотр задач проекта');
+        }
+
+        if (!isset(ProjectPage::SEARCH_SCOPES[$scope])) {
+            return $this->error('Неизвестная область поиска');
+        }
+
+        $filters = $this->buildIssuesFilters(
+            ProjectPage::SEARCH_SCOPES[$scope]['statuses'],
+            $search,
+            $filter
+        );
+
+        try {
+            $position = Issue::getPositionInProjectFiltered(
+                $projectId,
+                (float)$issueId,
+                $filters,
+                (string)$sort
+            );
+        } catch (Exception $e) {
+            return $this->exception($e);
+        }
+
+        $this->add2Answer('position', $position);
+
+        return $this->answer();
+    }
+
+    /**
+     * Возвращает разметку строки списка для одной задачи.
+     *
+     * Нужен, чтобы показать задачу в новом состоянии, не перечитывая весь
+     * список и не переставляя строки: вид строки зависит от статуса задачи
+     * целиком (цвет, кнопки, стрелки приоритета, дата завершения), и собирать
+     * его в JS значило бы повторить шаблон.
+     * @param  float $issueId Идентификатор задачи.
+     * @return {
+     *    string row Разметка строки таблицы.
+     * }
+     */
+    public function loadIssueRow($issueId)
+    {
+        $issue = Issue::load((float)$issueId);
+        if (!$issue) {
+            return $this->error('Нет такой задачи');
+        }
+
+        $project = Project::loadById($issue->projectId);
+        if (empty($project) || !$project->hasReadPermission($this->getUser())) {
+            return $this->error('Нет прав на просмотр задач проекта');
+        }
+
+        try {
+            $list = Issue::preloadBuildStates(Issue::preloadParticipants([$issue]));
+
+            ob_start();
+            PagePrinter::issueRows($list);
+            $row = ob_get_clean();
+        } catch (Exception $e) {
+            return $this->exception($e);
+        }
+
+        $this->add2Answer('row', $row);
+
+        return $this->answer();
+    }
+
+    /**
+     * Собирает фильтры выборки задач проекта из параметров запроса.
+     * @param  array<int> $statuses Статусы задач области поиска.
+     * @param  string     $search   Поисковый запрос.
+     * @param  array      $filter   Отбор по тегам и людям, см. loadProjectIssues().
+     * @return array Фильтры для Issue::loadListByProjectFiltered().
+     */
+    private function buildIssuesFilters($statuses, $search, $filter)
+    {
+        $filter = self::paramToArray($filter);
+        $filter = is_array($filter) ? $filter : [];
+        $ids = function ($key) use ($filter) {
+            return empty($filter[$key]) || !is_array($filter[$key])
+                ? [] : array_map('intval', $filter[$key]);
+        };
+
+        return [
+            'statuses' => $statuses,
+            'search' => trim((string)$search),
+            // Теги в фильтре - альтернативы: задаче достаточно иметь любой из выбранных
+            'labelsAny' => empty($filter['tags']) || !is_array($filter['tags'])
+                ? [] : array_map('strval', $filter['tags']),
+            'members' => $ids('members'),
+            'testers' => $ids('testers'),
+            'multiMemberOnly' => !empty($filter['multiMemberOnly']),
+        ];
     }
 
     /**

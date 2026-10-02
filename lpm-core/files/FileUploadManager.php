@@ -4,6 +4,16 @@ use GMFramework\FileSystemUtils;
 
 class FileUploadManager
 {
+    /**
+     * Имя файла для сообщения пользователю.
+     * @param  string $originalName Имя файла из `$_FILES`.
+     * @return string
+     */
+    private static function displayName($originalName)
+    {
+        return FileNameHelper::displayNameFromUpload($originalName, FileNameHelper::DEFAULT_NAME);
+    }
+
     public static function hasUploads(array $filesData)
     {
         if (!isset($filesData['tmp_name']) || !is_array($filesData['tmp_name'])) {
@@ -57,7 +67,7 @@ class FileUploadManager
         }
 
         if ($newCount > max(0, (int)$availableSlots)) {
-            $errors[] = sprintf('Вы не можете прикрепить больше %d файлов', self::getFilesLimit($availableSlots, $totalLimit));
+            $errors[] = sprintf('Вы не можете прикрепить больше %d файлов', self::getAttachmentsLimit($availableSlots, $totalLimit));
         }
 
         $totalError = self::checkTotalSize($filesData);
@@ -69,12 +79,14 @@ class FileUploadManager
     }
 
     /**
-     * Определяет количество файлов для сообщения о превышении лимита.
-     * @param  int $availableSlots Количество файлов, которые ещё можно прикрепить.
-     * @param  int $totalLimit     Максимальное количество файлов.
+     * Определяет количество вложений для сообщения о превышении лимита.
+     * Общее для всех видов вложений, в том числе изображений
+     * ({@see LPMImgUpload::validateUploadedFiles()}).
+     * @param  int $availableSlots Количество вложений, которые ещё можно прикрепить.
+     * @param  int $totalLimit     Максимальное количество вложений.
      * @return int
      */
-    private static function getFilesLimit($availableSlots, $totalLimit)
+    public static function getAttachmentsLimit($availableSlots, $totalLimit)
     {
         $limit = $totalLimit > 0 ? (int)$totalLimit : (int)$availableSlots;
 
@@ -106,7 +118,7 @@ class FileUploadManager
         }
 
         if ($size <= 0) {
-            return sprintf('Файл "%s" пустой или поврежден', $originalName);
+            return sprintf('Файл "%s" пустой или поврежден', self::displayName($originalName));
         }
 
         return null;
@@ -178,7 +190,7 @@ class FileUploadManager
             if ($availableSlots <= 0) {
                 $result['errors'][] = sprintf(
                     'Вы не можете прикрепить больше %d файлов',
-                    self::getFilesLimit($availableSlots, $totalLimit)
+                    self::getAttachmentsLimit($availableSlots, $totalLimit)
                 );
                 break;
             }
@@ -190,14 +202,17 @@ class FileUploadManager
             }
 
             if (!is_uploaded_file($tmpName)) {
-                $result['errors'][] = sprintf('Не удалось загрузить файл "%s"', $originalName);
+                $result['errors'][] = sprintf(
+                    'Не удалось загрузить файл "%s"',
+                    self::displayName($originalName)
+                );
                 continue;
             }
 
             // Имя хранится отдельно от файла и подставляется при скачивании,
             // поэтому пустым остаться не может
-            $sanitizedName = FileNameHelper::sanitize($originalName, self::DEFAULT_NAME);
-            $extension = self::buildStoredExtension($sanitizedName);
+            $displayName = self::displayName($originalName);
+            $extension = self::buildStoredExtension($displayName);
 
             do {
                 $storedBase = SecureRandomHelper::str(16);
@@ -207,7 +222,7 @@ class FileUploadManager
             } while (file_exists($absolutePath));
 
             if (!move_uploaded_file($tmpName, $absolutePath)) {
-                $result['errors'][] = sprintf('Не удалось сохранить файл "%s"', $originalName);
+                $result['errors'][] = sprintf('Не удалось сохранить файл "%s"', $displayName);
                 break;
             }
 
@@ -219,7 +234,7 @@ class FileUploadManager
                     $itemType,
                     $itemId,
                     $userId,
-                    $sanitizedName,
+                    $displayName,
                     $mimeType,
                     $realSize,
                     $relativePath
@@ -328,7 +343,8 @@ class FileUploadManager
      * Белым списком тут не обойтись: вложением может быть файл любого типа.
      * Поэтому это второй рубеж - основной запрет на исполнение задаётся
      * конфигурацией веб-сервера (см. lpm-files/.htaccess).
-     * @param  string $name Оригинальное имя файла (уже нормализованное).
+     * @param  string $name Отображаемое имя файла. Может содержать любые
+     *   символы - из расширения остаются только буквы и цифры.
      * @return string Расширение без точки или пустая строка.
      */
     private static function buildStoredExtension($name)
@@ -350,11 +366,13 @@ class FileUploadManager
     /**
      * Возвращает текст ошибки загрузки файла.
      * @param  int    $errorCode Код ошибки (одна из констант UPLOAD_ERR_*).
-     * @param  string $fileName  Имя файла.
+     * @param  string $fileName  Имя файла из `$_FILES`.
      * @return string
      */
     public static function translateUploadError($errorCode, $fileName)
     {
+        $fileName = self::displayName($fileName);
+
         switch ($errorCode) {
             case UPLOAD_ERR_INI_SIZE:
             case UPLOAD_ERR_FORM_SIZE:
@@ -371,10 +389,4 @@ class FileUploadManager
                 return sprintf('Не удалось загрузить файл "%s"', $fileName);
         }
     }
-
-    /**
-     * Имя, под которым сохраняется файл, от имени которого после очистки
-     * ничего не осталось.
-     */
-    private const DEFAULT_NAME = 'file';
 }

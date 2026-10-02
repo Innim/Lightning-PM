@@ -5,6 +5,24 @@
 class IssueComment extends LPMBaseObject
 {
     /**
+     * Типы записей, которые система создаёт сама, без участия человека.
+     *
+     * Единственное определение служебной записи ленты: на него опираются
+     * и {@see IssueComment::isAutoComment()}, и счётчик комментариев задачи.
+     *
+     * @return string[] Значения IssueCommentType.
+     */
+    public static function getAutoCommentTypes()
+    {
+        return [
+            IssueCommentType::CREATE_BRANCH,
+            IssueCommentType::BRANCH_MERGED,
+            IssueCommentType::TAKEN_FOR_TESTING,
+            IssueCommentType::RELEASED_FROM_TESTING,
+        ];
+    }
+
+    /**
      * Создает запись.
      *
      * Если запись уже создана - будет заменена.
@@ -140,12 +158,7 @@ class IssueComment extends LPMBaseObject
      * @return bool
      */
     public function isAutoComment() {
-        return in_array($this->type, [
-            IssueCommentType::CREATE_BRANCH,
-            IssueCommentType::BRANCH_MERGED,
-            IssueCommentType::TAKEN_FOR_TESTING,
-            IssueCommentType::RELEASED_FROM_TESTING,
-        ]);
+        return in_array($this->type, self::getAutoCommentTypes());
     }
 
     /**

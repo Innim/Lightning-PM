@@ -176,10 +176,21 @@ let scrumBoard = {
     /**
      * Показывает номер идущего спринта - после закрытия предыдущего
      * страница должна говорить о новом, в том числе при следующем закрытии.
+     *
+     * Единственное место, где номер меняется: закрытие спринта читает его
+     * из data-атрибута доски, поэтому заголовок и атрибут должны
+     * обновляться вместе. Зовётся и при закрытии из этой вкладки,
+     * и автообновлением, когда спринт закрыли в другой.
      * @param {Number} num номер спринта
      */
     setSprintNum: function (num) {
-        $('#scrumBoard').data('sprintNum', num);
+        const $board = $('#scrumBoard');
+        // Номер живёт в двух представлениях: кэш jQuery, который читает
+        // clearBoard(), и сам атрибут - для читающих dataset напрямую.
+        // Кэш заполняется из атрибута только при первом чтении, так что
+        // одной записи мало - иначе представления разойдутся
+        $board.data('sprintNum', num);
+        $board.attr('data-sprint-num', num);
         $('.sprint-num').text(num);
     },
     changeSPVisibility: function (value) {
@@ -187,6 +198,17 @@ let scrumBoard = {
             $('#scrumBoard').removeClass('hide-sp');
         else
             $('#scrumBoard').addClass('hide-sp');
+    },
+    /**
+     * Показывает или скрывает тестировщиков на стикерах доски.
+     *
+     * Состояние хранится классом на самой доске, а не на стикерах, поэтому
+     * стикеры, попавшие на доску позже - переносом между колонками или
+     * автообновлением, - подхватывают его сами.
+     * @param {Boolean} value показывать ли тестировщиков
+     */
+    changeTestersVisibility: function (value) {
+        $('#scrumBoard').toggleClass('show-testers', value);
     },
     clearBoard: function () {
         const $board = $('#scrumBoard');

@@ -15,6 +15,12 @@
 class ScrumBoardManager
 {
     /**
+     * Сколько секунд закрытие спринта ждёт своей очереди, если этот же спринт
+     * уже закрывает другой запрос.
+     */
+    const CLOSE_SPRINT_LOCK_TIMEOUT = 10;
+
+    /**
      * Ставит задачу на доску в колонку, соответствующую её статусу.
      *
      * Статус задачи при этом не меняется, поскольку колонка выводится из него.
@@ -127,6 +133,11 @@ class ScrumBoardManager
      * Пустая доска - не ошибка: закрывать нечего, снимок не создаётся
      * и номер спринта не меняется.
      *
+     * Закрытия одного проекта идут по очереди: номер нового спринта выводится
+     * из уже созданных снимков, поэтому два одновременных закрытия без очереди
+     * дали бы двум снимкам один номер. Второй запрос дожидается первого
+     * и получает отказ - его спринт к тому моменту уже закрыт.
+     *
      * @param  Project $project        Проект со скрам-доской.
      * @param  int     $sprintNumber   Номер закрываемого спринта.
      * @param  bool    $transferOpened Переносить ли незавершённые задачи
@@ -138,8 +149,8 @@ class ScrumBoardManager
      *         `archived` - снятые с доски стикеры, `transferred` - стикеры,
      *         оставшиеся на доске.
      * @throws ScrumBoardException Если у проекта нет скрам-доски, закрывают
-     *                             не открытый сейчас спринт или доску
-     *                             нельзя заархивировать.
+     *                             не открытый сейчас спринт, доску нельзя
+     *                             заархивировать или очереди не дождались.
      * @throws \GMFramework\ProviderSaveException Если не удалось снять стикеры.
      */
     public static function closeSprint(Project $project, $sprintNumber, $transferOpened, User $user)
@@ -148,8 +159,36 @@ class ScrumBoardManager
             throw new ScrumBoardException('У проекта нет скрам-доски');
         }
 
-        $sprintNumber = (int)$sprintNumber;
-        $currentNumber = $project->getCurrentSprintNum();
+        $lockName = 'scrum:close-sprint:' . $project->id;
+        if (!DbLock::acquire($lockName, self::CLOSE_SPRINT_LOCK_TIMEOUT)) {
+            throw new ScrumBoardException(
+                'Спринт этого проекта сейчас закрывает другой запрос - попробуйте ещё раз'
+            );
+        }
+
+        try {
+            return self::closeCurrentSprint($project, (int)$sprintNumber, (bool)$transferOpened, $user);
+        } finally {
+            DbLock::release($lockName);
+        }
+    }
+
+    /**
+     * Закрывает спринт, когда очередь на закрытие уже занята.
+     *
+     * @param  Project $project        Проект со скрам-доской.
+     * @param  int     $sprintNumber   Номер закрываемого спринта.
+     * @param  bool    $transferOpened Переносить ли незавершённые задачи.
+     * @param  User    $user           Пользователь, закрывающий спринт.
+     * @return array Результат закрытия, см. {@see closeSprint()}.
+     * @throws ScrumBoardException Если закрывают не открытый сейчас спринт
+     *                             или доску нельзя заархивировать.
+     * @throws \GMFramework\ProviderSaveException Если не удалось снять стикеры.
+     */
+    private static function closeCurrentSprint(Project $project, $sprintNumber, $transferOpened, User $user)
+    {
+        // Номер перечитывается: пока ждали очереди, спринт могли закрыть
+        $currentNumber = $project->getCurrentSprintNum(true);
         if ($sprintNumber !== $currentNumber) {
             throw new ScrumBoardException(
                 'Сейчас открыт спринт #' . $currentNumber . ', а не #' . $sprintNumber .
@@ -157,7 +196,6 @@ class ScrumBoardManager
             );
         }
 
-        $transferOpened = (bool)$transferOpened;
         $transferStates = [ScrumStickerState::TODO, ScrumStickerState::IN_PROGRESS];
 
         // Доска читается один раз: тот же состав и уходит в снимок,

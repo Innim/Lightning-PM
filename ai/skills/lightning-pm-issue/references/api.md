@@ -118,7 +118,7 @@ Example:
 GET /api/v1/projects/demo/issues?status=inWork,test&label=api&limit=20
 ```
 
-The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, substatus, priority, hours, hoursUnit, labels, commentsCount, isOnBoard, boardColumn, createDate, modifiedDate, completeDate, completedDate, author}`, with `priority` in the same `1..100` scale the web UI shows. Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments.
+The response is `{project, issues, paging: {limit, offset, total}}`. Each item is a short issue payload `{id, idInProject, name, url, type, status, substatus, priority, hours, hoursUnit, labels, commentsCount, isOnBoard, boardColumn, createDate, modifiedDate, completeDate, completedDate, author}`, with `priority` in the same `1..100` scale the web UI shows. Use `id` with `GET /api/v1/issues/{issueId}` to read the description, comments, and attachments. `commentsCount` counts the discussion only — automatic feed entries (`create_branch`, `branch_merged`, `taken_for_testing`, `released_from_testing`) are not counted; the full issue payload has no `commentsCount`, it carries the whole `comments` feed instead.
 
 ## Listing Project Labels
 
@@ -360,6 +360,8 @@ Good comment content:
 
 Comment text may use Markdown when it improves readability.
 
+To attach a screenshot or any other file to the comment, send the same request as `multipart/form-data` — see [File Upload](#file-upload).
+
 Always append a signature that makes it clear the comment was posted by the agent on the user's behalf. Include the current agent name in the signature. Default signature template:
 
 ```text
@@ -391,3 +393,40 @@ To save with a specific name, pass `--output` through the helper script:
 ```bash
 bash ~/path/to/skill/scripts/lpm-api.sh 'https://pm.example.com' GET 'https://pm.example.com/lpm-files/protected/screenshot.png' -- --output /tmp/screenshot.png
 ```
+
+## File Upload
+
+An attachment lands in one of two places, and the field decides which — the same split the web form has:
+
+- **images** — what is meant to be looked at (a screenshot, a mockup): they go to the issue gallery, with a preview and a viewer;
+- **files** — what is meant to be downloaded (a log, an archive), or an image when the original file itself is the point.
+
+A screenshot put in the file field stays a line in the file list, with no preview. Use the image field for it.
+
+Attachments go as `multipart/form-data`, in a repeatable field:
+
+```http
+POST /api/v1/issues                        images[]      files[]
+POST /api/v1/issues/{issueId}              addImages[]   addFiles[]
+POST /api/v1/issues/{issueId}/comments     —             files[]
+```
+
+Send them with the request that creates the issue or the comment — the first and the third. Then the issue or comment reaches its readers whole, in one action, and a brand-new issue does not open its history with an edit.
+
+The middle one is not an upload endpoint: `POST /api/v1/issues/{issueId}` changes an issue in part, and attachments are one of the things it understands. They are **added** to what is already attached — hence the `add` prefix, where a scalar field, when one is added to that endpoint, will replace the current value instead. Use it for an issue that already exists; it is not a second step of creating one.
+
+A comment has one field and no gallery: an image attached to a comment is shown with a preview and opens in the viewer by its type. `images[]` means nothing there — such a request is read as a comment with neither text nor files and answered with `400`. A comment carrying files may go without text at all.
+
+The helper script sends JSON only, so upload with `curl` directly. Pass the key through a config file on stdin, the way the helper does, to keep it out of the process list:
+
+```bash
+printf 'header = "X-LPM-API-Key: %s"\n' "$LIGHTNING_PM_API_KEY" | curl --fail-with-body -s -K - \
+  -X POST 'https://pm.example.com/api/v1/issues/4567' \
+  -F 'addImages[]=@/tmp/screenshot.png'
+```
+
+Limits are the web form's, not the API's own: at most 10 images and 10 files on an issue, 20 files on a comment (what is already attached takes up the issue slots); an image is at most 10 MB and must be jpg/jpeg/png/gif/webp; files may total 128 MB in one request and have no type restriction. Never send more than 20 attachments at once, images and files counted together: PHP drops everything past the twentieth before Lightning PM sees it, and nothing reports the loss — 10 images plus 10 files is already that ceiling. A request that breaks a checked limit answers `400` and saves nothing — not the attachments, and not the issue or comment they came with; a request bigger than the server limit answers `413`.
+
+Only `POST` accepts multipart, and multipart carries every field as a string. That matters for the fields that are not text: `requestChanges` of a comment and `board` of a new issue take `true` and `false` as strings, and `false`, `0` or an empty value all mean false.
+
+Attach something when it carries information the text cannot — a screenshot of the result, a diagram, a log. Get the same explicit user approval as for the comment text itself, and say which file is going up.
