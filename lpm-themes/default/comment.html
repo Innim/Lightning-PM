@@ -117,7 +117,7 @@ $deleteLinkDataAttributesString = HTMLHelper::buildDataAttributes($deleteLinkDat
 <div class="text-muted small ps-4">
   <span>Задача </span>
   <a href="<?=$issue->getConstURL();?>"
-    class="comment-issue-link"><?=$issue->getName();?></a>
+    class="comment-issue-link"><?=lpm_escape($issue->getName());?></a>
 </div>
 <?php endif;?>
 
@@ -194,7 +194,7 @@ $deleteLinkDataAttributesString = HTMLHelper::buildDataAttributes($deleteLinkDat
 			<div class="card-footer text-muted">
 				<span>Задача </span>
 				<a href="<?=$issue->getConstURL();?>"
-					class="comment-issue-link"><?=$issue->getName();?></a>
+					class="comment-issue-link"><?=lpm_escape($issue->getName());?></a>
 			</div>
 			<?php endif;?>
     </div>

@@ -148,7 +148,7 @@
                             data-issue-id="<?=$sticker->issue_uid;?>" data-sticker-state="<?=$sticker->issue_state;?>"
                             data-sticker-sp="<?=$sp;?>" title="<?=$testersStr;?>">
                             <span class="sticker-issue-id">#<?=$sticker->issue_pid;?></span>
-                            <a href="<?=$sticker->getURL4View();?>"><?=$sticker->issue_name;?><span
+                            <a href="<?=$sticker->getURL4View();?>"><?=lpm_escape($sticker->issue_name);?><span
                                     class="snapshot-sticker-issue-sp">(<?=$spStr;?> SP)</span></a>
                             <span class="sticker-issue-members"><?php
                             foreach ($sticker->getMembers() as $j => $member) {?><?=$j>0?', ':''?>

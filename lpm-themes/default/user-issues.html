@@ -44,7 +44,7 @@ $userId = lpm_get_user()->userId;
                     <?php /* Меню копирования идёт последним — после счётчика комментариев. Перед ним
                              не должно быть пробела: пробел — это точка переноса, и глиф отрывался бы
                              на следующую строку; отступ от счётчика задан в CSS */ ?>
-                    <a href="<?=$issue->getConstURL();?>"><?=$issue->name;?></a><?php
+                    <a href="<?=$issue->getConstURL();?>"><?=lpm_escape($issue->getName());?></a><?php
                     if ($issue->commentsCount > 0): ?>
                     &nbsp;<span class="comments-count" title="комментариев"><?=$issue->commentsCount;?></span><?php
                     endif;

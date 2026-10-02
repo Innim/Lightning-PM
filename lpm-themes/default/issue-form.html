@@ -91,9 +91,13 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
                 }
             ?>
             <span class="issue-labels-container<?=$hasCollapsedLabels ? ' labels-collapsed' : '';?>">
+                <?php /* Название метки передаётся обработчику через data-label, а не в
+                         аргументе onclick: внутри атрибута оно прошло бы два разбора
+                         подряд (сначала HTML, потом строка JS), и апостроф в метке
+                         вышел бы из строки. Обработчик делегирован в issue-form.js */ ?>
                 <?php foreach ($labelStates as $labelState): ?>
                 <a href="javascript:void(0)" class="issue-label<?=$labelState['collapsed'] ? ' issue-label-collapsed' : '';?>"
-                    onclick="issueFormLabels.addToName('<?=$labelState['label'];?>');"><?=$labelState['label'];?></a>
+                    data-label="<?=lpm_escape($labelState['label']);?>"><?=lpm_escape($labelState['label']);?></a>
                 <?php endforeach; ?>
                 <button type="button" class="issue-label-ctl add-issue-label"
                     title="Добавить метку" onclick="issueFormLabels.openAdd()">
@@ -440,7 +444,7 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
                                     unset($issueLabels[$index]);
                             ?>
                             <tr>
-                                <td class="label-name"><?=$label['label'];?></td>
+                                <td class="label-name"><?=lpm_escape($label['label']);?></td>
                                 <td class="text-center"><?=$label['projectUses'];?></td>
                                 <td class="text-center"><?=$label['countUses'];?></td>
                                 <td class="text-center">
@@ -449,8 +453,10 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
                                     <?php endif;?>
                                 </td>
                                 <td class="text-end">
+                                    <?php /* data-label-id отличает метку из списка проекта (её удаляют
+                                             из проекта) от метки, которая есть только в названии задачи */ ?>
                                     <button type="button" class="btn btn-sm btn-outline-danger" title="Удалить метку"
-                                        onclick="issueFormLabels.confirmRemove('<?=$label['label'];?>', <?=$label['id'];?>);">
+                                        data-label="<?=lpm_escape($label['label']);?>" data-label-id="<?=(int)$label['id'];?>">
                                         <i class="far fa-trash-can" aria-hidden="true"></i>
                                     </button>
                                 </td>
@@ -458,13 +464,13 @@ $descTemplate = LPMOptions::getIssueDescTemplate();
                             <?php endforeach; ?>
                             <?php foreach ($issueLabels as $label): ?>
                             <tr>
-                                <td class="label-name"><?=$label?></td>
+                                <td class="label-name"><?=lpm_escape($label);?></td>
                                 <td class="text-center">0</td>
                                 <td class="text-center">0</td>
                                 <td class="text-center"></td>
                                 <td class="text-end">
                                     <button type="button" class="btn btn-sm btn-outline-danger" title="Удалить метку"
-                                        onclick="issueFormLabels.confirmRemove('<?=$label;?>');">
+                                        data-label="<?=lpm_escape($label);?>">
                                         <i class="far fa-trash-can" aria-hidden="true"></i>
                                     </button>
                                 </td>

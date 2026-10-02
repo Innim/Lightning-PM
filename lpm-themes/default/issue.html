@@ -42,14 +42,16 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
         class="issue-info issue-card card shadow-sm block-with-attachments <?=IssueViewHelper::statusStateClass($issue->status);?>"
         data-is-on-board="<?=$isOnBoard ? 1 : 0;?>"
         data-id-in-project="<?=$issue->getIdInProject();?>" data-status="<?=$issue->status;?>"
-        data-labels="<?=implode(',', $issue->getLabelNames());?>" data-issue-id="<?=$issue->id;?>">
+        data-labels="<?=lpm_escape(implode(',', $issue->getLabelNames()));?>" data-issue-id="<?=$issue->id;?>">
         <div class="issue-header card-header bg-white">
             <div class="d-flex align-items-start gap-3">
                 <h2 class="issue-title h5 mb-0 flex-grow-1 text-break">
                     <span class="issue-id font-monospace text-muted" data-copy="<?=$issue->getIdInProject();?>"
                         data-copy-toast="Номер задачи скопирован"
                         title="Копировать номер задачи">#<?=$issue->getIdInProject();?></span>
-                    <span class="issue-name"><?=$issue->getName();?></span>
+                    <?php /* Класс issue-name нужен JS: форма редактирования берёт
+                             название задачи из текста этого элемента */ ?>
+                    <span class="issue-name"><?=lpm_escape($issue->getName());?></span>
                 </h2>
 
                 <div class="issue-actions d-flex align-items-center gap-1 flex-shrink-0">
