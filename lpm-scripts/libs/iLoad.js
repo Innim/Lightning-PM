@@ -4,7 +4,62 @@
 // Распространяется бесплатно для частных проектов
 // при условии сохранения авторства исходного кода
 
-(L=iload=iLoad=(function(L){eval(L)
+(L=iload=iLoad=(function(L){
+/*
+ * Патч Lightning PM к библиотеке iLoad 3.3.5.
+ *
+ * Библиотека поставляется упакованной: в eval() уходит исходный текст, который
+ * собирается подстановкой по словарю. Править упакованную строку нельзя, поэтому
+ * правка вносится в уже собранный текст - заменой фрагментов исходника перед eval().
+ * Каждый фрагмент обязан встретиться ровно один раз, иначе патч бросает исключение:
+ * после обновления библиотеки он должен падать, а не молча отрабатывать вхолостую.
+ *
+ * Меняются два места:
+ *  1. Значение информационного атрибута (L.infoAttribute) целиком считается именем
+ *     картинки, а не парой "имя L.splitSign описание": разделитель допустим в имени
+ *     файла, и отличить такое имя от пары нельзя. Описание через этот атрибут
+ *     не передаётся.
+ *  2. Имя и описание экранируются перед вставкой в innerHTML. Шаблон экранирует их
+ *     для атрибута, но это экранирование снимает парсер HTML, и до innerHTML значение
+ *     доходит в исходном виде - разметка из имени файла выполнилась бы.
+ */
+L=(function(src){
+    var patches=[
+        ['if(h){d=h.split(L.splitSign);v=d[0];q=d[1]?d[1]:false}else{q=v=false}',
+         'if(h){v=h;q=false}else{q=v=false}'],
+        ['j=l[y-1].split(L.splitSign);',
+         'j=L.lpmSplitItem(l[y-1]);'],
+        ['\'">\'+L.imageName+"</span>"',
+         '\'">\'+L.lpmEscapeHtml(L.imageName)+"</span>"'],
+        ['\'">\'+L.imageDesc+"</span>"',
+         '\'">\'+L.lpmEscapeHtml(L.imageDesc)+"</span>"']
+    ]
+    for (var i=0;i<patches.length;i++) {
+        var parts=src.split(patches[i][0])
+        if (parts.length!=2) {
+            throw new Error('iLoad: фрагмент #'+(i+1)+' встречается в исходнике '+(parts.length-1)+' раз - патч не применён')
+        }
+        src=parts.join(patches[i][1])
+    }
+    return src
+})(L)
+eval(L)
+
+// Функции патча: на них ссылается заменённый код библиотеки.
+
+// Делит элемент списка картинок ("адрес" + L.splitSign + "имя") на адрес, имя
+// и описание. Делит по первому разделителю: в имени разделитель допустим,
+// а в адресе его нет - имя файла попадает в адрес percent-кодированным.
+L.lpmSplitItem=function(item){
+    var at=item.indexOf(L.splitSign)
+    return at<0?[item,'','']:[item.slice(0,at),item.slice(at+L.splitSign.length),'']
+}
+
+// Готовит текст к подстановке в innerHTML.
+L.lpmEscapeHtml=function(text){
+    return String(text===null||text===undefined?'':text)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
 
 L.zIndex=9999
 L.infoAttribute='title'

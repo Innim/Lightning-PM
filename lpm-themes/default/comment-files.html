@@ -70,10 +70,8 @@ if (!empty($files)):
         <div class="comment-image-item text-center">
             <?php /* title читает просмотрщик iLoad - это подпись к картинке, поэтому ссылка
                     исключена из глобального тултипа (data-tooltip): он забирает title себе
-                    и подпись до просмотрщика не доходит. Подпись просмотрщик собирает через
-                    innerHTML, поэтому имя для title экранируется иначе, чем для остальных
-                    атрибутов (см. FileNameHelper). Имя видно в строке под превью. */ ?>
-            <a href="<?=$file->getViewUrl();?>" class="image-link comment-file-image-link d-inline-flex rounded-2 border bg-white p-1" rel="iLoad|CommentFiles" title="<?=FileNameHelper::escapeForImageViewer($file->origName);?>" data-tooltip>
+                    и подпись до просмотрщика не доходит. Имя видно в строке под превью. */ ?>
+            <a href="<?=$file->getViewUrl();?>" class="image-link comment-file-image-link d-inline-flex rounded-2 border bg-white p-1" rel="iLoad|CommentFiles" title="<?=$fileName;?>" data-tooltip>
                 <img src="<?=$file->getViewUrl();?>" class="comment-file-image rounded-1" alt="<?=$fileName;?>">
             </a>
             <div class="d-flex align-items-center justify-content-center gap-2 mt-1">
