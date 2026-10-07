@@ -344,6 +344,22 @@ class PagePrinter
     }
 
     /**
+     * Печатает предупреждение администратору об истечении общего токена GitLab.
+     *
+     * Ничего не печатает, если предупреждать не о чем - в том числе всем,
+     * кроме администраторов.
+     */
+    public static function gitlabTokenWarning()
+    {
+        $status = GitlabSudoTokenStatus::getWarning();
+        if ($status === null) {
+            return;
+        }
+
+        PageConstructor::includePattern('components/gitlab-token-warning', compact('status'));
+    }
+
+    /**
      * Печатает блок состояния миграций схемы БД.
      */
     public static function dbMigrations()

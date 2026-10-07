@@ -159,10 +159,15 @@ class User extends LPMBaseObject
      * @param int $userId
      * @param string $gitlabToken
      * @param int $gitlabId
+     * @param string|null $gitlabTokenExpiresAt Дата истечения токена в формате
+     * `Y-m-d`; null, если GitLab её не назвал — срок остаётся неизвестным.
      */
-    public static function updateGitlabToken($userId, $gitlabToken, $gitlabId)
+    public static function updateGitlabToken($userId, $gitlabToken, $gitlabId, $gitlabTokenExpiresAt = null)
     {
-        return self::updateFields($userId, compact('gitlabToken', 'gitlabId'));
+        $fields = compact('gitlabToken', 'gitlabId');
+        $fields['gitlabTokenExpiresAt'] = empty($gitlabTokenExpiresAt) ? null : $gitlabTokenExpiresAt;
+
+        return self::updateFields($userId, $fields);
     }
 
     /**
@@ -386,6 +391,12 @@ class User extends LPMBaseObject
     public $slackName = '';
     public $gitlabToken = '';
     public $gitlabId;
+    /**
+     * Момент истечения токена GitLab; 0, если срок неизвестен — так выглядят
+     * токены, выписанные до того, как таск начал сохранять срок.
+     * @var int|float
+     */
+    public $gitlabTokenExpiresAt = 0;
     public $lastVisit = 0;
     public $regDate   = 0;
     public $role      = 0;
@@ -403,7 +414,7 @@ class User extends LPMBaseObject
         
         $this->_typeConverter->addIntVars('userId', 'gitlabId');
         $this->_typeConverter->addBoolVars('secret', 'locked');
-        $this->addDateTimeFields('lastVisit', 'regDate');
+        $this->addDateTimeFields('lastVisit', 'regDate', 'gitlabTokenExpiresAt');
         
         $this->addClientFields('userId', 'firstName', 'lastName', 'nick', 'avatarUrl');
     }

@@ -1,5 +1,11 @@
 ## Next
 
+### Added
+- Администратор заранее видит предупреждение о скором истечении токена интеграции с GitLab ([#513](https://task.innim.ru/project/lightning-pm/issue/513)).
+
+### Fixed
+- Истёкший токен GitLab обновляется сам, и данные из GitLab больше не пропадают у пользователя навсегда ([#513](https://task.innim.ru/project/lightning-pm/issue/513)).
+
 ## 0.34.0 - 2026-10-02
 
 ### Added
