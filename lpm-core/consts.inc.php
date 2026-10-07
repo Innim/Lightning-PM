@@ -106,7 +106,7 @@ define('ISSUE_LABELS_DISPLAY_LIMIT', 10);
  * к списку по кнопке «Показать ещё».
  * @var int
  */
-define('PROJECT_ISSUES_PAGE_SIZE', 50);
+define('PROJECT_ISSUES_PAGE_SIZE', 100);
 
 /**
  * Предельный размер одной порции списка задач.
