@@ -1714,6 +1714,17 @@ form.pass-test #passTestComment textarea.comment-text-field {
   min-height: 24px;
 }
 
+/* Раскрытый список фильтра ложится поверх панели поиска, строки операций и списка
+   задач. Кнопку внутри `.input-group` Bootstrap держит на z-index 2 (и на 3, пока
+   она в фокусе), поэтому вендорного z-index 1 ему не хватает; сверху ограничивает
+   шкала наложений Bootstrap, начинающаяся с 1000, — модальные окна и тултипы должны
+   оставаться над списком. Правило висит на активном `.multiselect`, а не на самом
+   выпадающем блоке: `.multiselect` позиционирован, и его z-index образует контекст
+   наложения, внутри которого z-index блока снаружи уже не виден. */
+.issue-list-filter .multiselect--active {
+  z-index: 10;
+}
+
 .tooltip-link-issue-container {
 	max-height: 250px;  
 	overflow: hidden;
