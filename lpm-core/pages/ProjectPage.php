@@ -486,16 +486,17 @@ class ProjectPage extends LPMPage
      * Готовит список задач подраздела и форму поиска по нему.
      *
      * Показываются задачи области поиска, а если задан поисковый запрос - только
-     * найденные среди них. Пока область не меняли и не искали, подраздел
-     * показывает свой обычный список, и вместо размера выборки уместна общая
-     * статистика проекта.
+     * найденные среди них.
      * @param string $defaultScope Область поиска, которую подраздел показывает
      *        без запроса: список этих задач и есть его обычное содержимое.
      * @param bool   $scopeChoice  Можно ли менять область поиска. Если нет,
      *        подраздел ищет только среди своих задач: область не выбирается
      *        и не задаётся параметром адреса.
+     * @param string|null $defaultCountLabel Подпись к размеру обычного списка
+     *        подраздела. `null` означает, что к этому списку относится общая
+     *        статистика проекта по открытым задачам, и показывается она.
      */
-    private function initIssuesList($defaultScope, $scopeChoice)
+    private function initIssuesList($defaultScope, $scopeChoice, $defaultCountLabel = null)
     {
         $search = trim(self::getQueryParam(self::QUERY_ARG_SEARCH));
 
@@ -512,11 +513,16 @@ class ProjectPage extends LPMPage
             }
         }
 
-        $countLabel = null;
+        // Список отобран, когда показан не весь обычный список подраздела:
+        // по этому признаку раскрывается и форма поиска
+        $filtered = $search !== '' || $scope !== $defaultScope;
+
         if ($search !== '') {
             $countLabel = 'Найдено';
-        } elseif ($scope !== $defaultScope) {
+        } elseif ($filtered) {
             $countLabel = 'Показано';
+        } else {
+            $countLabel = $defaultCountLabel;
         }
 
         $statuses = self::SEARCH_SCOPES[$scope]['statuses'];
@@ -546,6 +552,7 @@ class ProjectPage extends LPMPage
             'url' => $this->getUrl(),
             'scope' => $scope,
             'scopes' => $scopes,
+            'filtered' => $filtered,
         ]);
     }
 
@@ -657,8 +664,10 @@ class ProjectPage extends LPMPage
     private function initCompletedIssues()
     {
         // Подраздел ищет только среди завершённых задач: показывать в нём открытые
-        // - значит противоречить его собственному названию
-        $this->initIssuesList(self::SEARCH_SCOPE_COMPLETED, false);
+        // - значит противоречить его собственному названию. По той же причине
+        // в статистике стоит размер самой выборки: сводка проекта по открытым
+        // задачам к списку завершённых не относится
+        $this->initIssuesList(self::SEARCH_SCOPE_COMPLETED, false, 'Завершено');
     }
 
     private function initComments()
