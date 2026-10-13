@@ -1,5 +1,8 @@
 ## Next
 
+### Changed
+- Глубина рассуждений ИИ-модели задаётся уровнем — настройкой `AI_GEMINI_THINKING_LEVEL` вместо лимита токенов ([#531](https://task.innim.ru/project/lightning-pm/issue/531)).
+
 ## 0.34.1 - 2026-10-07
 
 ### Changed

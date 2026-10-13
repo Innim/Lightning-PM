@@ -24,6 +24,11 @@ class IssueSummaryBuilder
      * хэшируется целиком, поэтому увеличивать версию нужно при изменениях,
      * которые в этот текст не попадают: схема ответа, параметры генерации,
      * формат разделов сводки.
+     *
+     * Параметры сэмплирования (температура, top-p, top-k) к таким изменениям
+     * не относятся: модели, с которыми работает приложение, их не применяют,
+     * поэтому ни их появление, ни их исчезновение в коде не меняет ответа
+     * модели и сохранённых сводок не обесценивает.
      */
     const PROMPT_VERSION = 1;
 
@@ -44,9 +49,6 @@ class IssueSummaryBuilder
 
     /** Максимальная длина описания задачи, передаваемого модели */
     const DESC_MAX_LENGTH = 6000;
-
-    /** Температура генерации: сводка должна быть предсказуемой */
-    const TEMPERATURE = 0.2;
 
     /**
      * Ограничение длины ответа.
@@ -227,7 +229,6 @@ TEXT;
         }
 
         $request = AiRequest::text($prompt, self::SYSTEM_INSTRUCTION)
-            ->setTemperature(self::TEMPERATURE)
             ->setMaxOutputTokens(self::MAX_OUTPUT_TOKENS)
             ->setResponseSchema(self::getResponseSchema());
 
