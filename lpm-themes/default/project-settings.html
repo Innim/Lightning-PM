@@ -63,10 +63,18 @@
                 </div>
 
                 <div class="mb-3">
-                    <label id="slackChannelLabel" for="slackChannel" class="form-label"
-                        title="Для получения кликните правой клавишей мыши по имени канала и выберите 'Copy link'. Последняя часть в скопированном URL и есть искомый ID канала.">
-                        ID канала оповещений в Slack
-                    </label>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <label id="slackChannelLabel" for="slackChannel" class="form-label mb-0"
+                            title="Для получения кликните правой клавишей мыши по имени канала и выберите 'Copy link'. Последняя часть в скопированном URL и есть искомый ID канала.">
+                            ID канала оповещений в Slack
+                        </label>
+                        <!-- Адрес ссылки проставляет JS: канал берётся из поля, а не из настроек. -->
+                        <a id="slackChannelLink" class="d-none link-primary text-decoration-none"
+                            href="#" target="_blank" rel="noopener"
+                            title="Открыть канал в Slack" aria-label="Открыть канал в Slack">
+                            <i class="fa-brands fa-slack" aria-hidden="true"></i>
+                        </a>
+                    </div>
                     <div class="input-group">
                         <input id="slackChannel" type="text" class="form-control"
                             value="<?=lpm_escape($project->slackNotifyChannel);?>">

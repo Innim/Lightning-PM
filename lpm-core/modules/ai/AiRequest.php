@@ -6,12 +6,16 @@
  * и параметры генерации в терминах, не зависящих от провайдера.
  * Адаптер переводит их в формат конкретного API.
  *
+ * Параметров сэмплирования (температура, top-p, top-k) здесь нет:
+ * модели их больше не принимают, предсказуемость ответа задаётся
+ * формулировкой запроса и схемой ответа.
+ *
  * Сеттеры возвращают сам объект, что позволяет собирать запрос цепочкой:
  * <code>
  * $response = $adapter->generate(
  *     AiRequest::text('Составь план задачи')
  *         ->setSystemInstruction('Отвечай кратко, на русском')
- *         ->setTemperature(0.2)
+ *         ->setMaxOutputTokens(2000)
  * );
  * </code>
  */
@@ -38,8 +42,6 @@ class AiRequest
     private $_messages = [];
     private $_systemInstruction = '';
     private $_model = '';
-    private $_temperature;
-    private $_topP;
     private $_maxOutputTokens;
     private $_jsonResponse = false;
     private $_responseSchema;
@@ -152,48 +154,6 @@ class AiRequest
     public function getModel()
     {
         return $this->_model;
-    }
-
-    /**
-     * Задаёт температуру — степень случайности ответа.
-     * Чем меньше значение, тем более предсказуем результат.
-     * @param float $temperature Обычно в диапазоне от 0 до 1.
-     * @return AiRequest
-     */
-    public function setTemperature($temperature)
-    {
-        $this->_temperature = $temperature === null ? null : (float)$temperature;
-        return $this;
-    }
-
-    /**
-     * Температура или null, если используется значение по умолчанию.
-     * @return float|null
-     */
-    public function getTemperature()
-    {
-        return $this->_temperature;
-    }
-
-    /**
-     * Задаёт top-p — долю наиболее вероятных вариантов, из которых
-     * выбирается следующий фрагмент ответа.
-     * @param float $topP Значение от 0 до 1.
-     * @return AiRequest
-     */
-    public function setTopP($topP)
-    {
-        $this->_topP = $topP === null ? null : (float)$topP;
-        return $this;
-    }
-
-    /**
-     * Top-p или null, если используется значение по умолчанию.
-     * @return float|null
-     */
-    public function getTopP()
-    {
-        return $this->_topP;
     }
 
     /**

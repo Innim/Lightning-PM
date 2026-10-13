@@ -50,9 +50,6 @@ class IssueTestChecklistBuilder
      */
     const MAX_CHANGED_FILES = 30;
 
-    /** Температура генерации: чек-лист должен быть предсказуемым */
-    const TEMPERATURE = 0.3;
-
     /**
      * Ограничение длины ответа.
      *
@@ -243,7 +240,6 @@ TEXT;
         }
 
         $request = AiRequest::text($prompt, self::SYSTEM_INSTRUCTION)
-            ->setTemperature(self::TEMPERATURE)
             ->setMaxOutputTokens(self::MAX_OUTPUT_TOKENS)
             ->setResponseSchema(self::getResponseSchema());
 

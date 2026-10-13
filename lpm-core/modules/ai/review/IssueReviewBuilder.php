@@ -31,9 +31,6 @@ class IssueReviewBuilder
     /** Максимальная длина описания задачи, передаваемого модели */
     const DESC_MAX_LENGTH = 20000;
 
-    /** Температура генерации: разбор постановки должен быть предсказуемым */
-    const TEMPERATURE = 0.3;
-
     /**
      * Ограничение длины ответа.
      *
@@ -149,7 +146,6 @@ TEXT;
         $prompt = self::buildPrompt($project, $name, $type, $desc);
 
         $request = AiRequest::text($prompt, self::buildSystemInstruction())
-            ->setTemperature(self::TEMPERATURE)
             ->setMaxOutputTokens(self::MAX_OUTPUT_TOKENS)
             ->setResponseSchema(self::getResponseSchema());
 
