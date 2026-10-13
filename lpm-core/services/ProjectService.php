@@ -633,7 +633,8 @@ class ProjectService extends LPMBaseService
      *
      * В ответе: `message` - текст подсказки, `invite` - команда `/invite`
      * или пустая строка, если приглашать пока некого, `note` - приписка
-     * после команды или пустая строка.
+     * после команды или пустая строка, `channelUrlPrefix` и `channelPattern` -
+     * из чего собрать ссылку на канал.
      */
     public function getSlackChannelHint()
     {
@@ -760,15 +761,25 @@ class ProjectService extends LPMBaseService
     /**
      * Ответ с подсказкой к полю канала.
      *
+     * Вместе с подсказкой отдаются начало адреса канала в рабочем
+     * пространстве (`channelUrlPrefix`, пустая строка - если адрес неизвестен)
+     * и образец идентификатора канала (`channelPattern`): ссылку на канал
+     * собирает страница, потому что идентификатор она берёт из поля,
+     * а не из сохранённых настроек.
+     *
      * @param String $message Текст подсказки.
      * @param String $invite Команда `/invite` или пустая строка.
      * @param String $note Приписка после команды или пустая строка.
      */
     private function slackHintAnswer($message, $invite, $note = '')
     {
+        $channelUrlPrefix = SlackIntegration::getInstance()->getChannelUrlPrefix();
+
         $this->add2Answer('message', $message);
         $this->add2Answer('invite', $invite);
         $this->add2Answer('note', $note);
+        $this->add2Answer('channelUrlPrefix', $channelUrlPrefix === null ? '' : $channelUrlPrefix);
+        $this->add2Answer('channelPattern', SlackIntegration::CHANNEL_ID_PATTERN);
 
         return $this->answer();
     }
