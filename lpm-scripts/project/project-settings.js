@@ -64,14 +64,22 @@ $(function () {
         });
     });
 
-    // Подсказка и проверка канала оповещений Slack.
-    // Имя приложения известно только Slack, поэтому подсказку забираем
-    // отдельным запросом — открытие страницы его не ждёт.
+    // Подсказка, ссылка на канал и проверка канала оповещений Slack.
+    // Имя приложения и адрес рабочего пространства известны только Slack,
+    // поэтому подсказку забираем отдельным запросом — открытие страницы
+    // его не ждёт.
     const $slackChannel = $('#slackChannel');
     const $slackHint = $('#slackChannelHint');
     const $slackCheckResult = $('#slackChannelCheckResult');
     const $slackCheckBtn = $('#checkSlackChannel');
+    const $slackChannelLink = $('#slackChannelLink');
     const slackCheckBtnText = $slackCheckBtn.text().trim();
+
+    // Из чего собирается ссылка на канал: начало адреса в рабочем пространстве
+    // и образец идентификатора канала. Оба значения приходят с подсказкой,
+    // до её ответа ссылки нет.
+    let slackChannelUrlPrefix = '';
+    let slackChannelIdRe = null;
 
     // Классы Bootstrap для результата проверки: приглашение приложения в канал
     // модератор делает сам, остальные отказы — повод идти к администратору.
@@ -104,8 +112,43 @@ $(function () {
         $target.removeClass('d-none');
     }
 
-    function showSlackCheckResult(alertClass, message, invite) {
+    // Адрес канала или пустая строка, если вести некуда: рабочее пространство
+    // неизвестно либо в поле не идентификатор канала.
+    function slackChannelUrl(channel) {
+        if (!slackChannelUrlPrefix || !slackChannelIdRe || !slackChannelIdRe.test(channel)) {
+            return '';
+        }
+
+        return slackChannelUrlPrefix + encodeURIComponent(channel);
+    }
+
+    // Ссылка у заголовка поля следует за введённым значением, а не за тем,
+    // что сохранено в настройках.
+    function updateSlackChannelLink() {
+        const url = slackChannelUrl($slackChannel.val().trim());
+
+        $slackChannelLink.attr('href', url || '#').toggleClass('d-none', !url);
+    }
+
+    function showSlackCheckResult(alertClass, message, invite, channel) {
         renderSlackNote($slackCheckResult, message, invite, '');
+
+        // Ссылка - отдельное действие, а не продолжение текста, поэтому стоит
+        // своей строкой под ним.
+        const url = slackChannelUrl(channel || '');
+        if (url) {
+            $slackCheckResult.append(
+                $('<div>').addClass('mt-2').append(
+                    $('<a>')
+                        .addClass('alert-link')
+                        .attr('href', url)
+                        .attr('target', '_blank')
+                        .attr('rel', 'noopener')
+                        .text('Открыть канал в Slack')
+                )
+            );
+        }
+
         $slackCheckResult
             .removeClass('alert-success alert-warning alert-danger')
             .addClass(alertClass);
@@ -120,19 +163,28 @@ $(function () {
             if (!res.success) return;
 
             renderSlackNote($slackHint, res.message, res.invite, res.note);
+
+            slackChannelUrlPrefix = res.channelUrlPrefix || '';
+            slackChannelIdRe = res.channelPattern
+                ? new RegExp('^' + res.channelPattern + '$')
+                : null;
+            updateSlackChannelLink();
         });
     }
 
     // Результат относится к тому каналу, который был в поле на момент проверки.
     // Стоит его поменять — прежний ответ уже ни о чём не говорит.
-    $slackChannel.on('input', hideSlackCheckResult);
+    $slackChannel.on('input', () => {
+        hideSlackCheckResult();
+        updateSlackChannelLink();
+    });
 
     $slackCheckBtn.on('click', () => {
         const channel = $slackChannel.val().trim();
         hideSlackCheckResult();
 
         if (!channel) {
-            showSlackCheckResult('alert-danger', 'Укажите ID канала.', '');
+            showSlackCheckResult('alert-danger', 'Укажите ID канала.', '', '');
             return;
         }
 
@@ -149,6 +201,7 @@ $(function () {
                 showSlackCheckResult(
                     'alert-danger',
                     res.error || 'Ошибка при запросе к серверу',
+                    '',
                     ''
                 );
                 return;
@@ -157,7 +210,8 @@ $(function () {
             showSlackCheckResult(
                 SLACK_ALERT_CLASS[res.status] || 'alert-danger',
                 res.message,
-                res.invite
+                res.invite,
+                channel
             );
         });
     });
@@ -167,6 +221,8 @@ $(function () {
         hideError();
         hideSlackCheckResult();
         lockUid();
+        // Сброс формы возвращает исходное значение уже после события.
+        setTimeout(updateSlackChannelLink, 0);
     });
 
     $('button#saveProject').on('click', () => {
