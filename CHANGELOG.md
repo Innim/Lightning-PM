@@ -1,7 +1,15 @@
 ## Next
 
+### Added
+- Рядом с полем канала Slack в настройках проекта появилась ссылка, открывающая этот канал ([#528](https://task.innim.ru/project/lightning-pm/issue/528)).
+
 ### Changed
 - Глубина рассуждений ИИ-модели задаётся уровнем — настройкой `AI_GEMINI_THINKING_LEVEL` вместо лимита токенов ([#531](https://task.innim.ru/project/lightning-pm/issue/531)).
+
+### Fixed
+- Строка статистики над списком завершённых задач показывает число задач в этом списке ([#515](https://task.innim.ru/project/lightning-pm/issue/515)).
+- Подсказка с приоритетом больше не остаётся висеть на экране после того, как задача переехала на новое место в списке ([#532](https://task.innim.ru/project/lightning-pm/issue/532)).
+- Раскрытый список фильтра в списке задач больше не перекрывается кнопкой поиска ([#529](https://task.innim.ru/project/lightning-pm/issue/529)).
 
 ## 0.34.1 - 2026-10-07
 

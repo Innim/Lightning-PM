@@ -92,6 +92,15 @@ class SlackIntegration
     const CHECK_FAILED = 'failed';
 
     /**
+     * Образец идентификатора канала Slack - регулярное выражение без якорей,
+     * пригодное и для JS.
+     *
+     * Идентификатор состоит только из заглавных латинских букв и цифр, чем
+     * и отличается от имени канала: имена Slack приводит к нижнему регистру.
+     */
+    const CHANNEL_ID_PATTERN = '[A-Z][A-Z0-9]{2,}';
+
+    /**
      * Сообщение журнала о неудачной отправке оповещения.
      */
     private const MSG_POST_FAILED = 'Не удалось отправить сообщение в Slack';
@@ -107,9 +116,9 @@ class SlackIntegration
     private const MSG_CHECK_FAILED = 'Не удалось отправить проверочное сообщение в Slack';
 
     /**
-     * Сообщение журнала о неудачной попытке узнать имя приложения.
+     * Сообщение журнала о неудачной попытке узнать данные приложения.
      */
-    private const MSG_AUTH_TEST_FAILED = 'Не удалось получить имя приложения Slack';
+    private const MSG_AUTH_TEST_FAILED = 'Не удалось получить данные приложения Slack';
 
     /**
      * Предельное время обращения к Slack API, с.
@@ -122,9 +131,15 @@ class SlackIntegration
     private const REQUEST_TIMEOUT = 5;
 
     /**
-     * Начало ключа кэша с именем приложения в Slack.
+     * Начало ключа кэша с данными приложения в Slack.
      */
-    private const BOT_NAME_CACHE_PREFIX = 'slack_bot_name-';
+    private const AUTH_INFO_CACHE_PREFIX = 'slack_auth_info-';
+
+    /**
+     * Путь к каналу в рабочем пространстве: к нему дописывается
+     * идентификатор канала.
+     */
+    private const CHANNEL_PATH = '/archives/';
 
     private $_token;
 
@@ -132,11 +147,12 @@ class SlackIntegration
     private $_notificationEnabled = true;
 
     /**
-     * Имя приложения в Slack в пределах запроса: строка, null - если узнать
-     * не удалось, false - ещё не запрашивали.
-     * @var String|null|false
+     * Данные приложения в Slack в пределах запроса: массив
+     * `['name' => ..., 'url' => ...]`, null - если узнать не удалось,
+     * false - ещё не запрашивали.
+     * @var array|null|false
      */
-    private $_botName = false;
+    private $_authInfo = false;
 
     /**
      * @param String      $token Бот-токен приложения Slack.
@@ -302,45 +318,33 @@ class SlackIntegration
      * Имя приложения в Slack - то, что подставляют в команду `/invite`.
      *
      * Имя нужно модератору проекта: пока приложение не приглашено в приватный
-     * канал, оповещения туда не дойдут. Значение кэшируется - оно одно на всю
-     * установку и меняется только при переименовании приложения в Slack.
+     * канал, оповещения туда не дойдут.
      *
      * @return String|null Имя без символа «@» или null, если интеграция
      *                     не настроена либо Slack не ответил.
      */
     public function getBotName()
     {
-        if ($this->_botName !== false) {
-            return $this->_botName;
+        $info = $this->getAuthInfo();
+
+        return $info === null ? null : $info['name'];
+    }
+
+    /**
+     * Начало адреса канала в рабочем пространстве Slack - к нему дописывают
+     * идентификатор канала, чтобы получить ссылку на канал.
+     *
+     * @return String|null null, если интеграция не настроена либо адрес
+     *                     рабочего пространства узнать не удалось.
+     */
+    public function getChannelUrlPrefix()
+    {
+        $info = $this->getAuthInfo();
+        if ($info === null || $info['url'] === null) {
+            return null;
         }
 
-        if (!$this->isConfigured()) {
-            return $this->_botName = null;
-        }
-
-        $cache = $this->cache();
-        $cacheKey = $this->getBotNameCacheKey();
-        if ($cache !== null && ($cached = $cache->get($cacheKey))) {
-            return $this->_botName = $cached;
-        }
-
-        try {
-            $res = $this->getClient()->authTest();
-            $name = $res === null ? null : $res->getUser();
-        } catch (\Throwable $e) {
-            $this->logError(self::MSG_AUTH_TEST_FAILED, $e);
-            $name = null;
-        }
-
-        if (empty($name)) {
-            return $this->_botName = null;
-        }
-
-        if ($cache !== null) {
-            $cache->set($cacheKey, $name, CacheController::DAY);
-        }
-
-        return $this->_botName = $name;
+        return $info['url'] . self::CHANNEL_PATH;
     }
 
     /**
@@ -401,12 +405,71 @@ class SlackIntegration
     }
 
     /**
-     * Ключ кэша с именем приложения: в него входит токен, поэтому смена
-     * приложения или рабочего пространства не оставляет в кэше чужое имя.
+     * Данные приложения, которые отдаёт `auth.test`: имя приложения и адрес
+     * его рабочего пространства.
+     *
+     * Запрос один на оба значения. Полный ответ кэшируется - данные одни
+     * на всю установку и меняются только при переименовании приложения
+     * или рабочего пространства в Slack. Неполный ответ отдаётся как есть,
+     * но не запоминается: иначе недостающее поле пропало бы на сутки,
+     * ничем себя не обозначив.
+     *
+     * @return array|null Массив `['name' => ..., 'url' => ...]`: имя без
+     *                    символа «@», адрес без завершающей косой черты,
+     *                    любое из полей может быть null. null, если
+     *                    интеграция не настроена либо Slack не ответил.
      */
-    private function getBotNameCacheKey()
+    private function getAuthInfo()
     {
-        return self::BOT_NAME_CACHE_PREFIX . md5($this->_token);
+        if ($this->_authInfo !== false) {
+            return $this->_authInfo;
+        }
+
+        if (!$this->isConfigured()) {
+            return $this->_authInfo = null;
+        }
+
+        $cache = $this->cache();
+        $cacheKey = $this->getAuthInfoCacheKey();
+        if ($cache !== null && is_array($cached = $cache->get($cacheKey))) {
+            return $this->_authInfo = $cached;
+        }
+
+        try {
+            $res = $this->getClient()->authTest();
+            $name = $res === null ? '' : (string)$res->getUser();
+            $url = $res === null ? '' : rtrim((string)$res->getUrl(), '/');
+        } catch (\Throwable $e) {
+            $this->logError(self::MSG_AUTH_TEST_FAILED, $e);
+            $name = '';
+            $url = '';
+        }
+
+        if ($name === '' && $url === '') {
+            return $this->_authInfo = null;
+        }
+
+        $info = [
+            'name' => $name === '' ? null : $name,
+            'url' => $url === '' ? null : $url,
+        ];
+
+        // Неполный ответ запоминать нельзя: следующий запрос должен попробовать
+        // получить недостающее поле заново, а не читать его из кэша.
+        if ($cache !== null && $info['name'] !== null && $info['url'] !== null) {
+            $cache->set($cacheKey, $info, CacheController::DAY);
+        }
+
+        return $this->_authInfo = $info;
+    }
+
+    /**
+     * Ключ кэша с данными приложения: в него входит токен, поэтому смена
+     * приложения или рабочего пространства не оставляет в кэше чужие данные.
+     */
+    private function getAuthInfoCacheKey()
+    {
+        return self::AUTH_INFO_CACHE_PREFIX . md5($this->_token);
     }
 
     /**
