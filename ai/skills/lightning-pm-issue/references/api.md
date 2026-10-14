@@ -413,7 +413,7 @@ POST /api/v1/issues/{issueId}/comments     —             files[]
 
 Send them with the request that creates the issue or the comment — the first and the third. Then the issue or comment reaches its readers whole, in one action, and a brand-new issue does not open its history with an edit.
 
-The middle one is not an upload endpoint: `POST /api/v1/issues/{issueId}` changes an issue in part, and attachments are one of the things it understands. They are **added** to what is already attached — hence the `add` prefix, where a scalar field, when one is added to that endpoint, will replace the current value instead. Use it for an issue that already exists; it is not a second step of creating one.
+The middle one is not an upload endpoint: `POST /api/v1/issues/{issueId}` changes an issue in part, and attachments are one of the things it understands. They are **added** to what is already attached — hence the `add` prefix, where a scalar field, when one is added to that endpoint, will replace the current value instead. Use it for an issue that already exists; it is not a second step of creating one. Participants get the usual «issue changed» letter, and it names every attachment the request added — so the upload is as visible to them as an edit made in the web UI.
 
 A comment has one field and no gallery: an image attached to a comment is shown with a preview and opens in the viewer by its type. `images[]` means nothing there — such a request is read as a comment with neither text nor files and answered with `400`. A comment carrying files may go without text at all.
 

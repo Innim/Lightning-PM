@@ -1,9 +1,13 @@
 ## Next
 
 ### Added
+- Письмо об изменении задачи называет приложенные и удалённые картинки и файлы ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
+- Письмо об изменении задачи называет изменённые оценки исполнителей в SP ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
+- Письмо об изменении задачи называет постановку задачи на скрам-доску и снятие с неё ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Рядом с полем канала Slack в настройках проекта появилась ссылка, открывающая этот канал ([#528](https://task.innim.ru/project/lightning-pm/issue/528)).
 
 ### Changed
+- Правка задачи, ничего в ней не изменившая, больше не рассылает участникам письмо ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Глубина рассуждений ИИ-модели задаётся уровнем — настройкой `AI_GEMINI_THINKING_LEVEL` вместо лимита токенов ([#531](https://task.innim.ru/project/lightning-pm/issue/531)).
 
 ### Fixed
