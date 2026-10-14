@@ -1703,9 +1703,21 @@ form.pass-test #passTestComment textarea.comment-text-field {
  * Фильтры в списке задач
  */
 
-.issue-list-filter .multiselect,
-.issue-list-filter .multiselect .filter-selector {
-  width: 250px !important;
+/* Мультиселекты шириной 250px, но при нехватке места строка фильтров сжимает их
+   до 150px и только после этого переносит. Ширина задана самому мультиселекту,
+   а не колонке: по ней flex считает желаемую ширину всей строки, поэтому строка
+   просит у соседей место под полные 250px, - а `max-width: 100%` даёт ему
+   ужиматься вместе с колонкой. Нижняя граница обязательна: без неё колонка
+   не сжимается ниже своего содержимого. В Bootstrap 5.1 нет утилит ни для
+   min-width, ни для max-width. */
+.issue-list-filter .filter-selector {
+  min-width: 150px;
+  max-width: 250px;
+}
+
+.issue-list-filter .multiselect {
+  width: 250px;
+  max-width: 100%;
 }
 
 .issue-list-filter .multiselect,
@@ -1713,6 +1725,17 @@ form.pass-test #passTestComment textarea.comment-text-field {
 {
   min-height: 24px;
 }
+
+/* Иконка кнопки меню фильтров, помеченная как активная: при наведении и нажатии
+   Bootstrap заливает `btn-outline-secondary` серым той же светлоты, что и
+   `text-primary`, - на такой заливке синяя иконка нечитаема, поэтому в этих
+   состояниях она берёт цвет самой кнопки. `!important` нужен, чтобы перебить
+   такую же пометку у утилиты. Точки это не касается: её отделяет своя обводка. */
+.issue-list-filter .btn:hover .text-primary,
+.issue-list-filter .btn:active .text-primary {
+  color: inherit !important;
+}
+
 
 /* Раскрытый список фильтра ложится поверх панели поиска, строки операций и списка
    задач. Кнопку внутри `.input-group` Bootstrap держит на z-index 2 (и на 3, пока
