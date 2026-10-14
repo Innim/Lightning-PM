@@ -1,6 +1,8 @@
 ## Next
 
 ### Added
+- В целях спринта строки вида `- [ ] текст` показываются галочками, которые можно отмечать прямо на доске ([#526](https://task.innim.ru/project/lightning-pm/issue/526)).
+- Рядом с заголовком целей спринта видно, сколько из них отмечено ([#526](https://task.innim.ru/project/lightning-pm/issue/526)).
 - Рядом с полем канала Slack в настройках проекта появилась ссылка, открывающая этот канал ([#528](https://task.innim.ru/project/lightning-pm/issue/528)).
 
 ### Changed

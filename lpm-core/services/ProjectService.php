@@ -912,9 +912,13 @@ class ProjectService extends LPMBaseService
     }
     
     /**
-     * Добавляет цели спринта для текущего проекта.
+     * Сохраняет цели спринта для текущего проекта.
      * @param int $instanceId id проекта.
-     * @param array $target массив целий спринта.
+     * @param string $target текст целей спринта.
+     * @return [
+     *    targetHTML: string,
+     *    targetText: string
+     * ]
      */
     public function addSprintTarget($instanceId, $target)
     {
@@ -933,8 +937,8 @@ class ProjectService extends LPMBaseService
                 return $this->error('Цели проекта не добавлены. Ошибка записи в БД.');
             }
     
-            $markdownText = HTMLHelper::getMarkdownText($targetText);
-            
+            $markdownText = Project::getSprintTargetMarkup($targetText);
+
             $this->add2Answer('targetHTML', $markdownText);
             $this->add2Answer('targetText', $targetText);
         } catch (Exception $e) {
