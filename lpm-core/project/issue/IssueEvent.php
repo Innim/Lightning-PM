@@ -40,6 +40,33 @@ class IssueEvent extends LPMBaseObject
     }
 
     /**
+     * Определяет, записано ли уже в журнал событие задачи с такими данными.
+     *
+     * Нужно событиям, которые описывают однократный факт: журнал ничего
+     * не перезаписывает, а событие извне может прийти и повторно.
+     * @param  int    $issueId Идентификатор задачи.
+     * @param  string $type    Тип события (@see IssueEventType).
+     * @param  string $data    Дополнительные данные события.
+     * @return bool
+     * @throws \GMFramework\ProviderLoadException Если не удалось загрузить данные.
+     */
+    public static function exists($issueId, $type, $data)
+    {
+        $res = self::loadFromDV2([
+            'SELECT' => '1',
+            'FROM'   => LPMTables::ISSUE_EVENT,
+            'WHERE'  => [
+                'issueId' => (int)$issueId,
+                'type'    => (string)$type,
+                'data'    => (string)$data,
+            ],
+            'LIMIT'  => 1,
+        ]);
+
+        return $res->num_rows > 0;
+    }
+
+    /**
      * Возвращает описание запроса, определяющего текущее состояние задачи
      * по журналу: последнее событие среди перечисленных типов.
      *
