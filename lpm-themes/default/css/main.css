@@ -937,10 +937,6 @@ table.issues-list td .priority-change-bar .priority-up {
 table.issues-list td .priority-change-bar .priority-down {
 	bottom: 0;
 }
-table.issues-list td .priority-change-animation {
-	position: absolute;
-	user-select: none;
-}
 /* Кратковременная подсветка блока для привлечения внимания (гаснет). */
 @keyframes highlight-fade {
 	from { background-color: #e0cffc; }

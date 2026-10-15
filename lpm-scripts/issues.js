@@ -2008,10 +2008,10 @@ issuePage.changePriority = function (e) {
                 issuePage.updatePriorityVal($('.priority-val', $row), priority);
 
                 // Подпись висит на body и ставится по координатам курсора,
-                // поэтому вне потока страницы её держит утилита Bootstrap:
-                // правило вида из main.css действует только внутри ячейки таблицы
+                // поэтому вне потока страницы её держат утилиты Bootstrap:
+                // правила вида из main.css действуют только внутри ячейки таблицы
                 var $hint = $("<span></span>").text(priorityVal)
-                    .addClass("priority-change-animation position-absolute")
+                    .addClass("priority-change-animation position-absolute user-select-none")
                     .appendTo($('body'))
                     .offset({ top: e.pageY - 13, left: e.pageX - 10 });
 
