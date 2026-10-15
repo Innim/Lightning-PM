@@ -53,8 +53,8 @@
 					foreach($projectsStat as $projectStat):
 						$doneSp = $projectStat->getSP();
 					?>
-					<tr data-done-sp="<?=$doneSp;?>">
-						<th scope="row"><?=$projectStat->project->name;?></td>
+					<tr>
+						<th scope="row"><?=$projectStat->project->name;?></th>
 						<td><?=$doneSp;?></td>
 						<td><?=$projectStat->getSnapshotsCount();?></td>
 						<td><?=$projectStat->getPeriod();?></td>

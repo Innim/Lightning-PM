@@ -57,7 +57,7 @@ class ProjectsPage extends LPMPage
             self::PUID_STAT,
             'Статистика',
             'projects-stat',
-            ['projects-stat'],
+            null,
             'Статистика по проектам',
             User::ROLE_MODERATOR
         );
