@@ -152,6 +152,22 @@ class Flash2PHP
 		return $method->getDeclaringClass()->getName() === $this->_serviceName;
 	}
 
+	/**
+	 * Определяет, что параметры вызова записаны массивом JSON.
+	 *
+	 * Проверяется запись, а не результат разбора: после разбора в массивы
+	 * объект JSON с ключами "0", "1", ... от массива уже неотличим, а означает
+	 * он другое - аргументов по именам шлюз не принимает. invokeArgs()
+	 * строковые ключи игнорирует и подставил бы значения по порядку, то есть
+	 * вызвал бы метод не тем, что прислал клиент.
+	 * @param mixed $raw Значение параметра запроса до разбора.
+	 * @return bool
+	 */
+	private function isParamsArray( $raw )
+	{
+		return is_string( $raw ) && substr( ltrim( $raw ), 0, 1 ) === '[';
+	}
+
 	public function init( $request )
 	{
         // тело запроса превысило post_max_size и было отброшено PHP
@@ -202,10 +218,16 @@ class Flash2PHP
 
         $args = $this->_method->getParameters();
         
-        $this->_params = ( !isset( $request[$this->_paramsParam] ) ) 
-                        ? array()
-                        : json_decode( $request[$this->_paramsParam] );
-        if( !is_array( $this->_params ) ) 
+        $rawParams = $request[$this->_paramsParam] ?? '[]';
+
+        // Ассоциативный режим обязателен: метод сервиса получает параметры
+        // массивами на любой глубине. Без него вложенный объект JSON доезжает
+        // как stdClass, проверка вида is_array() молча отвергает его,
+        // и запрос при этом остаётся успешным - расходится только результат.
+        $this->_params = $this->isParamsArray( $rawParams )
+                        ? json_decode( $rawParams, true )
+                        : null;
+        if( !is_array( $this->_params ) )
             throw new F2PException( 'Wrong params', F2PException::ERRNO_WRONG_PARAMS );
 
         $countOptional = 0;

@@ -5,34 +5,6 @@ use \GMFramework\DateTimeUtils as DTU;
 class IssueService extends LPMBaseService
 {
     /**
-     * Приводит параметр запроса к массиву, включая вложенные значения.
-     *
-     * Шлюз разбирает параметры вызова json_decode() без ассоциативного режима
-     * ({@see \GMFramework\Flash2PHP}), поэтому объект JSON доезжает до сервиса
-     * как stdClass, а не как массив. Приведение рекурсивное: объектом может
-     * оказаться и значение внутри параметра.
-     * @param  mixed $value Значение параметра.
-     * @return mixed Массив вместо объекта; значения других типов без изменений.
-     */
-    private static function paramToArray($value)
-    {
-        if ($value instanceof \stdClass) {
-            $value = get_object_vars($value);
-        }
-
-        if (!is_array($value)) {
-            return $value;
-        }
-
-        foreach ($value as $key => $item) {
-            $value[$key] = self::paramToArray($item);
-        }
-
-        return $value;
-    }
-
-
-    /**
      * Завершаем задачу
      * @param  int $issueId
      */
@@ -1425,7 +1397,6 @@ class IssueService extends LPMBaseService
      */
     private function buildIssuesFilters($statuses, $search, $filter)
     {
-        $filter = self::paramToArray($filter);
         $filter = is_array($filter) ? $filter : [];
         $ids = function ($key) use ($filter) {
             return empty($filter[$key]) || !is_array($filter[$key])
