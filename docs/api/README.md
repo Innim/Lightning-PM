@@ -602,7 +602,7 @@ Both are added to what is already attached, which is why neither is called `imag
 
 A request that carries neither field changes nothing and is answered with `400`. `POST` is the method because `multipart/form-data` reaches a PHP application only through it.
 
-The answer is the updated issue payload. Participants of the issue are notified of the change, exactly as they are when it is edited in the web UI.
+The answer is the updated issue payload. Participants of the issue are notified of the change, exactly as they are when it is edited in the web UI: the letter names every attachment the request added, under the name it was uploaded with. A request that ends up adding nothing sends no notification.
 
 ## Scope of v1
 

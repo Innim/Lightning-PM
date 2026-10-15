@@ -1,15 +1,18 @@
 ## Next
 
 ### Added
+- Письмо об изменении задачи подробно называет, что в ней изменилось ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Администратор заранее видит предупреждение о скором истечении токена интеграции с GitLab ([#513](https://task.innim.ru/project/lightning-pm/issue/513)).
 - Рядом с полем канала Slack в настройках проекта появилась ссылка, открывающая этот канал ([#528](https://task.innim.ru/project/lightning-pm/issue/528)).
 - В диалоге связывания задач объясняется, почему по введённому номеру ничего не нашлось ([#511](https://task.innim.ru/project/lightning-pm/issue/511)).
 
 ### Changed
+- Правка задачи, ничего в ней не изменившая, больше не рассылает участникам письмо ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Глубина рассуждений ИИ-модели задаётся уровнем — настройкой `AI_GEMINI_THINKING_LEVEL` вместо лимита токенов ([#531](https://task.innim.ru/project/lightning-pm/issue/531)).
 
 ### Fixed
 - Истёкший токен GitLab обновляется сам, и данные из GitLab больше не пропадают у пользователя навсегда ([#513](https://task.innim.ru/project/lightning-pm/issue/513)).
+- Давность активности у задачи в тесте отсчитывается от любого действия по ней, а не только от комментариев ([#533](https://task.innim.ru/project/lightning-pm/issue/533)).
 - Строка статистики над списком завершённых задач показывает число задач в этом списке ([#515](https://task.innim.ru/project/lightning-pm/issue/515)).
 - Подсказка с приоритетом больше не остаётся висеть на экране после того, как задача переехала на новое место в списке ([#532](https://task.innim.ru/project/lightning-pm/issue/532)).
 - Раскрытый список фильтра в списке задач больше не перекрывается кнопкой поиска ([#529](https://task.innim.ru/project/lightning-pm/issue/529)).

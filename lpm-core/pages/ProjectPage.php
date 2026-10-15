@@ -1056,13 +1056,12 @@ class ProjectPage extends LPMPage
             $this->saveLinkedIssues($userId, $issueId, $_POST['linkedIds'], true);
         }
 
-        // Снимок состава участников до сохранения — для детализации оповещения об изменениях.
-        // Снять нужно до записи в БД: списки грузятся лениво и кешируются в объекте.
-        $oldMemberIds = $oldTesterIds = $oldMasterIds = [];
+        // Снимок состава участников и вложений до сохранения — для детализации
+        // оповещения об изменениях. Снять нужно до записи в БД: эти списки
+        // сохранение перезаписывает.
+        $oldState = null;
         if ($editMode && isset($curIssue)) {
-            $oldMemberIds = $curIssue->getMemberIds();
-            $oldTesterIds = $curIssue->getTesterIds();
-            $oldMasterIds = $curIssue->getMasterIds();
+            $oldState = IssueStateSnapshot::take($curIssue);
         }
 
         // Сохраняем участников
@@ -1123,13 +1122,7 @@ class ProjectPage extends LPMPage
         // отсылаем оповещения
         $changes = null;
         if ($editMode && isset($curIssue)) {
-            $changes = IssueChangeSet::build(
-                $curIssue,
-                $oldMemberIds,
-                $oldTesterIds,
-                $oldMasterIds,
-                $issue
-            );
+            $changes = IssueChangeSet::build($curIssue, $oldState, $issue);
         }
         $this->notifyAboutIssueChange($issue, $editMode, $changes);
 
@@ -1793,11 +1786,25 @@ class ProjectPage extends LPMPage
         return true;
     }
 
+    /**
+     * Оповещает участников задачи о её создании или об изменении.
+     *
+     * Правка, не изменившая ни одного отслеживаемого свойства задачи,
+     * оповещения не порождает: сообщить о ней письму нечего.
+     * @param Issue $issue Задача после сохранения.
+     * @param bool $editMode Задача редактировалась, а не создавалась.
+     * @param IssueChangeSet|null $changes Набор изменений задачи;
+     *        null — при создании задачи.
+     */
     private function notifyAboutIssueChange(Issue $issue, $editMode, IssueChangeSet $changes = null)
     {
         $engine = $this->_engine;
         $user = $engine->getUser();
         if ($editMode) {
+            if ($changes !== null && $changes->isEmpty()) {
+                return;
+            }
+
             Issue::notifyByEmail(
                 $issue,
                 IssueEmailFormatter::issueChangedSubject($issue),
