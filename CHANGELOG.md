@@ -1,9 +1,7 @@
 ## Next
 
 ### Added
-- Письмо об изменении задачи называет приложенные и удалённые картинки и файлы ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
-- Письмо об изменении задачи называет изменённые оценки исполнителей в SP ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
-- Письмо об изменении задачи называет постановку задачи на скрам-доску и снятие с неё ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
+- Письмо об изменении задачи подробно называет, что в ней изменилось ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Рядом с полем канала Slack в настройках проекта появилась ссылка, открывающая этот канал ([#528](https://task.innim.ru/project/lightning-pm/issue/528)).
 - В диалоге связывания задач объясняется, почему по введённому номеру ничего не нашлось ([#511](https://task.innim.ru/project/lightning-pm/issue/511)).
 
