@@ -24,21 +24,53 @@ class Issue extends MembersInstance
     /**
      * Возвращает выражение даты последней активности по задаче в тесте.
      *
-     * Для задачи с багом это дата последнего бага. Если комментариев нет вообще -
-     * берётся дата изменения самой задачи (в том числе перевода в тест), чтобы
-     * только что отправленная в тест старая задача не считалась застоявшейся.
+     * Активность - это не только разговоры: берётся более позднее из последнего
+     * комментария и последнего события журнала задачи ({@see IssueEvent}).
+     * Журнал учитывается целиком, а не отдельными типами: каждое его событие
+     * и есть факт того, что с задачей что-то сделали, - так новое событие
+     * попадает в расчёт само, без правки этого выражения.
      *
-     * Выражение опирается на поля выборки `t_testState`, `t_lastBugDate`
-     * и `t_lastCommentDate`, поэтому применимо только к запросам {@see loadList()}.
+     * Задача с багом - исключение: у неё считается давность самого бага, а не
+     * активности, поэтому ни комментарии, ни события её не сбивают.
+     *
+     * Если ни комментариев, ни событий нет вообще - берётся дата изменения самой
+     * задачи (в том числе перевода в тест), чтобы только что отправленная
+     * в тест старая задача не считалась застоявшейся.
+     *
+     * Выражение опирается на поля выборки `t_testState`, `t_lastBugDate`,
+     * `t_lastCommentDate` и `t_lastEventDate`, поэтому применимо только
+     * к запросам {@see loadList()}.
      * @return string Часть SQL запроса.
      */
     private static function getTestActivitySql()
     {
         $requestChangesType = IssueCommentType::REQUEST_CHANGES;
 
+        // GREATEST с NULL даёт NULL, а любой из двух источников может
+        // отсутствовать, поэтому следом перечислены они же по отдельности
+        $activity = 'COALESCE(GREATEST(`t_lastCommentDate`, `t_lastEventDate`), '
+            . '`t_lastCommentDate`, `t_lastEventDate`)';
+
         return "COALESCE(IF(`t_testState` = '$requestChangesType', "
-            . "`t_lastBugDate`, `t_lastCommentDate`), "
+            . "`t_lastBugDate`, $activity), "
             . "GREATEST(`i`.`createDate`, `i`.`modifiedDate`))";
+    }
+
+    /**
+     * Возвращает описание запроса, определяющего момент последнего события
+     * журнала задачи - любого, без разбора типов ({@see getTestActivitySql()}).
+     * @param  int|\GMFramework\DBColumn $issueId Идентификатор задачи либо
+     *                                            колонка с ним - для подзапроса.
+     * @return array Описание запроса для конструктора.
+     */
+    private static function getLastEventDateSqlHash($issueId)
+    {
+        return [
+            'SELECT' => 'MAX(`ev`.`date`)',
+            'FROM'   => LPMTables::ISSUE_EVENT,
+            'AS'     => 'ev',
+            'WHERE'  => ['`ev`.`issueId`' => $issueId],
+        ];
     }
 
     /**
@@ -316,6 +348,8 @@ class Issue extends MembersInstance
             . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'))) . ')';
         $takenForTestingByIdSql = '('
             . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'), 'userId')) . ')';
+        $lastEventDateSql = '('
+            . self::buildQuery(self::getLastEventDateSqlHash(self::col('i.id'))) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -345,6 +379,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
         WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
           AND `icm`.`type` = '$requestChangesType'
       ), NULL) AS `t_lastBugDate`,
+    IF(`i`.`status` = $statusWait, $lastEventDateSql, NULL) AS `t_lastEventDate`,
     IF(`i`.`status` = $statusWait,
       (SELECT `mr`.`state`
          FROM `%8\$s` `mr`
@@ -418,6 +453,8 @@ SQL;
             . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'))) . ')';
         $takenForTestingByIdSql = '('
             . self::buildQuery(self::getTakenForTestingSqlHash(self::col('i.id'), 'userId')) . ')';
+        $lastEventDateSql = '('
+            . self::buildQuery(self::getLastEventDateSqlHash(self::col('i.id'))) . ')';
         $mrStatesOrder = self::getMrStatesOrderSql();
 
         $statusWait = Issue::STATUS_WAIT;
@@ -447,6 +484,7 @@ SELECT `i`.*, 'with_sticker', `st`.`state` `s_state`,
         WHERE `cm`.`instanceType` = '$instanceType' AND `cm`.`instanceId` = `i`.`id` AND `cm`.`deleted` = 0
           AND `icm`.`type` = '$requestChangesType'
       ), NULL) AS `t_lastBugDate`,
+    IF(`i`.`status` = $statusWait, $lastEventDateSql, NULL) AS `t_lastEventDate`,
     IF(`i`.`status` = $statusWait,
       (SELECT `mr`.`state`
          FROM `%8\$s` `mr`
@@ -2045,8 +2083,9 @@ WHERE;
     /**
      * Дата последней активности по задаче в тесте.
      *
-     * Для задачи с активным багом это дата последнего бага, иначе - дата
-     * последнего комментария; если комментариев нет - дата изменения задачи.
+     * Для задачи с активным багом это дата последнего бага, иначе - более
+     * позднее из последнего комментария и последнего события журнала задачи;
+     * если нет ни того, ни другого - дата изменения задачи.
      * Заполняется только для задач в тесте, для остальных 0.
      * @var float
      */
@@ -2838,7 +2877,17 @@ WHERE;
         }
 
         if ($this->isTesting() && array_key_exists('t_lastCommentDate', $hash)) {
-            $date = $this->isChangesRequested ? $hash['t_lastBugDate'] : $hash['t_lastCommentDate'];
+            if ($this->isChangesRequested) {
+                $date = $hash['t_lastBugDate'];
+            } else {
+                // Даты в формате MySQL сравниваются как строки: формат фиксированной
+                // ширины, а отсутствующий источник даёт пустую строку
+                $date = max(
+                    (string)$hash['t_lastCommentDate'],
+                    isset($hash['t_lastEventDate']) ? (string)$hash['t_lastEventDate'] : ''
+                );
+            }
+
             $this->testActivityDate = empty($date)
                 ? max($this->createDate, $this->modifiedDate)
                 : (float)DateTimeUtils::convertMysqlDate($date);
