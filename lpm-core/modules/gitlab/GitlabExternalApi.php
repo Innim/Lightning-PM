@@ -29,6 +29,11 @@ class GitlabExternalApi extends ExternalApi
     const FIELD_OBJECT_ATTRIBUTES = 'object_attributes';
     const FIELD_USER = 'user';
     const FIELD_USER_ID = 'user_id';
+
+    /**
+     * Значение почты в событии, если GitLab настроен её скрывать.
+     */
+    const REDACTED_EMAIL = '[REDACTED]';
     
     const EVENT_TYPE_MR = 'merge_request';
     
@@ -173,14 +178,34 @@ class GitlabExternalApi extends ExternalApi
         if ($mr->isMerged()) {
             $this->registerMergedMrPipeline($mr, $data);
 
-            // Загружаем задачи по MR
+            // Загружаем задачи по MR. Берутся задачи, у которых MR ещё числится
+            // открытым: так влитие обрабатывается ровно один раз, хотя
+            // по влитому MR события приходят и дальше
             $issueIds = IssueMR::loadIssueIdsForOpenedMr($mr->id);
             if (!empty($issueIds)) {
                 $slack = SlackIntegration::getInstance();
+                // Автор влития нужен только для записи в журнал, поэтому
+                // ненайденный пользователь обработку не останавливает
+                $mergedByUser = $this->getEventAuthor($data);
+                $mergedByUserId = empty($mergedByUser) ? 0 : $mergedByUser->userId;
+
                 foreach ($issueIds as $issueId) {
                     $issue = Issue::load($issueId);
                     if (empty($issue)) {
                         continue;
+                    }
+
+                    // Влитие нигде больше следа не оставляет, а для задачи это
+                    // движение: по журналу его видит счётчик дней без активности.
+                    // Влитие одного MR - однократный факт, поэтому повторно
+                    // пришедшее событие второй записи не делает
+                    if (!IssueEvent::exists($issue->id, IssueEventType::MR_MERGED, $mr->id)) {
+                        IssueEvent::create(
+                            $issue->id,
+                            IssueEventType::MR_MERGED,
+                            $mergedByUserId,
+                            $mr->id
+                        );
                     }
 
                     if ($issue->status == Issue::STATUS_WAIT) {
@@ -574,13 +599,48 @@ class GitlabExternalApi extends ExternalApi
         }
     }
 
+    /**
+     * Находит пользователя, от имени которого пришло событие.
+     *
+     * В отличие от {@see getUser()}, токен GitLab от него не требуется:
+     * той нужен пользователь, от имени которого можно обратиться к API,
+     * а здесь - сам автор события.
+     * @param  array $data Данные события.
+     * @return User|null Пользователь либо null, если сопоставить не удалось.
+     */
+    private function getEventAuthor($data)
+    {
+        $userData = isset($data[self::FIELD_USER]) ? $data[self::FIELD_USER] : null;
+        if (empty($userData)) {
+            return null;
+        }
+
+        $email = empty($userData['email']) ? '' : $userData['email'];
+        if ($email !== '' && $email !== self::REDACTED_EMAIL) {
+            $user = User::loadByEmail($email);
+            if (!empty($user)) {
+                return $user;
+            }
+        }
+
+        // Почту в событии GitLab может и скрывать, и вовсе не приводить -
+        // тогда остаётся сопоставление по идентификатору
+        if (empty($userData['id'])) {
+            return null;
+        }
+
+        $user = User::loadByGitlabId($userData['id']);
+
+        return empty($user) ? null : $user;
+    }
+
     private function getUser($data)
     {
         $userData = $data[self::FIELD_USER];
         if (!empty($userData) && !empty($userData['email'])) {
 
             $email = $userData['email'];
-            if ($email === '[REDACTED]') {
+            if ($email === self::REDACTED_EMAIL) {
                 if (!empty($userData['id'])) {
                     $user = User::loadByGitlabId($userData['id']);
                     // TODO: обработать, если не нашлось по id, например загрузить данные запросом
