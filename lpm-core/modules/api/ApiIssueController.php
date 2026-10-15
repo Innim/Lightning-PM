@@ -342,11 +342,9 @@ class ApiIssueController extends ApiControllerBase
         $instanceType = self::MEMBER_ROLES[$role];
         $userIds = array_values(array_unique(array_map('intval', $userIds)));
 
-        // Снимок состава - до записи в базу: списки участников грузятся
-        // лениво и кешируются в объекте задачи
-        $oldMemberIds = array_map('intval', $issue->getMemberIds());
-        $oldTesterIds = array_map('intval', $issue->getTesterIds());
-        $oldMasterIds = array_map('intval', $issue->getMasterIds());
+        // Снимок состава - до записи в базу: списки участников задача грузит
+        // лениво, а запись их перезаписывает
+        $oldState = IssueStateSnapshot::take($issue);
 
         $current = $this->participantIds($issue, $role);
         $removed = array_values(array_diff($current, $userIds));
@@ -382,13 +380,7 @@ class ApiIssueController extends ApiControllerBase
                 $updated->releaseFromTestingIfNotTester($user->getID());
             }
 
-            $changes = IssueChangeSet::build(
-                $issue,
-                $oldMemberIds,
-                $oldTesterIds,
-                $oldMasterIds,
-                $updated
-            );
+            $changes = IssueChangeSet::build($issue, $oldState, $updated);
 
             UserLogEntry::issueEdit(
                 $user->getID(),
@@ -716,7 +708,9 @@ class ApiIssueController extends ApiControllerBase
      * из лимитов задачи, но сохранению новых не мешают, пока места остаются.
      *
      * Изменение задачи оповещает её участников - так же, как правка
-     * из интерфейса ({@see ProjectPage::notifyAboutIssueChange()}).
+     * из интерфейса ({@see ProjectPage::notifyAboutIssueChange()}): письмо
+     * называет приложенные вложения. Запрос, ничего не изменивший,
+     * оповещения не порождает.
      * @return ApiResponse Обновлённая задача или ошибка запроса.
      * @throws ApiException Если вложения не удалось сохранить.
      * @throws Exception Если задачу не удалось перечитать.
@@ -753,6 +747,10 @@ class ApiIssueController extends ApiControllerBase
 
         $user = $this->user();
 
+        // Снимок вложений - до загрузки: иначе добавленное от бывшего
+        // уже не отличить
+        $oldState = IssueStateSnapshot::take($issue);
+
         // Запрос проверен выше, поэтому дальше доходит только сбой сохранения,
         // а он на стороне сервера
         if ($imagesData !== null) {
@@ -777,19 +775,27 @@ class ApiIssueController extends ApiControllerBase
             }
         }
 
-        UserLogEntry::issueEdit($user->getID(), $issue->id, 'Add attachments via api');
-
         $updated = Issue::load($issue->id);
         if (!$updated) {
             throw new Exception('Failed to load issue');
         }
 
-        Issue::notifyByEmail(
-            $updated,
-            IssueEmailFormatter::issueChangedSubject($updated),
-            IssueEmailFormatter::issueChangedText($updated, $user),
-            EmailNotifier::PREF_EDIT_ISSUE
-        );
+        $changes = IssueChangeSet::build($issue, $oldState, $updated);
+
+        $logComment = 'Add attachments via api';
+        if (!$changes->isEmpty()) {
+            $logComment .= ":\n" . $changes->asText();
+        }
+        UserLogEntry::issueEdit($user->getID(), $issue->id, $logComment);
+
+        if (!$changes->isEmpty()) {
+            Issue::notifyByEmail(
+                $updated,
+                IssueEmailFormatter::issueChangedSubject($updated),
+                IssueEmailFormatter::issueChangedText($updated, $user, $changes),
+                EmailNotifier::PREF_EDIT_ISSUE
+            );
+        }
 
         return ApiResponse::success([
             'issue' => $this->serializer()->issue($updated),

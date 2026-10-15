@@ -1,10 +1,12 @@
 ## Next
 
 ### Added
+- Письмо об изменении задачи подробно называет, что в ней изменилось ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Рядом с полем канала Slack в настройках проекта появилась ссылка, открывающая этот канал ([#528](https://task.innim.ru/project/lightning-pm/issue/528)).
 - В диалоге связывания задач объясняется, почему по введённому номеру ничего не нашлось ([#511](https://task.innim.ru/project/lightning-pm/issue/511)).
 
 ### Changed
+- Правка задачи, ничего в ней не изменившая, больше не рассылает участникам письмо ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Глубина рассуждений ИИ-модели задаётся уровнем — настройкой `AI_GEMINI_THINKING_LEVEL` вместо лимита токенов ([#531](https://task.innim.ru/project/lightning-pm/issue/531)).
 
 ### Fixed
