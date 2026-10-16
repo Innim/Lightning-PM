@@ -11,7 +11,7 @@ class UsersPage extends LPMPage
 
         $this->_defaultPUID = self::UID;
 
-        $this->addSubPage(self::PUID_STAT, 'Статистика пользователей', 'users-stat', array('users-stat'));
+        $this->addSubPage(self::PUID_STAT, 'Статистика пользователей', 'users-stat');
     }
 
     public function init()
@@ -56,6 +56,31 @@ class UsersPage extends LPMPage
                 $usersStat[] = $userStat;
             }
         }
+
+        // Подсчёт SP обходит все снимки пользователя и их стикеры,
+        // поэтому считаем его один раз на пользователя, а не на каждое сравнение.
+        $sp = [];
+        foreach ($usersStat as $userStat) {
+            $sp[$userStat->user->userId] = $userStat->getSP();
+        }
+
+        // SP дробные (шаг 0.5), а usort приводит результат колбэка к int:
+        // разность вида 0.5 обнулилась бы, и такие пары считались бы равными.
+        usort($usersStat, function (UserScrumStat $a, UserScrumStat $b) use ($sp) {
+            $bySp = $sp[$b->user->userId] <=> $sp[$a->user->userId];
+            if ($bySp !== 0) {
+                return $bySp;
+            }
+
+            // Без явного сравнения имён порядок пользователей с равными SP был бы
+            // произвольным: сортировка в PHP 7 не стабильна. Сравниваем байты
+            // приведённых к нижнему регистру строк - ext-intl нет в
+            // зависимостях проекта, поэтому Collator недоступен.
+            return strcmp(
+                mb_strtolower($a->user->getPlainName()),
+                mb_strtolower($b->user->getPlainName())
+            );
+        });
 
         $this->addTmplVar('month', $month);
         $this->addTmplVar('year', $year);

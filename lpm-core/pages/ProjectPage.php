@@ -287,7 +287,7 @@ class ProjectPage extends LPMPage
                 self::PUID_SPRINT_STAT,
                 'Статистика спринта',
                 'sprint-stat',
-                ['sprint-stat'],
+                null,
                 '',
                 -1,
                 false
@@ -783,6 +783,43 @@ class ProjectPage extends LPMPage
 
         $this->addTmplVar('project', $this->_project);
         $this->addTmplVar('snapshot', $snapshot);
+        $this->addTmplVar('members', $this->getSprintStatMembers($snapshot));
+    }
+
+    /**
+     * Участники спринта в том порядке, в котором они показываются
+     * в статистике спринта: по убыванию сделанных SP, при равенстве - по имени.
+     * @param ScrumStickerSnapshot $snapshot Снимок спринта.
+     * @return Member[] Отсортированный список участников.
+     */
+    private function getSprintStatMembers(ScrumStickerSnapshot $snapshot)
+    {
+        $members = $snapshot->getMembers();
+
+        $doneSp = [];
+        foreach ($members as $member) {
+            $doneSp[$member->userId] = $snapshot->getMemberDoneSP($member->userId);
+        }
+
+        // SP дробные (шаг 0.5), а usort приводит результат колбэка к int:
+        // разность вида 0.5 обнулилась бы, и такие пары считались бы равными.
+        usort($members, function (Member $a, Member $b) use ($doneSp) {
+            $bySp = $doneSp[$b->userId] <=> $doneSp[$a->userId];
+            if ($bySp !== 0) {
+                return $bySp;
+            }
+
+            // Без явного сравнения имён порядок участников с равными SP был бы
+            // произвольным: сортировка в PHP 7 не стабильна. Сравниваем байты
+            // приведённых к нижнему регистру строк - ext-intl нет в
+            // зависимостях проекта, поэтому Collator недоступен.
+            return strcmp(
+                mb_strtolower($a->getPlainName()),
+                mb_strtolower($b->getPlainName())
+            );
+        });
+
+        return $members;
     }
 
     private function initSettings()
