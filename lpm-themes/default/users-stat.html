@@ -40,7 +40,7 @@
 					foreach($usersStat as $userStat):
 						$doneSp = $userStat->getSP();
 					?>
-					<tr data-done-sp="<?=$doneSp;?>">
+					<tr>
 						<th scope="row"><?=$userStat->user->getLinkedName();?></th>
 						<td><?=$doneSp;?></td>
 						<td><?=$userStat->getSnapshotsCount();?></td>

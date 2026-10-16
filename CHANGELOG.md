@@ -9,13 +9,16 @@
 
 ### Changed
 - Правка задачи, ничего в ней не изменившая, больше не рассылает участникам письмо ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
+- Отбор «несколько исполнителей» переехал из строки фильтров в меню рядом с ней ([#527](https://task.innim.ru/project/lightning-pm/issue/527)).
 - Глубина рассуждений ИИ-модели задаётся уровнем — настройкой `AI_GEMINI_THINKING_LEVEL` вместо лимита токенов ([#531](https://task.innim.ru/project/lightning-pm/issue/531)).
+- В статистике пользователей и в статистике спринта участники с равным числом SP идут по алфавиту ([#484](https://task.innim.ru/project/lightning-pm/issue/484)).
 
 ### Fixed
 - Строки в блоке кода больше не слипаются ([#543](https://task.innim.ru/project/lightning-pm/issue/543)).
 - Давность активности у задачи в тесте отсчитывается от любого действия по ней, а не только от комментариев ([#533](https://task.innim.ru/project/lightning-pm/issue/533)).
 - Строка статистики над списком завершённых задач показывает число задач в этом списке ([#515](https://task.innim.ru/project/lightning-pm/issue/515)).
 - Подсказка с приоритетом больше не остаётся висеть на экране после того, как задача переехала на новое место в списке ([#532](https://task.innim.ru/project/lightning-pm/issue/532)).
+- Строка фильтров на узком экране сжимает поля, а не переносится на вторую строку ([#527](https://task.innim.ru/project/lightning-pm/issue/527)).
 - Раскрытый список фильтра в списке задач больше не перекрывается кнопкой поиска ([#529](https://task.innim.ru/project/lightning-pm/issue/529)).
 - В диалоге связывания задач Enter связывает задачу, когда совпадение одно, не дожидаясь списка результатов ([#511](https://task.innim.ru/project/lightning-pm/issue/511)).
 - Подпись поля в диалоге связывания задач ставит курсор в это поле ([#511](https://task.innim.ru/project/lightning-pm/issue/511)).

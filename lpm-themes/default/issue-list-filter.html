@@ -2,11 +2,11 @@
 /*
 Требуются: 
     $elementId - ID корневого HTML элемента
-    $showMultiMemberFilter - выводить ли переключатель «несколько исполнителей»
+    $showMultiMemberFilter - выводить ли отбор «несколько исполнителей»
 */
 ?>
-<?php /* По атрибуту `data-multi-member-filter` JS понимает, что переключатель
-         выведен: без него отбор по числу исполнителей недоступен */ ?>
+<?php /* По атрибуту `data-multi-member-filter` JS понимает, что отбор
+         по числу исполнителей выведен: без него он недоступен */ ?>
 <div id="<?=$elementId?>" class="mx-1 issue-list-filter"<?=$showMultiMemberFilter ? ' data-multi-member-filter' : '';?>>
   <div class="row g-2 align-items-center">
     <div class="col-auto">
@@ -62,17 +62,48 @@
     </div>
     <?php if ($showMultiMemberFilter): ?>
     <div class="col-auto">
-      <div class="form-check form-switch mb-0">
-        <input class="form-check-input" type="checkbox" role="switch"
-               id="<?=$elementId?>MultiMember" v-model="multiMemberOnly">
-        <label class="form-check-label" for="<?=$elementId?>MultiMember"
-               title="Оставить только задачи, у которых больше одного исполнителя">Несколько исполнителей</label>
+      <?php /* Меню редких отборов. Выводится только вместе с ними: пустого меню быть не должно */ ?>
+      <div class="dropdown">
+        <?php /* title на вложенном span, а не на самой кнопке: она уже держит Dropdown,
+                 а Bootstrap допускает только один компонент на элемент, поэтому Tooltip
+                 на неё не встанет.
+                 class кнопки обязан оставаться статическим: пока меню открыто, Bootstrap
+                 держит в нём служебный `show`, а привязка class отдала бы атрибут Vue,
+                 и первая же перерисовка стёрла бы его - меню переставало бы закрываться.
+                 Поэтому включённый отбор помечается вложенной точкой, а не видом кнопки */ ?>
+        <a href="javascript:void(0);"
+           class="btn btn-sm btn-outline-secondary position-relative"
+           id="<?=$elementId?>MoreFilters"
+           :aria-label="multiMemberOnly
+               ? 'Ещё фильтры, включён отбор по числу исполнителей'
+               : 'Ещё фильтры'"
+           data-bs-toggle="dropdown"
+           data-bs-auto-close="outside"
+           aria-expanded="false">
+          <span title="Ещё фильтры"><i class="fa fa-ellipsis-h"
+                :class="{ 'text-primary': multiMemberOnly }" aria-hidden="true"></i></span>
+          <span v-if="multiMemberOnly"
+                class="position-absolute top-0 start-100 translate-middle p-1 bg-primary border border-light rounded-circle"></span>
+        </a>
+        <?php /* data-bs-auto-close="outside" на кнопке держит меню открытым при щелчке
+                 по переключателю: иначе Bootstrap закрывал бы его по клику на подпись */ ?>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<?=$elementId?>MoreFilters">
+          <li>
+            <div class="form-check form-switch mx-3 mb-0 text-nowrap">
+              <input class="form-check-input" type="checkbox" role="switch"
+                     id="<?=$elementId?>MultiMember" v-model="multiMemberOnly">
+              <label class="form-check-label" for="<?=$elementId?>MultiMember"
+                     title="Оставить только задачи, у которых больше одного исполнителя">Несколько исполнителей</label>
+            </div>
+          </li>
+        </ul>
       </div>
     </div>
     <?php endif; ?>
-    <div class="col-auto">
+    <?php /* условие на самой колонке, а не на кнопке: иначе без активных фильтров
+             от неё остаётся пустая колонка, занимающая место в строке */ ?>
+    <div class="col-auto" v-if="hasActiveFilters">
       <button
-        v-if="hasActiveFilters"
         @click="clearAllFilters"
         class="btn btn-sm btn-outline-secondary"
         title="Очистить все фильтры">
