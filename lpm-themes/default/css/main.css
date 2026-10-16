@@ -113,7 +113,6 @@ code.no-highlight {
 	color: rgb(44, 45, 48);
 	margin: .5rem 0 .2rem;
 	font-size: .75rem;
-	line-height: 0.75rem;
 	overflow-x: auto;
 	background: #fbfaf8;
 	padding: .5rem;
@@ -937,10 +936,6 @@ table.issues-list td .priority-change-bar .priority-up {
 }
 table.issues-list td .priority-change-bar .priority-down {
 	bottom: 0;
-}
-table.issues-list td .priority-change-animation {
-	position: absolute;
-	user-select: none;
 }
 /* Кратковременная подсветка блока для привлечения внимания (гаснет). */
 @keyframes highlight-fade {
