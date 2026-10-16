@@ -3,6 +3,7 @@
 Требуются: 
     $project - проект
     $snapshot - данные конкретного снимка, если задано - будет показан он, если нет - список
+    $members - участники спринта в порядке вывода
 */
 ?>
 <article id="sprint-stat" data-project-id="<?=$project->id;?>" data-snapshot-id="<?=$snapshot->id;?>">
@@ -25,10 +26,10 @@
 				</thead>
 				<tbody>
 					<?php
-					foreach($snapshot->getMembers() as $member):
+					foreach($members as $member):
 						$doneSp = $snapshot->getMemberDoneSP($member->userId);
 					?>
-					<tr data-done-sp="<?=$doneSp;?>">
+					<tr>
 						<th scope="row"><?=$member->getLinkedName();?></th>
 						<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::TESTING);?></td>
 						<td><?=$snapshot->getMemberSP($member->userId, ScrumStickerState::DONE);?></td>

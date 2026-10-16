@@ -9,6 +9,7 @@
 - Правка задачи, ничего в ней не изменившая, больше не рассылает участникам письмо ([#502](https://task.innim.ru/project/lightning-pm/issue/502)).
 - Отбор «несколько исполнителей» переехал из строки фильтров в меню рядом с ней ([#527](https://task.innim.ru/project/lightning-pm/issue/527)).
 - Глубина рассуждений ИИ-модели задаётся уровнем — настройкой `AI_GEMINI_THINKING_LEVEL` вместо лимита токенов ([#531](https://task.innim.ru/project/lightning-pm/issue/531)).
+- В статистике пользователей и в статистике спринта участники с равным числом SP идут по алфавиту ([#484](https://task.innim.ru/project/lightning-pm/issue/484)).
 
 ### Fixed
 - Строки в блоке кода больше не слипаются ([#543](https://task.innim.ru/project/lightning-pm/issue/543)).
