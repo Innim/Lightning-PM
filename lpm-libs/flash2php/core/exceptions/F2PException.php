@@ -64,11 +64,11 @@ class F2PException extends Exception
 	/**
 	 * @var string
 	 */
-	//protected $_error;
+	protected $_error;
 	/**
      * @var int
      */
-    //protected $_errno;
+    protected $_errno;
 	
 	/**	
 	 * @param $error Текст сообщения об ошибке

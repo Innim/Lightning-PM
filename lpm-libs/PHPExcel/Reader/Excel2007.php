@@ -1010,7 +1010,7 @@ class PHPExcel_Reader_Excel2007 extends PHPExcel_Reader_Abstract implements PHPE
 
                                 $autoFilterRange = (string) $xmlSheet->autoFilter["ref"];
                                 if (strpos($autoFilterRange, ':') === false) {
-                                    $autoFilterRange = "${autoFilterRange}:${autoFilterRange}";
+                                    $autoFilterRange = "{$autoFilterRange}:{$autoFilterRange}";
                                 }
 								$autoFilter->setRange($autoFilterRange);
 
@@ -1585,7 +1585,7 @@ class PHPExcel_Reader_Excel2007 extends PHPExcel_Reader_Abstract implements PHPE
                                                     foreach ($extractedRange as $range) {
                                                         $autoFilterRange = $range;
                                                         if (strpos($autoFilterRange, ':') === false) {
-                                                            $autoFilterRange = "${autoFilterRange}:${autoFilterRange}";
+                                                            $autoFilterRange = "{$autoFilterRange}:{$autoFilterRange}";
                                                         }
                                                         $docSheet->getAutoFilter()->setRange($autoFilterRange);
                                                     }

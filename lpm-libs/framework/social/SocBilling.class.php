@@ -79,7 +79,10 @@ class SocBilling
             case 'userId'      : return $this->_userId ; break;
         }
         
-        return parent::__get( $var );
+        // У класса нет родителя, поэтому вызвать parent::__get() нельзя:
+        // с PHP 8.0 это ошибка компиляции, а не только времени выполнения.
+        // Неизвестное свойство читается как null - как и необъявленное свойство в PHP.
+        return null;
     }     
     
     /**

@@ -75,7 +75,7 @@ class Cutdowner
 		$gno = floor( $val / $this->_lcount );
 		if ($gno > 0) $letter .= $this->getDigit( $gno - 1 );
 		
-		$letter .= $letters{$val % $this->_lcount};
+		$letter .= $letters[$val % $this->_lcount];
 		return $letter;
 	}
 }

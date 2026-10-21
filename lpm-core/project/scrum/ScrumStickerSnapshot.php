@@ -36,7 +36,7 @@ class ScrumStickerSnapshot extends LPMBaseObject
         $sql = <<<SQL
         SELECT snapshot.*, `target`.`content` AS `sprintTarget` FROM `%1\$s` AS snapshot
         LEFT JOIN `%2\$s` AS target ON `target`.`instanceId` = `snapshot`.`id`
-        WHERE `snapshot`.`pid` = '${projectId}'
+        WHERE `snapshot`.`pid` = '{$projectId}'
         ORDER BY `snapshot`.`created` DESC
 SQL;
 
@@ -57,7 +57,7 @@ SQL;
 
         $dateWhere = self::whereBetween('createdUtc', $createFrom, $createdTo);
         $sql = <<<SQL
-        SELECT * FROM `%1\$s` WHERE ${dateWhere}
+        SELECT * FROM `%1\$s` WHERE {$dateWhere}
         ORDER BY `%1\$s`.`createdUtc` DESC, `%1\$s`.`pid` DESC
 SQL;
 
@@ -87,8 +87,8 @@ SQL;
         $idInProject = (int) $idInProject;
 
         $sql = <<<SQL
-        SELECT * FROM `%1\$s` WHERE `%1\$s`.`pid` = '${projectId}'
-           AND `%1\$s`.`idInProject` = '${idInProject}'
+        SELECT * FROM `%1\$s` WHERE `%1\$s`.`pid` = '{$projectId}'
+           AND `%1\$s`.`idInProject` = '{$idInProject}'
 SQL;
 
         $list = StreamObject::loadObjList($db, [$sql, LPMTables::SCRUM_SNAPSHOT_LIST], __CLASS__);
@@ -176,8 +176,8 @@ SQL;
             $sql = <<<SQL
                 INSERT INTO `%s` (`idInProject`, `pid`, `creatorId`, `started`, `startedUtc`,
                     `created`, `createdUtc`)
-                VALUES ('${idInProject}', '${pid}', '${creatorId}', '${started}', '${started}',
-                    '${created}', '${created}')
+                VALUES ('{$idInProject}', '{$pid}', '{$creatorId}', '{$started}', '{$started}',
+                    '{$created}', '{$created}')
 SQL;
 
             // если что-то пошло не так
@@ -199,7 +199,7 @@ SQL;
             $sql = <<<SQL
                 INSERT INTO `%s` (`sid`, `added`, `addedUtc`, `issue_uid`, `issue_pid`,
                     `issue_name`, `issue_state`, `issue_sp`, `issue_members_sp`, `issue_priority`)
-                VALUES ('${sid}', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES ('{$sid}', ?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
             // подготавливаем запрос для вставки данных о стикерах снапшота

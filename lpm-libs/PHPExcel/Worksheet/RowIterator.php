@@ -100,6 +100,7 @@ class PHPExcel_Worksheet_RowIterator implements Iterator
 	/**
 	 * Rewind the iterator to the starting row
 	 */
+	#[\ReturnTypeWillChange]
 	public function rewind() {
 		$this->_position = $this->_startRow;
 	}
@@ -109,6 +110,7 @@ class PHPExcel_Worksheet_RowIterator implements Iterator
 	 *
 	 * @return PHPExcel_Worksheet_Row
 	 */
+	#[\ReturnTypeWillChange]
 	public function current() {
 		return new PHPExcel_Worksheet_Row($this->_subject, $this->_position);
 	}
@@ -118,6 +120,7 @@ class PHPExcel_Worksheet_RowIterator implements Iterator
 	 *
 	 * @return int
 	 */
+	#[\ReturnTypeWillChange]
 	public function key() {
 		return $this->_position;
 	}
@@ -125,6 +128,7 @@ class PHPExcel_Worksheet_RowIterator implements Iterator
 	/**
 	 * Set the iterator to its next value
 	 */
+	#[\ReturnTypeWillChange]
 	public function next() {
 		++$this->_position;
 	}
@@ -142,6 +146,7 @@ class PHPExcel_Worksheet_RowIterator implements Iterator
 	 *
 	 * @return boolean
 	 */
+	#[\ReturnTypeWillChange]
 	public function valid() {
 		return $this->_position <= $this->_subject->getHighestRow();
 	}
