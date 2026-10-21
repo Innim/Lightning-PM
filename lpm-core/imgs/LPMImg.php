@@ -232,6 +232,14 @@ class LPMImg extends LPMBaseObject
             $this->_errors[] = 'Не найдено исходное изображение';
             return false;
         } elseif (!file_exists($cacheImg)) {
+            // Upload::init() заводит свойство file_max_size_raw, не объявленное
+            // в классе, а с PHP 8.2 это E_DEPRECATED. Предупреждение приходится
+            // гасить здесь: правка самой библиотеки запрещена, а при включённом
+            // display_errors её текст уходит в тело ответа до заголовков и ломает
+            // ответ. Снять, когда зависимость обновится.
+            $errorReporting = error_reporting();
+            error_reporting($errorReporting & ~E_DEPRECATED);
+
             if (!$this->_upload) {
                 $this->_upload = new \Verot\Upload\Upload($this->_srcImg);
             }
@@ -248,6 +256,8 @@ class LPMImg extends LPMBaseObject
             
             $this->_upload->process(self::getImgPath() . $this->_imgDir);
             
+            error_reporting($errorReporting);
+
             // успешность операции никого не волнует
             if (!$this->_upload->processed) {
                 $this->_errors[] = $this->_upload->error;

@@ -9,7 +9,10 @@ require_once(__DIR__ . '/aliases.inc.php');
 date_default_timezone_set('Etc/GMT-3');
 
 // подключаем фреймворк
-require_once(ROOT . LIBS_DIR . 'gm-framework-v1.1.1.phar');
+// Точка входа легаси-фреймворка: GMFramework::loadClass() ищет остальные его
+// классы относительно dirname(__FILE__), так что подключения этого файла
+// достаточно - как и в stub'е прежнего .phar.
+require_once(ROOT . LIBS_DIR . 'gm-framework-v1/GMFramework.class.php');
 
 // Подключаем фреймворк
 // if (!class_exists( 'GMFramework', false ))

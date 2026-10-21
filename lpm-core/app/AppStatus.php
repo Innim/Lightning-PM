@@ -29,6 +29,12 @@ class AppStatus
     public $trustedProxiesConfigured = false;
 
     /**
+     * Версия PHP, на которой работает приложение.
+     * @var string
+     */
+    public $phpVersion = '';
+
+    /**
      * Применяется ли ограничение числа попыток входа с одного адреса.
      * Работает только там, где адрес пользователя известен достоверно.
      * @var bool

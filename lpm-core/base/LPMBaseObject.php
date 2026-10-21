@@ -127,7 +127,9 @@ class LPMBaseObject extends StreamObject
             'LIMIT'  => 1
         ]);
 
-        return $res[$field];
+        // Если строки нет, querybSingle() отдаёт не массив - значения в этом
+        // случае нет, возвращается null.
+        return isset($res[$field]) ? $res[$field] : null;
     }
 
     protected static function loadIntValFromDb($table, $field, $where)

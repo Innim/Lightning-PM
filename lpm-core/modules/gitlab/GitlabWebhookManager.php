@@ -33,6 +33,25 @@ class GitlabWebhookManager
         . ' настройка перезаписала бы рабочий хук боевого репозитория';
 
     /**
+     * Контекст записи журнала.
+     *
+     * Хуками управляет только общий токен интеграции, поэтому вид клиента
+     * в записи всегда один и тот же - но без него по журналу не понять,
+     * чей отказ в нём отражён.
+     *
+     * @param  int|string $repositoryId Идентификатор проекта на GitLab.
+     * @param  array      $extra        Дополнительные поля записи.
+     * @return array
+     */
+    private static function logContext($repositoryId, array $extra = [])
+    {
+        return array_merge([
+            'client' => GitlabIntegration::CLIENT_SUDO,
+            'repositoryId' => $repositoryId,
+        ], $extra);
+    }
+
+    /**
      * Включена ли автоматическая настройка хука при создании ветки.
      *
      * По умолчанию выключена: адрес хука берется из `SITE_URL`, поэтому
@@ -94,7 +113,7 @@ class GitlabWebhookManager
             LPMLog::warning(
                 'Автонастройка вебхука пропущена: ' . self::LOCAL_URL_REFUSAL,
                 LPMLog::CH_GITLAB,
-                ['repositoryId' => $repositoryId]
+                self::logContext($repositoryId)
             );
             return;
         }
@@ -102,10 +121,9 @@ class GitlabWebhookManager
         try {
             $result = (new self($gitlab))->ensureForRepository($repositoryId);
         } catch (Exception $e) {
-            LPMLog::exception($e, LPMLog::CH_GITLAB, [
+            LPMLog::exception($e, LPMLog::CH_GITLAB, self::logContext($repositoryId, [
                 'context' => 'Автонастройка вебхука',
-                'repositoryId' => $repositoryId,
-            ]);
+            ]));
             return;
         }
 
@@ -113,7 +131,7 @@ class GitlabWebhookManager
             LPMLog::error(
                 'Не удалось настроить вебхук: ' . $result->message,
                 LPMLog::CH_GITLAB,
-                ['repositoryId' => $repositoryId]
+                self::logContext($repositoryId)
             );
         }
     }
@@ -188,10 +206,9 @@ class GitlabWebhookManager
                 $status = GitlabWebhookSetupResult::STATUS_UPDATED;
             }
         } catch (Exception $e) {
-            LPMLog::exception($e, LPMLog::CH_GITLAB, [
+            LPMLog::exception($e, LPMLog::CH_GITLAB, self::logContext($repositoryId, [
                 'context' => 'Не удалось настроить вебхук',
-                'repositoryId' => $repositoryId,
-            ]);
+            ]));
 
             return $this->fail($repositoryId, $this->describeError($e));
         }

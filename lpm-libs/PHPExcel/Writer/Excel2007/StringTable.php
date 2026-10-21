@@ -63,13 +63,16 @@ class PHPExcel_Writer_Excel2007_StringTable extends PHPExcel_Writer_Excel2007_Wr
 			foreach ($pSheet->getCellCollection() as $cellID) {
 				$cell = $pSheet->getCell($cellID);
 				$cellValue = $cell->getValue();
+				// Ключом массива float быть не может - PHP приводит его к int,
+				// и с PHP 8.1 неявное приведение осуждается; делаем его явным.
+				$stringTableKey = is_float($cellValue) ? (int) $cellValue : $cellValue;
 				if (!is_object($cellValue) &&
 					($cellValue !== NULL) &&
 					$cellValue !== '' &&
-					!isset($aFlippedStringTable[$cellValue]) &&
+					!isset($aFlippedStringTable[$stringTableKey]) &&
 					($cell->getDataType() == PHPExcel_Cell_DataType::TYPE_STRING || $cell->getDataType() == PHPExcel_Cell_DataType::TYPE_STRING2 || $cell->getDataType() == PHPExcel_Cell_DataType::TYPE_NULL)) {
 						$aStringTable[] = $cellValue;
-						$aFlippedStringTable[$cellValue] = true;
+						$aFlippedStringTable[$stringTableKey] = true;
 				} elseif ($cellValue instanceof PHPExcel_RichText &&
 						  ($cellValue !== NULL) &&
 						  !isset($aFlippedStringTable[$cellValue->getHashCode()])) {

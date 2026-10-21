@@ -274,6 +274,14 @@ function lpm_print_users_chooser()
 }
 
 /**
+ * Распечатывает предупреждение администратору об истечении токена GitLab.
+ */
+function lpm_print_gitlab_token_warning()
+{
+    return PagePrinter::gitlabTokenWarning();
+}
+
+/**
  * Распечатывает блок состояния миграций схемы БД.
  */
 function lpm_print_db_migrations()

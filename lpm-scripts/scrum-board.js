@@ -270,6 +270,13 @@ const sprintTarget = {
         const $el = $('#addTarget');
         $('[data-action="save"]', $el).on('click', () => sprintTarget.save());
         $('.target-btn').on('click', () => sprintTarget.open());
+        // Разметку целей перерисовывает и сохранение, и автообновление доски,
+        // поэтому обработчик галочек делегированный
+        $(document).on(
+            'change',
+            '.scrum-board-target .text-target .target-check',
+            (e) => sprintTarget.toggleItem(e.currentTarget)
+        );
         this.updateVisibility();
     },
     setValue: function (text, html) {
@@ -279,13 +286,77 @@ const sprintTarget = {
         sprintTarget.updateVisibility();
     },
     updateVisibility: function () {
-        if ($('.text-target').text().trim()) {
+        const $text = $('.text-target');
+        if ($text.text().trim() || $('.target-check', $text).length) {
             $('.title-target').show();
-            $('.text-target').show();
+            $text.show();
         } else {
             $('.title-target').hide();
-            $('.text-target').hide();
+            $text.hide();
         }
+
+        sprintTarget.updateProgress();
+    },
+    /**
+     * Обновляет счётчик отмеченных целей.
+     *
+     * Цели считаются по галочкам разметки, которую отдал сервер, - разбирать
+     * текст поля заново для этого не нужно. Когда галочек нет, счётчика нет тоже.
+     */
+    updateProgress: function () {
+        const $checks = $('.scrum-board-target .text-target .target-check');
+        const done = $checks.filter(':checked').length;
+
+        $('.scrum-board-target .target-progress')
+            .text($checks.length ? done + ' из ' + $checks.length : '');
+    },
+    /**
+     * Отмечает или снимает отметку цели, по галочке которой щёлкнули,
+     * и сохраняет поле целиком.
+     *
+     * Номер строки и её новое содержимое сервер задал при отрисовке галочки,
+     * поэтому щелчок меняет именно свою строку, даже если выше есть такая же.
+     * Если текст поля разошёлся с разметкой - поле успели изменить, - щелчок
+     * не сохраняется, чтобы не затереть чужую правку.
+     * @param {Element} checkbox галочка, по которой щёлкнули
+     */
+    toggleItem: function (checkbox) {
+        const $check = $(checkbox);
+        // Только переключаемые: галочка без строки выключена не на время запроса,
+        // а всегда, и включать её обратно нельзя
+        const $checks = $('.scrum-board-target .text-target .target-check[data-target-line]');
+        const lineNum = parseInt($check.attr('data-target-line'), 10);
+        const lines = $('.input-target').val().split('\n');
+
+        if (lines[lineNum] !== $check.attr('data-target-line-from')) {
+            $check.prop('checked', !$check.prop('checked'));
+            showError('Цели спринта изменились — обновите страницу');
+            return;
+        }
+
+        lines[lineNum] = $check.attr('data-target-line-to');
+        // До ответа сервера разметка и текст поля расходятся, и следующий
+        // щелчок отправил бы поле без этой правки. Прелоадер здесь не только
+        // про ожидание: пока он виден, автообновление доски не перерисует
+        // цели ответом, собранным до этой правки
+        $checks.prop('disabled', true);
+        preloader.show();
+        sprintTarget.updateProgress();
+
+        const projectId = $('#scrumBoard').data('project-id');
+        srv.project.setSprintTarget(projectId, lines.join('\n'), function (res) {
+            preloader.hide();
+
+            if (res && res.success) {
+                sprintTarget.setValue(res.targetText, res.targetHTML);
+                return;
+            }
+
+            $check.prop('checked', !$check.prop('checked'));
+            $checks.prop('disabled', false);
+            sprintTarget.updateProgress();
+            srv.err(res || {});
+        });
     },
     open: function () {
         bootstrap.Modal.getOrCreateInstance(document.getElementById('addTarget')).show();

@@ -222,7 +222,7 @@ class PageConstructor
     
     public function getJSLink($file)
     {
-        if ($file !== '' && $file{mb_strlen($file)-1} === '$') {
+        if ($file !== '' && $file[mb_strlen($file)-1] === '$') {
             $file = mb_substr($file, 0, -1);
         } else {
             // В режиме отладки предпочитаем неминифицированную версию,

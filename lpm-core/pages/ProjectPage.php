@@ -287,7 +287,7 @@ class ProjectPage extends LPMPage
                 self::PUID_SPRINT_STAT,
                 'Статистика спринта',
                 'sprint-stat',
-                ['sprint-stat'],
+                null,
                 '',
                 -1,
                 false
@@ -486,16 +486,17 @@ class ProjectPage extends LPMPage
      * Готовит список задач подраздела и форму поиска по нему.
      *
      * Показываются задачи области поиска, а если задан поисковый запрос - только
-     * найденные среди них. Пока область не меняли и не искали, подраздел
-     * показывает свой обычный список, и вместо размера выборки уместна общая
-     * статистика проекта.
+     * найденные среди них.
      * @param string $defaultScope Область поиска, которую подраздел показывает
      *        без запроса: список этих задач и есть его обычное содержимое.
      * @param bool   $scopeChoice  Можно ли менять область поиска. Если нет,
      *        подраздел ищет только среди своих задач: область не выбирается
      *        и не задаётся параметром адреса.
+     * @param string|null $defaultCountLabel Подпись к размеру обычного списка
+     *        подраздела. `null` означает, что к этому списку относится общая
+     *        статистика проекта по открытым задачам, и показывается она.
      */
-    private function initIssuesList($defaultScope, $scopeChoice)
+    private function initIssuesList($defaultScope, $scopeChoice, $defaultCountLabel = null)
     {
         $search = trim(self::getQueryParam(self::QUERY_ARG_SEARCH));
 
@@ -512,11 +513,16 @@ class ProjectPage extends LPMPage
             }
         }
 
-        $countLabel = null;
+        // Список отобран, когда показан не весь обычный список подраздела:
+        // по этому признаку раскрывается и форма поиска
+        $filtered = $search !== '' || $scope !== $defaultScope;
+
         if ($search !== '') {
             $countLabel = 'Найдено';
-        } elseif ($scope !== $defaultScope) {
+        } elseif ($filtered) {
             $countLabel = 'Показано';
+        } else {
+            $countLabel = $defaultCountLabel;
         }
 
         $statuses = self::SEARCH_SCOPES[$scope]['statuses'];
@@ -546,6 +552,7 @@ class ProjectPage extends LPMPage
             'url' => $this->getUrl(),
             'scope' => $scope,
             'scopes' => $scopes,
+            'filtered' => $filtered,
         ]);
     }
 
@@ -657,8 +664,10 @@ class ProjectPage extends LPMPage
     private function initCompletedIssues()
     {
         // Подраздел ищет только среди завершённых задач: показывать в нём открытые
-        // - значит противоречить его собственному названию
-        $this->initIssuesList(self::SEARCH_SCOPE_COMPLETED, false);
+        // - значит противоречить его собственному названию. По той же причине
+        // в статистике стоит размер самой выборки: сводка проекта по открытым
+        // задачам к списку завершённых не относится
+        $this->initIssuesList(self::SEARCH_SCOPE_COMPLETED, false, 'Завершено');
     }
 
     private function initComments()
@@ -774,6 +783,43 @@ class ProjectPage extends LPMPage
 
         $this->addTmplVar('project', $this->_project);
         $this->addTmplVar('snapshot', $snapshot);
+        $this->addTmplVar('members', $this->getSprintStatMembers($snapshot));
+    }
+
+    /**
+     * Участники спринта в том порядке, в котором они показываются
+     * в статистике спринта: по убыванию сделанных SP, при равенстве - по имени.
+     * @param ScrumStickerSnapshot $snapshot Снимок спринта.
+     * @return Member[] Отсортированный список участников.
+     */
+    private function getSprintStatMembers(ScrumStickerSnapshot $snapshot)
+    {
+        $members = $snapshot->getMembers();
+
+        $doneSp = [];
+        foreach ($members as $member) {
+            $doneSp[$member->userId] = $snapshot->getMemberDoneSP($member->userId);
+        }
+
+        // SP дробные (шаг 0.5), а usort приводит результат колбэка к int:
+        // разность вида 0.5 обнулилась бы, и такие пары считались бы равными.
+        usort($members, function (Member $a, Member $b) use ($doneSp) {
+            $bySp = $doneSp[$b->userId] <=> $doneSp[$a->userId];
+            if ($bySp !== 0) {
+                return $bySp;
+            }
+
+            // Без явного сравнения имён порядок участников с равными SP был бы
+            // произвольным: сортировка в PHP 7 не стабильна. Сравниваем байты
+            // приведённых к нижнему регистру строк - ext-intl нет в
+            // зависимостях проекта, поэтому Collator недоступен.
+            return strcmp(
+                mb_strtolower($a->getPlainName()),
+                mb_strtolower($b->getPlainName())
+            );
+        });
+
+        return $members;
     }
 
     private function initSettings()
@@ -1047,13 +1093,12 @@ class ProjectPage extends LPMPage
             $this->saveLinkedIssues($userId, $issueId, $_POST['linkedIds'], true);
         }
 
-        // Снимок состава участников до сохранения — для детализации оповещения об изменениях.
-        // Снять нужно до записи в БД: списки грузятся лениво и кешируются в объекте.
-        $oldMemberIds = $oldTesterIds = $oldMasterIds = [];
+        // Снимок состава участников и вложений до сохранения — для детализации
+        // оповещения об изменениях. Снять нужно до записи в БД: эти списки
+        // сохранение перезаписывает.
+        $oldState = null;
         if ($editMode && isset($curIssue)) {
-            $oldMemberIds = $curIssue->getMemberIds();
-            $oldTesterIds = $curIssue->getTesterIds();
-            $oldMasterIds = $curIssue->getMasterIds();
+            $oldState = IssueStateSnapshot::take($curIssue);
         }
 
         // Сохраняем участников
@@ -1114,13 +1159,7 @@ class ProjectPage extends LPMPage
         // отсылаем оповещения
         $changes = null;
         if ($editMode && isset($curIssue)) {
-            $changes = IssueChangeSet::build(
-                $curIssue,
-                $oldMemberIds,
-                $oldTesterIds,
-                $oldMasterIds,
-                $issue
-            );
+            $changes = IssueChangeSet::build($curIssue, $oldState, $issue);
         }
         $this->notifyAboutIssueChange($issue, $editMode, $changes);
 
@@ -1784,11 +1823,25 @@ class ProjectPage extends LPMPage
         return true;
     }
 
+    /**
+     * Оповещает участников задачи о её создании или об изменении.
+     *
+     * Правка, не изменившая ни одного отслеживаемого свойства задачи,
+     * оповещения не порождает: сообщить о ней письму нечего.
+     * @param Issue $issue Задача после сохранения.
+     * @param bool $editMode Задача редактировалась, а не создавалась.
+     * @param IssueChangeSet|null $changes Набор изменений задачи;
+     *        null — при создании задачи.
+     */
     private function notifyAboutIssueChange(Issue $issue, $editMode, IssueChangeSet $changes = null)
     {
         $engine = $this->_engine;
         $user = $engine->getUser();
         if ($editMode) {
+            if ($changes !== null && $changes->isEmpty()) {
+                return;
+            }
+
             Issue::notifyByEmail(
                 $issue,
                 IssueEmailFormatter::issueChangedSubject($issue),

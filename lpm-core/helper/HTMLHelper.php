@@ -185,16 +185,25 @@ class HTMLHelper
     }
 
     /**
-     * Backward compatibility for legacy fenced code format where opening and/or
-     * closing backticks (```) were on the same line as the code content.
+     * Приводит блоки кода старого формата к стандартному виду разметки.
+     *
+     * В старом формате ограждение ``` могло стоять на одной строке с кодом -
+     * у такого блока ограждения переносятся на отдельные строки, поэтому текст
+     * становится длиннее на эти строки. Остальное не меняется: стандартные
+     * блоки, в том числе с указанием языка (```js), и инлайн код остаются
+     * как есть.
+     *
+     * Публичный, потому что ту же нормализацию перед разбором делает
+     * ParsedownExt::textWithTaskList().
      *
      * Transforms:
      *  - "```<code"      -> "```\n<code" (only when not a language spec line)
      *  - "...```\n"      -> "...\n```\n"
      *
-     * Keeps standard Markdown intact, including language hints like "```js".
+     * @param  string $text Текст в разметке Markdown.
+     * @return string Текст, в котором блоки кода записаны стандартно.
      */
-    private static function normalizeLegacyFencedCode($text)
+    public static function normalizeLegacyFencedCode($text)
     {
         // Normalize legacy fenced code blocks where opening/closing ```
         // were placed on the same line as code content.

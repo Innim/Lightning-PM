@@ -7,6 +7,12 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExcep
  * через Generative Language API.
  *
  * Требует ключ API, который выдаётся в Google AI Studio.
+ *
+ * Параметры генерации передаются в том виде, в каком их принимают модели
+ * Gemini 3 и новее: глубина рассуждений задаётся уровнем, а параметров
+ * сэмплирования (температура, top-p, top-k) нет вовсе — в этих моделях они
+ * не действуют, а в следующих поколениях отклоняются с ошибкой. Модели 2.5
+ * и старше, ожидающие лимит токенов на рассуждения, не поддерживаются.
  */
 class GeminiAdapter implements AiAdapter
 {
@@ -16,6 +22,23 @@ class GeminiAdapter implements AiAdapter
     const DEFAULT_MODEL = 'gemini-3.6-flash';
     /** Таймаут запроса к API по умолчанию, в секундах */
     const DEFAULT_TIMEOUT = 60;
+
+    /** Минимальные рассуждения — принимают не все модели */
+    const THINKING_LEVEL_MINIMAL = 'minimal';
+    /** Лёгкие рассуждения */
+    const THINKING_LEVEL_LOW = 'low';
+    /** Умеренные рассуждения — то, что модели выбирают сами */
+    const THINKING_LEVEL_MEDIUM = 'medium';
+    /** Глубокие рассуждения */
+    const THINKING_LEVEL_HIGH = 'high';
+
+    /** Все известные уровни рассуждений, от меньшего к большему */
+    const THINKING_LEVELS = [
+        self::THINKING_LEVEL_MINIMAL,
+        self::THINKING_LEVEL_LOW,
+        self::THINKING_LEVEL_MEDIUM,
+        self::THINKING_LEVEL_HIGH,
+    ];
 
     /**
      * Создаёт адаптер по настройкам приложения
@@ -31,18 +54,59 @@ class GeminiAdapter implements AiAdapter
             defined('AI_REQUEST_TIMEOUT') ? AI_REQUEST_TIMEOUT : 0
         );
 
-        if (defined('AI_GEMINI_THINKING_BUDGET')) {
-            $adapter->setThinkingBudget(AI_GEMINI_THINKING_BUDGET);
+        if (defined('AI_GEMINI_THINKING_LEVEL')) {
+            $adapter->setThinkingLevel(AI_GEMINI_THINKING_LEVEL);
+        } elseif (defined('AI_GEMINI_THINKING_BUDGET')) {
+            $adapter->setThinkingLevel(self::thinkingLevelFromBudget(AI_GEMINI_THINKING_BUDGET));
         }
 
         return $adapter;
+    }
+
+    /**
+     * Переводит лимит токенов на рассуждения в уровень рассуждений.
+     *
+     * Нужен для совместимости с установками, где глубина рассуждений задана
+     * устаревшей настройкой AI_GEMINI_THINKING_BUDGET: лимит в токенах
+     * Gemini больше не принимает. Отрицательный лимит (выбор за моделью)
+     * и пустое значение уровня не задают, ноль переводится в минимальный
+     * уровень, положительный лимит — по величине: до 1024 токенов низкий
+     * уровень, до 8192 средний, выше высокий. Точного соответствия между
+     * токенами и уровнями нет, поэтому перевод приблизителен — лучше
+     * задать уровень явно.
+     *
+     * @param int $budget Лимит токенов на рассуждения.
+     * @return string Уровень (одна из констант THINKING_LEVEL_*)
+     * или пустая строка, если уровень задавать не нужно.
+     */
+    public static function thinkingLevelFromBudget($budget)
+    {
+        if ($budget === null || $budget === '' || (int)$budget < 0) {
+            return '';
+        }
+
+        $budget = (int)$budget;
+
+        if ($budget === 0) {
+            return self::THINKING_LEVEL_MINIMAL;
+        }
+
+        if ($budget <= 1024) {
+            return self::THINKING_LEVEL_LOW;
+        }
+
+        if ($budget <= 8192) {
+            return self::THINKING_LEVEL_MEDIUM;
+        }
+
+        return self::THINKING_LEVEL_HIGH;
     }
 
     private $_apiKey;
     private $_model;
     private $_endpoint;
     private $_timeout;
-    private $_thinkingBudget;
+    private $_thinkingLevel = '';
 
     private $_client;
 
@@ -62,18 +126,32 @@ class GeminiAdapter implements AiAdapter
     }
 
     /**
-     * Ограничивает количество токенов, которые модель тратит на рассуждения.
+     * Задаёт глубину рассуждений модели.
      *
-     * Значение -1 отдаёт выбор модели, ноль отключает рассуждения — но
-     * нулевой лимит принимают не все модели, часть отклоняет такой запрос
-     * с ошибкой. Настройка поддерживается моделями 2.5 и новее.
+     * Если уровень не задан, модель выбирает глубину сама. Уровни понимают
+     * модели Gemini 3 и новее, и какие именно — зависит от модели:
+     * минимальный уровень поддерживают не все, и такой запрос
+     * отклоняется с ошибкой.
+     * Неизвестный уровень в запрос не попадает, а пишется в лог: иначе
+     * опечатка в настройке ломала бы все обращения к модели.
      *
-     * @param int $budget Лимит токенов или null, чтобы не задавать его.
+     * @param string $level Уровень (одна из констант THINKING_LEVEL_*)
+     * или пустое значение, чтобы не задавать его.
      * @return GeminiAdapter
      */
-    public function setThinkingBudget($budget)
+    public function setThinkingLevel($level)
     {
-        $this->_thinkingBudget = $budget === null || $budget === '' ? null : (int)$budget;
+        $level = strtolower(trim((string)$level));
+
+        if ($level !== '' && !in_array($level, self::THINKING_LEVELS, true)) {
+            LPMLog::warning('Неизвестный уровень рассуждений Gemini', LPMLog::CH_AI, [
+                'level' => $level,
+                'supported' => self::THINKING_LEVELS,
+            ]);
+            $level = '';
+        }
+
+        $this->_thinkingLevel = $level;
         return $this;
     }
 
@@ -170,13 +248,10 @@ class GeminiAdapter implements AiAdapter
             $payload['systemInstruction'] = ['parts' => [['text' => $systemInstruction]]];
         }
 
+        // temperature, topP и topK в Gemini 3.6 и новее не действуют,
+        // а в следующих поколениях моделей отклоняются с ошибкой,
+        // поэтому в запрос не передаются вовсе.
         $config = [];
-        if ($request->getTemperature() !== null) {
-            $config['temperature'] = $request->getTemperature();
-        }
-        if ($request->getTopP() !== null) {
-            $config['topP'] = $request->getTopP();
-        }
         if ($request->getMaxOutputTokens() !== null) {
             $config['maxOutputTokens'] = $request->getMaxOutputTokens();
         }
@@ -186,8 +261,8 @@ class GeminiAdapter implements AiAdapter
         if ($request->getResponseSchema() !== null) {
             $config['responseSchema'] = $this->convertSchema($request->getResponseSchema());
         }
-        if ($this->_thinkingBudget !== null) {
-            $config['thinkingConfig'] = ['thinkingBudget' => $this->_thinkingBudget];
+        if ($this->_thinkingLevel !== '') {
+            $config['thinkingConfig'] = ['thinkingLevel' => $this->_thinkingLevel];
         }
 
         if (!empty($config)) {

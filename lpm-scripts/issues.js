@@ -1109,6 +1109,21 @@ issuePage.issuesList = {
     },
 
     /**
+     * Закрывает подсказки строки, которая остаётся в списке.
+     *
+     * Подсказка закрывается, а не снимается совсем (`dispose()`): экземпляр
+     * остаётся живым, и очередь Bootstrap доигрывает скрытие - иначе брошенный
+     * экземпляр оставил бы за собой наблюдателя из глобальной уборки подсказок
+     * (см. lightning.js), которая рассчитана на уходящий из разметки элемент.
+     */
+    hideTooltips: function (row) {
+        $(row).find('[title], [data-bs-original-title]').each(function () {
+            const tooltip = bootstrap.Tooltip.getInstance(this);
+            if (tooltip) tooltip.hide();
+        });
+    },
+
+    /**
      * Добавляет строки порции к списку, пропуская уже показанные задачи.
      *
      * Задача приходит повторно, если между запросами порций у неё изменился
@@ -1416,6 +1431,11 @@ issuePage.issuesList = {
 
         const index = position - 1;
         if ([...tbody.children].indexOf(row) !== index) {
+            // Подсказки закрываем и при переносе, а не только при удалении
+            // строки: курсор после переноса оказывается над другой задачей,
+            // и события ухода открытая подсказка уже не дождётся
+            this.hideTooltips(row);
+
             // Строку сначала вынимаем: пока она в списке, она же сдвигает
             // нумерацию соседей, и вставка встала бы на позицию мимо
             row.remove();
@@ -1938,6 +1958,12 @@ function refreshIssueRow(issueId, newStatus) {
     });
 }
 
+/** Длительность всплытия подписи с новым приоритетом, мс. */
+const PRIORITY_HINT_DURATION = 500;
+
+/** Через сколько подпись с новым приоритетом снимается принудительно, мс. */
+const PRIORITY_HINT_TIMEOUT = 1500;
+
 issuePage.changePriority = function (e) {
     var $control = $(e.currentTarget);
     var $row = $control.parents('tr');
@@ -1957,16 +1983,22 @@ issuePage.changePriority = function (e) {
                 let tooltipHost = $('.priority-title-owner', $row)[0];
                 if (tooltipHost) {
                     let newTitle = 'Приоритет: ' + priorityStr + ' (' + priorityVal + ')';
-                    // Drop the per-element tooltip instance (and any tip shown for the old value);
-                    // the delegated body tooltip rebuilds it from the fresh title on next hover.
+                    // После первого показа Bootstrap держит заголовок
+                    // в data-bs-original-title, а title оставляет пустым,
+                    // чтобы поверх подсказки не всплывала подсказка браузера
+                    if (tooltipHost.hasAttribute('data-bs-original-title')) {
+                        tooltipHost.setAttribute('data-bs-original-title', newTitle);
+                    } else {
+                        tooltipHost.setAttribute('title', newTitle);
+                    }
+
+                    // Показанную подсказку с прежним значением закрываем,
+                    // а не снимаем её экземпляр: dispose() посреди скрытия
+                    // обрывает очередь Bootstrap ошибкой (см. lightning.js)
                     let tooltipInstance = bootstrap.Tooltip.getInstance(tooltipHost);
                     if (tooltipInstance) {
-                        tooltipInstance.dispose();
+                        tooltipInstance.hide();
                     }
-                    // Bootstrap caches the title in data-bs-original-title after the first hover,
-                    // so reset both attributes to the new value.
-                    tooltipHost.setAttribute('title', newTitle);
-                    tooltipHost.removeAttribute('data-bs-original-title');
                 }
 
                 // Строка остаётся прежним узлом, только переезжает по списку,
@@ -1975,16 +2007,28 @@ issuePage.changePriority = function (e) {
                 $('.priority-val', $row).data("value", priority);
                 issuePage.updatePriorityVal($('.priority-val', $row), priority);
 
-                var hintY = e.pageY - 13;
-                $("<span></span>").text(priorityVal).addClass("priority-change-animation").
-                    appendTo($('body')).offset({ top: hintY, left: e.pageX - 10 }).
-                    animate(
-                        {
-                            opacity: '0',
-                            top: '-=20px'
-                        }, 500, function () {
-                            $(this).remove();
-                        });
+                // Подпись висит на body и ставится по координатам курсора,
+                // поэтому вне потока страницы её держат утилиты Bootstrap:
+                // правила вида из main.css действуют только внутри ячейки таблицы
+                var $hint = $("<span></span>").text(priorityVal)
+                    .addClass("priority-change-animation position-absolute user-select-none")
+                    .appendTo($('body'))
+                    .offset({ top: e.pageY - 13, left: e.pageX - 10 });
+
+                // Прерванная анимация обработчик завершения не вызывает,
+                // поэтому подпись снимается ещё и по таймеру
+                var hintTimeout = setTimeout(function () {
+                    $hint.stop(true).remove();
+                }, PRIORITY_HINT_TIMEOUT);
+
+                $hint.animate(
+                    {
+                        opacity: '0',
+                        top: '-=20px'
+                    }, PRIORITY_HINT_DURATION, function () {
+                        clearTimeout(hintTimeout);
+                        $hint.remove();
+                    });
             } else {
                 srv.err(res);
             }

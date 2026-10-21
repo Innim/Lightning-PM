@@ -261,7 +261,12 @@ abstract class StreamObject implements IStreamObject
      */
     public function getClientObject( $addfields = null )
     {
-        $addfields = is_array($addfields) ? $addfields : func_get_args();
+        // Наследник передаёт сюда свой $addfields как есть, и при вызове без
+        // аргументов это явный null - func_get_args() вернула бы [null],
+        // то есть поле с именем null.
+        $addfields = ($addfields === null)
+                        ? array()
+                        : (is_array($addfields) ? $addfields : func_get_args());
         $this->clientObjectAddFields($addfields);
         
         $obj = $this->_clientFields->createObject($addfields, 'getClientObject');
@@ -494,7 +499,7 @@ abstract class StreamObject implements IStreamObject
                 // Это может быть либо JSON, либо строка через запятую
                 else
                 {
-                    if ($value{0} !== '[' || mb_substr($value, -1) !== ']')
+                    if ($value[0] !== '[' || mb_substr($value, -1) !== ']')
                     {
                         $value = explode(',', $value);
                     }

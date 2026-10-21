@@ -1,20 +1,16 @@
-FROM php:7.3-apache-bullseye
+# Версия PHP закреплена точно, а не плавающим тегом 8.3: плавающий тег
+# разрешается в то, что лежит в локальном кэше, и устаревший базовый слой
+# молча выдаёт себя за актуальный. Для образа, который обновляют ради
+# исправлений безопасности, версия должна быть видна в диффе и меняться
+# осознанно. Поднимая версию, собирать с --pull.
+FROM php:8.3.36-apache-bookworm
 
 # Image metadata
-LABEL version="1.0"
-LABEL description="Legacy PHP 7.3 application with Apache"
-
-# Debian bullseye снят с поддержки, и его security-репозиторий больше не отдаёт
-# пакеты: security.debian.org отвечает 404 на сами .deb, а в archive.debian.org
-# bullseye-security ещё не выложен. Пока эта строка в списке источников, сборка
-# образа падает целиком, поэтому она удаляется. Обновлений для bullseye всё равно
-# больше не выходит; уход с этого базового образа - отдельная задача (#474).
-RUN sed -i '/security.debian.org/d' /etc/apt/sources.list
+LABEL version="2.0"
+LABEL description="Lightning PM application on PHP 8.3 with Apache"
 
 # Install required PHP extensions and system packages
-# Release-файлы bullseye просрочены, без Acquire::Check-Valid-Until=false
-# apt-get update завершается с кодом 100.
-RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y \
+RUN apt-get update && apt-get install -y \
     libicu-dev \
     libldap2-dev \
     libmemcached-dev \
@@ -31,32 +27,45 @@ RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Fix LDAP library path issue
-RUN ln -fs /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
-    && ln -fs /usr/lib/x86_64-linux-gnu/liblber.so /usr/lib/liblber.so
-
-# Configure and install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype-dir --with-jpeg-dir --with-webp-dir \
-    && docker-php-ext-configure ldap \
+# Configure and install PHP extensions.
+# curl, mbstring, opcache и xml собраны в самом базовом образе - повторная
+# установка пересобрала бы их как разделяемые модули и дала бы
+# "Module already loaded" при каждом старте.
+# Каталог библиотек для ldap зависит от архитектуры (x86_64 / aarch64),
+# поэтому берётся из dpkg-architecture, а не прописывается строкой.
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-configure ldap --with-libdir=lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH) \
     && docker-php-ext-install -j$(nproc) \
-        curl \
         gd \
         intl \
         ldap \
-        mbstring \
         mysqli \
-        opcache \
         pspell \
-        xml \
         xsl \
         zip
 
-# Install memcached extension via PECL
-RUN pecl install memcached \
-    && docker-php-ext-enable memcached
+# Расширение memcached собирается из релизного архива на GitHub, а не через
+# pecl install: pecl.php.net отвечал 504 и валил сборку целиком. Версия и
+# контрольная сумма зафиксированы; если GitHub пересоберёт архив тега и сумма
+# перестанет сходиться - сверять её нужно заново, а не выкидывать проверку.
+ARG MEMCACHED_VERSION=3.4.0
+ARG MEMCACHED_SHA256=10b98a0fdc3ce9ab823db59e8935f068de87e374728871a1efacdadd8c7807d1
+RUN set -eux; \
+    curl -fsSL -o /tmp/php-memcached.tar.gz \
+        "https://github.com/php-memcached-dev/php-memcached/archive/refs/tags/v${MEMCACHED_VERSION}.tar.gz"; \
+    echo "${MEMCACHED_SHA256}  /tmp/php-memcached.tar.gz" | sha256sum -c -; \
+    mkdir -p /usr/src/php-memcached; \
+    tar -xzf /tmp/php-memcached.tar.gz -C /usr/src/php-memcached --strip-components=1; \
+    cd /usr/src/php-memcached; \
+    phpize; \
+    ./configure; \
+    make -j"$(nproc)"; \
+    make install; \
+    docker-php-ext-enable memcached; \
+    rm -f /tmp/php-memcached.tar.gz
 
 # Install ffmpeg for background video compression
-RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y ffmpeg \
+RUN apt-get update && apt-get install -y ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable required Apache modules
@@ -65,7 +74,7 @@ RUN a2enmod rewrite headers deflate expires
 # Copy custom configurations
 COPY config/etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf
 RUN ln -sf /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/000-default.conf
-COPY config/etc/php/7.3/php.ini /usr/local/etc/php/php.ini
+COPY config/etc/php/8.3/php.ini /usr/local/etc/php/php.ini
 
 # Only expose port 80 (nginx handles HTTPS)
 EXPOSE 80

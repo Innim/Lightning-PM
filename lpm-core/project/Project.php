@@ -621,7 +621,21 @@ SQL;
 
         return $content === null ? '' : $content;
     }
-    
+
+    /**
+     * Возвращает форматированный текст целей спринта для вставки в HTML код.
+     *
+     * Строки вида `- [ ] текст` и `- [x] текст` показываются галочками,
+     * которые можно переключать; остальной текст - обычная разметка.
+     *
+     * @param  string $targetText Текст целей спринта.
+     * @return string
+     */
+    public static function getSprintTargetMarkup($targetText)
+    {
+        return ParsedownExt::textWithTaskList($targetText);
+    }
+
     /**
      *
      * @var int
@@ -1001,15 +1015,17 @@ SQL;
     }
     
     /**
-     * Возвращает форматированный текст для вставки в HTML код.
+     * Возвращает форматированный текст целей спринта для вставки в HTML код.
+     *
+     * См. getSprintTargetMarkup().
      * @return string
      */
     public function getSprintTargetHtml()
     {
         if (empty($this->_sprintTargetHtml)) {
-            $this->_sprintTargetHtml = HTMLHelper::getMarkdownText($this->getSprintTarget());
+            $this->_sprintTargetHtml = self::getSprintTargetMarkup($this->getSprintTarget());
         }
-        
+
         return $this->_sprintTargetHtml;
     }
 

@@ -18,7 +18,7 @@ class ScrumSticker extends LPMBaseObject
             ScrumStickerState::TESTING, ScrumStickerState::DONE]);
 
         $where = <<<SQL
-`i`.`projectId` = ${projectId} AND `s`.`state` IN (${states})
+`i`.`projectId` = {$projectId} AND `s`.`state` IN ({$states})
 SQL;
 
         return self::preloadBuildStates(self::preloadParticipants(self::loadList($where), $loadMasters));
@@ -181,14 +181,14 @@ SQL;
         $accessSql = Project::readPermitSqlCondition($userId, 'i.projectId');
 
         $where = <<<SQL
-`s`.`state` IN (${states}) AND `m`.`userId` = ${userId} AND `p`.`isArchive` = 0
-                AND (${accessSql})
+`s`.`state` IN ({$states}) AND `m`.`userId` = {$userId} AND `p`.`isArchive` = 0
+                AND ({$accessSql})
 SQL;
         return self::loadList(
             $where,
             '',
             ['m' => LPMTables::MEMBERS],
-            ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN (${instanceType})"]
+            ["`s`.`issueId` = `m`.`instanceId` AND `m`.`instanceType` IN ({$instanceType})"]
         );
     }
 
@@ -211,18 +211,18 @@ SQL;
         // `%4$s` - таблица участий: четвёртая в списке таблиц loadList,
         // т.к. первые три - стикеры, задачи и проекты
         $where = <<<SQL
-`s`.`state` = ${todo} AND `p`.`isArchive` = 0
+`s`.`state` = {$todo} AND `p`.`isArchive` = 0
                 AND NOT EXISTS (SELECT 1
                                   FROM `%4\$s` `im`
                                  WHERE `im`.`instanceId` = `s`.`issueId`
-                                   AND `im`.`instanceType` = ${issueType})
+                                   AND `im`.`instanceType` = {$issueType})
 SQL;
         return self::loadList(
             $where,
             '',
             ['pm' => LPMTables::MEMBERS],
-            ["`pm`.`instanceId` = `p`.`id` AND `pm`.`instanceType` = ${projectType} " .
-                "AND `pm`.`userId` = ${userId}"]
+            ["`pm`.`instanceId` = `p`.`id` AND `pm`.`instanceType` = {$projectType} " .
+                "AND `pm`.`userId` = {$userId}"]
         );
     }
 
@@ -279,7 +279,7 @@ SQL;
         if (!empty($excludedStates)) {
             $excludedStatesStr = implode(',', $excludedStates);
             $statesWhere = <<<SQL
-AND `s`.`state` NOT IN (${excludedStatesStr})
+AND `s`.`state` NOT IN ({$excludedStatesStr})
 SQL;
         }
 
@@ -287,8 +287,8 @@ SQL;
         $sql = <<<SQL
     		DELETE `s` FROM `%1\$s` `s`
     		     INNER JOIN `%2\$s` `i` ON `i`.`id` = `s`.`issueId`
-    		 WHERE `i`.`projectId` = ${projectId} 
-                   ${statesWhere}
+    		 WHERE `i`.`projectId` = {$projectId} 
+                   {$statesWhere}
 SQL;
 
         return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);
@@ -332,12 +332,12 @@ SQL;
         $db = self::getDB();
         $isActiveState = ScrumStickerState::isActiveState($state);
         if (!$isActiveState) {
-            $sql = "DELETE FROM `%s` WHERE `issueId` = ${issueId}";
+            $sql = "DELETE FROM `%s` WHERE `issueId` = {$issueId}";
         } else {
             $sql = <<<SQL
 		INSERT INTO `%s` (`issueId`, `state`, `added`, `addedUtc`)
-				  VALUES (${issueId}, ${state}, '${added}', '${added}')
-  			ON DUPLICATE KEY UPDATE `state` = ${state}
+				  VALUES ({$issueId}, {$state}, '{$added}', '{$added}')
+  			ON DUPLICATE KEY UPDATE `state` = {$state}
 SQL;
         }
 
@@ -348,10 +348,10 @@ SQL;
     {
         $isActiveState = ScrumStickerState::isActiveState($state);
         if (!$isActiveState) {
-            $sql = "DELETE FROM `%s` WHERE `issueId` = ${issueId}";
+            $sql = "DELETE FROM `%s` WHERE `issueId` = {$issueId}";
         } else {
             $sql = <<<SQL
-        		UPDATE `%s` SET `state` = ${state} WHERE `issueId` = ${issueId}
+        		UPDATE `%s` SET `state` = {$state} WHERE `issueId` = {$issueId}
 SQL;
         }
         
@@ -371,8 +371,8 @@ SQL;
         $sql = <<<SQL
     UPDATE `%1\$s` `s`
 INNER JOIN `%2\$s` `i` ON `i`.`id` = `s`.`issueId`
-       SET `s`.`added` = '${added}', `s`.`addedUtc` = '${added}'
-     WHERE `i`.`projectId` = ${projectId}
+       SET `s`.`added` = '{$added}', `s`.`addedUtc` = '{$added}'
+     WHERE `i`.`projectId` = {$projectId}
 SQL;
 
         return $db->queryt($sql, LPMTables::SCRUM_STICKER, LPMTables::ISSUES);

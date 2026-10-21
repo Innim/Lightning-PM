@@ -42,9 +42,6 @@ class IssueDraftBuilder
      */
     const NAME_MAX_LENGTH = 255;
 
-    /** Температура генерации: черновик должен быть предсказуемым */
-    const TEMPERATURE = 0.3;
-
     /**
      * Ограничение длины ответа.
      *
@@ -205,7 +202,6 @@ TEXT;
         $request = (new AiRequest())
             ->setSystemInstruction(self::buildSystemInstruction())
             ->addUserMessage($prompt, $images)
-            ->setTemperature(self::TEMPERATURE)
             ->setMaxOutputTokens(self::MAX_OUTPUT_TOKENS)
             ->setResponseSchema(self::getResponseSchema());
 

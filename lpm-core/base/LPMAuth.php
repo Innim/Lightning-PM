@@ -229,7 +229,10 @@ class LPMAuth
     private function parseSession()
     {
         // если сессия живет
-        if ($data = unserialize(Session::getInstance()->get(self::SESSION_NAME))) {
+        // На пустой сессии Session::get() отдаёт null, а unserialize(null)
+        // с PHP 8.1 осуждается.
+        $sessionData = Session::getInstance()->get(self::SESSION_NAME);
+        if (!empty($sessionData) && ($data = unserialize($sessionData))) {
             $userId = (float)$data['uid'];
             $hashId = (float)$data['hashId'];
 

@@ -29,7 +29,7 @@ abstract class IssuesExporter
     public function export()
     {
         $filepath = $this->getFileRelativePath();
-        if ($filepath{0} != '/') {
+        if ($filepath[0] != '/') {
             $filepath = '/' . $filepath;
         }
 

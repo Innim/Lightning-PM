@@ -14,7 +14,9 @@ class LPMException extends Exception
             $this->statusCode = $statusCode;
         }
 
-        parent::__construct($message, $code, $previous);
+        // Аргументы по умолчанию null, а Exception::__construct() ждёт string
+        // и int - с PHP 8.1 передача null в них осуждается.
+        parent::__construct($message === null ? '' : $message, $code === null ? 0 : $code, $previous);
     }
 
     public function getLocalizedMessage()
