@@ -1,0 +1,14 @@
+<?php
+/*
+Требуются:
+    GitlabSudoTokenStatus $status - состояние общего токена интеграции с GitLab
+*/
+?>
+<div class="alert alert-danger border-0 rounded-0 mb-0 py-1 px-3 small text-center" role="alert">
+	<i class="fa-solid fa-triangle-exclamation me-1" aria-hidden="true"></i>
+	<?php if ($status->isExpired()):?>
+	Токен интеграции с GitLab (<span class="font-monospace">GITLAB_TOKEN</span>) недействителен — интеграция не работает, пока его не заменят.
+	<?php else:?>
+	Токен интеграции с GitLab (<span class="font-monospace">GITLAB_TOKEN</span>) истекает <?=$status->getExpiresAtStr();?> — замените его, иначе интеграция перестанет работать.
+	<?php endif;?>
+</div>

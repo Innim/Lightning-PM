@@ -1,12 +1,50 @@
 <?php
 /**
  * Интеграция с GitLab.
+ *
+ * Работает двумя клиентами, и в журнал каждый запрос пишется с указанием,
+ * каким именно:
+ *  - `sudo` - общий токен из конфигурации (`GITLAB_TOKEN`), от имени
+ *    `GITLAB_SUDO_USER`; им делается то, на что у обычного пользователя
+ *    не хватит прав, в том числе выписка пользовательских токенов;
+ *  - `user` - личный токен пользователя, который таск выписывает сам.
+ *
+ * Пользовательский токен таск чинит без участия человека: перевыписывает
+ * заранее, за {@see self::TOKEN_RENEW_BEFORE_DAYS} дней до истечения, а если
+ * GitLab всё-таки отказал по токену - перевыписывает и повторяет запрос
+ * (см. {@see self::userRequest()}). Общий токен так обновить нельзя - о его
+ * истечении предупреждается администратор, см. {@see GitlabSudoTokenStatus}.
  */
 class GitlabIntegration
 {
     const URL_MR_SUBPATH = 'merge_requests/';
     const URL_PIPELINE_SUBPATH = 'pipelines/';
     const URL_JOB_SUBPATH = 'jobs/';
+
+    /** Запрос идёт личным токеном пользователя - значение поля `client` в журнале. */
+    const CLIENT_USER = 'user';
+    /** Запрос идёт общим токеном интеграции - значение поля `client` в журнале. */
+    const CLIENT_SUDO = 'sudo';
+
+    /**
+     * На сколько дней выписывается пользовательский токен.
+     *
+     * Дольше, чем на год, GitLab токен не выдаёт.
+     */
+    const TOKEN_LIFETIME_DAYS = 364;
+
+    /**
+     * За сколько дней до истечения пользовательский токен перевыписывается.
+     *
+     * Запас нужен, чтобы токен менялся в спокойном режиме, а не по отказу
+     * GitLab посреди пользовательского сценария.
+     */
+    const TOKEN_RENEW_BEFORE_DAYS = 14;
+
+    /**
+     * Предел ожидания ответа при запросе сведений об общем токене, секунды.
+     */
+    const TOKEN_INFO_TIMEOUT_SEC = 5;
 
     private static $_instance;
     /**
@@ -20,21 +58,25 @@ class GitlabIntegration
                 defined('GITLAB_URL') ? GITLAB_URL : '',
                 $userToken,
                 defined('GITLAB_TOKEN') ? GITLAB_TOKEN : '',
-                defined('GITLAB_SUDO_USER') ? GITLAB_SUDO_USER : ''
+                defined('GITLAB_SUDO_USER') ? GITLAB_SUDO_USER : '',
+                $user instanceof User ? $user : null
             );
 
-            // Если токена нет, то имеет смысл его создать
-            if ($userToken == null && $user != null) {
-                // TODO: нужен механизм, чтобы не каждый раз запрашивался токен, если не удается создать
-                // потому что могут быть пользователи, не подключенные к репозиториям
-                $token = self::$_instance->sudoCreateUserToken($user);
-                if ($token) {
-                    self::$_instance->setUserToken($token);
-                }
-            }
+            self::$_instance->ensureUserToken();
         }
 
         return self::$_instance;
+    }
+
+    /**
+     * Подпись владельца личного токена для журнала.
+     *
+     * @param  User|null $user Владелец токена.
+     * @return string
+     */
+    private static function getUserLabel(User $user = null)
+    {
+        return $user === null ? 'неизвестен' : $user->getPlainName() . ' #' . $user->userId;
     }
 
     private $_url;
@@ -42,15 +84,35 @@ class GitlabIntegration
     private $_sudoToken;
     private $_sudoUser;
 
+    /**
+     * Пользователь, которому принадлежит личный токен.
+     * @var User|null
+     */
+    private $_user;
+
+    /**
+     * Перевыписывался ли уже токен по отказу GitLab.
+     * @var bool
+     */
+    private $_userTokenRenewed = false;
+
     private $_client;
     private $_sudoClient;
 
-    public function __construct($url, $userToken, $sudoToken, $sudoUser)
+    /**
+     * @param string    $url       Адрес инстанса GitLab.
+     * @param string    $userToken Личный токен пользователя или null.
+     * @param string    $sudoToken Общий токен интеграции (`GITLAB_TOKEN`).
+     * @param string    $sudoUser  Пользователь, от имени которого идут sudo-запросы.
+     * @param User|null $user      Владелец личного токена.
+     */
+    public function __construct($url, $userToken, $sudoToken, $sudoUser, User $user = null)
     {
         $this->_url = $url;
         $this->_token = $userToken;
         $this->_sudoToken = $sudoToken;
         $this->_sudoUser = $sudoUser;
+        $this->_user = $user;
     }
 
     /**
@@ -60,6 +122,9 @@ class GitlabIntegration
     public function setUserToken($token)
     {
         $this->_token = $token;
+        // Клиент держит токен внутри, поэтому с новым токеном он
+        // пересоздаётся: иначе запросы продолжат идти со старым
+        $this->_client = null;
     }
 
     /**
@@ -95,10 +160,10 @@ class GitlabIntegration
         if ($gitlabUser == null) {
             return false;
         }
-        
+
         try {
             // нельзя делать токен дольше, чем на год
-            $expiresAt = date('Y-m-d', strtotime('+364 days')); 
+            $expiresAt = date('Y-m-d', strtotime('+' . self::TOKEN_LIFETIME_DAYS . ' days'));
             $res = $this->sudoClient()->users()->createImpersonationToken(
                 $gitlabUser['id'],
                 $this->getTokenName(),
@@ -106,15 +171,83 @@ class GitlabIntegration
                 $expiresAt
             );
 
+            // Инстанс вправе сократить запрошенный срок, поэтому запоминается
+            // тот, что вернул GitLab, а не тот, что просили
+            if (!empty($res['expires_at'])) {
+                $expiresAt = substr((string)$res['expires_at'], 0, 10);
+            }
+
+            $expiresTs = strtotime($expiresAt);
+
             $user->gitlabToken = $res['token'];
             $user->gitlabId = $gitlabUser['id'];
-            User::updateGitlabToken($user->userId, $user->gitlabToken, $user->gitlabId);
+            $user->gitlabTokenExpiresAt = $expiresTs === false ? 0 : $expiresTs;
+            User::updateGitlabToken($user->userId, $user->gitlabToken, $user->gitlabId, $expiresAt);
+
+            LPMLog::info('Выписан токен GitLab', LPMLog::CH_GITLAB, [
+                'client' => self::CLIENT_USER,
+                'owner' => self::getUserLabel($user),
+                'expiresAt' => $expiresAt,
+            ]);
 
             return $user->gitlabToken;
         } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
+            $this->onCallException(__METHOD__, $e, self::CLIENT_SUDO);
             return null;
         }
+    }
+
+    /**
+     * Срок действия общего токена интеграции (`GITLAB_TOKEN`).
+     *
+     * @return array|null <code>['expired' => bool, 'expiresAt' => string]</code>,
+     * где `expiresAt` - дата в формате `Y-m-d` либо пустая строка у бессрочного
+     * токена. Возвращается null, если срок узнать не удалось - в том числе
+     * когда у токена нет разрешения читать сведения о самом себе.
+     */
+    public function getSudoTokenInfo()
+    {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+
+        try {
+            $tokens = new GitlabClientTokensExt($this->tokenInfoClient());
+            $res = $tokens->current();
+        } catch (Exception $e) {
+            if ($this->isInvalidTokenException($e)) {
+                LPMLog::error(
+                    'GitLab не принял общий токен интеграции: ' . $e->getMessage(),
+                    LPMLog::CH_GITLAB,
+                    $this->logContext(self::CLIENT_SUDO)
+                );
+
+                return ['expired' => true, 'expiresAt' => ''];
+            }
+
+            // Сведений о токене может не быть вовсе: у токена нет
+            // разрешения «Personal Access Token: Read» (403), инстанс старее
+            // 13.5 или токен не личный, а проектный либо групповой. Это
+            // не ошибка интеграции - просто срок остаётся неизвестным,
+            // и предупредить администратора заранее нечем; требование
+            // к правам токена описано в lpm-config.inc.template.php
+            LPMLog::warning(
+                'Не удалось узнать срок действия общего токена: ' . $e->getMessage(),
+                LPMLog::CH_GITLAB,
+                $this->logContext(self::CLIENT_SUDO)
+            );
+
+            return null;
+        }
+
+        if (!is_array($res)) {
+            return null;
+        }
+
+        return [
+            'expired' => !empty($res['revoked']) || (isset($res['active']) && !$res['active']),
+            'expiresAt' => empty($res['expires_at']) ? '' : substr((string)$res['expires_at'], 0, 10),
+        ];
     }
 
     /**
@@ -217,17 +350,11 @@ class GitlabIntegration
         $projectPath = trim(mb_substr($path, 0, $mrPos), ' -/');
         $mrId = intval(mb_substr($path, $mrPos + mb_strlen(self::URL_MR_SUBPATH)));
 
-        $client = $this->client();
-        if ($client == null) {
-            return null;
-        }
-        try {
-            $res = $client->mergeRequests()->show($projectPath, $mrId);
-            return $res === null ? null : new GitlabMergeRequest($res);
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return null;
-        }
+        $res = $this->userRequest(__METHOD__, function ($client) use ($projectPath, $mrId) {
+            return $client->mergeRequests()->show($projectPath, $mrId);
+        });
+
+        return empty($res) ? null : new GitlabMergeRequest($res);
     }
 
     /**
@@ -252,18 +379,11 @@ class GitlabIntegration
         $projectPath = trim(mb_substr($path, 0, $pos), ' -/');
         $pipelineId = intval(mb_substr($path, $pos + mb_strlen(self::URL_PIPELINE_SUBPATH)));
 
-        $client = $this->client();
-        if ($client == null) {
-            return null;
-        }
+        $res = $this->userRequest(__METHOD__, function ($client) use ($projectPath, $pipelineId) {
+            return $client->projects()->pipeline($projectPath, $pipelineId);
+        });
 
-        try {
-            $res = $client->projects()->pipeline($projectPath, $pipelineId);
-            return $res === null ? null : new GitlabPipeline($res);
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return null;
-        }
+        return empty($res) ? null : new GitlabPipeline($res);
     }
 
     /**
@@ -290,18 +410,11 @@ class GitlabIntegration
         $projectPath = trim(mb_substr($path, 0, $pos), ' -/');
         $jobId = intval(mb_substr($path, $pos + mb_strlen(self::URL_JOB_SUBPATH)));
 
-        $client = $this->client();
-        if ($client == null) {
-            return null;
-        }
+        $res = $this->userRequest(__METHOD__, function ($client) use ($projectPath, $jobId) {
+            return $client->jobs()->show($projectPath, $jobId);
+        });
 
-        try {
-            $res = $client->jobs()->show($projectPath, $jobId);
-            return $res === null ? null : new GitlabJob($res);
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return null;
-        }
+        return empty($res) ? null : new GitlabJob($res);
     }
 
     /**
@@ -311,18 +424,11 @@ class GitlabIntegration
      */
     public function getProject($projectId)
     {
-        $client = $this->client();
-        if ($client == null) {
-            return null;
-        }
+        $res = $this->userRequest(__METHOD__, function ($client) use ($projectId) {
+            return $client->projects()->show($projectId);
+        });
 
-        try {
-            $res = $client->projects()->show($projectId);
-            return new GitlabProject($res);
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return null;
-        }
+        return empty($res) ? null : new GitlabProject($res);
     }
 
     /**
@@ -330,22 +436,20 @@ class GitlabIntegration
      */
     public function getProjects($groupId)
     {
-        $client = $this->client();
-        if ($client == null) {
+        $list = $this->userRequest(__METHOD__, function ($client) use ($groupId) {
+            return $client->groups()->projects($groupId);
+        });
+
+        if ($list === null) {
             return null;
         }
 
-        try {
-            $list = $client->groups()->projects($groupId);
-            $res = [];
-            foreach ($list as $data) {
-                $res[] = new GitlabProject($data);
-            }
-            return $res;
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return null;
+        $res = [];
+        foreach ($list as $data) {
+            $res[] = new GitlabProject($data);
         }
+
+        return $res;
     }
 
     /**
@@ -353,12 +457,7 @@ class GitlabIntegration
      */
     public function getBranches($projectId, $search = null)
     {
-        $client = $this->client();
-        if ($client == null) {
-            return null;
-        }
-
-        try {
+        return $this->userRequest(__METHOD__, function ($client) use ($projectId, $search) {
             $page = 0;
             $perPage = 100;
             $res = [];
@@ -374,16 +473,14 @@ class GitlabIntegration
                 $page++;
                 $params['page'] = $page;
                 $list = $client->repositories()->branches($projectId, $params);
-            
+
                 foreach ($list as $data) {
                     $res[] = new GitlabBranch($data);
                 }
             } while (count($list) == $perPage);
+
             return $res;
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return null;
-        }
+        });
     }
 
     /**
@@ -395,18 +492,11 @@ class GitlabIntegration
      */
     public function createBranch($projectId, $parent, $name)
     {
-        $client = $this->client();
-        if ($client == null) {
-            return false;
-        }
+        $res = $this->userRequest(__METHOD__, function ($client) use ($projectId, $parent, $name) {
+            return $client->repositories()->createBranch($projectId, $name, $parent);
+        }, false);
 
-        try {
-            $res = $client->repositories()->createBranch($projectId, $name, $parent);
-            return new GitlabBranch($res);
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return false;
-        }
+        return empty($res) ? false : new GitlabBranch($res);
     }
 
     /**
@@ -417,18 +507,10 @@ class GitlabIntegration
      */
     public function deleteBranch($projectId, $name)
     {
-        $client = $this->client();
-        if ($client == null) {
-            return false;
-        }
-
-        try {
+        return $this->userRequest(__METHOD__, function ($client) use ($projectId, $name) {
             $client->repositories()->deleteBranch($projectId, $name);
             return true;
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return false;
-        }
+        }, false);
     }
 
     /**
@@ -443,18 +525,15 @@ class GitlabIntegration
      */
     public function compareBranchesAndGetCommit($projectId, $fromShaOrBranch, $toShaOrBranch)
     {
-        $client = $this->client();
-        if ($client == null) {
-            return false;
-        }
+        $res = $this->userRequest(
+            __METHOD__,
+            function ($client) use ($projectId, $fromShaOrBranch, $toShaOrBranch) {
+                return $client->repositories()->compare($projectId, $fromShaOrBranch, $toShaOrBranch);
+            },
+            false
+        );
 
-        try {
-            $res = $client->repositories()->compare($projectId, $fromShaOrBranch, $toShaOrBranch);
-            return $res ? new GitlabCommit($res['commit']) : false;
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return false;
-        }
+        return $res ? new GitlabCommit($res['commit']) : false;
     }
 
     /**
@@ -465,18 +544,9 @@ class GitlabIntegration
      */
     public function createMRNote($projectId, $mrInternalId, $text)
     {
-        $client = $this->client();
-        if ($client == null) {
-            return false;
-        }
-
-        try {
-            $res = $client->mergeRequests()->addNote($projectId, $mrInternalId, $text);
-            return $res;
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return false;
-        }
+        return $this->userRequest(__METHOD__, function ($client) use ($projectId, $mrInternalId, $text) {
+            return $client->mergeRequests()->addNote($projectId, $mrInternalId, $text);
+        }, false);
     }
 
     /**
@@ -494,15 +564,11 @@ class GitlabIntegration
      */
     public function getMRChangedFiles($projectId, $mrInternalId, $maxFiles)
     {
-        $client = $this->client();
-        if ($client == null) {
-            return null;
-        }
+        $res = $this->userRequest(__METHOD__, function ($client) use ($projectId, $mrInternalId) {
+            return $client->mergeRequests()->changes($projectId, $mrInternalId);
+        });
 
-        try {
-            $res = $client->mergeRequests()->changes($projectId, $mrInternalId);
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
+        if ($res === null) {
             return null;
         }
 
@@ -531,23 +597,18 @@ class GitlabIntegration
      * @param bool $useSudo Использовать ли sudo пользователя или текущего.
      * @return GitlabPipeline|null
      */
-    public function getLatestPipeline($projectId, $ref, $useSudo = false) {
-        $client = $useSudo ? $this->sudoClient() : $this->client();
-        if ($client == null) {
-            return null;
-        }
-
-        try {
+    public function getLatestPipeline($projectId, $ref, $useSudo = false)
+    {
+        $request = function ($client) use ($projectId, $ref) {
             $projects = new GitlabClientProjectsExt($client);
-            $res = $projects->pipelineLatest($projectId, $ref);
-            if (empty($res)) {
-                return null;
-            }
-            return new GitlabPipeline($res);
-        } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
-            return null;
-        }
+            return $projects->pipelineLatest($projectId, $ref);
+        };
+
+        $res = $useSudo
+            ? $this->sudoRequest(__METHOD__, $request)
+            : $this->userRequest(__METHOD__, $request);
+
+        return empty($res) ? null : new GitlabPipeline($res);
     }
 
     /**
@@ -565,36 +626,192 @@ class GitlabIntegration
             return null;
         }
 
-        $client = $this->client();
-        if ($client == null) {
-            return null;
-        }
-
-        try {
-            $res = $client->projects()->pipelines($projectId, [
+        $res = $this->userRequest(__METHOD__, function ($client) use ($projectId, $ref, $sha) {
+            return $client->projects()->pipelines($projectId, [
                 'ref' => $ref,
                 'sha' => $sha,
                 'order_by' => 'id',
                 'sort' => 'desc',
                 'per_page' => 1,
             ]);
+        });
 
-            return empty($res) ? null : new GitlabPipeline($res[0]);
+        return empty($res) ? null : new GitlabPipeline($res[0]);
+    }
+
+    /**
+     * Выписывает пользователю личный токен, если действующего нет.
+     *
+     * Токен перевыписывается не только когда его нет вовсе, но и когда до
+     * истечения осталось меньше {@see self::TOKEN_RENEW_BEFORE_DAYS} дней:
+     * иначе он однажды истечёт посреди пользовательского сценария.
+     *
+     * Токены, выписанные до того, как таск начал хранить срок, срока не имеют
+     * и заранее не перевыписываются - такой чинится повтором по отказу
+     * (см. {@see self::userRequest()}).
+     */
+    private function ensureUserToken()
+    {
+        if ($this->_user === null || !$this->isAvailable()) {
+            return;
+        }
+
+        if ($this->_token !== null && !$this->isUserTokenExpiring()) {
+            return;
+        }
+
+        // TODO: нужен механизм, чтобы не каждый раз запрашивался токен, если не удается создать
+        // потому что могут быть пользователи, не подключенные к репозиториям
+        $token = $this->sudoCreateUserToken($this->_user);
+        if ($token) {
+            $this->setUserToken($token);
+        }
+    }
+
+    /**
+     * Истекает ли личный токен пользователя в ближайшие дни.
+     *
+     * Неизвестный срок не считается истекающим: заранее перевыписывать такой
+     * токен не на основании чего.
+     *
+     * @return bool
+     */
+    private function isUserTokenExpiring()
+    {
+        $expiresAt = (float)$this->_user->gitlabTokenExpiresAt;
+        if ($expiresAt <= 0) {
+            return false;
+        }
+
+        return $expiresAt <= time() + self::TOKEN_RENEW_BEFORE_DAYS * 86400;
+    }
+
+    /**
+     * Выполняет запрос личным токеном пользователя.
+     *
+     * Если GitLab отказал из-за недействительного токена, токен перевыписывается
+     * через sudo и запрос повторяется - ровно один раз за время жизни интеграции.
+     * Отказы другой природы (нет прав, нет объекта, сеть) повтора не вызывают:
+     * новый токен их не изменит.
+     *
+     * @param  string   $method  Метод, от имени которого идёт запрос - для журнала.
+     * @param  callable $request Запрос: получает \Gitlab\Client, возвращает ответ.
+     * @param  mixed    $default Что вернуть, если запрос не удался.
+     * @return mixed Ответ GitLab либо $default.
+     */
+    private function userRequest($method, callable $request, $default = null)
+    {
+        $client = $this->client();
+        if ($client === null) {
+            return $default;
+        }
+
+        try {
+            return $request($client);
         } catch (Exception $e) {
-            $this->onCallException(__METHOD__, $e);
+            if (!$this->isInvalidTokenException($e)) {
+                $this->onCallException($method, $e, self::CLIENT_USER);
+                return $default;
+            }
+
+            // Это штатно восстановимый отказ, поэтому не ошибка: ниже токен
+            // будет перевыписан, а запрос повторён
+            LPMLog::warning(
+                'GitLab не принял токен пользователя, перевыписываем: ' . $e->getMessage(),
+                LPMLog::CH_GITLAB,
+                $this->logContext(self::CLIENT_USER, ['context' => $method])
+            );
+        }
+
+        $client = $this->renewUserToken();
+        if ($client === null) {
+            return $default;
+        }
+
+        try {
+            return $request($client);
+        } catch (Exception $e) {
+            $this->onCallException($method, $e, self::CLIENT_USER);
+            return $default;
+        }
+    }
+
+    /**
+     * Выполняет запрос общим токеном интеграции.
+     *
+     * Повтора здесь нет: общий токен задан в конфигурации, перевыписать его
+     * таск не может.
+     *
+     * @param  string   $method  Метод, от имени которого идёт запрос - для журнала.
+     * @param  callable $request Запрос: получает \Gitlab\Client, возвращает ответ.
+     * @param  mixed    $default Что вернуть, если запрос не удался.
+     * @return mixed Ответ GitLab либо $default.
+     */
+    private function sudoRequest($method, callable $request, $default = null)
+    {
+        $client = $this->sudoClient();
+        if ($client === null) {
+            return $default;
+        }
+
+        try {
+            return $request($client);
+        } catch (Exception $e) {
+            $this->onCallException($method, $e, self::CLIENT_SUDO);
+            return $default;
+        }
+    }
+
+    /**
+     * Перевыписывает личный токен пользователя после отказа GitLab.
+     *
+     * Больше одного раза за время жизни интеграции не перевыписывает: если
+     * GitLab не принимает и только что выписанный токен, причина не в сроке,
+     * и повторять нечего - иначе каждый запрос плодил бы новые токены.
+     *
+     * @return \Gitlab\Client|null Клиент с новым токеном либо null, если
+     * перевыписать не удалось.
+     */
+    private function renewUserToken()
+    {
+        if ($this->_userTokenRenewed || $this->_user === null) {
             return null;
         }
+
+        $this->_userTokenRenewed = true;
+
+        $token = $this->sudoCreateUserToken($this->_user);
+        if (empty($token)) {
+            return null;
+        }
+
+        $this->setUserToken($token);
+
+        return $this->client();
+    }
+
+    /**
+     * Отказал ли GitLab именно из-за токена.
+     *
+     * 401 в ответ на запрос с токеном означает, что токен не действует -
+     * истёк, отозван или удалён. Прочие отказы (403 - нет прав, 404 - нет
+     * объекта, сетевые ошибки) к токену отношения не имеют, и новый токен
+     * их не исправит.
+     *
+     * @param  Exception $e Исключение запроса к GitLab.
+     * @return bool
+     */
+    private function isInvalidTokenException(Exception $e)
+    {
+        return $e instanceof \Gitlab\Exception\RuntimeException && (int)$e->getCode() === 401;
     }
 
     private function sudoGetUserByEmail($email)
     {
-        try {
-            $res = $this->sudoClient()->users()->all(['search' => $email]);
+        return $this->sudoRequest(__METHOD__, function ($client) use ($email) {
+            $res = $client->users()->all(['search' => $email]);
             return empty($res) ? null : $res[0];
-        } catch (Exception $e) {
-            $this->logException($e, 'Exception during ' . __METHOD__);
-            return null;
-        }
+        });
     }
 
     /**
@@ -625,7 +842,7 @@ class GitlabIntegration
         if (!$this->isAvailable()) {
             return null;
         }
-        
+
         if ($this->_sudoClient === null) {
             $client = new Gitlab\Client();
             $client->setUrl($this->_url);
@@ -635,6 +852,39 @@ class GitlabIntegration
         }
 
         return $this->_sudoClient;
+    }
+
+    /**
+     * Клиент с общим токеном, но без sudo.
+     *
+     * Сведения о самом токене GitLab отдаёт только его владельцу, а с
+     * заголовком sudo запрос пошёл бы от имени другого пользователя.
+     *
+     * Запрос этим клиентом делается по ходу отрисовки обычной страницы,
+     * а не по просьбе пользователя, поэтому он жёстко ограничен по времени:
+     * недоступный GitLab не должен держать страницу администратора.
+     * Таймаут ставится только там, где доступен транспорт, который его умеет;
+     * иначе остаётся клиент по умолчанию.
+     *
+     * @return \Gitlab\Client
+     */
+    private function tokenInfoClient()
+    {
+        $builder = null;
+        if (class_exists('\Symfony\Component\HttpClient\Psr18Client')) {
+            $builder = new \Gitlab\HttpClient\Builder(new \Symfony\Component\HttpClient\Psr18Client(
+                \Symfony\Component\HttpClient\HttpClient::create([
+                    'timeout' => self::TOKEN_INFO_TIMEOUT_SEC,
+                    'max_duration' => self::TOKEN_INFO_TIMEOUT_SEC,
+                ])
+            ));
+        }
+
+        $client = new Gitlab\Client($builder);
+        $client->setUrl($this->_url);
+        $client->authenticate($this->_sudoToken, Gitlab\Client::AUTH_HTTP_TOKEN);
+
+        return $client;
     }
 
     /**
@@ -656,14 +906,29 @@ class GitlabIntegration
         return 'Lightning PM at ' . SITE_URL;
     }
 
-    private function onCallException(String $method, Exception $e)
+    private function onCallException($method, Exception $e, $client)
     {
-        $this->logException($e, 'Exception during ' . $method);
+        LPMLog::exception($e, LPMLog::CH_GITLAB, $this->logContext($client, [
+            'context' => 'Exception during ' . $method,
+        ]));
     }
 
-    private function logException(Exception $e, $message = '')
+    /**
+     * Контекст записи журнала: каким клиентом шёл запрос и от чьего имени.
+     *
+     * @param  string $client Вид клиента: self::CLIENT_USER или self::CLIENT_SUDO.
+     * @param  array  $extra  Дополнительные поля записи.
+     * @return array
+     */
+    private function logContext($client, array $extra = [])
     {
-        $context = empty($message) ? [] : ['context' => $message];
-        LPMLog::exception($e, LPMLog::CH_GITLAB, $context);
+        $context = [
+            'client' => $client,
+            'owner' => $client === self::CLIENT_USER
+                ? self::getUserLabel($this->_user)
+                : $this->_sudoUser,
+        ];
+
+        return array_merge($context, $extra);
     }
 }
