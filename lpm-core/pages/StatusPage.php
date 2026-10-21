@@ -27,6 +27,8 @@ class StatusPage extends LPMPage
         $cache = $engine->cache();
         $status->cacheEnabled = $cache->isEnabled();
 
+        $status->phpVersion = PHP_VERSION;
+
         $clientIp = ClientIp::getTrusted();
         $status->remoteAddr = ClientIp::getRemoteAddr();
         $status->clientIp = $clientIp;

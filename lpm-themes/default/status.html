@@ -33,6 +33,13 @@
 
   <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center gap-2">
+      <span>PHP</span>
+      <span class="badge bg-secondary font-monospace"><?=htmlspecialchars($status->phpVersion, ENT_QUOTES);?></span>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2">
       <span>Ограничение попыток входа</span>
       <?php if ($status->loginIpLimitEnabled):?>
       <span class="badge bg-success">Считается и по адресу</span>
