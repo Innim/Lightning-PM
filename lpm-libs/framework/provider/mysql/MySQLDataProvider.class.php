@@ -602,7 +602,7 @@ abstract class MySQLDataProvider
     {
         if (empty($values)) return '1';
 
-        if ($field{0} != '`') $field = '`' . $field . '`';
+        if ($field[0] != '`') $field = '`' . $field . '`';
         $str = $field . ' ';
         if (is_array($values) && count($values) == 1) $values = $values[0];
 

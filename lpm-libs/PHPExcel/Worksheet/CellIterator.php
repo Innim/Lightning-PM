@@ -87,6 +87,7 @@ class PHPExcel_Worksheet_CellIterator implements Iterator
 	/**
 	 * Rewind iterator
 	 */
+    #[\ReturnTypeWillChange]
     public function rewind() {
         $this->_position = 0;
     }
@@ -96,6 +97,7 @@ class PHPExcel_Worksheet_CellIterator implements Iterator
      *
      * @return PHPExcel_Cell
      */
+    #[\ReturnTypeWillChange]
     public function current() {
 		return $this->_subject->getCellByColumnAndRow($this->_position, $this->_rowIndex);
     }
@@ -105,6 +107,7 @@ class PHPExcel_Worksheet_CellIterator implements Iterator
      *
      * @return int
      */
+    #[\ReturnTypeWillChange]
     public function key() {
         return $this->_position;
     }
@@ -112,6 +115,7 @@ class PHPExcel_Worksheet_CellIterator implements Iterator
     /**
      * Next value
      */
+    #[\ReturnTypeWillChange]
     public function next() {
         ++$this->_position;
     }
@@ -121,6 +125,7 @@ class PHPExcel_Worksheet_CellIterator implements Iterator
      *
      * @return boolean
      */
+    #[\ReturnTypeWillChange]
     public function valid() {
         // columnIndexFromString() returns an index based at one,
         // treat it as a count when comparing it to the base zero

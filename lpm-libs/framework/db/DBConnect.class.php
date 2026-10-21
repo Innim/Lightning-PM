@@ -68,6 +68,13 @@ class DBConnect extends \mysqli
 
         $this->builder = new DBQueryBuilder($this, $this->prefix);
 
+		// Начиная с PHP 8.1 mysqli по умолчанию бросает mysqli_sql_exception
+		// вместо того, чтобы возвращать false. Весь код вокруг построен на
+		// проверке результата (и на своих ProviderLoadException /
+		// ProviderSaveException поверх неё), поэтому режим отчётов возвращаем
+		// к прежнему: об ошибке говорит результат запроса и $this->error.
+		mysqli_report(MYSQLI_REPORT_OFF);
+
 		parent::__construct( $host, $username, $passwd, $dbname );
 		$this->set_charset( "utf8" );
 	}
@@ -130,16 +137,21 @@ class DBConnect extends \mysqli
 		}
 	}
 	
+	#[\ReturnTypeWillChange]
 	public function prepare($query) 
     {
 		$this->lastQuery = $query;
 		return parent::prepare( $query );
 	}
 	
+	#[\ReturnTypeWillChange]
 	public function query($query, $resultmode = null) 
     {
 		$this->lastQuery = $query;
-		return parent::query( $query, $resultmode );
+		// $resultmode по умолчанию null, а mysqli::query() с PHP 8.1 осуждает
+		// передачу null в нескалярный параметр - подставляем его собственное
+		// значение по умолчанию.
+		return parent::query( $query, $resultmode === null ? MYSQLI_STORE_RESULT : $resultmode );
 	}
 
 	/**
@@ -404,6 +416,7 @@ class DBConnect extends \mysqli
 	/**
      * @see mysqli::escape_string()
 	 */
+	#[\ReturnTypeWillChange]
 	public function escape_string($value)
 	{
 		return $this->builder->escape_string($value);
@@ -433,6 +446,7 @@ class DBConnect extends \mysqli
 	/**
 	 * @see mysqli::multi_query()
 	 */
+	#[\ReturnTypeWillChange]
 	public function multi_query( $query )
 	{
 		$this->lastQuery = $query;

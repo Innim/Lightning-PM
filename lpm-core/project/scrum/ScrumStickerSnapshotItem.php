@@ -18,7 +18,7 @@ class ScrumStickerSnapshotItem extends MembersInstance
         $db = self::getDB();
 
         $sql = <<<SQL
-            SELECT * FROM `%1\$s` WHERE `%1\$s`.`sid` = '${snapshotId}'
+            SELECT * FROM `%1\$s` WHERE `%1\$s`.`sid` = '{$snapshotId}'
 SQL;
 
         /* @var $items ScrumStickerSnapshotItem[] */

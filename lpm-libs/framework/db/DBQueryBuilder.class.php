@@ -251,7 +251,7 @@ class DBQueryBuilder {
 	        		if (ArrayUtils::isAssoc( $dupl ))
 	        			foreach ($dupl as $field => $value) {
 	        				if ($uValues != '') $uValues .= ', ';
-	        				if ($field{0} != '`') $field = '`' . $field . '`';
+	        				if ($field[0] != '`') $field = '`' . $field . '`';
 	        				$uValues .= $field . ' = ' . $this->getValueForSQL( $value );
 	        			}
 	        		else 
@@ -375,7 +375,7 @@ class DBQueryBuilder {
                     if ($field === '') $field = "'" . $field . "'";
                     else
                     {
-                        $s = $field{0};
+                        $s = $field[0];
 
                         if ($s !== '`' && $s !== '"' && $s !== "'") $field = '`' . $field . '`';
                     }
@@ -450,7 +450,7 @@ class DBQueryBuilder {
     private function getTableName($table, $prefix, $alias = null)
     {
         $res = $prefix . $table;
-        if ($table{0} !== '`') $res = '`' . $res . '`';
+        if ($table[0] !== '`') $res = '`' . $res . '`';
 
         if ($alias !== null)
         {
@@ -459,7 +459,7 @@ class DBQueryBuilder {
             $alias = (string)$alias;
             if ($alias !== '')
             {
-                if ($alias{0} !== '`') $alias = '`' . $alias . '`';
+                if ($alias[0] !== '`') $alias = '`' . $alias . '`';
                 $res .= ' AS ' . $alias;
             }
         }
@@ -530,7 +530,7 @@ class DBQueryBuilder {
             }
             else 
             {
-                if ($field{0} != '`') $field = '`' . $field . '`';
+                if ($field[0] != '`') $field = '`' . $field . '`';
                 $whereStr .= $field;
 
                 if (is_array($value))
