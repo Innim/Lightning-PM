@@ -74,8 +74,8 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
 
                     <a href="javascript:void(0);"
                         onclick="issuePage.onClickCopyMarkdownIssueLink(event)"
-                        title="Копировать ссылку как Markdown"
-                        aria-label="Копировать ссылку как Markdown"
+                        title="Копировать Markdown-ссылку (#номер)"
+                        aria-label="Копировать Markdown-ссылку (#номер)"
                         data-issue-url="<?=$issue->getConstURL();?>"
                         data-issue-id-in-project="<?=$issue->getIdInProject();?>"
                         class="btn btn-sm btn-light">
@@ -142,6 +142,17 @@ if ($issue->isTesting()) $classes[] = 'issue-testing';
                                     data-issue-name="<?=htmlspecialchars($issue->getName());?>">
                                     <i class="fa fa-arrow-up-right-from-square me-1 fa-xs"></i>
                                     <small>Копировать гиперссылку</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-1 px-2"
+                                    href="javascript:void(0);"
+                                    onclick="issuePage.onClickCopyMarkdownLinkedIssueTitle(event)"
+                                    data-issue-url="<?=$issue->getConstURL();?>"
+                                    data-issue-id-in-project="<?=$issue->getIdInProject();?>"
+                                    data-issue-name="<?=htmlspecialchars($issue->getName());?>">
+                                    <i class="fa-brands fa-markdown me-1 fa-xs" aria-hidden="true"></i>
+                                    <small>Копировать Markdown-ссылку (с названием)</small>
                                 </a>
                             </li>
                             <li>
