@@ -37,7 +37,9 @@ services:
       - 3306
 
   adminer:
-    image: adminer:4.8.1
+    # Версия закреплена точно: плавающий тег разрешается в то, что лежит
+    # в локальном кэше, и устаревший образ молча выдаёт себя за свежий.
+    image: adminer:5.5.1
     restart: unless-stopped
     ports:
       - "${ADMINER_PORT}:8080"
