@@ -1591,10 +1591,25 @@ issuePage.onClickCopyMarkdownIssueLink = function (event) {
     const url = link.getAttribute('data-issue-url');
     const idInProject = link.getAttribute('data-issue-id-in-project');
 
-    const text = '[#' + idInProject + '](' + url + ')';
+    const text = buildMarkdownLink('#' + idInProject, url);
 
     lpm.utils.copyToClipboard(text).then(() => {
        lpm.toast.show('Markdown ссылка скопирована в буфер'); 
+    });
+};
+
+issuePage.onClickCopyMarkdownLinkedIssueTitle = function (event) {
+    const link = event.target.closest('a');
+    const url = link.getAttribute('data-issue-url');
+    const idInProject = link.getAttribute('data-issue-id-in-project');
+    const issueName = link.getAttribute('data-issue-name');
+
+    // Подпись совпадает с той, что кладёт «Копировать гиперссылку», включая метки:
+    // квадратные скобки в ней экранируются, и приёмник их не показывает.
+    const text = buildMarkdownLink(issueTitle(idInProject, issueName), url);
+
+    lpm.utils.copyToClipboard(text).then(() => {
+        lpm.toast.show('Markdown-ссылка с названием скопирована');
     });
 };
 
@@ -1662,7 +1677,7 @@ issuePage.onClickCopyChangelogRecord = function (event) {
     const issueName = link.getAttribute('data-issue-name');
     const clearedName = removeLabelsFromIssueName(issueName);
 
-    const text = clearedName + ' ([#' + idInProject + '](' + url + '))';
+    const text = clearedName + ' (' + buildMarkdownLink('#' + idInProject, url) + ')';
 
     lpm.utils.copyToClipboard(text).then(() => {
         lpm.toast.show('Запись для changelog скопирована');
@@ -1701,6 +1716,25 @@ issuePage.onClickCopyIssueForAI = function (event) {
 
 function issueTitle(idInProject, issueName) {
     return idInProject + '. ' + issueName;
+}
+
+/**
+ * Собирает ссылку в разметке Markdown: `[подпись](url)`.
+ * @param {string} text Подпись ссылки.
+ * @param {string} url Адрес ссылки.
+ * @returns {string}
+ */
+function buildMarkdownLink(text, url) {
+    // Экранируются только символы, ломающие саму разметку ссылки: обратный слэш
+    // и квадратные скобки. Без этого непарная скобка в подписи обрывает ссылку
+    // раньше времени, и в неё попадает хвост названия вместо всего названия.
+    // Символы оформления (*, _, `) не трогаем - ссылку они не рвут.
+    const escapedText = String(text).replace(/[\\[\]]/g, '\\$&');
+    // Круглая скобка в адресе закрыла бы разметку раньше времени;
+    // процентное кодирование оставляет адрес рабочим.
+    const escapedUrl = String(url).replace(/\(/g, '%28').replace(/\)/g, '%29');
+
+    return '[' + escapedText + '](' + escapedUrl + ')';
 }
 
 function removeLabelsFromIssueName(name) {

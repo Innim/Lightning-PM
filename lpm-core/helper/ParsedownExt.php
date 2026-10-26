@@ -197,7 +197,10 @@ class ParsedownExt extends Parsedown
         array_unshift($this->InlineTypes['['], 'IssueLink');
 
         $issueUrlPattern = OwnUrlHelper::getIssueUrlPattern();
-        $this->_taskLinkRegex = '/^\[([^\]]*)\]\((' . $issueUrlPattern . ')\)/';
+        // Подпись может содержать экранированные скобки: ссылку на задачу с меткой
+        // в названии («[security] …») иначе не записать, не оборвав разметку.
+        // Группа некаптурящая - на число совпадений опирается inlineIssueLink().
+        $this->_taskLinkRegex = '/^\[((?:\\\\.|[^\]\\\\])*)\]\((' . $issueUrlPattern . ')\)/';
     }
 
     public function setLpmCodeHighlight($enabled)

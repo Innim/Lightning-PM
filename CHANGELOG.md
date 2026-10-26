@@ -1,5 +1,11 @@
 ## Next
 
+### Added
+- В меню копирования появился пункт, который копирует ссылку на задачу разметкой Markdown — с номером и названием ([#550](https://task.innim.ru/project/lightning-pm/issue/550)).
+
+### Changed
+- Прежний пункт копирования Markdown-ссылки называется «Копировать Markdown-ссылку (#номер)» ([#550](https://task.innim.ru/project/lightning-pm/issue/550)).
+
 ## 1.0.0 - 2026-10-21
 
 ### Added
